@@ -36,6 +36,12 @@ class ConstantValueExpression : public AbstractExpression {
     return value_;
   }
 
+  virtual void DeduceExpressionName() override {
+    if (!alias.empty())
+      return;
+    expr_name_ = value_.ToString();
+  }
+  
   virtual bool Equals(AbstractExpression *expr) override {
     if (exp_type_ != expr->GetExpressionType())
       return false;

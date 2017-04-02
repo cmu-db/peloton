@@ -94,6 +94,25 @@ class AbstractExpression : public Printable {
   inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   virtual void DeduceExpressionType() {}
+  
+  // Walks the expressoin trees and generate the correct expression name
+  virtual void DeduceExpressionName() {
+    // If alias exists, it will be used in TrafficCop
+    if (!alias.empty())
+      return;
+    
+    for (auto& child : children_)
+      child->DeduceExpressionName();
+    auto op_str = ExpressionTypeToString(exp_type_, true);
+    auto children_size = children_.size();
+    PL_ASSERT(children_size <= 2);
+    if (children_size == 2) {
+      expr_name_ = GetChild(0)->expr_name_ + " " + op_str + " " +
+        GetChild(1)->expr_name_;
+    } else if (children_size == 1) {
+      expr_name_ = op_str + " " + GetChild(0)->expr_name_;
+    }
+  }
 
   const std::string GetInfo() const {
     std::ostringstream os;

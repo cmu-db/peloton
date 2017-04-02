@@ -376,8 +376,8 @@ class ExpressionUtil {
   
   /**
    * Walks an expression trees. Set the value_idx for the leaf tuple_value_expr
-   * Set the correct expression name. Deduce the return value type
-   * of expression. Set the function ptr for function expression.
+   * Deduce the return value type of expression. Set the function ptr for 
+   * function expression.
    *
    * Plz notice: this function should only be used in the optimizer.
    * The following version TransformExpression will eventually be depracated
@@ -393,9 +393,6 @@ class ExpressionUtil {
       auto tup_expr = (expression::TupleValueExpression*) expr;
       auto iter = expr_map.find(tup_expr);
       tup_expr->SetValueIdx(iter->second);
-      // Set the expression name
-      if (tup_expr->alias.empty())
-        tup_expr->expr_name_ = tup_expr->GetColumnName();
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *) expr;
       // Check and set the function ptr
@@ -410,15 +407,6 @@ class ExpressionUtil {
       const_expr->expr_name_ = const_expr->GetValue().ToString();
     } else {
       expr->DeduceExpressionType();
-      // Set the expression name
-      auto op_str = ExpressionTypeToString(expr->GetExpressionType(), true);
-      PL_ASSERT(children_size <= 2);
-      if (children_size == 2) {
-        expr->expr_name_ = expr->GetChild(0)->expr_name_ + " " +
-          op_str + " " + expr->GetChild(1)->expr_name_;
-      } else if (children_size == 1) {
-        expr->expr_name_ = op_str + " " + expr->GetChild(0)->expr_name_;
-      }
     }
   }
   

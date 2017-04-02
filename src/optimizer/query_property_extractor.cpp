@@ -48,6 +48,7 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   } else {
     std::vector<expression::AbstractExpression *> column_exprs;
     for (auto col : *select_stmt->select_list) {
+      col->DeduceExpressionName();
       if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         column_exprs.emplace_back(col);
       } else {

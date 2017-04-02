@@ -60,6 +60,12 @@ class TupleValueExpression : public AbstractExpression {
     }
   }
 
+  virtual void DeduceExpressionName() override {
+    if (!alias.empty())
+      return;
+    expr_name_ = col_name_;
+  }
+  
   // TODO: Delete this when TransformExpression is completely depracated
   void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
