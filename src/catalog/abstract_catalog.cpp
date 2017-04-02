@@ -190,8 +190,8 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
   //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
   //     index_constraint, unique_keys, pool_.get(), nullptr);
 
-  LOG_INFO("Successfully created primary key index '%s' for table '%s'",
-           index_name.c_str(), COLUMN_CATALOG_NAME);
+  LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
+            index_name.c_str(), COLUMN_CATALOG_NAME);
 }
 
 }  // End catalog namespace
