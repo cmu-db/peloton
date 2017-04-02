@@ -386,6 +386,7 @@ bool Value::CheckComparable(const Value &o) const {
         case Type::INTEGER:
         case Type::BIGINT:
         case Type::DECIMAL:
+        case Type::VARCHAR:
           return true;
         default:
           break;
