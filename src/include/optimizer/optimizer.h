@@ -107,7 +107,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the lowest cost tree of physical plan nodes
    */
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
-      GroupID id, PropertySet requirements, ExprMap *output_expr_map = nullptr);
+      GroupID id, PropertySet requirements, ExprMap *output_expr_map);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After
