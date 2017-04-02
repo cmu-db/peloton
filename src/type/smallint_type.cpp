@@ -22,6 +22,51 @@
 namespace peloton {
 namespace type {
 
+#define SMALLINT_COMPARE_FUNC(OP) \
+  switch (right.GetTypeId()) { \
+    case Type::TINYINT: \
+      return GetCmpBool(left.value_.smallint OP right.GetAs<int8_t>()); \
+    case Type::SMALLINT: \
+      return GetCmpBool(left.value_.smallint OP right.GetAs<int16_t>()); \
+    case Type::INTEGER: \
+    case Type::PARAMETER_OFFSET: \
+      return GetCmpBool(left.value_.smallint OP right.GetAs<int32_t>()); \
+  case Type::BIGINT: \
+    return GetCmpBool(left.value_.smallint OP right.GetAs<int64_t>()); \
+  case Type::DECIMAL: \
+    return GetCmpBool(left.value_.smallint OP right.GetAs<double>()); \
+  case Type::VARCHAR: { \
+    auto r_value = right.CastAs(Type::SMALLINT); \
+    return GetCmpBool(left.value_.smallint OP r_value.GetAs<int16_t>()); \
+  } \
+  default: \
+    break; \
+  } // SWITCH
+
+#define SMALLINT_MODIFY_FUNC(METHOD, OP) \
+  switch (right.GetTypeId()) { \
+    case Type::TINYINT: \
+      return METHOD<int16_t, int8_t>(left, right); \
+    case Type::SMALLINT: \
+      return METHOD<int16_t, int16_t>(left, right); \
+    case Type::INTEGER: \
+    case Type::PARAMETER_OFFSET: \
+      return METHOD<int16_t, int32_t>(left, right); \
+    case Type::BIGINT: \
+      return METHOD<int16_t, int64_t>(left, right); \
+    case Type::DECIMAL: \
+      return ValueFactory::GetDecimalValue( \
+                left.value_.smallint OP right.GetAs<double>()); \
+    case Type::VARCHAR: { \
+      auto r_value = right.CastAs(Type::SMALLINT); \
+      return METHOD<int16_t, int16_t>(left, r_value); \
+    } \
+    default: \
+      break; \
+  } // SWITCH
+
+
+
 SmallintType::SmallintType() :
     IntegerParentType(Type::SMALLINT) {
 }
@@ -36,22 +81,7 @@ Value SmallintType::Add(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return AddValue<int16_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return AddValue<int16_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return AddValue<int16_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return AddValue<int16_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(
-        left.value_.smallint + right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_MODIFY_FUNC(AddValue, +);
 
   throw Exception("type error");
 }
@@ -62,22 +92,7 @@ Value SmallintType::Subtract(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return SubtractValue<int16_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return SubtractValue<int16_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return SubtractValue<int16_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return SubtractValue<int16_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(
-        left.value_.smallint - right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_MODIFY_FUNC(SubtractValue, -);
 
   throw Exception("type error");
 }
@@ -88,22 +103,7 @@ Value SmallintType::Multiply(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return MultiplyValue<int16_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return MultiplyValue<int16_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return MultiplyValue<int16_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return MultiplyValue<int16_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(
-        left.value_.smallint * right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_MODIFY_FUNC(MultiplyValue, *);
 
   throw Exception("type error");
 }
@@ -115,25 +115,11 @@ Value SmallintType::Divide(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, "Division by zerright.");
+    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return DivideValue<int16_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return DivideValue<int16_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return DivideValue<int16_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return DivideValue<int16_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(
-        left.value_.smallint / right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_MODIFY_FUNC(DivideValue, /);
 
   throw Exception("type error");
 }
@@ -145,7 +131,8 @@ Value SmallintType::Modulo(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, "Division by zerright.");
+    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
   switch (right.GetTypeId()) {
@@ -161,6 +148,10 @@ Value SmallintType::Modulo(const Value& left, const Value &right) const {
   case Type::DECIMAL:
     return ValueFactory::GetDecimalValue(
         ValMod(left.value_.smallint, right.GetAs<double>()));
+  case Type::VARCHAR: {
+      auto r_value = right.CastAs(Type::SMALLINT);
+      return ModuloValue<int16_t, int16_t>(left, r_value);
+  }
   default:
     break;
   }
@@ -211,26 +202,7 @@ CmpBool SmallintType::CompareEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint == right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint == right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint == right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint == right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint == right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(==);
 
   throw Exception("type error");
 }
@@ -242,26 +214,7 @@ CmpBool SmallintType::CompareNotEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint != right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint != right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint != right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint != right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint != right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(!=);
 
   throw Exception("type error");
 }
@@ -273,26 +226,7 @@ CmpBool SmallintType::CompareLessThan(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint < right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint < right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint < right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint < right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint < right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(<);
 
   throw Exception("type error");
 }
@@ -304,26 +238,8 @@ CmpBool SmallintType::CompareLessThanEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint <= right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint <= right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint <= right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint <= right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint <= right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(<=);
+
   throw Exception("type error");
 }
 
@@ -334,26 +250,7 @@ CmpBool SmallintType::CompareGreaterThan(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint > right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint > right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint > right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint > right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint > right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(>);
 
   throw Exception("type error");
 }
@@ -365,26 +262,7 @@ CmpBool SmallintType::CompareGreaterThanEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(
-        left.value_.smallint >= right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.smallint >= right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.smallint >= right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.smallint >= right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(
-        left.value_.smallint >= right.GetAs<double>());
-  default:
-    break;
-  }
+  SMALLINT_COMPARE_FUNC(>=);
 
   throw Exception("type error");
 }
