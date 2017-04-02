@@ -34,6 +34,10 @@ namespace type {
     return GetCmpBool(left.value_.bigint OP right.GetAs<int64_t>()); \
   case Type::DECIMAL: \
     return GetCmpBool(left.value_.bigint OP right.GetAs<double>()); \
+  case Type::VARCHAR: { \
+    auto r_value = right.CastAs(Type::BIGINT); \
+    return GetCmpBool(left.value_.bigint OP r_value.GetAs<int64_t>()); \
+  } \
   default: \
     break; \
   } // SWITCH
@@ -52,6 +56,10 @@ namespace type {
     case Type::DECIMAL: \
       return ValueFactory::GetDecimalValue( \
                 left.value_.bigint OP right.GetAs<double>()); \
+    case Type::VARCHAR: { \
+      auto r_value = right.CastAs(Type::BIGINT); \
+      return METHOD<int64_t, int64_t>(left, r_value); \
+    } \
     default: \
       break; \
   } // SWITCH
@@ -138,6 +146,10 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
   case Type::DECIMAL:
     return ValueFactory::GetDecimalValue(
         ValMod(left.value_.bigint, right.GetAs<double>()));
+  case Type::VARCHAR: {
+    auto r_value = right.CastAs(Type::BIGINT);
+    return ModuloValue<int64_t, int64_t>(left, r_value);
+  }
   default:
     break;
   }
