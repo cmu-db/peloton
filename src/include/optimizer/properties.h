@@ -21,7 +21,8 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs);
+  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs,
+                  bool is_star = false);
   PropertyColumns(bool is_star_expr);
 
   PropertyType Type() const override;

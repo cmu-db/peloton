@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "planner/aggregate_plan.h"
 #include "planner/update_plan.h"
-#include "expression/expression_util.h"
 
 #include "optimizer/operator_expression.h"
 #include "optimizer/operator_to_plan_transformer.h"
@@ -22,6 +22,9 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/limit_plan.h"
+#include "expression/expression_util.h"
+#include "expression/aggregate_expression.h"
+
 
 using std::vector;
 using std::make_pair;
@@ -209,6 +212,124 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   order_by_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(order_by_plan);
 }
+
+void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
+  auto proj_prop = requirements_
+      ->GetPropertyOfType(PropertyType::PROJECT)->As<PropertyProjection>();
+  auto col_prop = requirements_
+      ->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
+  auto child_expr_map = children_expr_map_[0];
+
+  //TODO: Consider different type in the logical to physical implementation
+  auto agg_type = AggregateType::PLAIN;
+  auto agg_id = 0;
+
+  // Metadata needed in AggregationPlan
+  std::vector<planner::AggregatePlan::AggTerm> agg_terms;
+  DirectMapList direct_map_list = {};
+  std::vector<catalog::Column> output_schema_columns;
+
+
+
+  PL_ASSERT(col_prop != nullptr);
+
+  if (proj_prop != nullptr) {
+    auto expr_len = proj_prop->GetProjectionListSize();
+    for (size_t col_pos = 0; col_pos<expr_len; col_pos++) {
+      auto expr = proj_prop->GetProjection(col_pos);
+      // Aggregate function
+      // Aggregate executor only supports aggregation on single col/*, not exprs
+      if (expression::ExpressionUtil::IsAggregateExpression(
+          expr->GetExpressionType())) {
+        auto agg_expr = (expression::AggregateExpression *) expr;
+        auto agg_col = expr->GetModifiableChild(0);
+
+        // Maps the aggregate value in the right tuple to the output.
+        // See aggregator.cpp for more info.
+        direct_map_list.emplace_back(
+            std::make_pair(col_pos, std::make_pair(1, agg_id++)));
+
+        planner::AggregatePlan::AggTerm agg_term(
+            agg_expr->GetExpressionType(),
+            agg_col == nullptr ? nullptr : agg_col->Copy(),
+            agg_expr->distinct_);
+        agg_terms.push_back(agg_term);
+      } else {
+        agg_type = AggregateType::PLAIN;
+        // Pass through non-aggregate values. See aggregator.cpp for more info.
+        direct_map_list.emplace_back(
+            std::make_pair(col_pos, std::make_pair(0, child_expr_map[expr])));
+      }
+
+      (*output_expr_map_)[expr] = col_pos;
+
+      type::Type::TypeId schema_col_type;
+      switch (expr->GetExpressionType()) {
+        case ExpressionType::AGGREGATE_AVG:
+          schema_col_type = type::Type::DECIMAL;
+          break;
+        case ExpressionType::AGGREGATE_COUNT_STAR:
+        case ExpressionType::AGGREGATE_COUNT:
+          schema_col_type = type::Type::INTEGER;
+          break;
+        default:
+          schema_col_type = expr->GetValueType();
+      }
+      output_schema_columns.push_back(
+          catalog::Column(schema_col_type,
+                          type::Type::GetTypeSize(schema_col_type),
+                          expr->expr_name_));
+    }
+  }
+  // Only have base columns
+  else if (col_prop != nullptr) {
+    if (col_prop->IsStarExpressionInColumn()) {
+      (*output_expr_map_) = child_expr_map;
+      std::unordered_map<unsigned, expression::AbstractExpression*> inverted_index;
+      for (auto entry : child_expr_map)
+        inverted_index[entry.second] = entry.first;
+      for (size_t col_pos = 0; col_pos < child_expr_map.size(); col_pos++) {
+        auto expr = inverted_index[col_pos];
+        auto schema_col_type = expr->GetValueType();
+        output_schema_columns.push_back(
+            catalog::Column(schema_col_type,
+                            type::Type::GetTypeSize(schema_col_type),
+                            expr->expr_name_));
+        direct_map_list.emplace_back(std::make_pair(col_pos, std::make_pair(0, col_pos)));
+      }
+    }
+    else {
+      auto col_len = col_prop->GetSize();
+      for (size_t col_pos = 0; col_pos<col_len; col_pos++) {
+        auto expr = col_prop->GetColumn(col_pos);
+        auto old_col_pos = child_expr_map[expr];
+        auto schema_col_type = expr->GetValueType();
+        output_schema_columns.push_back(
+            catalog::Column(schema_col_type,
+                            type::Type::GetTypeSize(schema_col_type),
+                            expr->expr_name_));
+        direct_map_list.emplace_back(std::make_pair(col_pos, std::make_pair(0, old_col_pos)));
+      }
+    }
+  }
+  std::vector<oid_t> col_ids;
+  for (auto col : *(op->columns))
+    col_ids.push_back(child_expr_map[col]);
+
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
+  std::unique_ptr<const expression::AbstractExpression> predicate(op->having);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(output_schema_columns));
+  std::unique_ptr<planner::AggregatePlan> agg_plan(
+      new planner::AggregatePlan(
+          std::move(proj_info), std::move(predicate),
+          std::move(agg_terms), std::move(col_ids),
+          output_table_schema, agg_type));
+  agg_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(agg_plan);
+}
+
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 

@@ -325,5 +325,17 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 
   const parser::UpdateStatement *update_stmt;
 };
+
+//===--------------------------------------------------------------------===//
+// PhysicalAggregate
+//===--------------------------------------------------------------------===//
+class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
+ public:
+  static Operator make(std::vector<expression::AbstractExpression *> *columns,
+                       expression::AbstractExpression *having);
+
+  std::vector<expression::AbstractExpression *> *columns;
+  expression::AbstractExpression *having;
+};
 } /* namespace optimizer */
 } /* namespace peloton */

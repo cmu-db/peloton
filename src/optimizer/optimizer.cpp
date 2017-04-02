@@ -54,6 +54,7 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());

@@ -317,6 +317,18 @@ Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
 }
 
 //===--------------------------------------------------------------------===//
+// PhysicalAggregate
+//===--------------------------------------------------------------------===//
+Operator PhysicalAggregate::make(
+    std::vector<expression::AbstractExpression *> *columns,
+    expression::AbstractExpression *having) {
+  PhysicalAggregate *agg = new PhysicalAggregate;
+  agg->columns = columns;
+  agg->having = having;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
 template <typename T>
 void OperatorNode<T>::Accept(OperatorVisitor *v) const {
   v->Visit((const T *)this);
@@ -426,6 +438,8 @@ template <>
 std::string OperatorNode<PhysicalDelete>::name_ = "PhysicalDelete";
 template <>
 std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
+template <>
+std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -445,7 +459,7 @@ OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregate>::type_ = OpType::Aggregate;
+OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
@@ -486,6 +500,8 @@ template <>
 OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
 template <>
 OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
+template <>
+OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
 
 //===--------------------------------------------------------------------===//
 template <typename T>

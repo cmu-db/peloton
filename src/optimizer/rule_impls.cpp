@@ -214,6 +214,29 @@ void LogicalInsertToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalAggregateToPhysical
+LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
+  physical = true;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
+}
+
+bool LogicalAggregateToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan) const {
+  (void)plan;
+  return true;
+}
+
+void LogicalAggregateToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalAggregate *agg_op = input->Op().As<LogicalAggregate>();
+  auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make(
+      agg_op->columns, agg_op->having));
+  PL_ASSERT(input->Children().size() == 0);
+  transformed.push_back(result);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   physical = true;

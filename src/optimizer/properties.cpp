@@ -18,8 +18,8 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(
-    std::vector<expression::AbstractExpression *> column_exprs)
-    : column_exprs_(std::move(column_exprs)), is_star_(false) {
+    std::vector<expression::AbstractExpression *> column_exprs, bool is_star)
+    : column_exprs_(std::move(column_exprs)), is_star_(is_star) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
 

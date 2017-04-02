@@ -35,7 +35,7 @@ enum class OpType {
   RightJoin,
   OuterJoin,
   SemiJoin,
-  Aggregate,
+  LogicalAggregate,
   Limit,
   LogicalInsert,
   LogicalDelete,
@@ -59,7 +59,8 @@ enum class OpType {
   OuterHashJoin,
   Insert,
   Delete,
-  Update
+  Update,
+  Aggregate
 };
 
 //===--------------------------------------------------------------------===//

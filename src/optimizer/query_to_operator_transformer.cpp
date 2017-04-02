@@ -153,7 +153,6 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   }
 }
 
-// Not support ORDER BY in sub-queries
 void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
