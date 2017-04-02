@@ -21,6 +21,41 @@
 namespace peloton {
 namespace type {
 
+#define BIGINT_COMPARE_FUNC(OP) \
+  switch (right.GetTypeId()) { \
+    case Type::TINYINT: \
+      return GetCmpBool(left.value_.bigint OP right.GetAs<int8_t>()); \
+    case Type::SMALLINT: \
+      return GetCmpBool(left.value_.bigint OP right.GetAs<int16_t>()); \
+    case Type::INTEGER: \
+    case Type::PARAMETER_OFFSET: \
+      return GetCmpBool(left.value_.bigint OP right.GetAs<int32_t>()); \
+  case Type::BIGINT: \
+    return GetCmpBool(left.value_.bigint OP right.GetAs<int64_t>()); \
+  case Type::DECIMAL: \
+    return GetCmpBool(left.value_.bigint OP right.GetAs<double>()); \
+  default: \
+    break; \
+  } // SWITCH
+
+#define BIGINT_MODIFY_FUNC(METHOD, OP) \
+  switch (right.GetTypeId()) { \
+    case Type::TINYINT: \
+      return METHOD<int64_t, int8_t>(left, right); \
+    case Type::SMALLINT: \
+      return METHOD<int64_t, int16_t>(left, right); \
+    case Type::INTEGER: \
+    case Type::PARAMETER_OFFSET: \
+      return METHOD<int64_t, int32_t>(left, right); \
+    case Type::BIGINT: \
+      return METHOD<int64_t, int64_t>(left, right); \
+    case Type::DECIMAL: \
+      return ValueFactory::GetDecimalValue( \
+                left.value_.bigint OP right.GetAs<double>()); \
+    default: \
+      break; \
+  } // SWITCH
+
 BigintType::BigintType() :
     IntegerParentType(BIGINT) {
 }
@@ -36,21 +71,8 @@ Value BigintType::Add(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return AddValue<int64_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return AddValue<int64_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return AddValue<int64_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return AddValue<int64_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(left.value_.bigint + right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_MODIFY_FUNC(AddValue, +);
+
   throw Exception("type error");
 }
 
@@ -60,21 +82,8 @@ Value BigintType::Subtract(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return SubtractValue<int64_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return SubtractValue<int64_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return SubtractValue<int64_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return SubtractValue<int64_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(left.value_.bigint - right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_MODIFY_FUNC(SubtractValue, -);
+
   throw Exception("type error");
 }
 
@@ -84,21 +93,7 @@ Value BigintType::Multiply(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return MultiplyValue<int64_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return MultiplyValue<int64_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return MultiplyValue<int64_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return MultiplyValue<int64_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(left.value_.bigint * right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_MODIFY_FUNC(MultiplyValue, *);
 
   throw Exception("type error");
 }
@@ -110,24 +105,12 @@ Value BigintType::Divide(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, "Division by zerright.");
+    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return DivideValue<int64_t, int8_t>(left, right);
-  case Type::SMALLINT:
-    return DivideValue<int64_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return DivideValue<int64_t, int32_t>(left, right);
-  case Type::BIGINT:
-    return DivideValue<int64_t, int64_t>(left, right);
-  case Type::DECIMAL:
-    return ValueFactory::GetDecimalValue(left.value_.bigint / right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_MODIFY_FUNC(DivideValue, /);
+
   throw Exception("type error");
 }
 
@@ -138,7 +121,8 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, "Division by zerright.");
+    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
   switch (right.GetTypeId()) {
@@ -197,24 +181,8 @@ CmpBool BigintType::CompareEquals(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint == right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.bigint == right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.bigint == right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.bigint == right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint == right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(==);
+
   throw Exception("type error");
 }
 
@@ -225,24 +193,8 @@ CmpBool BigintType::CompareNotEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint != right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.bigint != right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.bigint != right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.bigint != right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint != right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(!=);
+
   throw Exception("type error");
 }
 
@@ -253,21 +205,8 @@ CmpBool BigintType::CompareLessThan(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint < right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(left.value_.bigint < right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(left.value_.bigint < right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(left.value_.bigint < right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint < right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(<);
+
   throw Exception("type error");
 }
 
@@ -278,24 +217,8 @@ CmpBool BigintType::CompareLessThanEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint <= right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.bigint <= right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.bigint <= right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.bigint <= right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint <= right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(<=);
+
   throw Exception("type error");
 }
 
@@ -306,21 +229,7 @@ CmpBool BigintType::CompareGreaterThan(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint > right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(left.value_.bigint > right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(left.value_.bigint > right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(left.value_.bigint > right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint > right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(>);
 
   throw Exception("type error");
 }
@@ -332,24 +241,7 @@ CmpBool BigintType::CompareGreaterThanEquals(const Value& left,
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
 
-  switch (right.GetTypeId()) {
-  case Type::TINYINT:
-    return GetCmpBool(left.value_.bigint >= right.GetAs<int8_t>());
-  case Type::SMALLINT:
-    return GetCmpBool(
-        left.value_.bigint >= right.GetAs<int16_t>());
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
-    return GetCmpBool(
-        left.value_.bigint >= right.GetAs<int32_t>());
-  case Type::BIGINT:
-    return GetCmpBool(
-        left.value_.bigint >= right.GetAs<int64_t>());
-  case Type::DECIMAL:
-    return GetCmpBool(left.value_.bigint >= right.GetAs<double>());
-  default:
-    break;
-  }
+  BIGINT_COMPARE_FUNC(>=);
 
   throw Exception("type error");
 }
