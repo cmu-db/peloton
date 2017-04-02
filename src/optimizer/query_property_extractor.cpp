@@ -55,13 +55,12 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
   } else {
     std::vector<expression::AbstractExpression *> column_exprs;
-
-    // Transform output expressions
     for (auto col : *select_stmt->select_list) {
-      expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
-                                                      needs_projection);
-      column_exprs.emplace_back(
-          reinterpret_cast<expression::TupleValueExpression *>(col));
+      if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        column_exprs.emplace_back(col);
+      } else {
+        needs_projection = true;
+      }
     }
     property_set_.AddProperty(
         std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));

@@ -148,17 +148,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
-  (void)op;
-  //  PL_ASSERT(children_plans_.size() == 1);
-  //
-  //  // Limit Operator does not change the column mapping
-  //  if (output_columns_ != nullptr)
-  //    *output_columns_ = children_output_columns_[0];
-  //
-  //  unique_ptr<planner::AbstractPlan> limit_plan(
-  //      new planner::LimitPlan(op->limit, op->offset));
-  //  limit_plan->AddChild(move(children_plans_[0]));
-  //  output_plan_ = move(limit_plan);
+    PL_ASSERT(children_plans_.size() == 1);
+  
+    // Limit Operator does not change the column mapping
+      *output_expr_map_ = children_expr_map_[0];
+  
+    unique_ptr<planner::AbstractPlan> limit_plan(
+        new planner::LimitPlan(op->limit, op->offset));
+    limit_plan->AddChild(move(children_plans_[0]));
+    output_plan_ = move(limit_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {

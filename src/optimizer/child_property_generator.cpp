@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "expression/expression_util.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/column_manager.h"
 #include "optimizer/properties.h"
@@ -56,32 +57,47 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     if (columns_prop_ptr->IsStarExpressionInColumn()) {
       provided_property.AddProperty(columns_prop);
     } else {
-      std::vector<expression::AbstractExpression *> column_exprs;
+      // This set has all the TupleValueExpr that appears separately in the
+      // Statement. For example, SELECT a, b, b + c FROM A ORDER BY c + d
+      // TupleValueExpr a, b will be in the PropertyColumn. However, there are
+      // other expressions like b + c or c + d that need scan to also return
+      // columns c and d. Thus, here we add all the missing columns that appears
+      // in the expression but not in PropertyColumn.
+      ExprSet column_set;
       for (size_t i = 0; i < columns_prop_ptr->GetSize(); ++i)
-        column_exprs.push_back(columns_prop_ptr->GetColumn(i));
-
-      // Add sort column to output property if needed
+        column_set.insert(columns_prop_ptr->GetColumn(i));
+      
+      // Insert all missing TupleValueExpressions in the Predicate
+      auto predicate_prop = requirements_.GetPropertyOfType(PropertyType::PREDICATE)
+                           ->As<PropertyPredicate>();
+      if (predicate_prop != nullptr) {
+        expression::ExpressionUtil::GetTupleValueExprs(column_set,
+             predicate_prop->GetPredicate());
+      }
+      
+      
+      // Insert all missing TupleValueExpressions in Sort expressions
       auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
                            ->As<PropertySort>();
-      // column_exprs.empty() if
-      // the sql is 'SELECT *'
-      if (sort_prop != nullptr && !column_exprs.empty()) {
+      if (sort_prop != nullptr) {
         for (size_t i = 0; i < sort_prop->GetSortColumnSize(); ++i) {
-          auto sort_col = sort_prop->GetSortColumn(i);
-          bool found = false;
-          if (columns_prop_ptr != nullptr) {
-            for (auto &col : column_exprs) {
-              if (sort_col->Equals(col)) {
-                found = true;
-                break;
-              }
-            }
-          }
-
-          if (!found) column_exprs.push_back(sort_col);
+          expression::ExpressionUtil::GetTupleValueExprs(column_set,
+                                                         sort_prop->GetSortColumn(i));
         }
       }
-
+      
+      // Insert all missing TupleValueExpressions in Projection expressions
+      auto proj_prop = requirements_.GetPropertyOfType(PropertyType::PROJECT)
+              ->As<PropertyProjection>();
+      if (proj_prop != nullptr) {
+        for (size_t i = 0; i < proj_prop->GetProjectionListSize(); i++) {
+          expression::ExpressionUtil::GetTupleValueExprs(column_set,
+                                                         proj_prop->GetProjection(i));
+        }
+      }
+      
+      std::vector<expression::AbstractExpression *> column_exprs(
+          column_set.begin(), column_set.end());
       provided_property.AddProperty(
           std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
     }
