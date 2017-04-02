@@ -411,14 +411,25 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
-    case type::Type::BOOLEAN: {
+    case type::Type::BOOLEAN:
+    case type::Type::TINYINT: {
       field_type = PostgresValueType::BOOLEAN;
       field_size = 1;
+      break;
+    }
+    case type::Type::SMALLINT: {
+      field_type = PostgresValueType::SMALLINT;
+      field_size = 2;
       break;
     }
     case type::Type::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
+      break;
+    }
+    case type::Type::BIGINT: {
+      field_type = PostgresValueType::BIGINT;
+      field_size = 8;
       break;
     }
     case type::Type::DECIMAL: {
@@ -434,7 +445,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64;
+      field_size = 64; // FIXME: Bytes???
       break;
     }
     default: {
