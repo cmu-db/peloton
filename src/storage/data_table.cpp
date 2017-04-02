@@ -364,11 +364,6 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   }
   return true;
 }
-/*
-bool DataTable::CheckUniq(const storage::Tuple *tuple, oid_t column_idx) const {
-
-  return true;
-}*/
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
