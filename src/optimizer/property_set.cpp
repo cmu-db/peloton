@@ -25,7 +25,12 @@ const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
 
 void PropertySet::AddProperty(std::shared_ptr<Property> property) {
   LOG_TRACE("Add property with type %d", static_cast<int>(property->Type()));
-  properties_.push_back(property);
+  auto iter = properties_.begin();
+  for (; iter != properties_.end(); ++iter)
+    if (property->Type() < (*iter)->Type()) 
+      break;
+
+  properties_.insert(iter, property);
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(

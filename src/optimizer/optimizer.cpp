@@ -197,7 +197,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
         child_groups[i], required_input_props[i], &child_expr_map));
     children_expr_map.push_back(move(child_expr_map));
   }
-
   // Derive root plan
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
@@ -270,22 +269,22 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                              output_properties);
 
+    
+    if (requirements >= output_properties) {
+      DeriveCostAndStats(gexpr, requirements, input_properties_list,
+                       best_child_stats, best_child_costs);     
+    }
     // enforce missing properties
     for (auto property : requirements.Properties()) {
       if (output_properties.HasProperty(*property) == false) {
+        // new cost and stats are derived in EnforceProperty()
         gexpr =
             EnforceProperty(gexpr, output_properties, property, requirements);
-        DeriveCostAndStats(gexpr, output_properties, input_properties_list,
-                           best_child_stats, best_child_costs);
         group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                                  output_properties);
       }
     }
-
-    // Perform costing
-    DeriveCostAndStats(gexpr, requirements, input_properties_list,
-                       best_child_stats, best_child_costs);
-    // After the enforcement it must have met the property requirements, so
+        // After the enforcement it must have met the property requirements, so
     // notice here we set the best cost plan for 'requirements' instead of
     // 'output_properties'
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
@@ -305,9 +304,8 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   auto child_costs = vector<double>();
   child_costs.push_back(gexpr->GetCost(output_properties));
 
-  // if (property->Type() == PropertyType::SORT) {
-  //  LOG_DEBUG("Enforcing Sort");
-  //}
+  LOG_DEBUG("Enforcing %s", property->ToString().c_str());
+  
 
   PropertyEnforcer enforcer(column_manager_);
   auto enforced_expr =
