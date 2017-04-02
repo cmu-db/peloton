@@ -124,24 +124,26 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     std::transform(col_name.begin(), col_name.end(), col_name.begin(),
                    ::tolower);
 
+    type::Type::TypeId value_type;
     // Table name not specified in the expression
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
-                                            table_name))
+                                            table_name, value_type))
         throw Exception("Cannot find column " + col_name);
-      else
-        expr->SetTableName(table_name);
+      expr->SetTableName(table_name);
     }
     // Table name is present
-    else if (!BinderContext::GetTableIdTuple(context_, table_name,
-                                             &table_id_tuple)) {
-      throw Exception("Invalid table reference " + expr->GetTableName());
-    } else {
+    else {
+      // Find the corresponding table in the context
+      if (!BinderContext::GetTableIdTuple(context_, table_name,
+                                          &table_id_tuple))
+        throw Exception("Invalid table reference " + expr->GetTableName());
+      // Find the column offset in that table
       if (!BinderContext::GetColumnPosTuple(col_name, table_id_tuple,
-                                            col_pos_tuple))
+                                            col_pos_tuple, value_type))
         throw Exception("Cannot find column " + col_name);
     }
-
+    expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
   }
 }
