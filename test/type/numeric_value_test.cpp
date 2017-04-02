@@ -508,6 +508,62 @@ TEST_F(NumericValueTests, MathTest) {
   }
 }
 
+TEST_F(NumericValueTests, IsZeroTest) {
+  type::Value v1, v2;
+
+  v1 = type::ValueFactory::GetTinyIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::TINYINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetSmallIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::SMALLINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetIntegerValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::INTEGER);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetBigIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::BIGINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+}
+
+TEST_F(NumericValueTests, SqrtTest) {
+
+  for (int i = 1; i <= 10; i++) {
+    type::Value v1, v2;
+
+    v1 = type::ValueFactory::GetTinyIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetTinyIntValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetSmallIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetSmallIntValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetIntegerValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetIntegerValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetBigIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetBigIntValue(i);
+    CheckEqual(v1, v2);
+  } // FOR
+
+}
+
 TEST_F(NumericValueTests, DivideByZeroTest) {
   std::srand(SEED);
 
