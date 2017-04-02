@@ -184,7 +184,7 @@ std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<oid_t> table_ids;
-  for (auto tile : (*result_tiles)) {
+  for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       table_ids.emplace_back(
           tile->GetValue(tuple_id, 0)
@@ -206,7 +206,7 @@ std::vector<std::string> TableCatalog::GetTableNames(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<std::string> table_names;
-  for (auto tile : (*result_tiles)) {
+  for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       table_names.emplace_back(
           tile->GetValue(tuple_id, 0)

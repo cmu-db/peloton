@@ -60,9 +60,10 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  std::unique_ptr<std::vector<executor::LogicalTile *>> GetResultWithIndexScan(
-      std::vector<oid_t> column_offsets, oid_t index_offset,
-      std::vector<type::Value> values, concurrency::Transaction *txn);
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
+                         std::vector<type::Value> values,
+                         concurrency::Transaction *txn);
 
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
@@ -74,7 +75,7 @@ class AbstractCatalog {
   // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
 
-  std::shared_ptr<storage::DataTable> catalog_table_;
+  storage::DataTable *catalog_table_;
 };
 
 }  // End catalog namespace
