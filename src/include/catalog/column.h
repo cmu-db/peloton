@@ -93,6 +93,9 @@ class Column : public Printable {
     if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
     }
+    if (constraint.GetType() == ConstraintType::UNIQUE) {
+      is_unique_ = true;
+    }
   }
 
   // Todo: constraints list
@@ -138,6 +141,9 @@ class Column : public Printable {
 
   // is the column contained the primary key?
   bool is_primary_ = false;
+
+  // is the column unique
+  bool is_unique_ = false;
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;

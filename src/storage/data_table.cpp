@@ -1,4 +1,5 @@
 //===----------------------------------------------------------------------===//
+
 //
 //                         Peloton
 //
@@ -124,6 +125,68 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
+void DataTable::AddUNIQUEIndex() {
+  auto schema = this->GetSchema();
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    catalog::Column tmp_col = schema->GetColumn(col_itr);
+    if (tmp_col.is_unique_) {
+      // create index
+      // TODO should we retry until success?
+      std::vector<std::string> index_attrs;
+      index_attrs.push_back(tmp_col.GetName());
+      std::string index_name = table_name + "_" + tmp_col.GetName() + "_index";
+      std::string db_name = catalog::Catalog::GetInstance()
+                                ->GetDatabaseWithOid(database_oid)
+                                ->GetDBName();
+      std::cout << "********db name: " << db_name
+                << " index name: " << index_name << std::endl;
+      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
+          db_name, table_name, index_attrs, index_name, true,
+          IndexType::BWTREE);
+      if (result == ResultType::SUCCESS) {
+        LOG_TRACE("Creating table succeeded!");
+      } else {
+        LOG_TRACE("Creating table failed!");
+      }
+    }
+  }
+}
+
+void DataTable::AddMultiUNIQUEIndex() {
+  auto schema = this->GetSchema();
+  std::vector<catalog::MultiConstraint> multi_constraints;
+  multi_constraints = schema->GetMultiConstraints();
+  for (auto mc : multi_constraints) {
+    std::cout << mc.GetInfo();
+    std::vector<oid_t> cols = mc.GetCols();
+    ConstraintType type = mc.GetType();
+    if (cols.size() <= 0) continue;
+    if (type == ConstraintType::UNIQUE) {
+      std::vector<std::string> index_attrs;
+      std::string index_name = table_name + "_";
+      for (auto id : cols) {
+        index_attrs.push_back(schema->GetColumn(id).GetName());
+        index_name += schema->GetColumn(id).GetName() + "_";
+      }
+      index_name += "index";
+      std::string db_name = catalog::Catalog::GetInstance()
+                                ->GetDatabaseWithOid(database_oid)
+                                ->GetDBName();
+      std::cout << "********db name: " << db_name
+                << " index name: " << index_name << std::endl;
+      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
+          db_name, table_name, index_attrs, index_name, true,
+          IndexType::BWTREE);
+      if (result == ResultType::SUCCESS) {
+        LOG_TRACE("Creating table succeeded!");
+      } else {
+        LOG_TRACE("Creating table failed!");
+      }
+    }
+  }
+}
+
 bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
                               oid_t column_idx) const {
   if (tuple->IsNull(column_idx)) {
@@ -199,11 +262,6 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   }
   return true;
 }
-/*
-bool DataTable::CheckUniq(const storage::Tuple *tuple, oid_t column_idx) const {
-
-  return true;
-}*/
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
