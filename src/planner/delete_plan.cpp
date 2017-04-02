@@ -75,6 +75,8 @@ DeletePlan::DeletePlan(storage::DataTable *table,
   } else {
     expr_ = predicate->Copy();
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
+    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                    expr_);
   }
 }
 

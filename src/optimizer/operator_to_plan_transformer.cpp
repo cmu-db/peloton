@@ -59,7 +59,7 @@ OperatorToPlanTransformer::ConvertOpExpression(
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                         ->As<PropertyColumns>();
   vector<oid_t> column_ids;
   if (column_prop->IsStarExpressionInColumn()) {
     size_t num_col = op->table_->GetSchema()->GetColumnCount();
@@ -80,12 +80,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
       (*output_expr_map_)[output_expr] = idx;
     }
   }
-  
+
   // Add Scan Predicates
   // Ideally, predicate should be taken out as a separate operator. Since
   // now the predicate is coupled with scan, we need to evaluate predicate here
-  auto predicate_prop = requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-    ->As<PropertyPredicate>();
+  auto predicate_prop =
+      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
   expression::AbstractExpression *predicate = nullptr;
   if (predicate_prop != nullptr) {
     ExprMap table_expr_map;
@@ -93,7 +94,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     predicate = predicate_prop->GetPredicate()->Copy();
     expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
   }
-  
+
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
@@ -101,58 +102,57 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
-    auto project_prop =
-    requirements_->GetPropertyOfType(PropertyType::PROJECT)
-                            ->As<PropertyProjection>();
-    size_t proj_list_size = project_prop->GetProjectionListSize();
-  
-    // expressions to evaluate
-    TargetList tl = TargetList();
-    // columns which can be returned directly
-    DirectMapList dml = DirectMapList();
-    // schema of the projections output
-    vector<catalog::Column> columns;
-  
-    for (size_t project_idx = 0; project_idx < proj_list_size; project_idx++) {
-      auto expr = project_prop->GetProjection(project_idx);
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0], expr);
-      // For TupleValueExpr, we can just do a direct mapping.
-      if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto tup_expr = (expression::TupleValueExpression *)expr;
-        dml.push_back(
-            DirectMap(project_idx, make_pair(0,tup_expr->GetColumnId())));
-      } else {
-        // For more complex expression, we need to do evaluation in Executor
-        tl.push_back(Target(project_idx, expr->Copy()));
-      }
-      columns.push_back(catalog::Column(
-          expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-          expr->GetExpressionName()));
+  auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
+                          ->As<PropertyProjection>();
+  size_t proj_list_size = project_prop->GetProjectionListSize();
+
+  // expressions to evaluate
+  TargetList tl = TargetList();
+  // columns which can be returned directly
+  DirectMapList dml = DirectMapList();
+  // schema of the projections output
+  vector<catalog::Column> columns;
+
+  for (size_t project_idx = 0; project_idx < proj_list_size; project_idx++) {
+    auto expr = project_prop->GetProjection(project_idx);
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0], expr);
+    // For TupleValueExpr, we can just do a direct mapping.
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      auto tup_expr = (expression::TupleValueExpression *)expr;
+      dml.push_back(
+          DirectMap(project_idx, make_pair(0, tup_expr->GetColumnId())));
+    } else {
+      // For more complex expression, we need to do evaluation in Executor
+      tl.push_back(Target(project_idx, expr->Copy()));
     }
-  
-    // build the projection plan node and insert aboce the scan
-    unique_ptr<planner::ProjectInfo> proj_info(
-        new planner::ProjectInfo(move(tl), move(dml)));
-    shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
-    unique_ptr<planner::AbstractPlan> project_plan(
-        new planner::ProjectionPlan(move(proj_info), schema_ptr));
-  
-    PL_ASSERT(children_plans_.size() == 1);
-    project_plan->AddChild(move(children_plans_[0]));
-  
-    output_plan_ = move(project_plan);
+    columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->GetExpressionName()));
+  }
+
+  // build the projection plan node and insert aboce the scan
+  unique_ptr<planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+  shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
+  unique_ptr<planner::AbstractPlan> project_plan(
+      new planner::ProjectionPlan(move(proj_info), schema_ptr));
+
+  PL_ASSERT(children_plans_.size() == 1);
+  project_plan->AddChild(move(children_plans_[0]));
+
+  output_plan_ = move(project_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
-    PL_ASSERT(children_plans_.size() == 1);
-  
-    // Limit Operator does not change the column mapping
-      *output_expr_map_ = children_expr_map_[0];
-  
-    unique_ptr<planner::AbstractPlan> limit_plan(
-        new planner::LimitPlan(op->limit, op->offset));
-    limit_plan->AddChild(move(children_plans_[0]));
-    output_plan_ = move(limit_plan);
+  PL_ASSERT(children_plans_.size() == 1);
+
+  // Limit Operator does not change the column mapping
+  *output_expr_map_ = children_expr_map_[0];
+
+  unique_ptr<planner::AbstractPlan> limit_plan(
+      new planner::LimitPlan(op->limit, op->offset));
+  limit_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(limit_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
@@ -169,7 +169,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
 
   // When executor support order by expression, we need to call EvaluateExpr
   // expression::ExpressionUtil::EvaluateExpression(expr_map, sort_expr);
-  
+
   for (size_t idx = 0; idx < sort_columns_size; ++idx) {
     sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
     // planner use desc flag
@@ -344,13 +344,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
-  
+
 void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
   unique_ptr<planner::AbstractPlan> insert_plan(
       new planner::InsertPlan(op->target_table, op->columns, op->values));
   output_plan_ = move(insert_plan);
 }
-  
+
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   // TODO: Support index scan
   auto scan_plan = (planner::AbstractScan *)children_plans_[0].get();
@@ -366,35 +366,37 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   delete_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(delete_plan);
 }
-  
+
 void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   // TODO: Support index scan
   ExprMap table_expr_map;
   auto db_name = op->update_stmt->table->GetDatabaseName();
   auto table_name = op->update_stmt->table->GetTableName();
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(db_name, table_name);
+  auto table =
+      catalog::Catalog::GetInstance()->GetTableWithName(db_name, table_name);
   GenerateTableExprMap(table_expr_map, table);
-  
+
   // Evaluate update expression
   for (auto update : *op->update_stmt->updates) {
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map, update->value);
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map,
+                                                   update->value);
   }
   // Evaluate predicate if any
   if (op->update_stmt->where != nullptr) {
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map, op->update_stmt->where);
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map,
+                                                   op->update_stmt->where);
   }
 
   unique_ptr<planner::AbstractPlan> update_plan(
-          new planner::UpdatePlan(op->update_stmt));
+      new planner::UpdatePlan(op->update_stmt));
   output_plan_ = move(update_plan);
 }
 
-  
 /************************* Private Functions *******************************/
 // Generate expr map for all the columns in the given table. Used to evaluate
 // the predicate.
-void OperatorToPlanTransformer::GenerateTableExprMap(ExprMap& expr_map,
-                                                     storage::DataTable* table) {
+void OperatorToPlanTransformer::GenerateTableExprMap(
+    ExprMap &expr_map, storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   size_t num_col = table->GetSchema()->GetColumnCount();
@@ -405,7 +407,7 @@ void OperatorToPlanTransformer::GenerateTableExprMap(ExprMap& expr_map,
     expr_map[col_expr] = col_id;
   }
 }
-  
+
 void OperatorToPlanTransformer::VisitOpExpression(
     shared_ptr<OperatorExpression> op) {
   op->Op().Accept(this);

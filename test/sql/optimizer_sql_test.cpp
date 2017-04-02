@@ -293,7 +293,7 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Delete with predicates
   query = "DELETE FROM test WHERE b = 33";
-  
+
   // check for plan node type
   delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
@@ -312,7 +312,7 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Delete with false predicates
   query = "DELETE FROM test WHERE b = 123";
-  
+
   // check for plan node type
   delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
@@ -331,7 +331,7 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Full deletion
   query = "DELETE FROM test";
-  
+
   // check for plan node type
   delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);

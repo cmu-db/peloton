@@ -66,27 +66,27 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
       ExprSet column_set;
       for (size_t i = 0; i < columns_prop_ptr->GetSize(); ++i)
         column_set.insert(columns_prop_ptr->GetColumn(i));
-      
+
       // Insert all missing TupleValueExpressions in Sort expressions
       auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
                            ->As<PropertySort>();
       if (sort_prop != nullptr) {
         for (size_t i = 0; i < sort_prop->GetSortColumnSize(); ++i) {
-          expression::ExpressionUtil::GetTupleValueExprs(column_set,
-                                                         sort_prop->GetSortColumn(i));
+          expression::ExpressionUtil::GetTupleValueExprs(
+              column_set, sort_prop->GetSortColumn(i));
         }
       }
-      
+
       // Insert all missing TupleValueExpressions in Projection expressions
       auto proj_prop = requirements_.GetPropertyOfType(PropertyType::PROJECT)
-              ->As<PropertyProjection>();
+                           ->As<PropertyProjection>();
       if (proj_prop != nullptr) {
         for (size_t i = 0; i < proj_prop->GetProjectionListSize(); i++) {
-          expression::ExpressionUtil::GetTupleValueExprs(column_set,
-                                                         proj_prop->GetProjection(i));
+          expression::ExpressionUtil::GetTupleValueExprs(
+              column_set, proj_prop->GetProjection(i));
         }
       }
-      
+
       std::vector<expression::AbstractExpression *> column_exprs(
           column_set.begin(), column_set.end());
       provided_property.AddProperty(

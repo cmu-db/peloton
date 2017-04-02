@@ -183,7 +183,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If query is 'select *', the column will be already added.
       if (select_stmt->order != nullptr && !is_star) {
         expression::ExpressionUtil::TransformExpression(
-            column_ids, select_stmt->order->exprs->at(0), schema, needs_projection);
+            column_ids, select_stmt->order->exprs->at(0), schema,
+            needs_projection);
       }
 
       // Check if there are any aggregate functions

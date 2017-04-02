@@ -52,8 +52,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   }
   if (op->limit != nullptr) {
     // When offset is not specified in the query, parser will set offset to -1
-    if (op->limit->offset == -1) 
-      op->limit->offset = 0;
+    if (op->limit->offset == -1) op->limit->offset = 0;
     auto limit = std::make_shared<OperatorExpression>(
         LogicalLimit::make(op->limit->limit, op->limit->offset));
     limit->PushChild(output_expr);
@@ -172,9 +171,8 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
 void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName());
-  auto table_scan =
-      std::make_shared<OperatorExpression>(
-          LogicalGet::make(target_table, op->GetTableName()));
+  auto table_scan = std::make_shared<OperatorExpression>(
+      LogicalGet::make(target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);

@@ -281,7 +281,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
                                  output_properties);
       }
     }
-    
+
     // Perform costing
     DeriveCostAndStats(gexpr, requirements, input_properties_list,
                        best_child_stats, best_child_costs);

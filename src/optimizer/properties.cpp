@@ -64,12 +64,12 @@ hash_t PropertyColumns::Hash() const {
 void PropertyColumns::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyColumns *)this);
 }
-  
+
 std::string PropertyColumns::ToString() const {
   std::string str = PropertyTypeToString(Type()) + ": ";
   for (auto column_expr : column_exprs_) {
     if (column_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      str += ((expression::TupleValueExpression*)column_expr)->GetColumnName();
+      str += ((expression::TupleValueExpression *)column_expr)->GetColumnName();
       str += " ";
     } else {
       // TODO: Add support for other expression
@@ -118,7 +118,7 @@ hash_t PropertySort::Hash() const {
 void PropertySort::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertySort *)this);
 }
-  
+
 std::string PropertySort::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
@@ -166,7 +166,7 @@ hash_t PropertyProjection::Hash() const { return Property::Hash(); }
 void PropertyProjection::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyProjection *)this);
 }
-  
+
 std::string PropertyProjection::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
