@@ -974,10 +974,13 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
+  auto column2 = catalog::Column(type::Type::INTEGER, 25, "B", false, 1);
+
   auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
   column1.AddConstraint(constraints);
   std::cout << "****" << constraints.GetInfo() << std::endl;
-  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({column1}));
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
   catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
                                                std::move(table_schema), txn);
@@ -993,10 +996,11 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
   try {
-    bool result = true;
-    result = ConstraintsTestsUtil::ExecuteOneInsert(
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteOneInsert(
         txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
-    if (result == false) hasException = true;
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -1005,10 +1009,11 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // Test2: insert not a valid column violate the constraint
   hasException = false;
   try {
-    bool result = true;
-    result = ConstraintsTestsUtil::ExecuteOneInsert(
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteOneInsert(
         txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
-    if (result == false) hasException = true;
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -1016,10 +1021,11 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
   hasException = false;
   try {
-    bool result = true;
-    result = ConstraintsTestsUtil::ExecuteOneInsert(
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteOneInsert(
         txn, data_table.get(), type::ValueFactory::GetIntegerValue(20));
-    if (result == false) hasException = true;
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -1041,12 +1047,14 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
   catalog->CreateDatabase(db_name, nullptr);
   auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
   auto column2 = catalog::Column(type::Type::INTEGER, 25, "B", false, 1);
+  auto column3 = catalog::Column(type::Type::INTEGER, 25, "C", false, 2);
   std::vector<oid_t> cols;
   cols.push_back(0);
   cols.push_back(1);
   std::vector<catalog::Column> columns;
   columns.push_back(column1);
   columns.push_back(column2);
+  columns.push_back(column3);
   auto mc = catalog::MultiConstraint(ConstraintType::UNIQUE, "c1", cols);
   std::cout << "**** MULTI CONSTRAINTS ****" << mc.GetInfo() << std::endl;
 
@@ -1069,10 +1077,10 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
     std::vector<type::Value> ccs;
     ccs.push_back(type::ValueFactory::GetIntegerValue(10));
     ccs.push_back(type::ValueFactory::GetIntegerValue(11));
-    bool result = true;
-    result =
-        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-    if (result == false) hasException = true;
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -1084,10 +1092,10 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
     std::vector<type::Value> ccs;
     ccs.push_back(type::ValueFactory::GetIntegerValue(10));
     ccs.push_back(type::ValueFactory::GetIntegerValue(11));
-    bool result = true;
-    result =
-        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-    if (result == false) hasException = true;
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -1098,10 +1106,10 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
     std::vector<type::Value> ccs;
     ccs.push_back(type::ValueFactory::GetIntegerValue(10));
     ccs.push_back(type::ValueFactory::GetIntegerValue(12));
-    bool result = true;
-    result =
-        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-    if (result == false) hasException = true;
+    // bool result = true;
+    // result =
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    // if (result == false) hasException = true;
   } catch (ConstraintException e) {
     hasException = true;
   }
