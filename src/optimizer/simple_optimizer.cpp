@@ -777,16 +777,14 @@ bool SimpleOptimizer::CheckIndexSearchable(
       index_searchable = false;
 
       // Loop through the indexes to find to most proper one (if any)
-      int max_columns = 0;
       int index_index = 0;
       for (auto& column_set : target_table->GetIndexColumns()) {
         int matched_columns = 0;
         for (auto column_id : predicate_column_ids)
           if (column_set.find(column_id) != column_set.end()) matched_columns++;
-        if (matched_columns > max_columns) {
+        if (matched_columns == (int)column_set.size()) {
           index_searchable = true;
           index_id = index_index;
-          max_columns = matched_columns;
         }
         index_index++;
       }
