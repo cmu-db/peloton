@@ -47,13 +47,10 @@
 #define MULTI_NOTNULL_TEST
 #define CHECK_TEST
 #define DEFAULT_TEST
-#define PRIMARY_UNIQUEKEY_TEST
-#define FOREIGHN_KEY_TEST
-#define FOREIGHN_MULTI_KEY_TEST
+//#define PRIMARY_UNIQUEKEY_TEST
+//#define FOREIGHN_KEY_TEST
 #define UNIQUE_TEST
 #define MULTI_UNIQUE_TEST
-
-#define DEFAULT_VALUE 11111
 
 namespace peloton {
 namespace test {
@@ -75,6 +72,10 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
+  // ConstraintsTestsUtil::CreateAndPopulateTable();
+
+  // Bootstrap
+  ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
       ConstraintsTestsUtil::CreateAndPopulateTable());
 
@@ -524,6 +525,153 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   delete data_table.release();
 
 }
+
+#ifdef UNIQUE_TEST
+TEST_F(ConstraintsTests, UNIQUETest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
+  auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
+  column1.AddConstraint(constraints);
+  std::cout << "****" << constraints.GetInfo() << std::endl;
+  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({column1}));
+  std::string table_name("TEST_TABLE");
+  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
+                                               std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  storage::Database *database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
+  storage::DataTable *table = database->GetTableWithName(table_name);
+
+  // table->AddUNIQUEIndex();
+  std::unique_ptr<storage::DataTable> data_table(table);
+
+  txn = txn_manager.BeginTransaction();
+  // begin this transaction
+  // Test1: insert a tuple with column  meet the unique requirment
+  bool hasException = false;
+  try {
+    bool result = true;
+    result = ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    bool result = true;
+    result = ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  hasException = false;
+  try {
+    bool result = true;
+    result = ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(20));
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
+  delete table_schema.release();
+}
+#endif
+
+#ifdef MULTI_UNIQUE_TEST
+TEST_F(ConstraintsTests, MULTIUNIQUETest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::string db_name = "db1";
+  catalog->CreateDatabase(db_name, nullptr);
+  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
+  auto column2 = catalog::Column(type::Type::INTEGER, 25, "B", false, 1);
+  std::vector<oid_t> cols;
+  cols.push_back(0);
+  cols.push_back(1);
+  std::vector<catalog::Column> columns;
+  columns.push_back(column1);
+  columns.push_back(column2);
+  auto mc = catalog::MultiConstraint(ConstraintType::UNIQUE, "c1", cols);
+  std::cout << "**** MULTI CONSTRAINTS ****" << mc.GetInfo() << std::endl;
+
+  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
+  table_schema->AddMultiConstraints(mc);
+  std::string table_name("TEST_TABLE_1");
+  catalog->CreateTable(db_name, table_name, std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  storage::Database *database = catalog->GetDatabaseWithName(db_name);
+  storage::DataTable *table = database->GetTableWithName(table_name);
+
+  // table->AddUNIQUEIndex();
+  std::unique_ptr<storage::DataTable> data_table(table);
+
+  txn = txn_manager.BeginTransaction();
+  // begin this transaction
+  // Test1: insert a tuple with column  meet the unique requirment
+  bool hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(11));
+    bool result = true;
+    result =
+        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(11));
+    bool result = true;
+    result =
+        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(12));
+    bool result = true;
+    result =
+        ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+    if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
+  delete table_schema.release();
+}
+#endif
 
 /*
 #ifdef PRIMARY_UNIQUEKEY_TEST

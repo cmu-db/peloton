@@ -154,7 +154,6 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   }
 
   auto pg_database = DatabaseCatalog::GetInstance();
-
   // Check if a database with the same name exists
   oid_t database_oid = pg_database->GetDatabaseOid(database_name, txn);
   if (database_oid != INVALID_OID) {
@@ -555,7 +554,6 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
       databases_.erase(it);
       found_database = true;
       break;
-
     }
   }
   if (!found_database) {
@@ -582,7 +580,6 @@ ResultType Catalog::DropTable(const std::string &database_name,
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to drop table: %s", table_name.c_str());
     return ResultType::FAILURE;
-
   }
 
   // Checking if statement is valid
@@ -603,7 +600,6 @@ ResultType Catalog::DropTable(const std::string &database_name,
   ResultType result = DropTable(database_oid, table_oid, txn);
 
   return result;
-
 }
 
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,

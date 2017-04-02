@@ -174,6 +174,7 @@ void DataTable::AddMultiUNIQUEIndex() {
                                 ->GetDatabaseWithOid(database_oid)
                                 ->GetDBName();
       LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
+
       ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
           db_name, table_name, index_attrs, index_name, true,
           IndexType::BWTREE);
@@ -264,11 +265,6 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   }
   return true;
 }
-/*
-bool DataTable::CheckUniq(const storage::Tuple *tuple, oid_t column_idx) const {
-
-  return true;
-}*/
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
