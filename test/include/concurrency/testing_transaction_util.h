@@ -67,8 +67,8 @@
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "type/catalog_type.h"
 #include "type/types.h"
-
 #pragma once
 
 namespace peloton {
@@ -117,12 +117,10 @@ class TestingTransactionUtil {
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable(int num_key = 10,
-                                         std::string table_name = "TEST_TABLE",
-                                         oid_t database_id = INVALID_OID,
-                                         oid_t relation_id = INVALID_OID,
-                                         oid_t index_oid = 1234,
-                                         bool need_primary_index = false);
+  static storage::DataTable *CreateTable(
+      int num_key = 10, std::string table_name = "TEST_TABLE",
+      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = 2,
+      oid_t index_oid = 1234, bool need_primary_index = false);
 
   // Create the same table as CreateTable with primary key constrainst on id and
   // unique key constraints on value
@@ -273,8 +271,8 @@ class TransactionThread {
       }
       case TXN_OP_DELETE: {
         LOG_TRACE("Execute Delete");
-        execute_result =
-            TestingTransactionUtil::ExecuteDelete(txn, table, id, is_for_update);
+        execute_result = TestingTransactionUtil::ExecuteDelete(txn, table, id,
+                                                               is_for_update);
         break;
       }
       case TXN_OP_UPDATE: {

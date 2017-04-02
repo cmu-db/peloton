@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
+#include "concurrency/testing_transaction_util.h"
 
 namespace peloton {
 
@@ -28,11 +28,10 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     // T1 updates (0, ?) to (0, 1)
     // T2 updates (0, ?) to (0, 2)
     // T1 commits
@@ -57,7 +56,7 @@ void DirtyWriteTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
 
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(1).Update(0, 2);
@@ -78,7 +77,7 @@ void DirtyWriteTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     // T0 delete (0, ?)
     // T1 update (0, ?) to (0, 3)
     // T0 commit
@@ -103,7 +102,7 @@ void DirtyWriteTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     // T0 delete (1, ?)
     // T1 delete (1, ?)
     // T0 commit
@@ -130,11 +129,10 @@ void DirtyWriteTest() {
 
 void DirtyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
 
     // T1 updates (0, ?) to (0, 1)
     // T2 reads (0, ?)
@@ -155,7 +153,7 @@ void DirtyReadTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
 
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(1).Read(1);
@@ -172,7 +170,7 @@ void DirtyReadTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
 
     scheduler.Txn(0).Delete(2);
     scheduler.Txn(1).Read(2);
@@ -191,12 +189,11 @@ void DirtyReadTest() {
 
 void FuzzyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   // The constraints are the value of 0 and 1 should be equal
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
     scheduler.Txn(1).Update(1, 1);
@@ -215,7 +212,7 @@ void FuzzyReadTest() {
 
   // The constraints are 0 and 1 should both exist or bot not exist
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Delete(0);
     scheduler.Txn(1).Delete(1);
@@ -235,11 +232,10 @@ void FuzzyReadTest() {
 
 void PhantomTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Insert(5, 0);
     scheduler.Txn(0).Scan(0);
@@ -257,7 +253,7 @@ void PhantomTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Delete(4);
     scheduler.Txn(0).Scan(0);
@@ -279,17 +275,15 @@ void PhantomTest() {
 // Can't pass this test!
 void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
     // Prepare
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler(1, table, &txn_manager);
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
     // the database has tuple (0, 0), (1, 1)
@@ -297,7 +291,7 @@ void WriteSkewTest() {
     // T1 will set all 0 to 1
     // The results are either (0, 0), (1, 0) or (0, 1), (1, 1) in serilizable
     // transactions.
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    TransactionScheduler scheduler(3, table, &txn_manager);
 
     scheduler.Txn(0).UpdateByValue(1,
                                    0);  // txn 0 see (1, 1), update it to (1, 0)
@@ -311,8 +305,7 @@ void WriteSkewTest() {
 
     scheduler.Run();
 
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[2].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
     // Can't all success
     if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
         ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
@@ -324,10 +317,9 @@ void WriteSkewTest() {
 
 void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
     scheduler.Txn(1).Update(1, 1);
@@ -350,21 +342,19 @@ void ReadSkewTest() {
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
   int current_batch_key = 10000;
   {
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler(1, table, &txn_manager);
     // Prepare
     scheduler.Txn(0).Insert(current_batch_key, 100);
     scheduler.Txn(0).Update(100, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
-    TransactionScheduler scheduler(4, table.get(), &txn_manager);
+    TransactionScheduler scheduler(4, table, &txn_manager);
     // Test against anomaly
     scheduler.Txn(1).ReadStore(current_batch_key, 0);
     scheduler.Txn(2).Update(current_batch_key, 100 + 1);
@@ -391,8 +381,8 @@ void SIAnomalyTest1() {
 
 TEST_F(IsolationLevelTests, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(
-        test_type, IsolationLevelType::FULL);
+    concurrency::TransactionManagerFactory::Configure(test_type,
+                                                      IsolationLevelType::FULL);
     DirtyWriteTest();
     DirtyReadTest();
     FuzzyReadTest();
@@ -410,13 +400,12 @@ TEST_F(IsolationLevelTests, StressTest) {
   srand(15721);
 
   for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(
-        test_type, IsolationLevelType::FULL);
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable(num_key));
+    concurrency::TransactionManagerFactory::Configure(test_type,
+                                                      IsolationLevelType::FULL);
+    storage::DataTable *table = TestingTransactionUtil::CreateTable(num_key);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+    TransactionScheduler scheduler(num_txn, table, &txn_manager);
     scheduler.SetConcurrent(true);
     for (int i = 0; i < num_txn; i++) {
       for (int j = 0; j < scale; j++) {
@@ -438,15 +427,14 @@ TEST_F(IsolationLevelTests, StressTest) {
     scheduler.Run();
 
     // Read all values
-    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler2(1, table, &txn_manager);
     for (int i = 0; i < num_key; i++) {
       scheduler2.Txn(0).Read(i);
     }
     scheduler2.Txn(0).Commit();
     scheduler2.Run();
 
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler2.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler2.schedules[0].txn_result);
     // The sum should be zero
     int sum = 0;
     for (auto result : scheduler2.schedules[0].results) {

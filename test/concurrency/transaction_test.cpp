@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
+#include "concurrency/testing_transaction_util.h"
 
 namespace peloton {
 
@@ -25,8 +24,7 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    ConcurrencyType::TIMESTAMP_ORDERING
-};
+    ConcurrencyType::TIMESTAMP_ORDERING};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
@@ -62,11 +60,10 @@ TEST_F(TransactionTests, ReadonlyTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     // Just scan the table
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager, true);
+      TransactionScheduler scheduler(1, table, &txn_manager, true);
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
 
@@ -82,11 +79,10 @@ TEST_F(TransactionTests, SingleTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     // Just scan the table
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
 
@@ -97,7 +93,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Read(0);
       scheduler.Txn(0).Read(0);
       scheduler.Txn(0).Read(0);
@@ -124,7 +120,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 
     // // update, update, update, update, read
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
       scheduler.Txn(0).Update(0, 1);
       scheduler.Txn(0).Update(0, 2);
       scheduler.Txn(0).Update(0, 3);
@@ -142,7 +138,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // // read deleted, insert back, update inserted, read newly updated,
     // // delete inserted, read deleted
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
       scheduler.Txn(0).Delete(100);
       scheduler.Txn(0).Delete(0);
       scheduler.Txn(0).Read(0);
@@ -169,7 +165,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // // read deleted, insert again, read inserted, update inserted, read
     // updated
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
 
       scheduler.Txn(0).Insert(1000, 0);
       scheduler.Txn(0).Delete(1000);
@@ -191,7 +187,6 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(2, scheduler.schedules[0].results[2]);
       EXPECT_EQ(3, scheduler.schedules[0].results[3]);
     }
-
   }
 }
 
@@ -199,10 +194,9 @@ TEST_F(TransactionTests, AbortTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Update(0, 100);
       scheduler.Txn(0).Abort();
       scheduler.Txn(1).Read(0);
@@ -216,7 +210,7 @@ TEST_F(TransactionTests, AbortTest) {
     }
 
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Insert(100, 0);
       scheduler.Txn(0).Abort();
       scheduler.Txn(1).Read(100);
