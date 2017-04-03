@@ -83,7 +83,13 @@ class Column : public Printable {
 
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
-    constraints.push_back(constraint);
+    if (constraint.GetType() == ConstraintType::DEFAULT) {
+      // Add the default constraint to the front
+      constraints.insert(constraints.begin(), constraint);
+    } else {
+      constraints.push_back(constraint);
+    }
+
     if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
     }
