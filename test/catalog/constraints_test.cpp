@@ -37,6 +37,7 @@
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
 #define CHECK_TEST
+#define DEFAULT_TEST
 #define PRIMARY_UNIQUEKEY_TEST
 #define FOREIGHN_KEY_TEST
 
@@ -189,11 +190,15 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 }
 #endif
 
+#ifdef DEFAULT_TEST
 TEST_F(ConstraintsTests, DEFAULTTEST) {
   std::unique_ptr<storage::DataTable> data_table(
     ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto schema = data_table->GetSchema();
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
   catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
   auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
@@ -212,10 +217,12 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
 
 
+
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
 
 }
+#endif
 
 #ifdef CHECK_TEST
 TEST_F(ConstraintsTests, CHECKTest) {

@@ -193,6 +193,7 @@ class Schema : public Printable {
     }
 
     return nullptr;
+  }
 
   inline std::pair<ExpressionType, type::Value> AllowExpConstrain(
       const oid_t column_id) const {
