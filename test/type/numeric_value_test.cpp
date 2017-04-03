@@ -15,6 +15,7 @@
 #include <iostream>
 #include <cstdint>
 #include <cmath>
+
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
 #include "type/numeric_type.h"
@@ -560,6 +561,57 @@ TEST_F(NumericValueTests, SqrtTest) {
     v1 = type::ValueFactory::GetBigIntValue(i * i).Sqrt();
     v2 = type::ValueFactory::GetBigIntValue(i);
     CheckEqual(v1, v2);
+  } // FOR
+}
+
+TEST_F(NumericValueTests, CastAsTest) {
+
+  std::vector<type::Type::TypeId> types = {
+      type::Type::TINYINT,
+      type::Type::SMALLINT,
+      type::Type::INTEGER,
+      type::Type::BIGINT,
+//      type::Type::DECIMAL,
+      type::Type::VARCHAR,
+  };
+
+  for (int i = type::PELOTON_INT8_MIN; i <= type::PELOTON_INT8_MAX; i++) {
+    for (auto t1 : types) {
+      type::Value v1;
+
+      switch (t1) {
+        case type::Type::TINYINT:
+          v1 = type::ValueFactory::GetTinyIntValue(i);
+          break;
+        case type::Type::SMALLINT:
+          v1 = type::ValueFactory::GetSmallIntValue(i);
+          break;
+        case type::Type::INTEGER:
+          v1 = type::ValueFactory::GetIntegerValue(i);
+          break;
+        case type::Type::BIGINT:
+          v1 = type::ValueFactory::GetBigIntValue(i);
+          break;
+        case type::Type::DECIMAL:
+          v1 = type::ValueFactory::GetDecimalValue((double)i);
+          break;
+        case type::Type::VARCHAR:
+          v1 = type::ValueFactory::GetVarcharValue(
+                    type::ValueFactory::GetSmallIntValue(i).ToString());
+          break;
+        default:
+          LOG_ERROR("Unexpected type!");
+          ASSERT_FALSE(true);
+      }
+      EXPECT_FALSE(v1.IsNull());
+      for (auto t2 : types) {
+        type::Value v2 = v1.CastAs(t2);
+        LOG_TRACE("[%02d] %s -> %s",
+                  i, TypeIdToString(t1).c_str(),
+                  TypeIdToString(t2).c_str());
+        CheckEqual(v1, v2);
+      } // FOR
+    } // FOR
   } // FOR
 
 }

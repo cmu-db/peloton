@@ -21,6 +21,22 @@
 namespace peloton {
 namespace type {
 
+#define VARLEN_COMPARE_FUNC(OP) \
+  const char *str1 = left.GetData(); \
+  uint32_t len1 = GetLength(left) - 1; \
+  const char *str2; \
+  uint32_t len2; \
+  if (right.GetTypeId() == Type::VARCHAR) { \
+    str2 = right.GetData(); \
+    len2 = GetLength(right) - 1; \
+  } else { \
+    std::string to_string = right.ToString(); \
+    str2 = to_string.c_str(); \
+    len2 = static_cast<uint32_t>(to_string.size()); \
+  } \
+  return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
+                                             str2, len2) OP 0);
+
 VarlenType::VarlenType(TypeId type) : Type(type) {}
 
 VarlenType::~VarlenType() {}
@@ -30,7 +46,7 @@ const char *VarlenType::GetData(const Value &val) const {
   return val.value_.varlen;
 }
 
-// Get the length of the variable length data
+// Get the length of the variable length data (including the length field)
 uint32_t VarlenType::GetLength(const Value &val) const { return val.size_.len; }
 
 // Access the raw varlen data stored from the tuple storage
@@ -46,11 +62,8 @@ CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) == GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) == 0);
+
+  VARLEN_COMPARE_FUNC(==);
 }
 
 CmpBool VarlenType::CompareNotEquals(const Value &left,
@@ -61,11 +74,8 @@ CmpBool VarlenType::CompareNotEquals(const Value &left,
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) != GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) != 0);
+
+  VARLEN_COMPARE_FUNC(!=);
 }
 
 CmpBool VarlenType::CompareLessThan(const Value &left,
@@ -76,11 +86,8 @@ CmpBool VarlenType::CompareLessThan(const Value &left,
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) < GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) < 0);
+
+  VARLEN_COMPARE_FUNC(<);
 }
 
 CmpBool VarlenType::CompareLessThanEquals(const Value &left,
@@ -91,11 +98,8 @@ CmpBool VarlenType::CompareLessThanEquals(const Value &left,
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) <= GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) <= 0);
+
+  VARLEN_COMPARE_FUNC(<=);
 }
 
 CmpBool VarlenType::CompareGreaterThan(const Value &left,
@@ -106,11 +110,8 @@ CmpBool VarlenType::CompareGreaterThan(const Value &left,
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) > GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) > 0);
+
+  VARLEN_COMPARE_FUNC(>);
 }
 
 CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
@@ -121,11 +122,8 @@ CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) >= GetLength(right));
   }
-  const char *str1 = left.GetData();
-  const char *str2 = right.GetData();
-  // TODO strcmp does not work on binary values
-  return GetCmpBool(TypeUtil::CompareStrings(str1, GetLength(left), str2,
-                                             GetLength(right)) >= 0);
+
+  VARLEN_COMPARE_FUNC(>=);
 }
 
 Value VarlenType::Min(const Value& left, const Value& right) const {
