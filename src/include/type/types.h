@@ -1130,10 +1130,10 @@ typedef std::vector<DirectMap> DirectMapList;
 // Optimizer
 //===--------------------------------------------------------------------===//
 enum class PropertyType {
-  SORT,
   COLUMNS,
   PREDICATE,
   PROJECT,
+  SORT,
 };
   
 namespace expression {

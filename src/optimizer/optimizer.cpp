@@ -327,7 +327,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     DeriveCostAndStats(enforced_gexpr, requirements, child_input_properties,
                        child_stats, child_costs);
   }
-
+  LOG_DEBUG("LEAVING ENFORCE");
   return enforced_gexpr;
 }
 

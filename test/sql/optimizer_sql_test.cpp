@@ -254,8 +254,8 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   EXPECT_EQ("332", TestingSQLUtil::GetResultValueAsString(result, 1));
 
   // test projection for order by 
-  /*query = "SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b";
-
+  query = "SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b";
+  LOG_DEBUG("%s", query.c_str());
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
@@ -277,7 +277,7 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   EXPECT_EQ("21", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("-306", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("-396", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("-535", TestingSQLUtil::GetResultValueAsString(result, 3));*/
+  EXPECT_EQ("-535", TestingSQLUtil::GetResultValueAsString(result, 3));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
