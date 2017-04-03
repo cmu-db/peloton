@@ -34,7 +34,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -122,7 +122,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
 
   // Do a select to get the original values
   //  std::unique_ptr<Statement> statement;
-  //  auto& peloton_parser = parser::Parser::GetInstance();
+  //  auto& peloton_parser = parser::PostgresParser::GetInstance();
   //  auto select_stmt =
   //      peloton_parser.BuildParseTree("SELECT * FROM test_table LIMIT 1;");
   //  statement->SetPlanTree(
@@ -197,7 +197,7 @@ TEST_F(UpdateTests, UpdatingOld) {
                                 "INSERT INTO "
                                 "department_table(dept_id,manager_id,dept_name)"
                                 " VALUES (1,12,'hello_1');"));
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "

@@ -1,3 +1,5 @@
+#!/bin/bash -x
+
 mkdir -p lib
 mkdir -p out
 wget -nc -P lib https://jdbc.postgresql.org/download/postgresql-9.4.1209.jre6.jar

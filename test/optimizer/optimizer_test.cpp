@@ -10,7 +10,7 @@
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -48,7 +48,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement.reset(new Statement(
       "CREATE", "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);"));
 
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");

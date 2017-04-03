@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// checkpoint_manager_factory.h
+// log_manager_factory.h
 //
-// Identification: src/include/concurrency/log_manager_factory.h
+// Identification: src/include/logging/log_manager_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

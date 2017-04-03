@@ -34,7 +34,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
                                std::string table_name) {
   catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
-  auto &peloton_parser = parser::Parser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   std::vector<type::Value> params;
@@ -159,7 +159,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
 }
 
 void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
-  auto &peloton_parser = parser::Parser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(

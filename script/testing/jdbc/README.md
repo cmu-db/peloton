@@ -2,7 +2,9 @@
 
 The java program here provides simple JDBC operation tests for Peloton database. To run the test, simply type:
 
-`bash run.sh`
+test_jdbc.sh <type>
+
+Where 'type' is either 'basic', 'stats', or 'copy'
 
 The program performs the following tests:
 

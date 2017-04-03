@@ -38,6 +38,19 @@ void pg_query_exit_memory_context(MemoryContext ctx)
 	MemoryContextSwitchTo(TopMemoryContext);
 
 	MemoryContextDelete(ctx);
+
+    MemoryContext error_ctx = ErrorContext;
+    MemoryContext top_ctx = TopMemoryContext;
+
+//    TopMemoryContext = NULL;
+//    ErrorContext = NULL;
+//
+//	if (error_ctx != NULL)
+//    	MemoryContextDelete(error_ctx);
+//    if (top_ctx != NULL)
+//		MemoryContextDelete(top_ctx);
+
+
 }
 
 void pg_query_free_error(PgQueryError *error)

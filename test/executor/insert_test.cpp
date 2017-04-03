@@ -69,6 +69,7 @@ TEST_F(InsertTests, InsertRecord) {
 
   char *name = new char[11]();
   strcpy(name, "TEST_TABLE");
+  auto table_ref = new parser::TableRef(TableReferenceType::NAME);
   parser::TableInfo *table_info = new parser::TableInfo();
   table_info->table_name = name;
 
@@ -78,7 +79,8 @@ TEST_F(InsertTests, InsertRecord) {
   char *col_2 = new char[10]();
   strcpy(col_2, "dept_name");
 
-  insert_node->table_info_ = table_info;
+  table_ref->table_info_ = table_info;
+  insert_node->table_ref_ = table_ref;
 
   insert_node->columns = new std::vector<char *>;
   insert_node->columns->push_back(const_cast<char *>(col_1));
