@@ -270,7 +270,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
                              output_properties);
 
     
-    if (requirements >= output_properties) {
+    if (output_properties >= requirements) {
       DeriveCostAndStats(gexpr, requirements, input_properties_list,
                        best_child_stats, best_child_costs);     
     }
@@ -284,7 +284,8 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
                                  output_properties);
       }
     }
-        // After the enforcement it must have met the property requirements, so
+    
+    // After the enforcement it must have met the property requirements, so
     // notice here we set the best cost plan for 'requirements' instead of
     // 'output_properties'
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),

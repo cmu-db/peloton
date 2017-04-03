@@ -410,6 +410,8 @@ class ExpressionUtil {
     }
   }
   
+  /* All following functions will be depracated when switch to new optimizer */
+   
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects given a

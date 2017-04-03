@@ -43,15 +43,15 @@ void ChildPropertyGenerator::Visit(const PhysicalLimit *) {
 
 void ChildPropertyGenerator::Visit(const PhysicalScan *) {
   PropertySet provided_property;
-
-  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS);
+  
+  // Scan will fullfill predicate property
   auto predicate_prop =
       requirements_.GetPropertyOfType(PropertyType::PREDICATE);
-
   if (predicate_prop != nullptr) {
     provided_property.AddProperty(predicate_prop);
   }
-
+  
+  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS);
   if (columns_prop != nullptr) {
     auto columns_prop_ptr = columns_prop->As<PropertyColumns>();
     if (columns_prop_ptr->IsStarExpressionInColumn()) {
