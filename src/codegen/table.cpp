@@ -75,7 +75,9 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   // Get start and end index from multi thread context.
   llvm::Value *thread_id = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
-  MultiThreadContext multi_thread_context;
+
+  uint32_t num_threads = 3;
+  MultiThreadContext multi_thread_context{codegen, num_threads};
 
   llvm::Value *tile_group_idx = multi_thread_context.GetRangeStart(codegen, thread_id, num_tile_groups);
   llvm::Value *tile_group_idx_end = multi_thread_context.GetRangeEnd(codegen, thread_id, num_tile_groups);
