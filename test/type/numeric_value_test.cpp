@@ -571,7 +571,7 @@ TEST_F(NumericValueTests, CastAsTest) {
       type::Type::SMALLINT,
       type::Type::INTEGER,
       type::Type::BIGINT,
-//      type::Type::DECIMAL,
+      type::Type::DECIMAL,
       type::Type::VARCHAR,
   };
 

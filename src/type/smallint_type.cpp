@@ -65,8 +65,6 @@ namespace type {
       break; \
   } // SWITCH
 
-
-
 SmallintType::SmallintType() :
     IntegerParentType(Type::SMALLINT) {
 }
