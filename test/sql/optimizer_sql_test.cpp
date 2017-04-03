@@ -253,7 +253,7 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   EXPECT_EQ("27", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("332", TestingSQLUtil::GetResultValueAsString(result, 1));
 
-  // test projection for order by 
+  // test projection for order by
   query = "SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b";
   LOG_DEBUG("%s", query.c_str());
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
@@ -262,8 +262,7 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
 
   // check for plan node type
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -539,12 +538,9 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
-
-
   // Aggregate function: COUNT(*)
   query = "SELECT COUNT(*) FROM test GROUP BY b";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -558,8 +554,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: COUNT(a)
   query = "SELECT COUNT(a) FROM test GROUP BY b";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -573,8 +568,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: AVG(a)
   query = "SELECT AVG(a), b FROM test GROUP BY b having b=22";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -587,8 +581,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: MIN(b)
   query = "SELECT MIN(a), b FROM test GROUP BY b having b=22";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -601,8 +594,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: MAX(b)
   query = "SELECT MAX(a), b FROM test GROUP BY b having b=22";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -613,14 +605,12 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("6", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
-
   // Combine with ORDER BY
   query = "SELECT b FROM test GROUP BY b ORDER BY b";
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   EXPECT_EQ(4, result.size());
@@ -628,7 +618,6 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
