@@ -73,8 +73,8 @@ struct GroupByDescription {
       for (auto col : *columns) delete col;
       delete columns;
     }
-
-    delete having;
+    if (having)
+      delete having;
   }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }

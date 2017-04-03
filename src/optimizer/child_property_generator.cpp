@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression/expression_util.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/column_manager.h"
 #include "optimizer/properties.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -108,6 +108,8 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
 void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
   PropertySet child_input_property_set;
   PropertySet provided_property;
+  ExprSet child_cols;
+  bool has_star_expr = false;
 
   for (auto prop : requirements_.Properties()) {
     switch(prop->Type()){
@@ -116,38 +118,39 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
       case PropertyType::SORT:break;
       case PropertyType::COLUMNS: {
         provided_property.AddProperty(prop);
-        //TODO: Property column: copy constructor
-        //TODO: Store ExprSet in property columns
-
-        // Reuqire group by columns in the child node
         auto col_prop = prop->As<PropertyColumns>();
-        auto child_cols = std::vector<expression::AbstractExpression *>();
+        has_star_expr = col_prop->IsStarExpressionInColumn();
+        if (has_star_expr) break;
+
+        //TODO: Store ExprSet in property columns
+        // Reuqire group by columns in the child node
         size_t col_size = col_prop->GetSize();
         for (size_t i = 0; i < col_size; i++)
-          child_cols.emplace_back(col_prop->GetColumn(i));
-        for (auto group_by_col : *op->columns) {
-          bool found = false;
-          for (size_t i = 0; i < col_size; i++) {
-            if (child_cols[i]->Equals(group_by_col)) {
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-            child_cols.emplace_back(group_by_col);
-        }
-        child_input_property_set.AddProperty(
-            std::make_shared<PropertyColumns>(
-                child_cols, col_prop->IsStarExpressionInColumn()));
+          child_cols.insert(col_prop->GetColumn(i));
+        for (auto group_by_col : *op->columns)
+          child_cols.insert(group_by_col);
+
         break;
       }
       case PropertyType::PREDICATE:
         child_input_property_set.AddProperty(prop);
-        break;
-      default:
         provided_property.AddProperty(prop);
+        break;
+      case PropertyType::PROJECT:
+        provided_property.AddProperty(prop);
+        auto proj_prop = prop->As<PropertyProjection>();
+        for (size_t idx = 0; idx < proj_prop->GetProjectionListSize(); idx++) {
+          auto expr = proj_prop->GetProjection(idx);
+          expression::ExpressionUtil::GetTupleValueExprs(child_cols, expr);
+        }
+        break;
     }
   }
+  child_input_property_set.AddProperty(
+      std::make_shared<PropertyColumns>(
+          std::vector<expression::AbstractExpression*>(
+              child_cols.begin(), child_cols.end()),
+          has_star_expr));
   std::vector<PropertySet> child_input_properties{child_input_property_set};
 
   output_.push_back(std::make_pair(provided_property, std::move(child_input_properties)));

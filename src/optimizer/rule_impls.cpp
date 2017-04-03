@@ -218,6 +218,8 @@ void LogicalInsertToPhysical::Transform(
 LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
   physical = true;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(child);
 }
 
 bool LogicalAggregateToPhysical::Check(
@@ -232,7 +234,8 @@ void LogicalAggregateToPhysical::Transform(
   const LogicalAggregate *agg_op = input->Op().As<LogicalAggregate>();
   auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make(
       agg_op->columns, agg_op->having));
-  PL_ASSERT(input->Children().size() == 0);
+  PL_ASSERT(input->Children().size() == 1);
+  result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
 

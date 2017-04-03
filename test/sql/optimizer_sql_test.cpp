@@ -507,5 +507,135 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(OptimizerSQLTests, GroupByTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, -334);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 555);");
+
+  // Basic case
+  std::string query = "SELECT b FROM test GROUP BY b having b=11 or b=22";
+  auto select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(2, result.size());
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+
+
+  // Aggregate function: COUNT(*)
+  query = "SELECT COUNT(*) FROM test GROUP BY b";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(4, result.size());
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+  // Aggregate function: COUNT(a)
+  query = "SELECT COUNT(a) FROM test GROUP BY b";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(4, result.size());
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+  // Aggregate function: AVG(a)
+  query = "SELECT AVG(a), b FROM test GROUP BY b having b=22";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(2, result.size());
+  // 6+1 / 2 = 3.5
+  EXPECT_EQ("3.500000", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+  // Aggregate function: MIN(b)
+  query = "SELECT MIN(a), b FROM test GROUP BY b having b=22";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(2, result.size());
+  // MIN(6,1) = 1
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+  // Aggregate function: MAX(b)
+  query = "SELECT MAX(a), b FROM test GROUP BY b having b=22";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(2, result.size());
+  // MAX(6,1) = 6
+  EXPECT_EQ("6", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+
+//  // Combine with ORDER BY
+//  query = "SELECT b FROM test GROUP BY b ORDER BY b";
+//  select_plan =
+//      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+//  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+//  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+//            PlanNodeType::SEQSCAN);
+//  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+//      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+//  EXPECT_EQ(4, result.size());
+//  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+//  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
+//  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
+//  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton

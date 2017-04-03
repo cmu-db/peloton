@@ -14,6 +14,7 @@
 
 #include "optimizer/column.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -67,6 +68,14 @@ class PropertyProjection : public Property {
 
   inline expression::AbstractExpression *GetProjection(size_t idx) const {
     return expressions_[idx].get();
+  }
+
+  inline bool AllAggregation() const {
+    for (size_t idx = 0; idx < expressions_.size(); idx++)
+      if (!expression::ExpressionUtil::IsAggregateExpression
+          (expressions_[idx]->GetExpressionType()))
+        return false;
+    return true;
   }
 
  private:

@@ -14,6 +14,7 @@
 #include "optimizer/operators.h"
 #include "optimizer/property.h"
 #include "optimizer/properties.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
