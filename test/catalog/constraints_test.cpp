@@ -263,6 +263,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   create_executor.Init();
   create_executor.Execute();
 
+
   txn_manager.CommitTransaction(txn);
 
   LOG_INFO("==============Test table created !==============");
