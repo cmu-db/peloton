@@ -264,9 +264,10 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  auto table_info = new parser::TableInfo();
-  table_info->table_name = name;
-  insert_statement->table_info_ = table_info;
+  auto table_ref = new parser::TableRef(TableReferenceType::NAME);
+  table_ref->table_info_ = new parser::TableInfo();
+  table_ref->table_info_->table_name = name;
+  insert_statement->table_ref_ = table_ref;
   insert_statement->columns = new std::vector<char *>{strdup("id"), strdup("name")};
 
   // Value val =
@@ -305,8 +306,6 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   delete values;
   delete insert_plan;
   delete insert_statement;
-  //delete constant_expr_1; already deleted by insert_statement's descructor
-  delete parameter_expr_2;
 }
 
 
