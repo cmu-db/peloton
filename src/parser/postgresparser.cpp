@@ -901,6 +901,23 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   return result;
 }
 
+// This function takes in a Postgres CreateTrigStmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// CreateTrigStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* root) {
+  parser::CreateStatement* result =
+    new parser::CreateStatement(CreateStatement::kTrigger);
+  // TODO: transform other fields: funcname, args, columns, whenClause, etc..
+  result->trigger_row = root->row;
+  result->trigger_timing = root->timing;
+  result->trigger_events = root->events;
+  result->table_info_ = new TableInfo();
+  result->table_info_->table_name = cstrdup(root->relation->relname);
+  result->trigger_name = cstrdup(root->trigname);
+  return result;
+}
+
 // This function takes in a Postgres CreatedbStmt parsenode
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
@@ -1146,6 +1163,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
+      break;
+    case T_CreateTrigStmt:
+      result = CreateTriggerTransform(reinterpret_cast<CreateTrigStmt*>(stmt));
       break;
     case T_UpdateStmt:
       result = UpdateTransform((UpdateStmt*)stmt);

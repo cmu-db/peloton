@@ -296,6 +296,27 @@ typedef struct IndexStmt
   bool		if_not_exists;	/* just do nothing if index already exists? */
 } IndexStmt;
 
+typedef struct CreateTrigStmt
+{
+  NodeTag		type;
+  char	   *trigname;		/* TRIGGER's name */
+  RangeVar   *relation;		/* relation trigger is on */
+  List	   *funcname;		/* qual. name of function to call */
+  List	   *args;			/* list of (T_String) Values or NIL */
+  bool		row;			/* ROW/STATEMENT */
+  /* timing uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+  int16_t		timing;			/* BEFORE, AFTER, or INSTEAD */
+  /* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+  int16_t		events;			/* "OR" of INSERT/UPDATE/DELETE/TRUNCATE */
+  List	   *columns;		/* column names, or NIL for all columns */
+  Node	   *whenClause;		/* qual expression, or NULL if none */
+  bool		isconstraint;	/* This is a constraint trigger */
+  /* The remaining fields are only used for constraint triggers */
+  bool		deferrable;		/* [NOT] DEFERRABLE */
+  bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
+  RangeVar   *constrrel;		/* opposite relation, if RI trigger */
+} CreateTrigStmt;
+
 typedef struct ColumnDef
 {
 NodeTag		type;
