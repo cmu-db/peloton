@@ -15,12 +15,18 @@
 #include "codegen/codegen.h"
 #include "codegen/code_context.h"
 #include "codegen/function_builder.h"
+#include "codegen/type.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
 
 class MultiThreadContext {
  public:
+
+  MultiThreadContext(const CodeGen &codegen, uint64_t num_threads): codegen_(codegen) {
+      num_threads_ = codegen_.Const64(num_threads);
+  }
 
   llvm::Value *GetRangeStart(CodeGen &codegen, llvm::Value *thread_id, llvm::Value *tile_group_count) {
     auto *func = GetRangeStartFunction(codegen);
@@ -44,7 +50,12 @@ class MultiThreadContext {
             {"tile_group_count", codegen.Int64Type()}
         }};
 
-    function_builder.ReturnAndFinish(codegen.Const64(0));
+    auto tile_group_count = function_builder.GetArgumentByName("tile_group_count");
+    auto seg_size = codegen->CreateSDiv(tile_group_count, num_threads_);
+    auto thread_id = function_builder.GetArgumentByName("thread_id");
+    auto start = codegen->CreateMul(thread_id, seg_size);
+
+    function_builder.ReturnAndFinish(start);
     return function_builder.GetFunction();
   }
 
@@ -62,7 +73,8 @@ class MultiThreadContext {
     return function_builder.GetFunction();
   }
 
-  uint32_t thread_count;
+  llvm::Value *num_threads_;
+  const CodeGen &codegen_;
 };
 
 }
