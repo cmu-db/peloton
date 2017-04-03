@@ -69,7 +69,15 @@ class MultiThreadContext {
             {"tile_group_count", codegen.Int64Type()}
         }};
 
-    function_builder.ReturnAndFinish(function_builder.GetArgumentByName("tile_group_count"));
+    auto tile_group_count = function_builder.GetArgumentByName("tile_group_count");
+    auto seg_size = codegen->CreateSDiv(tile_group_count, num_threads_);
+    auto thread_id = function_builder.GetArgumentByName("thread_id");
+    auto end = codegen->CreateMul(codegen->CreateAdd(thread_id, codegen.Const64(1)), seg_size);
+    auto end_value = Value{type::Type::TypeId::INTEGER, end};
+    end_value = end_value.Max(codegen, Value{type::Type::TypeId::INTEGER, tile_group_count});
+    end = end_value.GetValue();
+
+    function_builder.ReturnAndFinish(end);
     return function_builder.GetFunction();
   }
 
