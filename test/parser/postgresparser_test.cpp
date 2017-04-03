@@ -890,6 +890,25 @@ TEST_F(PostgresParserTests, DataTypeTest) {
   delete stmt_list;
 }
 
+TEST_F(PostgresParserTests, CreateTriggerTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+
+  std::string query =
+       "CREATE TRIGGER check_update "
+       "BEFORE UPDATE ON accounts "
+       "FOR EACH ROW "
+       "EXECUTE PROCEDURE check_account_update();";
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (stmt_list->is_valid == false) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  EXPECT_EQ(stmt_list->GetStatement(0)->GetType(), StatementType::CREATE);
+  // TODO: test other fields
+  delete stmt_list;
+}
+
 TEST_F(PostgresParserTests, FuncCallTest) {
   std::string query = "SELECT add(1,a), chr(99) FROM TEST WHERE FUN(b) > 2";
 

@@ -187,7 +187,7 @@ struct ColumnDefinition {
  */
 class CreateStatement : public TableRefStatement {
  public:
-  enum CreateType { kTable, kDatabase, kIndex };
+  enum CreateType { kTable, kDatabase, kIndex, kTrigger };
 
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
@@ -227,9 +227,22 @@ class CreateStatement : public TableRefStatement {
   IndexType index_type;
 
   char* index_name = nullptr;
+  char* trigger_name = nullptr;
   char* database_name = nullptr;
 
   bool unique = false;
+
+  std::vector<char*>* trigger_funcname = nullptr;		/* qual. name of function to call */
+  std::vector<char*>* trigger_args = nullptr;			/* list of (T_String) Values or NIL */
+  bool trigger_row;			/* ROW/STATEMENT */
+  /* timing uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+  int trigger_timing;			/* BEFORE, AFTER, or INSTEAD */
+  /* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+  int trigger_events;			/* "OR" of INSERT/UPDATE/DELETE/TRUNCATE */
+  std::vector<char*>* trigger_columns = nullptr;		/* column names, or NIL for all columns */
+//  Node *trigger_whenClause = nullptr;		/* qual expression, or NULL if none */
+
+
 };
 
 }  // namespace parser

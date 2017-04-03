@@ -163,6 +163,9 @@ class PostgresParser {
   // transform helper for create index statements
   static parser::SQLStatement* CreateIndexTransform(IndexStmt* root);
 
+  // transform helper for create trigger statements
+  static parser::SQLStatement* CreateTriggerTransform(CreateTrigStmt* root);
+
   // transform helper for create db statement
   static parser::SQLStatement* CreateDbTransform(CreatedbStmt* root);
 
