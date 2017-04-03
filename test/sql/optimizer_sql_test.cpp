@@ -614,20 +614,20 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
 
-//  // Combine with ORDER BY
-//  query = "SELECT b FROM test GROUP BY b ORDER BY b";
-//  select_plan =
-//      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-//  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-//  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-//            PlanNodeType::SEQSCAN);
-//  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-//      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-//  EXPECT_EQ(4, result.size());
-//  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-//  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-//  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
-//  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
+  // Combine with ORDER BY
+  query = "SELECT b FROM test GROUP BY b ORDER BY b";
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(4, result.size());
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
 
 
   // free the database just created

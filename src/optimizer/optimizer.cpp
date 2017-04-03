@@ -309,12 +309,13 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   
 
   PropertyEnforcer enforcer(column_manager_);
-  auto enforced_expr =
+  auto enforced_gexpr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
 
-  shared_ptr<GroupExpression> enforced_gexpr;
-  RecordTransformedExpression(enforced_expr, enforced_gexpr,
-                              gexpr->GetGroupID());
+  // the new gexpr have the 
+  // same GrouID as the one beforce
+  // enforcing the property
+  memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID());
   // LOG_DEBUG("Leaving Enforce");
   // new output property would have the enforced Property
   output_properties.AddProperty(shared_ptr<Property>(property));

@@ -19,25 +19,22 @@
 namespace peloton {
 namespace optimizer {
 
-std::shared_ptr<OperatorExpression> PropertyEnforcer::EnforceProperty(
+std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
     std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
     std::shared_ptr<Property> property) {
   input_gexpr_ = gexpr;
   input_properties_ = properties;
   property->Accept(this);
-  return output_expr_;
+  return output_gexpr_;
 }
 
 void PropertyEnforcer::Visit(const PropertyColumns *) {}
 
 void PropertyEnforcer::Visit(const PropertyProjection *) {
-  auto project_expr =
-      std::make_shared<OperatorExpression>(PhysicalProject::make());
-
-  project_expr->PushChild(
-      std::make_shared<OperatorExpression>(input_gexpr_->Op()));
-
-  output_expr_ = project_expr;
+  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
+  
+  output_gexpr_ =
+      std::make_shared<GroupExpression>(PhysicalProject::make(), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertySort *property) {
@@ -49,13 +46,9 @@ void PropertyEnforcer::Visit(const PropertySort *property) {
     sort_ascending.push_back(property->GetSortAscending(i));
   }
 
-  auto order_by_expr = std::make_shared<OperatorExpression>(
-      PhysicalOrderBy::make(sort_columns, sort_ascending));
-
-  order_by_expr->PushChild(
-      std::make_shared<OperatorExpression>(input_gexpr_->Op()));
-
-  output_expr_ = order_by_expr;
+  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
+  output_gexpr_ = std::make_shared<GroupExpression>(
+      PhysicalOrderBy::make(sort_columns, sort_ascending), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertyPredicate *) {}
