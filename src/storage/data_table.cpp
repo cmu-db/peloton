@@ -428,9 +428,11 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
-  assert(tuple);
-  if (check_constraint && CheckConstraints(tuple) == false)
-    return INVALID_ITEMPOINTER;
+  // assert(tuple);
+  if (check_constraint && tuple != nullptr) {
+    if (CheckConstraints(tuple) == false)
+      return INVALID_ITEMPOINTER;
+  }
 
   //=============== garbage collection==================
   // check if there are recycled tuple slots

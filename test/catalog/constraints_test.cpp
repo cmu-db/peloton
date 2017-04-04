@@ -36,6 +36,12 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "parser/parser.h"
+#include "optimizer/simple_optimizer.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/plan_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
+#include "planner/plan_util.h"
 
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
@@ -289,34 +295,128 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 
 #ifdef DEFAULT_TEST
 TEST_F(ConstraintsTests, DEFAULTTEST) {
-  std::unique_ptr<storage::DataTable> data_table(
-    ConstraintsTestsUtil::CreateAndPopulateTable());
+  // Create the database
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
-  auto schema = data_table->GetSchema();
+  optimizer::SimpleOptimizer optimizer;
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // Create the table
   auto txn = txn_manager.BeginTransaction();
+  LOG_INFO("================================================");
+  LOG_INFO("========Starting to create the test table=======");
 
-  catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
-  auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
-  constraint.addDefaultValue(v);
-  schema->AddConstraint(1, constraint);
+  // Three columns
+  auto primary_col = catalog::Column(type::Type::INTEGER,
+                                     type::Type::GetTypeSize(
+                                       type::Type::INTEGER), "id", true);
+  catalog::Constraint primary_constraint(ConstraintType::PRIMARY, "primary");
+  primary_col.AddConstraint(primary_constraint);
 
-  ConstraintsTestsUtil::ExecuteInsert(
-    txn, data_table.get(),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 0)),
-    type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 2)),
-    type::ValueFactory::GetVarcharValue(
-      std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
+  auto col1 = catalog::Column(type::Type::INTEGER,
+                              type::Type::GetTypeSize(
+                                type::Type::INTEGER), "col1", true);
 
+  auto col2 = catalog::Column(type::Type::INTEGER,
+                              type::Type::GetTypeSize(
+                                type::Type::INTEGER), "col2", true);
 
+  std::unique_ptr<catalog::Schema> table_schema(
+    new catalog::Schema({primary_col, col1, col2}));
 
+  std::unique_ptr<executor::ExecutorContext> context(
+    new executor::ExecutorContext(txn));
+
+  planner::CreatePlan node("test_table", DEFAULT_DB_NAME,
+                           std::move(table_schema), CreateType::TABLE);
+  executor::CreateExecutor create_executor(&node, context.get());
+
+  create_executor.Init();
+  create_executor.Execute();
 
   txn_manager.CommitTransaction(txn);
-  delete data_table.release();
+
+  LOG_INFO("==============Test table created !==============");
+  LOG_INFO("================================================");
+
+  storage::DataTable* table =
+    catalog->GetTableWithName(DEFAULT_DB_NAME, "test_table");
+  LOG_INFO("%s", table->GetInfo().c_str());
+
+  // Insert some records
+  txn = txn_manager.BeginTransaction();
+  LOG_INFO("================================================");
+  LOG_INFO("============Starting to insert records==========");
+
+  std::unique_ptr<Statement> statement;
+  statement.reset(new Statement("INSERT",
+                                "INSERT INTO "
+                                  "test_table(id, col1, "
+                                  "col2)" " VALUES (1, 10, 100);"));
+  auto& peloton_parser = parser::Parser::GetInstance();
+  auto insert_stmt = peloton_parser.BuildParseTree(
+    "INSERT INTO test_table(id, col1, col2) VALUES (1, 10, 100);");
+
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
+  std::vector<type::Value> params;
+  std::vector<StatementResult> result;
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+
+  std::vector<int> result_format;
+  result_format =
+    std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+    statement->GetPlanTree().get(), params, result, result_format);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
+  LOG_INFO("Tuple inserted!");
+
+  txn_manager.CommitTransaction(txn);
+
+  // Do a select query to check the results
+  txn = txn_manager.BeginTransaction();
+  // Do a select to get the original values
+  std::unique_ptr<Statement> statement1;
+  statement1.reset(new Statement("SELECT", "SELECT * FROM test_table LIMIT 1;"));
+  auto select_stmt =
+    peloton_parser.BuildParseTree("SELECT * FROM test_table LIMIT 1;");
+
+  statement1->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
+  std::vector<type::Value> params1;
+  std::vector<StatementResult> result1;
+  // bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  std::vector<int> result_format1;
+  auto tuple_descriptor = traffic_cop.GenerateTupleDescriptor(
+    select_stmt->GetStatement(0));
+  result_format1 = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+  UNUSED_ATTRIBUTE bridge::peloton_status status1 =
+    traffic_cop.ExecuteStatementPlan(statement1->GetPlanTree().get(), params1,
+                                      result1, result_format1);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status1.m_result).c_str());
+  txn_manager.CommitTransaction(txn);
+
+  // Check the results
+  // Todo: having trouble checking the tuple values
+  /*
+  for (StatementResult r : result1) {
+
+    if (!r.first.empty()) {
+      LOG_INFO("Data 1 : %s", r.first.data());
+    }
+    if (!r.second.empty()) {
+      LOG_INFO("Data 2 : %s", r.second.data());
+    }
+  } */
+
+  // Delete the database
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
 }
 #endif
