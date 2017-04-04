@@ -25,7 +25,6 @@
 #include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
 
-
 using std::vector;
 using std::make_pair;
 using std::string;
@@ -78,7 +77,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
       auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
       column_ids.push_back(col_id);
       (*output_expr_map_)[output_expr] = idx;
-      expression::ExpressionUtil::EvaluateExpression(*output_expr_map_, output_expr);
     }
   }
 
@@ -131,7 +129,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
         expr->GetExpressionName()));
   }
 
-  // build the projection plan node and insert aboce the scan
+  // build the projection plan node and insert above the scan
   unique_ptr<planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
   shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
@@ -157,67 +155,126 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-  // Get child plan
-  PL_ASSERT(children_plans_.size() == 1);
-  PL_ASSERT(children_expr_map_.size() == 1);
-
-  vector<oid_t> sort_col_ids;
-  vector<bool> sort_flags;
-
   auto sort_columns_size = op->sort_exprs.size();
   auto &sort_exprs = op->sort_exprs;
   auto &sort_ascending = op->sort_ascending;
+  ExprMap &child_expr_map = children_expr_map_[0];
 
-  // When executor support order by expression, we need to call EvaluateExpr
-  // expression::ExpressionUtil::EvaluateExpression(expr_map, sort_expr);
-
-  for (size_t idx = 0; idx < sort_columns_size; ++idx) {
-    sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
-    // planner use desc flag
-    sort_flags.push_back(!sort_ascending[idx]);
-  }
-
-  // Get output columns
+  auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
+                          ->As<PropertyProjection>();
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  PL_ASSERT(column_prop != nullptr);
 
-  // construct output column offset & output expr map
-  vector<oid_t> column_ids;
-  if (column_prop->IsStarExpressionInColumn()) {
-    // if SELECT *, add all exprs to output column
-    column_ids.resize(children_expr_map_[0].size());
-    for (auto &expr_idx_pair : children_expr_map_[0]) {
-      auto &expr = expr_idx_pair.first;
-      oid_t &idx = expr_idx_pair.second;
-      (*output_expr_map_)[expr] = idx;
-      column_ids[idx] = idx;
+  // Find all the orderby expressions that are not TupleValueExpr
+  vector<expression::AbstractExpression *> orderby_exprs;
+  for (size_t i = 0; i < sort_columns_size; i++) {
+    if (sort_exprs[i]->GetExpressionType() != ExpressionType::VALUE_TUPLE)
+      orderby_exprs.push_back(sort_exprs[i]);
+  }
+
+  /********************** Generate the Projection Plan **********************/
+  // Orderby has complex expressions. Add a projection beneath orderby
+  bool need_projection = !orderby_exprs.empty();
+  if (need_projection) {
+    size_t num_output_column;
+    TargetList tl = TargetList();
+    DirectMapList dml = DirectMapList();
+    vector<catalog::Column> columns;
+    if (project_prop != nullptr) {
+      // PropertyProj has been fulfilled. Use it instead of PropertyColumns
+      num_output_column = project_prop->GetProjectionListSize();
+      // For all columns beneath, we do a direct map
+      for (size_t i = 0; i < num_output_column; i++) {
+        dml.push_back(DirectMap(i, make_pair(0, i)));
+        auto expr = project_prop->GetProjection(i);
+        columns.push_back(catalog::Column(
+            expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+            expr->GetExpressionName()));
+      }
+    } else {
+      // PropertyProj has not been fulfilled. Use PropertyColumns
+      PL_ASSERT(column_prop != nullptr);
+      if (column_prop->IsStarExpressionInColumn())
+        num_output_column = child_expr_map.size();
+      else
+        num_output_column = column_prop->GetSize();
+      for (size_t i = 0; i < num_output_column; i++) {
+        auto tup_expr = column_prop->GetColumn(i);
+        dml.push_back(DirectMap(i, make_pair(0, child_expr_map[tup_expr])));
+        columns.push_back(
+            catalog::Column(tup_expr->GetValueType(),
+                            type::Type::GetTypeSize(tup_expr->GetValueType()),
+                            tup_expr->GetExpressionName()));
+      }
     }
+    // The addition expr columns needed by order by will be added to the end
+    for (size_t i = 0; i < orderby_exprs.size(); i++) {
+      expression::ExpressionUtil::EvaluateExpression(child_expr_map,
+                                                     orderby_exprs[i]);
+      tl.push_back(Target(num_output_column + i, orderby_exprs[i]->Copy()));
+      columns.push_back(catalog::Column(
+          orderby_exprs[i]->GetValueType(),
+          type::Type::GetTypeSize(orderby_exprs[i]->GetValueType()),
+          orderby_exprs[i]->GetExpressionName()));
+    }
+    // Create and insert projection plan node
+    unique_ptr<planner::ProjectInfo> proj_info(
+        new planner::ProjectInfo(move(tl), move(dml)));
+    shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
+    unique_ptr<planner::AbstractPlan> project_plan(
+        new planner::ProjectionPlan(move(proj_info), schema_ptr));
+    project_plan->AddChild(move(children_plans_[0]));
+    children_plans_[0] = move(project_plan);
+  }
+
+  /************************ Generate the OrderBy Plan **********************/
+  // Construct output column offset and output expr map
+  vector<oid_t> column_ids;
+  size_t num_output_column = 0;
+  if (project_prop != nullptr || column_prop->IsStarExpressionInColumn()) {
+    *output_expr_map_ = child_expr_map;
+    // In the output columms, ignore the newly created expr columns
+    num_output_column = child_expr_map.size();
+    for (size_t i = 0; i < num_output_column; i++) column_ids.push_back(i);
   } else {
-    auto output_column_size = column_prop->GetSize();
-    for (oid_t idx = 0; idx < output_column_size; ++idx) {
-      auto output_expr = column_prop->GetColumn(idx);
-      column_ids.push_back(children_expr_map_[0][output_expr]);
-      (*output_expr_map_)[output_expr] = idx;
+    num_output_column = column_prop->GetSize();
+    for (oid_t i = 0; i < num_output_column; i++) {
+      auto output_expr = column_prop->GetColumn(i);
+      column_ids.push_back(child_expr_map[output_expr]);
+      (*output_expr_map_)[output_expr] = i;
     }
   }
 
+  // Construct sort ids and sort flags
+  size_t expr_count = 0;
+  vector<oid_t> sort_col_ids;
+  vector<bool> sort_flags;
+  for (size_t i = 0; i < sort_columns_size; i++) {
+    if (sort_exprs[i]->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
+      sort_col_ids.push_back(num_output_column + expr_count);
+      expr_count++;
+    } else {
+      sort_col_ids.push_back(child_expr_map[sort_exprs[i]]);
+    }
+    // planner use desc flag
+    sort_flags.push_back(!sort_ascending[i]);
+  }
+
+  // Create and insert OrderBy Plan
   unique_ptr<planner::AbstractPlan> order_by_plan(
       new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
-
-  // Add child
   order_by_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(order_by_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
-  auto proj_prop = requirements_
-      ->GetPropertyOfType(PropertyType::PROJECT)->As<PropertyProjection>();
-  auto col_prop = requirements_
-      ->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
+  auto proj_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
+                       ->As<PropertyProjection>();
+  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                      ->As<PropertyColumns>();
   auto child_expr_map = children_expr_map_[0];
 
-  //TODO: Consider different type in the logical to physical implementation
+  // TODO: Consider different type in the logical to physical implementation
   auto agg_type = AggregateType::HASH;
   auto agg_id = 0;
 
@@ -230,14 +287,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
 
   if (proj_prop != nullptr) {
     auto expr_len = proj_prop->GetProjectionListSize();
-    for (size_t col_pos = 0; col_pos<expr_len; col_pos++) {
+    for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
       auto expr = proj_prop->GetProjection(col_pos);
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0], expr);
+      expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0],
+                                                     expr);
       // Aggregate function
       // Aggregate executor only supports aggregation on single col/*, not exprs
       if (expression::ExpressionUtil::IsAggregateExpression(
-          expr->GetExpressionType())) {
-        auto agg_expr = (expression::AggregateExpression *) expr;
+              expr->GetExpressionType())) {
+        auto agg_expr = (expression::AggregateExpression *)expr;
         auto agg_col = expr->GetModifiableChild(0);
 
         // Maps the aggregate value in the right tuple to the output.
@@ -261,10 +319,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
       // TODO: Change this. We should only add to expr_map for TupleValueExpr
       (*output_expr_map_)[expr] = col_pos;
 
-      output_schema_columns.push_back(
-          catalog::Column(expr->GetValueType(),
-                          type::Type::GetTypeSize(expr->GetValueType()),
-                          expr->expr_name_));
+      output_schema_columns.push_back(catalog::Column(
+          expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+          expr->expr_name_));
     }
   }
   // Only have base columns
@@ -272,62 +329,58 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
     agg_type = AggregateType::HASH;
     if (col_prop->IsStarExpressionInColumn()) {
       (*output_expr_map_) = child_expr_map;
-      std::unordered_map<unsigned, expression::AbstractExpression*> inverted_index;
+      std::unordered_map<unsigned, expression::AbstractExpression *>
+          inverted_index;
       for (auto entry : child_expr_map)
         inverted_index[entry.second] = entry.first;
       for (size_t col_pos = 0; col_pos < child_expr_map.size(); col_pos++) {
         auto expr = inverted_index[col_pos];
         auto schema_col_type = expr->GetValueType();
-        output_schema_columns.push_back(
-            catalog::Column(schema_col_type,
-                            type::Type::GetTypeSize(schema_col_type),
-                            expr->expr_name_));
-        direct_map_list.emplace_back(std::make_pair(col_pos, std::make_pair(0, col_pos)));
+        output_schema_columns.push_back(catalog::Column(
+            schema_col_type, type::Type::GetTypeSize(schema_col_type),
+            expr->expr_name_));
+        direct_map_list.emplace_back(
+            std::make_pair(col_pos, std::make_pair(0, col_pos)));
       }
-    }
-    else {
+    } else {
       auto col_len = col_prop->GetSize();
-      for (size_t col_pos = 0; col_pos<col_len; col_pos++) {
+      for (size_t col_pos = 0; col_pos < col_len; col_pos++) {
         auto expr = col_prop->GetColumn(col_pos);
         (*output_expr_map_)[expr] = col_pos;
         auto old_col_pos = child_expr_map[expr];
         auto schema_col_type = expr->GetValueType();
-        output_schema_columns.push_back(
-            catalog::Column(schema_col_type,
-                            type::Type::GetTypeSize(schema_col_type),
-                            expr->expr_name_));
-        direct_map_list.emplace_back(std::make_pair(col_pos, std::make_pair(0, old_col_pos)));
+        output_schema_columns.push_back(catalog::Column(
+            schema_col_type, type::Type::GetTypeSize(schema_col_type),
+            expr->expr_name_));
+        direct_map_list.emplace_back(
+            std::make_pair(col_pos, std::make_pair(0, old_col_pos)));
       }
     }
   }
-  
+
   // Handle group by columns
   std::vector<oid_t> col_ids;
-  for (auto col : *(op->columns))
-    col_ids.push_back(child_expr_map[col]);
+  for (auto col : *(op->columns)) col_ids.push_back(child_expr_map[col]);
 
   // Handle having clause
-  expression::AbstractExpression* having = nullptr;
+  expression::AbstractExpression *having = nullptr;
   if (op->having != nullptr) {
     expression::ExpressionUtil::EvaluateExpression(child_expr_map, op->having);
     having = op->having->Copy();
   }
-  
+
   // Generate the Aggregate Plan
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
   std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(output_schema_columns));
-  std::unique_ptr<planner::AggregatePlan> agg_plan(
-      new planner::AggregatePlan(
-          std::move(proj_info), std::move(predicate),
-          std::move(agg_terms), std::move(col_ids),
-          output_table_schema, agg_type));
+  std::unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(col_ids), output_table_schema, agg_type));
   agg_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(agg_plan);
 }
-
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
