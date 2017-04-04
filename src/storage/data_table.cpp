@@ -542,7 +542,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 		return true;
 }
 
-
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
