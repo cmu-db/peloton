@@ -62,7 +62,23 @@ void Table::GenerateVectorizedScan(CodeGen &codegen, llvm::Value *table_ptr,
   DoGenerateScan(codegen, table_ptr, vector_size, consumer);
 }
 
-// Generate a scan over all tile groups
+/**
+ * Generate a scan over all tile groups.
+ *
+ * @code
+ * column_layouts := alloca<peloton::ColumnLayoutInfo>(
+ *     table.GetSchema().GetColumnCount())
+ *
+ * oid_t tile_group_idx := 0
+ * num_tile_groups = GetTileGroupCount(table_ptr)
+ *
+ * for (; tile_group_idx < num_tile_groups; ++tile_group_idx) {
+ *   tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
+ *   VectorizedTidScan(tile_group_ptr, column_layouts, vector_size, consumer);
+ * }
+ *
+ * @endcode
+ */
 void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
                            uint32_t vector_size, ScanConsumer &consumer) const {
   // First get the columns from the table the consumer needs. For every column,
@@ -92,10 +108,11 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     // Generate the scan cover over the given tile group
     if (vector_size > 1) {
       tile_group_.GenerateVectorizedTidScan(
-          codegen, tile_group_ptr, column_layouts, vector_size, consumer);
+          codegen, tile_group_idx, tile_group_ptr, column_layouts,
+          vector_size, consumer);
     } else {
-      tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
-                                  consumer);
+      tile_group_.GenerateTidScan(codegen, tile_group_idx, tile_group_ptr,
+                                  column_layouts, consumer);
     }
 
     // Invoke the consumer to let her know that we're done with this tile group

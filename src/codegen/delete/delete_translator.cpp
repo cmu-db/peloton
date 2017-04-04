@@ -58,9 +58,11 @@ void DeleteTranslator::Consume(ConsumerContext &context, RowBatch::Row &row) con
 
   auto &codegen = context.GetCodeGen();
 
-  auto tid = row.GetTID(codegen);
+  auto tile_group_id = row.GetTileGroupID();
+  auto tuple_id = row.GetTID(codegen);
 
-  codegen.CallPrintf("tid = %d\n", { tid });
+  codegen.CallPrintf("tile_group_id = %d\n", { tile_group_id });
+  codegen.CallPrintf("tuple_id = %d\n", { tuple_id });
 }
 
 }  // namespace codegen

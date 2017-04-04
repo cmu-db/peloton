@@ -94,7 +94,9 @@ class TableScanTranslator : public OperatorTranslator {
     }
 
     // The code that forms the body of the scan loop
-    void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
+    void ProcessTuples(CodeGen &codegen,
+                       llvm::Value *tile_group_id,
+                       llvm::Value *tid_start,
                        llvm::Value *tid_end,
                        TileGroup::TileGroupAccess &tile_group_access) override;
 
@@ -115,7 +117,7 @@ class TableScanTranslator : public OperatorTranslator {
 
     // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
     // store their TIDs in the output TID selection vector
-    void FilterRowsByPredicate(CodeGen &codegen,
+    void FilterRowsByPredicate(CodeGen &codegen, llvm::Value *tile_group_id,
                                const TileGroup::TileGroupAccess &access,
                                llvm::Value *tid_start, llvm::Value *tid_end,
                                Vector &selection_vector) const;

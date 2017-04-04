@@ -38,11 +38,15 @@ class TileGroup {
   TileGroup(const catalog::Schema &schema);
 
   // Generate code that performs a sequential scan over the provided tile group
-  void GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
+  void GenerateTidScan(CodeGen &codegen,
+                       llvm::Value *tile_group_id,
+                       llvm::Value *tile_group_ptr,
                        llvm::Value *column_layouts,
                        ScanConsumer &consumer) const;
 
-  void GenerateVectorizedTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
+  void GenerateVectorizedTidScan(CodeGen &codegen,
+                                 llvm::Value *tile_group_id,
+                                 llvm::Value *tile_group_ptr,
                                  llvm::Value *column_layouts,
                                  uint32_t vector_size,
                                  ScanConsumer &consumer) const;

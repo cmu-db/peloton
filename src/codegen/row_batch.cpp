@@ -192,10 +192,11 @@ llvm::Value *RowBatch::OutputTracker::GetFinalOutputPos() const {
 // ROW BATCH
 //===----------------------------------------------------------------------===//
 
-RowBatch::RowBatch(CompilationContext &ctx, llvm::Value *tid_start,
-                   llvm::Value *tid_end, Vector &selection_vector,
-                   bool filtered)
+RowBatch::RowBatch(CompilationContext &ctx, llvm::Value *tile_group_id,
+                   llvm::Value *tid_start, llvm::Value *tid_end,
+                   Vector &selection_vector, bool filtered)
     : context_(ctx),
+      tile_group_id_(tile_group_id),
       tid_start_(tid_start),
       tid_end_(tid_end),
       num_rows_(nullptr),
@@ -343,6 +344,13 @@ llvm::Value *RowBatch::GetNumTotalRows(CodeGen &codegen) {
     num_rows_ = codegen->CreateSub(tid_end_, tid_start_);
   }
   return num_rows_;
+}
+
+llvm::Value *RowBatch::GetTileGroupID() const {
+  PL_ASSERT((this->tile_group_id_ != nullptr) ||
+                "This row batch doesn't have tile_group_id");
+
+  return this->tile_group_id_;
 }
 
 void RowBatch::UpdateWritePosition(llvm::Value *sz) {
