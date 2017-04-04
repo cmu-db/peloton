@@ -251,29 +251,19 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
             agg_expr->distinct_);
         agg_terms.push_back(agg_term);
       } else {
+        // TODO: do we need to handle TupleValueExpr and other Expr differently?
         agg_type = AggregateType::HASH;
         // Pass through non-aggregate values. See aggregator.cpp for more info.
         direct_map_list.emplace_back(
             std::make_pair(col_pos, std::make_pair(0, child_expr_map[expr])));
       }
 
+      // TODO: Change this. We should only add to expr_map for TupleValueExpr
       (*output_expr_map_)[expr] = col_pos;
 
-      type::Type::TypeId schema_col_type;
-      switch (expr->GetExpressionType()) {
-        case ExpressionType::AGGREGATE_AVG:
-          schema_col_type = type::Type::DECIMAL;
-          break;
-        case ExpressionType::AGGREGATE_COUNT_STAR:
-        case ExpressionType::AGGREGATE_COUNT:
-          schema_col_type = type::Type::INTEGER;
-          break;
-        default:
-          schema_col_type = expr->GetValueType();
-      }
       output_schema_columns.push_back(
-          catalog::Column(schema_col_type,
-                          type::Type::GetTypeSize(schema_col_type),
+          catalog::Column(expr->GetValueType(),
+                          type::Type::GetTypeSize(expr->GetValueType()),
                           expr->expr_name_));
     }
   }
@@ -310,15 +300,20 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
       }
     }
   }
+  
+  // Handle group by columns
   std::vector<oid_t> col_ids;
   for (auto col : *(op->columns))
     col_ids.push_back(child_expr_map[col]);
 
+  // Handle having clause
   expression::AbstractExpression* having = nullptr;
   if (op->having != nullptr) {
     expression::ExpressionUtil::EvaluateExpression(child_expr_map, op->having);
     having = op->having->Copy();
   }
+  
+  // Generate the Aggregate Plan
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
   std::unique_ptr<const expression::AbstractExpression> predicate(having);

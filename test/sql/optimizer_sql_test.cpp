@@ -256,16 +256,12 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   // test projection for order by
   query = "SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b";
   LOG_DEBUG("%s", query.c_str());
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
 
   // check for plan node type
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
+            PlanNodeType::ORDERBY);
 
   // test small int
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
@@ -275,8 +271,33 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   EXPECT_EQ(4, result.size());
   EXPECT_EQ("21", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("-306", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("-396", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("-535", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("-535", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("-396", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+  // test projection for order by
+  query = "SELECT a, a + c FROM test ORDER BY a * 3 * b DESC, b + c / 5 ASC";
+  LOG_DEBUG("%s", query.c_str());
+
+  // check for plan node type
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+          PlanNodeType::ORDERBY);
+
+  // test small int
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+          optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  // Should be: 27, 332
+  EXPECT_EQ(8, result.size());
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("334", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 7));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
