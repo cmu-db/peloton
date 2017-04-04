@@ -114,7 +114,12 @@ class Type {
   // Is the given type an integral type (i.e., tinyint to bigint)
   static bool IsIntegral(type::Type::TypeId type_id);
 
+
+  // Get a null value for a given peloton type
   static llvm::Value *GetNullValue(CodeGen &codegen,
+                                   type::Type::TypeId type_id);
+
+  static llvm::Value *GetNullValueNonInt(CodeGen &codegen,
                                    type::Type::TypeId type_id);
 
   static void GetTypeForMaterialization(CodeGen &codegen,

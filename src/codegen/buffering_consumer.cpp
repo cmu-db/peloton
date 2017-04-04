@@ -123,7 +123,12 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::TIMESTAMP:
+      case type::Type::TypeId::TIMESTAMP: {
+        codegen.CallFunc(
+            ValuesRuntimeProxy::_OutputTimestamp::GetFunction(codegen),
+            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
+        break;
+      }
       case type::Type::TypeId::BIGINT: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen),

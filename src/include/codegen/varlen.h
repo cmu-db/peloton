@@ -46,7 +46,6 @@ class Varlen {
                               llvm::Value *&is_null) {
     // In order to load the components of the Varlen*, we need to do a null
     // check on the Varlen** argument first, to avoid loading garbage/segfault
-
     is_null = codegen->CreateICmpEQ(
         varlen_ptr_ptr,
         Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR));
@@ -55,7 +54,7 @@ class Varlen {
     If varlen_is_null{codegen, is_null};
     {
       // The pointer is null
-      null_data = codegen.NullPtr(codegen.Int8Type()->getPointerTo());
+      null_data = codegen.Null(codegen.CharPtrType());
       null_len = codegen.Const32(0);
     }
     varlen_is_null.ElseBlock();

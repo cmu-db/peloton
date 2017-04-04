@@ -117,6 +117,9 @@ class CodeGen {
   // Return the size of the given type in bytes
   uint64_t SizeOf(llvm::Type *type) const;
 
+  // Return the size of the given type in bits
+  uint64_t BitSizeOf(llvm::Type *type) const;
+
   // Get the context where all the code we generate resides
   CodeContext &GetCodeContext() const { return code_context_; }
 
