@@ -129,20 +129,18 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
 codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
                                      const TileGroup::ColumnLayout &layout,
                                      uint32_t vector_size) const {
-  // TODO: Move much of this logic into codegen::Value::InitFromTupleStorage ?
-
   // We're calculating: col[tid] = col_start + (tid + col_stride)
   llvm::Value *col_address =
       codegen->CreateInBoundsGEP(codegen.ByteType(), layout.col_start_ptr,
                                  codegen->CreateMul(tid, layout.col_stride));
 
-  // Column metadata
-  const auto &column = schema_.GetColumn(layout.col_id);
-
   // The value, length and is_null check
   llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
 
-  // If it's a varchar, handle specially
+  // Column metadata
+  const auto &column = schema_.GetColumn(layout.col_id);
+
+  // Check if it's a string or numeric value
   if (Type::HasVariableLength(column.GetType())) {
     PL_ASSERT(!column.IsInlined());
 
@@ -172,11 +170,11 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
     }
 
     if (schema_.AllowNull(layout.col_id)) {
-      llvm::Value *null_vall = Type::GetNullValue(codegen, column.GetType());
+      llvm::Value *null_val = Type::GetNullValue(codegen, column.GetType());
       if (Type::IsIntegral(column.GetType())) {
-        is_null = codegen->CreateICmpEQ(null_vall, val);
+        is_null = codegen->CreateICmpEQ(null_val, val);
       } else {
-        is_null = codegen->CreateFCmpOEQ(null_vall, val);
+        is_null = codegen->CreateFCmpOEQ(null_val, val);
       }
     }
   }

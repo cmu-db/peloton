@@ -12,6 +12,7 @@
 
 #include "codegen/type.h"
 
+#include "codegen/if.h"
 #include "codegen/values_runtime_proxy.h"
 #include "type/value.h"
 
@@ -877,7 +878,8 @@ static DecimalDiv kDecimalDiv;
 static DecimalMod kDecimalMod;
 
 // String representation of all binary operators
-const std::string Type::kBinaryOpNames[] = {"Add", "Sub", "Mul", "Div", "Mod"};
+const std::string Type::kOpNames[] = {"Negation", "Abs", "Add", "Sub",
+                                      "Mul",      "Div", "Mod"};
 
 std::vector<const Type::Comparison *> Type::kComparisonTable = {
     &kComparison,         // Invalid
@@ -896,20 +898,11 @@ std::vector<const Type::Comparison *> Type::kComparisonTable = {
     &kComparison};        // UDT
 
 Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
-    {Type::BinaryOperatorId::Add,
-     {&kIntegerAdd, &kDecimalAdd, &kMixedIntegerAdd}},
-
-    {Type::BinaryOperatorId::Sub,
-     {&kIntegerSub, &kDecimalSub, &kMixedIntegerSub}},
-
-    {Type::BinaryOperatorId::Mul,
-     {&kIntegerMul, &kDecimalMul, &kMixedIntegerMul}},
-
-    {Type::BinaryOperatorId::Div,
-     {&kIntegerDiv, &kDecimalDiv, &kMixedIntegerDiv}},
-
-    {Type::BinaryOperatorId::Mod,
-     {&kIntegerMod, &kDecimalMod, &kMixedIntegerMod}}};
+    {Type::OperatorId::Add, {&kIntegerAdd, &kDecimalAdd, &kMixedIntegerAdd}},
+    {Type::OperatorId::Sub, {&kIntegerSub, &kDecimalSub, &kMixedIntegerSub}},
+    {Type::OperatorId::Mul, {&kIntegerMul, &kDecimalMul, &kMixedIntegerMul}},
+    {Type::OperatorId::Div, {&kIntegerDiv, &kDecimalDiv, &kMixedIntegerDiv}},
+    {Type::OperatorId::Mod, {&kIntegerMod, &kDecimalMod, &kMixedIntegerMod}}};
 
 bool Type::HasVariableLength(type::Type::TypeId type_id) {
   return type_id == type::Type::TypeId::VARCHAR ||
@@ -983,7 +976,7 @@ llvm::Value *Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
       return codegen.Const64(type::PELOTON_TIMESTAMP_NULL);
     case type::Type::TypeId::VARBINARY:
     case type::Type::TypeId::VARCHAR:
-      return codegen.Null(codegen.Int8Type());
+      return codegen.NullPtr(codegen.CharPtrType());
     default: {
       auto msg = StringUtil::Format("Unknown Type '%d' for GetNullValue",
                                     static_cast<uint32_t>(type_id));
@@ -997,7 +990,7 @@ const Type::Comparison *Type::GetComparison(type::Type::TypeId type_id) {
 }
 
 const Type::BinaryOperator *Type::GetBinaryOperator(
-    Type::BinaryOperatorId op_id, type::Type::TypeId left_type,
+    Type::OperatorId op_id, type::Type::TypeId left_type,
     type::Type::TypeId right_type) {
   // Get the list of function overloads
   const auto &iter = kBuiltinBinaryOperatorsTable.find(op_id);
@@ -1011,10 +1004,11 @@ const Type::BinaryOperator *Type::GetBinaryOperator(
   }
 
   // Error
-  throw Exception{"No compatible binary operator [" +
-                  kBinaryOpNames[static_cast<uint32_t>(op_id)] +
-                  "] for input types: " + TypeIdToString(left_type) + ", " +
-                  TypeIdToString(right_type)};
+  std::string msg = StringUtil::Format(
+      "No compatible [%s] operator for input types: %s, %s",
+      kOpNames[static_cast<uint32_t>(op_id)], TypeIdToString(left_type).c_str(),
+      TypeIdToString(right_type).c_str());
+  throw Exception{msg};
 }
 
 }  // namespace codegen

@@ -75,6 +75,19 @@ class AbstractExpression : public Printable {
     return GetModifiableChild(index);
   }
 
+  bool IsNullable() const {
+    // An expression produces a nullable value iff at least one of its input
+    // attributes is null ... I think
+    std::unordered_set<const planner::AttributeInfo *> used_attributes;
+    GetUsedAttributes(used_attributes);
+    for (const auto *ai : used_attributes) {
+      if (ai->nullable) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   size_t GetChildrenSize() const { return children_.size(); }
 
   AbstractExpression *GetModifiableChild(int index) const {

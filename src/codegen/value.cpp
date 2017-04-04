@@ -105,44 +105,43 @@ codegen::Value Value::TestEquality(CodeGen &codegen,
 
 // Addition
 Value Value::Add(CodeGen &codegen, const Value &o) const {
-  auto *add_op = Type::GetBinaryOperator(Type::BinaryOperatorId::Add, GetType(),
-                                         o.GetType());
+  auto *add_op =
+      Type::GetBinaryOperator(Type::OperatorId::Add, GetType(), o.GetType());
   return add_op->DoWork(codegen, *this, o);
 }
 
 // Subtraction
 Value Value::Sub(CodeGen &codegen, const Value &o) const {
-  auto *sub_op = Type::GetBinaryOperator(Type::BinaryOperatorId::Sub, GetType(),
-                                         o.GetType());
+  auto *sub_op =
+      Type::GetBinaryOperator(Type::OperatorId::Sub, GetType(), o.GetType());
   return sub_op->DoWork(codegen, *this, o);
 }
 
 // Multiplication
 Value Value::Mul(CodeGen &codegen, const Value &o) const {
-  auto *mul_op = Type::GetBinaryOperator(Type::BinaryOperatorId::Mul, GetType(),
-                                         o.GetType());
+  auto *mul_op =
+      Type::GetBinaryOperator(Type::OperatorId::Mul, GetType(), o.GetType());
   return mul_op->DoWork(codegen, *this, o);
 }
 
 // Division
 Value Value::Div(CodeGen &codegen, const Value &o) const {
-  auto *div_op = Type::GetBinaryOperator(Type::BinaryOperatorId::Div, GetType(),
-                                         o.GetType());
+  auto *div_op =
+      Type::GetBinaryOperator(Type::OperatorId::Div, GetType(), o.GetType());
   return div_op->DoWork(codegen, *this, o);
 }
 
 // Modulus
 Value Value::Mod(CodeGen &codegen, const Value &o) const {
-  auto *mod_op = Type::GetBinaryOperator(Type::BinaryOperatorId::Mod, GetType(),
-                                         o.GetType());
+  auto *mod_op =
+      Type::GetBinaryOperator(Type::OperatorId::Mod, GetType(), o.GetType());
   return mod_op->DoWork(codegen, *this, o);
 }
 
 // Mathematical minimum
 Value Value::Min(CodeGen &codegen, const Value &o) const {
   // Check if this < o
-  auto *comparison = Type::GetComparison(GetType());
-  auto is_lt = comparison->DoCompareLt(codegen, *this, o);
+  auto is_lt = CompareLt(codegen, o);
 
   // Choose either this or o depending on result of comparison
   llvm::Value *val =
@@ -157,8 +156,7 @@ Value Value::Min(CodeGen &codegen, const Value &o) const {
 // Mathematical maximum
 Value Value::Max(CodeGen &codegen, const Value &o) const {
   // Check if this > o
-  auto *comparison = Type::GetComparison(GetType());
-  auto is_gt = comparison->DoCompareGt(codegen, *this, o);
+  auto is_gt = CompareGt(codegen, o);
 
   // Choose either this or o depending on result of comparison
   llvm::Value *val =
@@ -245,19 +243,30 @@ Value Value::BuildPHI(
     CodeGen &codegen,
     const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals) {
   PL_ASSERT(vals.size() > 0);
+  uint32_t num_entries = static_cast<uint32_t>(vals.size());
+
+  // The SQL type of the values that we merge here
   // TODO: Need to make sure all incoming types are unifyable
   auto type = vals[0].first.GetType();
-  if (type == type::Type::TypeId::VARCHAR ||
-      type == type::Type::TypeId::VARBINARY) {
-    auto *val_phi = codegen->CreatePHI(codegen.CharPtrType(), vals.size());
-    auto *len_phi = codegen->CreatePHI(codegen.Int32Type(), vals.size());
+
+  // Get the LLVM type for the values
+  llvm::Type *val_type = nullptr, *len_type = nullptr;
+  Type::GetTypeForMaterialization(codegen, type, val_type, len_type);
+  PL_ASSERT(val_type != nullptr);
+
+  // Do the merge depending on the type
+  if (Type::HasVariableLength(type)) {
+    PL_ASSERT(len_type != nullptr);
+    auto *val_phi = codegen->CreatePHI(val_type, num_entries);
+    auto *len_phi = codegen->CreatePHI(len_type, num_entries);
     for (const auto &val_pair : vals) {
       val_phi->addIncoming(val_pair.first.GetValue(), val_pair.second);
       len_phi->addIncoming(val_pair.first.GetLength(), val_pair.second);
     }
     return Value{type, val_phi, len_phi};
   } else {
-    auto *phi = codegen->CreatePHI(NumericType(codegen, type), vals.size());
+    PL_ASSERT(len_type == nullptr);
+    auto *phi = codegen->CreatePHI(val_type, num_entries);
     for (const auto &val_pair : vals) {
       phi->addIncoming(val_pair.first.GetValue(), val_pair.second);
     }

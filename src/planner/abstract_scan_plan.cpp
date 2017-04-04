@@ -12,15 +12,13 @@
 
 #include "planner/abstract_scan_plan.h"
 
-#include <numeric>
-
 #include "storage/data_table.h"
 
 namespace peloton {
 namespace planner {
 
 void AbstractScan::PerformBinding(BindingContext &binding_context) {
-  const auto& children = GetChildren();
+  const auto &children = GetChildren();
   if (children.size() > 0) {
     // We're scanning some intermediate result. This scan node doesn't produce
     // any new attributes, and hence, doesn't need to worry about binding its
@@ -41,8 +39,9 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
     const auto *schema = GetTable()->GetSchema();
     for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
       const auto column = schema->GetColumn(col_id);
-      attributes_.push_back(
-          AttributeInfo{column.GetType(), col_id, column.GetName()});
+      bool nullable = schema->AllowNull(col_id);
+      attributes_.push_back(AttributeInfo{column.GetType(), nullable, col_id,
+                                          column.GetName()});
     }
 
     // Perform attribute binding only for actual output columns
