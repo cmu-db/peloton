@@ -243,10 +243,10 @@ llvm::Function *ValuesRuntimeProxy::_CompareStrings::GetFunction(
     return llvm_fn;
   }
 
-  auto arg_types = {codegen.CharPtrType(),  // str1
-                    codegen.Int32Type(),    // str1 length
-                    codegen.CharPtrType(),  // str2
-                    codegen.Int32Type()};   // str2 length
+  std::vector<llvm::Type *> arg_types = {codegen.CharPtrType(),  // str1
+                                         codegen.Int32Type(),    // str1 length
+                                         codegen.CharPtrType(),  // str2
+                                         codegen.Int32Type()};   // str2 length
   auto *fn_type =
       llvm::FunctionType::get(codegen.Int32Type(), arg_types, false);
   return codegen.RegisterFunction(fn_name, fn_type);

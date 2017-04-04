@@ -65,22 +65,17 @@ class Type {
                                       const Value &right) const;
   };
 
-  // All unary operators we currently support
-  enum class UnaryOperatorId : uint32_t {
+  // All builtin operators we currently support
+  enum class OperatorId : uint32_t {
     Negation = 0,
     Abs,
-  };
-  static const std::string kUnaryOpNames[];
-
-  // All binary operators we currently support
-  enum class BinaryOperatorId : uint32_t {
     Add,
     Sub,
     Mul,
     Div,
     Mod,
   };
-  static const std::string kBinaryOpNames[];
+  static const std::string kOpNames[];
 
   //===--------------------------------------------------------------------===//
   // A unary operator (i.e., an operator that accepts a single argument)
@@ -114,14 +109,11 @@ class Type {
   // Is the given type an integral type (i.e., tinyint to bigint)
   static bool IsIntegral(type::Type::TypeId type_id);
 
-
-  // Get a null value for a given peloton type
+  // Get the default null value for the given type
   static llvm::Value *GetNullValue(CodeGen &codegen,
                                    type::Type::TypeId type_id);
 
-  static llvm::Value *GetNullValueNonInt(CodeGen &codegen,
-                                   type::Type::TypeId type_id);
-
+  // Get the LLVM types used to materialize a SQL value of the given type
   static void GetTypeForMaterialization(CodeGen &codegen,
                                         type::Type::TypeId type_id,
                                         llvm::Type *&val_type,
@@ -131,7 +123,7 @@ class Type {
   static const Comparison *GetComparison(type::Type::TypeId type_id);
 
   // Lookup the given binary operator that works on the left and right types
-  static const BinaryOperator *GetBinaryOperator(BinaryOperatorId op_id,
+  static const BinaryOperator *GetBinaryOperator(OperatorId op_id,
                                                  type::Type::TypeId left_type,
                                                  type::Type::TypeId right_type);
 
@@ -140,22 +132,21 @@ class Type {
   static std::vector<const Comparison *> kComparisonTable;
 
   struct OperatorIdHasher {
-    template <typename T>
-    size_t operator()(const T &func_id) const {
+    size_t operator()(const OperatorId &func_id) const {
       return std::hash<uint32_t>{}(static_cast<uint32_t>(func_id));
     }
   };
 
-  typedef std::unordered_map<UnaryOperatorId,
+  typedef std::unordered_map<OperatorId,
                              std::vector<const UnaryOperator *>,
                              OperatorIdHasher> UnaryOperatorTable;
 
-  typedef std::unordered_map<BinaryOperatorId,
+  typedef std::unordered_map<OperatorId,
                              std::vector<const BinaryOperator *>,
                              OperatorIdHasher> BinaryOperatorTable;
 
   // The table of builtin unary operators
-  static BinaryOperatorTable kBuiltinUnaryOperatorsTable;
+  static UnaryOperatorTable kBuiltinUnaryOperatorsTable;
 
   // The table of builtin binary operators
   static BinaryOperatorTable kBuiltinBinaryOperatorsTable;

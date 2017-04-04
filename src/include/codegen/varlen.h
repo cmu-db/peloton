@@ -44,11 +44,11 @@ class Varlen {
   static void GetPtrAndLength(CodeGen &codegen, llvm::Value *varlen_ptr_ptr,
                               llvm::Value *&data_ptr, llvm::Value *&len,
                               llvm::Value *&is_null) {
-    // In order to load the components of the Varlen*, we need to do a null
-    // check on the Varlen** argument first, to avoid loading garbage/segfault
-    is_null = codegen->CreateICmpEQ(
-        varlen_ptr_ptr,
-        Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR));
+    // Before loading the components of the Varlen, we need to do a null check
+    // on the Varlen** function argument.
+
+    auto *null_ptr = Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR);
+    is_null = codegen->CreateICmpEQ(varlen_ptr_ptr, null_ptr);
 
     llvm::Value *null_data = nullptr, *null_len = nullptr;
     If varlen_is_null{codegen, is_null};

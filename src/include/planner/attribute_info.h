@@ -25,6 +25,8 @@ namespace planner {
 struct AttributeInfo {
   // The actual type of this attribute (smallint, integer, varchar etc.)
   type::Type::TypeId type;
+  // Is this attribute nullable (i.e., can it take on a null value)
+  bool nullable;
   // The ID of the attribute
   oid_t attribute_id;
   // The name of this attribute. This isn't always available, so no one should

@@ -14,18 +14,19 @@
 
 #include <string>
 
+#include "common/logger.h"
+#include "common/macros.h"
 #include "common/printable.h"
+#include "common/sql_node_visitor.h"
 #include "planner/attribute_info.h"
+#include "type/serializeio.h"
 #include "type/types.h"
-#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 
-// Forward Declaration
 class Printable;
 class AbstractTuple;
-class SqlNodeVisitor;
-enum class ExpressionType;
 
 namespace planner {
 class BindingContext;
@@ -33,10 +34,6 @@ class BindingContext;
 
 namespace executor {
 class ExecutorContext;
-}
-
-namespace type {
-class Value;
 }
 
 namespace expression {
@@ -78,6 +75,19 @@ class AbstractExpression : public Printable {
     return GetModifiableChild(index);
   }
 
+  bool IsNullable() const {
+    // An expression produces a nullable value iff at least one of its input
+    // attributes is null ... I think
+    std::unordered_set<const planner::AttributeInfo *> used_attributes;
+    GetUsedAttributes(used_attributes);
+    for (const auto *ai : used_attributes) {
+      if (ai->nullable) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   size_t GetChildrenSize() const { return children_.size(); }
 
   AbstractExpression *GetModifiableChild(int index) const {
@@ -96,9 +106,9 @@ class AbstractExpression : public Printable {
 
   /** accessors */
 
-  inline ExpressionType GetExpressionType() const { return exp_type_; }
+  ExpressionType GetExpressionType() const { return exp_type_; }
 
-  inline type::Type::TypeId GetValueType() const { return return_value_type_; }
+  type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   // Attribute binding
   virtual void PerformBinding(const planner::BindingContext &binding_context) {
@@ -208,23 +218,6 @@ class AbstractExpression : public Printable {
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 
   bool has_parameter_ = false;
-};
-
-// Equality Comparator class for Abstract Expression
-class ExprEqualCmp {
- public:
-  inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
-                         std::shared_ptr<AbstractExpression> expr2) const {
-    return expr1->Equals(expr2.get());
-  }
-};
-
-// Hasher class for Abstract Expression
-class ExprHasher {
- public:
-  inline size_t operator()(std::shared_ptr<AbstractExpression> expr) const {
-    return expr->Hash();
-  }
 };
 
 }  // End expression namespace
