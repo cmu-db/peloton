@@ -325,7 +325,10 @@ HashGroupByTranslator::ProduceResults::ProduceResults(
 void HashGroupByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start, llvm::Value *end, Vector &selection_vector,
     HashTable::HashTableAccess &access) const {
-  RowBatch batch{translator_.GetCompilationContext(), start, end,
+
+  // @todo What should tile_group_id be?
+  RowBatch batch{translator_.GetCompilationContext(), /* tile_group_id */ nullptr,
+                 start, end,
                  selection_vector, true};
 
   AggregateFinalizer finalizer{translator_.GetAggregation(), access};

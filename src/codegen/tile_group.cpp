@@ -31,13 +31,26 @@ namespace codegen {
 // TileGroup constructor
 TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 
-//===----------------------------------------------------------------------===//
-// This method generates code to scan over all the tuples in the provided
-// tile group. The fourth argument is allocated stack space where
-// ColumnLayoutInfo structs are, which we need to acquire the layout information
-// of columns in this tile group.
-//===----------------------------------------------------------------------===//
-void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
+/**
+ * @brief This method generates code to scan over all the tuples in the provided
+ * tile group. The fourth argument is allocated stack space where
+ * ColumnLayoutInfo structs are, which we need to acquire the layout information
+ * of columns in this tile group.
+ *
+ * @code
+ * col_layouts := GetColumnLayouts(tile_group_ptr, column_layouts)
+ * num_tuples := GetNumTuples(tile_group_ptr)
+ *
+ * tid := 0
+ * while tid < num_tuples {
+ *   ProcessTuples(tid, num_tuples, tile_group_ptr)
+ *   tid := tid + 1
+ * }
+ * @endcode
+ */
+void TileGroup::GenerateTidScan(CodeGen &codegen,
+                                llvm::Value *tile_group_id,
+                                llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 ScanConsumer &consumer) const {
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
@@ -53,7 +66,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 
     // Call the consumer to generate the body of the scan loop
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, tid, num_tuples, tile_group_access);
+    consumer.ProcessTuples(codegen, tile_group_id, tid, num_tuples, tile_group_access);
 
     // Move to next tuple in the tile group
     tid = codegen->CreateAdd(tid, codegen.Const32(1));
@@ -61,9 +74,22 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
   }
 }
 
-// All we do here is scan over the tuples in the tile group in vectors of the
-// given size. We let the consumer do with it as it sees fit.
+/**
+ * All we do here is scan over the tuples in the tile group in vectors of the
+ * given size. We let the consumer do with it as it sees fit.
+ *
+ * @code
+ * col_layouts := GetColumnLayouts(tile_group_ptr, column_layouts)
+ * num_tuples := GetNumTuples(tile_group_ptr)
+ *
+ * for (start := 0; start < num_tuples; start += vector_size) {
+ *   end := min(start + vector_size, num_tuples)
+ *   ProcessTuples(start, end, tile_group_ptr);
+ * }
+ * @endcode
+ */
 void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
+                                          llvm::Value *tile_group_id,
                                           llvm::Value *tile_group_ptr,
                                           llvm::Value *column_layouts,
                                           uint32_t vector_size,
@@ -78,7 +104,8 @@ void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
 
     // Pass the vector to the consumer
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, curr_range.start, curr_range.end,
+    consumer.ProcessTuples(codegen, tile_group_id,
+                           curr_range.start, curr_range.end,
                            tile_group_access);
 
     loop.LoopEnd(codegen, {});

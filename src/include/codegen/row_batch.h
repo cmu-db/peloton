@@ -78,6 +78,8 @@ class RowBatch {
     // Get this row's position in the batch
     llvm::Value *GetBatchPosition() const { return batch_position_; }
 
+    llvm::Value *GetTileGroupID() const { return this->batch_.GetTileGroupID(); }
+
     // Get the unique TID of this row
     llvm::Value *GetTID(CodeGen &codegen);
 
@@ -198,8 +200,9 @@ class RowBatch {
 
  public:
   // Constructor
-  RowBatch(CompilationContext &ctx, llvm::Value *tid_start,
-           llvm::Value *tid_end, Vector &selection_vector, bool filtered);
+  RowBatch(CompilationContext &ctx, llvm::Value *tile_group_id,
+           llvm::Value *tid_start, llvm::Value *tid_end,
+           Vector &selection_vector, bool filtered);
 
   // Add an attribute to batch
   void AddAttribute(const planner::AttributeInfo *ai, AttributeAccess *access);
@@ -228,6 +231,8 @@ class RowBatch {
   // Have the rows in this batch been filtered by the selection vector?
   bool IsFiltered() const { return filtered_; }
 
+  llvm::Value *GetTileGroupID() const;
+
   // Return a const reference to the selection vector
   const Vector &GetSelectionVector() const { return selection_vector_; }
 
@@ -244,6 +249,12 @@ class RowBatch {
   // A batch either captures _all_ rows between two physical positions or all
   // rows whose positions are stored in the selection vector
   CompilationContext &context_;
+
+  // The ID of the tile group this batch is within.
+  // A tile group ID and a tuple ID form an ItemPointer, which can uniquely
+  // identify a tuple in a table.
+  // If this is nullptr, then this row_batch doesn't record tile group ID.
+  llvm::Value *tile_group_id_;
 
   // The range of TIDs this batch covers
   llvm::Value *tid_start_;

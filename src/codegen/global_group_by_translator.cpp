@@ -80,7 +80,9 @@ void GlobalGroupByTranslator::Produce() const {
   auto &codegen = GetCodeGen();
 
   Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
-  RowBatch batch{GetCompilationContext(), codegen.Const32(0),
+
+  // @todo What should tile_group_id be?
+  RowBatch batch{GetCompilationContext(), /* tile_group_id */ nullptr, codegen.Const32(0),
                  codegen.Const32(1), v, false};
 
   for (size_t i = 0; i < agg_terms.size(); i++) {
