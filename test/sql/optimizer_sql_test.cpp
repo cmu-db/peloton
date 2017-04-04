@@ -626,19 +626,19 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("6", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
   
-  // Complex expression in select list
-  query = "SELECT MAX(b + c) FROM test GROUP BY a, b";
+  // Test complex expression in aggregation
+  query = "SELECT b, MAX(a + c) FROM test GROUP BY b ORDER BY b";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
       tuple_descriptor, rows_changed, error_message);
-//  EXPECT_EQ(8, result.size());
-//  EXPECT_EQ("23", TestingSQLUtil::GetResultValueAsString(result, 0));
-//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 1));
-//  EXPECT_EQ("13", TestingSQLUtil::GetResultValueAsString(result, 2));
-//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
-//  EXPECT_EQ("36", TestingSQLUtil::GetResultValueAsString(result, 4));
-//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 5));
-//  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 6));
-//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ(8, result.size());
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("561", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 7));
   
   // Combine with ORDER BY
   query = "SELECT b FROM test GROUP BY b ORDER BY b";
