@@ -145,8 +145,10 @@ peloton_status PlanExecutor::ExecutePlan(
     for (auto &tuple : results) {
       for (unsigned int i = 0; i < tuple.tuple_.size(); i++) {
         auto res = StatementResult();
-        PlanExecutor::copyFromTo(tuple.tuple_[i].ToString(), res.second);
-        LOG_TRACE("column content: %s", tuple.tuple_[i].ToString().c_str());
+        auto str = tuple.tuple_[i].ToString();
+        if (tuple.tuple_[i].IsNull()) str = "";
+        PlanExecutor::copyFromTo(str, res.second);
+        LOG_TRACE("column content: [%s]", str.c_str());
         result.push_back(std::move(res));
       }
     }

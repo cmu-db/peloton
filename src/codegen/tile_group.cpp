@@ -22,6 +22,8 @@
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
 #include "codegen/vectorized_loop.h"
+#include "codegen/type.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -140,20 +142,19 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
   const auto &column = schema_.GetColumn(layout.col_id);
 
   // The value, length and is_null check
-  llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
+  llvm::Value *val = nullptr, *length = nullptr, *null = nullptr;
 
   // If it's a varchar, handle specially
   if (Type::HasVariableLength(column.GetType())) {
     PL_ASSERT(!column.IsInlined());
 
     if (schema_.AllowNull(layout.col_id)) {
-      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
-                                       is_null);
+      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length, null);
     } else {
       codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
+      null = codegen.ConstBool(false);
     }
-    PL_ASSERT(val != nullptr && length != nullptr);
-
+    PL_ASSERT(val != nullptr && length != nullptr && null != nullptr);
   } else {
     // Get the LLVM type of the column
     llvm::Type *col_type = nullptr, *col_len_type = nullptr;
@@ -172,22 +173,31 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
     }
 
     if (schema_.AllowNull(layout.col_id)) {
-      llvm::Value *null_vall = Type::GetNullValue(codegen, column.GetType());
       if (Type::IsIntegral(column.GetType())) {
-        is_null = codegen->CreateICmpEQ(null_vall, val);
+        llvm::Value *null_val = Type::GetNullValue(codegen, column.GetType());
+        null = codegen->CreateICmpEQ(null_val, val);
       } else {
-        is_null = codegen->CreateFCmpOEQ(null_vall, val);
+        // Do an explicit cast to make sure CreateFCmpOEQp pass its type check
+        // TODO Can we do better? Think about the method used in SetNullValue()
+        llvm::Value *null_val = Type::GetNullValueNonInt(codegen,
+                                                         column.GetType());
+        llvm::Value *val_double =
+            codegen->CreateSIToFP(val, codegen.DoubleType());
+        null = codegen->CreateFCmpOEQ(null_val, val_double);
       }
     }
+    else
+      null = codegen.ConstBool(false);
+    PL_ASSERT(val != nullptr && null != nullptr);
   }
 
   // Names
   val->setName(column.GetName());
   if (length != nullptr) length->setName(column.GetName() + ".len");
-  if (is_null != nullptr) is_null->setName(column.GetName() + ".null");
+  null->setName(column.GetName() + ".null");
 
   // Return the value
-  return codegen::Value{column.GetType(), val, length, is_null};
+  return codegen::Value{column.GetType(), val, length, null};
 }
 
 //===----------------------------------------------------------------------===//

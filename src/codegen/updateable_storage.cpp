@@ -34,7 +34,14 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   }
 
   std::vector<llvm::Type *> llvm_types;
-  for (uint32_t i = 0; i < types_.size(); i++) {
+  const auto numitems = types_.size();
+
+  // We do not keep all the EntryInfos for each bit since it is waste of memory
+  llvm::Type *null_type = codegen.BoolType();
+  for (uint32_t i = 0; i < numitems; i++)
+    llvm_types.push_back(null_type);
+
+  for (uint32_t i = 0; i < numitems; i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, types_[i], val_type, len_type);
@@ -63,7 +70,7 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
 
 // Get the value at a specific index into the storage area
 codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen,
-                                             llvm::Value *area_start,
+                                             llvm::Value *ptr,
                                              uint64_t index) const {
   PL_ASSERT(storage_type_ != nullptr);
   PL_ASSERT(index < types_.size());
@@ -84,28 +91,36 @@ codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen,
   PL_ASSERT(val_idx >= 0);
 
   llvm::Value *typed_ptr =
-      codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
+      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
+  const auto numitems = types_.size();
   llvm::Value *val = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-      storage_type_, typed_ptr, 0, val_idx));
+      storage_type_, typed_ptr, 0, numitems + val_idx));
 
   // If there is a length-component for this entry, load it too
   llvm::Value *len = nullptr;
   if (len_idx > 0) {
     len = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-        storage_type_, typed_ptr, 0, len_idx));
+        storage_type_, typed_ptr, 0, numitems + len_idx));
   }
 
+  llvm::Value *null = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+                                          storage_type_, typed_ptr, 0,
+                                          index));
+
   // Done
-  return codegen::Value{types_[index], val, len};
+  return codegen::Value{types_[index], val, len, null};
 }
 
 // Get the value at a specific index into the storage area
-void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *area_start,
+void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *ptr,
                                    uint64_t index,
                                    const codegen::Value &value) const {
-  llvm::Value *val = nullptr;
-  llvm::Value *len = nullptr;
-  value.ValuesForMaterialization(val, len);
+  llvm::Value *val = nullptr, *len = nullptr, *null = nullptr;
+  value.ValuesForMaterialization(val, len, null);
+
+  // Some data are coming in without its null bit allocated
+  if (null == nullptr)
+    null = codegen::Value::SetNullValue(codegen, value);
 
   // TODO: This linear search isn't great ...
   int val_idx = -1, len_idx = -1;
@@ -121,17 +136,24 @@ void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *area_start,
 
   PL_ASSERT(value.GetValue()->getType() == storage_format_[val_idx].type);
 
+  const auto numitems = types_.size();
   llvm::Value *typed_ptr =
-      codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
+      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
   // Store the value and len at the appropriate slots
   codegen->CreateStore(val, codegen->CreateConstInBoundsGEP2_32(
-                                storage_type_, typed_ptr, 0, val_idx));
+                                storage_type_, typed_ptr, 0,
+                                numitems + val_idx));
 
   // If there's a length-component, store it at the appropriate index too
   if (len != nullptr) {
     codegen->CreateStore(len, codegen->CreateConstInBoundsGEP2_32(
-                                  storage_type_, typed_ptr, 0, len_idx));
+                                  storage_type_, typed_ptr, 0,
+                                  numitems + len_idx));
   }
+
+  codegen->CreateStore(null, codegen->CreateConstInBoundsGEP2_32(
+      storage_type_, typed_ptr, 0, index));
+
 }
 
 }  // namespace codegen

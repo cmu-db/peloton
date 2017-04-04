@@ -40,6 +40,11 @@ void ValuesRuntime::OutputBigInt(char *values, uint32_t idx, int64_t val) {
   vals[idx] = type::ValueFactory::GetBigIntValue(val);
 }
 
+void ValuesRuntime::OutputTimestamp(char *values, uint32_t idx, int64_t val) {
+  type::Value *vals = reinterpret_cast<type::Value *>(values);
+  vals[idx] = type::ValueFactory::GetTimestampValue(val);
+}
+
 void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetDecimalValue(val);
