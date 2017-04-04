@@ -112,9 +112,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   // check for plan node type
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
+            PlanNodeType::ORDERBY);
 
   // test order by
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
@@ -128,9 +128,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
 
   // check for plan node type
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
+            PlanNodeType::ORDERBY);
 
   // test order by
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(

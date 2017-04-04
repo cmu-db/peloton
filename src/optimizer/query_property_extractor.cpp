@@ -20,6 +20,11 @@
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
 
+using std::vector;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::move;
+
 namespace peloton {
 namespace optimizer {
 
@@ -29,48 +34,72 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-  // Add predicate property
+  // Generate PropertyPredicate
   auto predicate = select_stmt->where_clause;
   if (predicate != nullptr) {
-    property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
+    property_set_.AddProperty(shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
   }
 
-  std::vector<oid_t> column_ids;
+  // Generate PropertyColumns
+  vector<oid_t> column_ids;
   bool needs_projection = false;
-
-  // TODO: Support combination of STAR expr and other cols expr.
-  // Only support single STAR expression
   if ((*select_stmt->getSelectList())[0]->GetExpressionType() ==
       ExpressionType::STAR) {
+    // TODO: Add support for combination of STAR expr and other cols expr.
     property_set_.AddProperty(
-        std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
+        shared_ptr<PropertyColumns>(new PropertyColumns(true)));
   } else {
-    std::vector<expression::AbstractExpression *> column_exprs;
+    vector<expression::AbstractExpression *> column_exprs;
+    ExprSet column_set;
     for (auto col : *select_stmt->select_list) {
+      // Expression name is used in TrafficCop
       col->DeduceExpressionName();
       if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         column_exprs.emplace_back(col);
       } else {
         needs_projection = true;
       }
+      // Add all columns in select list to column_set
+      expression::ExpressionUtil::GetTupleValueExprs(column_set, col);
     }
-    property_set_.AddProperty(
-        std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
+    // Add all the missing columns in Orderby
+    if (select_stmt->order != nullptr) {
+      for (auto expr : *select_stmt->order->exprs)
+        expression::ExpressionUtil::GetTupleValueExprs(column_set, expr);
+    }
+
+    // Add all the missing columns in GroupBy
+    if (select_stmt->group_by != nullptr) {
+      for (auto expr : *select_stmt->group_by->columns)
+        expression::ExpressionUtil::GetTupleValueExprs(column_set, expr);
+    }
+
+    // If any missing column is added, we need a projection.
+    if (column_set.size() > column_exprs.size()) {
+      needs_projection = true;
+      vector<expression::AbstractExpression *> columns(column_set.begin(),
+                                                       column_set.end());
+      property_set_.AddProperty(
+          shared_ptr<PropertyColumns>(new PropertyColumns(move(columns))));
+    } else {
+      property_set_.AddProperty(
+          shared_ptr<PropertyColumns>(new PropertyColumns(move(column_exprs))));
+    }
   }
 
+  // Generate PropertyProjection
   if (needs_projection) {
-    auto output_expressions =
-        std::vector<std::unique_ptr<expression::AbstractExpression> >();
-    // Add output expressions property
+    vector<unique_ptr<expression::AbstractExpression>> output_expressions;
     for (auto col : *select_stmt->select_list) {
       output_expressions.push_back(
-          std::unique_ptr<expression::AbstractExpression>(col->Copy()));
+          unique_ptr<expression::AbstractExpression>(col->Copy()));
     }
-    property_set_.AddProperty(std::shared_ptr<PropertyProjection>(
-        new PropertyProjection(std::move(output_expressions))));
+    property_set_.AddProperty(shared_ptr<PropertyProjection>(
+        new PropertyProjection(move(output_expressions))));
   }
 
+  // Generate PropertySort
   if (select_stmt->order != nullptr) {
     select_stmt->order->Accept(this);
   }
@@ -80,8 +109,8 @@ void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   // TODO: Only support order by base table columns
-  std::vector<bool> sort_ascendings;
-  std::vector<expression::AbstractExpression *> sort_cols;
+  vector<bool> sort_ascendings;
+  vector<expression::AbstractExpression *> sort_cols;
   auto len = node->exprs->size();
   for (size_t idx = 0; idx < len; idx++) {
     auto &expr = node->exprs->at(idx);
@@ -89,8 +118,8 @@ void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
     sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
   }
 
-  property_set_.AddProperty(std::shared_ptr<PropertySort>(
-      new PropertySort(sort_cols, sort_ascendings)));
+  property_set_.AddProperty(
+      shared_ptr<PropertySort>(new PropertySort(sort_cols, sort_ascendings)));
 }
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 
@@ -100,11 +129,11 @@ void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
 void QueryPropertyExtractor::Visit(const parser::DeleteStatement *op) {
   if (op->expr != nullptr) {
-    property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
-        new PropertyPredicate(op->expr->Copy())));
+    property_set_.AddProperty(
+        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->expr->Copy())));
   }
-  property_set_.AddProperty(std::shared_ptr<PropertyColumns>(
-      new PropertyColumns(std::vector<expression::AbstractExpression *>())));
+  property_set_.AddProperty(shared_ptr<PropertyColumns>(
+      new PropertyColumns(vector<expression::AbstractExpression *>())));
 }
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
