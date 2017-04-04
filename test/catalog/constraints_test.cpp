@@ -313,16 +313,15 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
   // Check the results
   // Todo: having trouble checking the tuple values
-  /*
   for (StatementResult r : result1) {
 
     if (!r.first.empty()) {
-      LOG_INFO("Data 1 : %s", r.first.data());
+      LOG_INFO("Data 1 : %s", reinterpret_cast<char*>(r.first.data()));
     }
     if (!r.second.empty()) {
-      LOG_INFO("Data 2 : %s", r.second.data());
+      LOG_INFO("Data 2 : %s", reinterpret_cast<char*>(r.second.data()));
     }
-  } */
+  }
 
   // Delete the database
   txn = txn_manager.BeginTransaction();
