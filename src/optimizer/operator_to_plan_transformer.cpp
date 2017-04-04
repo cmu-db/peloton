@@ -194,10 +194,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     } else {
       // PropertyProj has not been fulfilled. Use PropertyColumns
       PL_ASSERT(column_prop != nullptr);
-      if (column_prop->IsStarExpressionInColumn())
-        num_output_column = child_expr_map.size();
-      else
-        num_output_column = column_prop->GetSize();
+      num_output_column = child_expr_map.size();
       for (size_t i = 0; i < num_output_column; i++) {
         auto tup_expr = column_prop->GetColumn(i);
         dml.push_back(DirectMap(i, make_pair(0, child_expr_map[tup_expr])));
@@ -228,23 +225,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   }
 
   /************************ Generate the OrderBy Plan **********************/
-  // Construct output column offset and output expr map
+  // Construct output column offset. Ignore additional columns created
   vector<oid_t> column_ids;
-  size_t num_output_column = 0;
-  if (project_prop != nullptr || column_prop->IsStarExpressionInColumn()) {
-    *output_expr_map_ = child_expr_map;
-    // In the output columms, ignore the newly created expr columns
-    num_output_column = child_expr_map.size();
-    for (size_t i = 0; i < num_output_column; i++) column_ids.push_back(i);
-  } else {
-    num_output_column = column_prop->GetSize();
-    for (oid_t i = 0; i < num_output_column; i++) {
-      auto output_expr = column_prop->GetColumn(i);
-      column_ids.push_back(child_expr_map[output_expr]);
-      (*output_expr_map_)[output_expr] = i;
-    }
-  }
-
+  size_t num_output_column = child_expr_map.size();
+  for (size_t i = 0; i < num_output_column; i++)
+    column_ids.push_back(i);
+  
+  *output_expr_map_ = child_expr_map;
+  
   // Construct sort ids and sort flags
   size_t expr_count = 0;
   vector<oid_t> sort_col_ids;
