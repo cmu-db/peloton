@@ -625,7 +625,21 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   // MAX(6,1) = 6
   EXPECT_EQ("6", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
-
+  
+  // Complex expression in select list
+  query = "SELECT MAX(b + c) FROM test GROUP BY a, b";
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
+      tuple_descriptor, rows_changed, error_message);
+//  EXPECT_EQ(8, result.size());
+//  EXPECT_EQ("23", TestingSQLUtil::GetResultValueAsString(result, 0));
+//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 1));
+//  EXPECT_EQ("13", TestingSQLUtil::GetResultValueAsString(result, 2));
+//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
+//  EXPECT_EQ("36", TestingSQLUtil::GetResultValueAsString(result, 4));
+//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 5));
+//  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 6));
+//  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 7));
+  
   // Combine with ORDER BY
   query = "SELECT b FROM test GROUP BY b ORDER BY b";
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);

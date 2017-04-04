@@ -277,14 +277,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
     auto expr_len = proj_prop->GetProjectionListSize();
     for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
       auto expr = proj_prop->GetProjection(col_pos);
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0],
-                                                     expr);
+      expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
       // Aggregate function
       // Aggregate executor only supports aggregation on single col/*, not exprs
       if (expression::ExpressionUtil::IsAggregateExpression(
               expr->GetExpressionType())) {
         auto agg_expr = (expression::AggregateExpression *)expr;
         auto agg_col = expr->GetModifiableChild(0);
+        if (agg_col != nullptr)
+          expression::ExpressionUtil::EvaluateExpression(child_expr_map, agg_col);
 
         // Maps the aggregate value in the right tuple to the output.
         // See aggregator.cpp for more info.
