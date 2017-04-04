@@ -45,15 +45,14 @@ void Aggregation::Setup(
   }
 
   // Add the rest
-  for (uint32_t source_index = 0; source_index < aggregates.size();
-       source_index++) {
-    const auto agg_term = aggregates[source_index];
+  for (uint32_t source_idx = 0; source_idx < aggregates.size(); source_idx++) {
+    const auto agg_term = aggregates[source_idx];
     switch (agg_term.aggtype) {
       case ExpressionType::AGGREGATE_COUNT: {
         // We're counting instances ... use BIGINT for the count
-        auto count_type = type::Type::TypeId::BIGINT;
+        const auto count_type = type::Type::TypeId::BIGINT;
         uint32_t storage_pos = storage_.AddType(count_type);
-        AggregateInfo aggregate_info{agg_term.aggtype, count_type, source_index,
+        AggregateInfo aggregate_info{agg_term.aggtype, count_type, source_idx,
                                      storage_pos, false};
         aggregate_infos_.push_back(aggregate_info);
         break;
@@ -62,9 +61,9 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
         // Regular
-        type::Type::TypeId value_type = agg_term.expression->GetValueType();
+        const auto value_type = agg_term.expression->GetValueType();
         uint32_t storage_pos = storage_.AddType(value_type);
-        AggregateInfo aggregate_info{agg_term.aggtype, value_type, source_index,
+        AggregateInfo aggregate_info{agg_term.aggtype, value_type, source_idx,
                                      storage_pos, false};
         aggregate_infos_.push_back(aggregate_info);
         break;
@@ -74,25 +73,25 @@ void Aggregation::Setup(
 
         // SUM() - the type must match the type of the expression
         PL_ASSERT(agg_term.expression != nullptr);
-        type::Type::TypeId sum_type = agg_term.expression->GetValueType();
+        const auto sum_type = agg_term.expression->GetValueType();
         uint32_t sum_storage_pos = storage_.AddType(sum_type);
         AggregateInfo sum_agg{ExpressionType::AGGREGATE_SUM, sum_type,
-                              source_index, sum_storage_pos, true};
+                              source_idx, sum_storage_pos, true};
         aggregate_infos_.push_back(sum_agg);
 
         // COUNT() - can use big integer since we're counting instances
         uint32_t count_storage_pos =
             storage_.AddType(type::Type::TypeId::BIGINT);
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
-                                type::Type::TypeId::BIGINT, source_index,
+                                type::Type::TypeId::BIGINT, source_idx,
                                 count_storage_pos, true};
         aggregate_infos_.push_back(count_agg);
 
         // AVG()
         // TODO: Is this always double?
         AggregateInfo avg_agg{agg_term.aggtype, type::Type::TypeId::DECIMAL,
-                              source_index,
-                              std::numeric_limits<uint32_t>::max(), false};
+                              source_idx, std::numeric_limits<uint32_t>::max(),
+                              false};
         aggregate_infos_.push_back(avg_agg);
         break;
       }
@@ -102,16 +101,16 @@ void Aggregation::Setup(
         //       don't do it here
         PL_ASSERT(tracks_group_count);
         AggregateInfo count_agg{agg_term.aggtype, type::Type::TypeId::BIGINT,
-                                source_index, 0, false};
+                                source_idx, 0, false};
         aggregate_infos_.push_back(count_agg);
         break;
       }
       default: {
-        std::string message = "Ran into unexpected aggregate type [" +
-                              ExpressionTypeToString(agg_term.aggtype) +
-                              "] when setting up aggregation";
+        std::string message = StringUtil::Format(
+            "Unexpected aggregate type [%s] when preparing aggregator",
+            ExpressionTypeToString(agg_term.aggtype));
         LOG_ERROR("%s", message.c_str());
-        throw Exception{message};
+        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
     }
   }
@@ -151,12 +150,11 @@ void Aggregation::CreateInitialValues(
         break;
       }
       default: {
-        std::string message =
-            "Ran into unexpected aggregate type [" +
-            ExpressionTypeToString(aggregate_info.aggregate_type) +
-            "] when creating initial aggregate values";
+        std::string message = StringUtil::Format(
+            "Unexpected aggregate type [%s] when creating initial values",
+            ExpressionTypeToString(aggregate_info.aggregate_type));
         LOG_ERROR("%s", message.c_str());
-        throw Exception{message};
+        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
     }
   }
@@ -222,12 +220,11 @@ void Aggregation::AdvanceValues(
         continue;
       }
       default: {
-        std::string message =
-            "Ran into unexpected aggregate type [" +
-            ExpressionTypeToString(aggregate_info.aggregate_type) +
-            "] when advancing aggregates";
+        std::string message = StringUtil::Format(
+            "Unexpected aggregate type [%s] when advancing aggregator",
+            ExpressionTypeToString(aggregate_info.aggregate_type));
         LOG_ERROR("%s", message.c_str());
-        throw Exception{message};
+        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
     }
 
@@ -293,11 +290,11 @@ void Aggregation::FinalizeValues(
         break;
       }
       default: {
-        std::string message = "Ran into unexpected aggregate type [" +
-                              ExpressionTypeToString(agg_type) +
-                              "] when finalizing aggregation";
+        std::string message = StringUtil::Format(
+            "Unexpected aggregate type [%s] when finalizing aggregator",
+            ExpressionTypeToString(agg_type));
         LOG_ERROR("%s", message.c_str());
-        throw Exception{message};
+        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
     }
   }
