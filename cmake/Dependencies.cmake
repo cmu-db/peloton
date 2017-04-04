@@ -45,11 +45,10 @@ find_program(MEMORYCHECK_COMMAND valgrind)
 set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
 set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp")
 
-# --[ LibPQXX
-find_package(LibPQXX)
-include_directories(${LIBPQXX_INCLUDE_DIRS})
-link_directories(${LIBPQXX_LIBRARY_DIRS})
-list(APPEND Peloton_LINKER_LIBS "-lpqxx -lpq")
+# --[ PQXX
+find_package(PQXX REQUIRED)
+include_directories(SYSTEM ${PQXX_INCLUDE_DIRECTORIES})
+list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
 
 # --[ IWYU
 
