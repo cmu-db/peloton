@@ -104,13 +104,15 @@ bool DeleteExecutor::DExecute() {
 
     bool is_owner = 
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
-    bool is_written =
-      transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
-    PL_ASSERT((is_owner == false && is_written == true) == false);
 
+    bool is_written =
+        transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
+
+    // if the current transaction is the creator of this version.
+    // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
-      // if the thread is the owner of the tuple, then directly update in place.
-      LOG_TRACE("Thread is owner of the tuple");
+      // if the transaction is the owner of the tuple, then directly update in place.
+      LOG_TRACE("The current transaction is the owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
 
     } else {
