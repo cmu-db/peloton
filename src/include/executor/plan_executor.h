@@ -18,7 +18,7 @@
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
-namespace bridge {
+namespace executor {
 
 //===--------------------------------------------------------------------===//
 // Plan Executor
@@ -94,5 +94,5 @@ class PlanExecutor {
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 
-}  // namespace bridge
+}  // namespace executor
 }  // namespace peloton
