@@ -99,6 +99,18 @@ class CodeGen {
                           const std::vector<llvm::Value *> &args);
 
   //===--------------------------------------------------------------------===//
+  // Arithmetic with overflow logic
+  //===--------------------------------------------------------------------===//
+
+  llvm::Value *CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  llvm::Value *CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  llvm::Value *CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  void ThrowIfOverflow(llvm::Value *overflow) const;
+
+  //===--------------------------------------------------------------------===//
   // Function lookup and registration
   //===--------------------------------------------------------------------===//
 

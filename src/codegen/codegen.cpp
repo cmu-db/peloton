@@ -93,6 +93,80 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
   return CallFunc(printf_fn, printf_args);
 }
 
+llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left,
+                                          llvm::Value *right,
+                                          llvm::Value *&overflow_bit) const {
+  PL_ASSERT(left->getType() == right->getType());
+
+  // Get the intrinsic that does the addition with overflow checking
+  llvm::Function *add_func = llvm::Intrinsic::getDeclaration(
+      &GetModule(), llvm::Intrinsic::sadd_with_overflow, left->getType());
+
+  // Perform the addition
+  llvm::Value *add_result = CallFunc(add_func, {left, right});
+
+  // Pull out the overflow bit from the resulting aggregate/struct
+  overflow_bit = GetBuilder().CreateExtractValue(add_result, 1);
+
+  // Pull out the actual result of the addition
+  return GetBuilder().CreateExtractValue(add_result, 0);
+}
+
+llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left,
+                                          llvm::Value *right,
+                                          llvm::Value *&overflow_bit) const {
+  PL_ASSERT(left->getType() == right->getType());
+
+  // Get the intrinsic that does the addition with overflow checking
+  llvm::Function *sub_func = llvm::Intrinsic::getDeclaration(
+      &GetModule(), llvm::Intrinsic::ssub_with_overflow, left->getType());
+
+  // Perform the subtraction
+  llvm::Value *sub_result = CallFunc(sub_func, {left, right});
+
+  // Pull out the overflow bit from the resulting aggregate/struct
+  overflow_bit = GetBuilder().CreateExtractValue(sub_result, 1);
+
+  // Pull out the actual result of the subtraction
+  return GetBuilder().CreateExtractValue(sub_result, 0);
+}
+
+llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left,
+                                          llvm::Value *right,
+                                          llvm::Value *&overflow_bit) const {
+  PL_ASSERT(left->getType() == right->getType());
+  llvm::Function *mul_func = llvm::Intrinsic::getDeclaration(
+      &GetModule(), llvm::Intrinsic::smul_with_overflow, left->getType());
+
+  // Perform the multiplication
+  llvm::Value *mul_result = CallFunc(mul_func, {left, right});
+
+  // Pull out the overflow bit from the resulting aggregate/struct
+  overflow_bit = GetBuilder().CreateExtractValue(mul_result, 1);
+
+  // Pull out the actual result of the subtraction
+  return GetBuilder().CreateExtractValue(mul_result, 0);
+}
+
+void CodeGen::ThrowIfOverflow(llvm::Value *overflow) const {
+  PL_ASSERT(overflow->getType() == BoolType());
+
+  // Get the overflow basic block for the currently generating function
+  auto *func = code_context_.GetCurrentFunction();
+  auto *overflow_bb = func->GetOverflowBB();
+
+  // Construct a new block that we jump if there *isn't* an overflow
+  llvm::BasicBlock *no_overflow_bb =
+      llvm::BasicBlock::Create(GetContext(), "cont", func->GetFunction());
+
+  // Create a branch that goes to the overflow BB if an overflow exists
+  auto &builder = GetBuilder();
+  builder.CreateCondBr(overflow, overflow_bb, no_overflow_bb);
+
+  // Start insertion in the block
+  builder.SetInsertPoint(no_overflow_bb);
+}
+
 // Lookup a function in the module with the given name
 llvm::Function *CodeGen::LookupFunction(const std::string &fn_name) const {
   return GetModule().getFunction(fn_name);
