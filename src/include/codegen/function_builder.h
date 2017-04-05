@@ -36,6 +36,12 @@ class FunctionBuilder {
   llvm::Value *GetArgumentByPosition(uint32_t index);
   size_t GetNumArguments() const { return func_->arg_size(); }
 
+  // Get the basic block where the function throws an overflow exception
+  llvm::BasicBlock *GetOverflowBB();
+
+  // Get the basic block where the function throws a divide by zero exception
+  llvm::BasicBlock *GetDivideByZeroBB();
+
   // Finish the current function
   void ReturnAndFinish(llvm::Value *res = nullptr);
 
@@ -59,8 +65,10 @@ class FunctionBuilder {
   llvm::Function *func_;
   // The entry/first BB in the function
   llvm::BasicBlock *entry_bb_;
-  // The error block
-  llvm::BasicBlock *error_bb_;
+  // The arithmetic overflow error block
+  llvm::BasicBlock *overflow_bb_;
+  // The divide-by-zero error block
+  llvm::BasicBlock *divide_by_zero_bb_;
 
  private:
   // This class cannot be copy or move-constructed
