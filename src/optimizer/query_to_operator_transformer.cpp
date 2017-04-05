@@ -51,14 +51,6 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     output_expr = aggregate;
   }
 
-  if (op->select_distinct) {
-    // if is star
-    // hash keys will be derived
-    // when constructing the plan
-    auto hash = std::make_shared<OperatorExpression>(
-        LogicalHash::make(*(op->select_list)));
-  }
-
   if (op->limit != nullptr) {
     // When offset is not specified in the query, parser will set offset to -1
     if (op->limit->offset == -1) op->limit->offset = 0;

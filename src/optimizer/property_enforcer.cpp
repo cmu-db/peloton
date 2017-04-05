@@ -51,6 +51,8 @@ void PropertyEnforcer::Visit(const PropertySort *property) {
       PhysicalOrderBy::make(sort_columns, sort_ascending), child_groups);
 }
 
+// TODO add implementation for PropertyDistinct and PropertyPredicate
+void PropertyEnforcer::Visit(const PropertyDistinct *) {}
 void PropertyEnforcer::Visit(const PropertyPredicate *) {}
 
 } /* namespace optimizer */

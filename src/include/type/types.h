@@ -1134,6 +1134,7 @@ enum class PropertyType {
   PREDICATE,
   SORT,
   PROJECT,
+  DISTINCT
 };
   
 namespace expression {

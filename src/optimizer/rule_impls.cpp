@@ -240,32 +240,6 @@ void LogicalAggregateToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalHashToPhysical
-LogicalHashToPhysical::LogicalHashToPhysical() {
-  physical = true;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalHash);
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(child);
-}
-
-bool LogicalHashToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
-}
-
-void LogicalHashToPhysical::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalHash *hash_op = input->Op().As<LogicalHash>();
-  auto result = std::make_shared<OperatorExpression>(PhysicalHash::make(
-      hash_op->hash_keys));
-  PL_ASSERT(input->Children().size() == 1);
-  result->PushChild(input->Children().at(0));
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   physical = true;

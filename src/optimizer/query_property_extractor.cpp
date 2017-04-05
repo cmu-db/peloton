@@ -69,6 +69,13 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         expression::ExpressionUtil::GetTupleValueExprs(column_set, expr);
     }
 
+    // Add PropertyDistinct
+    if (select_stmt->select_distinct) {
+      vector<expression::AbstractExpression *> distinct_column_exprs(
+          column_exprs);
+      property_set_.AddProperty(shared_ptr<PropertyDistinct>(
+          new PropertyDistinct(move(distinct_column_exprs))));
+    }
     // Add all the missing columns in GroupBy
     if (select_stmt->group_by != nullptr) {
       for (auto expr : *select_stmt->group_by->columns)
@@ -97,6 +104,11 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     }
     property_set_.AddProperty(shared_ptr<PropertyProjection>(
         new PropertyProjection(move(output_expressions))));
+  }
+
+  // TODO add PropertyDistinct
+  if (select_stmt->select_distinct) {
+    vector<expression::AbstractExpression *> distinct_column_exprs();
   }
 
   // Generate PropertySort

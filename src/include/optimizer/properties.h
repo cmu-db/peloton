@@ -48,6 +48,37 @@ class PropertyColumns : public Property {
   bool is_star_;
 };
 
+// Specify which columns values are dictinct
+// PropertyDistinct(col_a, col_b, col_c) should have 
+// distinct value for (col_a, col_b, col_c) in each return tuple
+class PropertyDistinct : public Property {
+ public:
+  PropertyDistinct(std::vector<expression::AbstractExpression *> column_exprs,
+                  bool is_star = false);
+  PropertyDistinct(bool is_star_expr);
+
+  PropertyType Type() const override;
+
+  hash_t Hash() const override;
+
+  bool operator>=(const Property &r) const override;
+
+  void Accept(PropertyVisitor *v) const override;
+  
+  std::string ToString() const override;
+
+  inline expression::AbstractExpression *GetDistinctColumn(int idx) const {
+    return distinct_column_exprs_[idx];
+  }
+
+  inline size_t GetSize() const { return distinct_column_exprs_.size(); }
+  inline bool IsStarExpressionInColumn() const { return is_star_; }
+
+ private:
+  std::vector<expression::AbstractExpression *> distinct_column_exprs_;
+  bool is_star_;
+};
+
 // Specifies the output expressions of the query
 class PropertyProjection : public Property {
  public:

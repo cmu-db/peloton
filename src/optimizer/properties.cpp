@@ -79,6 +79,70 @@ std::string PropertyColumns::ToString() const {
   return str + "\n";
 }
 
+PropertyDistinct::PropertyDistinct(
+    std::vector<expression::AbstractExpression *> distinct_column_exprs, bool is_star)
+    : distinct_column_exprs_(std::move(distinct_column_exprs)), is_star_(is_star) {
+  LOG_TRACE("Size of column property: %ld", columns_.size());
+}
+
+PropertyDistinct::PropertyDistinct(bool is_star_expr) : is_star_(is_star_expr) {}
+
+PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }
+
+bool PropertyDistinct::operator>=(const Property &r) const {
+  // check the type
+  if (r.Type() != PropertyType::DISTINCT) return false;
+  const PropertyDistinct &r_columns =
+      *reinterpret_cast<const PropertyDistinct *>(&r);
+
+  if (is_star_ != r_columns.is_star_) return false;
+
+  // check that every column in the left hand side property exists in the right
+  // hand side property. which is the opposite to 
+  // the condition of propertyColumns
+  // e.g. distinct(col_a) >= distinct(col_a, col_b)
+  for (auto r_column : r_columns.distinct_column_exprs_) {
+    bool has_column = false;
+    for (auto column : distinct_column_exprs_) {
+      if (column->Equals(r_column)) {
+        has_column = true;
+        break;
+      }
+    }
+    if (has_column == false) return false;
+  }
+
+  return true;
+}
+
+hash_t PropertyDistinct::Hash() const {
+  // hash the type
+  hash_t hash = Property::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<bool>(&is_star_));
+  for (auto expr : distinct_column_exprs_) {
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
+  }
+  return hash;
+}
+
+void PropertyDistinct::Accept(PropertyVisitor *v) const {
+  v->Visit((const PropertyDistinct *)this);
+}
+
+std::string PropertyDistinct::ToString() const {
+  std::string str = PropertyTypeToString(Type()) + ": ";
+  for (auto column_expr : distinct_column_exprs_) {
+    if (column_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      str += ((expression::TupleValueExpression *)column_expr)->GetColumnName();
+      str += " ";
+    } else {
+      // TODO: Add support for other expression
+      str += "expr ";
+    }
+  }
+  return str + "\n";
+}
+
 PropertySort::PropertySort(
     std::vector<expression::AbstractExpression *> sort_columns,
     std::vector<bool> sort_ascending)

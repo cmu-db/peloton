@@ -117,15 +117,6 @@ Operator LogicalAggregate::make(
   return Operator(agg);
 }
 
-//===--------------------------------------------------------------------===//
-// Logical Hash
-//===--------------------------------------------------------------------===//
-Operator LogicalHash::make(const std::vector<expression::AbstractExpression *>
-                           &hash_keys) {
-  LogicalHash *hash = new LogicalHash;
-  hash->hash_keys = hash_keys;
-  return Operator(hash);
-}
 
 //===--------------------------------------------------------------------===//
 // Limit
@@ -381,9 +372,6 @@ template <>
 void OperatorNode<LogicalAggregate>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalHash>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
 void OperatorNode<LogicalLimit>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -418,8 +406,6 @@ template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
-template <>
-std::string OperatorNode<LogicalHash>::name_ = "LogicalHash";
 template <>
 std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
@@ -487,8 +473,6 @@ template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
-template <>
-OpType OperatorNode<LogicalHash>::type_ = OpType::LogicalHash;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
