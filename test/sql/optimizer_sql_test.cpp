@@ -543,8 +543,8 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, -334);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
   // Basic case
   std::string query = "SELECT b FROM test GROUP BY b having b=11 or b=22";
@@ -634,11 +634,24 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 3));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("561", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("339", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 7));
+  
+  // Test complex expression in select list and order by complex expr
+  query = "SELECT b + c, SUM(c * a) FROM test GROUP BY b,c";
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(8, result.size());
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2220", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("1332", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("2331", TestingSQLUtil::GetResultValueAsString(result, 7));
   
   // Combine with ORDER BY
   query = "SELECT b FROM test GROUP BY b ORDER BY b";
