@@ -386,13 +386,15 @@ bool Value::CheckComparable(const Value &o) const {
         case Type::INTEGER:
         case Type::BIGINT:
         case Type::DECIMAL:
+        case Type::VARCHAR:
           return true;
         default:
           break;
       } // SWITCH
       break;
     case Type::VARCHAR:
-      if (o.GetTypeId() == Type::VARCHAR) return true;
+      // Anything can be cast to a string!
+      return true;
       break;
     case Type::VARBINARY:
       if (o.GetTypeId() == Type::VARBINARY) return true;

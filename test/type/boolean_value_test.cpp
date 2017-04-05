@@ -189,6 +189,10 @@ TEST_F(BooleanValueTests, CastTest) {
   result = type::ValueFactory::CastAsBoolean(valTrue1);
   EXPECT_TRUE(result.IsTrue());
 
+  auto valTrue2 = type::ValueFactory::GetVarcharValue("t");
+  result = type::ValueFactory::CastAsBoolean(valTrue2);
+  EXPECT_TRUE(result.IsTrue());
+
   auto valFalse0 = type::ValueFactory::GetVarcharValue("FaLsE");
   result = type::ValueFactory::CastAsBoolean(valFalse0);
   EXPECT_TRUE(result.IsFalse());
@@ -197,6 +201,10 @@ TEST_F(BooleanValueTests, CastTest) {
 
   auto valFalse1 = type::ValueFactory::GetVarcharValue("0");
   result = type::ValueFactory::CastAsBoolean(valFalse1);
+  EXPECT_TRUE(result.IsFalse());
+
+  auto valFalse2 = type::ValueFactory::GetVarcharValue("f");
+  result = type::ValueFactory::CastAsBoolean(valFalse2);
   EXPECT_TRUE(result.IsFalse());
 
   auto valBustedLike = type::ValueFactory::GetVarcharValue("YourMom");

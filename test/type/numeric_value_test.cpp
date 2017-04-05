@@ -13,11 +13,10 @@
 
 #include <limits.h>
 #include <iostream>
-#include <cstdint>
 #include <cmath>
+
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
-#include "type/numeric_type.h"
 #include "type/varlen_type.h"
 #include "common/harness.h"
 #include "type/value_factory.h"
@@ -29,7 +28,7 @@ class NumericValueTests : public PelotonTest {};
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 #define SEED 233
-#define TEST_NUM 1
+#define TEST_NUM 100
 
 int8_t RANDOM8() {
   return ((rand() % (SCHAR_MAX * 2 - 1)) - (SCHAR_MAX - 1));
@@ -130,7 +129,7 @@ void CheckCompare2(T x, double y, type::Type::TypeId xtype) {
 
 // Compare decimal and integer
 template<class T>
-void CheckCompare3(double x, T y, type::Type::TypeId ytype ) {
+void CheckCompare3(double x, T y, type::Type::TypeId ytype) {
   type::Value v1 = type::ValueFactory::GetDecimalValue(x);
   type::Value v2 = type::Value(ytype, y);
   if (x == y)
@@ -145,6 +144,19 @@ void CheckCompare3(double x, T y, type::Type::TypeId ytype ) {
 void CheckCompare4(double x, double y) {
   type::Value v1 = type::ValueFactory::GetDecimalValue(x);
   type::Value v2 = type::ValueFactory::GetDecimalValue(y);
+  if (x == y)
+    CheckEqual(v1, v2);
+  else if (x < y)
+    CheckLessThan(v1, v2);
+  else if (x > y)
+    CheckGreaterThan(v1, v2);
+}
+
+// Compare number with varchar
+template<class T>
+void CheckCompare5(T x, T y, type::Type::TypeId xtype) {
+  type::Value v1 = type::Value(xtype, x);
+  type::Value v2 = type::ValueFactory::GetVarcharValue(type::Value(xtype, y).ToString());
   if (x == y)
     CheckEqual(v1, v2);
   else if (x < y)
@@ -380,39 +392,80 @@ void CheckMath4(double x, double y) {
   }
 }
 
-TEST_F(NumericValueTests, ComparisonTest) {
+TEST_F(NumericValueTests, TinyIntComparisonTest) {
   std::srand(SEED);
-
   for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::Type::TINYINT, type::Type::TINYINT);
     CheckCompare1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::Type::TINYINT, type::Type::SMALLINT);
     CheckCompare1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::Type::TINYINT, type::Type::INTEGER);
     CheckCompare1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::Type::TINYINT, type::Type::BIGINT);
     CheckCompare2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::Type::TINYINT);
+    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
 
+    int8_t v0 = RANDOM8();
+    int8_t v1 = v0 + 1;
+    int8_t v2 = v0 - 1;
+    CheckCompare5<int8_t>(v0, v0, type::Type::TINYINT);
+    CheckCompare5<int8_t>(v0, v1, type::Type::TINYINT);
+    CheckCompare5<int8_t>(v0, v2, type::Type::TINYINT);
+  }
+}
+
+TEST_F(NumericValueTests, SmallIntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::Type::SMALLINT, type::Type::TINYINT);
     CheckCompare1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::Type::SMALLINT, type::Type::SMALLINT);
     CheckCompare1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::Type::SMALLINT, type::Type::INTEGER);
     CheckCompare1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::Type::SMALLINT, type::Type::BIGINT);
     CheckCompare2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::Type::SMALLINT);
+    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
 
+    int16_t v0 = RANDOM16();
+    int16_t v1 = v0 + 1;
+    int16_t v2 = v0 - 1;
+    CheckCompare5<int16_t>(v0, v0, type::Type::SMALLINT);
+    CheckCompare5<int16_t>(v0, v1, type::Type::SMALLINT);
+    CheckCompare5<int16_t>(v0, v2, type::Type::SMALLINT);
+  }
+}
+
+TEST_F(NumericValueTests, IntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::Type::INTEGER, type::Type::TINYINT);
     CheckCompare1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::Type::INTEGER, type::Type::SMALLINT);
     CheckCompare1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::Type::INTEGER, type::Type::INTEGER);
     CheckCompare1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::Type::INTEGER, type::Type::BIGINT);
     CheckCompare2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::Type::INTEGER);
+    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
 
+    int32_t v0 = RANDOM32();
+    int32_t v1 = v0 + 1;
+    int32_t v2 = v0 - 1;
+    CheckCompare5<int32_t>(v0, v0, type::Type::INTEGER);
+    CheckCompare5<int32_t>(v0, v1, type::Type::INTEGER);
+    CheckCompare5<int32_t>(v0, v2, type::Type::INTEGER);
+  }
+}
+
+TEST_F(NumericValueTests, BigIntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::Type::BIGINT, type::Type::TINYINT);
     CheckCompare1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::Type::BIGINT, type::Type::SMALLINT);
     CheckCompare1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::Type::BIGINT, type::Type::INTEGER);
     CheckCompare1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::Type::BIGINT, type::Type::BIGINT);
     CheckCompare2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::Type::BIGINT);
-
-    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
-    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
-    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
     CheckCompare3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::Type::BIGINT);
     CheckCompare4(RANDOM_DECIMAL(), RANDOM_DECIMAL());
+
+    int64_t v0 = RANDOM64();
+    int64_t v1 = v0 + 1;
+    int64_t v2 = v0 - 1;
+    CheckCompare5<int64_t>(v0, v0, type::Type::BIGINT);
+    CheckCompare5<int64_t>(v0, v1, type::Type::BIGINT);
+    CheckCompare5<int64_t>(v0, v2, type::Type::BIGINT);
   }
 }
 
@@ -452,6 +505,113 @@ TEST_F(NumericValueTests, MathTest) {
     CheckMath3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::Type::BIGINT);
     CheckMath4(RANDOM_DECIMAL(), RANDOM_DECIMAL());
   }
+}
+
+TEST_F(NumericValueTests, IsZeroTest) {
+  type::Value v1, v2;
+
+  v1 = type::ValueFactory::GetTinyIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::TINYINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetSmallIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::SMALLINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetIntegerValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::INTEGER);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+
+  v1 = type::ValueFactory::GetBigIntValue(0);
+  v2 = type::ValueFactory::GetZeroValueByType(type::Type::BIGINT);
+  EXPECT_TRUE(v1.IsZero());
+  EXPECT_FALSE(v1.IsNull());
+  EXPECT_TRUE(v2.IsZero());
+  CheckEqual(v1, v2);
+}
+
+TEST_F(NumericValueTests, SqrtTest) {
+
+  for (int i = 1; i <= 10; i++) {
+    type::Value v1, v2;
+
+    v1 = type::ValueFactory::GetTinyIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetTinyIntValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetSmallIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetSmallIntValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetIntegerValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetIntegerValue(i);
+    CheckEqual(v1, v2);
+
+    v1 = type::ValueFactory::GetBigIntValue(i * i).Sqrt();
+    v2 = type::ValueFactory::GetBigIntValue(i);
+    CheckEqual(v1, v2);
+  } // FOR
+}
+
+TEST_F(NumericValueTests, CastAsTest) {
+
+  std::vector<type::Type::TypeId> types = {
+      type::Type::TINYINT,
+      type::Type::SMALLINT,
+      type::Type::INTEGER,
+      type::Type::BIGINT,
+      type::Type::DECIMAL,
+      type::Type::VARCHAR,
+  };
+
+  for (int i = type::PELOTON_INT8_MIN; i <= type::PELOTON_INT8_MAX; i++) {
+    for (auto t1 : types) {
+      type::Value v1;
+
+      switch (t1) {
+        case type::Type::TINYINT:
+          v1 = type::ValueFactory::GetTinyIntValue(i);
+          break;
+        case type::Type::SMALLINT:
+          v1 = type::ValueFactory::GetSmallIntValue(i);
+          break;
+        case type::Type::INTEGER:
+          v1 = type::ValueFactory::GetIntegerValue(i);
+          break;
+        case type::Type::BIGINT:
+          v1 = type::ValueFactory::GetBigIntValue(i);
+          break;
+        case type::Type::DECIMAL:
+          v1 = type::ValueFactory::GetDecimalValue((double)i);
+          break;
+        case type::Type::VARCHAR:
+          v1 = type::ValueFactory::GetVarcharValue(
+                    type::ValueFactory::GetSmallIntValue(i).ToString());
+          break;
+        default:
+          LOG_ERROR("Unexpected type!");
+          ASSERT_FALSE(true);
+      }
+      EXPECT_FALSE(v1.IsNull());
+      for (auto t2 : types) {
+        type::Value v2 = v1.CastAs(t2);
+        LOG_TRACE("[%02d] %s -> %s",
+                  i, TypeIdToString(t1).c_str(),
+                  TypeIdToString(t2).c_str());
+        CheckEqual(v1, v2);
+      } // FOR
+    } // FOR
+  } // FOR
+
 }
 
 TEST_F(NumericValueTests, DivideByZeroTest) {
@@ -652,7 +812,7 @@ TEST_F(NumericValueTests, NullValueTest) {
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
-  
+
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Modulo(
     type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Modulo(
