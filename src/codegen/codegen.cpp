@@ -120,10 +120,5 @@ uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   return size != 0 ? size : 1;
 }
 
-uint64_t CodeGen::BitSizeOf(llvm::Type *type) const {
-  return code_context_.GetDataLayout().getTypeSizeInBits(type);
- }
-
-
 }  // namespace codegen
 }  // namespace peloton
