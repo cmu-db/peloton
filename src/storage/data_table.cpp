@@ -306,7 +306,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
     }
   }
   return true;
-}
+} */
 
 // Set the default values for corresponding columns
 bool DataTable::SetDefaults(storage::Tuple *tuple) {
