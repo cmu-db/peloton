@@ -41,6 +41,9 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
 
 DatabaseCatalog::~DatabaseCatalog() {}
 
+/*@brief   private function for initialize schema of pg_database
+* @return  unqiue pointer to schema
+*/
 std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
@@ -104,10 +107,9 @@ std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      database_name =
-          (*result_tiles)[0]
-              ->GetValue(0, 0)
-              .GetAs<std::string>();  // After projection left 1 column
+      database_name = (*result_tiles)[0]
+                          ->GetValue(0, 0)
+                          .ToString();  // After projection left 1 column
     }
   }
 

@@ -28,16 +28,17 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
                            type::AbstractPool *pool)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
-
+  // Add indexes for pg_attribute table
+  // note that you have to build the index first before insert tuples
   AddIndex({0}, INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({1, 2}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
+  AddIndex({1}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
   AddIndex({2}, INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
 
+  // Insert columns into pg_attribute, note that insertion does not require
+  // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(),
@@ -49,6 +50,9 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
 
 IndexCatalog::~IndexCatalog() {}
 
+/*@brief   private function for initialize schema of pg_index
+* @return  unqiue pointer to schema
+*/
 std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
@@ -85,16 +89,20 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   auto unique_keys = catalog::Column(
       type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
       "unique_keys", true);
+
+  auto indekeys_column =
+      catalog::Column(type::Type::VARCHAR, max_name_size, "indekeys", false);
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(
       {index_id_column, index_name_column, table_id_column, index_type_column,
-       index_constraint_column, unique_keys}));
+       index_constraint_column, unique_keys, indekeys_column}));
   return index_schema;
 }
 
 bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
                                oid_t table_oid, IndexType index_type,
                                IndexConstraintType index_constraint,
-                               bool unique_keys, type::AbstractPool *pool,
+                               bool unique_keys, std::vector<oid_t> indekeys,
+                               type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -108,12 +116,17 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
       type::ValueFactory::GetIntegerValue(static_cast<int>(index_constraint));
   auto val5 = type::ValueFactory::GetBooleanValue(unique_keys);
 
+  std::stringstream os;
+  for (oid_t indkey : indekeys) os << std::to_string(indkey) << " ";
+  auto val6 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
+
   tuple->SetValue(0, val0, pool);
   tuple->SetValue(1, val1, pool);
   tuple->SetValue(2, val2, pool);
   tuple->SetValue(3, val3, pool);
   tuple->SetValue(4, val4, pool);
   tuple->SetValue(5, val5, pool);
+  tuple->SetValue(6, val6, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -144,7 +157,7 @@ std::string IndexCatalog::GetIndexName(oid_t index_oid,
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_name = (*result_tiles)[0]
                        ->GetValue(0, 0)
-                       .GetAs<std::string>();  // After projection left 1 column
+                       .ToString();  // After projection left 1 column
     }
   }
 
@@ -211,7 +224,7 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   IndexConstraintType index_constraint = IndexConstraintType::INVALID;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
@@ -236,7 +249,7 @@ bool IndexCatalog::IsUniqueKeys(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   bool unique_keys = false;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
@@ -249,6 +262,12 @@ bool IndexCatalog::IsUniqueKeys(oid_t index_oid,
   return unique_keys;
 }
 
+/*@brief   get all index records from the same table
+* this function may be useful when calling DropTable
+* @param   table_oid
+* @param   txn  Transaction
+* @return  a vector of index oid
+*/
 std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
                                               concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
@@ -271,14 +290,13 @@ std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
   return index_oids;
 }
 
-oid_t IndexCatalog::GetIndexOid(const std::string &index_name, oid_t table_oid,
+oid_t IndexCatalog::GetIndexOid(const std::string &index_name,
                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 1;              // Index of index_name & table_oid
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -295,6 +313,42 @@ oid_t IndexCatalog::GetIndexOid(const std::string &index_name, oid_t table_oid,
   }
 
   return index_oid;
+}
+
+/*@brief   return all the columns this index indexed
+* @param   index_oid
+* @param   txn  Transaction
+* @return  a vector of column oid(logical position)
+*/
+std::vector<oid_t> IndexCatalog::GetIndexedKeys(oid_t index_oid,
+                                                concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({6});  // indekeys
+  oid_t index_offset = 0;              // Index of index_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+
+  std::vector<oid_t> key_attrs;
+  std::string temp;
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
+  if (result_tiles->size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      temp = (*result_tiles)[0]->GetValue(0, 0).ToString();
+    }
+  }
+  LOG_TRACE("the string value for index keys is %s", temp.c_str());
+  // using " " as delimiter to split up string and turn into vector of oid_t
+  std::stringstream os(temp.c_str());  // Turn the string into a stream.
+  std::string tok;
+
+  while (std::getline(os, tok, ' ')) {
+    key_attrs.push_back(std::stoi(tok));
+  }
+  LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
+  return key_attrs;
 }
 
 }  // End catalog namespace

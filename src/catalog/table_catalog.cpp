@@ -40,6 +40,9 @@ TableCatalog::TableCatalog(storage::Database *pg_catalog,
 
 TableCatalog::~TableCatalog() {}
 
+/*@brief   private function for initialize schema of pg_table
+* @return  unqiue pointer to schema
+*/
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
@@ -69,6 +72,13 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   return table_catalog_schema;
 }
 
+/*@brief   insert a tuple about table info into pg_table
+* @param   table_oid
+* @param   table_name
+* @param   database_oid
+* @param   txn     Transaction
+* @return  Whether insertion is Successful
+*/
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
@@ -88,6 +98,11 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
+/*@brief   delete a tuple about table info from pg_table(using index scan)
+* @param   table_oid
+* @param   txn     Transaction
+* @return  Whether deletion is Successful
+*/
 bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of table_oid
   std::vector<type::Value> values;
@@ -96,6 +111,11 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+/*@brief   read table name from pg_table using table oid
+* @param   table_oid
+* @param   txn     Transaction
+* @return  table name
+*/
 std::string TableCatalog::GetTableName(oid_t table_oid,
                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
@@ -113,13 +133,18 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       table_name = (*result_tiles)[0]
                        ->GetValue(0, 0)
-                       .GetAs<std::string>();  // After projection left 1 column
+                       .ToString();  // After projection left 1 column
     }
   }
 
   return table_name;
 }
 
+/*@brief   read database oid one table belongs to using table oid
+* @param   table_oid
+* @param   txn     Transaction
+* @return  database oid
+*/
 oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
                                    concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // database_oid
@@ -144,6 +169,12 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
   return database_oid;
 }
 
+/*@brief   read table oid from pg_table using table name + database oid
+* @param   table_name
+* @param   database_oid
+* @param   txn     Transaction
+* @return  table oid
+*/
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
                                 oid_t database_oid,
                                 concurrency::Transaction *txn) {
@@ -173,6 +204,11 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
   return table_oid;
 }
 
+/*@brief   read all table oids from the same database using its oid
+* @param   database_oid
+* @param   txn  Transaction
+* @return  a vector of table oid
+*/
 std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
                                               concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_oid
@@ -195,6 +231,11 @@ std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
   return table_ids;
 }
 
+/*@brief   read all table names from the same database using its oid
+* @param   database_oid
+* @param   txn  Transaction
+* @return  a vector of table name
+*/
 std::vector<std::string> TableCatalog::GetTableNames(
     oid_t database_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
@@ -210,7 +251,7 @@ std::vector<std::string> TableCatalog::GetTableNames(
     for (auto tuple_id : *tile) {
       table_names.emplace_back(
           tile->GetValue(tuple_id, 0)
-              .GetAs<std::string>());  // After projection left 1 column
+              .ToString());  // After projection left 1 column
     }
   }
 

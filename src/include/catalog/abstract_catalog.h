@@ -23,6 +23,7 @@
 #include "expression/comparison_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "index/index_factory.h"
 #include "planner/delete_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
@@ -34,7 +35,6 @@
 #include "type/catalog_type.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-#include "index/index_factory.h"
 
 namespace peloton {
 namespace catalog {
@@ -53,7 +53,9 @@ class AbstractCatalog {
   // Construct catalog_table_ schema
   virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
 
-  // Helper functions for catalogs
+  //===--------------------------------------------------------------------===//
+  // Helper Functions
+  //===--------------------------------------------------------------------===//
   bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::Transaction *txn);
 
@@ -69,6 +71,9 @@ class AbstractCatalog {
                 const std::string &index_name,
                 IndexConstraintType index_constraint);
 
+  //===--------------------------------------------------------------------===//
+  // Memebers
+  //===--------------------------------------------------------------------===//
   // Maximum column name size for catalog schemas
   static const size_t max_name_size = 32;
 

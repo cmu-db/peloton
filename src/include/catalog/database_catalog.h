@@ -13,11 +13,12 @@
 //===----------------------------------------------------------------------===//
 // pg_database
 //
-// Schema: (column: column_name)
-// 0: database_oid (pkey), 1: database_name
+// Schema: (column offset: column_name)
+// 0: database_oid (pkey)
+// 1: database_name
 //
 // Indexes: (index offset: indexed columns)
-// 0: database_oid (unique)
+// 0: database_oid (unique & primary key)
 // 1: database_name (unique)
 //
 //===----------------------------------------------------------------------===//
@@ -39,12 +40,16 @@ class DatabaseCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
-  // Write related API
+  //===--------------------------------------------------------------------===//
+  // write Related API
+  //===--------------------------------------------------------------------===//
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
                       type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteDatabase(oid_t database_oid, concurrency::Transaction *txn);
 
-  // Read-only API
+  //===--------------------------------------------------------------------===//
+  // Read-only Related API
+  //===--------------------------------------------------------------------===//
   std::string GetDatabaseName(oid_t database_oid,
                               concurrency::Transaction *txn);
   oid_t GetDatabaseOid(const std::string &database_name,

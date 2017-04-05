@@ -13,12 +13,17 @@
 //===----------------------------------------------------------------------===//
 // pg_attribute
 //
-// Schema: (column: column_name)
-// 0: table_oid (pkey), 1: column_name (pkey), 2: column_offset, 3: column_type,
-// 4: is_inlined, 5: is_primary, 6: is_not_null
+// Schema: (column offset: column_name)
+// 0: table_oid (pkey)
+// 1: column_name (pkey)
+// 2: column_offset (physical offset instead of logical position)
+// 3: column_type (type of the data stored in this column)
+// 4: is_inlined (false for VARCHAR type, true for every type else)
+// 5: is_primary (is this column belongs to primary key)
+// 6: is_not_null
 //
 // Indexes: (index offset: indexed columns)
-// 0: table_oid & column_name (unique)
+// 0: table_oid & column_name (unique & primary key)
 // 1: table_oid & column_offset (unique)
 // 2: table_oid (non-unique)
 //
@@ -41,7 +46,9 @@ class ColumnCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | COLUMN_OID_MASK; }
 
-  // Write related API
+  //===--------------------------------------------------------------------===//
+  // write Related API
+  //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
                     oid_t column_offset, type::Type::TypeId column_type,
                     bool is_inlined, const std::vector<Constraint> &constraints,
@@ -50,7 +57,9 @@ class ColumnCatalog : public AbstractCatalog {
                     concurrency::Transaction *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::Transaction *txn);
 
-  // Read-only API
+  //===--------------------------------------------------------------------===//
+  // Read-only Related API
+  //===--------------------------------------------------------------------===//
   oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,
                         concurrency::Transaction *txn);
   std::string GetColumnName(oid_t table_oid, oid_t column_offset,
