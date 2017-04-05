@@ -129,6 +129,17 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 };
 
 //===--------------------------------------------------------------------===//
+// Logical Hash
+//===--------------------------------------------------------------------===//
+class LogicalHash : public OperatorNode<LogicalHash> {
+ public:
+  static Operator make(const std::vector<expression::AbstractExpression*> &hash_keys);
+
+  // logical hash will only be used for DISTINCT
+  std::vector<expression::AbstractExpression*> hash_keys;
+};
+
+//===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
@@ -337,5 +348,13 @@ class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
   std::vector<expression::AbstractExpression *> *columns;
   expression::AbstractExpression *having;
 };
+
+class PhysicalHash : public OperatorNode<PhysicalHash> {
+ public:
+  static Operator make(const std::vector<expression::AbstractExpression*> &hash_keys);
+  // PhysicalHash can be used for DISTINCT or hash join
+  std::vector<expression::AbstractExpression*> hash_keys;
+};
+
 } /* namespace optimizer */
 } /* namespace peloton */

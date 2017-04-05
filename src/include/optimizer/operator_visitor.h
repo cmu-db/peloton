@@ -42,6 +42,7 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalDelete *) = 0;
   virtual void Visit(const PhysicalUpdate *) = 0;
   virtual void Visit(const PhysicalAggregate *) = 0;
+  virtual void Visit(const PhysicalHash *) = 0;
 };
 
 } /* namespace optimizer */

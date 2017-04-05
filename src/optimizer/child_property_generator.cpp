@@ -102,6 +102,41 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
+void ChildPropertyGenerator::Visit(const PhysicalHash *) {
+  PropertySet child_input_property_set;
+  PropertySet provided_property;
+
+  for (auto prop : requirements_.Properties()) {
+    switch (prop->Type()) {
+      // Hash will break sort property
+      case PropertyType::SORT: {
+        break;
+      }
+      case PropertyType::COLUMNS: {
+        // PropertyColumns will be fulfilled by the child operator
+        child_input_property_set.AddProperty(prop);
+        provided_property.AddProperty(prop);
+        break;
+      }
+      case PropertyType::PREDICATE: {
+        // PropertyPredicate will be fulfilled by the child operator
+        child_input_property_set.AddProperty(prop);
+        provided_property.AddProperty(prop);
+        break;
+      }
+      case PropertyType::PROJECT: {
+        // PropertyProject will be fulfilled by the child operator
+        provided_property.AddProperty(prop);
+        break;
+      }
+    }
+  }
+
+  vector<PropertySet> child_input_properties{child_input_property_set};
+  output_.push_back(make_pair(provided_property, move(child_input_properties)));
+
+}
+
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};

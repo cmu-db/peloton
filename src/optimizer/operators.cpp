@@ -118,6 +118,16 @@ Operator LogicalAggregate::make(
 }
 
 //===--------------------------------------------------------------------===//
+// Logical Hash
+//===--------------------------------------------------------------------===//
+Operator LogicalHash::make(const std::vector<expression::AbstractExpression *>
+                           &hash_keys) {
+  LogicalHash *hash = new LogicalHash;
+  hash->hash_keys = hash_keys;
+  return Operator(hash);
+}
+
+//===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
 Operator LogicalLimit::make(int64_t limit, int64_t offset) {
@@ -329,6 +339,16 @@ Operator PhysicalAggregate::make(
 }
 
 //===--------------------------------------------------------------------===//
+// Physical Hash
+//===--------------------------------------------------------------------===//
+Operator PhysicalHash::make(const std::vector<expression::AbstractExpression *>
+                            &hash_keys) {
+  PhysicalHash *hash = new PhysicalHash;
+  hash->hash_keys = hash_keys;
+  return Operator(hash);
+}
+
+//===--------------------------------------------------------------------===//
 template <typename T>
 void OperatorNode<T>::Accept(OperatorVisitor *v) const {
   v->Visit((const T *)this);
@@ -359,6 +379,9 @@ void OperatorNode<LogicalOuterJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
 void OperatorNode<LogicalAggregate>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalHash>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
 void OperatorNode<LogicalLimit>::Accept(
@@ -395,6 +418,8 @@ template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
+template <>
+std::string OperatorNode<LogicalHash>::name_ = "LogicalHash";
 template <>
 std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
@@ -440,6 +465,8 @@ template <>
 std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
 template <>
 std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
+template <>
+std::string OperatorNode<PhysicalHash>::name_ = "PhysicalHash";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -461,6 +488,8 @@ OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
 template <>
+OpType OperatorNode<LogicalHash>::type_ = OpType::LogicalHash;
+template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
@@ -474,6 +503,8 @@ template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
+template <>
+OpType OperatorNode<PhysicalHash>::type_ = OpType::Hash;
 template <>
 OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>

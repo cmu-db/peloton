@@ -351,6 +351,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   output_plan_ = move(agg_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalHash *op) {
+  (void) op;
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {}
