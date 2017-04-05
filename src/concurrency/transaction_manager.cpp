@@ -32,17 +32,17 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
   
   Transaction *txn = nullptr;
   
-  cid_t begin_cid = INVALID_CID;
+  cid_t read_id = INVALID_CID;
 
   if (type == IsolationLevelType::READ_ONLY) {
 
     // transaction processing with decentralized epoch manager
-    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
+    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
   
   } else if (type == IsolationLevelType::SNAPSHOT) {
     
     // transaction processing with decentralized epoch manager
-    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
+    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
 
   } else {
     
@@ -53,11 +53,11 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // - READ_UNCOMMITTED.
   
     // transaction processing with decentralized epoch manager
-    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);
+    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);
     
   }
   
-  txn = new Transaction(begin_cid, thread_id, type);
+  txn = new Transaction(thread_id, type, read_id);
   
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -127,9 +127,9 @@ bool TransactionManager::IsOccupied(
   // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
   // the tuple has already been committed.
-  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  bool activated = (current_txn->GetReadId() >= tuple_begin_cid);
   // the tuple is not visible.
-  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+  bool invalidated = (current_txn->GetReadId() >= tuple_end_cid);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion/select for update.
@@ -189,9 +189,9 @@ VisibilityType TransactionManager::IsVisible(
   // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
   // the tuple has already been committed.
-  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  bool activated = (current_txn->GetReadId() >= tuple_begin_cid);
   // the tuple is not visible.
-  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+  bool invalidated = (current_txn->GetReadId() >= tuple_end_cid);
 
   if (tuple_txn_id == INVALID_TXN_ID || CidIsInDirtyRange(tuple_begin_cid)) {
     // the tuple is not available.
