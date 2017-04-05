@@ -13,12 +13,10 @@
 
 #include <limits.h>
 #include <iostream>
-#include <cstdint>
 #include <cmath>
 
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
-#include "type/numeric_type.h"
 #include "type/varlen_type.h"
 #include "common/harness.h"
 #include "type/value_factory.h"
