@@ -35,13 +35,13 @@
 #include "common/harness.h"
 #include "common/macros.h"
 #include "common/logger.h"
-#include "parser/parser.h"
 #include "optimizer/simple_optimizer.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/plan_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
 #include "planner/plan_util.h"
+#include "parser/postgresparser.h"
 
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
@@ -374,7 +374,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
                                 "INSERT INTO "
                                   "test_table(id, col1, "
                                   "col2)" " VALUES (1, 10, 100);"));
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   auto insert_stmt = peloton_parser.BuildParseTree(
     "INSERT INTO test_table(id, col1, col2) VALUES (1, 10, 100);");
 

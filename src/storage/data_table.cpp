@@ -266,7 +266,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   }
 
   return true;
-}
+} */
 
 bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   std::pair<ExpressionType, type::Value> exp =
