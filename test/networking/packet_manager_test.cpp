@@ -27,25 +27,27 @@ namespace test {
 
 class PacketManagerTests : public PelotonTest {};
 
-static void *LaunchServer(void *) {
+static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
   try {
     // Setup
-    //peloton::PelotonInit::Initialize();
-    LOG_INFO("Server initialized\n");
+    // peloton::PelotonInit::Initialize();
+    // LOG_INFO("Server initialized\n");
     // Launch server
-    //peloton::wire::LibeventServer libeventserver;
+    // peloton::wire::LibeventServer libeventserver;
+    
+    libeventserver.StartServer();
     LOG_INFO("Server Closed\n");
     // Teardown
     // Todo: Peloton cannot shut down normally, will try to fix this soon
     // peloton::PelotonInit::Shutdown();
-    LOG_INFO("Peloton has shut down\n");
+    // LOG_INFO("Peloton has shut down\n");
   } catch (peloton::ConnectionException exception) {
     // Nothing to do here!
   }
   return NULL;
 }
 
-/*
+
 static void *SimpleQueryTest(void *) {
   try {
     pqxx::connection C(
@@ -72,21 +74,22 @@ static void *SimpleQueryTest(void *) {
   LOG_INFO("Client has closed\n");
   return NULL;
 }
-*/
+
 
 TEST_F(PacketManagerTests, SimpleQueryTest) {
-  pthread_t threads[NUM_THREADS];
-  int rc = pthread_create(&threads[0], NULL, LaunchServer, NULL);
-  if (rc) {
-    LOG_INFO("Error:unable to create server thread");
-    exit(-1);
-  }
+  peloton::PelotonInit::Initialize();
+  LOG_INFO("Server initialized\n");
+  // pthread_t threads[NUM_THREADS];
+  peloton::wire::LibeventServer libeventserver;
+  std::thread serverThread(LaunchServer, libeventserver);
+
   sleep(5);
 
-  // SimpleQueryTest(NULL);
+  SimpleQueryTest(NULL);
 
-  pthread_kill(threads[0], SIGHUP);
-  pthread_join(threads[0], NULL);
+  // pthread_kill(threads[0], SIGHUP);
+  libeventserver.CloseServer();
+  serverThread.join();
 }
 
 }  // End test namespace
