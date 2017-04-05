@@ -210,13 +210,13 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+bridge::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
-  bridge::peloton_status p_status;
+  bridge::ExecuteResult p_status;
 
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
