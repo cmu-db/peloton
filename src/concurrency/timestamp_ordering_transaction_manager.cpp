@@ -104,11 +104,12 @@ bool TimestampOrderingTransactionManager::IsOwner(
 // This method tests whether the current transaction has created this version of
 // the tuple
 bool TimestampOrderingTransactionManager::IsWritten(
-    Transaction *const current_txn,
+    UNUSED_ATTRIBUTE Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  return IsOwner(current_txn, tile_group_header, tuple_id) &&
-         tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID;
+  auto tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  // return IsOwner(current_txn, tile_group_header, tuple_id) &&
+  return tuple_begin_cid == MAX_CID;
 }
 
 // if the tuple is not owned by any transaction and is visible to current

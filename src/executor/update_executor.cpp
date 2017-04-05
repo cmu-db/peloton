@@ -158,18 +158,18 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
-                                                physical_tuple_id);
+    bool is_owner = 
+        transaction_manager.IsOwner(current_txn, tile_group_header,physical_tuple_id);
 
-    bool is_written = transaction_manager.IsWritten(
-        current_txn, tile_group_header, physical_tuple_id);
-
-    PL_ASSERT((is_owner == false && is_written == true) == false);
+    bool is_written = 
+        transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
 
     // Prepare to examine primary key
     bool ret = false;
     const planner::UpdatePlan &update_node = GetPlanNode<planner::UpdatePlan>();
 
+    // if the current transaction is the creator of this version.
+    // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
 
       if (update_node.GetUpdatePrimaryKey()) {
