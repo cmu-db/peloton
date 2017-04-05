@@ -29,13 +29,15 @@ namespace type {
   if (right.GetTypeId() == Type::VARCHAR) { \
     str2 = right.GetData(); \
     len2 = GetLength(right) - 1; \
+    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
+                                               str2, len2) OP 0); \
   } else { \
-    std::string to_string = right.ToString(); \
-    str2 = to_string.c_str(); \
-    len2 = static_cast<uint32_t>(to_string.size()); \
+    auto r_value = right.CastAs(Type::VARCHAR); \
+    str2 = r_value.GetData(); \
+    len2 = GetLength(r_value) - 1; \
+    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
+                                               str2, len2) OP 0); \
   } \
-  return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
-                                             str2, len2) OP 0);
 
 VarlenType::VarlenType(TypeId type) : Type(type) {}
 

@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <string.h>
+
 #include "common/logger.h"
 #include "type/type.h"
 
@@ -25,14 +27,19 @@ namespace type {
 class TypeUtil {
  public:
   /**
-   * Use strncmp to evaluate two strings
+   * Use memcmp to evaluate two strings
    * This does not work with VARBINARY attributes.
    */
   static inline int CompareStrings(const char* str1, int len1, const char* str2,
                                    int len2) {
+    PL_ASSERT(str1 != nullptr);
     PL_ASSERT(len1 >= 0);
+    PL_ASSERT(str2 != nullptr);
     PL_ASSERT(len2 >= 0);
-    int ret = strncmp(str1, str2, std::min(len1, len2));
+    // PAVLO: 2017-04-04
+    // The reason why we use memcmp here is that our inputs are
+    // not null-terminated strings, so we can't use strncmp
+    int ret = memcmp(str1, str2, std::min(len1, len2));
     if (ret == 0 && len1 != len2) {
       ret = len1 - len2;
     }
