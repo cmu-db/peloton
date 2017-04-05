@@ -109,7 +109,7 @@ void PelotonCodeGenTest::LoadTestTable(uint32_t table_id, uint32_t num_rows) {
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
     const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state) {
+    char *consumer_state, codegen::QueryStatement::RuntimeStats *runtime_stats) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -120,7 +120,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state);
+  compiled_query->Execute(*txn, consumer_state, runtime_stats);
 
   txn_manager.CommitTransaction(txn);
 
