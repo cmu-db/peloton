@@ -29,6 +29,9 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
+  // Add indexes for pg_attribute table
+  // note that pg_index is not initialized right now, so it's impossible to
+  // insert relative records into pg_index
   AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
   AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
@@ -47,6 +50,9 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
 
 ColumnCatalog::~ColumnCatalog() {}
 
+/*@brief   private function for initialize schema of pg_attribute
+* @return  unqiue pointer to schema
+*/
 std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
@@ -154,6 +160,12 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+/*@brief   delete all column records from the same table
+* this function is useful when calling DropTable
+* @param   table_oid
+* @param   txn  Transaction
+* @return  a vector of table oid
+*/
 bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                                   concurrency::Transaction *txn) {
   oid_t index_offset = 2;  // Index of table_oid
@@ -206,10 +218,9 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_offset,
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      column_name =
-          (*result_tiles)[0]
-              ->GetValue(0, 0)
-              .GetAs<std::string>();  // After projection left 1 column
+      column_name = (*result_tiles)[0]
+                        ->GetValue(0, 0)
+                        .ToString();  // After projection left 1 column
     }
   }
 

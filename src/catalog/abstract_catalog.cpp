@@ -26,11 +26,13 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 
   // Add catalog_table_ into pg_catalog database
   pg_catalog->AddTable(catalog_table_, true);
-
-  // Index construction and inserting contents of pg_database, pg_table,
-  // pg_index should leave to catalog's constructor
 }
 
+/*@brief   insert tuple(reord) helper function
+* @param   tuple     tuple to be inserted
+* @param   txn       Transaction
+* @return  Whether insertion is Successful
+*/
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                                   concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -54,11 +56,12 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   return status;
 }
 
-// @brief   Delete a tuple using index scan
-// @param   index_offset  Offset of index for scan
-// @param   values        Values for search
-// @param   txn           Transaction
-// @return  Whether deletion is success
+/*@brief   Delete a tuple using index scan
+* @param   index_offset  Offset of index for scan
+* @param   values        Values for search
+* @param   txn           Transaction
+* @return  Whether deletion is Successful
+*/
 bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
                                           std::vector<type::Value> values,
                                           concurrency::Transaction *txn) {
@@ -110,12 +113,13 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
   return status;
 }
 
-// @brief   Index scan helper function
-// @param   column_offsets    Column ids for search (projection)
-// @param   index_offset  Offset of index for scan
-// @param   values        Values for search
-// @param   txn           Transaction
-// @return  Vector of logical tiles
+/*@brief   Index scan helper function
+* @param   column_offsets    Column ids for search (projection)
+* @param   index_offset      Offset of index for scan
+* @param   values            Values for search
+* @param   txn               Transaction
+* @return  Unique pointer of vector of logical tiles
+*/
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
@@ -151,7 +155,7 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                                   context.get());
 
   // Execute
-  index_scan_executor.Init();
+  PL_ASSERT(index_scan_executor.Init());
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
       result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
 
@@ -167,6 +171,13 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
   return result_tiles;
 }
 
+/*@brief   Add index on catalog table
+* @param   key_attrs    indexed column offset(position)
+* @param   index_oid    index id(global unique)
+* @param   index_name   index name(global unique)
+* @param   index_constraint     index constraints
+* @return  Unique pointer of vector of logical tiles
+*/
 void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
                                oid_t index_oid, const std::string &index_name,
                                IndexConstraintType index_constraint) {

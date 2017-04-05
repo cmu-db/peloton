@@ -15,10 +15,10 @@
 #include "catalog/foreign_key.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
-#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace storage {
@@ -28,7 +28,9 @@ Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
 Database::~Database() {
   // Clean up all the tables
   LOG_TRACE("Deleting tables from database");
-  for (auto table : tables) delete table;
+  for (auto table : tables) {
+    if (table != nullptr) delete table;
+  }
 
   LOG_TRACE("Finish deleting tables from database");
 }

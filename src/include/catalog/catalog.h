@@ -93,7 +93,7 @@ class Catalog {
                                 concurrency::Transaction *txn = nullptr);
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                 concurrency::Transaction *txn = nullptr);
-
+  // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
                          const std::vector<std::string> &index_attr,
@@ -101,6 +101,7 @@ class Catalog {
                          IndexType index_type,
                          concurrency::Transaction *txn = nullptr,
                          bool is_catalog = false);
+
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<std::string> &index_attr,
                          const std::string &index_name, bool unique,
@@ -119,7 +120,7 @@ class Catalog {
   ResultType DropDatabaseWithOid(oid_t database_oid,
                                  concurrency::Transaction *txn);
 
-  // Drop a table
+  // Drop a table using table name
   ResultType DropTable(const std::string &database_name,
                        const std::string &table_name,
                        concurrency::Transaction *txn);
@@ -134,11 +135,11 @@ class Catalog {
   bool HasDatabase(oid_t db_oid) const;
 
   // Find a database using its id
-  // return nullptr if not found
+  // return nullptr and throw catalog exceptions if not found
   storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
 
   // Find a database using its name
-  // return nullptr if not found
+  // return nullptr and throw catalog exceptions if not found
   storage::Database *GetDatabaseWithName(const std::string &db_name) const;
 
   // Find a database using vector offset

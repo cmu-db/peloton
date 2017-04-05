@@ -32,7 +32,6 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   storage::Database *database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   EXPECT_NE(database, nullptr);
-
   // Check metric tables
   //   auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
   //   EXPECT_NE(db_metric_table, nullptr);
@@ -42,11 +41,18 @@ TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
+  std::vector<oid_t> key_attrs =
+      catalog::IndexCatalog::GetInstance()->GetIndexedKeys(
+          INDEX_CATALOG_PKEY_OID, txn);
   txn_manager.CommitTransaction(txn);
+
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("EMP_DB")
                 ->GetDBName(),
             "EMP_DB");
+  EXPECT_EQ(key_attrs.size(), 1);
+  EXPECT_EQ(key_attrs[0], 0);
+  // EXPECT_EQ(index_name, "pg_index_pkey");
 }
 
 TEST_F(CatalogTests, CreatingTable) {
@@ -92,7 +98,7 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_attribute")
                 ->GetTupleCount(),
-            24);
+            25);
   // pg_catalog + EMP_DB
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
