@@ -181,8 +181,8 @@ const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id_
-     << " Begin Commit ID : " << std::setw(4) << begin_cid_
-     << " End Commit ID : " << std::setw(4) << end_cid_
+     << " Read ID : " << std::setw(4) << read_id_
+     << " Commit ID : " << std::setw(4) << commit_id_
      << " Result : " << result_;
 
   return os.str();

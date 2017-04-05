@@ -246,7 +246,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          LOG_TRACE("perform prediate evaluate");
+          LOG_TRACE("perform predicate evaluate");
           expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_location.offset);
           eval =
@@ -280,7 +280,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                                 tuple_location.offset) == INITIAL_TXN_ID);
         bool is_alive =
             (tile_group_header->GetEndCommitId(tuple_location.offset) <=
-             current_txn->GetBeginCommitId());
+             current_txn->GetReadId());
         if (is_acquired && is_alive) {
           // See an invisible version that does not belong to any one in the
           // version chain.
@@ -526,7 +526,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                                 tuple_location.offset) == INITIAL_TXN_ID);
         bool is_alive =
             (tile_group_header->GetEndCommitId(tuple_location.offset) <=
-             current_txn->GetBeginCommitId());
+             current_txn->GetReadId());
         if (is_acquired && is_alive) {
           // See an invisible version that does not belong to any one in the
           // version chain.

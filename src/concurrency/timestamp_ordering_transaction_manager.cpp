@@ -115,13 +115,13 @@ bool TimestampOrderingTransactionManager::IsWritten(
 // transaction.
 // this function is called by update/delete executors.
 bool TimestampOrderingTransactionManager::IsOwnable(
-    Transaction *const current_txn,
+    UNUSED_ATTRIBUTE Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID &&
-         tuple_end_cid > current_txn->GetBeginCommitId();
+         tuple_end_cid == MAX_CID;
 }
 
 bool TimestampOrderingTransactionManager::AcquireOwnership(
@@ -137,7 +137,11 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // change timestamp
   cid_t last_reader_cid = GetLastReaderCommitId(tile_group_header, tuple_id);
 
-  if (last_reader_cid > current_txn->GetBeginCommitId()) {
+  // must compare last_reader_cid with a transaction's commit_id 
+  // (rather than read_id).
+  // consider a transaction that is executed under snapshot isolation.
+  // in this case, commit_id is not equal to read_id.
+  if (last_reader_cid > current_txn->GetCommitId()) {
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
     return false;
@@ -254,7 +258,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // if the current transaction does not own this tuple, 
         // then attempt to set last reader cid.
         if (SetLastReaderCommitId(tile_group_header, tuple_id,
-                                  current_txn->GetBeginCommitId()) == true) {
+                                  current_txn->GetCommitId()) == true) {
           current_txn->RecordRead(location);
           // Increment table read op stats
           if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -287,7 +291,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
-                current_txn->GetBeginCommitId());
+                current_txn->GetCommitId());
       // Increment table read op stats
       if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
@@ -302,7 +306,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // if the current transaction does not own this tuple, 
         // then attempt to set last reader cid.
         if (SetLastReaderCommitId(tile_group_header, tuple_id,
-                                  current_txn->GetBeginCommitId()) == true) {
+                                  current_txn->GetCommitId()) == true) {
           
           // update read set.
           current_txn->RecordRead(location);
@@ -325,7 +329,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // if the current transaction has already owned this tuple, 
         // then perform read directly.
         PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
-                  current_txn->GetBeginCommitId());
+                  current_txn->GetCommitId());
 
         // Increment table read op stats
         if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -518,7 +522,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   auto transaction_id = current_txn->GetTransactionId();
 
   PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) <=
-            current_txn->GetBeginCommitId());
+            current_txn->GetCommitId());
 
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
             transaction_id);
@@ -648,7 +652,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   log_manager.StartLogging();
   
   // generate transaction id.
-  cid_t end_commit_id = current_txn->GetBeginCommitId();
+  cid_t end_commit_id = current_txn->GetCommitId();
   
   auto &rw_set = current_txn->GetReadWriteSet();
 

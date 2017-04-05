@@ -35,29 +35,31 @@ class Transaction : public Printable {
 
  public:
   Transaction() { 
-    Init(INVALID_CID, 0, IsolationLevelType::SERIALIZABLE); 
+    Init(0, IsolationLevelType::SERIALIZABLE, INVALID_CID); 
   }
 
-  Transaction(const cid_t &begin_cid, 
-              const size_t thread_id,
-              const IsolationLevelType isolation) {
-    Init(begin_cid, thread_id, isolation);
+  Transaction(const size_t thread_id,
+              const IsolationLevelType isolation,
+              const cid_t &read_id) {
+    Init(thread_id, isolation, read_id);
   }
 
   ~Transaction() {}
 
  private:
 
-  void Init(const cid_t &begin_cid, 
-            const size_t thread_id,
-            const IsolationLevelType isolation) {
-    txn_id_ = begin_cid;
+  void Init(const size_t thread_id, 
+            const IsolationLevelType isolation, 
+            const cid_t &read_id) {
+    // initially, all the three ids are set to read_id.
+    txn_id_ = read_id;
     
-    begin_cid_ = begin_cid;
+    read_id_ = read_id;
 
-    end_cid_ = MAX_CID;
+    // commit id can be set at a transaction's commit phase.
+    commit_id_ = read_id;
 
-    epoch_id_ = begin_cid_ >> 32;
+    epoch_id_ = read_id_ >> 32;
     
     thread_id_ = thread_id;
 
@@ -80,13 +82,13 @@ class Transaction : public Printable {
 
   inline txn_id_t GetTransactionId() const { return txn_id_; }
 
-  inline cid_t GetBeginCommitId() const { return begin_cid_; }
+  inline cid_t GetReadId() const { return read_id_; }
 
-  inline cid_t GetEndCommitId() const { return end_cid_; }
+  inline cid_t GetCommitId() const { return commit_id_; }
 
   inline eid_t GetEpochId() const { return epoch_id_; }
 
-  inline void SetEndCommitId(const cid_t end_cid) { end_cid_ = end_cid; }
+  inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   void RecordRead(const ItemPointer &);
 
@@ -137,15 +139,15 @@ class Transaction : public Printable {
   // thread id
   size_t thread_id_;
 
-  // begin commit id
+  // read id
   // this id determines which tuple versions the transaction can access.
-  cid_t begin_cid_;
+  cid_t read_id_;
 
-  // end commit id
+  // commit id
   // this id determines the id attached to the tuple version written by the transaction.
-  cid_t end_cid_;
+  cid_t commit_id_;
 
-  // epoch id can be extracted from begin commit id.
+  // epoch id can be extracted from read id.
   // GC manager uses this id to check whether a version is still visible.
   eid_t epoch_id_;
 
