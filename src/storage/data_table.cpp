@@ -210,6 +210,7 @@ bool DataTable::MultiCheckNotNulls(const storage::Tuple *tuple,
   return true;
 }
 
+/*
 bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
                          std::pair<ExpressionType, type::Value> exp) const {
   type::Value cur = tuple->GetValue(column_idx);
@@ -246,7 +247,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
     }
   }
   return true;
-}
+} */
 
 // Set the default values for corresponding columns
 /*
