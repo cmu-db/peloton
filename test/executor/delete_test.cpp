@@ -44,7 +44,7 @@ void ShowTable(std::string database_name, std::string table_name) {
                                                                  table_name);
   std::unique_ptr<Statement> statement;
   auto& peloton_parser = parser::PostgresParser::GetInstance();
-  bridge::peloton_status status;
+  bridge::ExecuteResult status;
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
   optimizer::SimpleOptimizer optimizer;
@@ -125,7 +125,7 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format = std::move(std::vector<int>(0, 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  bridge::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
