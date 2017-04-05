@@ -63,8 +63,7 @@ void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
 }
 
 LibeventServer::LibeventServer() {
-  struct event_base *base = event_base_new();
-  struct event *evstop;
+  base = event_base_new();
 
   // Create our event base
   if (!base) {
@@ -76,8 +75,7 @@ LibeventServer::LibeventServer() {
   evsignal_add(evstop, NULL);
 
   // a master thread is responsible for coordinating worker threads.
-  std::shared_ptr<LibeventThread> master_thread(
-      new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
+  master_thread = std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -93,7 +91,10 @@ LibeventServer::LibeventServer() {
   // Ignore the broken pipe signal
   // We don't want to exit on write when the client disconnects
   signal(SIGPIPE, SIG_IGN);
+}
 
+void LibeventServer::StartServer() {
+  LOG_INFO("Begin to start server\n");
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -126,8 +127,6 @@ LibeventServer::LibeventServer() {
 
     LOG_INFO("Listening on port %lu", port_);
     event_base_dispatch(base);
-    event_free(evstop);
-    event_base_free(base);
   }
 
   // This socket family code is not implemented yet
@@ -135,5 +134,15 @@ LibeventServer::LibeventServer() {
     throw ConnectionException("Unsupported socket family");
   }
 }
+
+void LibeventServer::CloseServer() {
+  LOG_INFO("Begin to stop server\n");
+  event_base_loopexit(base, NULL);
+  event_free(evstop);
+  event_base_free(base);
+  static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+  LOG_INFO("Server closed\n");
+}
+
 }
 }
