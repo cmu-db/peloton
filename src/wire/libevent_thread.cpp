@@ -124,5 +124,14 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
+
+void LibeventMasterThread::CloseConnection() {
+  auto &threads = GetWorkerThreads();
+
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
+    event_base_loopexit(threads[thread_id].get()->GetEventBase(), NULL);
+    LOG_INFO("Exit thread %d event base loop\n", thread_id);
+  }
+}
 }
 }
