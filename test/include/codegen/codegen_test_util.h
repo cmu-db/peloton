@@ -67,7 +67,7 @@ class PelotonCodeGenTest : public PelotonTest {
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state);
+      char *consumer_state, codegen::QueryStatement::RuntimeStats *runtime_stats = nullptr);
 
  private:
   storage::Database *test_db;
