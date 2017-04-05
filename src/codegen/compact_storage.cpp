@@ -36,8 +36,6 @@ llvm::Type *CompactStorage::Setup(
 
   // We keep no EntryInfo for each bit since it is waste of memory
   llvm::Type *null_type = codegen.BoolType();
-  uint32_t bitmap_bits = numitems * codegen.BitSizeOf(null_type);
-  bitmap_size_ = bitmap_bits / 8 + 1;
   for (uint32_t i = 0; i < numitems; i++) {
     llvm_types.push_back(null_type);
   }
@@ -69,6 +67,7 @@ llvm::Type *CompactStorage::Setup(
 
   // Construct the finalized types
   storage_type_ = llvm::StructType::get(codegen.GetContext(), llvm_types, true);
+  storage_size_ = codegen.SizeOf(storage_type_);
   return storage_type_;
 }
 
@@ -111,9 +110,8 @@ llvm::Value *CompactStorage::StoreValues(
   }
 
   // Return a pointer into the space just after all the entries we just wrote
-  uint32_t storage_size = codegen.SizeOf(storage_type_);
   return codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(), ptr,
-                                             storage_size);
+                                             storage_size_);
 }
 
 //===----------------------------------------------------------------------===//
@@ -156,19 +154,14 @@ llvm::Value *CompactStorage::LoadValues(
   }
 
   // Return a pointer into the space just after all the entries we stored
-  uint32_t storage_size = codegen.SizeOf(storage_type_);
   return codegen->CreateConstInBoundsGEP1_32(
       codegen.ByteType(), codegen->CreateBitCast(ptr, codegen.CharPtrType()),
-      storage_size);
+      storage_size_);
 }
 
 // Return the maximum possible bytes that this compact storage will need
 uint64_t CompactStorage::MaxStorageSize() const {
-  uint32_t total_entry_size = 0;
-  for (const auto &entry : storage_format_) {
-    total_entry_size += entry.nbytes;
-  }
-  return bitmap_size_ + total_entry_size;
+  return storage_size_;
 }
 
 }  // namespace codegen

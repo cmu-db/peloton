@@ -80,8 +80,8 @@ class CompactStorage {
   // The constructed finalized type
   llvm::Type *storage_type_;
 
-  // The size of the bitmap to store the null bits, in bytes
-  uint32_t bitmap_size_;
+  // The size of the constructed finalized type
+  uint32_t storage_size_;
 };
 
 }  // namespace codegen
