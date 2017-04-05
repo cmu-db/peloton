@@ -210,13 +210,13 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-bridge::ExecuteResult TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
-  bridge::ExecuteResult p_status;
+  executor::ExecuteResult p_status;
 
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
@@ -234,7 +234,7 @@ bridge::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                  result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {

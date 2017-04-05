@@ -20,7 +20,7 @@
 #include "storage/tuple_iterator.h"
 
 namespace peloton {
-namespace bridge {
+namespace executor {
 
 /*
  * Added for network invoking efficiently
@@ -383,5 +383,5 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   }
 }
 
-}  // namespace bridge
+}  // namespace executor
 }  // namespace peloton
