@@ -98,6 +98,8 @@ class LibeventMasterThread : public LibeventThread {
 
   void DispatchConnection(int new_conn_fd, short event_flags);
 
+  void CloseConnection();
+
   std::vector<std::shared_ptr<LibeventWorkerThread>> &GetWorkerThreads();
 
   static void StartWorker(peloton::wire::LibeventWorkerThread *worker_thread);
