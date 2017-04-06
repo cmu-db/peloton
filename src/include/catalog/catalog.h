@@ -88,24 +88,20 @@ class Catalog {
                          concurrency::Transaction *txn);
 
   // Create the primary key index for a table
-  ResultType CreatePrimaryIndex(const std::string &database_name,
-                                const std::string &table_name,
-                                concurrency::Transaction *txn = nullptr);
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                 concurrency::Transaction *txn = nullptr);
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
                          const std::vector<std::string> &index_attr,
-                         const std::string &index_name, bool unique,
+                         const std::string &index_name, bool unique_keys,
                          IndexType index_type,
-                         concurrency::Transaction *txn = nullptr,
-                         bool is_catalog = false);
+                         concurrency::Transaction *txn = nullptr);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<std::string> &index_attr,
-                         const std::string &index_name, bool unique,
-                         IndexType index_type,
+                         const std::string &index_name, IndexType index_type,
+                         IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::Transaction *txn = nullptr,
                          bool is_catalog = false);
 
