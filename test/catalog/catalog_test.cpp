@@ -42,7 +42,7 @@ TEST_F(CatalogTests, CreatingDatabase) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
   std::vector<oid_t> key_attrs =
-      catalog::IndexCatalog::GetInstance()->GetIndexedKeys(
+      catalog::IndexCatalog::GetInstance()->GetIndexedAttributes(
           INDEX_CATALOG_PKEY_OID, txn);
   txn_manager.CommitTransaction(txn);
 
