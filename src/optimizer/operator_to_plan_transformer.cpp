@@ -283,6 +283,66 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   output_plan_ = move(agg_plan);
 }
 
+
+// TODO: Remove duplicate codes
+void OperatorToPlanTransformer::Visit(const PhysicalPlainAggregate *) {
+  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+      ->As<PropertyColumns>();
+
+  PL_ASSERT(col_prop != nullptr);
+
+  auto child_expr_map = children_expr_map_[0];
+
+  // TODO: Consider different type in the logical to physical implementation
+  auto agg_type = AggregateType::PLAIN;
+
+  // Metadata needed in AggregationPlan
+  vector<planner::AggregatePlan::AggTerm> agg_terms;
+  vector<catalog::Column> output_schema_columns;
+  DirectMapList dml;
+  TargetList tl;
+
+  auto agg_id = 0;
+  auto expr_len = col_prop->GetSize();
+  for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
+    auto expr = col_prop->GetColumn(col_pos);
+    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
+
+    if (expression::ExpressionUtil::IsAggregateExpression(
+        expr->GetExpressionType())) {
+      // For AggregateExpr, add aggregate term
+      auto agg_expr = (expression::AggregateExpression *) expr;
+      auto agg_col = expr->GetModifiableChild(0);
+
+      // Maps the aggregate value in the right tuple to the output.
+      // See aggregator.cpp for more info.
+      dml.emplace_back(col_pos, make_pair(1, agg_id++));
+      planner::AggregatePlan::AggTerm agg_term(
+          agg_expr->GetExpressionType(),
+          agg_col == nullptr ? nullptr : agg_col->Copy(),
+          agg_expr->distinct_);
+      agg_terms.push_back(agg_term);
+    } else
+      PL_ASSERT(false);
+
+    (*output_expr_map_)[expr] = col_pos;
+    output_schema_columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->expr_name_));
+  }
+
+  // Generate the Aggregate Plan
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+  shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(output_schema_columns));
+  unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
+      move(proj_info), nullptr, move(agg_terms), {},
+      output_table_schema, agg_type));
+  agg_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(agg_plan);
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 

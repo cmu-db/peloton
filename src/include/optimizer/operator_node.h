@@ -62,7 +62,8 @@ enum class OpType {
   Insert,
   Delete,
   Update,
-  Aggregate
+  Aggregate,
+  PlainAggregate
 };
 
 //===--------------------------------------------------------------------===//

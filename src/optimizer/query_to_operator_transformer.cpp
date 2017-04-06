@@ -57,6 +57,21 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
   }
+  else {
+    // Check plain aggregation
+    bool plain_aggregation = true;
+    for (auto expr : *op->getSelectList()) {
+      if (!expression::ExpressionUtil::IsAggregateExpression(
+          expr->GetExpressionType()))
+        plain_aggregation = false;
+    }
+    if (plain_aggregation) {
+      auto aggregate = std::make_shared<OperatorExpression>(
+          LogicalAggregate::make(nullptr, nullptr));
+      aggregate->PushChild(output_expr);
+      output_expr = aggregate;
+    }
+  }
 
   if (op->limit != nullptr) {
     // When offset is not specified in the query, parser will set offset to -1

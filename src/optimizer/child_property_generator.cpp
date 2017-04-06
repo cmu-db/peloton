@@ -146,6 +146,48 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
+void ChildPropertyGenerator::Visit(const PhysicalPlainAggregate *) {
+  PropertySet child_input_property_set;
+  PropertySet provided_property;
+
+  for (auto prop : requirements_.Properties()) {
+    switch (prop->Type()) {
+      // Generate output columns for the child
+      // Aggregation will break sort property
+      case PropertyType::DISTINCT:
+      case PropertyType::PROJECT:
+      case PropertyType::SORT:
+        break;
+      case PropertyType::COLUMNS: {
+        provided_property.AddProperty(prop);
+
+        // Check group by columns and union it with the
+        // PropertyColumn to generate child property
+        auto col_prop = prop->As<PropertyColumns>();
+        size_t col_len = col_prop->GetSize();
+        ExprSet child_col;
+        for (size_t col_idx=0; col_idx<col_len; col_idx++) {
+          auto expr = col_prop->GetColumn(col_idx);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr);
+        }
+
+        // Add child PropertyColumn
+        child_input_property_set.AddProperty(
+            make_shared<PropertyColumns>(
+                std::vector<expression::AbstractExpression*>(
+                    child_col.begin(), child_col.end())));
+        break;
+      }
+      case PropertyType::PREDICATE:
+        // PropertyPredicate will be fulfilled by the child operator
+        child_input_property_set.AddProperty(prop);
+        provided_property.AddProperty(prop);
+        break;
+    }
+  }
+  vector<PropertySet> child_input_properties{child_input_property_set};
+  output_.push_back(make_pair(provided_property, move(child_input_properties)));
+}
 
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}

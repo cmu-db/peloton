@@ -323,7 +323,7 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
-// PhysicalAggregate
+// PhysicalHashGroupBy
 //===--------------------------------------------------------------------===//
 class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
  public:
@@ -333,6 +333,14 @@ class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalPlainAggregate
+//===--------------------------------------------------------------------===//
+class PhysicalPlainAggregate : public OperatorNode<PhysicalPlainAggregate> {
+ public:
+  static Operator make();
 };
 
 class PhysicalDistinct : public OperatorNode<PhysicalDistinct> {

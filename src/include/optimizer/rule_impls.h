@@ -111,10 +111,23 @@ class LogicalInsertToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalAggregateToPhysical
-class LogicalAggregateToPhysical : public Rule {
+/// LogicalAggregateToHashAggregate
+class LogicalAggregateToHashAggregate : public Rule {
  public:
-  LogicalAggregateToPhysical();
+  LogicalAggregateToHashAggregate();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalAggregateToPlainAggregate
+class LogicalAggregateToPlainAggregate : public Rule {
+ public:
+  LogicalAggregateToPlainAggregate();
 
   bool Check(std::shared_ptr<OperatorExpression> plan) const override;
 

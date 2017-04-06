@@ -76,6 +76,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalDistinct *) override;
 
+  void Visit(const PhysicalPlainAggregate *) override;
+
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 

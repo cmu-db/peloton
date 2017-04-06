@@ -55,7 +55,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalAggregateToHashAggregate());
+  physical_implementation_rules_.emplace_back(new LogicalAggregateToPlainAggregate());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
@@ -481,7 +482,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
     shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function
     if (rule.Check(plan)) {
-      LOG_TRACE("Rule matched expression of group %d with op %s",
+      LOG_DEBUG("Rule matched expression of group %d with op %s",
                 gexpr->GetGroupID(), gexpr->Op().name().c_str());
       // Apply rule transformations
       // We need to be able to analyze the transformations performed by this
@@ -492,7 +493,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 
       // Integrate transformed plans back into groups and explore/cost if new
       for (shared_ptr<OperatorExpression> plan : transformed_plans) {
-        LOG_TRACE("Trying to integrate expression with op %s",
+        LOG_DEBUG("Trying to integrate expression with op %s",
                   plan->Op().name().c_str());
         shared_ptr<GroupExpression> new_gexpr;
         bool new_expression =

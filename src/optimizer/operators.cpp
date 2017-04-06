@@ -314,7 +314,7 @@ Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
 }
 
 //===--------------------------------------------------------------------===//
-// PhysicalAggregate
+// PhysicalHashAggregate
 //===--------------------------------------------------------------------===//
 Operator PhysicalAggregate::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
@@ -322,6 +322,14 @@ Operator PhysicalAggregate::make(
   PhysicalAggregate *agg = new PhysicalAggregate;
   agg->columns = std::move(columns);
   agg->having = having;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalPlainAggregate
+//===--------------------------------------------------------------------===//
+Operator PhysicalPlainAggregate::make() {
+  PhysicalPlainAggregate *agg = new PhysicalPlainAggregate;
   return Operator(agg);
 }
 
@@ -447,6 +455,8 @@ template <>
 std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
 template <>
 std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
+template <>
+std::string OperatorNode<PhysicalPlainAggregate>::name_ = "PhysicalPlainAggregate";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -511,7 +521,8 @@ template <>
 OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
 template <>
 OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
-
+template <>
+OpType OperatorNode<PhysicalPlainAggregate>::type_ = OpType::PlainAggregate;
 //===--------------------------------------------------------------------===//
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
