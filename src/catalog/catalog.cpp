@@ -69,17 +69,17 @@ void Catalog::InitializeCatalog() {
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
               std::vector<std::string>({"database_name"}),
-              DATABASE_CATALOG_NAME "_skey0", true, IndexType::BWTREE, nullptr,
-              true);
+              DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              IndexConstraintType::UNIQUE, true, nullptr, true);
 
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"table_name", "database_oid"}),
-              TABLE_CATALOG_NAME "_skey0", true, IndexType::BWTREE, nullptr,
-              true);
+              TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              IndexConstraintType::UNIQUE, true, nullptr, true);
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"database_oid"}),
-              TABLE_CATALOG_NAME "_skey1", false, IndexType::BWTREE, nullptr,
-              true);
+              TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
+              IndexConstraintType::DEFAULT, false, nullptr, true);
 
   // actual index already added in column_catalog, index_catalog constructor
   // the reason we treat those two catalog tables differently is that indexes
@@ -235,7 +235,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
           column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
     }
 
-    CreatePrimaryIndex(database_name, table_name, txn);
+    CreatePrimaryIndex(database_oid, table_oid, txn);
     if (single_statement_txn) {
       txn_manager.CommitTransaction(txn);
     }
@@ -250,106 +250,11 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 /*@brief   create primary index on table
 * Note that this is a catalog helper function only called within catalog.cpp
 * If you want to create index on table outside, call CreateIndex() instead
-* @param   database_name    the database which the indexed table belongs to
-* @param   table_name       name of the table to add index on
+* @param   database_oid     the database which the indexed table belongs to
+* @param   table_oid        oid of the table to add index on
 * @param   txn              Transaction
 * @return  Transaction ResultType(SUCCESS or FAILURE)
 */
-ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
-                                       const std::string &table_name,
-                                       concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
-
-  LOG_TRACE("Trying to create primary index for table %s", table_name.c_str());
-  // get database oid from pg_database
-  oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
-  if (database_oid == INVALID_OID) {
-    LOG_TRACE("Can't found database %s to create pk. Return RESULT_FAILURE",
-              database_name.c_str());
-    return ResultType::FAILURE;
-  }
-  // get table oid from pg_table
-  oid_t table_oid =
-      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
-  if (table_oid == INVALID_OID) {
-    LOG_TRACE("Can't found table %s to create pk. Return RESULT_FAILURE",
-              table_name.c_str());
-    return ResultType::FAILURE;
-  }
-
-  try {
-    auto database = GetDatabaseWithOid(database_oid);
-    try {
-      auto table = database->GetTableWithOid(table_oid);
-
-      std::vector<oid_t> key_attrs;
-      catalog::Schema *key_schema = nullptr;
-      index::IndexMetadata *index_metadata = nullptr;
-      auto schema = table->GetSchema();
-
-      // Find primary index attributes
-      int column_idx = 0;
-      auto &schema_columns = schema->GetColumns();
-      for (auto &column : schema_columns) {
-        if (column.IsPrimary()) {
-          key_attrs.push_back(column_idx);
-        }
-        column_idx++;
-      }
-
-      if (key_attrs.empty()) return ResultType::FAILURE;
-
-      key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-      key_schema->SetIndexedColumns(key_attrs);
-
-      std::string index_name = table->GetName() + "_pkey";
-
-      bool unique_keys = true;
-      oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
-
-      index_metadata = new index::IndexMetadata(
-          index_name, index_oid, table->GetOid(), database->GetOid(),
-          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema,
-          key_schema, key_attrs, unique_keys);
-
-      std::shared_ptr<index::Index> pkey_index(
-          index::IndexFactory::GetIndex(index_metadata));
-      table->AddIndex(pkey_index);
-
-      // insert index record into index_catalog(pg_index) table
-      IndexCatalog::GetInstance()->InsertIndex(
-          index_oid, index_name, table->GetOid(), IndexType::BWTREE,
-          IndexConstraintType::PRIMARY_KEY, unique_keys, key_attrs, pool_.get(),
-          txn);
-
-      LOG_TRACE("Successfully create primary key index '%s' for table '%s'",
-                pkey_index->GetName().c_str(), table->GetName().c_str());
-
-      if (single_statement_txn) {
-        txn_manager.CommitTransaction(txn);
-      }
-      return ResultType::SUCCESS;
-    } catch (CatalogException &e) {
-      LOG_TRACE(
-          "Cannot find the table %s to create the primary key index. Return "
-          "RESULT_FAILURE.",
-          table_name.c_str());
-      return ResultType::FAILURE;
-    }
-  } catch (CatalogException &e) {
-    LOG_TRACE("Cannot find a database with name %s to create pk",
-              database_name.c_str());
-    return ResultType::FAILURE;
-  }
-}
-
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                        concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -444,8 +349,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::vector<std::string> &index_attr,
                                 const std::string &index_name, bool unique_keys,
                                 IndexType index_type,
-                                concurrency::Transaction *txn,
-                                bool is_catalog) {
+                                concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
 
@@ -476,9 +380,12 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
+  IndexConstraintType index_constraint =
+      unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
+
   ResultType success =
-      CreateIndex(database_oid, table_oid, index_attr, index_name, unique_keys,
-                  index_type, txn, is_catalog);
+      CreateIndex(database_oid, table_oid, index_attr, index_name, index_type,
+                  index_constraint, unique_keys, txn);
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
@@ -488,9 +395,10 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
 ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
                                 const std::vector<std::string> &index_attr,
-                                const std::string &index_name, bool unique_keys,
+                                const std::string &index_name,
                                 IndexType index_type,
-                                concurrency::Transaction *txn,
+                                IndexConstraintType index_constraint,
+                                bool unique_keys, concurrency::Transaction *txn,
                                 bool is_catalog) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
@@ -501,31 +409,30 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
   }
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
+  // check if table already has index with same name
+  auto pg_index = IndexCatalog::GetInstance();
+  if (!is_catalog && pg_index->GetIndexOid(index_name, txn) != INVALID_OID) {
+    LOG_TRACE(
+        "Cannot create index with same name Return "
+        "RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
+
   try {
     auto database = GetDatabaseWithOid(database_oid);
     try {
       auto table = database->GetTableWithOid(table_oid);
 
-      // check if table already has index with same name
-      auto pg_index = IndexCatalog::GetInstance();
-      if (!is_catalog &&
-          pg_index->GetIndexOid(index_name, txn) != INVALID_OID) {
-        LOG_TRACE(
-            "Cannot create index on same table with same name Return "
-            "RESULT_FAILURE.");
-        return ResultType::FAILURE;
-      }
+      // check if index attributes are in table, and get indexed column ids
       std::vector<oid_t> key_attrs;
-      catalog::Schema *key_schema = nullptr;
-      index::IndexMetadata *index_metadata = nullptr;
       auto schema = table->GetSchema();
-
-      // check if index attributes are in table
       auto &columns = schema->GetColumns();
       for (auto &attr : index_attr) {
+        // TODO: Shall we use pg_attribute to check column_ids instead?
         for (oid_t i = 0; i < columns.size(); ++i) {
           if (attr == columns[i].column_name) {
             key_attrs.push_back(i);
+            break;
           }
         }
       }
@@ -537,15 +444,15 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
         return ResultType::FAILURE;
       }
 
-      key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-      key_schema->SetIndexedColumns(key_attrs);
+      // Passed all checks, now get all index metadata
+      LOG_TRACE("Trying to create index %s on table %d", index_name.c_str(),
+                table_oid);
       oid_t index_oid = pg_index->GetNextOid();
-      IndexConstraintType index_constraint = unique_keys
-                                                 ? IndexConstraintType::UNIQUE
-                                                 : IndexConstraintType::DEFAULT;
+      auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
 
-      // Check if unique index or not
-      index_metadata = new index::IndexMetadata(
+      // Set index metadata
+      auto index_metadata = new index::IndexMetadata(
           index_name, index_oid, table->GetOid(), database->GetOid(),
           index_type, index_constraint, schema, key_schema, key_attrs,
           unique_keys);
@@ -555,7 +462,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
           index::IndexFactory::GetIndex(index_metadata));
       table->AddIndex(key_index);
 
-      // Insert index record into pg_index table
+      // Insert index record into pg_index
       IndexCatalog::GetInstance()->InsertIndex(
           index_oid, index_name, table_oid, index_type, index_constraint,
           unique_keys, key_attrs, pool_.get(), txn);

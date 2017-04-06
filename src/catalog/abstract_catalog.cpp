@@ -155,7 +155,7 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                                   context.get());
 
   // Execute
-  PL_ASSERT(index_scan_executor.Init());
+  index_scan_executor.Init();
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
       result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
 
