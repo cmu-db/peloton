@@ -345,6 +345,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
     const shared_ptr<Property> property, PropertySet &requirements) {
   // new child input is the old output
+  LOG_DEBUG("Output properties %s", output_properties.ToString().c_str());
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
 

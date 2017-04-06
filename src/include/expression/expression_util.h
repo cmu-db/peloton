@@ -363,7 +363,8 @@ class ExpressionUtil {
 
  public:
   /**
-   * Walks an expression trees and find all TupleValueExprs in the tree
+   * Walks an expression trees and find all TupleValueExprs in the tree, add them to a map
+   * for order preserving.
    */
   static void GetTupleValueExprs(ExprMap& expr_map, AbstractExpression *expr) {
     size_t children_size = expr->GetChildrenSize();
@@ -372,6 +373,18 @@ class ExpressionUtil {
     
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
       expr_map.emplace(expr, expr_map.size());
+  }
+
+  /**
+ * Walks an expression trees and find all TupleValueExprs in the tree, add them to a set.
+ */
+  static void GetTupleValueExprs(ExprSet& expr_set, AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
+
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      expr_set.insert(expr);
   }
   
   /**

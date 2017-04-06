@@ -122,12 +122,7 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
         ExprSet child_col;
         for (size_t col_idx=0; col_idx<col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
-          // Only add child expression for aggregate functions
-          if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())
-              && expr->GetChildrenSize() > 0) {
-            expr = expr->GetModifiableChild(0);
-          }
-          child_col.insert(expr);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr);
         }
         // Add group by columns
         for (auto group_by_col : *(op->columns))

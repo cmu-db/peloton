@@ -181,10 +181,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
       for (auto iter : child_expr_map) {
         if (iter.first->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
           column_ids.push_back(iter.second);
+          (*output_expr_map_)[iter.first] = iter.second;
         }
       }
     } else {
-      column_ids.push_back(child_expr_map[expr]);
+      auto col_offset = child_expr_map[expr];
+      column_ids.push_back(col_offset);
+      (*output_expr_map_)[expr] = col_offset;
     }
   }
 
@@ -241,9 +244,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
           agg_col == nullptr ? nullptr : agg_col->Copy(),
           agg_expr->distinct_);
       agg_terms.push_back(agg_term);
-    } else {
-      // For non-aggregate expressions, do direct mapping
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      // For TupleValueExpr, do direct mapping
       dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
+      (*output_expr_map_)[expr] = col_pos;
+    } else {
+      // For other exprs such as OperatorExpr, use target list
+      tl.emplace_back(col_pos, expr->Copy());
     }
 
     (*output_expr_map_)[expr] = col_pos;

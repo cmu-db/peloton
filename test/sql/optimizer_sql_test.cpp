@@ -549,6 +549,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Basic case
   std::string query = "SELECT b FROM test GROUP BY b having b=11 or b=22";
+  LOG_INFO("%s", query.c_str());
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
@@ -562,6 +563,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: COUNT(*)
   query = "SELECT COUNT(*) FROM test GROUP BY b";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -576,6 +578,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: COUNT(a)
   query = "SELECT COUNT(a) FROM test GROUP BY b";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -590,6 +593,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: AVG(a)
   query = "SELECT AVG(a), b FROM test GROUP BY b having b=22";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -603,6 +607,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: MIN(b)
   query = "SELECT MIN(a), b FROM test GROUP BY b having b=22";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -616,6 +621,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Aggregate function: MAX(b)
   query = "SELECT MAX(a), b FROM test GROUP BY b having b=22";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -627,36 +633,9 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("6", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
-  // Test complex expression in aggregation
-  query = "SELECT b, MAX(a + c) FROM test GROUP BY b ORDER BY b";
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(8, result.size());
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("339", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 7));
-
-  // Test complex expression in select list and order by complex expr
-  query = "SELECT b + c, SUM(c * a) FROM test GROUP BY b,c";
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(8, result.size());
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("2220", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("1332", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("2331", TestingSQLUtil::GetResultValueAsString(result, 7));
-
   // Combine with ORDER BY
   query = "SELECT b FROM test GROUP BY b ORDER BY b";
+  LOG_INFO("%s", query.c_str());
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -670,6 +649,36 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+  // Test complex expression in aggregation
+  query = "SELECT b, MAX(a + c) FROM test GROUP BY b ORDER BY b";
+  LOG_INFO("%s", query.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(8, result.size());
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("339", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 7));
+
+  // Test complex expression in select list and order by complex expr
+  query = "SELECT b + c, SUM(c * a) FROM test GROUP BY b,c ORDER BY b + c";
+  LOG_INFO("%s", query.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(8, result.size());
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2331", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("1332", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("2220", TestingSQLUtil::GetResultValueAsString(result, 7));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
