@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// catalog_type.h
+// catalog_defaults.h
 //
-// Identification: src/include/type/catalog_type.h
+// Identification: src/include/catalog/catalog_defaults.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,8 @@
 
 #pragma once
 
-#include "type/types.h"
-
 namespace peloton {
-namespace type {
+namespace catalog {
 
 // System Catalogs imitating Postgres
 // (https://www.postgresql.org/docs/9.6/static/catalogs.html)
@@ -38,10 +36,10 @@ namespace type {
 #define OID_OFFSET 1000
 
 // Oid mask for each type
-#define DATABASE_OID_MASK (static_cast<oid_t>(type::CatalogType::DATABASE))
-#define TABLE_OID_MASK (static_cast<oid_t>(type::CatalogType::TABLE))
-#define INDEX_OID_MASK (static_cast<oid_t>(type::CatalogType::INDEX))
-#define COLUMN_OID_MASK (static_cast<oid_t>(type::CatalogType::COLUMN))
+#define DATABASE_OID_MASK (static_cast<oid_t>(CatalogType::DATABASE))
+#define TABLE_OID_MASK (static_cast<oid_t>(CatalogType::TABLE))
+#define INDEX_OID_MASK (static_cast<oid_t>(CatalogType::INDEX))
+#define COLUMN_OID_MASK (static_cast<oid_t>(CatalogType::COLUMN))
 
 // Reserved pg_catalog database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)

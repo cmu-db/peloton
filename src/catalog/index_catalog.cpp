@@ -85,16 +85,22 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   auto index_constraint_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "index_constraint", true);
+  index_constraint_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto unique_keys = catalog::Column(
       type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
       "unique_keys", true);
+  unique_keys.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto indekeys_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "indekeys", false);
+  auto indexed_attributes_column = catalog::Column(
+      type::Type::VARCHAR, max_name_size, "indexed_attributes", false);
+  indexed_attributes_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(
       {index_id_column, index_name_column, table_id_column, index_type_column,
-       index_constraint_column, unique_keys, indekeys_column}));
+       index_constraint_column, unique_keys, indexed_attributes_column}));
   return index_schema;
 }
 
@@ -320,9 +326,9 @@ oid_t IndexCatalog::GetIndexOid(const std::string &index_name,
 * @param   txn  Transaction
 * @return  a vector of column oid(logical position)
 */
-std::vector<oid_t> IndexCatalog::GetIndexedKeys(oid_t index_oid,
-                                                concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({6});  // indekeys
+std::vector<oid_t> IndexCatalog::GetIndexedAttributes(
+    oid_t index_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({6});  // Indexed attributes
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
