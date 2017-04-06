@@ -89,7 +89,7 @@ class Catalog {
 
   // Create the primary key index for a table
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
-                                concurrency::Transaction *txn = nullptr);
+                                concurrency::Transaction *txn);
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
