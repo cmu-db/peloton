@@ -19,6 +19,7 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 
 namespace peloton {
@@ -905,7 +906,20 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
               stmt_list->error_line, stmt_list->error_col);
   }
   EXPECT_EQ(stmt_list->GetStatement(0)->GetType(), StatementType::CREATE);
-  // TODO: test other fields
+  auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+
+  // level
+  EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
+  // timing
+  EXPECT_TRUE(TRIGGER_FOR_BEFORE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_AFTER(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_INSTEAD(create_trigger_stmt->trigger_type));
+  // event
+  EXPECT_TRUE(TRIGGER_FOR_UPDATE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_INSERT(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_DELETE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(create_trigger_stmt->trigger_type));
+
   delete stmt_list;
 }
 

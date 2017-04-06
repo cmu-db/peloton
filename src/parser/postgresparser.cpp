@@ -27,6 +27,7 @@
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/pg_query.h"
+#include "parser/pg_trigger.h"
 #include "parser/pg_list.h"
 #include "parser/postgresparser.h"
 #include "type/types.h"
@@ -971,12 +972,25 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* roo
   parser::CreateStatement* result =
     new parser::CreateStatement(CreateStatement::kTrigger);
   // TODO: transform other fields: funcname, args, columns, whenClause, etc..
-  result->trigger_row = root->row;
-  result->trigger_timing = root->timing;
-  result->trigger_events = root->events;
+  result->trigger_args = new std::vector<char*>;
+//  for (auto cell = root->args->head; cell != nullptr;
+//       cell = cell->next) {
+//    char* arg = static_cast<char*>(cell->data.ptr_value);
+//    result->trigger_args->push_back(cstrdup(arg));
+//  }
+
+  int16_t& tgtype = result->trigger_type;
+  TRIGGER_CLEAR_TYPE(tgtype);
+  if (root->row)
+    TRIGGER_SETT_ROW(tgtype);
+  tgtype |= root->timing;
+  tgtype |= root->events;
+
   result->table_info_ = new TableInfo();
   result->table_info_->table_name = cstrdup(root->relation->relname);
+
   result->trigger_name = cstrdup(root->trigname);
+
   return result;
 }
 
