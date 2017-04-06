@@ -2383,6 +2383,8 @@ std::string PropertyTypeToString(PropertyType type) {
       return "PREDICATE";
     case PropertyType::PROJECT:
       return "PROJECT";
+    case PropertyType::DISTINCT:
+      return "DISTINCT";
     default:
       throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
                                                    static_cast<int>(type)));

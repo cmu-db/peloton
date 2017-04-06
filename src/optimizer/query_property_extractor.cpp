@@ -40,19 +40,23 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
   }
-  
+
   // Generate PropertyColumns
-  vector<expression::AbstractExpression*> output_expressions;
+  vector<expression::AbstractExpression *> output_expressions;
   for (auto col : *select_stmt->select_list) {
     output_expressions.push_back(col->Copy());
   }
+
+  // Distinct Columns are the same as output columns for now
+  if (select_stmt->select_distinct) {
+    vector<expression::AbstractExpression *> distinct_column_exprs(
+        output_expressions);
+    property_set_.AddProperty(shared_ptr<PropertyDistinct>(
+          new PropertyDistinct(move(distinct_column_exprs))));
+  }
+
   property_set_.AddProperty(shared_ptr<PropertyColumns>(
       new PropertyColumns(move(output_expressions))));
-
-  // TODO add PropertyDistinct
-  if (select_stmt->select_distinct) {
-    vector<expression::AbstractExpression *> distinct_column_exprs();
-  }
 
   // Generate PropertySort
   if (select_stmt->order != nullptr) {
