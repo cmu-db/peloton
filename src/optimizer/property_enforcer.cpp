@@ -52,8 +52,21 @@ void PropertyEnforcer::Visit(const PropertySort *property) {
 }
 
 // TODO add implementation for PropertyDistinct and PropertyPredicate
-void PropertyEnforcer::Visit(const PropertyDistinct *) {}
-void PropertyEnforcer::Visit(const PropertyPredicate *) {}
+void PropertyEnforcer::Visit(const PropertyDistinct *property) {
+  std::vector<expression::AbstractExpression *> hash_keys;
+  size_t hash_keys_size = property->GetSize();
+  for (size_t i = 0; i < hash_keys_size; ++i) {
+    hash_keys.push_back(property->GetDistinctColumn(i));
+  }
+
+  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
+  output_gexpr_ = std::make_shared<GroupExpression>(
+      PhysicalHash::make(hash_keys), child_groups);
+}
+
+void PropertyEnforcer::Visit(const PropertyPredicate *) {
+  
+}
 
 } /* namespace optimizer */
 } /* namespace peloton */

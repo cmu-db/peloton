@@ -332,10 +332,10 @@ Operator PhysicalAggregate::make(
 //===--------------------------------------------------------------------===//
 // Physical Hash
 //===--------------------------------------------------------------------===//
-Operator PhysicalHash::make(const std::vector<expression::AbstractExpression *>
+Operator PhysicalHash::make(std::vector<expression::AbstractExpression *>
                             &hash_keys) {
   PhysicalHash *hash = new PhysicalHash;
-  hash->hash_keys = hash_keys;
+  hash->hash_keys = std::move(hash_keys);
   return Operator(hash);
 }
 

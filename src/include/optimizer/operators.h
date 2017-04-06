@@ -351,7 +351,7 @@ class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
 
 class PhysicalHash : public OperatorNode<PhysicalHash> {
  public:
-  static Operator make(const std::vector<expression::AbstractExpression*> &hash_keys);
+  static Operator make(std::vector<expression::AbstractExpression*> &hash_keys);
   // PhysicalHash can be used for DISTINCT or hash join
   std::vector<expression::AbstractExpression*> hash_keys;
 };

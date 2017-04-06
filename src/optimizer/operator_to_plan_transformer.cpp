@@ -22,6 +22,7 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/limit_plan.h"
+#include "planner/hash_plan.h"
 #include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
 
@@ -281,7 +282,25 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalHash *op) {
-  (void) op;
+  ExprMap &child_expr_map = children_expr_map_[0];
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  // TODO handle star expr
+  // Hash executor uses TVexpr to store the column,
+  // but only uses their offset, we may want to modify
+  // the interface to the offset directly
+  for (auto expr : op->hash_keys) {
+    auto column_idx = child_expr_map[expr];
+    auto col_expr = new expression::TupleValueExpression("");
+    col_expr->SetValueIdx(static_cast<int>(column_idx));
+    hash_keys.emplace_back(col_expr);
+  }
+  unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+  hash_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(hash_plan);
+
+  // Hash does not change the layout of the column mapping
+  *output_expr_map_ = move(child_expr_map); 
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
@@ -359,6 +378,7 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
   size_t num_col = table->GetSchema()->GetColumnCount();
   for (oid_t col_id = 0; col_id < num_col; ++col_id) {
     // Only bound_obj_id is needed for expr_map
+    // TODO potential memory leak here?
     auto col_expr = new expression::TupleValueExpression("");
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;
