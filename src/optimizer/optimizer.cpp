@@ -332,8 +332,8 @@ Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
 
   if (columns_set.size() > cols_prop->GetSize()) {
     // Some orderby exprs are not in original PropertyColumns. Return new one
-    vector<expression::AbstractExpression *> columns(columns_set.begin(),
-                                                     columns_set.end());
+    vector<shared_ptr<expression::AbstractExpression>> columns(
+        columns_set.begin(), columns_set.end());
     return new PropertyColumns(move(columns));
   } else {
     // PropertyColumns already have all the orderby expr. Return the nullptr

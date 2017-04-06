@@ -45,20 +45,18 @@ void PropertyEnforcer::Visit(const PropertyProjection *) {
 
 void PropertyEnforcer::Visit(const PropertySort *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
-  output_gexpr_ = std::make_shared<GroupExpression>(
-      PhysicalOrderBy::make(), child_groups);
+  output_gexpr_ =
+      std::make_shared<GroupExpression>(PhysicalOrderBy::make(), child_groups);
 }
 
 // TODO add implementation for PropertyDistinct and PropertyPredicate
 void PropertyEnforcer::Visit(const PropertyDistinct *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
-  output_gexpr_ = std::make_shared<GroupExpression>(
-      PhysicalDistinct::make(), child_groups);
+  output_gexpr_ =
+      std::make_shared<GroupExpression>(PhysicalDistinct::make(), child_groups);
 }
 
-void PropertyEnforcer::Visit(const PropertyPredicate *) {
-  
-}
+void PropertyEnforcer::Visit(const PropertyPredicate *) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

@@ -120,7 +120,7 @@ class LogicalAggregateToPhysical : public Rule {
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-  const override;
+      const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

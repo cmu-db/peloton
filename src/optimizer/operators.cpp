@@ -109,14 +109,13 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 // Aggregate
 //===--------------------------------------------------------------------===//
 Operator LogicalAggregate::make(
-    std::vector<expression::AbstractExpression *> *columns,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
   LogicalAggregate *agg = new LogicalAggregate;
-  agg->columns = columns;
+  agg->columns = move(columns);
   agg->having = having;
   return Operator(agg);
 }
-
 
 //===--------------------------------------------------------------------===//
 // Limit
@@ -318,10 +317,10 @@ Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
 // PhysicalAggregate
 //===--------------------------------------------------------------------===//
 Operator PhysicalAggregate::make(
-    std::vector<expression::AbstractExpression *> *columns,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
   PhysicalAggregate *agg = new PhysicalAggregate;
-  agg->columns = columns;
+  agg->columns = std::move(columns);
   agg->having = having;
   return Operator(agg);
 }

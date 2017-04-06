@@ -35,6 +35,7 @@ using std::shared_ptr;
 using std::move;
 using std::make_tuple;
 using std::make_pair;
+// using std::dynamic_pointer_cast;
 
 namespace peloton {
 namespace optimizer {
@@ -71,7 +72,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
       auto output_expr = column_prop->GetColumn(idx);
       auto output_tvexpr =
-          reinterpret_cast<expression::TupleValueExpression *>(output_expr);
+          (expression::TupleValueExpression *)output_expr.get();
 
       // Set column offset
       PL_ASSERT(output_tvexpr->GetIsBound() == true);
@@ -106,7 +107,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
   // first expand the star expression to include all exprs beneath
-  vector<expression::AbstractExpression *> output_exprs;
+  vector<shared_ptr<expression::AbstractExpression>> output_exprs;
   for (size_t i = 0; i < col_size; i++) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
@@ -129,7 +130,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
-      expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
+      expression::ExpressionUtil::EvaluateExpression(child_expr_map,
+                                                     expr.get());
       tl.emplace_back(curr_col_offset, expr->Copy());
     }
     (*output_expr_map_)[expr] = curr_col_offset++;
@@ -164,13 +166,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
-  
   ExprMap &child_expr_map = children_expr_map_[0];
 
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                        ->As<PropertyColumns>();
-  auto sort_prop = requirements_->GetPropertyOfType(PropertyType::SORT)
-                       ->As<PropertySort>();
+  auto sort_prop =
+      requirements_->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
   auto sort_columns_size = sort_prop->GetSortColumnSize();
 
   // Construct output column offset.
@@ -210,7 +211,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                      ->As<PropertyColumns>();
 
   PL_ASSERT(col_prop != nullptr);
 
@@ -229,12 +230,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   auto expr_len = col_prop->GetSize();
   for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
     auto expr = col_prop->GetColumn(col_pos);
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
+    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr.get());
 
     if (expression::ExpressionUtil::IsAggregateExpression(
-        expr->GetExpressionType())) {
+            expr->GetExpressionType())) {
       // For AggregateExpr, add aggregate term
-      auto agg_expr = (expression::AggregateExpression *) expr;
+      auto agg_expr = (expression::AggregateExpression *)expr.get();
       auto agg_col = expr->GetModifiableChild(0);
 
       // Maps the aggregate value in the right tuple to the output.
@@ -242,8 +243,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
       dml.emplace_back(col_pos, make_pair(1, agg_id++));
       planner::AggregatePlan::AggTerm agg_term(
           agg_expr->GetExpressionType(),
-          agg_col == nullptr ? nullptr : agg_col->Copy(),
-          agg_expr->distinct_);
+          agg_col == nullptr ? nullptr : agg_col->Copy(), agg_expr->distinct_);
       agg_terms.push_back(agg_term);
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, do direct mapping
@@ -261,7 +261,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
 
   // Handle group by columns
   vector<oid_t> col_ids;
-  for (auto col : *(op->columns)) col_ids.push_back(child_expr_map[col]);
+  for (auto col : op->columns) col_ids.push_back(child_expr_map[col]);
 
   // Handle having clause
   expression::AbstractExpression *having = nullptr;
@@ -287,7 +287,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
   auto prop_distinct = requirements_->GetPropertyOfType(PropertyType::DISTINCT)
-      ->As<PropertyDistinct>();
+                           ->As<PropertyDistinct>();
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   auto distinct_column_size = prop_distinct->GetSize();
@@ -306,8 +306,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
           auto col_expr = new expression::TupleValueExpression("");
           col_expr->SetValueIdx(static_cast<int>(column_idx));
           hash_keys.emplace_back(col_expr);
-        } 
-      } 
+        }
+      }
     } else {
       auto column_idx = child_expr_map[expr];
       auto col_expr = new expression::TupleValueExpression("");
@@ -320,7 +320,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   output_plan_ = move(hash_plan);
 
   // Hash does not change the layout of the column mapping
-  *output_expr_map_ = move(child_expr_map); 
+  *output_expr_map_ = move(child_expr_map);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
@@ -399,7 +399,8 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
   for (oid_t col_id = 0; col_id < num_col; ++col_id) {
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
-    auto col_expr = new expression::TupleValueExpression("");
+    auto col_expr = shared_ptr<expression::TupleValueExpression>(
+        new expression::TupleValueExpression(""));
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;

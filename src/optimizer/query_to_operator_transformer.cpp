@@ -28,6 +28,9 @@
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 
+using std::vector;
+using std::shared_ptr;
+
 namespace peloton {
 namespace optimizer {
 
@@ -45,8 +48,12 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
   if (op->from_table != nullptr) op->from_table->Accept(this);
   if (op->group_by != nullptr) {
+    // Make copies of groupby columns
+    vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
+    for (auto col : *op->group_by->columns)
+      group_by_cols.emplace_back(col->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalAggregate::make(op->group_by->columns, op->group_by->having));
+        LogicalAggregate::make(move(group_by_cols), op->group_by->having));
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
   }

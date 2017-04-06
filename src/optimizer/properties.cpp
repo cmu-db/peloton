@@ -18,10 +18,8 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(
-    std::vector<expression::AbstractExpression *> column_exprs)
-    : column_exprs_(std::move(column_exprs)) {
-  LOG_TRACE("Size of column property: %ld", columns_.size());
-}
+    std::vector<std::shared_ptr<expression::AbstractExpression>> column_exprs)
+    : column_exprs_(std::move(column_exprs)) {}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -36,7 +34,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
   for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
     for (auto column : column_exprs_) {
-      if (column->Equals(r_column)) {
+      if (column->Equals(r_column.get())) {
         has_column = true;
         break;
       }
@@ -71,7 +69,8 @@ std::string PropertyColumns::ToString() const {
   std::string str = PropertyTypeToString(Type()) + ": ";
   for (auto column_expr : column_exprs_) {
     if (column_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      str += ((expression::TupleValueExpression *)column_expr)->GetColumnName();
+      str += ((expression::TupleValueExpression *)column_expr.get())
+                 ->GetColumnName();
       str += " ";
     } else {
       // TODO: Add support for other expression
@@ -81,8 +80,8 @@ std::string PropertyColumns::ToString() const {
   return str + "\n";
 }
 
-PropertyDistinct::PropertyDistinct(
-    std::vector<expression::AbstractExpression *> distinct_column_exprs)
+PropertyDistinct::PropertyDistinct(std::vector<
+    std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
@@ -102,7 +101,7 @@ bool PropertyDistinct::operator>=(const Property &r) const {
   for (auto r_column : r_columns.distinct_column_exprs_) {
     bool has_column = false;
     for (auto column : distinct_column_exprs_) {
-      if (column->Equals(r_column)) {
+      if (column->Equals(r_column.get())) {
         has_column = true;
         break;
       }
@@ -130,7 +129,8 @@ std::string PropertyDistinct::ToString() const {
   std::string str = PropertyTypeToString(Type()) + ": ";
   for (auto column_expr : distinct_column_exprs_) {
     if (column_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      str += ((expression::TupleValueExpression *)column_expr)->GetColumnName();
+      str += ((expression::TupleValueExpression *)column_expr.get())
+                 ->GetColumnName();
       str += " ";
     } else {
       // TODO: Add support for other expression
@@ -141,9 +141,10 @@ std::string PropertyDistinct::ToString() const {
 }
 
 PropertySort::PropertySort(
-    std::vector<expression::AbstractExpression *> sort_columns,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
     std::vector<bool> sort_ascending)
-    : sort_columns_(sort_columns), sort_ascending_(sort_ascending) {}
+    : sort_columns_(std::move(sort_columns)),
+      sort_ascending_(std::move(sort_ascending)) {}
 
 PropertyType PropertySort::Type() const { return PropertyType::SORT; }
 
@@ -156,10 +157,9 @@ bool PropertySort::operator>=(const Property &r) const {
   size_t num_sort_columns = r_sort.sort_columns_.size();
   PL_ASSERT(num_sort_columns == r_sort.sort_ascending_.size());
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    if (sort_columns_[i] != r_sort.sort_columns_[i]) return false;
+    if (!sort_columns_[i]->Equals(r_sort.sort_columns_[i].get())) return false;
     if (sort_ascending_[i] != r_sort.sort_ascending_[i]) return false;
   }
-
   return true;
 }
 

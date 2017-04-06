@@ -212,11 +212,11 @@ class Optimizer : public AbstractOptimizer {
   bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group);
-  
+
   //////////////////////////////////////////////////////////////////////////////
   /// Other Helper functions
-  Property* GenerateNewPropertyCols(PropertySet requirements);
-  
+  Property *GenerateNewPropertyCols(PropertySet requirements);
+
   //////////////////////////////////////////////////////////////////////////////
   /// Member variables
   Memo memo_;

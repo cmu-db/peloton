@@ -58,18 +58,18 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
 
   // AbstractExpression -> offset when insert
   ExprMap columns;
-  vector<expression::AbstractExpression *> column_exprs;
+  vector<shared_ptr<expression::AbstractExpression>> column_exprs;
   auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
                           ->As<PropertyColumns>();
   if (columns_prop->HasStarExpression()) {
-    column_exprs.push_back(new expression::StarExpression());
+    column_exprs.emplace_back(new expression::StarExpression());
   } else {
     // Add all the columns in PropertyColumn
     // Note: columns from PropertyColumn has to be inserted before PropertySort
     // to ensure we don't change the origin column order in PropertyColumn
     for (size_t i = 0; i < columns_prop->GetSize(); i++) {
       auto expr = columns_prop->GetColumn(i);
-      expression::ExpressionUtil::GetTupleValueExprs(columns, expr);
+      expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
     }
 
     // Add all the columns from PropertySort to column_set
@@ -78,7 +78,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     if (sort_prop != nullptr) {
       for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
         auto expr = sort_prop->GetSortColumn(i);
-        expression::ExpressionUtil::GetTupleValueExprs(columns, expr);
+        expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
       }
     }
 
@@ -120,19 +120,18 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
         auto col_prop = prop->As<PropertyColumns>();
         size_t col_len = col_prop->GetSize();
         ExprSet child_col;
-        for (size_t col_idx=0; col_idx<col_len; col_idx++) {
+        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
-          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
         }
         // Add group by columns
-        for (auto group_by_col : *(op->columns))
-          child_col.insert(group_by_col);
+        for (auto group_by_col : op->columns)
+          child_col.emplace(group_by_col->Copy());
 
         // Add child PropertyColumn
-        child_input_property_set.AddProperty(
-            make_shared<PropertyColumns>(
-                std::vector<expression::AbstractExpression*>(
-                    child_col.begin(), child_col.end())));
+        child_input_property_set.AddProperty(make_shared<PropertyColumns>(
+            vector<shared_ptr<expression::AbstractExpression>>(
+                child_col.begin(), child_col.end())));
         break;
       }
       case PropertyType::PREDICATE:

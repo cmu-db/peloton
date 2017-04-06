@@ -29,7 +29,7 @@ class PropertySet {
   const std::vector<std::shared_ptr<Property>> &Properties() const;
 
   void AddProperty(std::shared_ptr<Property> property);
-  
+
   void RemoveProperty(PropertyType type);
 
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
@@ -42,7 +42,7 @@ class PropertySet {
   bool operator>=(const PropertySet &r) const;
 
   bool operator==(const PropertySet &r) const;
-  
+
   std::string ToString() const;
 
  private:

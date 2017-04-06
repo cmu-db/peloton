@@ -78,8 +78,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
-  
-  void GenerateTableExprMap(ExprMap& expr_map, storage::DataTable* table);
+
+  void GenerateTableExprMap(ExprMap &expr_map, storage::DataTable *table);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;

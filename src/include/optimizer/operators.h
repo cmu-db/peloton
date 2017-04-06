@@ -121,10 +121,11 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {
  public:
-  static Operator make(std::vector<expression::AbstractExpression *> *columns,
-                       expression::AbstractExpression *having);
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
 
-  std::vector<expression::AbstractExpression *> *columns;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
 };
 
@@ -133,10 +134,11 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 //===--------------------------------------------------------------------===//
 class LogicalHash : public OperatorNode<LogicalHash> {
  public:
-  static Operator make(const std::vector<expression::AbstractExpression*> &hash_keys);
+  static Operator make(
+      const std::vector<expression::AbstractExpression *> &hash_keys);
 
   // logical hash will only be used for DISTINCT
-  std::vector<expression::AbstractExpression*> hash_keys;
+  std::vector<expression::AbstractExpression *> hash_keys;
 };
 
 //===--------------------------------------------------------------------===//
@@ -213,7 +215,6 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
   static Operator make();
-
 };
 
 //===--------------------------------------------------------------------===//
@@ -338,10 +339,11 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 //===--------------------------------------------------------------------===//
 class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
  public:
-  static Operator make(std::vector<expression::AbstractExpression *> *columns,
-                       expression::AbstractExpression *having);
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
 
-  std::vector<expression::AbstractExpression *> *columns;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
 };
 

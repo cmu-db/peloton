@@ -1136,22 +1136,22 @@ enum class PropertyType {
   DISTINCT,
   SORT,
 };
-  
+
 namespace expression {
 class AbstractExpression;
 class ExprHasher;
 class ExprEqualCmp;
 }
-  
+
 // Mapping of Expression -> Column Offset created by operator
-typedef std::unordered_map<expression::AbstractExpression *, unsigned,
-                           expression::ExprHasher,
+typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
+                           unsigned, expression::ExprHasher,
                            expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
-typedef std::unordered_set<expression::AbstractExpression *,
+typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
-  
+
 std::string PropertyTypeToString(PropertyType type);
 
 //===--------------------------------------------------------------------===//

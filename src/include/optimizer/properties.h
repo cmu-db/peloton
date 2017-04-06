@@ -22,7 +22,8 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs);
+  PropertyColumns(std::vector<std::shared_ptr<expression::AbstractExpression>>
+                      column_exprs);
 
   PropertyType Type() const override;
 
@@ -31,27 +32,29 @@ class PropertyColumns : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
 
-  inline expression::AbstractExpression *GetColumn(size_t idx) const {
+  inline std::shared_ptr<expression::AbstractExpression> GetColumn(
+      size_t idx) const {
     return column_exprs_[idx];
   }
 
   inline size_t GetSize() const { return column_exprs_.size(); }
-  
+
   bool HasStarExpression() const;
 
  private:
-  std::vector<expression::AbstractExpression *> column_exprs_;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> column_exprs_;
 };
 
 // Specify which columns values are dictinct
-// PropertyDistinct(col_a, col_b, col_c) should have 
+// PropertyDistinct(col_a, col_b, col_c) should have
 // distinct value for (col_a, col_b, col_c) in each return tuple
 class PropertyDistinct : public Property {
  public:
-  PropertyDistinct(std::vector<expression::AbstractExpression *> column_exprs);
+  PropertyDistinct(std::vector<std::shared_ptr<expression::AbstractExpression>>
+                       column_exprs);
 
   PropertyType Type() const override;
 
@@ -60,17 +63,19 @@ class PropertyDistinct : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
 
-  inline expression::AbstractExpression *GetDistinctColumn(int idx) const {
+  inline std::shared_ptr<expression::AbstractExpression> GetDistinctColumn(
+      int idx) const {
     return distinct_column_exprs_[idx];
   }
 
   inline size_t GetSize() const { return distinct_column_exprs_.size(); }
 
  private:
-  std::vector<expression::AbstractExpression *> distinct_column_exprs_;
+  std::vector<std::shared_ptr<expression::AbstractExpression>>
+      distinct_column_exprs_;
 };
 
 // Specifies the output expressions of the query
@@ -86,7 +91,7 @@ class PropertyProjection : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
 
   inline size_t GetProjectionListSize() const { return expressions_.size(); }
@@ -97,8 +102,8 @@ class PropertyProjection : public Property {
 
   inline bool AllAggregation() const {
     for (size_t idx = 0; idx < expressions_.size(); idx++)
-      if (!expression::ExpressionUtil::IsAggregateExpression
-          (expressions_[idx]->GetExpressionType()))
+      if (!expression::ExpressionUtil::IsAggregateExpression(
+              expressions_[idx]->GetExpressionType()))
         return false;
     return true;
   }
@@ -110,8 +115,9 @@ class PropertyProjection : public Property {
 // Specifies the required sorting order of the query
 class PropertySort : public Property {
  public:
-  PropertySort(std::vector<expression::AbstractExpression *> sort_columns,
-               std::vector<bool> sort_ascending);
+  PropertySort(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
+      std::vector<bool> sort_ascending);
 
   PropertyType Type() const override;
 
@@ -120,19 +126,20 @@ class PropertySort : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
 
   inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
-  inline expression::AbstractExpression *GetSortColumn(int idx) const {
+  inline std::shared_ptr<expression::AbstractExpression> GetSortColumn(
+      int idx) const {
     return sort_columns_[idx];
   }
 
   inline bool GetSortAscending(int idx) const { return sort_ascending_[idx]; }
 
  private:
-  std::vector<expression::AbstractExpression *> sort_columns_;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns_;
   std::vector<bool> sort_ascending_;
 };
 
@@ -148,7 +155,7 @@ class PropertyPredicate : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
 
   inline expression::AbstractExpression *GetPredicate() const {

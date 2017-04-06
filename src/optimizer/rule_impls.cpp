@@ -232,8 +232,8 @@ void LogicalAggregateToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalAggregate *agg_op = input->Op().As<LogicalAggregate>();
-  auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make(
-      agg_op->columns, agg_op->having));
+  auto result = std::make_shared<OperatorExpression>(
+      PhysicalAggregate::make(agg_op->columns, agg_op->having));
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);

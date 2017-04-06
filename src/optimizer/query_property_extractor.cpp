@@ -42,21 +42,18 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   }
 
   // Generate PropertyColumns
-  vector<expression::AbstractExpression *> output_expressions;
-  for (auto col : *select_stmt->select_list) {
-    output_expressions.push_back(col->Copy());
-  }
+  vector<shared_ptr<expression::AbstractExpression>> output_expressions;
+  for (auto col : *select_stmt->select_list)
+    output_expressions.emplace_back(col->Copy());
+  property_set_.AddProperty(
+      shared_ptr<PropertyColumns>(new PropertyColumns(output_expressions)));
 
-  // Distinct Columns are the same as output columns for now
+  // Generate PropertyDistinct
   if (select_stmt->select_distinct) {
-    vector<expression::AbstractExpression *> distinct_column_exprs(
-        output_expressions);
+    auto distinct_column_exprs = output_expressions;
     property_set_.AddProperty(shared_ptr<PropertyDistinct>(
-          new PropertyDistinct(move(distinct_column_exprs))));
+        new PropertyDistinct(move(distinct_column_exprs))));
   }
-
-  property_set_.AddProperty(shared_ptr<PropertyColumns>(
-      new PropertyColumns(move(output_expressions))));
 
   // Generate PropertySort
   if (select_stmt->order != nullptr) {
@@ -67,18 +64,17 @@ void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
-  // TODO: Only support order by base table columns
   vector<bool> sort_ascendings;
-  vector<expression::AbstractExpression *> sort_cols;
+  vector<shared_ptr<expression::AbstractExpression>> sort_cols;
   auto len = node->exprs->size();
   for (size_t idx = 0; idx < len; idx++) {
     auto &expr = node->exprs->at(idx);
-    sort_cols.emplace_back(expr);
+    sort_cols.emplace_back(expr->Copy());
     sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
   }
 
-  property_set_.AddProperty(
-      shared_ptr<PropertySort>(new PropertySort(sort_cols, sort_ascendings)));
+  property_set_.AddProperty(shared_ptr<PropertySort>(
+      new PropertySort(move(sort_cols), sort_ascendings)));
 }
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 
@@ -91,8 +87,8 @@ void QueryPropertyExtractor::Visit(const parser::DeleteStatement *op) {
     property_set_.AddProperty(
         shared_ptr<PropertyPredicate>(new PropertyPredicate(op->expr->Copy())));
   }
-  property_set_.AddProperty(shared_ptr<PropertyColumns>(
-      new PropertyColumns(vector<expression::AbstractExpression *>())));
+  property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
+      vector<shared_ptr<expression::AbstractExpression>>())));
 }
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}

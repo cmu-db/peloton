@@ -45,7 +45,7 @@ class Property {
   virtual bool operator>=(const Property &r) const;
 
   virtual void Accept(PropertyVisitor *v) const = 0;
-  
+
   virtual std::string ToString() const;
 
   template <typename T>
