@@ -311,21 +311,26 @@ Property* Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
     ->As<PropertyColumns>();
   auto sort_prop = requirements.GetPropertyOfType(PropertyType::SORT)
     ->As<PropertySort>();
-
+  
   ExprSet columns_set;
+  bool has_complex_expr = false;
   for (size_t i = 0; i < cols_prop->GetSize(); i++)
     columns_set.insert(cols_prop->GetColumn(i));
   // Check if there is any missing columns from orderby need to be added
-  for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++)
-    columns_set.insert(sort_prop->GetSortColumn(i));
+  for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
+    auto expr = sort_prop->GetSortColumn(i);
+    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
+      has_complex_expr = true;
+    columns_set.insert(expr);
+  }
   
   if (columns_set.size() > cols_prop->GetSize()) {
-    // PropertyColumns already have all the orderby expr. Return the nullptr
-    return nullptr;
-  } else {
     // Some orderby exprs are not in original PropertyColumns. Return new one
     vector<expression::AbstractExpression*> columns(columns_set.begin(), columns_set.end());
     return new PropertyColumns(move(columns));
+  } else {
+    // PropertyColumns already have all the orderby expr. Return the nullptr
+    return nullptr;
   }
 }
 

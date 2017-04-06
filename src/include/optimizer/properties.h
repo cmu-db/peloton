@@ -22,9 +22,7 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs,
-                  bool is_star = false);
-  PropertyColumns(bool is_star_expr);
+  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs);
 
   PropertyType Type() const override;
 
@@ -41,11 +39,10 @@ class PropertyColumns : public Property {
   }
 
   inline size_t GetSize() const { return column_exprs_.size(); }
-  inline bool IsStarExpressionInColumn() const { return is_star_; }
+//  inline bool IsStarExpressionInColumn() const { return is_star_; }
 
  private:
   std::vector<expression::AbstractExpression *> column_exprs_;
-  bool is_star_;
 };
 
 // Specify which columns values are dictinct

@@ -60,7 +60,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
   vector<oid_t> column_ids;
-  if (column_prop->IsStarExpressionInColumn()) {
+  // TODO: handle star expression
+  bool has_star_expr = false;
+  if (has_star_expr) {
     size_t num_col = op->table_->GetSchema()->GetColumnCount();
     for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);

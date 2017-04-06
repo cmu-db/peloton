@@ -62,33 +62,31 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
   ExprMap columns;
   auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
     ->As<PropertyColumns>();
-  if (columns_prop->IsStarExpressionInColumn()) {
-    provided_property.AddProperty(requirements_.GetPropertyOfType(PropertyType::COLUMNS));
-  } else {
-    // Add all the columns in PropertyColumn
-    // Note: columns from PropertyColumn has to be inserted before PropertySort
-    // to ensure we don't change the origin column order in PropertyColumn
-    for (size_t i = 0; i < columns_prop->GetSize(); i++) {
-      auto expr = columns_prop->GetColumn(i);
+  // TODO: handle Star Expression
+  
+  // Add all the columns in PropertyColumn
+  // Note: columns from PropertyColumn has to be inserted before PropertySort
+  // to ensure we don't change the origin column order in PropertyColumn
+  for (size_t i = 0; i < columns_prop->GetSize(); i++) {
+    auto expr = columns_prop->GetColumn(i);
+    expression::ExpressionUtil::GetTupleValueExprs(columns, expr);
+  }
+  
+  // Add all the columns from PropertySort to column_set
+  auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
+    ->As<PropertySort>();
+  if (sort_prop != nullptr) {
+    for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
+      auto expr = sort_prop->GetSortColumn(i);
       expression::ExpressionUtil::GetTupleValueExprs(columns, expr);
     }
-    
-    // Add all the columns from PropertySort to column_set
-    auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
-      ->As<PropertySort>();
-    if (sort_prop != nullptr) {
-      for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
-        auto expr = sort_prop->GetSortColumn(i);
-        expression::ExpressionUtil::GetTupleValueExprs(columns, expr);
-      }
-    }
-    
-    // Generate the provided PropertyColumn
-    vector<expression::AbstractExpression* > column_exprs(columns.size());
-    for (auto iter : columns)
-      column_exprs[iter.second] = iter.first;
-    provided_property.AddProperty(shared_ptr<Property>(new PropertyColumns(move(column_exprs))));
   }
+  
+  // Generate the provided PropertyColumn
+  vector<expression::AbstractExpression* > column_exprs(columns.size());
+  for (auto iter : columns)
+    column_exprs[iter.second] = iter.first;
+  provided_property.AddProperty(shared_ptr<Property>(new PropertyColumns(move(column_exprs))));
   
   output_.push_back(make_pair(move(provided_property), vector<PropertySet>()));
 };
