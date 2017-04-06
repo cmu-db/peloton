@@ -18,12 +18,10 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(
-    std::vector<expression::AbstractExpression *> column_exprs, bool is_star)
-    : column_exprs_(std::move(column_exprs)), is_star_(is_star) {
+    std::vector<expression::AbstractExpression *> column_exprs)
+    : column_exprs_(std::move(column_exprs)) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
-
-PropertyColumns::PropertyColumns(bool is_star_expr) : is_star_(is_star_expr) {}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -32,8 +30,6 @@ bool PropertyColumns::operator>=(const Property &r) const {
   if (r.Type() != PropertyType::COLUMNS) return false;
   const PropertyColumns &r_columns =
       *reinterpret_cast<const PropertyColumns *>(&r);
-
-  if (is_star_ != r_columns.is_star_) return false;
 
   // check that every column in the right hand side property exists in the left
   // hand side property
@@ -54,7 +50,6 @@ bool PropertyColumns::operator>=(const Property &r) const {
 hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<bool>(&is_star_));
   for (auto expr : column_exprs_) {
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   }
@@ -80,12 +75,10 @@ std::string PropertyColumns::ToString() const {
 }
 
 PropertyDistinct::PropertyDistinct(
-    std::vector<expression::AbstractExpression *> distinct_column_exprs, bool is_star)
-    : distinct_column_exprs_(std::move(distinct_column_exprs)), is_star_(is_star) {
+    std::vector<expression::AbstractExpression *> distinct_column_exprs)
+    : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
-
-PropertyDistinct::PropertyDistinct(bool is_star_expr) : is_star_(is_star_expr) {}
 
 PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }
 
@@ -95,10 +88,8 @@ bool PropertyDistinct::operator>=(const Property &r) const {
   const PropertyDistinct &r_columns =
       *reinterpret_cast<const PropertyDistinct *>(&r);
 
-  if (is_star_ != r_columns.is_star_) return false;
-
   // check that every column in the left hand side property exists in the right
-  // hand side property. which is the opposite to 
+  // hand side property. which is the opposite to
   // the condition of propertyColumns
   // e.g. distinct(col_a) >= distinct(col_a, col_b)
   for (auto r_column : r_columns.distinct_column_exprs_) {
@@ -118,7 +109,6 @@ bool PropertyDistinct::operator>=(const Property &r) const {
 hash_t PropertyDistinct::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<bool>(&is_star_));
   for (auto expr : distinct_column_exprs_) {
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   }

@@ -50,9 +50,7 @@ class PropertyColumns : public Property {
 // distinct value for (col_a, col_b, col_c) in each return tuple
 class PropertyDistinct : public Property {
  public:
-  PropertyDistinct(std::vector<expression::AbstractExpression *> column_exprs,
-                  bool is_star = false);
-  PropertyDistinct(bool is_star_expr);
+  PropertyDistinct(std::vector<expression::AbstractExpression *> column_exprs);
 
   PropertyType Type() const override;
 
@@ -69,11 +67,9 @@ class PropertyDistinct : public Property {
   }
 
   inline size_t GetSize() const { return distinct_column_exprs_.size(); }
-  inline bool IsStarExpressionInColumn() const { return is_star_; }
 
  private:
   std::vector<expression::AbstractExpression *> distinct_column_exprs_;
-  bool is_star_;
 };
 
 // Specifies the output expressions of the query

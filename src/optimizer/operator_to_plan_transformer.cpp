@@ -263,15 +263,28 @@ void OperatorToPlanTransformer::Visit(const PhysicalHash *op) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
-  // TODO handle star expr
   // Hash executor uses TVexpr to store the column,
   // but only uses their offset, we may want to modify
   // the interface to the offset directly
-  for (auto expr : op->hash_keys) {
-    auto column_idx = child_expr_map[expr];
-    auto col_expr = new expression::TupleValueExpression("");
-    col_expr->SetValueIdx(static_cast<int>(column_idx));
-    hash_keys.emplace_back(col_expr);
+  for (auto &expr : op->hash_keys) {
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      // If the hash key contains the star expr
+      // add all TupleValueExpr to hash_keys
+      for (auto &expr_idx_pair : child_expr_map) {
+        auto &input_expr = expr_idx_pair.first;
+        if (input_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+          auto &column_idx = expr_idx_pair.second;
+          auto col_expr = new expression::TupleValueExpression("");
+          col_expr->SetValueIdx(static_cast<int>(column_idx));
+          hash_keys.emplace_back(col_expr);
+        } 
+      } 
+    } else {
+      auto column_idx = child_expr_map[expr];
+      auto col_expr = new expression::TupleValueExpression("");
+      col_expr->SetValueIdx(static_cast<int>(column_idx));
+      hash_keys.emplace_back(col_expr);
+    }
   }
   unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
   hash_plan->AddChild(move(children_plans_[0]));

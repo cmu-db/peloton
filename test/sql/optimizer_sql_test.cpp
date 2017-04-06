@@ -674,5 +674,50 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(OptimizerSQLTests, SelectDistinctTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 00, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 444);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 22, 000);");
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  // Test limit without offset
+  std::string query("SELECT DISTINCT b FROM test");
+
+  auto select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
+  EXPECT_EQ(4, result.size());
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
 }  // namespace test
 }  // namespace peloton

@@ -313,14 +313,14 @@ Property* Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
     ->As<PropertySort>();
   
   ExprSet columns_set;
-  bool has_complex_expr = false;
+  //bool has_complex_expr = false;
   for (size_t i = 0; i < cols_prop->GetSize(); i++)
     columns_set.insert(cols_prop->GetColumn(i));
   // Check if there is any missing columns from orderby need to be added
   for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
     auto expr = sort_prop->GetSortColumn(i);
     if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
-      has_complex_expr = true;
+      //has_complex_expr = true;
     columns_set.insert(expr);
   }
   
