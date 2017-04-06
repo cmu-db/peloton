@@ -27,10 +27,17 @@ void PropertySet::AddProperty(std::shared_ptr<Property> property) {
   LOG_TRACE("Add property with type %d", static_cast<int>(property->Type()));
   auto iter = properties_.begin();
   for (; iter != properties_.end(); ++iter)
-    if (property->Type() < (*iter)->Type()) 
-      break;
+    if (property->Type() < (*iter)->Type()) break;
 
   properties_.insert(iter, property);
+}
+
+void PropertySet::RemoveProperty(PropertyType type) {
+  auto iter = properties_.begin();
+  for (; iter != properties_.end(); ++iter) {
+    if ((*iter)->Type() == type) break;
+  }
+  if (iter != properties_.end()) properties_.erase(iter);
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(

@@ -39,7 +39,8 @@ class PropertyColumns : public Property {
   }
 
   inline size_t GetSize() const { return column_exprs_.size(); }
-//  inline bool IsStarExpressionInColumn() const { return is_star_; }
+  
+  bool HasStarExpression() const;
 
  private:
   std::vector<expression::AbstractExpression *> column_exprs_;

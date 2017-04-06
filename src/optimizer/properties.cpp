@@ -47,6 +47,13 @@ bool PropertyColumns::operator>=(const Property &r) const {
   return true;
 }
 
+bool PropertyColumns::HasStarExpression() const {
+  for (auto expr : column_exprs_) {
+    if (expr->GetExpressionType() == ExpressionType::STAR) return true;
+  }
+  return false;
+}
+
 hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
@@ -75,10 +82,15 @@ std::string PropertyColumns::ToString() const {
 }
 
 PropertyDistinct::PropertyDistinct(
-    std::vector<expression::AbstractExpression *> distinct_column_exprs)
-    : distinct_column_exprs_(std::move(distinct_column_exprs)) {
+    std::vector<expression::AbstractExpression *> distinct_column_exprs,
+    bool is_star)
+    : distinct_column_exprs_(std::move(distinct_column_exprs)),
+      is_star_(is_star) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
+
+PropertyDistinct::PropertyDistinct(bool is_star_expr)
+    : is_star_(is_star_expr) {}
 
 PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }
 
