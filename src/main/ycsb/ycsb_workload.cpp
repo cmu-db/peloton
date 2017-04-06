@@ -38,6 +38,7 @@
 #include "common/timer.h"
 #include "common/generator.h"
 #include "common/platform.h"
+#include "common/container_tuple.h"
 
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
