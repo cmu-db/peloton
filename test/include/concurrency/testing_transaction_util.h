@@ -67,7 +67,7 @@
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
-#include "type/catalog_type.h"
+#include "catalog/catalog_defaults.h"
 #include "type/types.h"
 #pragma once
 

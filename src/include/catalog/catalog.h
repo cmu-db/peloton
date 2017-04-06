@@ -23,7 +23,7 @@
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
 #include "type/abstract_pool.h"
-#include "type/catalog_type.h"
+#include "catalog/catalog_defaults.h"
 #include "type/ephemeral_pool.h"
 #include "type/types.h"
 #include "type/value_factory.h"

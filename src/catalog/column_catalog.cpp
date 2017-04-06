@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
-#include "type/catalog_type.h"
+#include "include/catalog/catalog_defaults.h"
 #include "type/types.h"
 
 namespace peloton {

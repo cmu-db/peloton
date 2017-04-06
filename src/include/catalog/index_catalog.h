@@ -20,10 +20,9 @@
 // 3: index_type (default value is BWTREE)
 // 4: index_constraint
 // 5: unique_keys (is this index supports duplicate keys)
-// 5: indekeys (indicate which table columns this index indexes. For example a
-// value of 0 2 would mean that the first and the third table columns make up
-// the index key.)
-// )
+// 5: indexed_attributes (indicate which table columns this index indexes. For
+// example a value of 0 2 would mean that the first and the third table columns
+// make up the index.)
 //
 // Indexes: (index offset: indexed columns)
 // 0: index_oid (unique & primary key)
@@ -68,8 +67,8 @@ class IndexCatalog : public AbstractCatalog {
   IndexConstraintType GetIndexConstraint(oid_t index_oid,
                                          concurrency::Transaction *txn);
   bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn);
-  std::vector<oid_t> GetIndexedKeys(oid_t index_oid,
-                                    concurrency::Transaction *txn);
+  std::vector<oid_t> GetIndexedAttributes(oid_t index_oid,
+                                          concurrency::Transaction *txn);
   oid_t GetIndexOid(const std::string &index_name,
                     concurrency::Transaction *txn);
 
