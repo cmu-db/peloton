@@ -1,14 +1,14 @@
-// //===----------------------------------------------------------------------===//
-// //
-// //                         Peloton
-// //
-// // copy_test.cpp
-// //
-// // Identification: test/executor/copy_test.cpp
-// //
-// // Copyright (c) 2015-16, Carnegie Mellon University Database Group
-// //
-// //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// copy_test.cpp
+//
+// Identification: test/executor/copy_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 // #include <cstdio>
 
@@ -80,7 +80,7 @@
 //     std::vector<type::Value> params;
 //     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
 //     std::vector<StatementResult> result;
-//     bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+//     executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
 //         statement->GetPlanTree().get(), params, result, result_format);
 //     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
 //     LOG_TRACE("Statement executed. Result: %s",
@@ -138,4 +138,3 @@
 
 // }  // End test namespace
 // }  // End peloton namespace
-

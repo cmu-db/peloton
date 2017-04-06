@@ -65,7 +65,7 @@ class TrafficCop {
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
-  bridge::peloton_status ExecuteStatementPlan(
+  executor::ExecuteResult ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<StatementResult> &result, const std::vector<int> &result_format,
       const size_t thread_id = 0);
