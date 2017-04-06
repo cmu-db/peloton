@@ -81,8 +81,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   }
 
   // Add Scan Predicates
-  // Ideally, predicate should be taken out as a separate operator. Since
-  // now the predicate is coupled with scan, we need to evaluate predicate here
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
@@ -101,9 +99,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
-  auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
-                          ->As<PropertyProjection>();
-  size_t proj_list_size = project_prop->GetProjectionListSize();
+  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                          ->As<PropertyColumns>();
+  size_t proj_list_size = cols_prop->GetSize();
+  ExprMap& child_expr_map = children_expr_map_[0];
 
   // expressions to evaluate
   TargetList tl = TargetList();
@@ -113,19 +112,21 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   vector<catalog::Column> columns;
 
   for (size_t project_idx = 0; project_idx < proj_list_size; project_idx++) {
-    auto expr = project_prop->GetProjection(project_idx);
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0], expr);
+    auto expr = cols_prop->GetColumn(project_idx);
+    
     // For TupleValueExpr, we can just do a direct mapping.
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto tup_expr = (expression::TupleValueExpression *)expr;
-      dml.emplace_back(project_idx, make_pair(0, tup_expr->GetColumnId()));
+      dml.emplace_back(project_idx, make_pair(0, child_expr_map[tup_expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
+      expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
       tl.emplace_back(project_idx, expr->Copy());
     }
     columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
         expr->GetExpressionName()));
+    (*output_expr_map_)[expr] = project_idx;
   }
 
   // build the projection plan node and insert above the scan
@@ -159,93 +160,19 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   auto &sort_ascending = op->sort_ascending;
   ExprMap &child_expr_map = children_expr_map_[0];
 
-  auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
-                          ->As<PropertyProjection>();
-  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
 
-  // Find all the orderby expressions that are not TupleValueExpr
-  vector<expression::AbstractExpression *> orderby_exprs;
-  for (size_t i = 0; i < sort_columns_size; i++) {
-    if (sort_exprs[i]->GetExpressionType() != ExpressionType::VALUE_TUPLE)
-      orderby_exprs.push_back(sort_exprs[i]);
-  }
-
-  /********************** Generate the Projection Plan **********************/
-  // Orderby has complex expressions. Add a projection beneath orderby
-  bool need_projection = !orderby_exprs.empty();
-  if (need_projection) {
-    size_t num_output_column;
-    TargetList tl = TargetList();
-    DirectMapList dml = DirectMapList();
-    vector<catalog::Column> columns;
-    if (project_prop != nullptr) {
-      // PropertyProj has been fulfilled. Use it instead of PropertyColumns
-      num_output_column = project_prop->GetProjectionListSize();
-      // For all columns beneath, we do a direct map
-      for (size_t i = 0; i < num_output_column; i++) {
-        dml.push_back(DirectMap(i, make_pair(0, i)));
-        auto expr = project_prop->GetProjection(i);
-        columns.push_back(catalog::Column(
-            expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-            expr->GetExpressionName()));
-      }
-    } else {
-      // PropertyProj has not been fulfilled. Use PropertyColumns
-      PL_ASSERT(column_prop != nullptr);
-      num_output_column = child_expr_map.size();
-      for (size_t i = 0; i < num_output_column; i++) {
-        auto tup_expr = column_prop->GetColumn(i);
-        dml.push_back(DirectMap(i, make_pair(0, child_expr_map[tup_expr])));
-        columns.push_back(
-            catalog::Column(tup_expr->GetValueType(),
-                            type::Type::GetTypeSize(tup_expr->GetValueType()),
-                            tup_expr->GetExpressionName()));
-      }
-    }
-    // The addition expr columns needed by order by will be added to the end
-    for (size_t i = 0; i < orderby_exprs.size(); i++) {
-      expression::ExpressionUtil::EvaluateExpression(child_expr_map,
-                                                     orderby_exprs[i]);
-      tl.push_back(Target(num_output_column + i, orderby_exprs[i]->Copy()));
-      columns.push_back(catalog::Column(
-          orderby_exprs[i]->GetValueType(),
-          type::Type::GetTypeSize(orderby_exprs[i]->GetValueType()),
-          orderby_exprs[i]->GetExpressionName()));
-    }
-    // Create and insert projection plan node
-    unique_ptr<planner::ProjectInfo> proj_info(
-        new planner::ProjectInfo(move(tl), move(dml)));
-    shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
-    unique_ptr<planner::AbstractPlan> project_plan(
-        new planner::ProjectionPlan(move(proj_info), schema_ptr));
-    project_plan->AddChild(move(children_plans_[0]));
-    children_plans_[0] = move(project_plan);
-  }
-
-  /************************ Generate the OrderBy Plan **********************/
-  // Construct output column offset. Ignore additional columns created
+  // Construct output column offset.
   vector<oid_t> column_ids;
-  size_t num_output_column;
-  if (project_prop != nullptr)
-    num_output_column = project_prop->GetProjectionListSize();
-  else
-    num_output_column = child_expr_map.size();
-  for (size_t i = 0; i < num_output_column; i++) column_ids.push_back(i);
-
-  *output_expr_map_ = child_expr_map;
+  for (size_t i = 0; i < cols_prop->GetSize(); i++)
+    column_ids.push_back(child_expr_map[cols_prop->GetColumn(i)]);
 
   // Construct sort ids and sort flags
-  size_t expr_count = 0;
   vector<oid_t> sort_col_ids;
   vector<bool> sort_flags;
   for (size_t i = 0; i < sort_columns_size; i++) {
-    if (sort_exprs[i]->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
-      sort_col_ids.push_back(num_output_column + expr_count);
-      expr_count++;
-    } else {
-      sort_col_ids.push_back(child_expr_map[sort_exprs[i]]);
-    }
+    sort_col_ids.push_back(child_expr_map[sort_exprs[i]]);
     // planner use desc flag
     sort_flags.push_back(!sort_ascending[i]);
   }

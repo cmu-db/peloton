@@ -40,71 +40,14 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
   }
-
+  
   // Generate PropertyColumns
-  vector<oid_t> column_ids;
-  bool needs_projection = false;
-  if ((*select_stmt->getSelectList())[0]->GetExpressionType() ==
-      ExpressionType::STAR) {
-    // TODO: Add support for combination of STAR expr and other cols expr.
-    property_set_.AddProperty(
-        shared_ptr<PropertyColumns>(new PropertyColumns(true)));
-  } else {
-    vector<expression::AbstractExpression *> column_exprs;
-    ExprSet column_set;
-    for (auto col : *select_stmt->select_list) {
-      // Expression name is used in TrafficCop
-      col->DeduceExpressionName();
-      if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        column_exprs.emplace_back(col);
-      } else {
-        needs_projection = true;
-      }
-      // Add all columns in select list to column_set
-      expression::ExpressionUtil::GetTupleValueExprs(column_set, col);
-    }
-    // Add all the missing columns in Orderby
-    if (select_stmt->order != nullptr) {
-      for (auto expr : *select_stmt->order->exprs)
-        expression::ExpressionUtil::GetTupleValueExprs(column_set, expr);
-    }
-
-    // Add PropertyDistinct
-    if (select_stmt->select_distinct) {
-      vector<expression::AbstractExpression *> distinct_column_exprs(
-          column_exprs);
-      property_set_.AddProperty(shared_ptr<PropertyDistinct>(
-          new PropertyDistinct(move(distinct_column_exprs))));
-    }
-    // Add all the missing columns in GroupBy
-    if (select_stmt->group_by != nullptr) {
-      for (auto expr : *select_stmt->group_by->columns)
-        expression::ExpressionUtil::GetTupleValueExprs(column_set, expr);
-    }
-
-    // If any missing column is added, we need a projection.
-    if (column_set.size() > column_exprs.size()) {
-      needs_projection = true;
-      vector<expression::AbstractExpression *> columns(column_set.begin(),
-                                                       column_set.end());
-      property_set_.AddProperty(
-          shared_ptr<PropertyColumns>(new PropertyColumns(move(columns))));
-    } else {
-      property_set_.AddProperty(
-          shared_ptr<PropertyColumns>(new PropertyColumns(move(column_exprs))));
-    }
+  vector<expression::AbstractExpression*> output_expressions;
+  for (auto col : *select_stmt->select_list) {
+    output_expressions.push_back(col->Copy());
   }
-
-  // Generate PropertyProjection
-  if (needs_projection) {
-    vector<unique_ptr<expression::AbstractExpression>> output_expressions;
-    for (auto col : *select_stmt->select_list) {
-      output_expressions.push_back(
-          unique_ptr<expression::AbstractExpression>(col->Copy()));
-    }
-    property_set_.AddProperty(shared_ptr<PropertyProjection>(
-        new PropertyProjection(move(output_expressions))));
-  }
+  property_set_.AddProperty(shared_ptr<PropertyColumns>(
+      new PropertyColumns(move(output_expressions))));
 
   // TODO add PropertyDistinct
   if (select_stmt->select_distinct) {

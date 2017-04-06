@@ -365,13 +365,13 @@ class ExpressionUtil {
   /**
    * Walks an expression trees and find all TupleValueExprs in the tree
    */
-  static void GetTupleValueExprs(ExprSet& tup_exprs, AbstractExpression *expr) {
+  static void GetTupleValueExprs(ExprMap& expr_map, AbstractExpression *expr) {
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
-      GetTupleValueExprs(tup_exprs, expr->GetModifiableChild(i));
+      GetTupleValueExprs(expr_map, expr->GetModifiableChild(i));
     
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      tup_exprs.insert(expr);
+      expr_map.emplace(expr, expr_map.size());
   }
   
   /**
