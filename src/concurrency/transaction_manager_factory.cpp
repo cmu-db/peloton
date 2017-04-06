@@ -15,8 +15,8 @@
 
 namespace peloton {
 namespace concurrency {
-ConcurrencyType TransactionManagerFactory::protocol_ =
-    ConcurrencyType::TIMESTAMP_ORDERING;
+ProtocolType TransactionManagerFactory::protocol_ =
+    ProtocolType::TIMESTAMP_ORDERING;
 IsolationLevelType TransactionManagerFactory::default_isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManagerFactory::conflict_avoidance_ =

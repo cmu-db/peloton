@@ -374,7 +374,7 @@ enum SqlStateErrorCode {
 // Concurrency Control Types
 //===--------------------------------------------------------------------===//
 
-enum class ConcurrencyType {
+enum class ProtocolType {
   INVALID = INVALID_TYPE_ID,
   TIMESTAMP_ORDERING = 1  // timestamp ordering
 };

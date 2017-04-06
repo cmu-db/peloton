@@ -24,8 +24,8 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {
-    ConcurrencyType::TIMESTAMP_ORDERING
+static std::vector<ProtocolType> TEST_TYPES = {
+    ProtocolType::TIMESTAMP_ORDERING
 };
 
 void TransactionTest(concurrency::TransactionManager *txn_manager,

@@ -22,7 +22,7 @@ class TransactionManagerFactory {
   static TransactionManager &GetInstance() {
     switch (protocol_) {
 
-      case ConcurrencyType::TIMESTAMP_ORDERING:
+      case ProtocolType::TIMESTAMP_ORDERING:
         return TimestampOrderingTransactionManager::GetInstance(default_isolation_level_, conflict_avoidance_);
 
       default:
@@ -30,7 +30,7 @@ class TransactionManagerFactory {
     }
   }
 
-  static void Configure(const ConcurrencyType protocol,
+  static void Configure(const ProtocolType protocol,
                         const IsolationLevelType level = IsolationLevelType::SERIALIZABLE, 
                         const ConflictAvoidanceType conflict = ConflictAvoidanceType::ABORT) {
     protocol_ = protocol;
@@ -38,14 +38,14 @@ class TransactionManagerFactory {
     conflict_avoidance_ = conflict;
   }
 
-  static ConcurrencyType GetProtocol() { return protocol_; }
+  static ProtocolType GetProtocol() { return protocol_; }
 
   static IsolationLevelType GetDefaultIsolationLevel() { return default_isolation_level_; }
 
   static ConflictAvoidanceType GetConflictAvoidanceType() { return conflict_avoidance_; }
 
  private:
-  static ConcurrencyType protocol_;
+  static ProtocolType protocol_;
   static IsolationLevelType default_isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
 };

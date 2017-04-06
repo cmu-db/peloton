@@ -25,8 +25,8 @@ namespace test {
 
 class MVCCTests : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {
-    ConcurrencyType::TIMESTAMP_ORDERING};
+static std::vector<ProtocolType> TEST_TYPES = {
+    ProtocolType::TIMESTAMP_ORDERING};
 
 TEST_F(MVCCTests, SingleThreadVersionChainTest) {
   LOG_INFO("SingleThreadVersionChainTest");
