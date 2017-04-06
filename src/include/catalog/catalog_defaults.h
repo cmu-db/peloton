@@ -36,10 +36,10 @@ namespace catalog {
 #define OID_OFFSET 1000
 
 // Oid mask for each type
-#define DATABASE_OID_MASK (static_cast<oid_t>(CatalogType::DATABASE))
-#define TABLE_OID_MASK (static_cast<oid_t>(CatalogType::TABLE))
-#define INDEX_OID_MASK (static_cast<oid_t>(CatalogType::INDEX))
-#define COLUMN_OID_MASK (static_cast<oid_t>(CatalogType::COLUMN))
+#define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
+#define TABLE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TABLE))
+#define INDEX_OID_MASK (static_cast<oid_t>(catalog::CatalogType::INDEX))
+#define COLUMN_OID_MASK (static_cast<oid_t>(catalog::CatalogType::COLUMN))
 
 // Reserved pg_catalog database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)
