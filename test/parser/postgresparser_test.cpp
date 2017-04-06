@@ -908,6 +908,15 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ(stmt_list->GetStatement(0)->GetType(), StatementType::CREATE);
   auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
+  // funcname
+  std::vector<char*>* funcname = create_trigger_stmt->trigger_funcname;
+  EXPECT_EQ(funcname->size(), 1);
+  EXPECT_EQ(std::string((*funcname)[0]), "check_account_update");
+  // args
+  EXPECT_EQ(create_trigger_stmt->trigger_args->size(), 0);
+  // columns
+  EXPECT_EQ(create_trigger_stmt->trigger_columns->size(), 0);
+
   // level
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
   // timing

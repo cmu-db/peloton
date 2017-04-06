@@ -971,13 +971,34 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
 parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* root) {
   parser::CreateStatement* result =
     new parser::CreateStatement(CreateStatement::kTrigger);
-  // TODO: transform other fields: funcname, args, columns, whenClause, etc..
+  // TODO: transform other fields:  columns, whenClause, etc..
+  // funcname
+  result->trigger_funcname = new std::vector<char*>;
+  if (root->funcname) {
+    for (auto cell = root->funcname->head; cell != nullptr;
+         cell = cell->next) {
+      char* name = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_funcname->push_back(cstrdup(name));
+    }
+  }
+  // args
   result->trigger_args = new std::vector<char*>;
-//  for (auto cell = root->args->head; cell != nullptr;
-//       cell = cell->next) {
-//    char* arg = static_cast<char*>(cell->data.ptr_value);
-//    result->trigger_args->push_back(cstrdup(arg));
-//  }
+  if (root->args) {
+    for (auto cell = root->args->head; cell != nullptr;
+         cell = cell->next) {
+      char* arg = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_args->push_back(cstrdup(arg));
+    }
+  }
+  // columns
+  result->trigger_columns = new std::vector<char*>;
+  if (root->columns) {
+    for (auto cell = root->columns->head; cell != nullptr;
+         cell = cell->next) {
+      char* column = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_columns->push_back(cstrdup(column));
+    }
+  }
 
   int16_t& tgtype = result->trigger_type;
   TRIGGER_CLEAR_TYPE(tgtype);
