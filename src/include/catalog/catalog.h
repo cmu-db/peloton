@@ -95,14 +95,13 @@ class Catalog {
                          const std::string &table_name,
                          const std::vector<std::string> &index_attr,
                          const std::string &index_name, bool unique_keys,
-                         IndexType index_type,
-                         concurrency::Transaction *txn = nullptr);
+                         IndexType index_type, concurrency::Transaction *txn);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<std::string> &index_attr,
                          const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
-                         concurrency::Transaction *txn = nullptr,
+                         concurrency::Transaction *txn,
                          bool is_catalog = false);
 
   // Get a index with the oids of index, table, and database.

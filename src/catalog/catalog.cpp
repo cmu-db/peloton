@@ -348,12 +348,10 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &index_name, bool unique_keys,
                                 IndexType index_type,
                                 concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to create table: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
   }
 
   LOG_TRACE("Trying to create index %s for table %s",
@@ -385,9 +383,6 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
       CreateIndex(database_oid, table_oid, index_attr, index_name, index_type,
                   index_constraint, unique_keys, txn);
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
   return success;
 }
 
@@ -398,13 +393,12 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
                                 IndexConstraintType index_constraint,
                                 bool unique_keys, concurrency::Transaction *txn,
                                 bool is_catalog) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to create table: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
   }
+
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
   // check if table already has index with same name
@@ -468,9 +462,6 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       LOG_TRACE("Successfully add index for table %s contains %d indexes",
                 table->GetName().c_str(), (int)table->GetValidIndexCount());
 
-      if (single_statement_txn) {
-        txn_manager.CommitTransaction(txn);
-      }
       return ResultType::SUCCESS;
     } catch (CatalogException &e) {
       LOG_TRACE(
