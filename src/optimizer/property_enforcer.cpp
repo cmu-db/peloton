@@ -43,31 +43,17 @@ void PropertyEnforcer::Visit(const PropertyProjection *) {
   //      child_groups);
 }
 
-void PropertyEnforcer::Visit(const PropertySort *property) {
-  std::vector<expression::AbstractExpression *> sort_columns;
-  std::vector<bool> sort_ascending;
-  size_t column_size = property->GetSortColumnSize();
-  for (size_t i = 0; i < column_size; ++i) {
-    sort_columns.push_back(property->GetSortColumn(i));
-    sort_ascending.push_back(property->GetSortAscending(i));
-  }
-
+void PropertyEnforcer::Visit(const PropertySort *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ = std::make_shared<GroupExpression>(
-      PhysicalOrderBy::make(sort_columns, sort_ascending), child_groups);
+      PhysicalOrderBy::make(), child_groups);
 }
 
 // TODO add implementation for PropertyDistinct and PropertyPredicate
-void PropertyEnforcer::Visit(const PropertyDistinct *property) {
-  std::vector<expression::AbstractExpression *> hash_keys;
-  size_t hash_keys_size = property->GetSize();
-  for (size_t i = 0; i < hash_keys_size; ++i) {
-    hash_keys.push_back(property->GetDistinctColumn(i));
-  }
-
+void PropertyEnforcer::Visit(const PropertyDistinct *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ = std::make_shared<GroupExpression>(
-      PhysicalHash::make(hash_keys), child_groups);
+      PhysicalDistinct::make(), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertyPredicate *) {

@@ -212,12 +212,8 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 //===--------------------------------------------------------------------===//
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
-  static Operator make(
-      std::vector<expression::AbstractExpression *> &sort_exprs,
-      std::vector<bool> &sort_ascending);
+  static Operator make();
 
-  std::vector<expression::AbstractExpression *> sort_exprs;
-  std::vector<bool> sort_ascending;
 };
 
 //===--------------------------------------------------------------------===//
@@ -349,11 +345,9 @@ class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
   expression::AbstractExpression *having;
 };
 
-class PhysicalHash : public OperatorNode<PhysicalHash> {
+class PhysicalDistinct : public OperatorNode<PhysicalDistinct> {
  public:
-  static Operator make(std::vector<expression::AbstractExpression*> &hash_keys);
-  // PhysicalHash can be used for DISTINCT or hash join
-  std::vector<expression::AbstractExpression*> hash_keys;
+  static Operator make();
 };
 
 } /* namespace optimizer */

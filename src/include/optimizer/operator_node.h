@@ -48,7 +48,7 @@ enum class OpType {
   Project,
   OrderBy,
   PhysicalLimit,
-  Hash,
+  Distinct,
   ComputeExprs,
   Filter,
   InnerNLJoin,

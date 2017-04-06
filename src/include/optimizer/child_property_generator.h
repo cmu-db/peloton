@@ -47,7 +47,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void Visit(const PhysicalDelete *) override;
   void Visit(const PhysicalUpdate *) override;
   void Visit(const PhysicalAggregate *) override;
-  void Visit(const PhysicalHash *) override;
+  void Visit(const PhysicalDistinct *) override;
 
  private:
   ColumnManager &manager_;

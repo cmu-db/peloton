@@ -75,7 +75,7 @@ void CostAndStatsCalculator::Visit(const PhysicalAggregate *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };
-void CostAndStatsCalculator::Visit(const PhysicalHash *) {
+void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };

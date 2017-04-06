@@ -194,12 +194,9 @@ Operator PhysicalProject::make() {
 //===--------------------------------------------------------------------===//
 // OrderBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalOrderBy::make(
-    std::vector<expression::AbstractExpression *> &sort_exprs,
-    std::vector<bool> &sort_ascending) {
+Operator PhysicalOrderBy::make() {
   PhysicalOrderBy *order_by = new PhysicalOrderBy;
-  order_by->sort_exprs = sort_exprs;
-  order_by->sort_ascending = sort_ascending;
+
   return Operator(order_by);
 }
 
@@ -332,10 +329,8 @@ Operator PhysicalAggregate::make(
 //===--------------------------------------------------------------------===//
 // Physical Hash
 //===--------------------------------------------------------------------===//
-Operator PhysicalHash::make(std::vector<expression::AbstractExpression *>
-                            &hash_keys) {
-  PhysicalHash *hash = new PhysicalHash;
-  hash->hash_keys = std::move(hash_keys);
+Operator PhysicalDistinct::make() {
+  PhysicalDistinct *hash = new PhysicalDistinct;
   return Operator(hash);
 }
 
@@ -452,7 +447,7 @@ std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
 template <>
 std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
 template <>
-std::string OperatorNode<PhysicalHash>::name_ = "PhysicalHash";
+std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -488,7 +483,7 @@ OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
 template <>
-OpType OperatorNode<PhysicalHash>::type_ = OpType::Hash;
+OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
 template <>
 OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>

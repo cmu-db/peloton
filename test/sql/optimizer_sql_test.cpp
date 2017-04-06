@@ -702,13 +702,13 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   CreateAndLoadTable();
-  //  Why we have the same table as the GROUP BY test???
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 00, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -738,7 +738,7 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
 
 
-  query = "SELECT DISTINCT b, c FROM test ORDER BY 11 * b + c";
+  query = "SELECT DISTINCT b, c FROM test ORDER BY 10 * b + c";
 
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
@@ -750,34 +750,42 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
-  EXPECT_EQ(8, result.size());
+  EXPECT_EQ(10, result.size());
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 3));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 8));
+  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 9));
 
-  query = "SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c";
+
+  query = "SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c LIMIT 3";
+
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::HASH);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
-  EXPECT_EQ(12, result.size());
+  EXPECT_EQ(9, result.size());
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 9));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 10));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result,11));
+  EXPECT_EQ("7", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 8));
+
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

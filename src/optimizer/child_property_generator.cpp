@@ -146,7 +146,7 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
-void ChildPropertyGenerator::Visit(const PhysicalHash *) {}
+void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
 
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}

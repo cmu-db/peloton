@@ -163,14 +163,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
   output_plan_ = move(limit_plan);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-  auto sort_columns_size = op->sort_exprs.size();
-  auto &sort_exprs = op->sort_exprs;
-  auto &sort_ascending = op->sort_ascending;
+void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
+  
   ExprMap &child_expr_map = children_expr_map_[0];
 
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                        ->As<PropertyColumns>();
+  auto sort_prop = requirements_->GetPropertyOfType(PropertyType::SORT)
+                       ->As<PropertySort>();
+  auto sort_columns_size = sort_prop->GetSortColumnSize();
 
   // Construct output column offset.
   vector<oid_t> column_ids;
@@ -195,9 +196,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   vector<oid_t> sort_col_ids;
   vector<bool> sort_flags;
   for (size_t i = 0; i < sort_columns_size; i++) {
-    sort_col_ids.push_back(child_expr_map[sort_exprs[i]]);
+    sort_col_ids.push_back(child_expr_map[sort_prop->GetSortColumn(i)]);
     // planner use desc flag
-    sort_flags.push_back(!sort_ascending[i]);
+    sort_flags.push_back(!sort_prop->GetSortAscending(i));
   }
 
   // Create and insert OrderBy Plan
@@ -282,14 +283,19 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   output_plan_ = move(agg_plan);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalHash *op) {
+void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
+  auto prop_distinct = requirements_->GetPropertyOfType(PropertyType::DISTINCT)
+      ->As<PropertyDistinct>();
+
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  auto distinct_column_size = prop_distinct->GetSize();
   // Hash executor uses TVexpr to store the column,
   // but only uses their offset, we may want to modify
   // the interface to the offset directly
-  for (auto &expr : op->hash_keys) {
+  for (size_t idx = 0; idx < distinct_column_size; ++idx) {
+    auto expr = prop_distinct->GetDistinctColumn(idx);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       // If the hash key contains the star expr
       // add all TupleValueExpr to hash_keys
