@@ -48,9 +48,8 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     
     // if the isolation level is set to: 
     // - SERIALIZABLE, or 
-    // - REPEATABLE_READS, or
-    // - READ_COMMITTED, or
-    // - READ_UNCOMMITTED.
+    // - REPEATABLE_READS, or 
+    // - READ_COMMITTED.
   
     // transaction processing with decentralized epoch manager
     read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);

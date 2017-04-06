@@ -39,11 +39,11 @@ namespace concurrency {
  *         i  |       |     d
  *  (init)-->-+---> Insert ---> Ins_Del (final)
  *
- *    r: read
+ *    r : read
  *    ro: read_own
- *    u: update
- *    d: delete
- *    i: insert
+ *    u : update
+ *    d : delete
+ *    i : insert
  */
 
 RWType Transaction::GetRWType(const ItemPointer &location) {
