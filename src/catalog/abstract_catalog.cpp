@@ -177,6 +177,8 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 * @param   index_name   index name(global unique)
 * @param   index_constraint     index constraints
 * @return  Unique pointer of vector of logical tiles
+* Note: Use catalog::Catalog::CreateIndex() if you can, only ColumnCatalog and
+* IndexCatalog should need this
 */
 void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
                                oid_t index_oid, const std::string &index_name,
@@ -196,13 +198,14 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
       index::IndexFactory::GetIndex(index_metadata));
   catalog_table_->AddIndex(key_index);
 
+  // If you called AddIndex(), you need to insert the index record by yourself!
   // insert index record into index_catalog(pg_index) table
   // IndexCatalog::GetInstance()->InsertIndex(
   //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
   //     index_constraint, unique_keys, pool_.get(), nullptr);
 
-  LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
-            index_name.c_str(), COLUMN_CATALOG_NAME);
+  LOG_TRACE("Successfully created primary key index '%s' for table '%d'",
+            index_name.c_str(), (int)catalog_table_->GetOid());
 }
 
 }  // End catalog namespace

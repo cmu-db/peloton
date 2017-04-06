@@ -52,6 +52,10 @@ void Catalog::InitializeCatalog() {
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
   databases_.push_back(pg_catalog);
 
+  // begin a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   // Create catalog tables
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get());
   auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get());
@@ -64,22 +68,22 @@ void Catalog::InitializeCatalog() {
   // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
 
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID);
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID);
+  CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID, txn);
+  CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID, txn);
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
               std::vector<std::string>({"database_name"}),
               DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
-              IndexConstraintType::UNIQUE, true, nullptr, true);
+              IndexConstraintType::UNIQUE, true, txn, true);
 
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"table_name", "database_oid"}),
               TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
-              IndexConstraintType::UNIQUE, true, nullptr, true);
+              IndexConstraintType::UNIQUE, true, txn, true);
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"database_oid"}),
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
-              IndexConstraintType::DEFAULT, false, nullptr, true);
+              IndexConstraintType::DEFAULT, false, txn, true);
 
   // actual index already added in column_catalog, index_catalog constructor
   // the reason we treat those two catalog tables differently is that indexes
@@ -87,42 +91,45 @@ void Catalog::InitializeCatalog() {
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
-      std::vector<oid_t>({0, 1}), pool_.get(), nullptr);
+      std::vector<oid_t>({0, 1}), pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      std::vector<oid_t>({0, 2}), pool_.get(), nullptr);
+      std::vector<oid_t>({0, 2}), pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
-      false, std::vector<oid_t>({0}), pool_.get(), nullptr);
+      false, std::vector<oid_t>({0}), pool_.get(), txn);
 
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
-      std::vector<oid_t>({0}), pool_.get(), nullptr);
+      std::vector<oid_t>({0}), pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      std::vector<oid_t>({1}), pool_.get(), nullptr);
+      std::vector<oid_t>({1}), pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
-      std::vector<oid_t>({2}), pool_.get(), nullptr);
+      std::vector<oid_t>({2}), pool_.get(), txn);
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
-                              pool_.get(), nullptr);
+                              pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   pg_table->InsertTable(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), txn);
   pg_table->InsertTable(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), txn);
   pg_table->InsertTable(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), txn);
   pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), txn);
+
+  // Commit transaction
+  txn_manager.CommitTransaction(txn);
 }
 
 //===----------------------------------------------------------------------===//
@@ -171,12 +178,10 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to create table: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
   }
 
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
@@ -236,9 +241,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     }
 
     CreatePrimaryIndex(database_oid, table_oid, txn);
-    if (single_statement_txn) {
-      txn_manager.CommitTransaction(txn);
-    }
+
     return ResultType::SUCCESS;
   } catch (CatalogException &e) {
     LOG_TRACE("Can't found database %s. Return RESULT_FAILURE",
@@ -257,12 +260,10 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 */
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                        concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to create table: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
   }
 
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
@@ -315,9 +316,6 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
       LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
                 pkey_index->GetName().c_str(), table->GetName().c_str());
 
-      if (single_statement_txn) {
-        txn_manager.CommitTransaction(txn);
-      }
       return ResultType::SUCCESS;
     } catch (CatalogException &e) {
       LOG_TRACE(
