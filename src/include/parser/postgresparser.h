@@ -130,6 +130,9 @@ class PostgresParser {
   // transform helper for where clauses
   static expression::AbstractExpression* WhereTransform(Node* root);
 
+  // transform helper for when clauses
+  static expression::AbstractExpression* WhenTransform(Node* root);
+
   // transform helper for column refs
   static expression::AbstractExpression* ColumnRefTransform(ColumnRef* root);
 

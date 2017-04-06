@@ -676,6 +676,28 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
   return result;
 }
 
+// This function takes in the whenClause part of a Postgres CreateTrigStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::WhenTransform(Node* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+  expression::AbstractExpression* result = nullptr;
+  switch (root->type) {
+    case T_A_Expr: {
+      result = AExprTransform(reinterpret_cast<A_Expr*>(root));
+      break;
+    }
+    case T_BoolExpr: {
+      result = BoolExprTransform(reinterpret_cast<BoolExpr*>(root));
+      break;
+    }
+    default: { LOG_ERROR("WHEN of type %d not supported yet...", root->type); }
+  }
+  return result;
+}
+
+
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object
 parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
@@ -909,7 +931,7 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
 parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* root) {
   parser::CreateStatement* result =
     new parser::CreateStatement(CreateStatement::kTrigger);
-  // TODO: transform other fields:  columns, whenClause, etc..
+
   // funcname
   result->trigger_funcname = new std::vector<char*>;
   if (root->funcname) {
@@ -937,6 +959,8 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* roo
       result->trigger_columns->push_back(cstrdup(column));
     }
   }
+  // when
+  result->trigger_when = WhenTransform(root->whenClause);
 
   int16_t& tgtype = result->trigger_type;
   TRIGGER_CLEAR_TYPE(tgtype);
