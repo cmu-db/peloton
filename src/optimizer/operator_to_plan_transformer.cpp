@@ -61,9 +61,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
   vector<oid_t> column_ids;
-  // TODO: handle star expression
-  bool has_star_expr = false;
-  if (has_star_expr) {
+  if (column_prop->HasStarExpression()) {
     size_t num_col = op->table_->GetSchema()->GetColumnCount();
     for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);
@@ -103,9 +101,20 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                          ->As<PropertyColumns>();
-  size_t proj_list_size = cols_prop->GetSize();
-  ExprMap& child_expr_map = children_expr_map_[0];
+                       ->As<PropertyColumns>();
+  size_t col_size = cols_prop->GetSize();
+  ExprMap &child_expr_map = children_expr_map_[0];
+
+  // first expand the star expression to include all exprs beneath
+  vector<expression::AbstractExpression *> output_exprs;
+  for (size_t i = 0; i < col_size; i++) {
+    auto expr = cols_prop->GetColumn(i);
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      for (auto iter : child_expr_map) output_exprs.push_back(iter.first);
+    } else {
+      output_exprs.push_back(expr);
+    }
+  }
 
   // expressions to evaluate
   TargetList tl = TargetList();
@@ -113,23 +122,20 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   DirectMapList dml = DirectMapList();
   // schema of the projections output
   vector<catalog::Column> columns;
-
-  for (size_t project_idx = 0; project_idx < proj_list_size; project_idx++) {
-    auto expr = cols_prop->GetColumn(project_idx);
-    
-    // For TupleValueExpr, we can just do a direct mapping.
+  size_t curr_col_offset = 0;
+  for (auto expr : output_exprs) {
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto tup_expr = (expression::TupleValueExpression *)expr;
-      dml.emplace_back(project_idx, make_pair(0, child_expr_map[tup_expr]));
+      // For TupleValueExpr, we can just do a direct mapping.
+      dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
       expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
-      tl.emplace_back(project_idx, expr->Copy());
+      tl.emplace_back(curr_col_offset, expr->Copy());
     }
+    (*output_expr_map_)[expr] = curr_col_offset++;
     columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
         expr->GetExpressionName()));
-    (*output_expr_map_)[expr] = project_idx;
   }
 
   // build the projection plan node and insert above the scan
@@ -164,12 +170,23 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                         ->As<PropertyColumns>();
+                       ->As<PropertyColumns>();
 
   // Construct output column offset.
   vector<oid_t> column_ids;
-  for (size_t i = 0; i < cols_prop->GetSize(); i++)
-    column_ids.push_back(child_expr_map[cols_prop->GetColumn(i)]);
+  for (size_t i = 0; i < cols_prop->GetSize(); i++) {
+    auto expr = cols_prop->GetColumn(i);
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      // For StarExpr, Output all TupleValuesExpr from operator below
+      for (auto iter : child_expr_map) {
+        if (iter.first->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+          column_ids.push_back(iter.second);
+        }
+      }
+    } else {
+      column_ids.push_back(child_expr_map[expr]);
+    }
+  }
 
   // Construct sort ids and sort flags
   vector<oid_t> sort_col_ids;
@@ -371,6 +388,7 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
     auto col_expr = new expression::TupleValueExpression("");
+    col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;
   }

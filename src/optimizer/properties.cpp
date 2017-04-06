@@ -82,15 +82,10 @@ std::string PropertyColumns::ToString() const {
 }
 
 PropertyDistinct::PropertyDistinct(
-    std::vector<expression::AbstractExpression *> distinct_column_exprs,
-    bool is_star)
-    : distinct_column_exprs_(std::move(distinct_column_exprs)),
-      is_star_(is_star) {
+    std::vector<expression::AbstractExpression *> distinct_column_exprs)
+    : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
-
-PropertyDistinct::PropertyDistinct(bool is_star_expr)
-    : is_star_(is_star_expr) {}
 
 PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }
 
