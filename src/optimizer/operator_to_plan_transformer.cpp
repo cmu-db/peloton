@@ -188,10 +188,11 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
-  auto proj_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
-                       ->As<PropertyProjection>();
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                      ->As<PropertyColumns>();
+      ->As<PropertyColumns>();
+
+  PL_ASSERT(col_prop != nullptr);
+
   auto child_expr_map = children_expr_map_[0];
 
   // TODO: Consider different type in the logical to physical implementation
@@ -204,57 +205,34 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
   TargetList tl;
 
   auto agg_id = 0;
-  if (proj_prop != nullptr) {
-    auto expr_len = proj_prop->GetProjectionListSize();
-    for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
-      auto expr = proj_prop->GetProjection(col_pos);
-      expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
+  auto expr_len = col_prop->GetSize();
+  for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
+    auto expr = col_prop->GetColumn(col_pos);
+    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
 
-      if (expression::ExpressionUtil::IsAggregateExpression(
-              expr->GetExpressionType())) {
-        // For AggregateExpr, add aggregate term
-        auto agg_expr = (expression::AggregateExpression *)expr;
-        auto agg_col = expr->GetModifiableChild(0);
-        if (agg_col != nullptr)
-          expression::ExpressionUtil::EvaluateExpression(child_expr_map,
-                                                         agg_col);
+    if (expression::ExpressionUtil::IsAggregateExpression(
+        expr->GetExpressionType())) {
+      // For AggregateExpr, add aggregate term
+      auto agg_expr = (expression::AggregateExpression *) expr;
+      auto agg_col = expr->GetModifiableChild(0);
 
-        // Maps the aggregate value in the right tuple to the output.
-        // See aggregator.cpp for more info.
-        dml.emplace_back(col_pos, make_pair(1, agg_id++));
-        planner::AggregatePlan::AggTerm agg_term(
-            agg_expr->GetExpressionType(),
-            agg_col == nullptr ? nullptr : agg_col->Copy(),
-            agg_expr->distinct_);
-        agg_terms.push_back(agg_term);
-      } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        // For TupleValueExpr, do direct mapping
-        dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
-        (*output_expr_map_)[expr] = col_pos;
-      } else {
-        // For other exprs such as OperatorExpr, use target list
-        tl.emplace_back(col_pos, expr->Copy());
-      }
-
-      output_schema_columns.push_back(catalog::Column(
-          expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-          expr->expr_name_));
+      // Maps the aggregate value in the right tuple to the output.
+      // See aggregator.cpp for more info.
+      dml.emplace_back(col_pos, make_pair(1, agg_id++));
+      planner::AggregatePlan::AggTerm agg_term(
+          agg_expr->GetExpressionType(),
+          agg_col == nullptr ? nullptr : agg_col->Copy(),
+          agg_expr->distinct_);
+      agg_terms.push_back(agg_term);
+    } else {
+      // For non-aggregate expressions, do direct mapping
+      dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
     }
-  } else {
-    // Only have base columns
-    PL_ASSERT(col_prop != nullptr);
 
-    *output_expr_map_ = child_expr_map;
-    output_schema_columns.resize(child_expr_map.size());
-    for (auto iter : child_expr_map) {
-      auto expr = iter.first;
-      size_t col_pos = iter.second;
-      // Keep the column order
-      dml.emplace_back(col_pos, make_pair(0, col_pos));
-      output_schema_columns[col_pos] = catalog::Column(
-          expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-          expr->expr_name_);
-    }
+    (*output_expr_map_)[expr] = col_pos;
+    output_schema_columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->expr_name_));
   }
 
   // Handle group by columns

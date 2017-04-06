@@ -100,7 +100,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
  *    different combination of the aggregation functions and other projection.
  */
 
-void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
+void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
   PropertySet child_input_property_set;
   PropertySet provided_property;
 
@@ -108,24 +108,41 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
     switch (prop->Type()) {
       // Generate output columns for the child
       // Aggregation will break sort property
+      case PropertyType::DISTINCT:
       case PropertyType::SORT:
         break;
       case PropertyType::COLUMNS: {
-        // PropertyColumns will be fulfilled by the child operator
-        child_input_property_set.AddProperty(prop);
         provided_property.AddProperty(prop);
+
+        // Check group by columns and union it with the
+        // PropertyColumn to generate child property
+        auto col_prop = prop->As<PropertyColumns>();
+        size_t col_len = col_prop->GetSize();
+        ExprSet child_col;
+        for (size_t col_idx=0; col_idx<col_len; col_idx++) {
+          auto expr = col_prop->GetColumn(col_idx);
+          // Only add child expression for aggregate functions
+          if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())
+              && expr->GetChildrenSize() > 0) {
+            expr = expr->GetModifiableChild(0);
+          }
+          child_col.insert(expr);
+        }
+        // Add group by columns
+        for (auto group_by_col : *(op->columns))
+          child_col.insert(group_by_col);
+
+        // Add child PropertyColumn
+        child_input_property_set.AddProperty(
+            make_shared<PropertyColumns>(
+                std::vector<expression::AbstractExpression*>(
+                    child_col.begin(), child_col.end())));
         break;
       }
       case PropertyType::PREDICATE:
         // PropertyPredicate will be fulfilled by the child operator
         child_input_property_set.AddProperty(prop);
         provided_property.AddProperty(prop);
-        break;
-      case PropertyType::PROJECT:
-        // PropertyProject will be fulfilled by this operator
-        provided_property.AddProperty(prop);
-        break;
-      case PropertyType::DISTINCT:
         break;
     }
   }

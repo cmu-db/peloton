@@ -34,7 +34,7 @@ class PropertyColumns : public Property {
   
   std::string ToString() const override;
 
-  inline expression::AbstractExpression *GetColumn(int idx) const {
+  inline expression::AbstractExpression *GetColumn(size_t idx) const {
     return column_exprs_[idx];
   }
 
