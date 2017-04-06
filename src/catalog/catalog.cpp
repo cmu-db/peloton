@@ -261,8 +261,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                        concurrency::Transaction *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to create table: %s",
-              table_name.c_str());
+    LOG_TRACE("Do not have transaction to create table: %d", (int)table_oid);
     return ResultType::FAILURE;
   }
 
@@ -349,8 +348,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                                 IndexType index_type,
                                 concurrency::Transaction *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to create table: %s",
-              table_name.c_str());
+    LOG_TRACE("Do not have transaction to create index: %s",
+              index_name.c_str());
     return ResultType::FAILURE;
   }
 
@@ -394,8 +393,8 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
                                 bool unique_keys, concurrency::Transaction *txn,
                                 bool is_catalog) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to create table: %s",
-              table_name.c_str());
+    LOG_TRACE("Do not have transaction to create index: %s",
+              index_name.c_str());
     return ResultType::FAILURE;
   }
 
@@ -548,15 +547,8 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
 ResultType Catalog::DropTable(const std::string &database_name,
                               const std::string &table_name,
                               concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
-  if (txn == nullptr) {
-    LOG_TRACE("Can't call DropTable() when txn is null");
+    LOG_TRACE("Do not have transaction to drop table: %s", table_name.c_str());
     return ResultType::FAILURE;
   }
 
@@ -576,20 +568,14 @@ ResultType Catalog::DropTable(const std::string &database_name,
   }
   ResultType result = DropTable(database_oid, table_oid, txn);
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
   return result;
 }
 
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to create table: %d", (int)table_oid);
+    return ResultType::FAILURE;
   }
 
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
@@ -610,9 +596,6 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
     // STEP 4
     database->DropTableWithOid(table_oid);
 
-    if (single_statement_txn) {
-      txn_manager.CommitTransaction(txn);
-    }
     return ResultType::SUCCESS;
   } catch (CatalogException &e) {
     LOG_TRACE("Can't find database %d! Return RESULT_FAILURE", database_oid);
@@ -626,12 +609,9 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
 * @return  Transaction ResultType(SUCCESS or FAILURE)
 */
 ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
   if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
+    LOG_TRACE("Do not have transaction to drop index: %d", (int)index_oid);
+    return ResultType::FAILURE;
   }
 
   // find table_oid by looking up pg_index using index_oid
@@ -660,9 +640,6 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
       LOG_TRACE("Successfully drop index %d for table %s", index_oid,
                 table->GetName().c_str());
 
-      if (single_statement_txn) {
-        txn_manager.CommitTransaction(txn);
-      }
       return ResultType::SUCCESS;
     } catch (CatalogException &e) {
       LOG_TRACE(
