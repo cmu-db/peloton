@@ -247,7 +247,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, do direct mapping
       dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
-      (*output_expr_map_)[expr] = col_pos;
     } else {
       // For other exprs such as OperatorExpr, use target list
       tl.emplace_back(col_pos, expr->Copy());

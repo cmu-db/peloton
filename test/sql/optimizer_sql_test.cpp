@@ -679,7 +679,18 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   EXPECT_EQ("1332", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("2220", TestingSQLUtil::GetResultValueAsString(result, 7));
-
+  
+  // Test group by complex expression
+  query = "SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c";
+  LOG_INFO("%s", query.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(4, result.size());
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 3));
+  
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

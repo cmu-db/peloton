@@ -282,12 +282,16 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
   for (auto cell = group->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     switch (temp->type) {
-      case T_ColumnRef: {
-        result->columns->push_back(
-            ColumnRefTransform(reinterpret_cast<ColumnRef*>(temp)));
+      case T_ColumnRef:
+        result->columns->push_back(ColumnRefTransform((ColumnRef*)temp));
         break;
+      case T_A_Expr:
+        result->columns->push_back(AExprTransform((A_Expr*)temp));
+        break;
+      default: {
+        LOG_ERROR("Group By type %d not supported...", temp->type);
+        throw NotImplementedException("");
       }
-      default: { LOG_ERROR("Group By type %d not supported...", temp->type); }
     }
   }
 
