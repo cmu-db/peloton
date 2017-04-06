@@ -130,18 +130,6 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 };
 
 //===--------------------------------------------------------------------===//
-// Logical Hash
-//===--------------------------------------------------------------------===//
-class LogicalHash : public OperatorNode<LogicalHash> {
- public:
-  static Operator make(
-      const std::vector<expression::AbstractExpression *> &hash_keys);
-
-  // logical hash will only be used for DISTINCT
-  std::vector<expression::AbstractExpression *> hash_keys;
-};
-
-//===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
