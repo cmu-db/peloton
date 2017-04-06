@@ -896,8 +896,9 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
 
   std::string query =
        "CREATE TRIGGER check_update "
-       "BEFORE UPDATE ON accounts "
+       "BEFORE UPDATE OF balance ON accounts "
        "FOR EACH ROW "
+       "WHEN (OLD.balance <> NEW.balance) "
        "EXECUTE PROCEDURE check_account_update();";
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
@@ -905,18 +906,36 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
     LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
               stmt_list->error_line, stmt_list->error_col);
   }
+<<<<<<< HEAD
   EXPECT_EQ(stmt_list->GetStatement(0)->GetType(), StatementType::CREATE);
+=======
+  EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
+>>>>>>> Transform trigger's when clause to expression
   auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // funcname
   std::vector<char*>* funcname = create_trigger_stmt->trigger_funcname;
-  EXPECT_EQ(funcname->size(), 1);
-  EXPECT_EQ(std::string((*funcname)[0]), "check_account_update");
+  EXPECT_EQ(1, funcname->size());
+  EXPECT_EQ("check_account_update", std::string((*funcname)[0]));
   // args
-  EXPECT_EQ(create_trigger_stmt->trigger_args->size(), 0);
+  EXPECT_EQ(0, create_trigger_stmt->trigger_args->size());
   // columns
-  EXPECT_EQ(create_trigger_stmt->trigger_columns->size(), 0);
-
+  std::vector<char*>* columns = create_trigger_stmt->trigger_columns;
+  EXPECT_EQ(1, columns->size());
+  EXPECT_EQ("balance", std::string((*columns)[0]));
+  // when
+  auto when = create_trigger_stmt->trigger_when;
+  EXPECT_NE(nullptr, when);
+  EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
+  EXPECT_EQ(2, when->GetChildrenSize());
+  auto left = when->GetChild(0);
+  auto right = when->GetChild(1);
+  EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
+  EXPECT_EQ("old", static_cast<const expression::TupleValueExpression*>(left)->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression*>(left)->GetColumnName());
+  EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
+  EXPECT_EQ("new", static_cast<const expression::TupleValueExpression*>(right)->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression*>(right)->GetColumnName());
   // level
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
   // timing
