@@ -231,11 +231,11 @@ struct CreateStatement : TableRefStatement {
 
   bool unique = false;
 
-  std::vector<char*>* trigger_funcname = nullptr;		/* qual. name of function to call */
-  std::vector<char*>* trigger_args = nullptr;			/* list of (T_String) Values or NIL */
+  std::vector<char*>* trigger_funcname = nullptr;
+  std::vector<char*>* trigger_args = nullptr;
+  std::vector<char*>* trigger_columns = nullptr;
+  expression::AbstractExpression* trigger_when = nullptr;
   int16_t trigger_type; // information about row, timing, events, access by pg_trigger
-  std::vector<char*>* trigger_columns = nullptr;		/* column names, or NIL for all columns */
-//  Node *trigger_whenClause = nullptr;		/* qual expression, or NULL if none */
 
 
 };
