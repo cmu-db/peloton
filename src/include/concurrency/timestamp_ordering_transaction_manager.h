@@ -111,7 +111,9 @@ private:
 
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &current_cid);
+      const oid_t &tuple_id, 
+      const cid_t &current_cid, 
+      const bool is_owner);
 
   // Initiate reserved area of a tuple
   void InitTupleReserved(
