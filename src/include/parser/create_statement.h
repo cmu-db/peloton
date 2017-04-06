@@ -233,11 +233,7 @@ struct CreateStatement : TableRefStatement {
 
   std::vector<char*>* trigger_funcname = nullptr;		/* qual. name of function to call */
   std::vector<char*>* trigger_args = nullptr;			/* list of (T_String) Values or NIL */
-  bool trigger_row;			/* ROW/STATEMENT */
-  /* timing uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
-  int trigger_timing;			/* BEFORE, AFTER, or INSTEAD */
-  /* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
-  int trigger_events;			/* "OR" of INSERT/UPDATE/DELETE/TRUNCATE */
+  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
   std::vector<char*>* trigger_columns = nullptr;		/* column names, or NIL for all columns */
 //  Node *trigger_whenClause = nullptr;		/* qual expression, or NULL if none */
 
