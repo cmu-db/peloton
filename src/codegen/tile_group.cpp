@@ -147,7 +147,8 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
     PL_ASSERT(!column.IsInlined());
 
     if (schema_.AllowNull(layout.col_id)) {
-      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length, is_null);
+      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
+                                       is_null);
     } else {
       codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
       is_null = codegen.ConstBool(false);
