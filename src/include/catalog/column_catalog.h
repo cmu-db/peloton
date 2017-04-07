@@ -16,11 +16,12 @@
 // Schema: (column offset: column_name)
 // 0: table_oid (pkey)
 // 1: column_name (pkey)
-// 2: column_offset (physical offset instead of logical position)
-// 3: column_type (type of the data stored in this column)
-// 4: is_inlined (false for VARCHAR type, true for every type else)
-// 5: is_primary (is this column belongs to primary key)
-// 6: is_not_null
+// 2: column_id (logical position, starting from 0, then 1, 2, 3....)
+// 3: column_offset (physical offset instead of logical position)
+// 4: column_type (type of the data stored in this column)
+// 5: is_inlined (false for VARCHAR type, true for every type else)
+// 6: is_primary (is this column belongs to primary key)
+// 7: is_not_null
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid & column_name (unique & primary key)
@@ -50,8 +51,9 @@ class ColumnCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
-                    oid_t column_offset, type::Type::TypeId column_type,
-                    bool is_inlined, const std::vector<Constraint> &constraints,
+                    oid_t column_id, oid_t column_offset,
+                    type::Type::TypeId column_type, bool is_inlined,
+                    const std::vector<Constraint> &constraints,
                     type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::Transaction *txn);
@@ -62,11 +64,13 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,
                         concurrency::Transaction *txn);
-  std::string GetColumnName(oid_t table_oid, oid_t column_offset,
+  oid_t GetColumnId(oid_t table_oid, const std::string &column_name,
+                    concurrency::Transaction *txn);
+  std::string GetColumnName(oid_t table_oid, oid_t column_id,
                             concurrency::Transaction *txn);
   type::Type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
                                    concurrency::Transaction *txn);
-  type::Type::TypeId GetColumnType(oid_t table_oid, oid_t column_offset,
+  type::Type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
                                    concurrency::Transaction *txn);
 
  private:
