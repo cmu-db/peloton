@@ -35,9 +35,9 @@ llvm::Type *CompactStorage::Setup(
   std::vector<llvm::Type *> llvm_types;
 
   // We keep no EntryInfo for each bit since it is waste of memory
-  llvm::Type *null_type = codegen.BoolType();
+  llvm::Type *null_bit = codegen.BoolType();
   for (uint32_t i = 0; i < numitems; i++) {
-    llvm_types.push_back(null_type);
+    llvm_types.push_back(null_bit);
   }
 
   // Construct the storage for the values

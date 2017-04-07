@@ -212,8 +212,7 @@ void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
 //===----------------------------------------------------------------------===//
 // Generate a hash for the given value
 //===----------------------------------------------------------------------===//
-void Value::ValuesForMaterialization(llvm::Value *&val,
-                                     llvm::Value *&len,
+void Value::ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
                                      llvm::Value *&null) const {
   PL_ASSERT(type_ != type::Type::TypeId::INVALID);
   val = GetValue();
@@ -229,26 +228,14 @@ Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
                null};
 }
 
-
-llvm:: Value *Value::SetNullValue(CodeGen &codegen, const Value &value) {
-
+llvm::Value *Value::SetNullValue(CodeGen &codegen, const Value &value) {
   llvm::Value *null = nullptr;
   if (Type::HasVariableLength(value.GetType())) {
-    null = codegen->CreateICmpEQ(
-        value.GetValue(),
-        Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR));
-  }
-  else {
-    // Use the codegen's comparisons to get away from explicit type checking
-    llvm::Value *null_true = nullptr;
-    llvm::Value *null_false = codegen.ConstBool(false);
-    codegen::Value null_val{value.GetType(),
-                            Type::GetNullValue(codegen, value.GetType())};
-    If is_null {codegen, value.CompareEq(codegen, null_val).GetValue()};
-    {
-      null_true = codegen.ConstBool(true);
-    } is_null.EndIf();
-    null = is_null.BuildPHI(null_true, null_false);
+    null = codegen->CreateICmpEQ(value.GetValue(),
+                                 codegen.NullPtr(codegen.CharPtrType()));
+  } else {
+    codegen::Value null_val = Type::GetNullValue(codegen, value.GetType());
+    null = value.CompareEq(codegen, null_val).GetValue();
   }
   return null;
 }

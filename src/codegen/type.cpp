@@ -1204,21 +1204,6 @@ Value Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
   }
 }
 
-llvm::Value *Type::GetNullValueNonInt(CodeGen &codegen,
-                                      type::Type::TypeId type_id) {
-  switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
-      return codegen.ConstBool(type::PELOTON_BOOLEAN_NULL);
-    case type::Type::TypeId::DECIMAL:
-      return codegen.ConstDouble(type::PELOTON_DECIMAL_NULL);
-    case type::Type::TypeId::VARBINARY:
-    case type::Type::TypeId::VARCHAR:
-      return codegen.Null(codegen.CharPtrType());
-    default: {
-      auto msg = StringUtil::Format("Unknown Type '%d' for GetNullValueNonInt",
-                                    static_cast<uint32_t>(type_id));
-      throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
-
 Value Type::GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id) {
   switch (type_id) {
     case type::Type::TypeId::BOOLEAN:
