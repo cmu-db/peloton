@@ -243,8 +243,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
       return true;
     
     } else {
-      // if it's not select for update, then directly return true.
-      // no need to update read/write set.
+      // if it's not select for update, then update read set and return true.
+      
+      current_txn->RecordRead(location);
 
       // Increment table read op stats
       if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -299,6 +300,10 @@ bool TimestampOrderingTransactionManager::PerformRead(
       return true;
 
     } else {
+
+      // if it's not select for update, then update read set and return true.
+      
+      current_txn->RecordRead(location);
 
       // Increment table read op stats
       if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -376,9 +381,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
         if (SetLastReaderCommitId(tile_group_header, tuple_id,
                                   current_txn->GetCommitId(), false) == true) {
           
-          // there's no need to maintain read set for timestamp ordering protocol.
-          // T/O does not check the read set during commit phase.
-          
+          // update read set.
+          current_txn->RecordRead(location);
+
           // Increment table read op stats
           if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
             stats::BackendStatsContext::GetInstance()->IncrementTableReads(
@@ -399,6 +404,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
         PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
                   current_txn->GetCommitId());
 
+        // update read set.
+        current_txn->RecordRead(location);
+        
         // Increment table read op stats
         if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
           stats::BackendStatsContext::GetInstance()->IncrementTableReads(

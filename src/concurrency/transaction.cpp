@@ -122,6 +122,8 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     PL_ASSERT(false);
+  } else {
+    PL_ASSERT(false);
   }
 }
 

@@ -401,12 +401,12 @@ TEST_F(AnomalyTests, SerializableTest) {
         concurrency::TransactionManagerFactory::Configure(
             protocol_type, isolation_level_type, conflict_avoidance_type);
         DirtyWriteTest();
-        // DirtyReadTest();
-        // FuzzyReadTest();
-        // // WriteSkewTest();
-        // ReadSkewTest();
-        // PhantomTest();
-        // SIAnomalyTest1();
+        DirtyReadTest();
+        FuzzyReadTest();
+        // WriteSkewTest();
+        ReadSkewTest();
+        PhantomTest();
+        SIAnomalyTest1();
       }
     }
   }
