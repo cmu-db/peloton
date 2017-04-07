@@ -26,8 +26,10 @@ namespace codegen {
 struct InvalidCast : public Type::Cast {
   Value DoCast(UNUSED_ATTRIBUTE CodeGen &codegen, const Value &value,
                type::Type::TypeId to_type) const override {
-    throw NotImplementedException{StringUtil::Format(
-        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+    std::string msg = StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str());
+    throw NotImplementedException{msg};
   }
 };
 
@@ -56,7 +58,8 @@ struct CastBoolean : public Type::Cast {
     // TODO: Fill me out
     // Can't do anything else for now
     throw NotImplementedException{StringUtil::Format(
-        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str())};
   }
 };
 
@@ -101,7 +104,8 @@ struct CastInteger : public Type::Cast {
     // TODO: Fill me out
     // Can't do anything else for now
     throw NotImplementedException{StringUtil::Format(
-        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str())};
   }
 };
 
@@ -133,7 +137,8 @@ struct CastDecimal : public Type::Cast {
     // TODO: Fill me out
     // Can't do anything else for now
     throw NotImplementedException{StringUtil::Format(
-        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str())};
   }
 };
 
@@ -145,63 +150,70 @@ struct CastDecimal : public Type::Cast {
 Value Type::Comparison::DoCompareLt(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid LT comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid LT comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareLte(UNUSED_ATTRIBUTE CodeGen &codegen,
                                      const Value &left,
                                      const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid LTE comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid LTE comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareEq(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid EQ comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid EQ comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareNe(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid NE comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid NE comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareGt(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid GT comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid GT comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareGte(UNUSED_ATTRIBUTE CodeGen &codegen,
                                      const Value &left,
                                      const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid GTE comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid GTE comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoComparisonForSort(UNUSED_ATTRIBUTE CodeGen &codegen,
                                             const Value &left,
                                             const Value &right) const {
-  std::string msg = StringUtil::Format(
-      "Invalid SORT comparison between types %s and %s",
-      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  std::string msg =
+      StringUtil::Format("Invalid SORT comparison between types %s and %s",
+                         TypeIdToString(left.GetType()).c_str(),
+                         TypeIdToString(right.GetType()).c_str());
   throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
@@ -1038,6 +1050,7 @@ Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
     {Type::OperatorId::Div, {&kIntegerDiv, &kDecimalDiv}},
     {Type::OperatorId::Mod, {&kIntegerMod, &kDecimalMod}}};
 
+// Get the number of bytes needed to store the given type
 uint32_t Type::GetFixedSizeForType(type::Type::TypeId type_id) {
   switch (type_id) {
     case type::Type::TypeId::BOOLEAN:
@@ -1058,7 +1071,9 @@ uint32_t Type::GetFixedSizeForType(type::Type::TypeId type_id) {
     default:
       break;
   }
-  throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type."};
+  std::string msg = StringUtil::Format("Type '%s' doesn't have a fixed size",
+                                       TypeIdToString(type_id).c_str());
+  throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
 }
 
 bool Type::HasVariableLength(type::Type::TypeId type_id) {
@@ -1121,7 +1136,8 @@ void Type::GetTypeForMaterialization(CodeGen &codegen,
       len_type = codegen.Int32Type();
       break;
     default: {
-      throw Exception{TypeIdToString(type_id) + " not materializable type"};
+      throw Exception{StringUtil::Format("'%s' is not a materializable type",
+                                         TypeIdToString(type_id).c_str())};
     }
   }
 }
