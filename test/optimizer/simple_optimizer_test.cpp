@@ -33,7 +33,9 @@ class SimpleOptimizerTests : public PelotonTest {};
 // TODO: Split the tests into separate test cases.
 TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_TRACE("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;

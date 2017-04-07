@@ -33,11 +33,11 @@ class PlannerTests : public PelotonTest {};
 
 TEST_F(PlannerTests, DeletePlanTestParameter) {
   // Bootstrapping peloton
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
-  // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  // Create table
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -100,11 +100,11 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
 TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // Bootstrapping peloton
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
-  // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  // Create table
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -174,11 +174,11 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
   // Bootstrapping peloton
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
-  // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  // Create table
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -198,7 +198,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
   table_ref->table_info_ = new parser::TableInfo();
   table_ref->table_info_->table_name = name;
-  insert_statement->table_ref_= table_ref;
+  insert_statement->table_ref_ = table_ref;
   std::vector<char *> *columns = NULL;  // will not be used
   insert_statement->columns = columns;
 
@@ -226,7 +226,8 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto values = new std::vector<type::Value>();
   values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
   values->push_back(type::ValueFactory::GetVarcharValue(
-      (std::string)"CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
+                        (std::string) "CS",
+                        TestingHarness::GetInstance().GetTestingPool()).Copy());
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
   // bind values to parameters in plan

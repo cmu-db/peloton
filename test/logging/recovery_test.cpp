@@ -83,11 +83,10 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
             random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
-    tuple->SetValue(
-        2,
-        type::ValueFactory::GetDecimalValue(TestingExecutorUtil::PopulatedValue(
-            random ? std::rand() : populate_value, 2)),
-        testing_pool);
+    tuple->SetValue(2, type::ValueFactory::GetDecimalValue(
+                           TestingExecutorUtil::PopulatedValue(
+                               random ? std::rand() : populate_value, 2)),
+                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
     auto string_value = type::ValueFactory::GetVarcharValue(
@@ -263,8 +262,7 @@ TEST_F(RecoveryTests, RestartTest) {
   for (int i = 1; i <= 2; i++) {
     struct stat stat_buf;
     EXPECT_NE(stat((dir_name + "/" + std::string("peloton_log_") +
-                    std::to_string(i) + std::string(".log"))
-                       .c_str(),
+                    std::to_string(i) + std::string(".log")).c_str(),
                    &stat_buf),
               0);
   }
@@ -276,7 +274,10 @@ TEST_F(RecoveryTests, RestartTest) {
   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
   EXPECT_EQ(status, true);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
@@ -325,7 +326,10 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(RecoveryTests, BasicUpdateTest) {
@@ -376,7 +380,10 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 /* (From Joy) TODO FIX this

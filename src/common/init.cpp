@@ -64,9 +64,18 @@ void PelotonInit::Initialize() {
     layout_tuner.Start();
   }
 
+  // Initialize catalog
+  auto pg_catalog = catalog::Catalog::GetInstance();
+
+  // begin a transaction
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 void PelotonInit::Shutdown() {
