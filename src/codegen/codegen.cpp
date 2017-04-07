@@ -167,6 +167,25 @@ void CodeGen::ThrowIfOverflow(llvm::Value *overflow) const {
   builder.SetInsertPoint(no_overflow_bb);
 }
 
+void CodeGen::ThrowIfDivideByZero(llvm::Value *divide_by_zero) const {
+  PL_ASSERT(divide_by_zero->getType() == BoolType());
+
+  // Get the divide-by-zero basic block for the currently generating function
+  auto *func = code_context_.GetCurrentFunction();
+  auto *div0_bb = func->GetDivideByZeroBB();
+
+  // Construct a new block that we jump if there *isn't* a divide-by-zero
+  llvm::BasicBlock *no_div0_bb =
+      llvm::BasicBlock::Create(GetContext(), "cont", func->GetFunction());
+
+  // Create a branch that goes to the divide-by-zero BB if an error exists
+  auto &builder = GetBuilder();
+  builder.CreateCondBr(divide_by_zero, div0_bb, no_div0_bb);
+
+  // Start insertion in the block
+  builder.SetInsertPoint(no_div0_bb);
+}
+
 // Lookup a function in the module with the given name
 llvm::Function *CodeGen::LookupFunction(const std::string &fn_name) const {
   return GetModule().getFunction(fn_name);

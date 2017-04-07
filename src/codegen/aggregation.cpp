@@ -152,7 +152,7 @@ void Aggregation::CreateInitialValues(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when creating initial values",
-            ExpressionTypeToString(aggregate_info.aggregate_type));
+            ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
@@ -199,8 +199,8 @@ void Aggregation::AdvanceValues(
       case ExpressionType::AGGREGATE_COUNT: {
         auto curr = storage_.GetValueAt(codegen, storage_space,
                                         aggregate_info.storage_index);
-        next = curr.Add(codegen, codegen::Value{type::Type::TypeId::BIGINT,
-                                                codegen.Const64(1)});
+        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        next = curr.Add(codegen, delta);
         break;
       }
       case ExpressionType::AGGREGATE_COUNT_STAR: {
@@ -211,8 +211,8 @@ void Aggregation::AdvanceValues(
         }
         auto curr = storage_.GetValueAt(codegen, storage_space,
                                         aggregate_info.storage_index);
-        next = curr.Add(codegen, codegen::Value{type::Type::TypeId::BIGINT,
-                                                codegen.Const64(1)});
+        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        next = curr.Add(codegen, delta);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
@@ -222,7 +222,7 @@ void Aggregation::AdvanceValues(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when advancing aggregator",
-            ExpressionTypeToString(aggregate_info.aggregate_type));
+            ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
@@ -266,12 +266,12 @@ void Aggregation::FinalizeValues(
       }
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
-        codegen::Value sum =
-            vals[std::make_pair(source, ExpressionType::AGGREGATE_SUM)];
-        codegen::Value count =
-            vals[std::make_pair(source, ExpressionType::AGGREGATE_COUNT)];
-        // TODO: Check if count is zero
-        codegen::Value final_val = sum.Div(codegen, count);
+        codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
+        codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
+        codegen::Value casted_sum = sum.CastTo(codegen, count.GetType());
+
+        codegen::Value final_val =
+            casted_sum.Div(codegen, count, Value::OnError::Ignore);
         vals[std::make_pair(source, agg_type)] = final_val;
         final_vals.push_back(final_val);
         break;

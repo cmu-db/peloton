@@ -109,6 +109,7 @@ class CodeGen {
   llvm::Value *CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
                                    llvm::Value *&overflow_bit) const;
   void ThrowIfOverflow(llvm::Value *overflow) const;
+  void ThrowIfDivideByZero(llvm::Value *divide_by_zero) const;
 
   //===--------------------------------------------------------------------===//
   // Function lookup and registration

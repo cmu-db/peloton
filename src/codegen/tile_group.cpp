@@ -170,12 +170,9 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
     }
 
     if (schema_.AllowNull(layout.col_id)) {
-      llvm::Value *null_val = Type::GetNullValue(codegen, column.GetType());
-      if (Type::IsIntegral(column.GetType())) {
-        is_null = codegen->CreateICmpEQ(null_val, val);
-      } else {
-        is_null = codegen->CreateFCmpOEQ(null_val, val);
-      }
+      codegen::Value tmp{column.GetType(), val};
+      codegen::Value null_val = Type::GetNullValue(codegen, column.GetType());
+      is_null = null_val.CompareEq(codegen, tmp).GetValue();
     }
   }
 

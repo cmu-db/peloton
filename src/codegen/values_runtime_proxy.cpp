@@ -160,6 +160,34 @@ llvm::Function *ValuesRuntimeProxy::_OutputDouble::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
+// OUTPUT TIMESTAMP
+//===----------------------------------------------------------------------===//
+
+const std::string &ValuesRuntimeProxy::_OutputTimestamp::GetFunctionName() {
+  static const std::string kOutputTimestampFnName =
+      "_ZN7peloton7codegen13ValuesRuntime15OutputTimestampEPcjl";
+  return kOutputTimestampFnName;
+}
+
+llvm::Function *ValuesRuntimeProxy::_OutputTimestamp::GetFunction(
+    CodeGen &codegen) {
+  const std::string &fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  auto *value_type = ValueProxy::GetType(codegen);
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int64Type()},
+      false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
 // OUTPUT VARCHAR
 //===----------------------------------------------------------------------===//
 
