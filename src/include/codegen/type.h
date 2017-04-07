@@ -130,6 +130,8 @@ class Type {
   static Value GetMinValue(CodeGen &codegen, type::Type::TypeId type_id);
   static Value GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id);
   static Value GetNullValue(CodeGen &codegen, type::Type::TypeId type_id);
+  static llvm::Value *GetNullValueNonInt(CodeGen &codegen,
+                                         type::Type::TypeId type_id);
   static Value GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id);
 
   // Get the LLVM types used to materialize a SQL value of the given type

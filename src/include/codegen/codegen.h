@@ -129,7 +129,7 @@ class CodeGen {
   // Get the LLVM context
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
-  // Return the size of the given type in bytes
+  // Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
 
   // Get the context where all the code we generate resides

@@ -209,8 +209,8 @@ llvm::Function *CodeGen::RegisterFunction(const std::string &fn_name,
 }
 
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
-  auto &data_layout = code_context_.GetDataLayout();
-  return data_layout.getTypeSizeInBits(type) / 8;
+  auto size = code_context_.GetDataLayout().getTypeSizeInBits(type) / 8;
+  return size != 0 ? size : 1;
 }
 
 }  // namespace codegen

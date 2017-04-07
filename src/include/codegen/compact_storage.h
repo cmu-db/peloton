@@ -77,8 +77,11 @@ class CompactStorage {
   // The schema of the storage
   std::vector<CompactStorage::EntryInfo> storage_format_;
 
-  // The constructed finalized type;
+  // The constructed finalized type
   llvm::Type *storage_type_;
+
+  // The size of the constructed finalized type
+  uint32_t storage_size_;
 };
 
 }  // namespace codegen

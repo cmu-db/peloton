@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/aggregation.h"
+#include "codegen/if.h"
+#include "codegen/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -60,6 +62,15 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
+
+        // Count() - to check whether there is no item at all
+        uint32_t count_storage_pos =
+            storage_.AddType(type::Type::TypeId::BIGINT);
+        AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
+                                type::Type::TypeId::BIGINT, source_index,
+                                count_storage_pos, true};
+        aggregate_infos_.push_back(count_agg);
+
         // Regular
         const auto value_type = agg_term.expression->GetValueType();
         uint32_t storage_pos = storage_.AddType(value_type);
@@ -197,6 +208,7 @@ void Aggregation::AdvanceValues(
         break;
       }
       case ExpressionType::AGGREGATE_COUNT: {
+        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
         auto curr = storage_.GetValueAt(codegen, storage_space,
                                         aggregate_info.storage_index);
         auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
@@ -252,14 +264,37 @@ void Aggregation::FinalizeValues(
     uint32_t source = aggregate_info.source_index;
     ExpressionType agg_type = aggregate_info.aggregate_type;
     switch (agg_type) {
-      case ExpressionType::AGGREGATE_COUNT:
-      case ExpressionType::AGGREGATE_SUM:
-      case ExpressionType::AGGREGATE_MIN:
-      case ExpressionType::AGGREGATE_MAX: {
+      case ExpressionType::AGGREGATE_COUNT: {
         codegen::Value final_val = storage_.GetValueAt(
             codegen, storage_space, aggregate_info.storage_index);
         vals[std::make_pair(source, agg_type)] = final_val;
         if (!aggregate_info.is_internal) {
+          final_vals.push_back(final_val);
+        }
+        break;
+      }
+      case ExpressionType::AGGREGATE_SUM:
+      case ExpressionType::AGGREGATE_MIN:
+      case ExpressionType::AGGREGATE_MAX: {
+        codegen::Value count =
+            vals[std::make_pair(source, ExpressionType::AGGREGATE_COUNT)];
+        codegen::Value final_calc = storage_.GetValueAt(
+            codegen, storage_space, aggregate_info.storage_index);
+
+        vals[std::make_pair(source, agg_type)] = final_calc;
+        if (!aggregate_info.is_internal) {
+          // Empty check
+          codegen::Value final_null;
+          If check_count {codegen, codegen->CreateICmpEQ(count.GetValue(),
+                                                         codegen.Const64(0))};
+          {
+            final_null = Value{final_calc.GetType(),
+                               Type::GetNullValue(codegen,
+                                                  final_calc.GetType()),
+                                                  codegen.Const32(0),
+                                                  codegen.ConstBool(true)};
+          } check_count.EndIf();
+          auto final_val = check_count.BuildPHI(final_null, final_calc);
           final_vals.push_back(final_val);
         }
         break;

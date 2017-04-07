@@ -54,7 +54,7 @@ class Varlen {
     If varlen_is_null{codegen, is_null};
     {
       // The pointer is null
-      null_data = codegen.NullPtr(codegen.Int8Type()->getPointerTo());
+      null_data = codegen.Null(codegen.CharPtrType());
       null_len = codegen.Const32(0);
     }
     varlen_is_null.ElseBlock();

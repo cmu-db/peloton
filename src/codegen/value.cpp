@@ -19,6 +19,8 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/type.h"
 
+#include "type/value.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -29,8 +31,8 @@ namespace codegen {
 Value::Value() : Value(type::Type::TypeId::INVALID) {}
 
 Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
-             llvm::Value *is_null)
-    : type_(type), value_(val), length_(length), null_(is_null) {}
+             llvm::Value *null)
+    : type_(type), value_(val), length_(length), null_(null) {}
 
 //===----------------------------------------------------------------------===//
 // COMPARISONS
@@ -211,17 +213,44 @@ void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
 // Generate a hash for the given value
 //===----------------------------------------------------------------------===//
 void Value::ValuesForMaterialization(llvm::Value *&val,
-                                     llvm::Value *&len) const {
+                                     llvm::Value *&len,
+                                     llvm::Value *&null) const {
   PL_ASSERT(type_ != type::Type::TypeId::INVALID);
   val = GetValue();
   len = GetType() == type::Type::TypeId::VARCHAR ? GetLength() : nullptr;
+  null = GetNull();
 }
 
 // Return the value that can be
 Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
-                                      llvm::Value *len) {
+                                      llvm::Value *len, llvm::Value *null) {
   PL_ASSERT(type != type::Type::TypeId::INVALID);
-  return Value{type, val, type == type::Type::TypeId::VARCHAR ? len : nullptr};
+  return Value{type, val, type == type::Type::TypeId::VARCHAR ? len : nullptr,
+               null};
+}
+
+
+llvm:: Value *Value::SetNullValue(CodeGen &codegen, const Value &value) {
+
+  llvm::Value *null = nullptr;
+  if (Type::HasVariableLength(value.GetType())) {
+    null = codegen->CreateICmpEQ(
+        value.GetValue(),
+        Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR));
+  }
+  else {
+    // Use the codegen's comparisons to get away from explicit type checking
+    llvm::Value *null_true = nullptr;
+    llvm::Value *null_false = codegen.ConstBool(false);
+    codegen::Value null_val{value.GetType(),
+                            Type::GetNullValue(codegen, value.GetType())};
+    If is_null {codegen, value.CompareEq(codegen, null_val).GetValue()};
+    {
+      null_true = codegen.ConstBool(true);
+    } is_null.EndIf();
+    null = is_null.BuildPHI(null_true, null_false);
+  }
+  return null;
 }
 
 // Build a new value that combines values arriving from different BB's into a

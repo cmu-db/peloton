@@ -22,6 +22,8 @@
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
 #include "codegen/vectorized_loop.h"
+#include "codegen/type.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -149,9 +151,9 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
                                        is_null);
     } else {
       codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
+      is_null = codegen.ConstBool(false);
     }
-    PL_ASSERT(val != nullptr && length != nullptr);
-
+    PL_ASSERT(val != nullptr && length != nullptr && is_null != nullptr);
   } else {
     // Get the LLVM type of the column
     llvm::Type *col_type = nullptr, *col_len_type = nullptr;
@@ -173,13 +175,16 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
       codegen::Value tmp{column.GetType(), val};
       codegen::Value null_val = Type::GetNullValue(codegen, column.GetType());
       is_null = null_val.CompareEq(codegen, tmp).GetValue();
+    } else {
+      is_null = codegen.ConstBool(false);
     }
+    PL_ASSERT(val != nullptr && is_null != nullptr);
   }
 
   // Names
   val->setName(column.GetName());
   if (length != nullptr) length->setName(column.GetName() + ".len");
-  if (is_null != nullptr) is_null->setName(column.GetName() + ".null");
+  is_null->setName(column.GetName() + ".null");
 
   // Return the value
   return codegen::Value{column.GetType(), val, length, is_null};

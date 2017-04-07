@@ -39,6 +39,9 @@ class Value {
   // Get the length of the varchar (if it is one)
   llvm::Value *GetLength() const { return length_; }
 
+  // Get the null indicator value
+  llvm::Value *GetNull() const { return null_; }
+
   // Return the name of the string
   const std::string GetName() const { return value_->getName(); }
 
@@ -103,12 +106,17 @@ class Value {
   //===--------------------------------------------------------------------===//
 
   // Return the a representation of this value suitable for materialization
-  void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len) const;
+  void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
+                                llvm::Value *&null) const;
 
   // Return a value that can be constructed from the provided type and value
   // registers
   static Value ValueFromMaterialization(type::Type::TypeId type,
-                                        llvm::Value *val, llvm::Value *len);
+                                        llvm::Value *val, llvm::Value *len,
+                                        llvm::Value *null);
+
+  // Return the null indicator
+  static llvm::Value *SetNullValue(CodeGen &codegen, const Value &value);
 
  private:
   friend class Hash;
