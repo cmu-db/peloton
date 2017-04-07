@@ -192,7 +192,8 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   // a + 1
   auto *a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto *const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+//  auto *const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto *const_1_exp = new expression::ConstantValueExpression(type::ValueFactory::GetSmallIntValue(1));
   auto *a_plus_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
       const_1_exp);
@@ -346,7 +347,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
 
 TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   //
-  //   SELECT a, b, c FROM table where a = a / 1;
+  //   SELECT a, b, c FROM table where a = a / 2;
   //
 
   // Construct the components of the predicate
@@ -354,9 +355,9 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   // a / 1
   auto* a_rhs_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(2);
   auto* a_div_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::DECIMAL,
+      ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::INTEGER,
       a_rhs_col_exp, const_1_exp);
 
   // a = a / 1
@@ -380,9 +381,9 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
-  // Check output results
+  // Check output results - only one output tuple (with a == 0)
   const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), NumRowsInTestTable());
+  EXPECT_EQ(1, results.size());
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {

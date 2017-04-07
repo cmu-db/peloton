@@ -118,7 +118,7 @@ class CodeContext {
   llvm::Type *int64_type_;
   llvm::Type *double_type_;
   llvm::Type *void_type_;
-  llvm::Type *char_ptr_type_;
+  llvm::PointerType *char_ptr_type_;
 
  private:
   // This class cannot be copy or move-constructed

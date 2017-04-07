@@ -10,222 +10,153 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
-#include "codegen/buffering_consumer.h"
-#include "codegen/query_compiler.h"
-#include "common/harness.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "expression/comparison_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/operator_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "planner/seq_scan_plan.h"
+#include "codegen/type.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation for
-// undefined values that are the result of a divide by zero error or integer
-// overflow. All the tests use a single table created and loaded during
-// SetUp().  The schema of the table is as follows:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the table is loaded with 10 rows of random values.
-//===----------------------------------------------------------------------===//
-
 class ValueIntegrityTest : public PelotonCodeGenTest {
  public:
-  ValueIntegrityTest() : PelotonCodeGenTest() {
-    LoadTestTable(test_table1_id, 10);
-  }
+  ValueIntegrityTest() : PelotonCodeGenTest() {}
 };
 
-void DivideByZeroTest(ExpressionType exp_type, storage::DataTable* table) {
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_0_exp = CodegenTestUtils::ConstIntExpression(0);
+// This test sets up a function taking a single argument. The body of the
+// function divides a constant value with the value of the argument. After
+// JITing the function, we test the division by passing in a zero value divisor.
+template <typename CType>
+void DivideByZeroTest(type::Type::TypeId data_type, ExpressionType op) {
+  codegen::CodeContext code_context;
+  codegen::CodeGen codegen{code_context};
 
-  expression::AbstractExpression* a_op_0 = nullptr;
-  switch (exp_type) {
-    case ExpressionType::OPERATOR_DIVIDE:
-      // a / 0
-      a_op_0 = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::DECIMAL, a_col_exp, const_0_exp);
-      break;
-    case ExpressionType::OPERATOR_MOD:
-      // a % 0
-      a_op_0 = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::DECIMAL, a_col_exp, const_0_exp);
-      break;
-    default: {}
+  llvm::Type *llvm_type = nullptr, *llvm_len_type = nullptr;
+  codegen::Type::GetTypeForMaterialization(codegen, data_type, llvm_type,
+                                           llvm_len_type);
+
+  codegen::FunctionBuilder function{
+      code_context, "test", codegen.VoidType(), {{"arg", llvm_type}}};
+  {
+    codegen::Value a = codegen::Type::GetMaxValue(codegen, data_type);
+    codegen::Value divisor{data_type, function.GetArgumentByPosition(0)};
+    codegen::Value res;
+    switch (op) {
+      case ExpressionType::OPERATOR_DIVIDE: {
+        // a / 0
+        res = a.Div(codegen, divisor);
+        break;
+      }
+      case ExpressionType::OPERATOR_MOD: {
+        // a % 0
+        res = a.Mod(codegen, divisor);
+        break;
+      }
+      default: {
+        throw Exception{"Invalid expression type for divide-by-zero test"};
+      }
+    }
+
+    codegen.CallPrintf("%lu\n", {res.GetValue()});
+
+    function.ReturnAndFinish();
   }
 
-  auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* b_eq_a_op_0 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, b_col_exp, a_op_0);
+  // Should be able to compile
+  EXPECT_TRUE(code_context.Compile());
 
-  // Setup the scan plan node
-  planner::SeqScanPlan scan{table, b_eq_a_op_0, {0, 1, 2}};
-
-  // Do binding
-  planner::BindingContext context;
-  scan.PerformBinding(context);
-
-  // We collect the results of the query into an in-memory buffer
-  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(scan, buffer);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto *txn = txn_manager.BeginTransaction();
-
-  // Run
-  EXPECT_THROW(
-      compiled_query->Execute(*txn, reinterpret_cast<char*>(buffer.GetState())),
-      DivideByZeroException);
-
-  txn_manager.CommitTransaction(txn);
+  typedef void (*func)(CType);
+  func f = (func)code_context.GetFunctionPointer(function.GetFunction());
+  EXPECT_THROW(f(0), DivideByZeroException);
 }
 
-void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+template <typename CType>
+void OverflowTest(type::Type::TypeId data_type, ExpressionType op) {
+  codegen::CodeContext code_context;
+  codegen::CodeGen codegen{code_context};
 
-  expression::AbstractExpression* a_op_lim = nullptr;
-  switch (exp_type) {
-    case ExpressionType::OPERATOR_PLUS: {
-      // a + INT32_MAX
-      auto* const_max_exp = CodegenTestUtils::ConstIntExpression(INT32_MAX);
-      a_op_lim = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::INTEGER, a_col_exp, const_max_exp);
-      break;
+  llvm::Type *llvm_type = nullptr, *llvm_len_type = nullptr;
+  codegen::Type::GetTypeForMaterialization(codegen, data_type, llvm_type,
+                                           llvm_len_type);
+
+  codegen::FunctionBuilder function{
+      code_context, "test", codegen.VoidType(), {{"arg", llvm_type}}};
+  {
+    codegen::Value initial{data_type, function.GetArgumentByPosition(0)};
+    codegen::Value res;
+    switch (op) {
+      case ExpressionType::OPERATOR_PLUS: {
+        // initial + MAX_FOR_TYPE
+        codegen::Value next = codegen::Type::GetMaxValue(codegen, data_type);
+        res = next.Add(codegen, initial);
+        break;
+      }
+      case ExpressionType::OPERATOR_MINUS: {
+        // a - MIN_FOR_TYPE
+        codegen::Value next = codegen::Type::GetMinValue(codegen, data_type);
+        res = initial.Sub(codegen, next);
+        break;
+      }
+      case ExpressionType::OPERATOR_MULTIPLY: {
+        // a * INT32_MAX
+        codegen::Value next = codegen::Type::GetMaxValue(codegen, data_type);
+        res = initial.Mul(codegen, next);
+        break;
+      }
+      /*
+      case ExpressionType::OPERATOR_DIVIDE: {
+        // Overflow when: lhs == INT_MIN && rhs == -1
+        // (a - 1) --> this makes a[0] = -1
+        // INT64_MIN / (a - 1)
+        auto *const_min_exp = CodegenTestUtils::ConstIntExpression(INT32_MIN);
+        auto *const_one_exp = CodegenTestUtils::ConstIntExpression(1);
+        auto *a_sub_one = new expression::OperatorExpression(
+            ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
+            a_col_exp, const_one_exp);
+        a_op_lim = new expression::OperatorExpression(
+            exp_type, type::Type::TypeId::INTEGER, const_min_exp, a_sub_one);
+        break;
+      }
+      */
+      default: {
+        throw Exception{"Invalid expression type for overflow check"};
+      }
     }
-    case ExpressionType::OPERATOR_MINUS: {
-      // a - INT32_MIN
-      auto* const_min_exp = CodegenTestUtils::ConstIntExpression(INT32_MIN);
-      a_op_lim = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::INTEGER, a_col_exp, const_min_exp);
-      break;
-    }
-    case ExpressionType::OPERATOR_MULTIPLY: {
-      // a * INT32_MAX
-      auto* const_max_exp = CodegenTestUtils::ConstIntExpression(INT32_MAX);
-      a_op_lim = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::INTEGER, a_col_exp, const_max_exp);
-      break;
-    }
-    case ExpressionType::OPERATOR_DIVIDE: {
-      // Overflow when: lhs == INT_MIN && rhs == -1
-      // (a - 1) --> this makes a[0] = -1
-      // INT64_MIN / (a - 1)
-      auto* const_min_exp = CodegenTestUtils::ConstIntExpression(INT32_MIN);
-      auto* const_one_exp = CodegenTestUtils::ConstIntExpression(1);
-      auto* a_sub_one = new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
-          a_col_exp, const_one_exp);
-      a_op_lim = new expression::OperatorExpression(
-          exp_type, type::Type::TypeId::INTEGER, const_min_exp, a_sub_one);
-      break;
-    }
-    default: {}
+
+    codegen.CallPrintf("%lu\n", {res.GetValue()});
+
+    function.ReturnAndFinish();
   }
 
-  auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* b_eq_a_op_lim = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, b_col_exp, a_op_lim);
+  // Should be able to compile
+  EXPECT_TRUE(code_context.Compile());
 
-  // Setup the scan plan node
-  planner::SeqScanPlan scan{table, b_eq_a_op_lim, {0, 1, 2}};
-
-  // Do binding
-  planner::BindingContext context;
-  scan.PerformBinding(context);
-
-  // We collect the results of the query into an in-memory buffer
-  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(scan, buffer);
-
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto* txn = txn_manager.BeginTransaction();
-
-  // Run
-  EXPECT_THROW(
-      compiled_query->Execute(*txn, reinterpret_cast<char*>(buffer.GetState())),
-      std::overflow_error);
-
-  txn_manager.CommitTransaction(txn);
+  typedef void (*func)(CType);
+  func f = (func)code_context.GetFunctionPointer(function.GetFunction());
+  EXPECT_THROW(f(2), std::overflow_error);
 }
 
-// Commented out until we fix the new type system ...
-/*
-TEST_F(ValueIntegrityTest, DivideByZeroModuloOp) {
-  //
-  // SELECT a, b, c FROM table where b = a % 0;
-  //
-  LaunchParallelTest(1, DivideByZeroTest, ExpressionType::OPERATOR_MOD,
-                     &GetTestTable());
+TEST_F(ValueIntegrityTest, IntegerOverflow) {
+  auto overflowable_ops = {ExpressionType::OPERATOR_MINUS,
+                           ExpressionType::OPERATOR_PLUS,
+                           ExpressionType::OPERATOR_MULTIPLY};
+  for (auto op : overflowable_ops) {
+    OverflowTest<int8_t>(type::Type::TypeId::TINYINT, op);
+    OverflowTest<int16_t>(type::Type::TypeId::SMALLINT, op);
+    OverflowTest<int32_t>(type::Type::TypeId::INTEGER, op);
+    OverflowTest<int64_t>(type::Type::TypeId::BIGINT, op);
+  }
 }
 
-TEST_F(ValueIntegrityTest, DivideByZeroDivideOp) {
-  //
-  // SELECT a, b, c FROM table where b = a / 0;
-  //
-  LaunchParallelTest(1, DivideByZeroTest, ExpressionType::OPERATOR_DIVIDE,
-                     &GetTestTable());
+TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
+  auto div0_ops = {ExpressionType::OPERATOR_DIVIDE,
+                   ExpressionType::OPERATOR_MOD};
+  for (auto op : div0_ops) {
+    DivideByZeroTest<int8_t>(type::Type::TypeId::TINYINT, op);
+    DivideByZeroTest<int16_t>(type::Type::TypeId::SMALLINT, op);
+    DivideByZeroTest<int32_t>(type::Type::TypeId::INTEGER, op);
+    DivideByZeroTest<int64_t>(type::Type::TypeId::BIGINT, op);
+  }
 }
-
-TEST_F(ValueIntegrityTest, IntegerOverflowAddOp) {
-  //
-  // SELECT a, b, c FROM table where b = a + INT32_MAX;
-  //
-  LaunchParallelTest(1, OverflowTest, ExpressionType::OPERATOR_PLUS,
-                     &GetTestTable());
-}
-
-TEST_F(ValueIntegrityTest, IntegerOverflowSubOp) {
-  //
-  // SELECT a, b, c FROM table where b = a - INT32_MIN;
-  //
-  LaunchParallelTest(1, OverflowTest, ExpressionType::OPERATOR_MINUS,
-                     &GetTestTable());
-}
-
-TEST_F(ValueIntegrityTest, IntegerOverflowMulOp) {
-  //
-  // SELECT a, b, c FROM table where b = a * INT32_MAX;
-  //
-  LaunchParallelTest(1, OverflowTest, ExpressionType::OPERATOR_MULTIPLY,
-                     &GetTestTable());
-}
-
-TEST_F(ValueIntegrityTest, IntegerOverflowDivOp) {
-  //
-  // Overflow when: lhs == INT_MIN && rhs == -1
-  // (a - 1) --> this makes a[0] = -1
-  //
-  // SELECT a, b, c FROM table where b =INT64_MIN / (a - 1);
-  //
-  LaunchParallelTest(1, OverflowTest, ExpressionType::OPERATOR_DIVIDE,
-                     &GetTestTable());
-}
-*/
 
 }  // namespace test
 }  // namespace peloton

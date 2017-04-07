@@ -12,11 +12,130 @@
 
 #include "codegen/type.h"
 
+#include "codegen/if.h"
 #include "codegen/values_runtime_proxy.h"
 #include "type/value.h"
 
 namespace peloton {
 namespace codegen {
+
+//===----------------------------------------------------------------------===//
+// Type casting
+//===----------------------------------------------------------------------===//
+
+struct InvalidCast : public Type::Cast {
+  Value DoCast(UNUSED_ATTRIBUTE CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Boolean casting rules
+//===----------------------------------------------------------------------===//
+
+struct CastBoolean : public Type::Cast {
+  // Cast the boolean value into the provided type
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    PL_ASSERT(Type::IsIntegral(value.GetType()));
+
+    // Types for the casted-to type
+    llvm::Type *val_type = nullptr, *len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
+
+    if (Type::IsIntegral(to_type)) {
+      // Any integral value requires a zero-extension
+      return Value{to_type, codegen->CreateZExt(value.GetValue(), val_type)};
+    } else if (Type::IsNumeric(to_type)) {
+      // Convert this boolean (unsigned int) into the double type
+      return Value{to_type, codegen->CreateUIToFP(value.GetValue(), val_type)};
+    }
+
+    // TODO: Fill me out
+    // Can't do anything else for now
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Integer (8-, 16-, 32-, 64-bit) casting rules
+//===----------------------------------------------------------------------===//
+
+struct CastInteger : public Type::Cast {
+  // Cast the given integer value into the provided type
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    PL_ASSERT(Type::IsIntegral(value.GetType()));
+
+    // Types for the casted-to type
+    llvm::Type *val_type = nullptr, *len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
+
+    if (Type::IsIntegral(to_type)) {
+      // For integral casts, we need to either truncate or sign-extend
+      uint32_t curr_size = Type::GetFixedSizeForType(value.GetType());
+      uint32_t target_size = Type::GetFixedSizeForType(to_type);
+
+      llvm::Value *res = nullptr;
+      if (curr_size == target_size) {
+        res = value.GetValue();
+      } else if (curr_size < target_size) {
+        res = codegen->CreateSExt(value.GetValue(), val_type);
+      } else {
+        res = codegen->CreateTrunc(value.GetValue(), val_type);
+      }
+
+      // We're done
+      return Value{to_type, res};
+    } else if (Type::IsNumeric(to_type)) {
+      // Convert this integral value into a floating point double
+      llvm::Value *res = codegen->CreateSIToFP(value.GetValue(), val_type);
+
+      // We're done
+      return Value{to_type, res};
+    }
+
+    // TODO: Fill me out
+    // Can't do anything else for now
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Decimal casting rules
+//===----------------------------------------------------------------------===//
+
+struct CastDecimal : public Type::Cast {
+  // Cast the given decimal value into the provided type
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    PL_ASSERT(Type::IsIntegral(value.GetType()));
+
+    // Types for the casted-to type
+    llvm::Type *val_type = nullptr, *len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
+
+    if (Type::IsIntegral(to_type)) {
+      // Convert the decimal value into an integral value
+      llvm::Value *res = codegen->CreateFPToSI(value.GetValue(), val_type);
+
+      // We're done
+      return Value{to_type, res};
+    } else if (Type::IsNumeric(to_type)) {
+      // Just return the value
+      return value;
+    }
+
+    // TODO: Fill me out
+    // Can't do anything else for now
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()), to_type)};
+  }
+};
 
 //===----------------------------------------------------------------------===//
 // Default Comparison
@@ -26,51 +145,64 @@ namespace codegen {
 Value Type::Comparison::DoCompareLt(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  throw Exception{"Invalid LT comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid LT comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
-Value Type::Comparison::DoCompareLte(UNUSED_ATTRIBUTE CodeGen &,
+Value Type::Comparison::DoCompareLte(UNUSED_ATTRIBUTE CodeGen &codegen,
                                      const Value &left,
                                      const Value &right) const {
-  throw Exception{"Invalid LE comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid LTE comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
-Value Type::Comparison::DoCompareEq(UNUSED_ATTRIBUTE CodeGen &,
+Value Type::Comparison::DoCompareEq(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  throw Exception{"Invalid EQ comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid EQ comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 Value Type::Comparison::DoCompareNe(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  throw Exception{"Invalid NE comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid NE comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
-Value Type::Comparison::DoCompareGt(UNUSED_ATTRIBUTE CodeGen &,
+Value Type::Comparison::DoCompareGt(UNUSED_ATTRIBUTE CodeGen &codegen,
                                     const Value &left,
                                     const Value &right) const {
-  throw Exception{"Invalid GT comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid GT comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
-Value Type::Comparison::DoCompareGte(UNUSED_ATTRIBUTE CodeGen &,
+Value Type::Comparison::DoCompareGte(UNUSED_ATTRIBUTE CodeGen &codegen,
                                      const Value &left,
                                      const Value &right) const {
-  throw Exception{"Invalid GE comparison of " + TypeIdToString(left.GetType()) +
-                  " type with " + TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid GTE comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
-Value Type::Comparison::DoComparisonForSort(UNUSED_ATTRIBUTE CodeGen &,
+Value Type::Comparison::DoComparisonForSort(UNUSED_ATTRIBUTE CodeGen &codegen,
                                             const Value &left,
                                             const Value &right) const {
-  throw Exception{"Invalid SORT comparison of " +
-                  TypeIdToString(left.GetType()) + " type with " +
-                  TypeIdToString(right.GetType())};
+  std::string msg = StringUtil::Format(
+      "Invalid SORT comparison between types %s and %s",
+      TypeIdToString(left.GetType()), TypeIdToString(right.GetType()));
+  throw Exception{EXCEPTION_TYPE_NOT_IMPLEMENTED, msg};
 }
 
 //===----------------------------------------------------------------------===//
@@ -180,27 +312,33 @@ struct BooleanComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct IntegerComparison : public Type::Comparison {
-  llvm::Value *CastToCorrectType(CodeGen &codegen, const Value &o,
-                                 llvm::Type *llvm_type) const {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right = nullptr;
-    if (o.GetType() == type::Type::TypeId::DECIMAL) {
-      // Cast the right-side values from a floating point value to integer
-      raw_right = codegen->CreateFPToSI(o.GetValue(), llvm_type);
-    } else {
-      raw_right = codegen->CreateSExtOrTrunc(o.GetValue(), llvm_type);
+  void CastToCorrectType(CodeGen &codegen, const Value &left,
+                         const Value &right, Value &proper_left,
+                         Value &proper_right) const {
+    proper_left = left;
+    proper_right = right;
+
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
     }
-    return raw_right;
   }
 
   Value DoCompareLt(CodeGen &codegen, const Value &left,
                     const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    // Cast appropriately
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpSLT(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpSLT(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -208,12 +346,12 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoCompareLte(CodeGen &codegen, const Value &left,
                      const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpSLE(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpSLE(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -221,12 +359,12 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoCompareEq(CodeGen &codegen, const Value &left,
                     const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpEQ(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpEQ(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -234,12 +372,12 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoCompareNe(CodeGen &codegen, const Value &left,
                     const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpNE(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpNE(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -247,12 +385,12 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoCompareGt(CodeGen &codegen, const Value &left,
                     const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpSGT(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpSGT(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -260,12 +398,12 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoCompareGte(CodeGen &codegen, const Value &left,
                      const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
+    Value proper_left, proper_right;
+    CastToCorrectType(codegen, left, right, proper_left, proper_right);
 
-    // Do the comparison
-    llvm::Value *result = codegen->CreateICmpSGE(left.GetValue(), raw_right);
+    // Do comparison
+    llvm::Value *result =
+        codegen->CreateICmpSGE(proper_left.GetValue(), proper_right.GetValue());
 
     // Return the result
     return Value{type::Type::TypeId::BOOLEAN, result};
@@ -273,19 +411,10 @@ struct IntegerComparison : public Type::Comparison {
 
   Value DoComparisonForSort(CodeGen &codegen, const Value &left,
                             const Value &right) const override {
-    // Properly cast the right value to the correct type
-    llvm::Value *raw_right =
-        CastToCorrectType(codegen, right, left.GetValue()->getType());
-
-    // Do the subtraction
-    llvm::Value *result = codegen->CreateSub(left.GetValue(), raw_right);
-
-    // Cast to 32-bit integer
-    llvm::Type *int32 = codegen.Int32Type();
-    llvm::Value *casted_result = codegen->CreateZExtOrBitCast(result, int32);
-
-    // Return the result
-    return Value{type::Type::TypeId::INTEGER, casted_result};
+    // For integer comparisons, just subtract left from right and cast the
+    // result to a 32-bit value
+    Value sub_result = left.Sub(codegen, right);
+    return sub_result.CastTo(codegen, type::Type::TypeId::INTEGER);
   }
 };
 
@@ -417,11 +546,9 @@ struct VarlenComparison : public Type::Comparison {
     // Get the proxy to ValuesRuntime::CompareStrings(...)
     auto *cmp_func = ValuesRuntimeProxy::_CompareStrings::GetFunction(codegen);
 
-    // Setup the function arguments to the call
-    auto args = {left.GetValue(), left.GetLength(), right.GetValue(),
-                 right.GetLength()};
-
-    // Make the function call
+    // Setup the function arguments and invoke the call
+    std::vector<llvm::Value *> args = {left.GetValue(), left.GetLength(),
+                                       right.GetValue(), right.GetLength()};
     return codegen.CallFunc(cmp_func, args);
   }
 
@@ -529,246 +656,234 @@ struct VarlenComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct IntegerAdd : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    PL_ASSERT(left.GetType() == right.GetType());
+  bool SupportsTypes(type::Type::TypeId left_type,
+                     type::Type::TypeId right_type) const override {
+    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    // The convention for this function is: sizeof(left) >= sizeof(right)
+
+    codegen::Value proper_left = left;
+    codegen::Value proper_right = right;
+
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
+    }
 
     // Do addition
-    llvm::Value *result = codegen->CreateAdd(left.GetValue(), right.GetValue());
+    llvm::Value *overflow_bit = nullptr;
+    llvm::Value *result = codegen.CallAddWithOverflow(
+        proper_left.GetValue(), proper_right.GetValue(), overflow_bit);
+
+    if (on_error == Value::OnError::Exception) {
+      codegen.ThrowIfOverflow(overflow_bit);
+    }
 
     // Return result
-    return Value{left.GetType(), result};
+    return Value{proper_left.GetType(), result};
   }
 };
 
 struct IntegerSub : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    PL_ASSERT(left.GetType() == right.GetType());
+  bool SupportsTypes(type::Type::TypeId left_type,
+                     type::Type::TypeId right_type) const override {
+    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
+  }
 
-    // Do addition
-    llvm::Value *result = codegen->CreateSub(left.GetValue(), right.GetValue());
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    // The convention for this function is: sizeof(left) >= sizeof(right)
+
+    codegen::Value proper_left = left;
+    codegen::Value proper_right = right;
+
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
+    }
+
+    // Do subtraction
+    llvm::Value *overflow_bit = nullptr;
+    llvm::Value *result = codegen.CallSubWithOverflow(
+        proper_left.GetValue(), proper_right.GetValue(), overflow_bit);
+
+    if (on_error == Value::OnError::Exception) {
+      codegen.ThrowIfOverflow(overflow_bit);
+    }
 
     // Return result
-    return Value{left.GetType(), result};
+    return Value{proper_left.GetType(), result};
   }
 };
 
 struct IntegerMul : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    PL_ASSERT(left.GetType() == right.GetType());
+  bool SupportsTypes(type::Type::TypeId left_type,
+                     type::Type::TypeId right_type) const override {
+    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
+  }
 
-    // Do addition
-    llvm::Value *result = codegen->CreateMul(left.GetValue(), right.GetValue());
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    codegen::Value proper_left = left;
+    codegen::Value proper_right = right;
+
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
+    }
+
+    // Do multiplication
+    llvm::Value *overflow_bit = nullptr;
+    llvm::Value *result = codegen.CallMulWithOverflow(
+        proper_left.GetValue(), proper_right.GetValue(), overflow_bit);
+
+    if (on_error == Value::OnError::Exception) {
+      codegen.ThrowIfOverflow(overflow_bit);
+    }
 
     // Return result
-    return Value{left.GetType(), result};
+    return Value{proper_left.GetType(), result};
   }
 };
 
 struct IntegerDiv : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    PL_ASSERT(left.GetType() == right.GetType());
+  bool SupportsTypes(type::Type::TypeId left_type,
+                     type::Type::TypeId right_type) const override {
+    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
+  }
 
-    // Do addition
-    llvm::Value *result =
-        codegen->CreateSDiv(left.GetValue(), right.GetValue());
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    codegen::Value proper_left = left;
+    codegen::Value proper_right = right;
+
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
+    }
+
+    // First, check if the divisor is zero
+    codegen::Value div0 = right.CompareEq(
+        codegen, Value{type::Type::TypeId::INTEGER, codegen.Const32(0)});
+
+    // Check if the caller cares about division-by-zero errors
+
+    llvm::Value *result = nullptr;
+    if (on_error == Value::OnError::Ignore) {
+      // Get the default value for the types
+      llvm::Value *default_val = nullptr, *division_result = nullptr;
+      If is_div0{codegen, div0.GetValue()};
+      {
+        default_val =
+            Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+      }
+      is_div0.ElseBlock();
+      {
+        division_result = codegen->CreateSDiv(proper_left.GetValue(),
+                                              proper_right.GetValue());
+      }
+      is_div0.EndIf();
+
+      // Build PHI
+      result = is_div0.BuildPHI(default_val, division_result);
+    } else if (on_error == Value::OnError::Exception) {
+      // If the caller **does** care about the error, generate the exception
+      codegen.ThrowIfDivideByZero(div0.GetValue());
+
+      // Do division
+      result =
+          codegen->CreateSDiv(proper_left.GetValue(), proper_right.GetValue());
+    }
 
     // Return result
-    return Value{left.GetType(), result};
+    return Value{proper_left.GetType(), result};
   }
 };
 
 struct IntegerMod : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    PL_ASSERT(left.GetType() == right.GetType());
-
-    // Do addition
-    llvm::Value *result =
-        codegen->CreateSRem(left.GetValue(), right.GetValue());
-
-    // Return result
-    return Value{left.GetType(), result};
-  }
-};
-
-//===----------------------------------------------------------------------===//
-// MIXED INTEGER OPS
-//
-// This class assumes both the left and right inputs and integer values of
-// different types.
-//===----------------------------------------------------------------------===//
-
-struct MixedIntegerAdd : public Type::BinaryOperator {
   bool SupportsTypes(type::Type::TypeId left_type,
                      type::Type::TypeId right_type) const override {
     return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    llvm::Type *left_type = left.GetValue()->getType();
-    llvm::Type *right_type = right.GetValue()->getType();
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    codegen::Value proper_left = left;
+    codegen::Value proper_right = right;
 
-    llvm::Value *left_value = nullptr, *right_value = nullptr;
-    type::Type::TypeId result_type;
-
-    if (left_type->getIntegerBitWidth() > right_type->getIntegerBitWidth()) {
-      // left size is larger than right => cast right upwards and perform op
-      left_value = left.GetValue();
-      right_value = codegen->CreateZExt(right.GetValue(), left_type);
-      result_type = left.GetType();
-    } else {
-      // right size is larger than right => cast left upwards and perform op
-      left_value = codegen->CreateZExt(left.GetValue(), right_type);
-      right_value = right.GetValue();
-      result_type = right.GetType();
+    // If the types don't match, we'll need to do some casting
+    if (left.GetType() != right.GetType()) {
+      uint32_t left_size = Type::GetFixedSizeForType(left.GetType());
+      uint32_t right_size = Type::GetFixedSizeForType(right.GetType());
+      if (left_size < right_size) {
+        proper_left = left.CastTo(codegen, right.GetType());
+      } else {
+        proper_right = right.CastTo(codegen, left.GetType());
+      }
     }
 
-    // Do op
-    llvm::Value *result = codegen->CreateAdd(left_value, right_value);
+    // First, check if the divisor is zero
+    codegen::Value div0 = right.CompareEq(
+        codegen, Value{type::Type::TypeId::INTEGER, codegen.Const32(0)});
 
-    // Return result
-    return Value{result_type, result};
-  }
-};
+    // Check if the caller cares about division-by-zero errors
 
-struct MixedIntegerSub : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
-  }
+    llvm::Value *result = nullptr;
+    if (on_error == Value::OnError::Ignore) {
+      // Get the default value for the types
+      llvm::Value *default_val = nullptr, *division_result = nullptr;
+      If is_div0{codegen, div0.GetValue()};
+      {
+        default_val =
+            Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+      }
+      is_div0.ElseBlock();
+      {
+        division_result = codegen->CreateSRem(proper_left.GetValue(),
+                                              proper_right.GetValue());
+      }
+      is_div0.EndIf();
 
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    llvm::Type *left_type = left.GetValue()->getType();
-    llvm::Type *right_type = right.GetValue()->getType();
+      // Build PHI
+      result = is_div0.BuildPHI(default_val, division_result);
+    } else if (on_error == Value::OnError::Exception) {
+      // If the caller **does** care about the error, generate the exception
+      codegen.ThrowIfDivideByZero(div0.GetValue());
 
-    llvm::Value *left_value = nullptr, *right_value = nullptr;
-    type::Type::TypeId result_type;
-
-    if (left_type->getIntegerBitWidth() > right_type->getIntegerBitWidth()) {
-      // left size is larger than right => cast right upwards and perform op
-      left_value = left.GetValue();
-      right_value = codegen->CreateZExt(right.GetValue(), left_type);
-      result_type = left.GetType();
-    } else {
-      // right size is larger than right => cast left upwards and perform op
-      left_value = codegen->CreateZExt(left.GetValue(), right_type);
-      right_value = right.GetValue();
-      result_type = right.GetType();
+      // Do division
+      result =
+          codegen->CreateSRem(proper_left.GetValue(), proper_right.GetValue());
     }
 
-    // Do op
-    llvm::Value *result = codegen->CreateSub(left_value, right_value);
-
     // Return result
-    return Value{result_type, result};
-  }
-};
-
-struct MixedIntegerMul : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
-  }
-
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    llvm::Type *left_type = left.GetValue()->getType();
-    llvm::Type *right_type = right.GetValue()->getType();
-
-    llvm::Value *left_value = nullptr, *right_value = nullptr;
-    type::Type::TypeId result_type;
-
-    if (left_type->getIntegerBitWidth() > right_type->getIntegerBitWidth()) {
-      // left size is larger than right => cast right upwards and perform op
-      left_value = left.GetValue();
-      right_value = codegen->CreateZExt(right.GetValue(), left_type);
-      result_type = left.GetType();
-    } else {
-      // right size is larger than right => cast left upwards and perform op
-      left_value = codegen->CreateZExt(left.GetValue(), right_type);
-      right_value = right.GetValue();
-      result_type = right.GetType();
-    }
-
-    // Do op
-    llvm::Value *result = codegen->CreateMul(left_value, right_value);
-
-    // Return result
-    return Value{result_type, result};
-  }
-};
-
-struct MixedIntegerDiv : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
-  }
-
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    llvm::Type *left_type = left.GetValue()->getType();
-    llvm::Type *right_type = right.GetValue()->getType();
-
-    llvm::Value *left_value = nullptr, *right_value = nullptr;
-    type::Type::TypeId result_type;
-
-    if (left_type->getIntegerBitWidth() > right_type->getIntegerBitWidth()) {
-      // left size is larger than right => cast right upwards and perform op
-      left_value = left.GetValue();
-      right_value = codegen->CreateZExt(right.GetValue(), left_type);
-      result_type = left.GetType();
-    } else {
-      // right size is larger than right => cast left upwards and perform op
-      left_value = codegen->CreateZExt(left.GetValue(), right_type);
-      right_value = right.GetValue();
-      result_type = right.GetType();
-    }
-
-    // Do op
-    llvm::Value *result = codegen->CreateSDiv(left_value, right_value);
-
-    // Return result
-    return Value{result_type, result};
-  }
-};
-
-struct MixedIntegerMod : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return Type::IsIntegral(left_type) && Type::IsIntegral(right_type);
-  }
-
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
-    llvm::Type *left_type = left.GetValue()->getType();
-    llvm::Type *right_type = right.GetValue()->getType();
-
-    llvm::Value *left_value = nullptr, *right_value = nullptr;
-    type::Type::TypeId result_type;
-
-    if (left_type->getIntegerBitWidth() > right_type->getIntegerBitWidth()) {
-      // left size is larger than right => cast right upwards and perform op
-      left_value = left.GetValue();
-      right_value = codegen->CreateZExt(right.GetValue(), left_type);
-      result_type = left.GetType();
-    } else {
-      // right size is larger than right => cast left upwards and perform op
-      left_value = codegen->CreateZExt(left.GetValue(), right_type);
-      right_value = right.GetValue();
-      result_type = right.GetType();
-    }
-
-    // Do op
-    llvm::Value *result = codegen->CreateSRem(left_value, right_value);
-
-    // Return result
-    return Value{result_type, result};
+    return Value{proper_left.GetType(), result};
   }
 };
 
@@ -779,8 +894,9 @@ struct MixedIntegerMod : public Type::BinaryOperator {
 //===----------------------------------------------------------------------===//
 
 struct DecimalAdd : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
     // Do addition
@@ -793,8 +909,9 @@ struct DecimalAdd : public Type::BinaryOperator {
 };
 
 struct DecimalSub : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
     // Do addition
@@ -807,8 +924,9 @@ struct DecimalSub : public Type::BinaryOperator {
 };
 
 struct DecimalMul : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
     // Do addition
@@ -821,8 +939,9 @@ struct DecimalMul : public Type::BinaryOperator {
 };
 
 struct DecimalDiv : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
     // Do addition
@@ -835,8 +954,9 @@ struct DecimalDiv : public Type::BinaryOperator {
 };
 
 struct DecimalMod : public Type::BinaryOperator {
-  Value DoWork(CodeGen &codegen, const Value &left,
-               const Value &right) const override {
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               Value::OnError on_error) const override {
+    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
     // Do addition
@@ -852,6 +972,11 @@ struct DecimalMod : public Type::BinaryOperator {
 // The static comparison and binary functions
 //===----------------------------------------------------------------------===//
 
+static InvalidCast kInvalidCast;
+static CastBoolean kCastBoolean;
+static CastInteger kCastInteger;
+static CastDecimal kCastDecimal;
+
 static Type::Comparison kComparison;
 static BooleanComparison kBooleanComparison;
 static IntegerComparison kIntegerComparison;
@@ -864,12 +989,6 @@ static IntegerMul kIntegerMul;
 static IntegerDiv kIntegerDiv;
 static IntegerMod kIntegerMod;
 
-static MixedIntegerAdd kMixedIntegerAdd;
-static MixedIntegerSub kMixedIntegerSub;
-static MixedIntegerMul kMixedIntegerMul;
-static MixedIntegerDiv kMixedIntegerDiv;
-static MixedIntegerMod kMixedIntegerMod;
-
 static DecimalAdd kDecimalAdd;
 static DecimalSub kDecimalSub;
 static DecimalMul kDecimalMul;
@@ -877,7 +996,24 @@ static DecimalDiv kDecimalDiv;
 static DecimalMod kDecimalMod;
 
 // String representation of all binary operators
-const std::string Type::kBinaryOpNames[] = {"Add", "Sub", "Mul", "Div", "Mod"};
+const std::string Type::kOpNames[] = {"Negation", "Abs", "Add", "Sub",
+                                      "Mul",      "Div", "Mod"};
+
+std::vector<const Type::Cast *> Type::kCastingTable = {
+    &kInvalidCast,   // Invalid
+    &kInvalidCast,   // Param offset
+    &kCastBoolean,   // Boolean
+    &kCastInteger,   // Tiny Int
+    &kCastInteger,   // Small Int
+    &kCastInteger,   // Integer
+    &kCastInteger,   // BigInt
+    &kCastDecimal,   // Decimal
+    &kInvalidCast,   // Timestamp
+    &kInvalidCast,   // Date
+    &kInvalidCast,   // Varchar
+    &kInvalidCast,   // Varbinary
+    &kInvalidCast,   // Array
+    &kInvalidCast};  // UDT
 
 std::vector<const Type::Comparison *> Type::kComparisonTable = {
     &kComparison,         // Invalid
@@ -896,20 +1032,34 @@ std::vector<const Type::Comparison *> Type::kComparisonTable = {
     &kComparison};        // UDT
 
 Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
-    {Type::BinaryOperatorId::Add,
-     {&kIntegerAdd, &kDecimalAdd, &kMixedIntegerAdd}},
+    {Type::OperatorId::Add, {&kIntegerAdd, &kDecimalAdd}},
+    {Type::OperatorId::Sub, {&kIntegerSub, &kDecimalSub}},
+    {Type::OperatorId::Mul, {&kIntegerMul, &kDecimalMul}},
+    {Type::OperatorId::Div, {&kIntegerDiv, &kDecimalDiv}},
+    {Type::OperatorId::Mod, {&kIntegerMod, &kDecimalMod}}};
 
-    {Type::BinaryOperatorId::Sub,
-     {&kIntegerSub, &kDecimalSub, &kMixedIntegerSub}},
-
-    {Type::BinaryOperatorId::Mul,
-     {&kIntegerMul, &kDecimalMul, &kMixedIntegerMul}},
-
-    {Type::BinaryOperatorId::Div,
-     {&kIntegerDiv, &kDecimalDiv, &kMixedIntegerDiv}},
-
-    {Type::BinaryOperatorId::Mod,
-     {&kIntegerMod, &kDecimalMod, &kMixedIntegerMod}}};
+uint32_t Type::GetFixedSizeForType(type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+    case type::Type::TypeId::TINYINT:
+      return 1;
+    case type::Type::TypeId::SMALLINT:
+      return 2;
+    case type::Type::TypeId::INTEGER:
+    case type::Type::TypeId::DATE:
+      return 4;
+    case type::Type::TypeId::BIGINT:
+    case type::Type::TypeId::DECIMAL:
+    case type::Type::TypeId::TIMESTAMP:
+    case type::Type::TypeId::VARCHAR:
+    case type::Type::TypeId::VARBINARY:
+    case type::Type::TypeId::ARRAY:
+      return 8;
+    default:
+      break;
+  }
+  throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type."};
+}
 
 bool Type::HasVariableLength(type::Type::TypeId type_id) {
   return type_id == type::Type::TypeId::VARCHAR ||
@@ -924,6 +1074,15 @@ bool Type::IsIntegral(type::Type::TypeId type_id) {
     case type::Type::TypeId::INTEGER:
     case type::Type::TypeId::TIMESTAMP:
     case type::Type::TypeId::BIGINT:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool Type::IsNumeric(type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::DECIMAL:
       return true;
     default:
       return false;
@@ -967,29 +1126,80 @@ void Type::GetTypeForMaterialization(CodeGen &codegen,
   }
 }
 
-llvm::Value *Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
+Value Type::GetMinValue(CodeGen &codegen, type::Type::TypeId type_id) {
   switch (type_id) {
     case type::Type::TypeId::BOOLEAN:
-      return codegen.ConstBool(type::PELOTON_BOOLEAN_NULL);
+      return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_MIN)};
     case type::Type::TypeId::TINYINT:
-      return codegen.Const8(type::PELOTON_INT8_NULL);
+      return Value{type_id, codegen.Const8(type::PELOTON_INT8_MIN)};
     case type::Type::TypeId::SMALLINT:
-      return codegen.Const16(type::PELOTON_INT16_NULL);
+      return Value{type_id, codegen.Const16(type::PELOTON_INT16_MIN)};
     case type::Type::TypeId::INTEGER:
-      return codegen.Const32(type::PELOTON_INT32_NULL);
+      return Value{type_id, codegen.Const32(type::PELOTON_INT32_MIN)};
     case type::Type::TypeId::BIGINT:
-      return codegen.Const64(type::PELOTON_INT64_NULL);
+      return Value{type_id, codegen.Const64(type::PELOTON_INT64_MIN)};
     case type::Type::TypeId::DECIMAL:
-      return codegen.ConstDouble(type::PELOTON_DECIMAL_NULL);
+      return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MIN)};
     case type::Type::TypeId::TIMESTAMP:
-      return codegen.Const64(type::PELOTON_TIMESTAMP_NULL);
+      return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MIN)};
+    default: {
+      auto msg = StringUtil::Format("No minimum value for type '%s'",
+                                    TypeIdToString(type_id).c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
+    }
+  }
+}
+
+Value Type::GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+      return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_MAX)};
+    case type::Type::TypeId::TINYINT:
+      return Value{type_id, codegen.Const8(type::PELOTON_INT8_MAX)};
+    case type::Type::TypeId::SMALLINT:
+      return Value{type_id, codegen.Const16(type::PELOTON_INT16_MAX)};
+    case type::Type::TypeId::INTEGER:
+      return Value{type_id, codegen.Const32(type::PELOTON_INT32_MAX)};
+    case type::Type::TypeId::BIGINT:
+      return Value{type_id, codegen.Const64(type::PELOTON_INT64_MAX)};
+    case type::Type::TypeId::DECIMAL:
+      return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MAX)};
+    case type::Type::TypeId::TIMESTAMP:
+      return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MAX)};
+    default: {
+      auto msg = StringUtil::Format("No maximum value for type '%s'",
+                                    TypeIdToString(type_id).c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
+    }
+  }
+}
+
+Value Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+      return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_NULL)};
+    case type::Type::TypeId::TINYINT:
+      return Value{type_id, codegen.Const8(type::PELOTON_INT8_NULL)};
+    case type::Type::TypeId::SMALLINT:
+      return Value{type_id, codegen.Const16(type::PELOTON_INT16_NULL)};
+    case type::Type::TypeId::INTEGER:
+      return Value{type_id, codegen.Const32(type::PELOTON_INT32_NULL)};
+    case type::Type::TypeId::BIGINT:
+      return Value{type_id, codegen.Const64(type::PELOTON_INT64_NULL)};
+    case type::Type::TypeId::DECIMAL:
+      return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_NULL)};
+    case type::Type::TypeId::DATE:
+      return Value{type_id, codegen.Const32(type::PELOTON_DATE_NULL)};
+    case type::Type::TypeId::TIMESTAMP:
+      return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_NULL)};
     case type::Type::TypeId::VARBINARY:
     case type::Type::TypeId::VARCHAR:
-      return codegen.Null(codegen.CharPtrType());
+      return Value{type_id, codegen.NullPtr(codegen.CharPtrType()),
+                   codegen.Const32(0)};
     default: {
-      auto msg = StringUtil::Format("Unknown Type '%d' for GetNullValue",
-                                    static_cast<uint32_t>(type_id));
-      throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+      auto msg = StringUtil::Format("No null value for type '%s'",
+                                    TypeIdToString(type_id).c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
     }
   }
 }
@@ -1008,8 +1218,37 @@ llvm::Value *Type::GetNullValueNonInt(CodeGen &codegen,
       auto msg = StringUtil::Format("Unknown Type '%d' for GetNullValueNonInt",
                                     static_cast<uint32_t>(type_id));
       throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+
+Value Type::GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+      return Value{type_id, codegen.ConstBool(false)};
+    case type::Type::TypeId::TINYINT:
+      return Value{type_id, codegen.Const8(0)};
+    case type::Type::TypeId::SMALLINT:
+      return Value{type_id, codegen.Const16(0)};
+    case type::Type::TypeId::INTEGER:
+      return Value{type_id, codegen.Const32(0)};
+    case type::Type::TypeId::BIGINT:
+      return Value{type_id, codegen.Const64(0)};
+    case type::Type::TypeId::DECIMAL:
+      return Value{type_id, codegen.ConstDouble(0.0)};
+    case type::Type::TypeId::DATE:
+      return Value{type_id, codegen.Const32(0)};
+    case type::Type::TypeId::TIMESTAMP:
+      return Value{type_id, codegen.Const64(0)};
+    default: {
+      auto msg = StringUtil::Format("No default value for type '%s'",
+                                    TypeIdToString(type_id).c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
     }
   }
+}
+
+const Type::Cast *Type::GetCast(type::Type::TypeId from_type,
+                                type::Type::TypeId to_type) {
+  (void)to_type;
+  return kCastingTable[static_cast<uint32_t>(from_type)];
 }
 
 const Type::Comparison *Type::GetComparison(type::Type::TypeId type_id) {
@@ -1017,7 +1256,7 @@ const Type::Comparison *Type::GetComparison(type::Type::TypeId type_id) {
 }
 
 const Type::BinaryOperator *Type::GetBinaryOperator(
-    Type::BinaryOperatorId op_id, type::Type::TypeId left_type,
+    Type::OperatorId op_id, type::Type::TypeId left_type,
     type::Type::TypeId right_type) {
   // Get the list of function overloads
   const auto &iter = kBuiltinBinaryOperatorsTable.find(op_id);
@@ -1031,10 +1270,11 @@ const Type::BinaryOperator *Type::GetBinaryOperator(
   }
 
   // Error
-  throw Exception{"No compatible binary operator [" +
-                  kBinaryOpNames[static_cast<uint32_t>(op_id)] +
-                  "] for input types: " + TypeIdToString(left_type) + ", " +
-                  TypeIdToString(right_type)};
+  std::string msg = StringUtil::Format(
+      "No compatible '%s' operator for input types: %s, %s",
+      kOpNames[static_cast<uint32_t>(op_id)].c_str(),
+      TypeIdToString(left_type).c_str(), TypeIdToString(right_type).c_str());
+  throw Exception{msg};
 }
 
 }  // namespace codegen

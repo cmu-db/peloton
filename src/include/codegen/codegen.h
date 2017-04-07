@@ -52,7 +52,9 @@ class CodeGen {
   llvm::Type *Int64Type() const { return code_context_.int64_type_; }
   llvm::Type *DoubleType() const { return code_context_.double_type_; }
   llvm::Type *VoidType() const { return code_context_.void_type_; }
-  llvm::Type *CharPtrType() const { return code_context_.char_ptr_type_; }
+  llvm::PointerType *CharPtrType() const {
+    return code_context_.char_ptr_type_;
+  }
   llvm::Type *VectorType(llvm::Type *type, uint32_t num_elements) const {
     return llvm::ArrayType::get(type, num_elements);
   }
@@ -95,6 +97,19 @@ class CodeGen {
   llvm::Value *CallFree(llvm::Value *ptr);
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
+
+  //===--------------------------------------------------------------------===//
+  // Arithmetic with overflow logic
+  //===--------------------------------------------------------------------===//
+
+  llvm::Value *CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  llvm::Value *CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  llvm::Value *CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
+                                   llvm::Value *&overflow_bit) const;
+  void ThrowIfOverflow(llvm::Value *overflow) const;
+  void ThrowIfDivideByZero(llvm::Value *divide_by_zero) const;
 
   //===--------------------------------------------------------------------===//
   // Function lookup and registration

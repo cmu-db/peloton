@@ -27,7 +27,7 @@ uint32_t OAHashTable::kDefaultGroupPrefetchSize = 10;
 
 // The global attribute information instance used to populate a row's hash value
 const planner::AttributeInfo OAHashTable::kHashAI{type::Type::TypeId::INTEGER,
-                                                  0, "hash"};
+                                                  false, 0, "hash"};
 
 //===----------------------------------------------------------------------===//
 // CONSTRUCTORS

@@ -45,7 +45,11 @@ class Value {
   // Return the name of the string
   const std::string GetName() const { return value_->getName(); }
 
+  //===--------------------------------------------------------------------===//
   // Comparison functions
+  //===--------------------------------------------------------------------===//
+  codegen::Value CastTo(CodeGen &codegen, type::Type::TypeId to_type) const;
+
   codegen::Value CompareEq(CodeGen &codegen, const codegen::Value &o) const;
   codegen::Value CompareNe(CodeGen &codegen, const codegen::Value &o) const;
   codegen::Value CompareLt(CodeGen &codegen, const codegen::Value &o) const;
@@ -65,16 +69,29 @@ class Value {
   codegen::Value CompareForSort(CodeGen &codegen,
                                 const codegen::Value &o) const;
 
-  // Mathematical
-  codegen::Value Add(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Sub(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Mul(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Div(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Mod(CodeGen &codegen, const codegen::Value &o) const;
+  //===--------------------------------------------------------------------===//
+  // Mathematical functions
+  //===--------------------------------------------------------------------===//
+
+  enum class OnError : uint32_t { Ignore, Exception };
+
+  codegen::Value Add(CodeGen &codegen, const codegen::Value &right,
+                     const OnError on_error = OnError::Exception) const;
+  codegen::Value Sub(CodeGen &codegen, const codegen::Value &right,
+                     const OnError on_error = OnError::Exception) const;
+  codegen::Value Mul(CodeGen &codegen, const codegen::Value &right,
+                     const OnError on_error = OnError::Exception) const;
+  codegen::Value Div(CodeGen &codegen, const codegen::Value &right,
+                     const OnError on_error = OnError::Exception) const;
+  codegen::Value Mod(CodeGen &codegen, const codegen::Value &right,
+                     const OnError on_error = OnError::Exception) const;
   codegen::Value Min(CodeGen &codegen, const codegen::Value &o) const;
   codegen::Value Max(CodeGen &codegen, const codegen::Value &o) const;
 
-  // Logical/Boolean
+  //===--------------------------------------------------------------------===//
+  // Logical/Boolean functions
+  //===--------------------------------------------------------------------===//
+
   codegen::Value LogicalAnd(CodeGen &codegen, const codegen::Value &o) const;
   codegen::Value LogicalOr(CodeGen &codegen, const codegen::Value &o) const;
 
@@ -83,6 +100,10 @@ class Value {
   static codegen::Value BuildPHI(
       CodeGen &codegen,
       const std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> &vals);
+
+  //===--------------------------------------------------------------------===//
+  // Materialization helpers
+  //===--------------------------------------------------------------------===//
 
   // Return the a representation of this value suitable for materialization
   void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
@@ -96,9 +117,6 @@ class Value {
 
   // Return the null indicator
   static llvm::Value *SetNullValue(CodeGen &codegen, const Value &value);
-
-  // Get the LLVM type that matches the numeric type provided
-  static llvm::Type *NumericType(CodeGen &codegen, type::Type::TypeId type);
 
  private:
   friend class Hash;
@@ -117,9 +135,6 @@ class Value {
 
   // The length of the value (if it's variable in length)
   llvm::Value *length_;
-
-  // If the value is inlined
-  bool inlined_;
 
   // NULL indicator (if any)
   llvm::Value *null_;
