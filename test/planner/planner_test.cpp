@@ -36,8 +36,10 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create table
+  txn = txn_manager.BeginTransaction();
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -103,8 +105,10 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create table
+  txn = txn_manager.BeginTransaction();
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -177,8 +181,10 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create table
+  txn = txn_manager.BeginTransaction();
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);

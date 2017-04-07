@@ -40,12 +40,14 @@ TEST_F(CopyTests, Copying) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase("emp_db", txn);
+  txn_manager.CommitTransaction(txn);
 
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);
+  txn = txn_manager.BeginTransaction();
   std::string short_string = "eeeeeeeeee";
   std::string long_string =
       short_string + short_string + short_string + short_string + short_string +
