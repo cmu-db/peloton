@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-
+#include "type/types.h"
 namespace peloton {
 namespace catalog {
 
