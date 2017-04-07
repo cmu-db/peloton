@@ -98,6 +98,7 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   EXPECT_EQ(result[0].second[0], '2');
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
