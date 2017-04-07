@@ -55,7 +55,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
+  physical_implementation_rules_.emplace_back(
+      new LogicalGroupByToHashGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
@@ -353,7 +354,6 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = vector<double>();
   child_costs.push_back(gexpr->GetCost(output_properties));
-
 
   PropertyEnforcer enforcer(column_manager_);
   auto enforced_gexpr =

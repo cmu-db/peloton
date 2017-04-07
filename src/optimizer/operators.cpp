@@ -109,7 +109,7 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 // Aggregate
 //===--------------------------------------------------------------------===//
 Operator LogicalAggregate::make() {
-  LogicalAggregate * agg = new LogicalAggregate;
+  LogicalAggregate *agg = new LogicalAggregate;
   return Operator(agg);
 }
 

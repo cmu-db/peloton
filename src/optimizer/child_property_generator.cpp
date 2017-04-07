@@ -166,16 +166,15 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
         auto col_prop = prop->As<PropertyColumns>();
         size_t col_len = col_prop->GetSize();
         ExprSet child_col;
-        for (size_t col_idx=0; col_idx<col_len; col_idx++) {
+        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
         }
 
         // Add child PropertyColumn
-        child_input_property_set.AddProperty(
-            make_shared<PropertyColumns>(
-                std::vector<std::shared_ptr<expression::AbstractExpression>>(
-                    child_col.begin(), child_col.end())));
+        child_input_property_set.AddProperty(make_shared<PropertyColumns>(
+            std::vector<std::shared_ptr<expression::AbstractExpression>>(
+                child_col.begin(), child_col.end())));
         break;
       }
       case PropertyType::PREDICATE:

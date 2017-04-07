@@ -216,18 +216,17 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
   PL_ASSERT(col_prop != nullptr);
 
   output_plan_ = move(GenerateGourpByPlan(col_prop, AggregateType::HASH,
-                                     op->columns, op->having));
+                                          op->columns, op->having));
 }
-
 
 // TODO: Remove duplicate codes
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                      ->As<PropertyColumns>();
 
   PL_ASSERT(col_prop != nullptr);
 
-  planner::ProjectInfo* proj_info_ptr;
+  planner::ProjectInfo *proj_info_ptr;
   vector<planner::AggregatePlan::AggTerm> agg_terms;
   vector<catalog::Column> output_schema_columns;
 
@@ -237,9 +236,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
   unique_ptr<const planner::ProjectInfo> proj_info(proj_info_ptr);
   shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(output_schema_columns));
-  unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
-      move(proj_info), nullptr, move(agg_terms), {},
-      output_table_schema, AggregateType::PLAIN));
+  unique_ptr<planner::AggregatePlan> agg_plan(
+      new planner::AggregatePlan(move(proj_info), nullptr, move(agg_terms), {},
+                                 output_table_schema, AggregateType::PLAIN));
   agg_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(agg_plan);
 }
@@ -373,7 +372,6 @@ void OperatorToPlanTransformer::AggregationHelper(
     vector<planner::AggregatePlan::AggTerm> &agg_terms,
     vector<catalog::Column> &output_schema_columns,
     planner::ProjectInfo **proj_info) {
-
   auto child_expr_map = children_expr_map_[0];
 
   // Metadata needed in AggregationPlan
@@ -387,7 +385,7 @@ void OperatorToPlanTransformer::AggregationHelper(
     expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr.get());
 
     if (expression::ExpressionUtil::IsAggregateExpression(
-        expr->GetExpressionType())) {
+            expr->GetExpressionType())) {
       // For AggregateExpr, add aggregate term
       auto agg_expr = (expression::AggregateExpression *)expr.get();
       auto agg_col = expr->GetModifiableChild(0);
@@ -417,12 +415,13 @@ void OperatorToPlanTransformer::AggregationHelper(
   *proj_info = new planner::ProjectInfo(move(tl), move(dml));
 }
 
-std::unique_ptr<planner::AggregatePlan> OperatorToPlanTransformer::GenerateGourpByPlan(
+std::unique_ptr<planner::AggregatePlan>
+OperatorToPlanTransformer::GenerateGourpByPlan(
     const PropertyColumns *prop_col, AggregateType agg_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> &group_by_exprs,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> &
+        group_by_exprs,
     expression::AbstractExpression *having) {
-
-  planner::ProjectInfo* proj_info_ptr;
+  planner::ProjectInfo *proj_info_ptr;
   vector<planner::AggregatePlan::AggTerm> agg_terms;
   vector<catalog::Column> output_schema_columns;
 
