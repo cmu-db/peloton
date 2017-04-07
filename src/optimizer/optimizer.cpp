@@ -346,7 +346,6 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
     const shared_ptr<Property> property, PropertySet &requirements) {
   // new child input is the old output
-  LOG_DEBUG("Output properties %s", output_properties.ToString().c_str());
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
 
@@ -355,7 +354,6 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   auto child_costs = vector<double>();
   child_costs.push_back(gexpr->GetCost(output_properties));
 
-  LOG_DEBUG("Enforcing %s", property->ToString().c_str());
 
   PropertyEnforcer enforcer(column_manager_);
   auto enforced_gexpr =
@@ -381,7 +379,6 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     DeriveCostAndStats(enforced_gexpr, requirements, child_input_properties,
                        child_stats, child_costs);
   }
-  LOG_DEBUG("LEAVING ENFORCE");
   return enforced_gexpr;
 }
 
