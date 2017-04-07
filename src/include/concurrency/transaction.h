@@ -103,6 +103,20 @@ class Transaction : public Printable {
 
   RWType GetRWType(const ItemPointer &);
 
+  bool IsInRWSet(const ItemPointer &location) {
+
+    oid_t tile_group_id = location.block;
+    oid_t tuple_id = location.offset;
+
+    if (rw_set_.find(tile_group_id) != rw_set_.end() &&
+        rw_set_.at(tile_group_id).find(tuple_id) !=
+            rw_set_.at(tile_group_id).end()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
   inline std::shared_ptr<GCSet> GetGCSetPtr() {
