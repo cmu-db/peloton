@@ -221,6 +221,16 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
                                      &op->columns, op->having));
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
+  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+      ->As<PropertyColumns>();
+
+  PL_ASSERT(col_prop != nullptr);
+
+  output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::SORTED,
+                                            &op->columns, op->having));
+}
+
 // TODO: Remove duplicate codes
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
