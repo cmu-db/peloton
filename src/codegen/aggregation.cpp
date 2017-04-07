@@ -118,7 +118,7 @@ void Aggregation::Setup(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when preparing aggregator",
-            ExpressionTypeToString(agg_term.aggtype));
+            ExpressionTypeToString(agg_term.aggtype).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
@@ -323,7 +323,7 @@ void Aggregation::FinalizeValues(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when finalizing aggregator",
-            ExpressionTypeToString(agg_type));
+            ExpressionTypeToString(agg_type).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
