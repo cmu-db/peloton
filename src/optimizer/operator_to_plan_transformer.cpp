@@ -125,7 +125,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   vector<catalog::Column> columns;
   size_t curr_col_offset = 0;
   for (auto expr : output_exprs) {
-    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+    auto expr_type = expr->GetExpressionType();
+    if (expr_type == ExpressionType::VALUE_TUPLE ||
+        expression::ExpressionUtil::IsAggregateExpression(expr_type)) {
       // For TupleValueExpr, we can just do a direct mapping.
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
