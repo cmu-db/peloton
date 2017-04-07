@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/catalog_util.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
@@ -23,9 +24,7 @@
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
 #include "type/abstract_pool.h"
-#include "catalog/catalog_defaults.h"
 #include "type/ephemeral_pool.h"
-#include "type/types.h"
 #include "type/value_factory.h"
 
 #define DATABASE_METRIC_NAME "database_metric"
@@ -68,13 +67,31 @@ class Catalog {
 
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
+  //===--------------------------------------------------------------------===//
+  // DEPRECATED FUNCTIONs
+  //===--------------------------------------------------------------------===//
+  /*
+  * We're working right now to remove metadata from storage level and eliminate
+  * multiple copies, so those functions below will be DEPRECATED soon.
+  */
+  // Add a database
+  void AddDatabase(storage::Database *database);
+  // Find a database using its name
+  // return nullptr and throw catalog exceptions if not found
+  storage::Database *GetDatabaseWithName(const std::string &db_name) const;
 
+  // Find a database using vector offset
+  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
+
+  // Get table from a database with its name
+  storage::DataTable *GetTableWithName(const std::string &database_name,
+                                       const std::string &table_name);
+  //===--------------------------------------------------------------------===//
+  // CREATE FUNCTIONs
+  //===--------------------------------------------------------------------===//
   // Create a database
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::Transaction *txn);
-
-  // Add a database
-  void AddDatabase(storage::Database *database);
 
   // Create a table in a database
   ResultType CreateTable(const std::string &database_name,
@@ -82,7 +99,8 @@ class Catalog {
                          std::unique_ptr<catalog::Schema>,
                          concurrency::Transaction *txn);
 
-  // Create the primary key index for a table
+  // Create the primary key index for a table, don't call this function outside
+  // catalog.cpp
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                 concurrency::Transaction *txn);
   // Create index for a table
@@ -99,9 +117,9 @@ class Catalog {
                          concurrency::Transaction *txn,
                          bool is_catalog = false);
 
-  // Get a index with the oids of index, table, and database.
-  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
-                                oid_t index_oid) const;
+  //===--------------------------------------------------------------------===//
+  // DROP FUNCTIONS
+  //===--------------------------------------------------------------------===//
   // Drop a database
   ResultType DropDatabaseWithName(const std::string &database_name,
                                   concurrency::Transaction *txn);
@@ -128,23 +146,16 @@ class Catalog {
   // return nullptr and throw catalog exceptions if not found
   storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
 
-  // Find a database using its name
-  // return nullptr and throw catalog exceptions if not found
-  storage::Database *GetDatabaseWithName(const std::string &db_name) const;
-
-  // Find a database using vector offset
-  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
-
-  // Get table from a database with its name
-  storage::DataTable *GetTableWithName(const std::string &database_name,
-                                       const std::string &table_name);
-
   // Get table from a database with its oid
   storage::DataTable *GetTableWithOid(oid_t database_oid,
                                       oid_t table_oid) const;
 
   // Get the number of databases currently in the catalog
   oid_t GetDatabaseCount();
+
+  // Get a index with the oids of index, table, and database.
+  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
+                                oid_t index_oid) const;
 
   //===--------------------------------------------------------------------===//
   // METRIC
@@ -170,7 +181,7 @@ class Catalog {
   // std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
 
   //===--------------------------------------------------------------------===//
-  // FUNCTION
+  // USER DEFINE FUNCTION
   //===--------------------------------------------------------------------===//
 
   void InitializeFunctions();
