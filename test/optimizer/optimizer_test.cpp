@@ -35,7 +35,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn = txn_manager.BeginTransaction();
+  txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
