@@ -86,18 +86,11 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void GenerateTableExprMap(ExprMap &expr_map, storage::DataTable *table);
 
-  // Generate aggregation terms, output columns and projection info
-  void AggregationHelper(
-      const PropertyColumns *prop_col,
-      std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
-      std::vector<catalog::Column> &output_schema_columns,
-      planner::ProjectInfo **proj_info);
 
   // Generate group by plan
-  std::unique_ptr<planner::AggregatePlan> GenerateGourpByPlan(
-      const PropertyColumns *prop_col, AggregateType agg_type,
-      const std::vector<std::shared_ptr<expression::AbstractExpression>> &
-          group_by_exprs,
+  std::unique_ptr<planner::AggregatePlan> GenerateAggregatePlan(
+      const PropertyColumns* prop_col, AggregateType agg_type,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>* group_by_exprs,
       expression::AbstractExpression *having);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
