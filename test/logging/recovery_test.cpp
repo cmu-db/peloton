@@ -274,7 +274,6 @@ TEST_F(RecoveryTests, RestartTest) {
   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
   EXPECT_EQ(status, true);
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);
   txn_manager.CommitTransaction(txn);
