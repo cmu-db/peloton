@@ -111,10 +111,10 @@ class LogicalInsertToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalAggregateToHashAggregate
-class LogicalAggregateToHashAggregate : public Rule {
+/// LogicalGroupByToHashGroupBy
+class LogicalGroupByToHashGroupBy : public Rule {
  public:
-  LogicalAggregateToHashAggregate();
+  LogicalGroupByToHashGroupBy();
 
   bool Check(std::shared_ptr<OperatorExpression> plan) const override;
 
@@ -124,10 +124,10 @@ class LogicalAggregateToHashAggregate : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalAggregateToPlainAggregate
-class LogicalAggregateToPlainAggregate : public Rule {
+/// LogicalAggregateToPhysical
+class LogicalAggregateToPhysical : public Rule {
  public:
-  LogicalAggregateToPlainAggregate();
+  LogicalAggregateToPhysical();
 
   bool Check(std::shared_ptr<OperatorExpression> plan) const override;
 

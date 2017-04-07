@@ -53,21 +53,30 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     for (auto col : *op->group_by->columns)
       group_by_cols.emplace_back(col->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalAggregate::make(move(group_by_cols), op->group_by->having));
+        LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
   }
   else {
     // Check plain aggregation
-    bool plain_aggregation = true;
+    bool aggregation = false;
+    bool non_aggregation = false;
     for (auto expr : *op->getSelectList()) {
-      if (!expression::ExpressionUtil::IsAggregateExpression(
+      if (expression::ExpressionUtil::IsAggregateExpression(
           expr->GetExpressionType()))
-        plain_aggregation = false;
+        aggregation = true;
+      else non_aggregation = true;
     }
-    if (plain_aggregation) {
+    // Syntax error when there are mixture of aggregation and other exprs
+    // when group by is absent
+    if (aggregation && non_aggregation)
+      throw SyntaxException(
+          "Non aggregation expressionmust appear in the GROUP BY "
+              "clause or be used in an aggregate function");
+    // Plain aggregation
+    else if (aggregation && !non_aggregation) {
       auto aggregate = std::make_shared<OperatorExpression>(
-          LogicalAggregate::make(nullptr, nullptr));
+          LogicalAggregate::make());
       aggregate->PushChild(output_expr);
       output_expr = aggregate;
     }

@@ -121,6 +121,14 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {
  public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// GroupBy
+//===--------------------------------------------------------------------===//
+class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
+ public:
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       expression::AbstractExpression *having);
@@ -325,7 +333,7 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 //===--------------------------------------------------------------------===//
 // PhysicalHashGroupBy
 //===--------------------------------------------------------------------===//
-class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
+class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
  public:
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
@@ -336,9 +344,9 @@ class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
 };
 
 //===--------------------------------------------------------------------===//
-// PhysicalPlainAggregate
+// PhysicalAggregate
 //===--------------------------------------------------------------------===//
-class PhysicalPlainAggregate : public OperatorNode<PhysicalPlainAggregate> {
+class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
  public:
   static Operator make();
 };

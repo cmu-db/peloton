@@ -214,50 +214,48 @@ void LogicalInsertToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalAggregateToHashAggregate
-LogicalAggregateToHashAggregate::LogicalAggregateToHashAggregate() {
+/// LogicalGroupByToHashGroupBy
+LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
   physical = true;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
 }
 
-bool LogicalAggregateToHashAggregate::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  auto op = plan->Op().As<LogicalAggregate>();
-  return op->columns != nullptr;
+bool LogicalGroupByToHashGroupBy::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+  return true;
 }
 
-void LogicalAggregateToHashAggregate::Transform(
+void LogicalGroupByToHashGroupBy::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalAggregate *agg_op = input->Op().As<LogicalAggregate>();
+  const LogicalGroupBy *agg_op = input->Op().As<LogicalGroupBy>();
   auto result = std::make_shared<OperatorExpression>(
-      PhysicalAggregate::make(agg_op->columns, agg_op->having));
+      PhysicalHashGroupBy::make(agg_op->columns, agg_op->having));
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalAggregateToPlainAggregate
-LogicalAggregateToPlainAggregate::LogicalAggregateToPlainAggregate() {
+/// LogicalAggregateToPhysical
+LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
   physical = true;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
 }
 
-bool LogicalAggregateToPlainAggregate::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  auto op = plan->Op().As<LogicalAggregate>();
-  return op->columns == nullptr;
+bool LogicalAggregateToPhysical::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+  return true;
 }
 
-void LogicalAggregateToPlainAggregate::Transform(
+void LogicalAggregateToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result = std::make_shared<OperatorExpression>(PhysicalPlainAggregate::make());
+  auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make());
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);

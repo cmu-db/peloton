@@ -13,6 +13,8 @@
 #pragma once
 
 #include "optimizer/operator_visitor.h"
+#include "properties.h"
+#include "planner/aggregate_plan.h"
 
 namespace peloton {
 
@@ -22,6 +24,7 @@ class HashJoinPlan;
 class NestedLoopJoinPlan;
 class ProjectionPlan;
 class SeqScanPlan;
+class AggregatePlan;
 }
 
 namespace optimizer {
@@ -72,16 +75,28 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalUpdate *) override;
 
-  void Visit(const PhysicalAggregate *) override;
+  void Visit(const PhysicalHashGroupBy *) override;
 
   void Visit(const PhysicalDistinct *) override;
 
-  void Visit(const PhysicalPlainAggregate *) override;
+  void Visit(const PhysicalAggregate *) override;
 
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
   void GenerateTableExprMap(ExprMap &expr_map, storage::DataTable *table);
+
+  // Generate aggregation terms, output columns and projection info
+  void AggregationHelper(const PropertyColumns* prop_col,
+                         std::vector<planner::AggregatePlan::AggTerm>& agg_terms,
+                         std::vector<catalog::Column>& output_schema_columns,
+                         planner::ProjectInfo** proj_info);
+
+  // Generate group by plan
+  std::unique_ptr<planner::AggregatePlan> GenerateGourpByPlan(
+      const PropertyColumns* prop_col, AggregateType agg_type,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>& group_by_exprs,
+      expression::AbstractExpression *having);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;

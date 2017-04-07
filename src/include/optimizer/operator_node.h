@@ -36,6 +36,7 @@ enum class OpType {
   OuterJoin,
   SemiJoin,
   LogicalAggregate,
+  LogicalGroupBy,
   LogicalHash,
   Limit,
   LogicalInsert,
@@ -63,7 +64,8 @@ enum class OpType {
   Delete,
   Update,
   Aggregate,
-  PlainAggregate
+  HashGroupBy,
+  SortGoupBy
 };
 
 //===--------------------------------------------------------------------===//

@@ -209,136 +209,37 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
   output_plan_ = move(order_by_plan);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalAggregate *op) {
+void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                       ->As<PropertyColumns>();
 
   PL_ASSERT(col_prop != nullptr);
 
-  auto child_expr_map = children_expr_map_[0];
-
-  // TODO: Consider different type in the logical to physical implementation
-  auto agg_type = AggregateType::HASH;
-
-  // Metadata needed in AggregationPlan
-  vector<planner::AggregatePlan::AggTerm> agg_terms;
-  vector<catalog::Column> output_schema_columns;
-  DirectMapList dml;
-  TargetList tl;
-
-  auto agg_id = 0;
-  auto expr_len = col_prop->GetSize();
-  for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
-    auto expr = col_prop->GetColumn(col_pos);
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr.get());
-
-    if (expression::ExpressionUtil::IsAggregateExpression(
-            expr->GetExpressionType())) {
-      // For AggregateExpr, add aggregate term
-      auto agg_expr = (expression::AggregateExpression *)expr.get();
-      auto agg_col = expr->GetModifiableChild(0);
-
-      // Maps the aggregate value in the right tuple to the output.
-      // See aggregator.cpp for more info.
-      dml.emplace_back(col_pos, make_pair(1, agg_id++));
-      planner::AggregatePlan::AggTerm agg_term(
-          agg_expr->GetExpressionType(),
-          agg_col == nullptr ? nullptr : agg_col->Copy(), agg_expr->distinct_);
-      agg_terms.push_back(agg_term);
-    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      // For TupleValueExpr, do direct mapping
-      dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
-    } else {
-      // For other exprs such as OperatorExpr, use target list
-      tl.emplace_back(col_pos, expr->Copy());
-    }
-
-    (*output_expr_map_)[expr] = col_pos;
-    output_schema_columns.push_back(catalog::Column(
-        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-        expr->expr_name_));
-  }
-
-  // Handle group by columns
-  vector<oid_t> col_ids;
-  for (auto col : op->columns) col_ids.push_back(child_expr_map[col]);
-
-  // Handle having clause
-  expression::AbstractExpression *having = nullptr;
-  if (op->having != nullptr) {
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, op->having);
-    having = op->having->Copy();
-  }
-
-  // Generate the Aggregate Plan
-  unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(move(tl), move(dml)));
-  unique_ptr<const expression::AbstractExpression> predicate(having);
-  shared_ptr<const catalog::Schema> output_table_schema(
-      new catalog::Schema(output_schema_columns));
-  unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
-      move(proj_info), move(predicate), move(agg_terms), move(col_ids),
-      output_table_schema, agg_type));
-  agg_plan->AddChild(move(children_plans_[0]));
-  output_plan_ = move(agg_plan);
+  output_plan_ = move(GenerateGourpByPlan(col_prop, AggregateType::HASH,
+                                     op->columns, op->having));
 }
 
 
 // TODO: Remove duplicate codes
-void OperatorToPlanTransformer::Visit(const PhysicalPlainAggregate *) {
+void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
       ->As<PropertyColumns>();
 
   PL_ASSERT(col_prop != nullptr);
 
-  auto child_expr_map = children_expr_map_[0];
-
-  // TODO: Consider different type in the logical to physical implementation
-  auto agg_type = AggregateType::PLAIN;
-
-  // Metadata needed in AggregationPlan
+  planner::ProjectInfo* proj_info_ptr;
   vector<planner::AggregatePlan::AggTerm> agg_terms;
   vector<catalog::Column> output_schema_columns;
-  DirectMapList dml;
-  TargetList tl;
 
-  auto agg_id = 0;
-  auto expr_len = col_prop->GetSize();
-  for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
-    auto expr = col_prop->GetColumn(col_pos);
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr);
-
-    if (expression::ExpressionUtil::IsAggregateExpression(
-        expr->GetExpressionType())) {
-      // For AggregateExpr, add aggregate term
-      auto agg_expr = (expression::AggregateExpression *) expr;
-      auto agg_col = expr->GetModifiableChild(0);
-
-      // Maps the aggregate value in the right tuple to the output.
-      // See aggregator.cpp for more info.
-      dml.emplace_back(col_pos, make_pair(1, agg_id++));
-      planner::AggregatePlan::AggTerm agg_term(
-          agg_expr->GetExpressionType(),
-          agg_col == nullptr ? nullptr : agg_col->Copy(),
-          agg_expr->distinct_);
-      agg_terms.push_back(agg_term);
-    } else
-      PL_ASSERT(false);
-
-    (*output_expr_map_)[expr] = col_pos;
-    output_schema_columns.push_back(catalog::Column(
-        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-        expr->expr_name_));
-  }
+  AggregationHelper(col_prop, agg_terms, output_schema_columns, &proj_info_ptr);
 
   // Generate the Aggregate Plan
-  unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(move(tl), move(dml)));
+  unique_ptr<const planner::ProjectInfo> proj_info(proj_info_ptr);
   shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(output_schema_columns));
   unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
       move(proj_info), nullptr, move(agg_terms), {},
-      output_table_schema, agg_type));
+      output_table_schema, AggregateType::PLAIN));
   agg_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(agg_plan);
 }
@@ -465,6 +366,89 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;
   }
+}
+
+void OperatorToPlanTransformer::AggregationHelper(
+    const PropertyColumns *prop_col,
+    vector<planner::AggregatePlan::AggTerm> &agg_terms,
+    vector<catalog::Column> &output_schema_columns,
+    planner::ProjectInfo **proj_info) {
+
+  auto child_expr_map = children_expr_map_[0];
+
+  // Metadata needed in AggregationPlan
+  DirectMapList dml;
+  TargetList tl;
+
+  auto agg_id = 0;
+  auto expr_len = prop_col->GetSize();
+  for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
+    auto expr = prop_col->GetColumn(col_pos);
+    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr.get());
+
+    if (expression::ExpressionUtil::IsAggregateExpression(
+        expr->GetExpressionType())) {
+      // For AggregateExpr, add aggregate term
+      auto agg_expr = (expression::AggregateExpression *)expr.get();
+      auto agg_col = expr->GetModifiableChild(0);
+
+      // Maps the aggregate value in the right tuple to the output.
+      // See aggregator.cpp for more info.
+      dml.emplace_back(col_pos, make_pair(1, agg_id++));
+      planner::AggregatePlan::AggTerm agg_term(
+          agg_expr->GetExpressionType(),
+          agg_col == nullptr ? nullptr : agg_col->Copy(), agg_expr->distinct_);
+      agg_terms.push_back(agg_term);
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      // For TupleValueExpr, do direct mapping
+      dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
+    } else {
+      // For other exprs such as OperatorExpr, use target list
+      tl.emplace_back(col_pos, expr->Copy());
+    }
+
+    (*output_expr_map_)[expr] = col_pos;
+    output_schema_columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->expr_name_));
+  }
+
+  // Generate the projection info
+  *proj_info = new planner::ProjectInfo(move(tl), move(dml));
+}
+
+std::unique_ptr<planner::AggregatePlan> OperatorToPlanTransformer::GenerateGourpByPlan(
+    const PropertyColumns *prop_col, AggregateType agg_type,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> &group_by_exprs,
+    expression::AbstractExpression *having) {
+
+  planner::ProjectInfo* proj_info_ptr;
+  vector<planner::AggregatePlan::AggTerm> agg_terms;
+  vector<catalog::Column> output_schema_columns;
+
+  AggregationHelper(prop_col, agg_terms, output_schema_columns, &proj_info_ptr);
+  // Handle group by columns
+  auto child_expr_map = children_expr_map_[0];
+  vector<oid_t> col_ids;
+  for (auto col : group_by_exprs) col_ids.push_back(child_expr_map[col]);
+
+  // Handle having clause
+  expression::AbstractExpression *having_predicate = nullptr;
+  if (having != nullptr) {
+    expression::ExpressionUtil::EvaluateExpression(child_expr_map, having);
+    having_predicate = having->Copy();
+  }
+
+  // Generate the Aggregate Plan
+  unique_ptr<const planner::ProjectInfo> proj_info(proj_info_ptr);
+  unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
+  shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(output_schema_columns));
+  unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
+      move(proj_info), move(predicate), move(agg_terms), move(col_ids),
+      output_table_schema, agg_type));
+  agg_plan->AddChild(move(children_plans_[0]));
+  return move(agg_plan);
 }
 
 void OperatorToPlanTransformer::VisitOpExpression(

@@ -100,7 +100,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
  *    different combination of the aggregation functions and other projection.
  */
 
-void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
+void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
   PropertySet child_input_property_set;
   PropertySet provided_property;
 
@@ -146,7 +146,7 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *op) {
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
-void ChildPropertyGenerator::Visit(const PhysicalPlainAggregate *) {
+void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
   PropertySet child_input_property_set;
   PropertySet provided_property;
 
@@ -168,13 +168,13 @@ void ChildPropertyGenerator::Visit(const PhysicalPlainAggregate *) {
         ExprSet child_col;
         for (size_t col_idx=0; col_idx<col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
-          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
         }
 
         // Add child PropertyColumn
         child_input_property_set.AddProperty(
             make_shared<PropertyColumns>(
-                std::vector<expression::AbstractExpression*>(
+                std::vector<std::shared_ptr<expression::AbstractExpression>>(
                     child_col.begin(), child_col.end())));
         break;
       }

@@ -108,13 +108,21 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregate::make(
+Operator LogicalAggregate::make() {
+  LogicalAggregate * agg = new LogicalAggregate;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// Aggregate
+//===--------------------------------------------------------------------===//
+Operator LogicalGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
-  LogicalAggregate *agg = new LogicalAggregate;
-  agg->columns = move(columns);
-  agg->having = having;
-  return Operator(agg);
+  LogicalGroupBy *group_by = new LogicalGroupBy;
+  group_by->columns = move(columns);
+  group_by->having = having;
+  return Operator(group_by);
 }
 
 //===--------------------------------------------------------------------===//
@@ -316,20 +324,20 @@ Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
 //===--------------------------------------------------------------------===//
 // PhysicalHashAggregate
 //===--------------------------------------------------------------------===//
-Operator PhysicalAggregate::make(
+Operator PhysicalHashGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
-  PhysicalAggregate *agg = new PhysicalAggregate;
+  PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
   agg->columns = std::move(columns);
   agg->having = having;
   return Operator(agg);
 }
 
 //===--------------------------------------------------------------------===//
-// PhysicalPlainAggregate
+// PhysicalAggregate
 //===--------------------------------------------------------------------===//
-Operator PhysicalPlainAggregate::make() {
-  PhysicalPlainAggregate *agg = new PhysicalPlainAggregate;
+Operator PhysicalAggregate::make() {
+  PhysicalAggregate *agg = new PhysicalAggregate;
   return Operator(agg);
 }
 
@@ -374,6 +382,9 @@ template <>
 void OperatorNode<LogicalAggregate>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
+void OperatorNode<LogicalGroupBy>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
 void OperatorNode<LogicalLimit>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -408,6 +419,8 @@ template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
+template <>
+std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
 template <>
 std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
@@ -452,11 +465,11 @@ std::string OperatorNode<PhysicalDelete>::name_ = "PhysicalDelete";
 template <>
 std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
 template <>
-std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
+std::string OperatorNode<PhysicalHashGroupBy>::name_ = "PhysicalHashGroupBy";
 template <>
 std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
 template <>
-std::string OperatorNode<PhysicalPlainAggregate>::name_ = "PhysicalPlainAggregate";
+std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -477,6 +490,8 @@ template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
+template <>
+OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
@@ -520,9 +535,9 @@ OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
 template <>
 OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
 template <>
-OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
+OpType OperatorNode<PhysicalHashGroupBy>::type_ = OpType::HashGroupBy;
 template <>
-OpType OperatorNode<PhysicalPlainAggregate>::type_ = OpType::PlainAggregate;
+OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
 //===--------------------------------------------------------------------===//
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
