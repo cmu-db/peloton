@@ -109,6 +109,7 @@ TEST_F(UpdateSQLTests, ComplexUpdateSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("Bootstrapping completed!");
 
@@ -188,6 +189,7 @@ TEST_F(UpdateSQLTests, ComplexUpdateSQLTest) {
   EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 1), "5.5");
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

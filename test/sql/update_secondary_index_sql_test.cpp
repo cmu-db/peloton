@@ -28,6 +28,7 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
@@ -67,6 +68,7 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   EXPECT_EQ(result[0].second[0], '2');
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

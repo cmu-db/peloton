@@ -35,12 +35,14 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
   std::unique_ptr<Statement> statement;
