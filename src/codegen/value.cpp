@@ -38,6 +38,16 @@ Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
 // COMPARISONS
 //===----------------------------------------------------------------------===//
 
+codegen::Value Value::CastTo(CodeGen &codegen,
+                             type::Type::TypeId to_type) const {
+  if (GetType() == to_type) {
+    return *this;
+  } else {
+    const auto &cast = Type::GetCast(GetType(), to_type);
+    return cast->DoCast(codegen, *this, to_type);
+  }
+}
+
 // Equality comparison
 Value Value::CompareEq(CodeGen &codegen, const Value &o) const {
   const auto &comparison = Type::GetComparison(o.GetType());
@@ -106,38 +116,38 @@ codegen::Value Value::TestEquality(CodeGen &codegen,
 //===----------------------------------------------------------------------===//
 
 // Addition
-Value Value::Add(CodeGen &codegen, const Value &o) const {
-  auto *add_op =
-      Type::GetBinaryOperator(Type::OperatorId::Add, GetType(), o.GetType());
-  return add_op->DoWork(codegen, *this, o);
+Value Value::Add(CodeGen &codegen, const Value &right, OnError on_error) const {
+  auto *add_op = Type::GetBinaryOperator(Type::OperatorId::Add, GetType(),
+                                         right.GetType());
+  return add_op->DoWork(codegen, *this, right, on_error);
 }
 
 // Subtraction
-Value Value::Sub(CodeGen &codegen, const Value &o) const {
-  auto *sub_op =
-      Type::GetBinaryOperator(Type::OperatorId::Sub, GetType(), o.GetType());
-  return sub_op->DoWork(codegen, *this, o);
+Value Value::Sub(CodeGen &codegen, const Value &right, OnError on_error) const {
+  auto *sub_op = Type::GetBinaryOperator(Type::OperatorId::Sub, GetType(),
+                                         right.GetType());
+  return sub_op->DoWork(codegen, *this, right, on_error);
 }
 
 // Multiplication
-Value Value::Mul(CodeGen &codegen, const Value &o) const {
-  auto *mul_op =
-      Type::GetBinaryOperator(Type::OperatorId::Mul, GetType(), o.GetType());
-  return mul_op->DoWork(codegen, *this, o);
+Value Value::Mul(CodeGen &codegen, const Value &right, OnError on_error) const {
+  auto *mul_op = Type::GetBinaryOperator(Type::OperatorId::Mul, GetType(),
+                                         right.GetType());
+  return mul_op->DoWork(codegen, *this, right, on_error);
 }
 
 // Division
-Value Value::Div(CodeGen &codegen, const Value &o) const {
-  auto *div_op =
-      Type::GetBinaryOperator(Type::OperatorId::Div, GetType(), o.GetType());
-  return div_op->DoWork(codegen, *this, o);
+Value Value::Div(CodeGen &codegen, const Value &right, OnError on_error) const {
+  auto *div_op = Type::GetBinaryOperator(Type::OperatorId::Div, GetType(),
+                                         right.GetType());
+  return div_op->DoWork(codegen, *this, right, on_error);
 }
 
 // Modulus
-Value Value::Mod(CodeGen &codegen, const Value &o) const {
-  auto *mod_op =
-      Type::GetBinaryOperator(Type::OperatorId::Mod, GetType(), o.GetType());
-  return mod_op->DoWork(codegen, *this, o);
+Value Value::Mod(CodeGen &codegen, const Value &right, OnError on_error) const {
+  auto *mod_op = Type::GetBinaryOperator(Type::OperatorId::Mod, GetType(),
+                                         right.GetType());
+  return mod_op->DoWork(codegen, *this, right, on_error);
 }
 
 // Mathematical minimum
@@ -241,29 +251,6 @@ llvm:: Value *Value::SetNullValue(CodeGen &codegen, const Value &value) {
     null = is_null.BuildPHI(null_true, null_false);
   }
   return null;
-}
-
-// Get the LLVM type that matches the numeric type provided
-// TODO: This needs to move to type system
-llvm::Type *Value::NumericType(CodeGen &codegen, type::Type::TypeId type) {
-  switch (type) {
-    case type::Type::TypeId::BOOLEAN:
-      return codegen.BoolType();
-    case type::Type::TypeId::TINYINT:
-      return codegen.Int8Type();
-    case type::Type::TypeId::SMALLINT:
-      return codegen.Int16Type();
-    case type::Type::TypeId::DATE:
-    case type::Type::TypeId::INTEGER:
-      return codegen.Int32Type();
-    case type::Type::TypeId::TIMESTAMP:
-    case type::Type::TypeId::BIGINT:
-      return codegen.Int64Type();
-    case type::Type::TypeId::DECIMAL:
-      return codegen.DoubleType();
-    default:
-      throw Exception{TypeIdToString(type) + " is not a numeric type"};
-  }
 }
 
 // Build a new value that combines values arriving from different BB's into a

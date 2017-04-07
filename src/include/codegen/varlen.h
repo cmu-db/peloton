@@ -47,7 +47,7 @@ class Varlen {
     // Before loading the components of the Varlen, we need to do a null check
     // on the Varlen** function argument.
 
-    auto *null_ptr = Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR);
+    auto *null_ptr = codegen.NullPtr(codegen.CharPtrType());
     is_null = codegen->CreateICmpEQ(varlen_ptr_ptr, null_ptr);
 
     llvm::Value *null_data = nullptr, *null_len = nullptr;

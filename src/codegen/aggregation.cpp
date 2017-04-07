@@ -163,7 +163,7 @@ void Aggregation::CreateInitialValues(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when creating initial values",
-            ExpressionTypeToString(aggregate_info.aggregate_type));
+            ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
@@ -211,8 +211,8 @@ void Aggregation::AdvanceValues(
         PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
         auto curr = storage_.GetValueAt(codegen, storage_space,
                                         aggregate_info.storage_index);
-        next = curr.Add(codegen, codegen::Value{type::Type::TypeId::BIGINT,
-                                                codegen.Const64(1)});
+        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        next = curr.Add(codegen, delta);
         break;
       }
       case ExpressionType::AGGREGATE_COUNT_STAR: {
@@ -223,8 +223,8 @@ void Aggregation::AdvanceValues(
         }
         auto curr = storage_.GetValueAt(codegen, storage_space,
                                         aggregate_info.storage_index);
-        next = curr.Add(codegen, codegen::Value{type::Type::TypeId::BIGINT,
-                                                codegen.Const64(1)});
+        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        next = curr.Add(codegen, delta);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
@@ -234,7 +234,7 @@ void Aggregation::AdvanceValues(
       default: {
         std::string message = StringUtil::Format(
             "Unexpected aggregate type [%s] when advancing aggregator",
-            ExpressionTypeToString(aggregate_info.aggregate_type));
+            ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
       }
@@ -288,12 +288,9 @@ void Aggregation::FinalizeValues(
           If check_count {codegen, codegen->CreateICmpEQ(count.GetValue(),
                                                          codegen.Const64(0))};
           {
-            final_null = Value{final_calc.GetType(),
-                               Type::GetNullValue(codegen,
-                                                  final_calc.GetType()),
-                                                  codegen.Const32(0),
-                                                  codegen.ConstBool(true)};
-          } check_count.EndIf();
+            final_null = Type::GetNullValue(codegen, final_calc.GetType());
+          }
+          check_count.EndIf();
           auto final_val = check_count.BuildPHI(final_null, final_calc);
           final_vals.push_back(final_val);
         }
@@ -301,26 +298,13 @@ void Aggregation::FinalizeValues(
       }
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
-        codegen::Value sum =
-            vals[std::make_pair(source, ExpressionType::AGGREGATE_SUM)];
-        codegen::Value count =
-            vals[std::make_pair(source, ExpressionType::AGGREGATE_COUNT)];
+        codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
+        codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
+        codegen::Value casted_sum = sum.CastTo(codegen, count.GetType());
 
-        codegen::Value final_calc;
-        // TODO Use DECIMAL type, and put this check into Div
-        codegen::Value final_null = Value{type::Type::TypeId::BIGINT,
-                                          Type::GetNullValue(codegen,
-                                              type::Type::TypeId::BIGINT),
-                                          nullptr, codegen.ConstBool(true)};
-        // Empty check
-        If check_divisor {codegen, codegen->CreateICmpNE(count.GetValue(),
-                                                         codegen.Const64(0))};
-        {
-          final_calc = sum.Div(codegen, count);
-        } check_divisor.EndIf();
-
-        auto final_val = check_divisor.BuildPHI(final_calc, final_null);
-
+        codegen::Value final_val =
+            casted_sum.Div(codegen, count, Value::OnError::Ignore);
+        vals[std::make_pair(source, agg_type)] = final_val;
         final_vals.push_back(final_val);
         break;
       }

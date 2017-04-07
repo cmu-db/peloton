@@ -43,7 +43,7 @@ class ValuesRuntimeProxy {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::OutputBigInt()
+  // The proxy around ValuesRuntime::OutputTimestamp()
   struct _OutputTimestamp {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
