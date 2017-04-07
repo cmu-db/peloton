@@ -77,6 +77,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalHashGroupBy *) override;
 
+  void Visit(const PhysicalSortGroupBy *) override;
+
   void Visit(const PhysicalDistinct *) override;
 
   void Visit(const PhysicalAggregate *) override;

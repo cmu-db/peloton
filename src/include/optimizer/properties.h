@@ -132,7 +132,7 @@ class PropertySort : public Property {
   inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
   inline std::shared_ptr<expression::AbstractExpression> GetSortColumn(
-      int idx) const {
+      size_t idx) const {
     return sort_columns_[idx];
   }
 

@@ -344,6 +344,19 @@ class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
 };
 
 //===--------------------------------------------------------------------===//
+// PhysicalSortGroupBy
+//===--------------------------------------------------------------------===//
+class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
+ public:
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
+  expression::AbstractExpression *having;
+};
+
+//===--------------------------------------------------------------------===//
 // PhysicalAggregate
 //===--------------------------------------------------------------------===//
 class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {

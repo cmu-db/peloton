@@ -57,6 +57,7 @@ class CostAndStatsCalculator : public OperatorVisitor {
   void Visit(const PhysicalDelete *) override;
   void Visit(const PhysicalUpdate *) override;
   void Visit(const PhysicalHashGroupBy *) override;
+  void Visit(const PhysicalSortGroupBy *) override;
   void Visit(const PhysicalDistinct *) override;
   void Visit(const PhysicalAggregate *) override;
 

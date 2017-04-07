@@ -322,12 +322,24 @@ Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
 }
 
 //===--------------------------------------------------------------------===//
-// PhysicalHashAggregate
+// PhysicalHashGroupBy
 //===--------------------------------------------------------------------===//
 Operator PhysicalHashGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
   PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
+  agg->columns = std::move(columns);
+  agg->having = having;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalSortGroupBy
+//===--------------------------------------------------------------------===//
+Operator PhysicalSortGroupBy::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+    expression::AbstractExpression *having) {
+  PhysicalSortGroupBy *agg = new PhysicalSortGroupBy;
   agg->columns = std::move(columns);
   agg->having = having;
   return Operator(agg);
@@ -467,6 +479,8 @@ std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
 template <>
 std::string OperatorNode<PhysicalHashGroupBy>::name_ = "PhysicalHashGroupBy";
 template <>
+std::string OperatorNode<PhysicalSortGroupBy>::name_ = "PhysicalSortGroupBy";
+template <>
 std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
 template <>
 std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
@@ -536,6 +550,8 @@ template <>
 OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
 template <>
 OpType OperatorNode<PhysicalHashGroupBy>::type_ = OpType::HashGroupBy;
+template <>
+OpType OperatorNode<PhysicalSortGroupBy>::type_ = OpType::SortGroupBy;
 template <>
 OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
 //===--------------------------------------------------------------------===//

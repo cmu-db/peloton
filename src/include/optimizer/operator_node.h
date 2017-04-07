@@ -65,7 +65,7 @@ enum class OpType {
   Update,
   Aggregate,
   HashGroupBy,
-  SortGoupBy
+  SortGroupBy
 };
 
 //===--------------------------------------------------------------------===//

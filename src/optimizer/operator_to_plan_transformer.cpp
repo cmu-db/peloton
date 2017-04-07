@@ -220,7 +220,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
   output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::HASH,
                                      &op->columns, op->having));
 }
-}
 
 // TODO: Remove duplicate codes
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {

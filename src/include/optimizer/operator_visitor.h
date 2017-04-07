@@ -42,6 +42,7 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalDelete *) = 0;
   virtual void Visit(const PhysicalUpdate *) = 0;
   virtual void Visit(const PhysicalHashGroupBy *) = 0;
+  virtual void Visit(const PhysicalSortGroupBy *) = 0;
   virtual void Visit(const PhysicalDistinct *) = 0;
   virtual void Visit(const PhysicalAggregate *) = 0;
 };

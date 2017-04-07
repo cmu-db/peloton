@@ -55,8 +55,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  physical_implementation_rules_.emplace_back(
-      new LogicalGroupByToHashGroupBy());
+  physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
+  physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
@@ -226,7 +226,7 @@ void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
 
 void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
                                    PropertySet requirements) {
-  LOG_TRACE("Optimizing expression of group %d with op %s", gexpr->GetGroupID(),
+  LOG_DEBUG("Optimizing expression of group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   // Only optimize and cost physical expression
@@ -304,6 +304,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                              requirements);
   }
+  LOG_DEBUG("Optimizing expression finishes");
 }
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {

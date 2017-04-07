@@ -75,6 +75,10 @@ void CostAndStatsCalculator::Visit(const PhysicalHashGroupBy *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };
+void CostAndStatsCalculator::Visit(const PhysicalSortGroupBy *) {
+  // TODO: Replace with more accurate cost
+  output_cost_ = 0;
+};
 void CostAndStatsCalculator::Visit(const PhysicalAggregate *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
