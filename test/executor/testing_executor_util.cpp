@@ -46,7 +46,10 @@ namespace test {
 storage::Database *TestingExecutorUtil::InitializeDatabase(
     const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
-  auto result = catalog->CreateDatabase(db_name, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto result = catalog->CreateDatabase(db_name, txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
   auto database = catalog->GetDatabaseWithName(db_name);
   return (database);
@@ -54,7 +57,10 @@ storage::Database *TestingExecutorUtil::InitializeDatabase(
 
 void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
-  auto result = catalog->DropDatabaseWithName(db_name, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto result = catalog->DropDatabaseWithName(db_name, txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
 }
 

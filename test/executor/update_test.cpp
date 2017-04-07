@@ -147,7 +147,9 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
 TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
@@ -168,13 +170,10 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, manager_id_column, name_column}));
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
   planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema),
-                           CreateType::TABLE);
+                           std::move(table_schema), CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
