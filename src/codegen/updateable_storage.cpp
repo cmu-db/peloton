@@ -37,9 +37,10 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   const auto numitems = types_.size();
 
   // We do not keep all the EntryInfos for each bit since it is waste of memory
-  llvm::Type *null_type = codegen.BoolType();
-  for (uint32_t i = 0; i < numitems; i++)
-    llvm_types.push_back(null_type);
+  llvm::Type *null_bit = codegen.BoolType();
+  for (uint32_t i = 0; i < numitems; i++) {
+    llvm_types.push_back(null_bit);
+  }
 
   for (uint32_t i = 0; i < numitems; i++) {
     llvm::Type *val_type = nullptr;

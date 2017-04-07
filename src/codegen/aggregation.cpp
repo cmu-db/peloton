@@ -62,12 +62,11 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-
         // Count() - to check whether there is no item at all
         uint32_t count_storage_pos =
             storage_.AddType(type::Type::TypeId::BIGINT);
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
-                                type::Type::TypeId::BIGINT, source_index,
+                                type::Type::TypeId::BIGINT, source_idx,
                                 count_storage_pos, true};
         aggregate_infos_.push_back(count_agg);
 
@@ -285,8 +284,8 @@ void Aggregation::FinalizeValues(
         if (!aggregate_info.is_internal) {
           // Empty check
           codegen::Value final_null;
-          If check_count {codegen, codegen->CreateICmpEQ(count.GetValue(),
-                                                         codegen.Const64(0))};
+          If check_count{codegen, codegen->CreateICmpEQ(count.GetValue(),
+                                                        codegen.Const64(0))};
           {
             final_null = Type::GetNullValue(codegen, final_calc.GetType());
           }
