@@ -239,11 +239,13 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     // Update pg_table with table info
     pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(),
                           txn);
-
+    oid_t column_id = 0;
     for (auto column : table->GetSchema()->GetColumns()) {
       ColumnCatalog::GetInstance()->InsertColumn(
-          table_oid, column.GetName(), column.GetOffset(), column.GetType(),
-          column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
+          table_oid, column.GetName(), column_id, column.GetOffset(),
+          column.GetType(), column.IsInlined(), column.GetConstraints(),
+          pool_.get(), txn);
+      column_id++;
     }
 
     CreatePrimaryIndex(database_oid, table_oid, txn);

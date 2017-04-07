@@ -31,11 +31,14 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
+
+  oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
-                               column.GetOffset(), column.GetType(),
+                               column_id, column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
                                pool, nullptr);
+    column_id++;
   }
 }
 
