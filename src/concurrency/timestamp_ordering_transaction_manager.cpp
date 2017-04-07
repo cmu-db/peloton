@@ -406,7 +406,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
         // update read set.
         current_txn->RecordRead(location);
-        
+
         // Increment table read op stats
         if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
           stats::BackendStatsContext::GetInstance()->IncrementTableReads(
@@ -482,7 +482,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     old_location = *(tile_group_header->GetIndirection(location.offset));
 
     tile_group_header = manager.GetTileGroup(old_location.block)
-                                    ->GetHeader();
+                               ->GetHeader();
   }
 
   auto transaction_id = current_txn->GetTransactionId();

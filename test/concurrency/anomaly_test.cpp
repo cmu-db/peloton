@@ -304,7 +304,7 @@ void WriteSkewTest() {
     // the database has tuple (0, 0), (1, 1)
     // T0 will set all 1 to 0
     // T1 will set all 0 to 1
-    // The results are either (0, 0), (1, 0) or (0, 1), (1, 1) in serilizable
+    // The results are either (0, 0), (1, 0) or (0, 1), (1, 1) in serializable
     // transactions.
     TransactionScheduler scheduler(3, table, &txn_manager);
 
@@ -429,11 +429,11 @@ TEST_F(AnomalyTests, StressTest) {
     scheduler.SetConcurrent(true);
     for (int i = 0; i < num_txn; i++) {
       for (int j = 0; j < scale; j++) {
-        // randomly select two uniq keys
+        // randomly select two unique keys
         int key1 = rand() % num_key;
         int key2 = rand() % num_key;
         int delta = rand() % 1000;
-        // Store substracted value
+        // Store subtracted value
         scheduler.Txn(i).ReadStore(key1, -delta);
         scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
         LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
