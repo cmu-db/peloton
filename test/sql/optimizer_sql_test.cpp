@@ -602,7 +602,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   EXPECT_EQ(2, result.size());
   // 6+1 / 2 = 3.5
-  EXPECT_EQ("3.500000", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3.5", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
   // Aggregate function: MIN(b)

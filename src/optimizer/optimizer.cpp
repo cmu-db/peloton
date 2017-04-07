@@ -69,7 +69,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list) {
-  LOG_DEBUG("Enter new optimizer...");
+  LOG_TRACE("Enter new optimizer...");
 
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
@@ -112,7 +112,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Reset memo after finishing the optimization
   Reset();
 
-  LOG_DEBUG("Exit new optimizer...");
+  LOG_TRACE("Exit new optimizer...");
 
   //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
   return move(best_plan);
@@ -212,7 +212,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
 }
 
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
-  LOG_TRACE("Optimizing group %d", id);
+  LOG_TRACE("Optimizing group %d with req %s", id, requirements.ToString().c_str());
   Group *group = memo_.GetGroupByID(id);
 
   // Whether required properties have already been optimized for the group
@@ -226,7 +226,7 @@ void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
 
 void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
                                    PropertySet requirements) {
-  LOG_DEBUG("Optimizing expression of group %d with op %s", gexpr->GetGroupID(),
+  LOG_TRACE("Optimizing expression of group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   // Only optimize and cost physical expression
@@ -234,20 +234,20 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
   vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
       move(DeriveChildProperties(gexpr, requirements));
-
+  
   size_t num_property_pairs = output_input_property_pairs.size();
 
   auto child_group_ids = gexpr->GetChildGroupIDs();
-
+  
   for (size_t pair_offset = 0; pair_offset < num_property_pairs;
        ++pair_offset) {
     auto output_properties = output_input_property_pairs[pair_offset].first;
     const auto &input_properties_list =
         output_input_property_pairs[pair_offset].second;
-
+    
     vector<shared_ptr<Stats>> best_child_stats;
     vector<double> best_child_costs;
-    for (size_t i = 0; i < child_group_ids.size(); ++i) {
+    for (size_t i = 0; i < child_group_ids.size(); ++i) { 
       GroupID child_group_id = child_group_ids[i];
       const PropertySet &input_properties = input_properties_list[i];
       // Optimize child
@@ -264,7 +264,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       best_child_stats.push_back(best_expression->GetStats(input_properties));
       best_child_costs.push_back(best_expression->GetCost(input_properties));
     }
-
+    
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
     DeriveCostAndStats(gexpr, output_properties, input_properties_list,
@@ -304,7 +304,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                              requirements);
   }
-  LOG_DEBUG("Optimizing expression finishes");
+  LOG_TRACE("Optimizing expression finishes");
 }
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
@@ -350,7 +350,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-
+  
   auto child_stats = vector<shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = vector<double>();
@@ -480,7 +480,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
     shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function
     if (rule.Check(plan)) {
-      LOG_DEBUG("Rule matched expression of group %d with op %s",
+      LOG_TRACE("Rule matched expression of group %d with op %s",
                 gexpr->GetGroupID(), gexpr->Op().name().c_str());
       // Apply rule transformations
       // We need to be able to analyze the transformations performed by this
@@ -491,7 +491,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 
       // Integrate transformed plans back into groups and explore/cost if new
       for (shared_ptr<OperatorExpression> plan : transformed_plans) {
-        LOG_DEBUG("Trying to integrate expression with op %s",
+        LOG_TRACE("Trying to integrate expression with op %s",
                   plan->Op().name().c_str());
         shared_ptr<GroupExpression> new_gexpr;
         bool new_expression =
