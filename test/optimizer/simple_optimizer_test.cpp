@@ -42,9 +42,6 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
   LOG_TRACE("Creating table");
   LOG_TRACE(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
