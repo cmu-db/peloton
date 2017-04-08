@@ -606,3 +606,36 @@ typedef struct ParamRef
   int			number;			/* the number of the parameter */
   int			location;		/* token location, or -1 if unknown */
 } ParamRef;
+
+/// **********  For UDFs *********** ///
+
+
+typedef struct CreateFunctionStmt
+{
+	NodeTag		type;
+	bool		replace;		/* T => replace if already exists */
+	List	   *funcname;		/* qualified name of function to create */
+	List	   *parameters;		/* a list of FunctionParameter */
+	TypeName   *returnType;		/* the return type */
+	List	   *options;		/* a list of DefElem */
+	List	   *withClause;		/* a list of DefElem */
+} CreateFunctionStmt;
+
+typedef enum FunctionParameterMode
+{
+	/* the assigned enum values appear in pg_proc, don't change 'em! */
+	FUNC_PARAM_IN = 'i',		/* input only */
+	FUNC_PARAM_OUT = 'o',		/* output only */
+	FUNC_PARAM_INOUT = 'b',		/* both */
+	FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
+	FUNC_PARAM_TABLE = 't'		/* table function output column */
+} FunctionParameterMode;
+
+typedef struct FunctionParameter
+{
+	NodeTag		type;
+	char	   *name;			/* parameter name, or NULL if not given */
+	TypeName   *argType;		/* TypeName for parameter type */
+	FunctionParameterMode mode; /* IN/OUT/etc */
+	Node	   *defexpr;		/* raw default expr, or NULL if not given */
+} FunctionParameter;

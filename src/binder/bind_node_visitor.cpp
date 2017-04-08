@@ -107,6 +107,7 @@ void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
 void BindNodeVisitor::Visit(const parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(const parser::CopyStatement *) {}
 void BindNodeVisitor::Visit(const parser::CreateStatement *) {}
+void BindNodeVisitor::Visit(const parser::CreateFunctionStatement *) {}
 void BindNodeVisitor::Visit(const parser::InsertStatement *) {}
 void BindNodeVisitor::Visit(const parser::DropStatement *) {}
 void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
