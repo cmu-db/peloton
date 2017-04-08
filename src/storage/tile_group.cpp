@@ -42,10 +42,11 @@ TileGroup::TileGroup(BackendType backend_type,
       column_map(column_map) {
   tile_count = tile_schemas.size();
 
+  LOG_INFO("Tile Count: %d", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
-
+    std::cout<<"tile_group.cpp Tile_Group Constructor: Tile with tile_id: "<< tile_id << " added\n";
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
         tile_group_header, tile_schemas[tile_itr], this, tuple_count));
@@ -96,7 +97,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
  * Copy from tuple.
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
             tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
@@ -131,12 +132,12 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
             tuple_slot_id, num_tuple_slots);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
-    LOG_TRACE("Failed to get next empty tuple slot within tile group.");
+    LOG_INFO("Failed to get next empty tuple slot within tile group.");
     return INVALID_OID;
   }
 
@@ -179,7 +180,7 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
     return tuple_slot_id;
   }
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
             tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
@@ -279,7 +280,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   // No more slots
   if (status == false) return INVALID_OID;
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
             tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;

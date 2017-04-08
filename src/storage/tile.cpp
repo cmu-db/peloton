@@ -51,7 +51,7 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   PL_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
-
+  LOG_INFO("Tuple Count: %d for Tile ID: %d and Tile Group ID: %d",tuple_count, tile_id, tile_group_id);
   // allocate tuple storage space for inlined data
   auto &storage_manager = storage::StorageManager::GetInstance();
   data = reinterpret_cast<char *>(
@@ -97,6 +97,9 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
 
   // Find slot location
   char *location = tuple_offset * tuple_length + data;
+
+  LOG_INFO("Insert Tuple at Tile Level");
+  std::cout<< "At Tuple Offset: "<< tuple_offset;
 
   // Copy over the tuple data into the tuple slot in the tile
   PL_MEMCPY(location, tuple->tuple_data_, tuple_length);
