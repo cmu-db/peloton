@@ -21,18 +21,6 @@ namespace peloton {
 namespace parser {
 
 
-
-enum DataType {
-
-	INT,
-	INTEGER,
-	TINYINT,
-	SMALLINT,
-	BIGINT
-
-};
-
-
 enum FuncParamMode {
 
 	FUNC_PARAM_IN = 'i',		/* input only */
@@ -43,13 +31,25 @@ enum FuncParamMode {
 
 };
 
-struct FunctionParameter {
+struct FuncParameter {
+
+
+  enum DataType {
+	INT,
+	INTEGER,
+	TINYINT,
+	SMALLINT,
+	BIGINT,
+        VARCHAR,
+        TEXT
+  };
+
  
-     FunctionParameter(DataType type): type(type) {};	
+     FuncParameter(DataType type): type(type) {};	
 
-     FunctionParameter(std::string name, DataType type):name(name),type(type){};
+     FuncParameter(std::string name, DataType type):name(name),type(type){};
 
-     virtual ~FunctionParameter(){
+     virtual ~FuncParameter(){
      //delete name
     // delete type? 	 		
      }	
@@ -73,7 +73,10 @@ struct FunctionParameter {
       case BIGINT:
         return type::Type::BIGINT;
         break;
-
+      case TEXT:
+      case VARCHAR:
+        return type::Type::VARCHAR;
+        break;
        // add other types as necessary 
     }
 	
@@ -92,13 +95,14 @@ enum PLType {
 	
 };
 
+/*
 enum ASclause {
     
     EXECUTABLE=0,
     QUERY_STRING=1	  	
   
 };
-
+*/
 
 
 //might want to change it to char* instead of string
@@ -119,10 +123,10 @@ struct CreateFunctionStatement : public SQLStatement {
   }
 	
   PLType language;
-  ASclause as_type;
-  std::vector<std::string> function_body;
-  DataType return_type;
-  std::vector<FunctionParameter*>* func_parameters;	
+  //ASclause as_type;
+  std::string function_body;
+  //DataType return_type;
+  std::vector<FuncParameter*>* func_parameters;	
   std::string function_name;
   bool replace = false;
 
