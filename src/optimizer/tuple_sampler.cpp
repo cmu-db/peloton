@@ -40,6 +40,8 @@ int TupleSampler::GetNext() {
 size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *total_tuple_count) {
 
   size_t tuple_count = table->GetTupleCount();
+  size_t tile_group_count = table->GetTileGroupCount();
+  LOG_DEBUG("tuple_count = %lu", tuple_count);
 
   *total_tuple_count = tuple_count;
 
@@ -54,15 +56,18 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
 
   while(sampled_count < target_sample_count) {
     // Generate a random tilegroup offset
-    rand_tilegroup_offset = rand() % tuple_count;
+    rand_tilegroup_offset = rand() % tile_group_count;
     storage::TileGroup *tile_group = table->GetTileGroup(rand_tilegroup_offset).get();
 
     oid_t tuple_per_group = tile_group->GetAllocatedTupleCount();
+    LOG_DEBUG("tuple_per_group: %u", tuple_per_group);
 
     rand_tuple_offset = rand() % tuple_per_group;
 
     storage::Tuple tuple(tuple_schema, true);
 
+    LOG_DEBUG("tuple_group_offset = %lu, tuple_offset = %lu",
+                rand_tilegroup_offset, rand_tuple_offset);
     if(!GetTupleInTileGroup(tile_group, rand_tuple_offset, &tuple)) {
       continue;
     }
@@ -80,6 +85,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   // Reference: TileGroupHeader::GetActiveTupleCount()
   // Check whether the transaction ID is invalid.
   txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_offset);
+  LOG_DEBUG("transaction ID: %lu", tuple_txn_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     return false;
   }
@@ -88,6 +94,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   auto tile_schemas = tile_group->GetTileSchemas();
   size_t tile_count = tile_group->GetTileCount();
 
+  LOG_DEBUG("tile_count: %lu", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     const catalog::Schema &schema = tile_schemas[tile_itr];
     oid_t tile_column_count = schema.GetColumnCount();
@@ -104,6 +111,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
       tuple_column_itr++;
     }
   }
+  LOG_DEBUG("offset %lu, Tuple info: %s", tuple_offset, tuple->GetInfo().c_str());
   return true;
 }
 
