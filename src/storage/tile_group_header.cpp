@@ -220,7 +220,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  LOG_TRACE("%s", os.str().c_str());
+  LOG_INFO("%s", os.str().c_str());
 }
 
 // this function is called only when building tile groups for aggregation
