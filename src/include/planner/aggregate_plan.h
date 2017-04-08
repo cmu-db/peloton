@@ -42,6 +42,8 @@ class AggregatePlan : public AbstractPlan {
 
     type::Type::TypeId GetValueType() const { return agg_ai.type; }
 
+    bool IsNullable() const { return agg_ai.nullable; }
+
     AggTerm Copy() const {
       return AggTerm(aggtype, expression->Copy(), distinct);
     }

@@ -35,10 +35,12 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
 
   // Now let the aggregate expressions do their bindings
   for (oid_t i = 0; i < aggregates.size(); i++) {
+    auto &term = const_cast<planner::AggregatePlan::AggTerm &>(aggregates[i]);
     auto *term_exp =
         const_cast<expression::AbstractExpression *>(aggregates[i].expression);
     if (term_exp != nullptr) {
       term_exp->PerformBinding(input_context);
+      term.agg_ai.nullable = term_exp->IsNullable();
     }
   }
 
