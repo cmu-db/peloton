@@ -38,10 +38,15 @@ int TupleSampler::GetNext() {
  *
  */
 size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *total_tuple_count) {
+//  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+//  auto txn = txn_manager.BeginTransaction();
+
+//  auto &manager = catalog::Manager::GetInstance();
 
   size_t tuple_count = table->GetTupleCount();
   size_t tile_group_count = table->GetTileGroupCount();
-  LOG_DEBUG("tuple_count = %lu", tuple_count);
+  LOG_DEBUG("tuple_count = %lu, tile_group_count = %lu",
+              tuple_count, tile_group_count);
 
   *total_tuple_count = tuple_count;
 
@@ -58,9 +63,12 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
     // Generate a random tilegroup offset
     rand_tilegroup_offset = rand() % tile_group_count;
     storage::TileGroup *tile_group = table->GetTileGroup(rand_tilegroup_offset).get();
-
-    oid_t tuple_per_group = tile_group->GetAllocatedTupleCount();
-    LOG_DEBUG("tuple_per_group: %u", tuple_per_group);
+    oid_t tuple_per_group = tile_group->GetActiveTupleCount();
+    LOG_DEBUG("tile_group: offset: %lu, addr: %p, tuple_per_group: %u",
+        rand_tilegroup_offset, tile_group, tuple_per_group);
+    if(tuple_per_group == 0) {
+      continue;
+    }
 
     rand_tuple_offset = rand() % tuple_per_group;
 
@@ -81,10 +89,14 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
 bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
                           size_t tuple_offset,
                           storage::Tuple *tuple) {
+  // Tile Group Header
+  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+//  LOG_DEBUG("Tile Group info: %s", tile_group_header->GetInfo().c_str());
+
   // Check whether tuple is valid at given offset in the tile_group
   // Reference: TileGroupHeader::GetActiveTupleCount()
   // Check whether the transaction ID is invalid.
-  txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_offset);
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_offset);
   LOG_DEBUG("transaction ID: %lu", tuple_txn_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     return false;
