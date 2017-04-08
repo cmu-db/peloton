@@ -2,7 +2,7 @@
 
 #define private public
 
-#include "optimizer/count_min_sketch.h"
+#include "optimizer/stats/count_min_sketch.h"
 #include "common/logger.h"
 #include "common/statement.h"
 
@@ -43,6 +43,27 @@ TEST_F(CountMinSketchTests, SimpleCountMinSketchStringTest) {
   sketch.Add("Million", 1000000);
 
   EXPECT_EQ(sketch.EstimateItemCount("10"), 10);
+}
+
+TEST_F(CountMinSketchTests, SimpleCountMinSketchMixTest) {
+  CountMinSketch sketch(10, 5, 0);
+  EXPECT_EQ(sketch.depth, 10);
+  EXPECT_EQ(sketch.width, 5);
+  EXPECT_EQ(sketch.size, 0);
+
+  sketch.Add(10, 10);
+  sketch.Add("5", 5);
+  sketch.Add("1", 1);
+  sketch.Add("Million", 1000000);
+  sketch.Add(100, 35);
+
+  EXPECT_EQ(sketch.EstimateItemCount(10), 10);
+  EXPECT_EQ(sketch.size, 5);
+
+  sketch.Remove(50, 35);
+  sketch.Remove(100, 40);
+  sketch.Remove("1", 3);
+  EXPECT_EQ(sketch.size, 3);
 }
 
 }
