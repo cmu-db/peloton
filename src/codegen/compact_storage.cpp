@@ -30,19 +30,19 @@ llvm::Type *CompactStorage::Setup(
 
   // Copy over the types for convenience
   types_ = types;
-  const auto numitems = types_.size();
+  const auto num_items = types_.size();
 
   std::vector<llvm::Type *> llvm_types;
 
   // We keep no EntryInfo for each bit since it is waste of memory
   llvm::Type *null_bit = codegen.BoolType();
-  for (uint32_t i = 0; i < numitems; i++) {
+  for (uint32_t i = 0; i < num_items; i++) {
     llvm_types.push_back(null_bit);
   }
 
   // Construct the storage for the values
 
-  for (uint32_t i = 0; i < numitems; i++) {
+  for (uint32_t i = 0; i < num_items; i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, types_[i], val_type, len_type);

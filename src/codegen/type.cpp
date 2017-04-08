@@ -808,13 +808,19 @@ struct IntegerDiv : public Type::BinaryOperator {
     // Check if the caller cares about division-by-zero errors
 
     llvm::Value *result = nullptr;
-    if (on_error == Value::OnError::Ignore) {
+    if (on_error == Value::OnError::ReturnDefault ||
+        on_error == Value::OnError::ReturnNull) {
       // Get the default value for the types
       llvm::Value *default_val = nullptr, *division_result = nullptr;
       If is_div0{codegen, div0.GetValue()};
       {
-        default_val =
-            Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+        if (on_error == Value::OnError::ReturnDefault) {
+          default_val =
+              Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+        } else {
+          default_val =
+              Type::GetNullValue(codegen, proper_left.GetType()).GetValue();
+        }
       }
       is_div0.ElseBlock();
       {
@@ -868,13 +874,19 @@ struct IntegerMod : public Type::BinaryOperator {
     // Check if the caller cares about division-by-zero errors
 
     llvm::Value *result = nullptr;
-    if (on_error == Value::OnError::Ignore) {
+    if (on_error == Value::OnError::ReturnDefault ||
+        on_error == Value::OnError::ReturnNull) {
       // Get the default value for the types
       llvm::Value *default_val = nullptr, *division_result = nullptr;
       If is_div0{codegen, div0.GetValue()};
       {
-        default_val =
-            Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+        if (on_error == Value::OnError::ReturnDefault) {
+          default_val =
+              Type::GetDefaultValue(codegen, proper_left.GetType()).GetValue();
+        } else {
+          default_val =
+              Type::GetNullValue(codegen, proper_left.GetType()).GetValue();
+        }
       }
       is_div0.ElseBlock();
       {
@@ -953,12 +965,42 @@ struct DecimalMul : public Type::BinaryOperator {
 struct DecimalDiv : public Type::BinaryOperator {
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
                Value::OnError on_error) const override {
-    (void)on_error;
     PL_ASSERT(left.GetType() == right.GetType());
 
-    // Do addition
-    llvm::Value *result =
-        codegen->CreateFDiv(left.GetValue(), right.GetValue());
+    // First, check if the divisor is zero
+    codegen::Value div0 = right.CompareEq(
+        codegen, Value{type::Type::TypeId::DECIMAL, codegen.ConstDouble(0.0)});
+
+    llvm::Value *result = nullptr;
+    if (on_error == Value::OnError::ReturnDefault ||
+        on_error == Value::OnError::ReturnNull) {
+      // Get the default value for the types
+      llvm::Value *default_val = nullptr, *division_result = nullptr;
+      If is_div0{codegen, div0.GetValue()};
+      {
+        if (on_error == Value::OnError::ReturnDefault) {
+          default_val =
+              Type::GetDefaultValue(codegen, left.GetType()).GetValue();
+        } else {
+          default_val = Type::GetNullValue(codegen, left.GetType()).GetValue();
+        }
+      }
+      is_div0.ElseBlock();
+      {
+        division_result =
+            codegen->CreateFDiv(left.GetValue(), right.GetValue());
+      }
+      is_div0.EndIf();
+
+      // Build PHI
+      result = is_div0.BuildPHI(default_val, division_result);
+    } else if (on_error == Value::OnError::Exception) {
+      // If the caller **does** care about the error, generate the exception
+      codegen.ThrowIfDivideByZero(div0.GetValue());
+
+      // Do division
+      result = codegen->CreateFDiv(left.GetValue(), right.GetValue());
+    }
 
     // Return result
     return Value{left.GetType(), result};

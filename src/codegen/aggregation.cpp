@@ -283,9 +283,11 @@ void Aggregation::FinalizeValues(
         vals[std::make_pair(source, agg_type)] = final_calc;
         if (!aggregate_info.is_internal) {
           // Empty check
+          codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
+          codegen::Value zero_count = count.CompareEq(codegen, zero);
+
           codegen::Value final_null;
-          If check_count{codegen, codegen->CreateICmpEQ(count.GetValue(),
-                                                        codegen.Const64(0))};
+          If check_count{codegen, zero_count.GetValue()};
           {
             final_null = Type::GetNullValue(codegen, final_calc.GetType());
           }
@@ -299,10 +301,11 @@ void Aggregation::FinalizeValues(
         // Find the sum and count for this aggregate
         codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
         codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
-        codegen::Value casted_sum = sum.CastTo(codegen, count.GetType());
+        sum = sum.CastTo(codegen, count.GetType());
 
         codegen::Value final_val =
-            casted_sum.Div(codegen, count, Value::OnError::Ignore);
+            sum.Div(codegen, count, Value::OnError::ReturnNull);
+
         vals[std::make_pair(source, agg_type)] = final_val;
         final_vals.push_back(final_val);
         break;

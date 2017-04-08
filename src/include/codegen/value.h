@@ -73,7 +73,7 @@ class Value {
   // Mathematical functions
   //===--------------------------------------------------------------------===//
 
-  enum class OnError : uint32_t { Ignore, Exception };
+  enum class OnError : uint32_t { ReturnDefault, ReturnNull, Exception };
 
   codegen::Value Add(CodeGen &codegen, const codegen::Value &right,
                      const OnError on_error = OnError::Exception) const;
