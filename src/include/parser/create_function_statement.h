@@ -32,60 +32,53 @@ enum FuncParamMode {
 };
 
 struct FuncParameter {
-
-
   enum DataType {
 	INT,
 	INTEGER,
 	TINYINT,
 	SMALLINT,
 	BIGINT,
-        VARCHAR,
-        TEXT
+  VARCHAR,
+  TEXT
   };
 
- 
-     FuncParameter(DataType type): type(type) {};	
+  FuncParameter(DataType type): type(type) {};	
 
-     FuncParameter(std::string name, DataType type):name(name),type(type){};
+  FuncParameter(std::string name, DataType type):name(name),type(type){};
 
-     virtual ~FuncParameter(){
-     //delete name
-    // delete type? 	 		
-     }	
-     std::string name;
-     DataType type; 
-     FuncParamMode mode;
+    virtual ~FuncParameter(){
+      //delete name
+      // delete type? 	 		
+    }	
 
-     static type::Type::TypeId GetValueType(DataType type) {
-     switch (type) {
-      case INT:
-      case INTEGER:
-        return type::Type::INTEGER;
-        break;
+    std::string name;
+    DataType type; 
+    FuncParamMode mode;
 
-      case TINYINT:
-        return type::Type::TINYINT;
-        break;
-      case SMALLINT:
-        return type::Type::SMALLINT;
-        break;
-      case BIGINT:
-        return type::Type::BIGINT;
-        break;
-      case TEXT:
-      case VARCHAR:
-        return type::Type::VARCHAR;
-        break;
-       // add other types as necessary 
-    }
-	
-}
-	
+    static type::Type::TypeId GetValueType(DataType type) {
+    switch (type) {
+    case INT:
+    case INTEGER:
+      return type::Type::INTEGER;
+      break;
+
+    case TINYINT:
+      return type::Type::TINYINT;
+      break;
+    case SMALLINT:
+      return type::Type::SMALLINT;
+      break;
+    case BIGINT:
+      return type::Type::BIGINT;
+      break;
+    case TEXT:
+    case VARCHAR:
+      return type::Type::VARCHAR;
+      break;
+     // add other types as necessary 
+      }
+  }	
 };
-
-
-
 
 //move it to types.h
 enum PLType {
@@ -104,14 +97,11 @@ enum ASclause {
 };
 */
 
-
 //might want to change it to char* instead of string
 struct CreateFunctionStatement : public SQLStatement {
 
   CreateFunctionStatement()
       :SQLStatement(StatementType::CREATE_FUNC){
-
-	
    }; 
 
   virtual ~CreateFunctionStatement() {
