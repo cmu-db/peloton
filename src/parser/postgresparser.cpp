@@ -830,6 +830,114 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
 
+// This helper function takes in a Postgres FunctionParameter object and transforms
+// it into a Peloton FunctionParameter object
+parser::FuncParameter* PostgresParser::FunctionParameterTransform(FunctionParameter* root) {
+  parser::FuncParameter::DataType data_type;
+  TypeName* type_name = root->argType;
+  char* name = (reinterpret_cast<value*>(type_name->names->tail->data.ptr_value)
+                    ->val.str);
+  parser::FuncParameter* result = nullptr;
+
+  // Transform parameter type
+  if ((strcmp(name, "int") == 0) || (strcmp(name, "int4") == 0)) {
+    data_type = FuncParameter::DataType::INT;
+  } 
+  //*******See which of the below are needed later***********
+  // I think text/varchar may be used for the pg_catalog
+  else if (strcmp(name, "varchar") == 0) {
+    data_type = FuncParameter::DataType::VARCHAR;
+  } else if (strcmp(name, "int8") == 0) {
+    data_type = FuncParameter::DataType::BIGINT;
+  } else if (strcmp(name, "int2") == 0) {
+    data_type = FuncParameter::DataType::SMALLINT;
+  } else if (strcmp(name, "text") == 0) {
+    data_type = FuncParameter::DataType::TEXT;
+  } else if (strcmp(name, "tinyint") == 0) {
+    data_type = FuncParameter::DataType::TINYINT;
+  } else {
+    LOG_ERROR("Column DataType %s not supported yet...\n", name);
+    throw NotImplementedException("...");
+  }
+
+  // Transform Varchar parameter name
+  result = new FuncParameter(cstrdup(root->name), data_type);
+  //Handle the tranformation of type modes for the parameters
+  if (type_name->typmods) {
+    Node* node =
+        reinterpret_cast<Node*>(type_name->typmods->head->data.ptr_value);
+    if (node->type == T_A_Const) {
+      if (reinterpret_cast<A_Const*>(node)->val.type != T_Integer) {
+        LOG_ERROR("typmods of type %d not supported yet...\n",
+                  reinterpret_cast<A_Const*>(node)->val.type);
+        delete result;
+        throw NotImplementedException("...");
+      }
+      // will have to include this parameter to accomodate type modes
+      //result->varlen =
+      //    static_cast<size_t>(reinterpret_cast<A_Const*>(node)->val.val.ival);
+    } else {
+      LOG_ERROR("typmods of type %d not supported yet...\n", node->type);
+      delete result;
+      throw NotImplementedException("...");
+    }
+  }
+
+  return result;
+}
+
+// This function takes in a Postgres CreateFunctionStmt parsenode
+// and transfers into a Peloton CreateFunctionStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// CreateFunctionStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt* root) {
+  UNUSED_ATTRIBUTE CreateFunctionStmt* temp = root;
+  parser::CreateFunctionStatement* result = new CreateFunctionStatement();
+  
+  result->replace = root->replace;
+  //FunctionParameter* parameters = root->parameters;
+
+  result->func_parameters = new std::vector<FuncParameter*>();
+  for (auto cell = root->parameters->head; cell != nullptr; cell = cell->next) {
+    Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
+    if ((node->type) == T_FunctionParameter) {
+      // Transform Function Parameter
+      FuncParameter* temp =
+          FunctionParameterTransform(reinterpret_cast<FunctionParameter*>(node));
+      
+      result->func_parameters->push_back(temp);
+    }
+  }
+  //**** We can either reuse FuctionParamater here or create a new struct for ReturnType
+  //result->return_type = TBD
+
+  // Assuming only one function name can be passed for now.
+  char* name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value)
+                    ->val.str);
+  result->function_name = cstrdup(name); //We may have to change this to another function for handlign char * to string
+   
+  // handle options
+  for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
+    auto def_elem = reinterpret_cast<DefElem*>(cell->data.ptr_value);
+    if (strcmp(def_elem->defname, "as") == 0) {
+      auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      result->function_body = query_string;
+    }
+    else if(strcmp(def_elem->defname, "language") == 0) {
+      auto lang = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      if ((strcmp(lang, "plpgsql") == 0)) {
+        result->language = PL_PGSQL;
+      } 
+      else if (strcmp(name, "C") == 0) {
+        result->language = PL_C;
+      }
+    }
+  }
+
+  return reinterpret_cast<parser::SQLStatement*>(result);
+}
+
+
 // This function takes in a Postgres IndexStmt parsenode
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
@@ -1093,6 +1201,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
       break;
     case T_CreateStmt:
       result = CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
+      break;
+    case T_CreateFunctionStmt:
+      result = CreateFunctionTransform(reinterpret_cast<CreateFunctionStmt*>(stmt));
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
