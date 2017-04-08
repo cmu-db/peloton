@@ -24,3 +24,4 @@
 #include "select_statement.h"
 #include "transaction_statement.h"
 #include "update_statement.h"
+#include "create_function_statement.h"
