@@ -141,6 +141,8 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
+  bool GetTileCompressionStatus(const oid_t tile_id) const;
+
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
   const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {

@@ -51,7 +51,8 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   PL_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
-  LOG_INFO("Tuple Count: %d for Tile ID: %d and Tile Group ID: %d",tuple_count, tile_id, tile_group_id);
+  // LOG_INFO("Tuple Count: %d for Tile ID: %d and Tile Group ID: %d",tuple_count, tile_id, tile_group_id);
+
   // allocate tuple storage space for inlined data
   auto &storage_manager = storage::StorageManager::GetInstance();
   data = reinterpret_cast<char *>(
@@ -103,6 +104,7 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
 
   // Copy over the tuple data into the tuple slot in the tile
   PL_MEMCPY(location, tuple->tuple_data_, tuple_length);
+  LOG_INFO("Memcopy of tuple at location: SUCCESS");
 }
 
 /**
@@ -216,6 +218,27 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 
   return new_tile;
 }
+
+void Tile::CompressTile() {
+  LOG_INFO("Compress Tile Here");
+  int num_tuples = GetAllocatedTupleCount();
+  std::vector<int> column_values;
+  LOG_INFO("Number of Columns: %d", column_count);
+  unsigned int i;
+  int j;
+  for (i = 0; i < column_count; i++) {
+    int max = 0;
+    for (j = 0; j < num_tuples; j++) {
+      int curr_value = GetValue(j,i).GetAs<int32_t>();
+      std::cout << "Value for tuple: "<< j << " at column: "<< i << " is: " << curr_value << "\n";
+      if (curr_value > max) {
+        max = curr_value;
+      }
+    }
+    std::cout << " Max Value of column: " << i << " is: "<< max << "\n";
+  }
+}
+
 
 //===--------------------------------------------------------------------===//
 // Utilities

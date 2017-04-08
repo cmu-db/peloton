@@ -46,13 +46,14 @@ TileGroup::TileGroup(BackendType backend_type,
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
-    std::cout<<"tile_group.cpp Tile_Group Constructor: Tile with tile_id: "<< tile_id << " added\n";
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
         tile_group_header, tile_schemas[tile_itr], this, tuple_count));
 
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
+    std::cout<<"tile_group.cpp Tile_Group Constructor: Tile with tile_id: "<< tile_id << " added\n";
+    std::cout << "Compression Status of tile with tile_id: " << tile_id << " is: " << GetTileCompressionStatus(tiles.size() - 1) << "\n";
   }
 }
 
@@ -66,6 +67,11 @@ TileGroup::~TileGroup() {
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   PL_ASSERT(tiles[tile_id]);
   return tiles[tile_id]->GetTileId();
+}
+
+bool TileGroup::GetTileCompressionStatus(const oid_t tile_id) const {
+  PL_ASSERT(tiles[tile_id]);
+  return tiles[tile_id]->IsCompressed();
 }
 
 type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
@@ -392,6 +398,7 @@ const std::string TileGroup::GetInfo() const {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
       os << std::endl << (*tile);
+      os << std::endl << "Compression Status: " << tile->IsCompressed() << std::endl;
     }
   }
 
