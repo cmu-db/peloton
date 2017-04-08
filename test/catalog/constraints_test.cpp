@@ -52,6 +52,8 @@
 #define UNIQUE_TEST
 #define MULTI_UNIQUE_TEST
 
+#define DEFAULT_VALUE 11111
+
 namespace peloton {
 namespace test {
 
@@ -249,6 +251,9 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   auto col2 = catalog::Column(type::Type::INTEGER,
                               type::Type::GetTypeSize(
                                 type::Type::INTEGER), "col2", true);
+  catalog::Constraint defalut_constraint(ConstraintType::DEFAULT, "default");
+  defalut_constraint.addDefaultValue(type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
+  col2.AddConstraint(defalut_constraint);
 
   std::unique_ptr<catalog::Schema> table_schema(
     new catalog::Schema({primary_col, col1, col2}));
@@ -280,14 +285,12 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   LOG_INFO("================================================");
   LOG_INFO("============Starting to insert records==========");
 
+  std::string q1 = "INSERT INTO test_table VALUES (1, 10, NULL);";
+
   std::unique_ptr<Statement> statement;
-  statement.reset(new Statement("INSERT",
-                                "INSERT INTO "
-                                  "test_table(id, col1, "
-                                  "col2)" " VALUES (1, 10, 100);"));
+  statement.reset(new Statement("INSERT", q1));
   auto& peloton_parser = parser::PostgresParser::GetInstance();
-  auto insert_stmt = peloton_parser.BuildParseTree(
-    "INSERT INTO test_table(id, col1, col2) VALUES (1, 10, 100);");
+  auto insert_stmt = peloton_parser.BuildParseTree(q1);
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   std::vector<type::Value> params;
@@ -331,15 +334,32 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
   // Check the results
   // Todo: having trouble checking the tuple values
-  for (StatementResult r : result1) {
+  std::string s1, s2, col3val;
 
-    if (!r.first.empty()) {
-      LOG_INFO("Data 1 : %s", reinterpret_cast<char*>(r.first.data()));
+  for (unsigned int i = 0; i < result1.size(); i++) {
+    StatementResult r = result1[i];
+    std::string ss1, ss2;
+
+    for (unsigned char c : r.first) {
+      ss1 += c;
     }
-    if (!r.second.empty()) {
-      LOG_INFO("Data 2 : %s", reinterpret_cast<char*>(r.second.data()));
+
+    for (unsigned char c : r.second) {
+      ss2 += c;
+    }
+
+    s1 += ss1 + " ";
+    s2 += ss2 + " ";
+
+    if (i == result1.size() - 1) {
+      col3val += ss2;
     }
   }
+
+  LOG_INFO("SELECT result from 1 : %s", s1.c_str());
+  LOG_INFO("SELECT result from 2 : %s", s2.c_str());
+
+  EXPECT_EQ(DEFAULT_VALUE, std::stoi(col3val));
 
   // Delete the database
   txn = txn_manager.BeginTransaction();
