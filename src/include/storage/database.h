@@ -19,7 +19,7 @@
 #include "common/printable.h"
 #include "storage/data_table.h"
 
-struct peloton_status;
+struct ExecuteResult;
 struct dirty_table_info;
 struct dirty_index_info;
 

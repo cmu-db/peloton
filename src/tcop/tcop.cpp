@@ -210,13 +210,13 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
-  bridge::peloton_status p_status;
+  executor::ExecuteResult p_status;
 
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
@@ -234,7 +234,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                  result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
@@ -411,14 +411,25 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
-    case type::Type::BOOLEAN: {
+    case type::Type::BOOLEAN:
+    case type::Type::TINYINT: {
       field_type = PostgresValueType::BOOLEAN;
       field_size = 1;
+      break;
+    }
+    case type::Type::SMALLINT: {
+      field_type = PostgresValueType::SMALLINT;
+      field_size = 2;
       break;
     }
     case type::Type::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
+      break;
+    }
+    case type::Type::BIGINT: {
+      field_type = PostgresValueType::BIGINT;
+      field_size = 8;
       break;
     }
     case type::Type::DECIMAL: {
@@ -434,7 +445,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64;
+      field_size = 64; // FIXME: Bytes???
       break;
     }
     default: {

@@ -129,15 +129,15 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   //  std::vector<type::Value> params;
   //  std::vector<ResultType> result;
-  //  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  //  executor::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   //
   //  std::vector<int> result_format;
   //  auto tuple_descriptor =
   //      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  //  UNUSED_ATTRIBUTE bridge::peloton_status status =
-  //      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+  //  UNUSED_ATTRIBUTE executor::ExecuteResult status =
+  //      executor::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
   //  LOG_INFO("Statement executed. Result: %s",
@@ -214,7 +214,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
