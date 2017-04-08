@@ -603,7 +603,8 @@ enum class StatementType {
   RENAME = 11,                // rename statement type
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
-  COPY = 14                   // copy type
+  COPY = 14,                   // copy type
+  CREATE_FUNC = 15	      // create function type	
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
