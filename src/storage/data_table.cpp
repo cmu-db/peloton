@@ -63,6 +63,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
   // Init default partition
+  this->table_oid = table_oid;
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);

@@ -237,6 +237,8 @@ class DataTable : public AbstractTable {
   // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 
+  inline oid_t GetTableOid() const { return (table_oid); }
+
   bool HasPrimaryKey() const { return (has_primary_key_); }
 
   bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
@@ -330,6 +332,7 @@ class DataTable : public AbstractTable {
 
   // deprecated, use catalog::TableCatalog::GetInstance()->GetTableName()
   std::string table_name;
+  oid_t table_oid;
 
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;
