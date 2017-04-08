@@ -61,6 +61,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
+        tuples_per_tilegroup_ = 3;
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -175,6 +176,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
+      LOG_INFO("Calling GetTileGroup");
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
       tile_group->CopyTuple(tuple, free_item_pointer.offset);
@@ -205,6 +207,15 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
+    std::cout << "Compress Tile Group ID: "<< tile_group->GetInfo();
+    std::cout << "Create New Tile Group: "<< active_tile_group_id << "\n";
+    int num_tiles = tile_group_count_.load();
+    for (int i = 0; i < num_tiles; i++) {
+      std::cout<< "Compress Tile " << i+1 << "\n";
+      auto tile_ptr = tile_group->GetTileReference(i);
+      tile_ptr->CompressTile();
+    }
+
     AddDefaultTileGroup(active_tile_group_id);
   }
 
@@ -305,6 +316,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
+
 
   return location;
 }

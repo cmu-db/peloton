@@ -117,6 +117,11 @@ class Tile : public Printable {
   // Copy current tile in given backend and return new tile
   Tile *CopyTile(BackendType backend_type);
 
+  // 
+  virtual bool IsCompressed() const { return false; }
+
+  void CompressTile();
+
   //===--------------------------------------------------------------------===//
   // Size Stats
   //===--------------------------------------------------------------------===//

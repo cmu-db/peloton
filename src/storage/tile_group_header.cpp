@@ -46,7 +46,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
 
   // zero out the data
   PL_MEMSET(data, 0, header_size);
-
+  LOG_INFO("Num Tuple slots set to %d", num_tuple_slots);
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
