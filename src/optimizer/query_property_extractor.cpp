@@ -77,6 +77,7 @@ void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
       new PropertySort(move(sort_cols), sort_ascendings)));
 }
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
+void QueryPropertyExtractor::Visit(UNUSED_ATTRIBUTE const parser::CreateFunctionStatement *) {}
 
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}

@@ -31,6 +31,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(const parser::LimitDescription *) override;
 
   void Visit(const parser::CreateStatement *) override;
+  void Visit(const parser::CreateFunctionStatement *) override;
   void Visit(const parser::InsertStatement *) override;
   void Visit(const parser::DeleteStatement *) override;
   void Visit(const parser::DropStatement *) override;
