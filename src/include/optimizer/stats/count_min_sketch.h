@@ -1,9 +1,7 @@
-
 #pragma once
 
 #include "common/logger.h"
-
-#include <murmur3/MurmurHash3.h>
+#include "murmur3/MurmurHash3.h"
 
 #include <cmath>
 #include <vector>
@@ -51,16 +49,62 @@ class CountMinSketch {
   // in case later we need to change only one of them
   void Add(int64_t item, int count = 1) {
     std::vector<int> bins = getHashBins(item);
+    uint64_t former_min = UINT64_MAX;
     for (int i = 0; i < depth; i++) {
+      former_min = std::min(table[i][bins[i]], former_min);
       table[i][bins[i]] += count;
+    }
+    if (former_min == 0) {
+      ++size;
     }
   }
 
   void Add(const char* item, int count = 1) {
     std::vector<int> bins = getHashBins(item);
+    uint64_t former_min = UINT64_MAX;
     for (int i = 0; i < depth; i++) {
+      former_min = std::min(table[i][bins[i]], former_min);
       table[i][bins[i]] += count;
     }
+    if (former_min == 0) {
+      ++size;
+    }
+  }
+
+  void Remove(int64_t item, unsigned int count = 1) {
+    std::vector<int> bins = getHashBins(item);
+    uint64_t former_min = UINT64_MAX, latter_min = UINT64_MAX;
+    for (int i = 0; i < depth; i++) {
+      former_min = std::min(table[i][bins[i]], former_min);
+      if (table[i][bins[i]] > count)
+        table[i][bins[i]] -= count;
+      else
+        table[i][bins[i]] = 0;
+
+      latter_min = std::min(latter_min, table[i][bins[i]]);
+    }
+    if (former_min != 0 && latter_min == 0) {
+      --size;
+    }
+    //LOG_INFO("mins for item %d : [%d, %d]", (int) item, (int) former_min, (int) latter_min);
+  }
+
+  void Remove(const char* item, unsigned int count = 1) {
+    std::vector<int> bins = getHashBins(item);
+    uint64_t former_min = UINT64_MAX, latter_min = UINT64_MAX;
+    for (int i = 0; i < depth; i++) {
+      former_min = std::min(table[i][bins[i]], former_min);
+      if (table[i][bins[i]] > count)
+        table[i][bins[i]] -= count;
+      else
+        table[i][bins[i]] = 0;
+
+      latter_min = std::min(latter_min, table[i][bins[i]]);
+    }
+    if (former_min != 0 && latter_min == 0) {
+      --size;
+    }
+    //LOG_INFO("mins for item %s : [%d, %d]", item, (int) former_min, (int) latter_min);
   }
 
   uint64_t EstimateItemCount(int64_t item) {
