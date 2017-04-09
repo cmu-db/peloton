@@ -38,7 +38,7 @@
 #include "storage/database.h"
 
 // Logging mode
-extern peloton::LoggingType peloton_logging_mode;
+// extern peloton::LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace benchmark {

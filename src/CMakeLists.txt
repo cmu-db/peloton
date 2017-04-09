@@ -69,19 +69,18 @@ target_link_libraries(sdbench peloton)
 
 
 # --[ logger
-file(GLOB_RECURSE logger_srcs ${PROJECT_SOURCE_DIR}/src/main/logger/*.cpp)
-list(APPEND logger_srcs ${ycsb_srcs})
-list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/ycsb.cpp)
-list(APPEND logger_srcs ${tpcc_srcs})
-list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/tpcc.cpp)
-add_executable(logger EXCLUDE_FROM_ALL ${logger_srcs})
-target_link_libraries(logger peloton)
-
+#file(GLOB_RECURSE logger_srcs ${PROJECT_SOURCE_DIR}/src/main/logger/*.cpp)
+#list(APPEND logger_srcs ${ycsb_srcs})
+#list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/ycsb.cpp)
+#list(APPEND logger_srcs ${tpcc_srcs})
+#list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/tpcc.cpp)
+#add_executable(logger EXCLUDE_FROM_ALL ${logger_srcs})
+#target_link_libraries(logger peloton)
 
 # --[ link to jemalloc
 set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
-set(EXE_LIST peloton-bin ycsb tpcc sdbench logger)
+set(EXE_LIST peloton-bin ycsb tpcc sdbench) 
 foreach(exe_name ${EXE_LIST})
     target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
     set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})
@@ -90,6 +89,6 @@ endforeach()
 # --[ benchmark
 
 add_custom_target(benchmark)
-add_dependencies(benchmark tpcc ycsb sdbench logger)
+add_dependencies(benchmark tpcc ycsb sdbench)
 
 
