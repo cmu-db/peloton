@@ -4,7 +4,7 @@
 //
 // tuple_sampler_test.cpp
 //
-// Identification: test/optimizer/tuple_sampler.cpp
+// Identification: test/optimizer/tuple_sampler_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

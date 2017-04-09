@@ -33,6 +33,9 @@ namespace optimizer {
 
 #define STATS_TABLE_NAME "stats"
 
+#define SAMPLES_DB_NAME "samples_db"
+
+
 class ColumnStats {
  public:
 
@@ -61,29 +64,44 @@ class StatsStorage {
 
   StatsStorage();
 
+  /* Functions for managing stats table and schema */
+
   void CreateStatsCatalog();
 
   std::unique_ptr<catalog::Schema> InitializeStatsSchema();
 
   storage::DataTable *GetStatsTable();
 
-  std::unique_ptr<storage::Tuple> GetTableStatsCatalogTuple(
+  /* Functions for adding, updating and quering stats */
+
+  void StoreTableStats(TableStats *table_stats);
+
+  void InsertColumnStats();
+
+  std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
     oid_t column_id, int num_row, int num_distinct, int num_null,
     std::vector<type::Value> most_common_vals, std::vector<int> most_common_freqs,
     std::vector<double> histogram_bounds);
-
-  void InsertColumnStats();
-
-  void CollectStatsForAllTables();
-
-  void StoreTableStats(TableStats *table_stats);
 
   TableStats *GetTableStatsWithName(const std::string table_name);
 
   ColumnStats *GetColumnStatsByID(UNUSED_ATTRIBUTE oid_t database_id,
                                   UNUSED_ATTRIBUTE oid_t table_id,
                                   UNUSED_ATTRIBUTE oid_t column_id);
+
+  /* Functions for managing tuple samples */
+
+  void CreateSamplesDatabase();
+
+  void AddSamplesDatatable(
+                storage::DataTable *data_table,
+                std::vector<storage::Tuple> sampled_tuples);
+
+
+  /* Functions for triggerring stats collection */
+
+  void CollectStatsForAllTables();
 
  private:
   void StoreColumnStats(ColumnStats *column_stats);

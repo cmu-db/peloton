@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/tuple_sampler.h"
+#include "optimizer/stats/tuple_sampler.h"
 
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
