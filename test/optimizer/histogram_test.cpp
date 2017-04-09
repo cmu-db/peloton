@@ -2,7 +2,7 @@
 
 #define private public
 
-#include "optimizer/histogram.h"
+#include "optimizer/stats/histogram.h"
 
 namespace peloton {
 namespace test {
