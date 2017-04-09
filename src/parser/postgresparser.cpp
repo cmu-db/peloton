@@ -862,26 +862,42 @@ parser::FuncParameter* PostgresParser::FunctionParameterTransform(FunctionParame
 
   // Transform Varchar parameter name
   result = new FuncParameter(cstrdup(root->name), data_type);
-  //Handle the tranformation of type modes for the parameters
-  if (type_name->typmods) {
-    Node* node =
-        reinterpret_cast<Node*>(type_name->typmods->head->data.ptr_value);
-    if (node->type == T_A_Const) {
-      if (reinterpret_cast<A_Const*>(node)->val.type != T_Integer) {
-        LOG_ERROR("typmods of type %d not supported yet...\n",
-                  reinterpret_cast<A_Const*>(node)->val.type);
-        delete result;
-        throw NotImplementedException("...");
-      }
-      // will have to include this parameter to accomodate type modes
-      //result->varlen =
-      //    static_cast<size_t>(reinterpret_cast<A_Const*>(node)->val.val.ival);
-    } else {
-      LOG_ERROR("typmods of type %d not supported yet...\n", node->type);
-      delete result;
-      throw NotImplementedException("...");
-    }
+
+  return result;
+}
+
+// This helper function takes in a Postgres TypeName object and transforms
+// it into a Peloton ReturnType object
+parser::ReturnType* PostgresParser::ReturnTypeTransform(TypeName* root) {
+  parser::ReturnType::DataType data_type;
+  TypeName* type_name = root->argType;
+  char* name = (reinterpret_cast<value*>(root->names->tail->data.ptr_value)
+                    ->val.str);
+  parser::ReturnType* result = nullptr;
+
+  // Transform parameter type
+  if ((strcmp(name, "int") == 0) || (strcmp(name, "int4") == 0)) {
+    data_type = FuncParameter::DataType::INT;
+  } 
+  //*******See which of the below are needed later***********
+  // I think text/varchar may be used for the pg_catalog
+  else if (strcmp(name, "varchar") == 0) {
+    data_type = FuncParameter::DataType::VARCHAR;
+  } else if (strcmp(name, "int8") == 0) {
+    data_type = FuncParameter::DataType::BIGINT;
+  } else if (strcmp(name, "int2") == 0) {
+    data_type = FuncParameter::DataType::SMALLINT;
+  } else if (strcmp(name, "text") == 0) {
+    data_type = FuncParameter::DataType::TEXT;
+  } else if (strcmp(name, "tinyint") == 0) {
+    data_type = FuncParameter::DataType::TINYINT;
+  } else {
+    LOG_ERROR("Column DataType %s not supported yet...\n", name);
+    throw NotImplementedException("...");
   }
+
+  // Transform Varchar parameter name
+  result = new ReturnType(data_type);
 
   return result;
 }
@@ -902,14 +918,16 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     if ((node->type) == T_FunctionParameter) {
       // Transform Function Parameter
-      FuncParameter* temp =
+      FuncParameter* funcpar_temp =
           FunctionParameterTransform(reinterpret_cast<FunctionParameter*>(node));
       
-      result->func_parameters->push_back(temp);
+      result->func_parameters->push_back(funcpar_temp);
     }
   }
-  //**** We can either reuse FuctionParamater here or create a new struct for ReturnType
-  //result->return_type = TBD
+ 
+  ReturnType* ret_temp =
+          ReturnTypeTransform(reinterpret_cast<TypeName*>(root->returnType));
+  result->return_type = ret_temp;
 
   // Assuming only one function name can be passed for now.
   char* name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value)
@@ -920,15 +938,20 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
   for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
     auto def_elem = reinterpret_cast<DefElem*>(cell->data.ptr_value);
     if (strcmp(def_elem->defname, "as") == 0) {
-      auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
-      result->function_body = query_string;
+      for (auto cell = def_elem->arg->head; cell != nullptr; cell = cell->next) {
+        result->function_body.push_back(cell->val.str)
+      }
+       result->set_as_type();
+
+      //auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      //result->function_body = *query_string;
     }
     else if(strcmp(def_elem->defname, "language") == 0) {
       auto lang = reinterpret_cast<value*>(def_elem->arg)->val.str;
       if ((strcmp(lang, "plpgsql") == 0)) {
         result->language = PL_PGSQL;
       } 
-      else if (strcmp(name, "C") == 0) {
+      else if (strcmp(name, "c") == 0) {
         result->language = PL_C;
       }
     }
