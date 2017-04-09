@@ -103,35 +103,38 @@ class TopKElements {
 
   class ApproxTopEntryElem {
   public:
-    
-    int item_type;
-    int64_t int_item;
-    const char* str_item;
 
     /* 
      * types:
-     * 0: no type / not initialized
-     * 1: int
-     * 2: str
+     * NON_TYPE: no type / not initialized
+     * INT_TYPE: int
+     * STR_TYPE: str
      */
-    static const int NON_TYPE = 0;
-    static const int INT_TYPE = 1;
-    static const int STR_TYPE = 2;
+
+    enum class ElemType {
+      NON_TYPE,
+      INT_TYPE,
+      STR_TYPE
+    };
+    
+    ElemType item_type;
+    int64_t int_item;
+    const char* str_item;
 
     ApproxTopEntryElem() : 
-    item_type{ApproxTopEntryElem::NON_TYPE},
+    item_type{ElemType::NON_TYPE},
     int_item{-1},
     str_item{nullptr}
     {}
     
     ApproxTopEntryElem(int64_t intItem) :
-    item_type{ApproxTopEntryElem::INT_TYPE},
+    item_type{ElemType::INT_TYPE},
     int_item{intItem},
     str_item{nullptr}
     {}
 
     ApproxTopEntryElem(const char* strItem) :
-    item_type{ApproxTopEntryElem::STR_TYPE},
+    item_type{ElemType::STR_TYPE},
     int_item{-1},
     str_item{strItem}
     {}
@@ -151,9 +154,9 @@ class TopKElements {
     bool operator==(const ApproxTopEntryElem &other) const {
       if (item_type == other.item_type) {
         switch (item_type) {
-          case ApproxTopEntryElem::INT_TYPE:
+          case ElemType::INT_TYPE:
             return int_item == other.int_item;
-          case ApproxTopEntryElem::STR_TYPE:
+          case ElemType::STR_TYPE:
             if (strcmp(str_item, other.str_item) == 0) {
               return true;
             } else {
@@ -193,7 +196,7 @@ class TopKElements {
       //char * ret ;
       std::string ret;
       switch (approx_top_elem.item_type) {
-        case ApproxTopEntryElem::INT_TYPE:
+        case ApproxTopEntryElem::ElemType::INT_TYPE:
           //sprintf(ret, "{int_elem: %ld, count: %ld}", approx_top_elem.int_item,  approx_count);
           ret += "{int_elem: ";
           ret += std::to_string(approx_top_elem.int_item); 
@@ -201,7 +204,7 @@ class TopKElements {
           ret += std::to_string(approx_count);
           ret += "}";
           break;
-        case ApproxTopEntryElem::STR_TYPE:
+        case ApproxTopEntryElem::ElemType::STR_TYPE:
           //sprintf(ret, "{str_elem: %s, count: %ld}", approx_top_elem.str_item, approx_count);
           ret += "{str_elem: ";
           ret += approx_top_elem.str_item; 
