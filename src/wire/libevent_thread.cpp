@@ -62,7 +62,11 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   }
   // TODO wait for all threads to be up before exit from Init()
   // TODO replace sleep with future/promises
-  sleep(1);
+  for (int thread_id = 0; thread_id < num_threads; thread_id++) {
+    if (!threads[thread_id].get()->is_started) {
+      sleep(1);
+    }
+  }
 }
 
 /*
@@ -70,6 +74,19 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
  */
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
+  worker_thread->is_closed = false;
+}
+
+void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                     UNUSED_ATTRIBUTE short what, void *arg) {
+  LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
+  if (!thread->is_started) {
+    thread->is_started = true;
+  }
+  if (thread->is_closed) {
+    event_base_loopexit(thread->GetEventBase(), NULL);
+    LOG_INFO("Thread %d exit base loop", thread->GetThreadID());
+  }
 }
 
 /*
@@ -90,6 +107,11 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   // Listen for notifications from the master thread
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
+
+  struct event *ev_timeout;
+  struct timeval two_seconds = {2,0};
+  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT|EV_PERSIST, ThreadStatus_Callback, this);
+  event_add(ev_timeout, &two_seconds);
 
   if (event_add(new_conn_event_, 0) == -1) {
     LOG_ERROR("Can't monitor libevent notify pipe\n");
@@ -129,8 +151,13 @@ void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    event_base_loopexit(threads[thread_id].get()->GetEventBase(), NULL);
-    LOG_INFO("Exit thread %d event base loop\n", thread_id);
+    threads[thread_id].get()->is_closed = true;
+  }
+
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
+    if (threads[thread_id].get()->is_closed) {
+      sleep(1);
+    }
   }
 }
 }
