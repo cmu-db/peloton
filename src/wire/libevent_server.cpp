@@ -85,10 +85,9 @@ LibeventServer::LibeventServer() {
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
-  struct event *ev_tout;
   struct timeval two_seconds = {2,0};
-  ev_tout = event_new(base, -1, EV_TIMEOUT|EV_PERSIST, Status_Callback, this);
-  event_add(ev_tout, &two_seconds);
+  ev_timeout = event_new(base, -1, EV_TIMEOUT|EV_PERSIST, Status_Callback, this);
+  event_add(ev_timeout, &two_seconds);
 
   // a master thread is responsible for coordinating worker threads.
   master_thread = std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
@@ -144,8 +143,10 @@ void LibeventServer::StartServer() {
     LOG_INFO("Listening on port %lu", port_);
     event_base_dispatch(base);
     event_free(evstop);
+    event_free(ev_timeout);
     event_base_free(base);
     static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+    LibeventServer::GetConn(listen_fd)->CloseSocket();
     LOG_INFO("Server Closed");
   }
 
