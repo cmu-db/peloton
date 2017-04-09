@@ -11,6 +11,11 @@
 #include <string>
 #include <vector>
 
+#include "type/value.h"
+#include "type/type.h"
+#include "common/macros.h"
+#include "common/logger.h"
+
 namespace peloton {
 namespace optimizer {
 
@@ -40,7 +45,6 @@ class Histogram {
   double total_count;
   double minimum;
   double maximum;
-  // std::map<double, Bin> cdf;
 
   /*
    * Constructor.
@@ -54,7 +58,6 @@ class Histogram {
    total_count{0},
    minimum{DBL_MAX},
    maximum{DBL_MIN}
-  //  cdf{}
   {}
 
   /*
@@ -69,6 +72,15 @@ class Histogram {
      if (bins.size() > max_bins) {
        MergeTwoBinsWithMinGap();
      }
+   }
+
+   /*
+    * Peloton type adapter
+    */
+   void Update(type::Value& value) {
+     PL_ASSERT(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL);
+     double raw_value = atof(value.ToString().c_str());
+     Update(raw_value);
    }
 
    /*
@@ -245,35 +257,10 @@ class Histogram {
     return binary_search(vec, middle + 1, end, key);
   }
 
-  /*
-   * This function generate empirical distribution function based on the histogram.
-   * CDF is a map from sum area -> bin
-   */
-  // void ComputeCDF() {
-  //   cdf.clear();
-  //   double sum = 0;
-  //   for (Bin bin : bins) {
-  //     sum += bin.m;
-  //     cdf.insert(std::pair<double, Bin>(sum, bin));
-  //   }
-  //   PrintCDF();
-  // }
-  //
-  // void PrintCDF() {
-  //   printf("Printing CDF...\n");
-  //   for (auto it = cdf.begin(); it != cdf.end(); it++) {
-  //     printf("[sum=%f, p=%f, m=%f]", it->first, it->second.p, it->second.m);
-  //   }
-  //   printf("\n");
-  // }
-
  public:
 
  /*
   * Represent a bin of a historgram.
-  *
-  * p refers to x-
-  * m refers to frequency
   */
   class Bin {
    public:

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "optimizer/stats/hyperloglog.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace optimizer {
@@ -12,33 +12,28 @@ ColumnStats::ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
     : database_id_{database_id},
       table_id_{table_id},
       column_id_{column_id},
-      column_type_{column_type} {
-  InitStatsCollectors();
-}
+      column_type_{column_type},
+      hll_{},
+      hist_{} {}
 
 ColumnStats::~ColumnStats() {}
 
-/*
- * Support the following stats collectors:
- * - DistinctValueCounter
- */
-void ColumnStats::InitStatsCollectors() {
-  /* Init distinct value counter */
-  HyperLogLog hll{};
-  distinct_value_counter_ = &hll;
-
-  /* Init value frequency counter */
-
-  /* Init histogram builder */
-
-  /* Init top k value counter */
+void ColumnStats::AddValue(type::Value& value) {
+  hll_.Add(value);
+  hist_.Update(value);
+  total_count_++;
+  if (value.IsNull()) {
+    null_count_++;
+  }
 }
 
-void ColumnStats::AddValue(type::Value value) {
-  distinct_value_counter_->AddValue(value);
+double ColumnStats::GetFracNull() {
+  if (total_count_ == 0) {
+    PL_ASSERT("Cannot calculate stats for table size 0.");
+    return 0;
+  }
+  return (static_cast<double>(null_count_) / total_count_);
 }
-
-double ColumnStats::GetNullValueCount() { return 0; }
 
 std::vector<ColumnStats::ValueFrequencyPair> ColumnStats::GetCommonValueAndFrequency() {
   std::vector<ColumnStats::ValueFrequencyPair> res{};
@@ -46,12 +41,11 @@ std::vector<ColumnStats::ValueFrequencyPair> ColumnStats::GetCommonValueAndFrequ
 }
 
 double ColumnStats::GetCardinality() {
-  return distinct_value_counter_->EstimateCardinality();
+  return hll_.EstimateCardinality();
 }
 
-std::vector<type::Value> ColumnStats::GetHistogramBound(uint8_t bin_nums = 10) {
-  std::vector<type::Value> res(bin_nums);
-  return res;
+std::vector<double> ColumnStats::GetHistogramBound() {
+  return hist_.Uniform(num_bins);
 }
 
 } /* namespace optimizer */
