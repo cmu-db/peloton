@@ -162,7 +162,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
         txn_manager.CommitTransaction(txn);
       }
 
-      // stats.Finalize();
+      stats.Finalize();
       return stats;
     }
 
@@ -177,13 +177,13 @@ void PrintName(std::string test_name) {
 
 TEST_F(BenchmarkScanTest, ScanTestWithCompilation) {
   PrintName("SCAN: COMPILATION");
-  auto stats = RunCompiledExperiment();
+  auto stats = RunCompiledExperiment(100);
   stats.PrintStats();
 }
 
 TEST_F(BenchmarkScanTest, ScanTestWithInterpretation) {
   PrintName("SCAN: INTERPRETATION");
-  auto stats = RunInterpretedExperiment();
+  auto stats = RunInterpretedExperiment(100);
   stats.PrintStats();
 }
 
