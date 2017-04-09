@@ -496,6 +496,7 @@ void LibeventSocket::CloseSocket() {
         continue;
       }
     }
+    LOG_DEBUG("Already Closed the connection %d", sock_fd);
     return;
   }
 }
