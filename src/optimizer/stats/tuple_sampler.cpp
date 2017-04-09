@@ -37,7 +37,7 @@ int TupleSampler::GetNext() {
  * AcquireSampleTuples - Sample a certain number of tuples from a given table.
  *
  */
-size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *total_tuple_count) {
+size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
 //  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
 //  auto txn = txn_manager.BeginTransaction();
 
@@ -45,10 +45,8 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
 
   size_t tuple_count = table->GetTupleCount();
   size_t tile_group_count = table->GetTileGroupCount();
-  LOG_DEBUG("tuple_count = %lu, tile_group_count = %lu",
+  LOG_TRACE("tuple_count = %lu, tile_group_count = %lu",
               tuple_count, tile_group_count);
-
-  *total_tuple_count = tuple_count;
 
   if(tuple_count < target_sample_count) {
     target_sample_count = tuple_count;
@@ -64,7 +62,7 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
     rand_tilegroup_offset = rand() % tile_group_count;
     storage::TileGroup *tile_group = table->GetTileGroup(rand_tilegroup_offset).get();
     oid_t tuple_per_group = tile_group->GetActiveTupleCount();
-    LOG_DEBUG("tile_group: offset: %lu, addr: %p, tuple_per_group: %u",
+    LOG_TRACE("tile_group: offset: %lu, addr: %p, tuple_per_group: %u",
         rand_tilegroup_offset, tile_group, tuple_per_group);
     if(tuple_per_group == 0) {
       continue;
@@ -72,15 +70,15 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
 
     rand_tuple_offset = rand() % tuple_per_group;
 
-    storage::Tuple tuple(tuple_schema, true);
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(tuple_schema, true));
 
-    LOG_DEBUG("tuple_group_offset = %lu, tuple_offset = %lu",
+    LOG_TRACE("tuple_group_offset = %lu, tuple_offset = %lu",
                 rand_tilegroup_offset, rand_tuple_offset);
-    if(!GetTupleInTileGroup(tile_group, rand_tuple_offset, &tuple)) {
+    if(!GetTupleInTileGroup(tile_group, rand_tuple_offset, tuple)) {
       continue;
     }
-
-    sampled_tuples.push_back(tuple);
+    LOG_TRACE("Add sampled tuple: %s", tuple->GetInfo().c_str());
+    sampled_tuples.push_back(std::move(tuple));
     sampled_count ++;
   }
   return sampled_tuples.size();
@@ -88,7 +86,7 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count, size_t *tot
 
 bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
                           size_t tuple_offset,
-                          storage::Tuple *tuple) {
+                          std::unique_ptr<storage::Tuple> &tuple) {
   // Tile Group Header
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 //  LOG_DEBUG("Tile Group info: %s", tile_group_header->GetInfo().c_str());
@@ -97,7 +95,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   // Reference: TileGroupHeader::GetActiveTupleCount()
   // Check whether the transaction ID is invalid.
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_offset);
-  LOG_DEBUG("transaction ID: %lu", tuple_txn_id);
+  LOG_TRACE("transaction ID: %lu", tuple_txn_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     return false;
   }
@@ -106,7 +104,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   auto tile_schemas = tile_group->GetTileSchemas();
   size_t tile_count = tile_group->GetTileCount();
 
-  LOG_DEBUG("tile_count: %lu", tile_count);
+  LOG_TRACE("tile_count: %lu", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     const catalog::Schema &schema = tile_schemas[tile_itr];
     oid_t tile_column_count = schema.GetColumnCount();
@@ -123,8 +121,12 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
       tuple_column_itr++;
     }
   }
-  LOG_DEBUG("offset %lu, Tuple info: %s", tuple_offset, tuple->GetInfo().c_str());
+  LOG_TRACE("offset %lu, Tuple info: %s", tuple_offset, tuple->GetInfo().c_str());
   return true;
+}
+
+std::vector<std::unique_ptr<storage::Tuple>> &TupleSampler::GetSampledTuples() {
+  return sampled_tuples;
 }
 
 

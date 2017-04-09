@@ -38,7 +38,10 @@ namespace optimizer {
 
 class ColumnStats {
  public:
+  ColumnStats() {}
 
+  oid_t GetDistinctCount() { return 0; }
+  oid_t GetNullCount() { return 0; }
 };
 
 class TableStats {
@@ -48,11 +51,10 @@ class TableStats {
   void CollectColumnStats() {}
   oid_t GetDatabaseID() { return 0; }
   oid_t GetTableID() { return 0; }
-  int GetRowCount() { return 0; }
+  size_t GetActiveTupleCount() { return 0; }
   oid_t GetColumnCount() { return 0; }
   ColumnStats *GetColumnStats(UNUSED_ATTRIBUTE oid_t column_id) { return nullptr; }
-  int GetDistinctCount() { return 0; }
-  int GetNullCount() { return 0; }
+
 
 };
 
@@ -96,8 +98,11 @@ class StatsStorage {
 
   void AddSamplesDatatable(
                 storage::DataTable *data_table,
-                std::vector<storage::Tuple> sampled_tuples);
+                std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
 
+  std::string GenerateSamplesTableName(oid_t db_id, oid_t table_id) {
+    return std::to_string(db_id) + "_" + std::to_string(table_id);
+  }
 
   /* Functions for triggerring stats collection */
 

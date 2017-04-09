@@ -78,15 +78,15 @@ std::unique_ptr<catalog::Schema> StatsStorage::InitializeStatsSchema() {
 
   auto most_common_vals_column = catalog::Column(varchar_type, varchar_type_size,
       "most_common_vals_column");
-  most_common_vals_column.AddConstraint(not_null_constraint);
+//  most_common_vals_column.AddConstraint(not_null_constraint);
 
   auto most_common_freqs_column = catalog::Column(varchar_type, varchar_type_size,
       "most_common_freqs_column");
-  most_common_freqs_column.AddConstraint(not_null_constraint);
+//  most_common_freqs_column.AddConstraint(not_null_constraint);
 
   auto histogram_bounds_column = catalog::Column(varchar_type, varchar_type_size,
       "histogram_bounds");
-  histogram_bounds_column.AddConstraint(not_null_constraint);
+//  histogram_bounds_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema( {
       database_id_column, table_id_column, column_id_column,
@@ -112,14 +112,14 @@ void StatsStorage::StoreTableStats(TableStats *table_stats) {
 
   oid_t database_id = table_stats->GetDatabaseID();
   oid_t table_id = table_stats->GetTableID();
-  int num_row = table_stats->GetRowCount();
+  size_t num_row = table_stats->GetActiveTupleCount();
 
   oid_t column_count = table_stats->GetColumnCount();
   for(oid_t column_id = 0; column_id < column_count; column_id ++) {
     ColumnStats *column_stats = table_stats->GetColumnStats(column_id);
     (void) column_stats;
-    int num_distinct = table_stats->GetDistinctCount();
-    int num_null = table_stats->GetNullCount();
+    int num_distinct = column_stats->GetDistinctCount();
+    int num_null = column_stats->GetNullCount();
     // TODO: Get most_common_vals, most_common_freqs and histogram_bounds from column_stats.
     std::vector<type::Value> most_common_vals;
     std::vector<int> most_common_freqs;
@@ -138,7 +138,8 @@ void StatsStorage::StoreTableStats(TableStats *table_stats) {
 }
 
 /**
- * Generate a column stats tuple
+ * Generate a column stats tuple.
+ * TODO: deal with array type.
  */
 std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
@@ -200,7 +201,7 @@ void StatsStorage::CreateSamplesDatabase() {
 
 void StatsStorage::AddSamplesDatatable(
                 storage::DataTable *data_table,
-                UNUSED_ATTRIBUTE std::vector<storage::Tuple> sampled_tuples) {
+                std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples) {
   auto schema = data_table->GetSchema();
   auto schema_copy = catalog::Schema::CopySchema(schema);
 
@@ -211,13 +212,19 @@ void StatsStorage::AddSamplesDatatable(
   bool adapt_table = false;
   bool is_catalog = true;
 
-  std::string samples_table_name = "samples_table";
+  std::string samples_table_name = GenerateSamplesTableName(data_table->GetDatabaseOid(),
+                                                            data_table->GetOid());
 
-  std::unique_ptr<storage::DataTable> table(
+
+  storage::DataTable *table =
         storage::TableFactory::GetDataTable(samples_db_oid, catalog->GetNextOid(),
         schema_copy, samples_table_name, DEFAULT_TUPLES_PER_TILEGROUP,
-        own_schema, adapt_table, is_catalog));
-  samples_db->AddTable(table.release(), true);
+        own_schema, adapt_table, is_catalog);
+  samples_db->AddTable(table, true);
+
+  for (auto &tuple : sampled_tuples) {
+    catalog::InsertTuple(table, std::move(tuple), nullptr);
+  }
 }
 
 } /* namespace optimizer */

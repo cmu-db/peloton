@@ -33,9 +33,11 @@ class TupleSampler {
   TupleSampler(storage::DataTable *table)
                 : table{table} {}
 
-  size_t AcquireSampleTuples(size_t target_sample_count, size_t *total_tuple_count);
+  size_t AcquireSampleTuples(size_t target_sample_count);
   bool GetTupleInTileGroup(storage::TileGroup *tile_group, size_t tuple_offset,
-                            storage::Tuple *tuple);
+                            std::unique_ptr<storage::Tuple> &tuple);
+
+  std::vector<std::unique_ptr<storage::Tuple>> &GetSampledTuples();
 
  private:
   void InitState();
@@ -44,7 +46,7 @@ class TupleSampler {
 
   storage::DataTable *table;
 
-  std::vector<storage::Tuple> sampled_tuples;
+  std::vector<std::unique_ptr<storage::Tuple>> sampled_tuples;
 
 };
 

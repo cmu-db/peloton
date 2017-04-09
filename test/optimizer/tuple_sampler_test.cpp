@@ -12,7 +12,7 @@
 
 #include "common/harness.h"
 
-#include "optimizer/tuple_sampler.h"
+#include "optimizer/stats/tuple_sampler.h"
 
 #include "storage/data_table.h"
 
@@ -38,7 +38,7 @@ class TupleSamplerTests : public PelotonTest {};
 TEST_F(TupleSamplerTests, SampleCountTest) {
   const int tuple_count = 100;
 
-  // Create a table and wrap it in logical tiles
+  // Create a table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
@@ -49,9 +49,11 @@ TEST_F(TupleSamplerTests, SampleCountTest) {
 
   TupleSampler sampler(data_table.get());
 
-  size_t total_tuple_count;
-  size_t sampled_count = sampler.AcquireSampleTuples(10, &total_tuple_count);
-  EXPECT_EQ(10, sampled_count);
+  size_t sampled_count = sampler.AcquireSampleTuples(10);
+  EXPECT_EQ(sampled_count, 10);
+
+  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples = sampler.GetSampledTuples();
+  EXPECT_EQ(sampled_tuples.size(), 10);
 }
 
 
