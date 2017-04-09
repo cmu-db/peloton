@@ -122,6 +122,8 @@ class Tile : public Printable {
 
   void CompressTile();
 
+  void CompressIntegerColumn(oid_t column_id);
+
   //===--------------------------------------------------------------------===//
   // Size Stats
   //===--------------------------------------------------------------------===//

@@ -171,7 +171,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  //Avoid inserting into recycled slot. Needs to be Modified!!!
+  /*auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
@@ -182,7 +183,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
       tile_group->CopyTuple(tuple, free_item_pointer.offset);
     }
     return free_item_pointer;
-  }
+  }*/
   //====================================================
 
   size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
@@ -207,15 +208,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
-    std::cout << "Compress Tile Group ID: "<< tile_group->GetInfo();
     std::cout << "Create New Tile Group: "<< active_tile_group_id << "\n";
-    int num_tiles = tile_group_count_.load();
-    for (int i = 0; i < num_tiles; i++) {
-      std::cout<< "Compress Tile " << i+1 << "\n";
-      auto tile_ptr = tile_group->GetTileReference(i);
-      tile_ptr->CompressTile();
-    }
-
+    tile_group->CompressTiles();
     AddDefaultTileGroup(active_tile_group_id);
   }
 
