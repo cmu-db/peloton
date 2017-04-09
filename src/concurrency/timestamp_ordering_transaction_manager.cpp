@@ -364,7 +364,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // if we have already owned the version.
       PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
-                current_txn->GetCommitId());
+                current_txn->GetCommitId() || 
+                GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
       // Increment table read op stats
       if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
@@ -402,7 +403,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // if the current transaction has already owned this tuple, 
         // then perform read directly.
         PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
-                  current_txn->GetCommitId());
+                  current_txn->GetCommitId() || 
+                  GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
 
         // update read set.
         current_txn->RecordRead(location);
