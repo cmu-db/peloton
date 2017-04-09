@@ -36,13 +36,13 @@ static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
     // peloton::wire::LibeventServer libeventserver;
     
     libeventserver.StartServer();
-    LOG_INFO("Server Closed\n");
     // Teardown
     // Todo: Peloton cannot shut down normally, will try to fix this soon
     // peloton::PelotonInit::Shutdown();
     // LOG_INFO("Peloton has shut down\n");
   } catch (peloton::ConnectionException exception) {
     // Nothing to do here!
+    LOG_INFO("There is exception in thread");
   }
   return NULL;
 }
@@ -52,7 +52,7 @@ static void *SimpleQueryTest(void *) {
   try {
     pqxx::connection C(
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
-    LOG_INFO("Connected to %s\n", C.dbname());
+    LOG_INFO("Connected to %s", C.dbname());
     pqxx::work W(C);
 
     // create table and insert some data
@@ -65,31 +65,32 @@ static void *SimpleQueryTest(void *) {
     pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
 
     EXPECT_EQ(R.size(), 1);
-    LOG_INFO("Found %lu employees\n", R.size());
+    LOG_INFO("Found %lu employees", R.size());
     W.commit();
   } catch (const std::exception &e) {
-    LOG_INFO("Exception occurred\n");
+    LOG_INFO("Exception occurred");
   }
 
-  LOG_INFO("Client has closed\n");
+  LOG_INFO("Client has closed");
   return NULL;
 }
 
 
 TEST_F(PacketManagerTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized\n");
-  // pthread_t threads[NUM_THREADS];
+  LOG_INFO("Server initialized");
   peloton::wire::LibeventServer libeventserver;
   std::thread serverThread(LaunchServer, libeventserver);
-
-  sleep(5);
-
+  while (!libeventserver.is_started) {
+    sleep(1);
+  }
   SimpleQueryTest(NULL);
 
-  // pthread_kill(threads[0], SIGHUP);
   libeventserver.CloseServer();
   serverThread.join();
+  LOG_INFO("Thread has joined");
+  peloton::PelotonInit::Shutdown();
+  LOG_INFO("Peloton has shut down\n"); 
 }
 
 }  // End test namespace
