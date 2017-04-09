@@ -120,9 +120,9 @@ class Tile : public Printable {
   // 
   virtual bool IsCompressed() const { return false; }
 
-  void CompressTile();
+  Tile *CompressTile();
 
-  void CompressIntegerColumn(oid_t column_id);
+  std::vector<type::Value> CompressIntegerColumn(oid_t column_id);
 
   //===--------------------------------------------------------------------===//
   // Size Stats

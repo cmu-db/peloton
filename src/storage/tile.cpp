@@ -223,7 +223,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
   return new_tile;
 }
 
-void Tile::CompressIntegerColumn(oid_t column_id) {
+std::vector<type::Value> Tile::CompressIntegerColumn(oid_t column_id) {
   oid_t num_tuples = GetAllocatedTupleCount();
 
   bool is_inlined = schema.IsInlined(column_id);
@@ -240,12 +240,12 @@ void Tile::CompressIntegerColumn(oid_t column_id) {
 
   std::cout<<"Sorted values \n";
   for(oid_t j = 0; j < num_tuples; j++) {
-    std::cout<<column_values[j]<<"\t";
+    std::cout<< column_values[j]<<"\t";
   }
 
-  std::cout<<"\nMedian value = "<<column_values[num_tuples/2]<<"\n";
-  std::cout<<"Minimum value = "<<column_values[0]<<"\n";
-  std::cout<<"Maximum value = "<<column_values[num_tuples-1]<<"\n";
+  std::cout<<"\nMedian value = "<< column_values[num_tuples/2]<<"\n";
+  std::cout<<"Minimum value = "<< column_values[0]<<"\n";
+  std::cout<<"Maximum value = "<< column_values[num_tuples-1]<<"\n";
 
 
   type::Value median = column_values[num_tuples/2];
@@ -259,32 +259,64 @@ void Tile::CompressIntegerColumn(oid_t column_id) {
     std::cout<<"Column can be compressed into TINYINT \nCompressed values - \n";
     for(oid_t k = 0; k < num_tuples; k++) {
       modified_values[k] = actual_values[k].Subtract(median).CastAs(type::Type::TINYINT);
-      std::cout<<modified_values[k]<<"\t";
+      std::cout<< modified_values[k]<<"\t";
     }
     std::cout<<"\n";
-
   } catch(Exception &e) {
     std::cout<<"Can not compress to TINYINT\n";
-  }
-  
 
+    if(schema.GetType(column_id) != type::Type::SMALLINT) {
+
+      try {
+        type::Value min_diff = column_values[0].Subtract(median).CastAs(type::Type::SMALLINT);
+        type::Value max_diff = column_values[num_tuples-1].Subtract(median).CastAs(type::Type::SMALLINT);
+
+        std::cout <<"Column can be compressed into SMALLINT \n Compressed values - \n";
+
+        for(oid_t k = 0; k  < num_tuples; k++) {
+          modified_values[k] = actual_values[k].Subtract(median).CastAs(type::Type::SMALLINT);
+          std::cout << modified_values[k]<<"\t";
+        }
+        std::cout<<"\n";
+      } catch(Exception &e) {
+        std::cout << "Can not compress SMALLINT";
+        modified_values.resize(0);
+      }
+
+
+    } 
+  }
+  return modified_values;
 }
 
-void Tile::CompressTile() {
+Tile *Tile::CompressTile() {
   LOG_INFO("Compress Tile Here");
-  //int num_tuples = GetAllocatedTupleCount();
-  std::vector<int> column_values;
   LOG_INFO("Number of Columns: %d", column_count);
 
+  oid_t compressed_columns = 0;
+
+  oid_t allocated_tuple_count = GetAllocatedTupleCount();
+  std::vector<type::Value> new_tile_column_values (allocated_tuple_count);
+  std::vector<std::vector<type::Value>> new_table (column_count);
+
+
   for(oid_t i = 0; i < column_count; i++) {
-    std::cout<<schema.GetColumn(i).GetName()<<"\n";
+    std::cout<< schema.GetColumn(i).GetName()<<"\n";
+
     switch(schema.GetType(i)) {
+
       case type::Type::SMALLINT: 
         std::cout<<"Column is SMALLINT\n";
         break;
+
       case type::Type::INTEGER:
         std::cout<<"Column is INTEGER\n";
-        CompressIntegerColumn(i);
+        new_tile_column_values = CompressIntegerColumn(i);
+        if (new_tile_column_values.size()!=0) {
+          compressed_columns += 1;
+          LOG_INFO ("Increased compressed_columns count by 1");
+        }
+        new_table[i] = new_tile_column_values;
         break;
       case type::Type::BIGINT:
         std::cout<<"Column is BIGINT\n";
@@ -295,23 +327,41 @@ void Tile::CompressTile() {
     }
   }
 
+    if (compressed_columns != 0) {
+      int allocated_tuple_count = GetAllocatedTupleCount();
 
-  /*for (i = 0; i < column_count; i++) {
-    //int max = 0;
-    for (j = 0; j < num_tuples; j++) {
+      
+      std::vector<catalog::Column> columns;
 
-      type::Value val = GetValue(j,i);
-      std::cout<<"Type = "<<val.GetTypeId()<<"\n";
-      std::cout<<"String value = "<<val.ToString()<<"\n";
-      //int curr_value = GetValue(j,i).GetAs<int32_t>();
-      //std::cout << "Value for tuple: "<< j << " at column: "<< i << " is: " << curr_value << "\n";
-      //if (curr_value > max) {
-        //max = curr_value;
-      //}
+      for (oid_t i = 0; i < column_count; i++) {
+        if (new_table[i].size() == 0) {
+          catalog::Column column(schema.GetType(i), type::Type::GetTypeSize(schema.GetType(i)),
+                                schema.GetColumn(i).GetName(), schema.GetColumn(i).IsInlined());
+          std::cout<< "Pushing uncompressed column as is into the schema \t" << schema.GetColumn(i).GetName() << "\n";
+          columns.push_back(column);
+          } else {
+            type::Type::TypeId new_column_type = new_table[i][0].GetTypeId();
+            catalog::Column column(new_column_type, type::Type::GetTypeSize(new_column_type),
+                                schema.GetColumn(i).GetName(), schema.GetColumn(i).IsInlined());
+            std::cout<< "Pushing Compressed column into the schema \t" << schema.GetColumn(i).GetName() << "\n";
+            std::cout<< "OLD TYPE of column is " << schema.GetType(i) << "\n";
+            std::cout<< "NEW TYPE of column is " << new_column_type << "\n";
+            columns.push_back(column);
+          }
+      }
+
+      catalog::Schema *new_schema = new catalog::Schema(columns);
+      TileGroupHeader *new_header = GetHeader();
+      Tile *new_tile = TileFactory::GetTile(
+        BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+        new_header, *new_schema, tile_group, allocated_tuple_count);
+        std::cout << "The schema of the compressed tile is : " << new_schema->GetInfo() << "\n";
+      return new_tile;
+    } else {
+      return nullptr;
     }
-    //std::cout << " Max Value of column: " << i << " is: "<< max << "\n";
-  }*/
 }
+
 
 
 //===--------------------------------------------------------------------===//

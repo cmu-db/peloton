@@ -325,7 +325,12 @@ void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
     std::cout << " Compressing Tile: " << i << "\n";
-    tiles[i]->CompressTile();
+    Tile *new_tile;
+    new_tile = tiles[i]->CompressTile();
+    if (new_tile != nullptr) {
+      LOG_INFO("Tile was successfully compressed and pointer was updated");
+      tiles[i] = std::shared_ptr<Tile> (new_tile);
+    }
   }
 }
 
