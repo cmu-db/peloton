@@ -6,6 +6,8 @@
 
 #include <murmur3/MurmurHash3.h>
 
+#include "optimizer/stats/distinct_value_counter.h"
+
 namespace peloton {
 namespace optimizer {
 
@@ -22,9 +24,8 @@ namespace optimizer {
  * We also wanna try the improved version HyperLogLog++ but it's complicated...
  * Paper: https://research.google.com/pubs/pub40671.html
  */
-class HyperLogLog {
+class HyperLogLog : public DistinctValueCounter {
  public:
-
   using Uint_t = uint32_t;
 
   uint8_t b; // Register bit width
@@ -52,17 +53,38 @@ class HyperLogLog {
     }
   }
 
-  HyperLogLog(uint8_t b = 4) :
+  /*
+   * b in [4, 16]
+   */
+  HyperLogLog(uint8_t b = 4)
+    : DistinctValueCounter{},
       b{b},
       m(1 << b),
       M(m, 0),
-      alphaMM{AlphaM(m) * m * m}
-  {}
+      alphaMM{AlphaM(m) * m * m} {}
 
-  // Only support strings for now
+  // TODO: Handle NULL value properly!
+  void AddValue(type::Value &value) {
+    if (value.GetTypeId() == type::Type::TypeId::INVALID) {
+      return;
+    }
+    Add(value.Hash());
+  }
+
+  void Add(Uint_t hash) {
+    Uint_t j = hash >> (HASH_SIZE - b);
+    // Get number of of leading zero + 1 (the position of the leftmost 1-bit)
+    uint8_t r = CLZ((hash << b), HASH_SIZE - b) + 1;
+    if (r > M[j]) {
+      M[j] = r;
+    }
+  }
+
+  // MurmurHash does not work properly. Deprecated.
   void Add(const char* item, uint32_t count = 1) {
     // using 32 bit MurmurHash for now
     Uint_t hash = MurmurHash3_x86_32(item, count, 0);
+    // LOG_INFO("hash is %u", hash);
     Uint_t j = hash >> (HASH_SIZE - b);
     // Get number of of leading zero + 1 (the position of the leftmost 1-bit)
     uint8_t r = CLZ((hash << b), HASH_SIZE - b) + 1;
@@ -94,8 +116,10 @@ class HyperLogLog {
     return E;
   }
 
-
-
+  // http://stackoverflow.com/questions/8848575/fastest-way-to-reset-every-value-of-stdvectorint-to-0
+  void Clear() {
+    std::fill(M.begin(), M.end(), 0);
+  }
 };
 
 } /* namespace optimizer */
