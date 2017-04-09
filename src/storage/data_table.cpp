@@ -463,6 +463,16 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
           break;
         }
         case ConstraintType::FOREIGN: {
+          /*
+          auto fk_offset = cons.GetForeignKeyListOffset();
+          catalog::ForeignKey *foreigh_key = foreign_keys_[fk_offset];
+
+          auto sink_table_oid = foreigh_key->GetSinkTableOid();
+          auto catalog = catalog::Catalog::GetInstance();
+          auto sink_table = catalog->GetTableWithOid(GetDatabaseOid(), sink_table_oid);
+          */
+
+
           break;
         }
         case ConstraintType::EXCLUSION: {
@@ -903,7 +913,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_TRACE("BEGIN checking referred table");
+        LOG_INFO("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
@@ -913,7 +923,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_TRACE("check key: %s", key->GetInfo().c_str());
+        LOG_INFO("check key: %s", key->GetInfo().c_str());
 
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
