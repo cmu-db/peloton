@@ -22,6 +22,19 @@ namespace parser {
 
   struct Parameter {
 
+
+
+    enum FuncParamMode {
+
+      FUNC_PARAM_IN = 'i',		/* input only */
+      FUNC_PARAM_OUT = 'o',		/* output only */
+      FUNC_PARAM_INOUT = 'b',		/* both */
+      FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
+      FUNC_PARAM_TABLE = 't'	
+
+    };
+
+
     enum DataType {
       INT,
       INTEGER,
@@ -69,16 +82,6 @@ namespace parser {
 
 
   };
-
-enum FuncParamMode {
-
-	FUNC_PARAM_IN = 'i',		/* input only */
-	FUNC_PARAM_OUT = 'o',		/* output only */
-	FUNC_PARAM_INOUT = 'b',		/* both */
-	FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
-	FUNC_PARAM_TABLE = 't'	
-
-};
 
 struct ReturnType : Parameter {
   
