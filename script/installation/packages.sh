@@ -80,7 +80,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         valgrind \
         lcov \
         postgresql-client \
-        libpqxx-dev
+        libpqxx-dev \
         llvm-3.7 \
         libedit-dev \
         postgresql-client
@@ -102,7 +102,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         lcov \
         postgresql \
         libpqxx-devel \
-        libpqxx
+        libpqxx \
         llvm3.7 \
         libedit-devel \
         postgresql
@@ -140,7 +140,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         doxygen \
         graphviz \
         postgresql93 \
-        libpqxx-devel
+        libpqxx-devel \
         llvm3.7 \
         libedit-devel \
         postgresql93
