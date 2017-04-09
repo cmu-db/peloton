@@ -95,7 +95,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
                           ->As<PropertyProjection>();
-  (void)project_prop;
 
   size_t project_list_size = project_prop->GetProjectionListSize();
 
