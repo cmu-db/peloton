@@ -73,6 +73,9 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   worker_thread->is_closed = false;
+  event_free(worker_thread->new_conn_event_);
+  event_free(worker_thread->ev_timeout);
+  event_base_free(worker_thread->GetEventBase());
 }
 
 void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
@@ -106,7 +109,6 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
-  struct event *ev_timeout;
   struct timeval two_seconds = {2,0};
   ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT|EV_PERSIST, ThreadStatus_Callback, this);
   event_add(ev_timeout, &two_seconds);
