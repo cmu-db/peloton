@@ -15,15 +15,12 @@
 
 #include "optimizer/operator_expression.h"
 #include "optimizer/operator_to_plan_transformer.h"
-#include "optimizer/properties.h"
 #include "planner/hash_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/projection_plan.h"
-#include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/hash_plan.h"
-#include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
 
 using std::vector;
@@ -35,7 +32,6 @@ using std::shared_ptr;
 using std::move;
 using std::make_tuple;
 using std::make_pair;
-// using std::dynamic_pointer_cast;
 
 namespace peloton {
 namespace optimizer {
@@ -231,7 +227,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
                                             &op->columns, op->having));
 }
 
-// TODO: Remove duplicate codes
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                       ->As<PropertyColumns>();

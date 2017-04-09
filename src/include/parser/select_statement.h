@@ -69,11 +69,11 @@ struct GroupByDescription {
   GroupByDescription() : columns(NULL), having(NULL) {}
 
   ~GroupByDescription() {
-    if (columns) {
+    if (columns != nullptr) {
       for (auto col : *columns) delete col;
       delete columns;
     }
-    if (having)
+    if (having != nullptr)
       delete having;
   }
 

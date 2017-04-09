@@ -16,7 +16,6 @@
 #include "optimizer/column.h"
 #include "optimizer/group.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/util.h"
 
 #include <vector>
 

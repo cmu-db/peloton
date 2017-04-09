@@ -14,7 +14,6 @@
 
 #include "optimizer/operator_visitor.h"
 #include "properties.h"
-#include "planner/aggregate_plan.h"
 
 namespace peloton {
 

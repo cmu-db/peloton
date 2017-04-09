@@ -13,7 +13,6 @@
 #pragma once
 
 #include "optimizer/property_set.h"
-#include "optimizer/util.h"
 #include "util/hash_util.h"
 
 #include <memory>

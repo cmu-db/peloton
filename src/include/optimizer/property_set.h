@@ -13,7 +13,6 @@
 #pragma once
 
 #include "optimizer/property.h"
-#include "optimizer/util.h"
 
 #include <memory>
 #include <vector>

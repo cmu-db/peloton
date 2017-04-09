@@ -15,7 +15,6 @@
 #include <typeinfo>
 
 #include "common/logger.h"
-#include "optimizer/util.h"
 #include "type/types.h"
 
 namespace peloton {
