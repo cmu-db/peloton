@@ -293,6 +293,14 @@ class TopKElements {
     size{0}
     {}
 
+    int get_k() {
+      return this->k;
+    }
+
+    int get_size() {
+      return this->size;
+    }
+
     inline void incr_size() {
       size++;
     }
@@ -482,7 +490,7 @@ class TopKElements {
    * Max first
    */
   std::vector<ApproxTopEntry> RetrieveOrderedMaxFirst(int num) {
-    if (num >= tkq.k)
+    if (num >= tkq.get_k())
       return tkq.retrieve_all_ordered_max_first();
     return tkq.retrieve_ordered_max_first(num);
   }
@@ -506,7 +514,7 @@ class TopKElements {
    * Queue is empty afterwards
    */
   void PrintTopKQueuePops() {
-    while (tkq.size != 0) {
+    while (tkq.get_size() != 0) {
       LOG_INFO("\n [PrintTopKQueuePops Entries] %s", tkq.pop().print().c_str());
     }
   }
