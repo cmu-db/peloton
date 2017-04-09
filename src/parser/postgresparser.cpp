@@ -921,7 +921,6 @@ parser::FuncParameter* PostgresParser::FunctionParameterTransform(FunctionParame
 // it into a Peloton ReturnType object
 parser::ReturnType* PostgresParser::ReturnTypeTransform(TypeName* root) {
   parser::ReturnType::DataType data_type;
-  TypeName* type_name = root->argType;
   char* name = (reinterpret_cast<value*>(root->names->tail->data.ptr_value)
                     ->val.str);
   parser::ReturnType* result = nullptr;
@@ -983,19 +982,23 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
   // Assuming only one function name can be passed for now.
   char* name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value)
                     ->val.str);
-  result->function_name = cstrdup(name); //We may have to change this to another function for handlign char * to string
+  std::string func_name_string(name);
+  result->function_name = func_name_string; //We may have to change this to another function for handlign char * to string
    
   // handle options
   for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
     auto def_elem = reinterpret_cast<DefElem*>(cell->data.ptr_value);
     if (strcmp(def_elem->defname, "as") == 0) {
-      for (auto cell = def_elem->arg->head; cell != nullptr; cell = cell->next) {
-        result->function_body.push_back(cell->val.str)
-      }
-       result->set_as_type();
-
-      //auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
-      //result->function_body = *query_string;
+      
+      /*  DO NOT REMOVE **********
+      for (auto cell = def_elem->arg; cell != nullptr; cell = cell->next) {
+        result->function_body.push_back(cell->val.str);
+      } */
+    
+      auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      std::string new_func_body(query_string);
+      result->function_body.push_back(new_func_body);
+      result->set_as_type();
     }
     else if(strcmp(def_elem->defname, "language") == 0) {
       auto lang = reinterpret_cast<value*>(def_elem->arg)->val.str;

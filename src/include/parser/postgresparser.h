@@ -152,6 +152,9 @@ class PostgresParser {
   // transform helper for function parameters
   static parser::FuncParameter* FunctionParameterTransform(FunctionParameter *root);
 
+  //transforms helper for return type
+  static parser::ReturnType* ReturnTypeTransform(TypeName *root);
+
   // transform helper for create statements
   static parser::SQLStatement* CreateTransform(CreateStmt* root);
 
