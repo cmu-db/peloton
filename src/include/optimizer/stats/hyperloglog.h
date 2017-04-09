@@ -80,7 +80,7 @@ class HyperLogLog : public DistinctValueCounter {
     }
   }
 
-  // MurmurHash does not work properly. Deprecated.
+  // MurmurHash does not work properly...
   void Add(const char* item, uint32_t count = 1) {
     // using 32 bit MurmurHash for now
     Uint_t hash = MurmurHash3_x86_32(item, count, 0);
@@ -116,7 +116,6 @@ class HyperLogLog : public DistinctValueCounter {
     return E;
   }
 
-  // http://stackoverflow.com/questions/8848575/fastest-way-to-reset-every-value-of-stdvectorint-to-0
   void Clear() {
     std::fill(M.begin(), M.end(), 0);
   }

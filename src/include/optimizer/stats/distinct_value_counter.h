@@ -1,7 +1,6 @@
 #pragma once
 
 #include "type/value.h"
-#include "type/type.h"
 
 namespace peloton {
 namespace optimizer {
