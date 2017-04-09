@@ -71,8 +71,8 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
-  const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), NumRowsInTestTable());
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
 TEST_F(TableScanTranslatorTest, SimplePredicate) {
@@ -101,8 +101,8 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), NumRowsInTestTable() - 2);
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
 }
 
 TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
@@ -131,8 +131,8 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), NumRowsInTestTable() - 4);
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
@@ -175,7 +175,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
-  ASSERT_EQ(results.size(), 1);
+  ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
@@ -300,8 +300,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), NumRowsInTestTable());
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
@@ -342,7 +342,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(1, results.size());
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
@@ -382,7 +382,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results - only one output tuple (with a == 0)
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 }
 
@@ -424,7 +424,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
-  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(1, results.size());
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
@@ -463,8 +463,8 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
-  ASSERT_EQ(results.size(), 1);
+  const auto &results = buffer.GetOutputTuples();
+  ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
