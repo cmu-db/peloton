@@ -742,6 +742,10 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   }
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  // trigger name
+  EXPECT_EQ("check_update", std::string(create_trigger_stmt->trigger_name));
+  // table name
+  EXPECT_EQ("accounts", create_trigger_stmt->GetTableName());
   // funcname
   std::vector<char*>* funcname = create_trigger_stmt->trigger_funcname;
   EXPECT_EQ(1, funcname->size());
