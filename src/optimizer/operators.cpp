@@ -161,9 +161,12 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // Update
 //===--------------------------------------------------------------------===//
-Operator LogicalUpdate::make(const parser::UpdateStatement *update_stmt) {
+Operator LogicalUpdate::make(
+    storage::DataTable *target_table,
+    std::vector<peloton::parser::UpdateClause*> updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
-  update_op->update_stmt = update_stmt;
+  update_op->target_table = target_table;
+  update_op->updates = updates;
   return Operator(update_op);
 }
 
@@ -315,9 +318,12 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
-Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
+Operator PhysicalUpdate::make(
+    storage::DataTable *target_table,
+    std::vector<peloton::parser::UpdateClause*> updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
-  update->update_stmt = update_stmt;
+  update->target_table = target_table;
+  update->updates = updates;
   return Operator(update);
 }
 

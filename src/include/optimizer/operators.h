@@ -25,6 +25,10 @@ namespace expression {
 class AbstractExpression;
 }
 
+namespace parser {
+class UpdateClause;
+}
+
 namespace storage {
 class DataTable;
 }
@@ -177,9 +181,11 @@ class LogicalDelete : public OperatorNode<LogicalDelete> {
 //===--------------------------------------------------------------------===//
 class LogicalUpdate : public OperatorNode<LogicalUpdate> {
  public:
-  static Operator make(const parser::UpdateStatement *update_stmt);
+  static Operator make(storage::DataTable *target_table,
+                       std::vector<peloton::parser::UpdateClause*> updates);
 
-  const parser::UpdateStatement *update_stmt;
+  storage::DataTable *target_table;
+  std::vector<peloton::parser::UpdateClause*> updates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -324,9 +330,11 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 //===--------------------------------------------------------------------===//
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
-  static Operator make(const parser::UpdateStatement *update_stmt);
+  static Operator make(storage::DataTable *target_table,
+  std::vector<peloton::parser::UpdateClause*> updates);
 
-  const parser::UpdateStatement *update_stmt;
+  storage::DataTable *target_table;
+  std::vector<peloton::parser::UpdateClause*> updates;
 };
 
 //===--------------------------------------------------------------------===//

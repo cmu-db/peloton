@@ -320,25 +320,37 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
 void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   // TODO: Support index scan
   ExprMap table_expr_map;
-  auto db_name = op->update_stmt->table->GetDatabaseName();
-  auto table_name = op->update_stmt->table->GetTableName();
-  auto table =
-      catalog::Catalog::GetInstance()->GetTableWithName(db_name, table_name);
-  GenerateTableExprMap(table_expr_map, table);
+  DirectMapList dml;
+  TargetList tl;
+  std::unordered_set<oid_t> update_col_ids;
+  auto schema = op->target_table->GetSchema();
+  GenerateTableExprMap(table_expr_map, op->target_table);
 
-  // Evaluate update expression
-  for (auto update : *op->update_stmt->updates) {
+  // Evaluate update expression and add to target list
+  for (auto update : op->updates) {
+    auto column = std::string(update->column);
+    auto col_id = schema->GetColumnID(column);
+    if (update_col_ids.find(col_id) != update_col_ids.end())
+      throw SyntaxException("Multiple assignments to same column "+ column);
+    update_col_ids.insert(col_id);
     expression::ExpressionUtil::EvaluateExpression(table_expr_map,
                                                    update->value);
-  }
-  // Evaluate predicate if any
-  if (op->update_stmt->where != nullptr) {
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map,
-                                                   op->update_stmt->where);
+    tl.emplace_back(col_id, update->value->Copy());
   }
 
+  // Add other columns to direct map
+  auto col_size = schema->GetColumnCount();
+  for (size_t i = 0; i<col_size; i++) {
+    if (update_col_ids.find(i) == update_col_ids.end())
+      dml.emplace_back(i, std::pair<oid_t, oid_t >(0,i));
+  }
+
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+
   unique_ptr<planner::AbstractPlan> update_plan(
-      new planner::UpdatePlan(op->update_stmt));
+      new planner::UpdatePlan(op->target_table, move(proj_info)));
+  update_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(update_plan);
 }
 

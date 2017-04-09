@@ -99,7 +99,14 @@ void QueryPropertyExtractor::Visit(
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
 void QueryPropertyExtractor::Visit(
-    UNUSED_ATTRIBUTE const parser::UpdateStatement *op) {}
+    UNUSED_ATTRIBUTE const parser::UpdateStatement *op) {
+  if (op->where != nullptr) {
+    property_set_.AddProperty(
+        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->where->Copy())));
+  }
+  property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
+      vector<shared_ptr<expression::AbstractExpression>>())));
+}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
 

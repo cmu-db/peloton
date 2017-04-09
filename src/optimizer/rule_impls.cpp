@@ -166,8 +166,8 @@ void LogicalDeleteToPhysical::Transform(
 LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
   physical = true;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalUpdate);
-  //  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  //  match_pattern->AddChild(child);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(child);
 }
 
 bool LogicalUpdateToPhysical::Check(
@@ -181,9 +181,9 @@ void LogicalUpdateToPhysical::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalUpdate *update_op = input->Op().As<LogicalUpdate>();
   auto result = std::make_shared<OperatorExpression>(
-      PhysicalUpdate::make(update_op->update_stmt));
-  PL_ASSERT(input->Children().size() == 0);
-  //  result->PushChild(input->Children().at(0));
+      PhysicalUpdate::make(update_op->target_table, update_op->updates));
+  PL_ASSERT(input->Children().size() != 0);
+  result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
 
