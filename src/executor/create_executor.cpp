@@ -84,6 +84,27 @@ bool CreateExecutor::DExecute() {
                 ResultTypeToString(current_txn->GetResult()).c_str());
     }
   }
+
+  // Check if query was for creating trigger
+  if (node.GetCreateType() == CreateType::TRIGGER) {
+    std::string table_name = node.GetTableName();
+    std::string trigger_name = node.GetTriggerName();
+    std::unique_ptr<catalog::Schema> schema(node.GetSchema());
+
+    // TODO: add trigger into catalog (waiting for the changes of catalog API)
+    ResultType result = ResultType::SUCCESS;
+    current_txn->SetResult(result);
+
+    if (current_txn->GetResult() == ResultType::SUCCESS) {
+      LOG_TRACE("Creating trigger succeeded!");
+    } else if (current_txn->GetResult() == ResultType::FAILURE) {
+      LOG_TRACE("Creating trigger failed!");
+    } else {
+      LOG_TRACE("Result is: %s", ResultTypeToString(
+        current_txn->GetResult()).c_str());
+    }
+  }
+
   return false;
 }
 
