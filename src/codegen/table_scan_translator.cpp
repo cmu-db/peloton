@@ -15,6 +15,7 @@
 #include "codegen/if.h"
 #include "codegen/catalog_proxy.h"
 //#include "common/simd_util.h"
+#include "codegen/transaction_runtime_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -105,21 +106,27 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
 void TableScanTranslator::ScanConsumer::ProcessTuples(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     TileGroup::TileGroupAccess &tile_group_access) {
+  // TODO: Should visibility check be done here or in codegen::Table/TileGroup?
+
+  // 1. Filter the rows in the range [tid_start, tid_end) by txn visibility
+  FilterRowsByVisibility(codegen, tid_start, tid_end, selection_vector_);
+
+  // 2. Filter rows by the given predicate (if one exists)
   auto *predicate = GetPredicate();
   if (predicate != nullptr) {
     // First perform a vectorized filter, putting TIDs into the selection vector
-    FilterRows(codegen, tile_group_access, tid_start, tid_end,
-               selection_vector_);
+    FilterRowsByPredicate(codegen, tile_group_access, tid_start, tid_end,
+                          selection_vector_);
   }
 
-  // 2. Setup the row batch
+  // 3. Setup the (filtered) row batch and setup attribute accessors
   RowBatch batch{translator_.GetCompilationContext(), tid_start, tid_end,
-                 selection_vector_, predicate != nullptr};
+                 selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
 
-  // Push the batch into the pipeline
+  // 4. Push the batch into the pipeline
   ConsumerContext context{translator_.GetCompilationContext(),
                           translator_.GetPipeline()};
   context.Consume(batch);
@@ -150,18 +157,30 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   }
 }
 
-const expression::AbstractExpression *
-TableScanTranslator::ScanConsumer::GetPredicate() const {
-  return translator_.GetScanPlan().GetPredicate();
+void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
+    CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
+    Vector &selection_vector) const {
+  // Get the pointer to TransactionRuntime::PerformRead(...)
+  auto *txn_perform_read =
+      TransactionRuntimeProxy::_PerformVectorizedRead::GetFunction(codegen);
+
+  llvm::Value *txn = translator_.GetCompilationContext().GetTransactionPtr();
+  llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
+
+  // Invoke the function
+  llvm::Value *out_idx =
+      codegen.CallFunc(txn_perform_read,
+                       {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
+  selection_vector.SetNumElements(out_idx);
 }
 
-void TableScanTranslator::ScanConsumer::FilterRows(
+void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     CodeGen &codegen, const TileGroup::TileGroupAccess &access,
     llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
   // The batch we're filtering
   auto &compilation_ctx = translator_.GetCompilationContext();
-  RowBatch batch{compilation_ctx, tid_start, tid_end, selection_vector, false};
+  RowBatch batch{compilation_ctx, tid_start, tid_end, selection_vector, true};
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();

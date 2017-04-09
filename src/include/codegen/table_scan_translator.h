@@ -82,7 +82,9 @@ class TableScanTranslator : public OperatorTranslator {
                  Vector &selection_vector);
 
     // The callback when starting iteration over a new tile group
-    void TileGroupStart(CodeGen &, llvm::Value *) override {}
+    void TileGroupStart(CodeGen &, llvm::Value *tile_group_ptr) override {
+      tile_group_ptr_ = tile_group_ptr;
+    }
 
     // The code that forms the body of the scan loop
     void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
@@ -94,17 +96,24 @@ class TableScanTranslator : public OperatorTranslator {
 
    private:
     // Get the predicate, if one exists
-    const expression::AbstractExpression *GetPredicate() const;
+    const expression::AbstractExpression *GetPredicate() const {
+      return translator_.GetScanPlan().GetPredicate();
+    }
 
     void SetupRowBatch(RowBatch &batch,
                        TileGroup::TileGroupAccess &tile_group_access,
                        std::vector<AttributeAccess> &access) const;
 
+    void FilterRowsByVisibility(CodeGen &codegen, llvm::Value *tid_start,
+                                llvm::Value *tid_end,
+                                Vector &selection_vector) const;
+
     // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
     // store their TIDs in the output TID selection vector
-    void FilterRows(CodeGen &codegen, const TileGroup::TileGroupAccess &access,
-                    llvm::Value *tid_start, llvm::Value *tid_end,
-                    Vector &selection_vector) const;
+    void FilterRowsByPredicate(CodeGen &codegen,
+                               const TileGroup::TileGroupAccess &access,
+                               llvm::Value *tid_start, llvm::Value *tid_end,
+                               Vector &selection_vector) const;
 
     llvm::Value *SIMDFilterRows(RowBatch &batch,
                                 const TileGroup::TileGroupAccess &access) const;
@@ -115,6 +124,9 @@ class TableScanTranslator : public OperatorTranslator {
 
     // The selection vector used for vectorized scans
     Vector &selection_vector_;
+
+    // The current tile group we're scanning over
+    llvm::Value *tile_group_ptr_;
   };
 
   // Plan accessor

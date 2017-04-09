@@ -41,6 +41,8 @@ class Vector {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  llvm::Value *GetVectorPtr() const { return vector_ptr_; }
+
   uint32_t GetCapacity() const { return capacity_; }
 
   llvm::Value *GetNumElements() const { return num_elements_; }
