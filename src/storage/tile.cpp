@@ -29,6 +29,10 @@
 namespace peloton {
 namespace storage {
 
+bool CompareLessThanBool(type::Value left, type::Value right) {
+  return left.CompareLessThan(right);
+}
+
 Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
            const catalog::Schema &tuple_schema, TileGroup *tile_group,
            int tuple_count)
@@ -219,24 +223,94 @@ Tile *Tile::CopyTile(BackendType backend_type) {
   return new_tile;
 }
 
+void Tile::CompressIntegerColumn(oid_t column_id) {
+  oid_t num_tuples = GetAllocatedTupleCount();
+
+  bool is_inlined = schema.IsInlined(column_id);
+  size_t column_offset = schema.GetOffset(column_id);
+
+  std::cout<< "Compressing " << schema.GetColumn(column_id).GetName()<<"\n";
+  std::vector<type::Value> column_values(num_tuples);
+  for(oid_t i = 0; i < num_tuples; i++) {
+    column_values[i] = GetValueFast(i,column_offset,type::Type::INTEGER,is_inlined);
+  }
+
+  std::vector<type::Value> actual_values(column_values);
+  std::sort(column_values.begin(), column_values.end(), CompareLessThanBool);
+
+  std::cout<<"Sorted values \n";
+  for(oid_t j = 0; j < num_tuples; j++) {
+    std::cout<<column_values[j]<<"\t";
+  }
+
+  std::cout<<"\nMedian value = "<<column_values[num_tuples/2]<<"\n";
+  std::cout<<"Minimum value = "<<column_values[0]<<"\n";
+  std::cout<<"Maximum value = "<<column_values[num_tuples-1]<<"\n";
+
+
+  type::Value median = column_values[num_tuples/2];
+
+  std::vector<type::Value> modified_values(num_tuples);
+
+  try {
+    type::Value min_diff = column_values[0].Subtract(median).CastAs(type::Type::TINYINT);
+    type::Value max_diff = column_values[num_tuples-1].Subtract(median).CastAs(type::Type::TINYINT);
+
+    std::cout<<"Column can be compressed into TINYINT \nCompressed values - \n";
+    for(oid_t k = 0; k < num_tuples; k++) {
+      modified_values[k] = actual_values[k].Subtract(median).CastAs(type::Type::TINYINT);
+      std::cout<<modified_values[k]<<"\t";
+    }
+    std::cout<<"\n";
+
+  } catch(Exception &e) {
+    std::cout<<"Can not compress to TINYINT\n";
+  }
+  
+
+}
+
 void Tile::CompressTile() {
   LOG_INFO("Compress Tile Here");
-  int num_tuples = GetAllocatedTupleCount();
+  //int num_tuples = GetAllocatedTupleCount();
   std::vector<int> column_values;
   LOG_INFO("Number of Columns: %d", column_count);
-  unsigned int i;
-  int j;
-  for (i = 0; i < column_count; i++) {
-    int max = 0;
-    for (j = 0; j < num_tuples; j++) {
-      int curr_value = GetValue(j,i).GetAs<int32_t>();
-      std::cout << "Value for tuple: "<< j << " at column: "<< i << " is: " << curr_value << "\n";
-      if (curr_value > max) {
-        max = curr_value;
-      }
+
+  for(oid_t i = 0; i < column_count; i++) {
+    std::cout<<schema.GetColumn(i).GetName()<<"\n";
+    switch(schema.GetType(i)) {
+      case type::Type::SMALLINT: 
+        std::cout<<"Column is SMALLINT\n";
+        break;
+      case type::Type::INTEGER:
+        std::cout<<"Column is INTEGER\n";
+        CompressIntegerColumn(i);
+        break;
+      case type::Type::BIGINT:
+        std::cout<<"Column is BIGINT\n";
+        break;
+      default:
+        std::cout<<"Currently uncompressable.\n";
+        break;
     }
-    std::cout << " Max Value of column: " << i << " is: "<< max << "\n";
   }
+
+
+  /*for (i = 0; i < column_count; i++) {
+    //int max = 0;
+    for (j = 0; j < num_tuples; j++) {
+
+      type::Value val = GetValue(j,i);
+      std::cout<<"Type = "<<val.GetTypeId()<<"\n";
+      std::cout<<"String value = "<<val.ToString()<<"\n";
+      //int curr_value = GetValue(j,i).GetAs<int32_t>();
+      //std::cout << "Value for tuple: "<< j << " at column: "<< i << " is: " << curr_value << "\n";
+      //if (curr_value > max) {
+        //max = curr_value;
+      //}
+    }
+    //std::cout << " Max Value of column: " << i << " is: "<< max << "\n";
+  }*/
 }
 
 

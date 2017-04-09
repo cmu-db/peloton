@@ -321,6 +321,14 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
+void TileGroup::CompressTiles() {
+  oid_t num_tiles = tiles.size();
+  for (oid_t i = 0; i < num_tiles; i++) {
+    std::cout << " Compressing Tile: " << i << "\n";
+    tiles[i]->CompressTile();
+  }
+}
+
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
