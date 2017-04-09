@@ -583,7 +583,8 @@ enum class CreateType {
   DB = 1,                     // db create type
   TABLE = 2,                  // table create type
   INDEX = 3,                  // index create type
-  CONSTRAINT = 4              // constraint create type
+  CONSTRAINT = 4,             // constraint create type
+  TRIGGER = 5                 // trigger create type
 };
 
 //===--------------------------------------------------------------------===//

@@ -890,12 +890,12 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
     LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
               stmt_list->error_line, stmt_list->error_col);
   }
-<<<<<<< HEAD
-  EXPECT_EQ(stmt_list->GetStatement(0)->GetType(), StatementType::CREATE);
-=======
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
->>>>>>> Transform trigger's when clause to expression
   auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  // trigger name
+  EXPECT_EQ("check_update", std::string(create_trigger_stmt->trigger_name));
+  // table name
+  EXPECT_EQ("accounts", create_trigger_stmt->GetTableName());
 
   // funcname
   std::vector<char*>* funcname = create_trigger_stmt->trigger_funcname;
