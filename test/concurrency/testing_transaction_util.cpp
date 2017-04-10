@@ -56,7 +56,7 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-     CATALOG_DATABASE_OID, 2, table_schema, table_name, tuples_per_tilegroup, true, false);
+     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
 
   // Create index on the (id, value) column
   std::vector<oid_t> key_attrs = {0, 1};
@@ -66,7 +66,7 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, 2,CATALOG_DATABASE_OID, IndexType::BWTREE,
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
@@ -102,7 +102,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-     CATALOG_DATABASE_OID, 2, table_schema, table_name, tuples_per_tilegroup, true, false);
+     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
 
   // Create primary index on the id column
   std::vector<oid_t> key_attrs = {0};
@@ -112,7 +112,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, 2, CATALOG_DATABASE_OID, IndexType::BWTREE,
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
@@ -128,7 +128,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
   auto index_metadata2 =
-      new index::IndexMetadata("unique_btree_index", 1235, 2,CATALOG_DATABASE_OID,
+      new index::IndexMetadata("unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
                                IndexType::BWTREE, IndexConstraintType::UNIQUE,
                                tuple_schema2, key_schema2, key_attrs2, unique2);
 
@@ -175,7 +175,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", index_oid, 2,CATALOG_DATABASE_OID, IndexType::BWTREE,
+      "primary_btree_index", index_oid, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
       need_primary_index ? IndexConstraintType::PRIMARY_KEY
                          : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);

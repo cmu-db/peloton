@@ -111,6 +111,7 @@ enum txn_op_t {
 };
 
 #define TXN_STORED_VALUE -10000
+#define TEST_TABLE_OID (1234 | TABLE_OID_MASK)
 
 class TestingTransactionUtil {
  public:
@@ -119,7 +120,7 @@ class TestingTransactionUtil {
   // when created
   static storage::DataTable *CreateTable(
       int num_key = 10, std::string table_name = "TEST_TABLE",
-      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = 2,
+      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = TEST_TABLE_OID,
       oid_t index_oid = 1234, bool need_primary_index = false);
 
   // Create the same table as CreateTable with primary key constrainst on id and
