@@ -72,18 +72,15 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
       codegen.Const32(table_.GetSchema()->GetColumnCount()));
 
-  //TODO: Get start and end index from multi thread context.
-  llvm::Value *thread_id = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
-  //TODO: need llvm here? where to put the multithreaded logic?
-  uint32_t num_threads = 3;
+  uint64_t thread_id = 0;
+  uint64_t num_threads = 3;
 
-  //TODO: should codegen, num_threads, thread_id, etc..
   //TODO: be attributes of multi_thread_context or parameters of GetRangeStart/End functions?
-  MultiThreadContext multi_thread_context{codegen, num_threads};
-  llvm::Value *tile_group_idx = multi_thread_context.GetRangeStart(codegen, thread_id, num_tile_groups);
-  llvm::Value *tile_group_idx_end = multi_thread_context.GetRangeEnd(codegen, thread_id, num_tile_groups);
+  MultiThreadContext multi_thread_context{codegen.Const64(thread_id), codegen.Const64(num_threads), nullptr};
+  llvm::Value *tile_group_idx = multi_thread_context.GetRangeStart(codegen, num_tile_groups);
+  llvm::Value *tile_group_idx_end = multi_thread_context.GetRangeEnd(codegen, num_tile_groups);
 
 
 
