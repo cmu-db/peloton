@@ -13,6 +13,7 @@
 #include "codegen/query.h"
 
 #include "catalog/catalog.h"
+#include "executor/executor_context.h"
 #include "common/macros.h"
 
 namespace peloton {
@@ -36,6 +37,10 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
 
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
+  type::Value values[params_.size()];
+  for (uint32_t i = 0; i < params_.size(); i ++) {
+    values[i] = params_[i];
+  }
 
   // Grab an non-owning pointer to the space
   char *param = param_data.get();
@@ -47,6 +52,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   struct FunctionArguments {
     concurrency::Transaction *txn;
     catalog::Catalog *catalog;
+    type::Value *values;
     char *consumer_arg;
     char rest[0];
   } PACKED;
@@ -55,6 +61,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
   func_args->txn = &txn;
   func_args->catalog = catalog::Catalog::GetInstance();
+  func_args->values = values;
   func_args->consumer_arg = consumer_arg;
 
   // Timer

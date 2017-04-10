@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/value_proxy.h"
 #include "codegen/compilation_context.h"
 
 #include "codegen/catalog_proxy.h"
@@ -34,6 +35,9 @@ CompilationContext::CompilationContext(Query &query,
 
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
+
+  values_state_id_ = runtime_state.RegisterState(
+          "values", ValueProxy::GetType(codegen_)->getPointerTo());
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -128,6 +132,10 @@ llvm::Value *CompilationContext::GetCatalogPtr() {
 llvm::Value *CompilationContext::GetTransactionPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, txn_state_id_);
 }
+
+llvm::Value *CompilationContext::GetValuesPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, values_state_id_);
+};
 
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
