@@ -51,10 +51,9 @@ void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
 }
 
 void ValuesRuntime::OutputVarchar(char *values, uint32_t idx, char *str,
-                                  uint32_t len) {
+                                  UNUSED_ATTRIBUTE uint32_t len) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  std::string string_val{str, len - 1};
-  vals[idx] = type::ValueFactory::GetVarcharValue(string_val);
+  vals[idx] = type::ValueFactory::GetVarcharValue(str, false);
 }
 
 int32_t ValuesRuntime::CompareStrings(const char *str1, uint32_t len1,
