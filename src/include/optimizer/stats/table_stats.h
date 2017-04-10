@@ -31,7 +31,7 @@ public:
 private:
   storage::DataTable* table_;
 	catalog::Schema* schema_;
-  std::vector<ColumnStats*> column_stats_;
+  std::vector<std::unique_ptr<ColumnStats>> column_stats_;
   size_t active_tuple_count_;
   size_t column_count_;
 

@@ -58,12 +58,13 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<optimizer::TableStats> table_stats(new TableStats(data_table.get()));
+  table_stats->CollectColumnStats();
 
   StatsStorage *stats_storage = StatsStorage::GetInstance();
   stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
 
   storage::DataTable *stats_table = stats_storage->GetStatsTable();
-  EXPECT_EQ(stats_table->GetTupleCount(), 3);
+  EXPECT_EQ(stats_table->GetTupleCount(), 4);
 
   auto tile_group = stats_table->GetTileGroup(0);
 
@@ -82,6 +83,8 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   LOG_DEBUG("Tuple Info: %s", tile_tuple1.GetInfo().c_str());
   storage::Tuple tile_tuple2(&schema, tile->GetTupleLocation(2));
   LOG_DEBUG("Tuple Info: %s", tile_tuple2.GetInfo().c_str());
+  storage::Tuple tile_tuple3(&schema, tile->GetTupleLocation(3));
+  LOG_DEBUG("Tuple Info: %s", tile_tuple3.GetInfo().c_str());
 
 }
 

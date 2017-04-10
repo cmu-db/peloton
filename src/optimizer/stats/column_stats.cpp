@@ -45,6 +45,9 @@ uint64_t ColumnStats::GetCardinality() {
 }
 
 std::vector<double> ColumnStats::GetHistogramBound() {
+  if(!(column_type_ == type::Type::INTEGER || column_type_ == type::Type::DECIMAL)) {
+    return std::vector<double>();
+  }
   return hist_.Uniform(num_bins);
 }
 

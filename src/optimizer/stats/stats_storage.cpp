@@ -157,16 +157,27 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
   auto val_cardinality = type::ValueFactory::GetDecimalValue(cardinality);
   auto val_frac_null = type::ValueFactory::GetDecimalValue(frac_null);
 
+  LOG_DEBUG("Most cmmon val count: %lu", most_common_val_freqs.size());
   // Currently, only store the most common value and its frequency
   // TODO: support array
-  auto val_common_val = type::ValueFactory::GetVarcharValue(
+  type::Value val_common_val, val_common_freq;
+  if(most_common_val_freqs.size() > 0) {
+    val_common_val = type::ValueFactory::GetVarcharValue(
                             most_common_val_freqs[0].first.ToString());
-  auto val_common_freq = type::ValueFactory::GetDecimalValue(
+    val_common_freq = type::ValueFactory::GetDecimalValue(
                             most_common_val_freqs[0].second);
-
+  } else {
+    val_common_val = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    val_common_freq = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+  }
   // Convert the double array to a string by concatening them with ","
-  auto val_hist_bounds = type::ValueFactory::GetVarcharValue(
+  type::Value val_hist_bounds;
+  if(histogram_bounds.size() > 0) {
+    val_hist_bounds = type::ValueFactory::GetVarcharValue(
                           ConvertDoubleArrayToString(histogram_bounds));
+  } else {
+    val_hist_bounds = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
 
   tuple->SetValue(0, val_db_id, nullptr);
   tuple->SetValue(1, val_table_id, nullptr);

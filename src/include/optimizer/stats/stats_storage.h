@@ -12,8 +12,8 @@
 
 #pragma once
 
-// #include "optimizer/stats/table_stats.h"
-// #include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats.h"
+#include "optimizer/stats/column_stats.h"
 
 #include <sstream>
 
@@ -40,44 +40,6 @@ namespace optimizer {
 #define SAMPLES_DB_NAME "samples_db"
 
 using ValueFrequencyPair = std::pair<type::Value, double>;
-
-class ColumnStats {
- public:
-  ColumnStats() {}
-
-  double GetFracNull() { return 12.34; }
-
-  std::vector<ValueFrequencyPair> GetCommonValueAndFrequency() {
-    std::vector<ValueFrequencyPair> result;
-    result.push_back(std::make_pair(type::ValueFactory::GetIntegerValue(10), 6.78));
-    return result;
-  }
-
-  double GetCardinality() { return 23.45; }
-
-  std::vector<double> GetHistogramBound() {
-    std::vector<double> result;
-    result.push_back(3.4);
-    result.push_back(4.5);
-    result.push_back(5.6);
-    return result;
-  }
-
-};
-
-class TableStats {
- public:
-  TableStats(UNUSED_ATTRIBUTE storage::DataTable *table) {}
-
-  void CollectColumnStats() {}
-  size_t GetActiveTupleCount() { return 30; }
-  oid_t GetColumnCount() { return column_stats.size(); }
-  ColumnStats *GetColumnStats(oid_t column_id) { return &(column_stats[column_id]); }
-
- private:
-  std::vector<ColumnStats> column_stats{3};
-};
-
 
 class StatsStorage {
  public:

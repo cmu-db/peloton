@@ -77,11 +77,14 @@ class Histogram {
    /*
     * Peloton type adapter
     */
-   void Update(type::Value& value) {
-     PL_ASSERT(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL);
-     double raw_value = atof(value.ToString().c_str());
-     Update(raw_value);
-   }
+  void Update(type::Value& value) {
+    if(!(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL)) {
+      return;
+    }
+//     PL_ASSERT(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL);
+    double raw_value = atof(value.ToString().c_str());
+    Update(raw_value);
+  }
 
    /*
     * Input: a point b such that p1 < b < pB
@@ -100,7 +103,7 @@ class Histogram {
       // -1 because we want index to be element less than b
       i = std::abs(i + 1) - 1;
     }
-    assert(i >= 0 && i < bins.size() - 1);
+//    assert(i >= 0 && i < bins.size() - 1);
 
     Bin b_i = bins[i];
     Bin b_i1 = bins[i + 1];
@@ -231,7 +234,7 @@ class Histogram {
         min_gap_idx = i;
       }
     }
-    assert(min_gap_idx >= 0 && min_gap_idx < bins.size());
+//    assert(min_gap_idx >= 0 && min_gap_idx < bins.size());
     Bin &prev_bin = bins[min_gap_idx];
     Bin &next_bin = bins[min_gap_idx + 1];
     prev_bin.MergeWith(next_bin);
