@@ -27,15 +27,25 @@ TEST_F(ColumnStatsTests, BasicTests) {
   uint64_t cardinality = colstats.GetCardinality();
   EXPECT_GE(cardinality, 50000);
   EXPECT_LE(cardinality, 150000);
+  // Histogram bound
   std::vector<double> bounds = colstats.GetHistogramBound();
-
+  // Null value fraction
   EXPECT_EQ(colstats.GetFracNull(), 0);
 }
 
 TEST_F(ColumnStatsTests, SkewedTests) {
-  ColumnStats colstats{0, 0, 0, type::Type::TypeId::DATETIME};
-
-
+  ColumnStats colstats{0, 0, 0, type::Type::TypeId::DECIMAL};
+  for (int i = 0; i < 1000; i++) {
+    type::Value v = type::ValueFactory::GetDecimalValue(4.1525);
+    colstats.AddValue(v);
+  }
+  type::Value v1 = type::ValueFactory::GetDecimalValue(7.12);
+  type::Value v2 = type::ValueFactory::GetDecimalValue(10.25);
+  colstats.AddValue(v1);
+  colstats.AddValue(v2);
+  uint64_t cardinality = colstats.GetCardinality();
+  EXPECT_GE(cardinality, 1);
+  EXPECT_LE(cardinality, 5);
 }
 
 } /* namespace test */
