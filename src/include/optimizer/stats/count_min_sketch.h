@@ -113,7 +113,7 @@ class CountMinSketch {
       for (int i = 0; i < depth; i++) {
         count = std::min(count, table[i][bins[i]]);
       }
-      LOG_INFO("Item count is: %d", (int) count);
+      // LOG_INFO("Item count is: %d", (int) count);
       return count;
   }
 
@@ -123,7 +123,7 @@ class CountMinSketch {
       for (int i = 0; i < depth; i++) {
         count = std::min(count, table[i][bins[i]]);
       }
-      LOG_INFO("Item count is: %d", (int) count);
+      // LOG_INFO("Item count is: %d", (int) count);
       return count;
   }
 

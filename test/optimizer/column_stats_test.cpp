@@ -31,6 +31,9 @@ TEST_F(ColumnStatsTests, BasicTests) {
   std::vector<double> bounds = colstats.GetHistogramBound();
   // Null value fraction
   EXPECT_EQ(colstats.GetFracNull(), 0);
+  // Common value with frequency
+  std::vector<std::pair<type::Value, double>> valfreq =
+			colstats.GetCommonValueAndFrequency();
 }
 
 TEST_F(ColumnStatsTests, SkewedTests) {
@@ -46,6 +49,9 @@ TEST_F(ColumnStatsTests, SkewedTests) {
   uint64_t cardinality = colstats.GetCardinality();
   EXPECT_GE(cardinality, 1);
   EXPECT_LE(cardinality, 5);
+  // Common value with frequency
+  std::vector<std::pair<type::Value, double>> valfreq =
+			colstats.GetCommonValueAndFrequency();
 }
 
 } /* namespace test */

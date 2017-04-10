@@ -5,9 +5,9 @@
 
 #include "type/types.h"
 #include "optimizer/stats/count_min_sketch.h"
+#include "optimizer/stats/top_k_elements.h"
 #include "optimizer/stats/histogram.h"
 #include "optimizer/stats/hll.h"
-#include "optimizer/stats/count_min_sketch.h"
 
 namespace peloton {
 namespace optimizer {
@@ -41,6 +41,8 @@ private:
   const type::Type::TypeId column_type_;
   HLL hll_;
   Histogram hist_;
+  CountMinSketch sketch_;
+  TopKElements topk_;
 
   // Not allow copy
   ColumnStats(const ColumnStats&);
