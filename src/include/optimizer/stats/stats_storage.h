@@ -15,8 +15,12 @@
 // #include "optimizer/stats/table_stats.h"
 // #include "optimizer/stats/column_stats.h"
 
+#include <sstream>
+
 #include "common/macros.h"
 #include "type/types.h"
+
+#include "type/value_factory.h"
 
 namespace peloton {
 
@@ -35,13 +39,30 @@ namespace optimizer {
 
 #define SAMPLES_DB_NAME "samples_db"
 
+using ValueFrequencyPair = std::pair<type::Value, double>;
 
 class ColumnStats {
  public:
   ColumnStats() {}
 
-  oid_t GetDistinctCount() { return 0; }
-  oid_t GetNullCount() { return 0; }
+  double GetFracNull() { return 12.34; }
+
+  std::vector<ValueFrequencyPair> GetCommonValueAndFrequency() {
+    std::vector<ValueFrequencyPair> result;
+    result.push_back(std::make_pair(type::ValueFactory::GetIntegerValue(10), 6.78));
+    return result;
+  }
+
+  double GetCardinality() { return 23.45; }
+
+  std::vector<double> GetHistogramBound() {
+    std::vector<double> result;
+    result.push_back(3.4);
+    result.push_back(4.5);
+    result.push_back(5.6);
+    return result;
+  }
+
 };
 
 class TableStats {
@@ -49,18 +70,18 @@ class TableStats {
   TableStats(UNUSED_ATTRIBUTE storage::DataTable *table) {}
 
   void CollectColumnStats() {}
-  oid_t GetDatabaseID() { return 0; }
-  oid_t GetTableID() { return 0; }
-  size_t GetActiveTupleCount() { return 0; }
-  oid_t GetColumnCount() { return 0; }
-  ColumnStats *GetColumnStats(UNUSED_ATTRIBUTE oid_t column_id) { return nullptr; }
+  size_t GetActiveTupleCount() { return 30; }
+  oid_t GetColumnCount() { return column_stats.size(); }
+  ColumnStats *GetColumnStats(oid_t column_id) { return &(column_stats[column_id]); }
 
-
+ private:
+  std::vector<ColumnStats> column_stats{3};
 };
 
 
 class StatsStorage {
  public:
+
   // Global Singleton
   static StatsStorage *GetInstance();
 
@@ -76,29 +97,29 @@ class StatsStorage {
 
   /* Functions for adding, updating and quering stats */
 
-  void StoreTableStats(TableStats *table_stats);
-
-  void InsertColumnStats();
+  void AddOrUpdateTableStats(storage::DataTable *table, TableStats *table_stats);
 
   std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
-    oid_t column_id, int num_row, int num_distinct, int num_null,
-    std::vector<type::Value> most_common_vals, std::vector<int> most_common_freqs,
+    oid_t column_id, int num_row, double cardinality, double frac_null,
+    std::vector<ValueFrequencyPair> most_common_val_freqs,
     std::vector<double> histogram_bounds);
 
-  TableStats *GetTableStatsWithName(const std::string table_name);
+//  std::unique_ptr<TableStats> GetTableStatsWithName(const std::string table_name);
 
-  ColumnStats *GetColumnStatsByID(UNUSED_ATTRIBUTE oid_t database_id,
-                                  UNUSED_ATTRIBUTE oid_t table_id,
-                                  UNUSED_ATTRIBUTE oid_t column_id);
+  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id, oid_t table_id, oid_t column_id);
 
   /* Functions for managing tuple samples */
 
   void CreateSamplesDatabase();
 
-  void AddSamplesDatatable(
+  void AddSamplesTable(
                 storage::DataTable *data_table,
                 std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
+
+  void GetTupleSamples(std::vector<storage::Tuple> &tuple_samples);
+
+  void GetColumnSamples(std::vector<type::Value> &column_samples);
 
   std::string GenerateSamplesTableName(oid_t db_id, oid_t table_id) {
     return std::to_string(db_id) + "_" + std::to_string(table_id);
@@ -111,7 +132,32 @@ class StatsStorage {
  private:
   void StoreColumnStats(ColumnStats *column_stats);
 
+  std::string ConvertDoubleArrayToString(std::vector<double> &double_array) {
+    std::stringstream ss;
+    for(size_t i = 0; i < double_array.size(); ++i) {
+      if(i != 0) {
+        ss << ",";
+      }
+      ss << double_array[i];
+    }
+    return ss.str();
+  }
 
+  std::vector<double> ConvertStringToDoubleArray(std::string str) {
+    std::vector<double> double_array;
+    std::stringstream ss(str);
+    double num;
+
+    while (ss >> num) {
+        double_array.push_back(num);
+
+        if (ss.peek() == ',') {
+            ss.ignore();
+        }
+    }
+
+    return double_array;
+  }
 };
 
 }

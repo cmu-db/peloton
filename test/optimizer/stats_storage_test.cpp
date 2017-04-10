@@ -17,6 +17,7 @@
 
 #include "storage/data_table.h"
 #include "storage/database.h"
+#include "storage/tile.h"
 #include "catalog/schema.h"
 #include "catalog/catalog.h"
 #include "executor/testing_executor_util.h"
@@ -45,7 +46,43 @@ TEST_F(StatsStorageTests, StatsTableTest) {
   EXPECT_EQ(schema->GetColumnCount(), 9);
 }
 
-TEST_F(StatsStorageTests, StatsInsertTest) {
+TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
+  const int tuple_count = 100;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<storage::DataTable> data_table(
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
+                                     true, txn);
+  txn_manager.CommitTransaction(txn);
+
+  std::unique_ptr<optimizer::TableStats> table_stats(new TableStats(data_table.get()));
+
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+  stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
+
+  storage::DataTable *stats_table = stats_storage->GetStatsTable();
+  EXPECT_EQ(stats_table->GetTupleCount(), 3);
+
+  auto tile_group = stats_table->GetTileGroup(0);
+
+  // Column ID
+  // EXPECT_EQ(tile_group->GetValue(0, 2), type::ValueFactory::GetIntegerValue(0));
+  // EXPECT_EQ(tile_group->GetValue(1, 2), type::ValueFactory::GetIntegerValue(1));
+  // EXPECT_EQ(tile_group->GetValue(2, 2), type::ValueFactory::GetIntegerValue(2));
+
+  auto tile = tile_group->GetTile(0);
+  auto tile_schemas = tile_group->GetTileSchemas();
+  const catalog::Schema &schema = tile_schemas[0];
+
+  storage::Tuple tile_tuple0(&schema, tile->GetTupleLocation(0));
+  LOG_DEBUG("Tuple Info: %s", tile_tuple0.GetInfo().c_str());
+  storage::Tuple tile_tuple1(&schema, tile->GetTupleLocation(1));
+  LOG_DEBUG("Tuple Info: %s", tile_tuple1.GetInfo().c_str());
+  storage::Tuple tile_tuple2(&schema, tile->GetTupleLocation(2));
+  LOG_DEBUG("Tuple Info: %s", tile_tuple2.GetInfo().c_str());
+
 }
 
 TEST_F(StatsStorageTests, SamplesDBTest) {
@@ -76,7 +113,7 @@ TEST_F(StatsStorageTests, AddSamplesTableTest) {
   // Add samples into database
   catalog::Catalog *catalog = catalog::Catalog::GetInstance();
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->AddSamplesDatatable(data_table.get(), sampled_tuples);
+  stats_storage->AddSamplesTable(data_table.get(), sampled_tuples);
 
   // Check the sampled tuples
   std::string samples_table_name = stats_storage->GenerateSamplesTableName(
