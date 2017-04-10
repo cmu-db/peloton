@@ -12,7 +12,6 @@
 
 #include "codegen/values_runtime.h"
 
-#include "common/logger.h"
 #include "type/type_util.h"
 #include "type/value_factory.h"
 #include "type/value_peeker.h"
@@ -51,9 +50,9 @@ void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
 }
 
 void ValuesRuntime::OutputVarchar(char *values, uint32_t idx, char *str,
-                                  UNUSED_ATTRIBUTE uint32_t len) {
+                                  uint32_t len) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  vals[idx] = type::ValueFactory::GetVarcharValue(str, false);
+  vals[idx] = type::ValueFactory::GetVarcharValue(str, len, false);
 }
 
 int32_t ValuesRuntime::CompareStrings(const char *str1, uint32_t len1,
