@@ -23,7 +23,7 @@
 namespace peloton {
 namespace storage {
 
-Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
+Database::Database(const oid_t database_oid) : database_oid(database_oid) {}
 
 Database::~Database() {
   // Clean up all the tables
@@ -168,8 +168,10 @@ const std::string Database::GetInfo() const {
   return os.str();
 }
 
+// deprecated, use catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
 std::string Database::GetDBName() { return database_name; }
 
+// deprecated, use catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
 void Database::setDBName(const std::string &database_name) {
   Database::database_name = database_name;
 }

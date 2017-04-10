@@ -34,7 +34,7 @@ class Database : public Printable {
   Database() = delete;
   Database(Database const &) = delete;
 
-  Database(const oid_t &database_oid);
+  Database(const oid_t database_oid);
 
   ~Database();
 
@@ -68,6 +68,8 @@ class Database : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  // deprecated, use catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
   std::string GetDBName();
   void setDBName(const std::string &database_name);
 
@@ -77,9 +79,11 @@ class Database : public Printable {
   //===--------------------------------------------------------------------===//
 
   // database oid
-  oid_t database_oid = INVALID_OID;
+  const oid_t database_oid;
 
   // database name
+  // TODO: deprecated, use
+  // catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
   std::string database_name;
 
   // TABLES
