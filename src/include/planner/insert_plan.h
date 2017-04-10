@@ -27,6 +27,13 @@ class InsertStatement;
 }
 
 namespace planner {
+
+/**
+ * There are several different flavors of Insert.
+ *
+ * - Insert a tile.
+ * - Insert
+ */
 class InsertPlan : public AbstractPlan {
  public:
   // This constructor takes in neither a project info nor a tuple

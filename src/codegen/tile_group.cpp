@@ -49,8 +49,8 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
  * @endcode
  */
 void TileGroup::GenerateTidScan(CodeGen &codegen,
-                                llvm::Value *tile_group_id,
-                                llvm::Value *tile_group_ptr,
+                                llvm::Value *tile_group_id,   // oid_t
+                                llvm::Value *tile_group_ptr,  // TileGroup *
                                 llvm::Value *column_layouts,
                                 ScanConsumer &consumer) const {
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
