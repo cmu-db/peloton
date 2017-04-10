@@ -45,7 +45,8 @@ class ColumnCatalog : public AbstractCatalog {
 
   ~ColumnCatalog();
 
-  inline oid_t GetNextOid() { return oid_++ | COLUMN_OID_MASK; }
+  // No use
+  inline oid_t GetNextOid() { return INVALID_OID; }
 
   //===--------------------------------------------------------------------===//
   // write Related API
