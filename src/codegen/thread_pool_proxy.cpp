@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/thread_pool_proxy.h"
+#include "codegen/multi_thread_context.h"
+#include "codegen/query_thread_pool_proxy.h"
 #include "codegen/query_thread_pool.h"
 
 namespace peloton {
@@ -19,8 +20,8 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 // Return the LLVM type that matches the memory layout of our Database class
 //===----------------------------------------------------------------------===//
-llvm::Type* ThreadPoolProxy::GetType(CodeGen& codegen) {
-  static const std::string kThreadPoolTypeName = "peloton::QueryThreadPool";
+llvm::Type* QueryThreadPoolProxy::GetType(CodeGen& codegen) {
+  static const std::string kThreadPoolTypeName = "peloton::codegen::QueryThreadPool";
   // Check if the type is already registered in the module, if so return it
   auto* thread_pool_type = codegen.LookupTypeByName(kThreadPoolTypeName);
   if (thread_pool_type != nullptr) {
@@ -40,21 +41,17 @@ llvm::Type* ThreadPoolProxy::GetType(CodeGen& codegen) {
 //===----------------------------------------------------------------------===//
 // Return the symbol of the QueryThreadPool::SubmitQueryTask() function
 //===----------------------------------------------------------------------===//
-const std::string& ThreadPoolProxy::_SubmitQueryTask::GetFunctionName() {
+const std::string& QueryThreadPoolProxy::_SubmitQueryTask::GetFunctionName() {
   static const std::string kThreadPoolProxyFnName =
-#ifdef __APPLE__
       // TODO: these symbols are incorrect!!
-      "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj11";
-#else
-      "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj11";
-#endif
+      "_ZNK7peloton7codegen15QueryThreadPool15SubmitQueryTask";
   return kThreadPoolProxyFnName;
 }
 
 //===----------------------------------------------------------------------===//
 // Return the LLVM function definition for QueryThreadPool::SubmitQueryTask()
 //===----------------------------------------------------------------------===//
-llvm::Function* ThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& codegen) {
+llvm::Function* QueryThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
   // Has the function already been registered?
@@ -64,20 +61,13 @@ llvm::Function* ThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& codegen)
   }
 
   // The function hasn't been registered, let's do it now
-  llvm::Type* thread_pool_type = ThreadPoolProxy::GetType(codegen);
+  llvm::Type* thread_pool_type = QueryThreadPoolProxy::GetType(codegen);
 
-  // create the type for the function to be submitted to thread pool
-  std::vector<llvm::Type*> thread_fn_args{codegen.Int64Type(), codegen.Int64Type()};
-  llvm::FunctionType* thread_fn_type =
-      llvm::FunctionType::get(codegen.Int64Type(), thread_fn_args, false);
-
-  // now create the type for SubmitQueryTask()
-  std::vector<llvm::Type*> fn_args{thread_pool_type->getPointerTo(),
-                                   thread_fn_type,   // 1st arg: function
-                                   codegen.Int64Type(),   // 2nd arg: start
-                                   codegen.Int64Type()};  // 3rd arg: end
-  llvm::FunctionType* fn_type =
-      llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
+  llvm::FunctionType* fn_type = llvm::FunctionType::get(
+    codegen.VoidType(), {
+      thread_pool_type->getPointerTo(),
+      MultiThreadContext::GetType(codegen)
+    }, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
