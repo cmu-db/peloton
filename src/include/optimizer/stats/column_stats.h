@@ -1,11 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <libcount/hll.h>
 
 #include "type/types.h"
 #include "optimizer/stats/count_min_sketch.h"
 #include "optimizer/stats/histogram.h"
-#include "optimizer/stats/hyperloglog.h"
+#include "optimizer/stats/hll.h"
 #include "optimizer/stats/count_min_sketch.h"
 
 namespace peloton {
@@ -29,7 +30,7 @@ public:
 
   std::vector<ValueFrequencyPair> GetCommonValueAndFrequency();
 
-  double GetCardinality();
+  uint64_t GetCardinality();
 
   std::vector<double> GetHistogramBound();
 
@@ -38,7 +39,7 @@ private:
   const oid_t table_id_;
   const oid_t column_id_;
   const type::Type::TypeId column_type_;
-  HyperLogLog hll_;
+  HLL hll_;
   Histogram hist_;
 
   // Not allow copy

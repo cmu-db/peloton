@@ -1,7 +1,5 @@
 #include "optimizer/stats/column_stats.h"
 
-#include <vector>
-
 #include "common/macros.h"
 
 namespace peloton {
@@ -19,7 +17,7 @@ ColumnStats::ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
 ColumnStats::~ColumnStats() {}
 
 void ColumnStats::AddValue(type::Value& value) {
-  hll_.Add(value);
+  hll_.Update(value);
   hist_.Update(value);
   total_count_++;
   if (value.IsNull()) {
@@ -40,7 +38,7 @@ std::vector<ColumnStats::ValueFrequencyPair> ColumnStats::GetCommonValueAndFrequ
   return res;
 }
 
-double ColumnStats::GetCardinality() {
+uint64_t ColumnStats::GetCardinality() {
   return hll_.EstimateCardinality();
 }
 

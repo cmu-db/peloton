@@ -20,12 +20,16 @@ class ColumnStatsTests : public PelotonTest {};
 TEST_F(ColumnStatsTests, BasicTests) {
   ColumnStats colstats{0, 0, 0, type::Type::TypeId::INTEGER};
   for (int i = 0; i < 100000; i++) {
-    type::Value v = type::ValueFactory::GetIntegerValue(i % 8765);
+    type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
   }
 
-  printf("cardinality is %f \n", colstats.GetCardinality());
+  // Minimum accuracy requirement
+  uint64_t cardinality = colstats.GetCardinality();
+  EXPECT_GE(cardinality, 50000);
+  EXPECT_LE(cardinality, 150000);
   std::vector<double> bounds = colstats.GetHistogramBound();
+
   EXPECT_EQ(colstats.GetFracNull(), 0);
 }
 
