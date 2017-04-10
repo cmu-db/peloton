@@ -12,17 +12,33 @@
 
 #pragma once
 
+#include "codegen/codegen.h"
+#include "codegen/multi_thread_context.h"
 #include "common/thread_pool.h"
 
 namespace peloton {
+namespace codegen {
+
 // a wrapper for boost worker thread pool.
-class QueryThreadPool : public ThreadPool {
+class QueryThreadPool {
  public:
 
-  // submit a specialized query task to the thread pool
-  void SubmitQueryTask(int64_t (&&func)(int64_t *, int64_t *), int64_t start, int64_t end) {
-    // add task to thread pool.
-    SubmitTask(func, &start, &end);
+  QueryThreadPool(size_t thread_nums) {
+    pool.Initialize(thread_nums, 0);
   }
+
+  ~QueryThreadPool() {
+    pool.Shutdown();
+  }
+
+  // submit a specialized query task to the thread pool
+  void SubmitQueryTask(MultiThreadContext context, void (*produce_func)(MultiThreadContext)) {
+    pool.SubmitTask(produce_func, std::move(context));
+  }
+
+ private:
+  ThreadPool pool;
 };
+
+}
 }

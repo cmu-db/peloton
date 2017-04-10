@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/codegen.h"
+#include "codegen/codegen_test_util.h"
+#include "codegen/multi_thread_context.h"
 #include "codegen/query_thread_pool.h"
 #include "common/harness.h"
 
@@ -22,64 +25,27 @@ namespace test {
 
 class QueryThreadPoolTests : public PelotonTest {};
 
-int64_t func_add(int64_t *var, int64_t *var2) {
-    *var = *var + *var2;
-    return *var;
-}
-
 TEST_F(QueryThreadPoolTests, BasicTest) {
-  QueryThreadPool thread_pool;
-  thread_pool.Initialize(2, 1);
+  codegen::QueryThreadPool thread_pool(4);
 
-  std::atomic<int> counter(0);
+  codegen::CodeContext code_context;
+  codegen::CodeGen codegen(code_context);
 
-  int var1 = 1;
-  int var2 = 2;
-  int var3 = 3;
-  int var4 = 4;
-  int var5 = 5;
-  thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var + *var;
-                           counter->fetch_add(1);
-                         },
-                         &var1, &counter);
-  thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var - *var;
-                           counter->fetch_add(1);
-                         },
-                         &var2, &counter);
-  thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var * *var;
-                           counter->fetch_add(1);
-                         },
-                         &var3, &counter);
-  thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var / *var;
-                           counter->fetch_add(1);
-                         },
-                         &var4, &counter);
+  std::atomic<bool> finished(false);
+  codegen::MultiThreadContext context(codegen.Const64(0), codegen.Const64(4), &finished);
 
-  thread_pool.SubmitDedicatedTask([](int *var, std::atomic<int> *counter) {
-                                    *var = *var / *var;
-                                    counter->fetch_add(1);
-                                  },
-                                  &var5, &counter);
-  int64_t var6 = 6;
-  thread_pool.SubmitQueryTask(func_add, var6, var6);
+  thread_pool.SubmitQueryTask(context, [](__attribute__ ((unused)) codegen::MultiThreadContext context){
+    // Thread blocks for 100 ms.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    context.ThreadFinish();
+    return;
+  });
 
-  // Wait for all the test to finish
-  while (counter.load() != 5) {
+  while (finished.load() == false) {
+    LOG_DEBUG("Thread not finish, wait for another 10ms...");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-
-
-  EXPECT_EQ(2, var1);
-  EXPECT_EQ(0, var2);
-  EXPECT_EQ(9, var3);
-  EXPECT_EQ(1, var4);
-  EXPECT_EQ(1, var5);
-
-  thread_pool.Shutdown();
+  LOG_DEBUG("All threads finish.");
 }
 
 }  // End test namespace

@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "codegen/codegen.h"
 #include "codegen/code_context.h"
 #include "codegen/function_builder.h"
@@ -24,18 +26,46 @@ namespace codegen {
 class MultiThreadContext {
  public:
 
-  MultiThreadContext(const CodeGen &codegen, uint64_t num_threads): codegen_(codegen) {
-      num_threads_ = codegen_.Const64(num_threads);
+  MultiThreadContext(llvm::Value *thread_id, llvm::Value *num_threads, std::atomic<bool> *finished)
+   : thread_id_(thread_id), num_threads_(num_threads) {
+    finished_ = finished;
+    if (finished_ != nullptr) {
+      finished_->store(false);
+    }
   }
 
-  llvm::Value *GetRangeStart(CodeGen &codegen, llvm::Value *thread_id, llvm::Value *tile_group_count) {
+  static llvm::Type* GetType(CodeGen& codegen) {
+    static const std::string kThreadPoolTypeName = "peloton::codegen::MultiThreadContext";
+    // Check if the type is already registered in the module, if so return it
+    auto* thread_pool_type = codegen.LookupTypeByName(kThreadPoolTypeName);
+    if (thread_pool_type != nullptr) {
+      return thread_pool_type;
+    }
+
+    // Right now we don't need to define each individual field
+    // since we only invoke functions on the class.
+    static constexpr uint64_t thread_pool_obj_size = sizeof(MultiThreadContext);
+    auto* byte_arr_type =
+        llvm::ArrayType::get(codegen.Int8Type(), thread_pool_obj_size);
+    thread_pool_type = llvm::StructType::create(codegen.GetContext(), {byte_arr_type},
+                                            kThreadPoolTypeName);
+    return thread_pool_type;
+  }
+
+  llvm::Value *GetRangeStart(CodeGen &codegen, llvm::Value *tile_group_count) {
     auto *func = GetRangeStartFunction(codegen);
-    return codegen.CallFunc(func, {thread_id, tile_group_count});
+    return codegen.CallFunc(func, {thread_id_, tile_group_count});
   }
 
-  llvm::Value *GetRangeEnd(CodeGen &codegen, llvm::Value *thread_id, llvm::Value *tile_group_count) {
+  llvm::Value *GetRangeEnd(CodeGen &codegen, llvm::Value *tile_group_count) {
     auto *func = GetRangeEndFunction(codegen);
-    return codegen.CallFunc(func, {thread_id, tile_group_count});
+    return codegen.CallFunc(func, {thread_id_, tile_group_count});
+  }
+
+  void ThreadFinish() {
+    if (finished_ != nullptr) {
+      finished_->store(true);
+    }
   }
 
  private:
@@ -81,8 +111,10 @@ class MultiThreadContext {
     return function_builder.GetFunction();
   }
 
+  llvm::Value *thread_id_;
   llvm::Value *num_threads_;
-  const CodeGen &codegen_;
+
+  std::atomic<bool> *finished_;
 };
 
 }
