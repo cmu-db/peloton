@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/parser/statements.h>
 #include "optimizer/query_property_extractor.h"
 
 #include "catalog/catalog.h"
@@ -28,8 +29,6 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-  std::vector<Column *> columns = {};
-
   // Get table pointer, id, and schema.
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
@@ -45,30 +44,30 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         new PropertyPredicate(predicate->Copy())));
   }
 
-  std::unordered_map<oid_t, oid_t> column_mapping;
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
 
-  // Transform output expressions
-  for (auto col : *select_stmt->select_list) {
-    expression::ExpressionUtil::TransformExpression(column_ids, col, schema, needs_projection);
+  // TODO: Support combination of STAR expr and other cols expr.
+  // Only support single STAR expression
+  if ((*select_stmt->getSelectList())[0]->GetExpressionType() ==
+      ExpressionType::STAR) {
+    property_set_.AddProperty(
+        std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
   }
+  else {
+    std::vector<expression::TupleValueExpression *> column_exprs;
 
-  // Get the columns required by the result
-  auto table_oid = target_table->GetOid();
-  for (oid_t col_id : column_ids) {
-    catalog::Column schema_col = schema.GetColumn(col_id);
-    Column *col = manager_.LookupColumn(table_oid, col_id);
-    if (col == nullptr) {
-      col = manager_.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
-                                   schema_col.GetName(), schema_col.IsInlined(),
-                                   table_oid, col_id);
+    // Transform output expressions
+    for (auto col : *select_stmt->select_list) {
+      expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
+                                                      needs_projection);
+      if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+        column_exprs.emplace_back(
+            reinterpret_cast<expression::TupleValueExpression *>(col));
     }
-    columns.push_back(col);
+    property_set_.AddProperty(
+        std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
   }
-
-  property_set_.AddProperty(
-      std::shared_ptr<PropertyColumns>(new PropertyColumns(columns)));
 
   if (needs_projection) {
     auto output_expressions =
@@ -81,11 +80,30 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(std::shared_ptr<PropertyProjection>(
         new PropertyProjection(std::move(output_expressions))));
   }
+
+  if (select_stmt->order != nullptr) {
+    select_stmt->order->Accept(this);
+  }
 };
 void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
-void QueryPropertyExtractor::Visit(const parser::OrderDescription *) {}
+void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
+  // TODO: Only support order by base table columns
+  std::vector<bool> sort_ascendings;
+  std::vector<expression::TupleValueExpression*> sort_cols;
+  auto len = node->exprs->size();
+  for (size_t idx = 0; idx < len; idx++) {
+    auto expr = node->exprs->at(idx);
+    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
+      continue;
+    sort_cols.emplace_back(reinterpret_cast<expression::TupleValueExpression*>(expr));
+    sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
+  }
+
+  property_set_.AddProperty(std::shared_ptr<PropertySort>(
+      new PropertySort(sort_cols, sort_ascendings)));
+}
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 
 void QueryPropertyExtractor::Visit(
@@ -93,7 +111,16 @@ void QueryPropertyExtractor::Visit(
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
 void QueryPropertyExtractor::Visit(
-    UNUSED_ATTRIBUTE const parser::DeleteStatement *op) {}
+    const parser::DeleteStatement *op) {
+  if (op->expr != nullptr) {  
+    property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
+        new PropertyPredicate(op->expr->Copy())));
+  }
+  property_set_.AddProperty(
+      std::shared_ptr<PropertyColumns>(
+          new PropertyColumns(std::vector<expression::TupleValueExpression *>())));
+
+}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
 void QueryPropertyExtractor::Visit(

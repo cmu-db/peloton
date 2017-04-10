@@ -51,6 +51,11 @@ llvm_map_components_to_libnames(LLVM_LIBRARIES core mcjit nativecodegen native)
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${LLVM_LIBRARIES})
 
+# --[ PQXX
+find_package(PQXX REQUIRED)
+include_directories(SYSTEM ${PQXX_INCLUDE_DIRECTORIES})
+list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
+
 # --[ IWYU
 
 # Generate clang compilation database

@@ -27,6 +27,8 @@ class OperatorVisitor {
 
   virtual void Visit(const PhysicalScan *) = 0;
   virtual void Visit(const PhysicalProject *) = 0;
+  virtual void Visit(const PhysicalOrderBy *) = 0;
+  virtual void Visit(const PhysicalLimit *) = 0;
   virtual void Visit(const PhysicalFilter *) = 0;
   virtual void Visit(const PhysicalInnerNLJoin *) = 0;
   virtual void Visit(const PhysicalLeftNLJoin *) = 0;
@@ -36,6 +38,10 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalLeftHashJoin *) = 0;
   virtual void Visit(const PhysicalRightHashJoin *) = 0;
   virtual void Visit(const PhysicalOuterHashJoin *) = 0;
+  virtual void Visit(const PhysicalInsert *) = 0;
+  virtual void Visit(const PhysicalDelete *) = 0;
+  virtual void Visit(const PhysicalUpdate *) = 0;
+
 };
 
 } /* namespace optimizer */

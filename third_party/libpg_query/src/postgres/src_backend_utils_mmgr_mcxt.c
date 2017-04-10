@@ -134,8 +134,8 @@ MemoryContextInit(void)
 	TopMemoryContext = AllocSetContextCreate((MemoryContext) NULL,
 											 "TopMemoryContext",
 											 0,
-											 8 * 1024,
-											 8 * 1024);
+											 0,
+											 0);
 
 	/*
 	 * Not having any other place to point CurrentMemoryContext, make it point
@@ -158,9 +158,9 @@ MemoryContextInit(void)
 	 */
 	ErrorContext = AllocSetContextCreate(TopMemoryContext,
 										 "ErrorContext",
-										 8 * 1024,
-										 8 * 1024,
-										 8 * 1024);
+										 0,
+										 0,
+										 0);
 	MemoryContextAllowInCriticalSection(ErrorContext, true);
 }
 

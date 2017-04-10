@@ -25,23 +25,31 @@
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "common/exception.h"
 #include "parser/select_statement.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
+#include <include/parser/postgresparser.h>
+
+// #define NEW_OPTIMIZER
 
 namespace peloton {
 namespace tcop {
 
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
+#ifdef NEW_OPTIMIZER
+  optimizer_.reset(new optimizer::Optimizer);
+#else
   optimizer_.reset(new optimizer::SimpleOptimizer());
+#endif
 }
 
 void TrafficCop::Reset() {
@@ -202,13 +210,13 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
-  bridge::peloton_status p_status;
+  executor::ExecuteResult p_status;
 
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
@@ -226,7 +234,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                  result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
@@ -274,7 +282,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
   try {
-    auto &peloton_parser = parser::Parser::GetInstance();
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
@@ -403,9 +411,25 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
+    case type::Type::BOOLEAN:
+    case type::Type::TINYINT: {
+      field_type = PostgresValueType::BOOLEAN;
+      field_size = 1;
+      break;
+    }
+    case type::Type::SMALLINT: {
+      field_type = PostgresValueType::SMALLINT;
+      field_size = 2;
+      break;
+    }
     case type::Type::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
+      break;
+    }
+    case type::Type::BIGINT: {
+      field_type = PostgresValueType::BIGINT;
+      field_size = 8;
       break;
     }
     case type::Type::DECIMAL: {
@@ -421,7 +445,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64;
+      field_size = 64; // FIXME: Bytes???
       break;
     }
     default: {

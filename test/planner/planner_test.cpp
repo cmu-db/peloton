@@ -195,9 +195,10 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  auto table_info = new parser::TableInfo();
-  table_info->table_name = name;
-  insert_statement->table_info_ = table_info;
+  auto table_ref = new parser::TableRef(TableReferenceType::NAME);
+  table_ref->table_info_ = new parser::TableInfo();
+  table_ref->table_info_->table_name = name;
+  insert_statement->table_ref_= table_ref;
   std::vector<char *> *columns = NULL;  // will not be used
   insert_statement->columns = columns;
 
@@ -238,9 +239,75 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   delete values;
   delete insert_plan;
   delete insert_statement;
-  delete parameter_expr_1;
-  delete parameter_expr_2;
 }
+
+TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
+  // Bootstrapping peloton
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  // Create table
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+  catalog::Catalog::GetInstance()->CreateTable(
+      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+
+  // INSERT INTO department_table VALUES (1, $1)
+  auto insert_statement =
+      new parser::InsertStatement(peloton::InsertType::VALUES);
+
+  auto name = new char[strlen("department_table") + 1]();
+  strcpy(name, "department_table");
+  auto table_ref = new parser::TableRef(TableReferenceType::NAME);
+  table_ref->table_info_ = new parser::TableInfo();
+  table_ref->table_info_->table_name = name;
+  insert_statement->table_ref_ = table_ref;
+  insert_statement->columns = new std::vector<char *>{strdup("id"), strdup("name")};
+
+  // Value val =
+  //    type::ValueFactory::GetNullValue();  // The value is not important
+  // at  this point
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    type::ValueFactory::GetIntegerValue(1).Copy());
+  auto parameter_expr_2 = new expression::ParameterValueExpression(1);
+  auto exprs = new std::vector<expression::AbstractExpression *>();
+  exprs->push_back(constant_expr_1);
+  exprs->push_back(parameter_expr_2);
+  insert_statement->insert_values = new std::vector<
+      std::vector<peloton::expression::AbstractExpression *> *>();
+  insert_statement->insert_values->push_back(exprs);
+
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "department_table");
+
+  planner::InsertPlan *insert_plan = new planner::InsertPlan(
+      target_table, insert_statement->columns, insert_statement->insert_values);
+  LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
+
+  // VALUES(1, "CS")
+  LOG_INFO("Binding values");
+  auto values = new std::vector<type::Value>();
+  values->push_back(type::ValueFactory::GetVarcharValue(
+      (std::string)"CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
+  LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
+  // bind values to parameters in plan
+  insert_plan->SetParameterValues(values);
+
+  // free the database just created
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  delete values;
+  delete insert_plan;
+  delete insert_statement;
+}
+
 
 }  // End test namespace
 }  // End peloton namespace

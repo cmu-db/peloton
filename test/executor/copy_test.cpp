@@ -19,7 +19,7 @@
 #include "executor/copy_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
 #include "tcop/tcop.h"
 
@@ -80,7 +80,7 @@ TEST_F(CopyTests, Copying) {
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<StatementResult> result;
-    bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+    executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree().get(), params, result, result_format);
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
     LOG_TRACE("Statement executed. Result: %s",
@@ -98,7 +98,7 @@ TEST_F(CopyTests, Copying) {
   std::unique_ptr<Statement> statement(new Statement("COPY", copy_sql));
 
   LOG_INFO("Building parse tree...");
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
   LOG_INFO("Building plan tree...");

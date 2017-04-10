@@ -31,7 +31,7 @@ class UpdateClause {
 
   ~UpdateClause() {
     if (column != nullptr) {
-      delete column;
+      delete[] column;
     }
     if (value != nullptr) {
       delete value;

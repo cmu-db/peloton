@@ -31,7 +31,7 @@ class DataTable;
 }
 
 namespace optimizer {
-
+class PropertySort;
 //===--------------------------------------------------------------------===//
 // Leaf
 //===--------------------------------------------------------------------===//
@@ -47,13 +47,14 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table);
+  static Operator make(storage::DataTable *table = nullptr, std::string alias = "");
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   storage::DataTable *table;
+  std::string table_alias;
 };
 
 //===--------------------------------------------------------------------===//
@@ -69,7 +70,9 @@ class LogicalFilter : public OperatorNode<LogicalFilter> {
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -77,7 +80,9 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -85,7 +90,9 @@ class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -93,7 +100,9 @@ class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -101,7 +110,9 @@ class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -109,7 +120,11 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {
  public:
-  static Operator make();
+  static Operator make(std::vector<expression::AbstractExpression *> *columns,
+                       expression::AbstractExpression *having);
+
+  std::vector<expression::AbstractExpression *> *columns;
+  expression::AbstractExpression *having;
 };
 
 //===--------------------------------------------------------------------===//
@@ -117,8 +132,47 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
  public:
-  static Operator make();
+  static Operator make(int64_t limit, int64_t offset);
+
+  int64_t limit;
+  int64_t offset;
 };
+
+//===--------------------------------------------------------------------===//
+// Insert
+//===--------------------------------------------------------------------===//
+class LogicalInsert: public OperatorNode<LogicalInsert> {
+ public:
+  static Operator make(
+      storage::DataTable* target_table,
+      std::vector<char*>* columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+
+  storage::DataTable* target_table;
+  std::vector<char*>* columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
+};
+
+//===--------------------------------------------------------------------===//
+// Delete
+//===--------------------------------------------------------------------===//
+class LogicalDelete: public OperatorNode<LogicalDelete> {
+ public:
+  static Operator make(storage::DataTable* target_table);
+
+  storage::DataTable* target_table;
+};
+
+//===--------------------------------------------------------------------===//
+// Update
+//===--------------------------------------------------------------------===//
+class LogicalUpdate: public OperatorNode<LogicalUpdate> {
+ public:
+  static Operator make(const parser::UpdateStatement* update_stmt);
+
+  const parser::UpdateStatement* update_stmt;
+};
+
 
 //===--------------------------------------------------------------------===//
 // Scan
@@ -140,6 +194,29 @@ class PhysicalScan : public OperatorNode<PhysicalScan> {
 class PhysicalProject : public OperatorNode<PhysicalProject> {
  public:
   static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalOrderBy
+//===--------------------------------------------------------------------===//
+class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
+ public:
+  static Operator make(std::vector<expression::TupleValueExpression *> &sort_columns,
+                       std::vector<bool> &sort_ascending);
+
+  std::vector<expression::TupleValueExpression *> sort_columns;
+  std::vector<bool> sort_ascending;
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalLimit
+//===--------------------------------------------------------------------===//
+class PhysicalLimit : public OperatorNode<PhysicalLimit> {
+ public:
+  static Operator make(int64_t limit, int64_t offset);
+
+  int64_t limit;
+  int64_t offset;
 };
 
 //===--------------------------------------------------------------------===//
@@ -214,5 +291,39 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
   static Operator make();
 };
 
+//===--------------------------------------------------------------------===//
+// PhysicalInsert
+//===--------------------------------------------------------------------===//
+class PhysicalInsert : public OperatorNode<PhysicalInsert> {
+ public:
+  static Operator make(
+      storage::DataTable* target_table,
+      std::vector<char*>* columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+
+  storage::DataTable* target_table;
+  std::vector<char*>* columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalDelete
+//===--------------------------------------------------------------------===//
+class PhysicalDelete : public OperatorNode<PhysicalDelete> {
+ public:
+  static Operator make(storage::DataTable* target_table);
+  storage::DataTable* target_table;
+
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalUpdate
+//===--------------------------------------------------------------------===//
+class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
+ public:
+  static Operator make(const parser::UpdateStatement* update_stmt);
+
+  const parser::UpdateStatement* update_stmt;
+};
 } /* namespace optimizer */
 } /* namespace peloton */

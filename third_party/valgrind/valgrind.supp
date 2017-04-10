@@ -38,3 +38,16 @@
         fun:exit
         fun:(below main)
 }
+
+{
+   Handles leaks in libpg_query
+        Memcheck:Leak
+        match-leak-kinds: definite
+        ...
+        fun:AllocSetContextCreate
+        fun:MemoryContextInit
+        fun:pg_query_init
+        fun:pg_query_enter_memory_context
+        ...
+}
+

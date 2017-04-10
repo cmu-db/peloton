@@ -29,7 +29,6 @@
 #include "executor/plan_executor.h"
 #include "executor/update_executor.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -48,8 +47,8 @@ class OptimizerRuleTests : public PelotonTest {};
 
 TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   // Build op plan node to match rule
-  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));
-  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto val = type::ValueFactory::GetBooleanValue(true);
   auto join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   join->PushChild(left_get);

@@ -32,7 +32,8 @@
 
 #include "expression/comparison_expression.h"
 #include "planner/insert_plan.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
+
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
 #include "storage/data_table.h"

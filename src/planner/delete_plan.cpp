@@ -64,7 +64,7 @@ void DeletePlan::BuildInitialDeletePlan(
 
 // Creates the delete plan. The index plan should be added outside
 DeletePlan::DeletePlan(storage::DataTable *table,
-                       expression::AbstractExpression *predicate) {
+                       const expression::AbstractExpression *predicate) {
   target_table_ = table;
 
   // if expr is null , delete all tuples from table

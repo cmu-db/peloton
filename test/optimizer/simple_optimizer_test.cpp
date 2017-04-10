@@ -10,7 +10,7 @@
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -53,7 +53,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
                                 "PRIMARY KEY, student_id INT, dept_name "
                                 "TEXT);"));
 
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
@@ -68,7 +68,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());

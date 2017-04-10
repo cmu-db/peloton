@@ -18,20 +18,20 @@
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
-namespace bridge {
+namespace executor {
 
 //===----------------------------------------------------------------------===//
 // Plan Executor
 //===----------------------------------------------------------------------===//
 
-typedef struct peloton_status {
+typedef struct ExecuteResult {
   peloton::ResultType m_result;
   int *m_result_slots;
 
   // number of tuples processed
   uint32_t m_processed;
 
-  peloton_status() {
+  ExecuteResult() {
     m_processed = 0;
     m_result = peloton::ResultType::SUCCESS;
     m_result_slots = nullptr;
@@ -43,7 +43,7 @@ typedef struct peloton_status {
   bool SerializeTo(peloton::SerializeOutput &output);
   bool DeserializeFrom(peloton::SerializeInput &input);
 
-} peloton_status;
+} ExecuteResult;
 
 class PlanExecutor {
  public:
@@ -67,7 +67,7 @@ class PlanExecutor {
    * Before ExecutePlan, a node first receives value list, so we should
    * pass value list directly rather than passing Postgres's ParamListInfo
    */
-  static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
+  static ExecuteResult ExecutePlan(const planner::AbstractPlan *plan,
                                     concurrency::Transaction* txn,
                                     const std::vector<type::Value> &params,
                                     std::vector<StatementResult> &result,
@@ -86,5 +86,5 @@ class PlanExecutor {
   DISALLOW_COPY_AND_MOVE(PlanExecutor);
 };
 
-}  // namespace bridge
+}  // namespace executor
 }  // namespace peloton

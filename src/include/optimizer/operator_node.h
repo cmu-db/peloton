@@ -36,11 +36,16 @@ enum class OpType {
   SemiJoin,
   Aggregate,
   Limit,
+  LogicalInsert,
+  LogicalDelete,
+  LogicalUpdate,
   // Separate between logical and physical ops
   LogicalPhysicalDelimiter,
   // Physical ops
   Scan,
   Project,
+  OrderBy,
+  PhysicalLimit,
   ComputeExprs,
   Filter,
   InnerNLJoin,
@@ -51,6 +56,9 @@ enum class OpType {
   LeftHashJoin,
   RightHashJoin,
   OuterHashJoin,
+  Insert,
+  Delete,
+  Update
 };
 
 //===--------------------------------------------------------------------===//

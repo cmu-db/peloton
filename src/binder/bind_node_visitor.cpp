@@ -75,7 +75,8 @@ void BindNodeVisitor::Visit(const parser::GroupByDescription *node) {
   if (node->having != nullptr) node->having->Accept(this);
 }
 void BindNodeVisitor::Visit(const parser::OrderDescription *node) {
-  if (node->expr != nullptr) node->expr->Accept(this);
+  for (auto expr : *(node->exprs))
+    if (expr != nullptr) expr->Accept(this);
 }
 
 void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
@@ -110,7 +111,7 @@ void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
-  if (!expr->is_bound) {
+  if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
     std::tuple<oid_t, oid_t> table_id_tuple;
 
@@ -142,7 +143,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     }
 
     expr->SetBoundObjectId(col_pos_tuple);
-    expr->is_bound = true;
+    expr->SetIsBound();
   }
 }
 

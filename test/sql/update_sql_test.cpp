@@ -158,7 +158,7 @@ TEST_F(UpdateSQLTests, ComplexUpdateSQLTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "10.005000");
+  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "10.005");
 
   // Another update a tuple into table
   LOG_INFO("Another update a tuple...");
@@ -181,8 +181,8 @@ TEST_F(UpdateSQLTests, ComplexUpdateSQLTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "10.000000");
-  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 1), "5.500000");
+  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "10");
+  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 1), "5.5");
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

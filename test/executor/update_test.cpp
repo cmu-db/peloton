@@ -34,7 +34,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -122,22 +122,22 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
 
   // Do a select to get the original values
   //  std::unique_ptr<Statement> statement;
-  //  auto& peloton_parser = parser::Parser::GetInstance();
+  //  auto& peloton_parser = parser::PostgresParser::GetInstance();
   //  auto select_stmt =
   //      peloton_parser.BuildParseTree("SELECT * FROM test_table LIMIT 1;");
   //  statement->SetPlanTree(
   //      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   //  std::vector<type::Value> params;
   //  std::vector<ResultType> result;
-  //  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  //  executor::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   //
   //  std::vector<int> result_format;
   //  auto tuple_descriptor =
   //      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  //  UNUSED_ATTRIBUTE bridge::peloton_status status =
-  //      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+  //  UNUSED_ATTRIBUTE executor::ExecuteResult status =
+  //      executor::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
   //  LOG_INFO("Statement executed. Result: %s",
@@ -197,7 +197,7 @@ TEST_F(UpdateTests, UpdatingOld) {
                                 "INSERT INTO "
                                 "department_table(dept_id,manager_id,dept_name)"
                                 " VALUES (1,12,'hello_1');"));
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
@@ -214,7 +214,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
