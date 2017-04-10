@@ -1,36 +1,154 @@
 #pragma once
 
+#include "type/value.h"
+#include "type/type.h"
+#include "type/types.h"
+#include "expression/abstract_expression.h"
+#include "common/macros.h"
 #include "common/logger.h"
 #include "count_min_sketch.h"
 
 #include <cmath>
 #include <vector>
 #include <cassert>
-#include <cstdlib>
 #include <cinttypes>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <string>
 #include <stack>
 #include <queue>
 #include <vector>
-#include <cstring>
-#include <string>
-#include <cstdio>
+#include <utility>
 
 namespace peloton{
 namespace optimizer{
 
 class TopKElements {
- public:
+
+  using ValueFrequencyPair = std::pair<type::Value, double>;
+
+public:
+
   /*
    * class declaration
    */
-  template<class T, class Container, class Compare> class UpdatableQueue;
   class ApproxTopEntry;
   class ApproxTopEntryElem;
+  template<class T, class Container, class Compare> class UpdatableQueue;
   class TopKQueue;
 
   /*
    * class definition
    */
+
+  class ApproxTopEntryElem {
+  public:
+
+    /* 
+     * types:
+     * NON_TYPE: no type / not initialized
+     * INT_TYPE: int
+     * STR_TYPE: str
+     */
+
+    enum class ElemType {
+      NON_TYPE,
+      INT_TYPE,
+      STR_TYPE
+    };
+    
+    ElemType item_type;
+    int64_t int_item;
+    const char* str_item;
+
+    ApproxTopEntryElem() : 
+    item_type{ElemType::NON_TYPE},
+    int_item{-1},
+    str_item{nullptr}
+    {}
+    
+    ApproxTopEntryElem(int64_t intItem) :
+    item_type{ElemType::INT_TYPE},
+    int_item{intItem},
+    str_item{nullptr}
+    {}
+
+    ApproxTopEntryElem(const char* strItem) :
+    item_type{ElemType::STR_TYPE},
+    int_item{-1},
+    str_item{strItem}
+    {}
+
+    bool operator==(const ApproxTopEntryElem &other) const {
+      if (item_type == other.item_type) {
+        switch (item_type) {
+          case ElemType::INT_TYPE:
+            return int_item == other.int_item;
+          case ElemType::STR_TYPE:
+            if (strcmp(str_item, other.str_item) == 0) {
+              return true;
+            } else {
+              return false;
+            }
+          default:
+            return false;
+        }
+      }
+      return false;
+    }
+    
+  }; // end of class ApproxTopEntryElem
+
+
+  class ApproxTopEntry {
+  public:
+    ApproxTopEntryElem approx_top_elem;
+    int64_t approx_count;
+
+    ApproxTopEntry() : 
+    approx_top_elem{},
+    approx_count{0}
+    {}
+
+    ApproxTopEntry(ApproxTopEntryElem elem, int64_t freq) : 
+    approx_top_elem{elem},
+    approx_count{freq}
+    {}
+
+    bool operator==(const ApproxTopEntry &other) const {
+      // just check the elem, not the count
+      return approx_top_elem == other.approx_top_elem;
+    }
+
+    std::string print() const {
+      //char * ret ;
+      std::string ret;
+      switch (approx_top_elem.item_type) {
+        case ApproxTopEntryElem::ElemType::INT_TYPE:
+          //sprintf(ret, "{int_elem: %ld, count: %ld}", approx_top_elem.int_item,  approx_count);
+          ret += "{int_elem: ";
+          ret += std::to_string(approx_top_elem.int_item); 
+          ret +=" count: "; 
+          ret += std::to_string(approx_count);
+          ret += "}";
+          break;
+        case ApproxTopEntryElem::ElemType::STR_TYPE:
+          //sprintf(ret, "{str_elem: %s, count: %ld}", approx_top_elem.str_item, approx_count);
+          ret += "{str_elem: ";
+          ret += approx_top_elem.str_item; 
+          ret +=" count: "; 
+          ret += std::to_string(approx_count);
+          ret += "}";
+          break;
+        default:
+          
+          break;
+      }
+      return ret;
+    }
+
+  }; // end of class ApproxTopEntry
 
   template<
     class T,
@@ -159,115 +277,75 @@ class TopKElements {
       return std::move(vec_ret);
     }
 
-  };
-
-  class ApproxTopEntryElem {
-  public:
-
-    /* 
-     * types:
-     * NON_TYPE: no type / not initialized
-     * INT_TYPE: int
-     * STR_TYPE: str
+    /*
+     * Retrieve given number of elements, ordered
+     * Max first
      */
+    std::vector<ValueFrequencyPair> get_all_ordered_max_first() {
+      std::stack<ApproxTopEntry> stack;
+      std::vector<ValueFrequencyPair> vec_ret;
+      while (!this->empty()) {
+        stack.push(this->top());
+        this->pop();
+      }
 
-    enum class ElemType {
-      NON_TYPE,
-      INT_TYPE,
-      STR_TYPE
-    };
-    
-    ElemType item_type;
-    int64_t int_item;
-    const char* str_item;
-
-    ApproxTopEntryElem() : 
-    item_type{ElemType::NON_TYPE},
-    int_item{-1},
-    str_item{nullptr}
-    {}
-    
-    ApproxTopEntryElem(int64_t intItem) :
-    item_type{ElemType::INT_TYPE},
-    int_item{intItem},
-    str_item{nullptr}
-    {}
-
-    ApproxTopEntryElem(const char* strItem) :
-    item_type{ElemType::STR_TYPE},
-    int_item{-1},
-    str_item{strItem}
-    {}
-
-    bool operator==(const ApproxTopEntryElem &other) const {
-      if (item_type == other.item_type) {
-        switch (item_type) {
-          case ElemType::INT_TYPE:
-            return int_item == other.int_item;
-          case ElemType::STR_TYPE:
-            if (strcmp(str_item, other.str_item) == 0) {
-              return true;
-            } else {
-              return false;
-            }
+      while (stack.size() != 0) {
+        ApproxTopEntry t = stack.top();
+        this->push(t);
+        type::Value val;
+        switch (t.approx_top_elem.item_type) {
+          case ApproxTopEntryElem::ElemType::INT_TYPE :
+            val = type::ValueFactory::GetIntegerValue(t.approx_top_elem.int_item);
+            break;
+          case ApproxTopEntryElem::ElemType::STR_TYPE :
+            val = type::ValueFactory::GetVarcharValue(t.approx_top_elem.str_item);
+            break;
           default:
-            return false;
+            break;
         }
+        vec_ret.push_back(std::make_pair(val, (double) t.approx_count));
+        stack.pop();
       }
-      return false;
-    }
-    
-  }; // end of class ApproxTopEntryElem
-
-
-  class ApproxTopEntry {
-  public:
-    ApproxTopEntryElem approx_top_elem;
-    int64_t approx_count;
-
-    ApproxTopEntry() : 
-    approx_top_elem{},
-    approx_count{0}
-    {}
-
-    ApproxTopEntry(ApproxTopEntryElem elem, int64_t freq) : 
-    approx_top_elem{elem},
-    approx_count{freq}
-    {}
-
-    bool operator==(const ApproxTopEntry &other) const {
-      // just check the elem, not the count
-      return approx_top_elem == other.approx_top_elem;
+      return std::move(vec_ret);
     }
 
-    std::string print() const {
-      //char * ret ;
-      std::string ret;
-      switch (approx_top_elem.item_type) {
-        case ApproxTopEntryElem::ElemType::INT_TYPE:
-          //sprintf(ret, "{int_elem: %ld, count: %ld}", approx_top_elem.int_item,  approx_count);
-          ret += "{int_elem: ";
-          ret += std::to_string(approx_top_elem.int_item); 
-          ret +=" count: "; 
-          ret += std::to_string(approx_count);
-          ret += "}";
-          break;
-        case ApproxTopEntryElem::ElemType::STR_TYPE:
-          //sprintf(ret, "{str_elem: %s, count: %ld}", approx_top_elem.str_item, approx_count);
-          ret += "{str_elem: ";
-          ret += approx_top_elem.str_item; 
-          ret +=" count: "; 
-          ret += std::to_string(approx_count);
-          ret += "}";
-          break;
-        default:
-          
-          break;
+    /*
+     * Retrieve given number of elements, ordered
+     * Max first
+     */
+    std::vector<ValueFrequencyPair> get_ordered_max_first(int num) {
+      std::stack<ApproxTopEntry> stack;
+      std::vector<ValueFrequencyPair> vec_ret;
+      int i = 0;
+      while (!this->empty()) {
+        stack.push(this->top());
+        this->pop();
       }
-      return ret;
+
+      while (stack.size() != 0) {
+        ApproxTopEntry t = stack.top();
+        this->push(t);
+        if (i < num) {
+          ++i;
+          type::Value val;
+          switch (t.approx_top_elem.item_type) {
+            case ApproxTopEntryElem::ElemType::INT_TYPE :
+              val = type::ValueFactory::GetIntegerValue(t.approx_top_elem.int_item);
+              break;
+            case ApproxTopEntryElem::ElemType::STR_TYPE :
+              val = type::ValueFactory::GetVarcharValue(t.approx_top_elem.str_item);
+              break;
+            default:
+              break;
+          }
+          vec_ret.push_back(std::make_pair(val, (double) t.approx_count));
+        }
+        stack.pop();
+      }
+      return std::move(vec_ret);
     }
 
-  }; // end of class ApproxTopEntry
+  }; // end of UpdatableQueue
 
   /*
    * TopKQueue
@@ -383,13 +461,30 @@ class TopKElements {
       return queue.retrieve_all_ordered_max_first();
     }
 
-
     /*
      * Retrieve given number of elements, ordered
      * Max first
      */
     std::vector<ApproxTopEntry> retrieve_ordered_max_first(int num) {
       return queue.retrieve_ordered_max_first(num);
+    }
+
+    /*
+     * Retrieve all elements, ordered
+     * Max first
+     * Peloton Compatible
+     */
+    std::vector<ValueFrequencyPair> get_all_ordered_max_first() {
+      return queue.get_all_ordered_max_first();
+    }
+
+    /*
+     * Retrieve given number of elements, ordered
+     * Max first
+     * Peloton Compatible
+     */
+    std::vector<ValueFrequencyPair> get_ordered_max_first(int num) {
+      return queue.get_ordered_max_first(num);
     }
 
    private:
@@ -445,6 +540,14 @@ class TopKElements {
     //AddFreqItem(MakeApproxTopEntry(EstimateItemCount(item), item));
   }
 
+  /*
+   * Peloton type adapter
+   */
+  void Add(type::Value& value) {
+    const char * s = value.ToString().c_str();
+    Add(s, 1);
+  }
+
   // TODO:
   // Need to retrieve new elements after eviction of current element(s)
   // UPDATE:
@@ -493,6 +596,26 @@ class TopKElements {
     if (num >= tkq.get_k())
       return tkq.retrieve_all_ordered_max_first();
     return tkq.retrieve_ordered_max_first(num);
+  }
+
+  /*
+   * Retrieve all the items in the queue, ordered, queue is maintained
+   * large count to small count (max first)
+   * Peloton Type Compatible
+   */
+  std::vector<ValueFrequencyPair> GetAllOrderedMaxFirst() {
+    return tkq.get_all_ordered_max_first();
+  }
+
+  /*
+   * Retrieve given number of elements, ordered
+   * Max first
+   * Peloton Type Compatible
+   */
+  std::vector<ValueFrequencyPair> GetOrderedMaxFirst(int num) {
+    if (num >= tkq.get_k())
+      return tkq.get_all_ordered_max_first();
+    return tkq.get_ordered_max_first(num);
   }
 
   /*
@@ -552,6 +675,20 @@ class TopKElements {
     std::vector<ApproxTopEntry> vec = tkq.retrieve_ordered_max_first(num);
     for (auto const& e : vec) {
       LOG_INFO("\n [Print top %d Entries MaxFirst] %s", num, e.print().c_str());
+    }
+  }
+
+  void PrintAllOrderedMaxFirst() {
+    std::vector<ValueFrequencyPair> vec = GetAllOrderedMaxFirst();
+    for (auto const& p : vec) {
+      LOG_INFO("\n [Print k Values MaxFirst] %s, %f", p.first.GetInfo().c_str(), p.second);
+    }
+  }
+
+  void PrintOrderedMaxFirst(int num) {
+    std::vector<ValueFrequencyPair> vec = GetOrderedMaxFirst(num);
+    for (auto const& p : vec) {
+      LOG_INFO("\n [Print %d Values MaxFirst] %s, %f", num, p.first.GetInfo().c_str(), p.second);
     }
   }
 

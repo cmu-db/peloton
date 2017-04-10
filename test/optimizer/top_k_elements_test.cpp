@@ -1,3 +1,4 @@
+
 #include "common/harness.h"
 
 #define private public
@@ -96,11 +97,13 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   for (i = 0; i < 30; ++i) {
     top_k_elements.Add(i, i);
   }
-  top_k_elements.PrintTopKQueueOrderedMaxFirst();
-  top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
+  //top_k_elements.PrintTopKQueueOrderedMaxFirst();
+  //top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
+  top_k_elements.PrintAllOrderedMaxFirst();
+  top_k_elements.PrintOrderedMaxFirst(10);
   EXPECT_EQ(top_k_elements.tkq.size, k);
-  top_k_elements.PrintTopKQueuePops();
-  EXPECT_EQ(top_k_elements.tkq.size, 0);
+  //top_k_elements.PrintTopKQueuePops();
+  //EXPECT_EQ(top_k_elements.tkq.size, 0);
 }
 
 }
