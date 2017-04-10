@@ -12,7 +12,10 @@
 
 #include "benchmark/tpch/tpch_workload.h"
 
+#include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "planner/abstract_plan.h"
+#include "planner/binding_context.h"
 
 namespace peloton {
 namespace benchmark {
@@ -165,7 +168,7 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
   codegen::QueryCompiler compiler;
   auto compiled_query = compiler.Compile(*plan, counter, &compile_stats);
 
-  codegen::QueryStatement::RuntimeStats overall_stats = {0.0, 0.0, 0.0};
+  codegen::Query::RuntimeStats overall_stats = {0.0, 0.0, 0.0};
   for (uint32_t i = 0; i < config_.num_runs; i++) {
     // Reset the counter for this run
     counter.ResetCount();
@@ -175,7 +178,7 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
     auto *txn = txn_manager.BeginTransaction();
 
     // Execute query in a transaction
-    codegen::QueryStatement::RuntimeStats runtime_stats;
+    codegen::Query::RuntimeStats runtime_stats;
     compiled_query->Execute(*txn, counter.GetCountAsState(), &runtime_stats);
 
     // Commit transaction
