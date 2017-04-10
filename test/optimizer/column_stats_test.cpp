@@ -23,7 +23,6 @@ TEST_F(ColumnStatsTests, BasicTests) {
     type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
   }
-
   // Minimum accuracy requirement
   uint64_t cardinality = colstats.GetCardinality();
   EXPECT_GE(cardinality, 50000);
@@ -31,6 +30,12 @@ TEST_F(ColumnStatsTests, BasicTests) {
   std::vector<double> bounds = colstats.GetHistogramBound();
 
   EXPECT_EQ(colstats.GetFracNull(), 0);
+}
+
+TEST_F(ColumnStatsTests, SkewedTests) {
+  ColumnStats colstats{0, 0, 0, type::Type::TypeId::DATETIME};
+
+
 }
 
 } /* namespace test */
