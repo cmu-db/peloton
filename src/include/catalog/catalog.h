@@ -33,11 +33,6 @@
 #define INDEX_METRIC_NAME "index_metric"
 #define QUERY_METRIC_NAME "query_metric"
 
-#define QUERY_NUM_PARAM_COL_NAME "num_params"
-#define QUERY_PARAM_TYPE_COL_NAME "param_types"
-#define QUERY_PARAM_FORMAT_COL_NAME "param_formats"
-#define QUERY_PARAM_VAL_COL_NAME "param_values"
-
 namespace peloton {
 
 namespace catalog {
@@ -172,7 +167,7 @@ class Catalog {
   std::unique_ptr<Schema> InitializeIndexMetricsSchema();
 
   // Initialize the schema of the query metrics table
-  std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
+  // std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
 
   //===--------------------------------------------------------------------===//
   // FUNCTION
