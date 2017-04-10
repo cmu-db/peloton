@@ -13,6 +13,7 @@
 #include "codegen/expression_translator.h"
 
 #include "codegen/compilation_context.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace codegen {

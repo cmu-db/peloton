@@ -16,6 +16,7 @@
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"
+#include "planner/hash_join_plan.h"
 
 namespace peloton {
 namespace codegen {

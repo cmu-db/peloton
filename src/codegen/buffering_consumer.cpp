@@ -14,6 +14,7 @@
 
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
+#include "planner/binding_context.h"
 
 namespace peloton {
 namespace codegen {

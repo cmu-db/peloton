@@ -18,9 +18,13 @@
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator_translator.h"
 #include "codegen/updateable_storage.h"
-#include "planner/aggregate_plan.h"
 
 namespace peloton {
+
+namespace planner {
+class AggregatePlan;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//

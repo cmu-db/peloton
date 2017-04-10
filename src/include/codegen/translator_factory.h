@@ -15,10 +15,16 @@
 #include <memory>
 #include <unordered_map>
 
-#include "expression/abstract_expression.h"
-#include "planner/abstract_plan.h"
-
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}  // namespace expression
+
+namespace planner {
+class AbstractPlan;
+}  // namespace planner
+
 namespace codegen {
 
 // Forward declare these guys so CompilationContext can include this file

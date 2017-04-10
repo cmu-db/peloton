@@ -7,6 +7,7 @@ matrix:
           addons:
               apt:
                 sources:
+                    - llvm-toolchain-precise-3.7
                     - ubuntu-toolchain-r-test
                     - boost-latest
                 packages:

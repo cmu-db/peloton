@@ -15,6 +15,8 @@
 #include "codegen/if.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/sorter_proxy.h"
+#include "common/logger.h"
+#include "planner/order_by_plan.h"
 
 namespace peloton {
 namespace codegen {

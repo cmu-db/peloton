@@ -17,9 +17,13 @@
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator_translator.h"
 #include "codegen/updateable_storage.h"
-#include "planner/hash_join_plan.h"
 
 namespace peloton {
+
+namespace planner {
+class HashJoinPlan;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//

@@ -16,9 +16,13 @@
 #include "codegen/operator_translator.h"
 #include "codegen/sorter.h"
 #include "codegen/updateable_storage.h"
-#include "planner/order_by_plan.h"
 
 namespace peloton {
+
+namespace planner {
+class OrderByPlan;
+}  // namespace planner
+
 namespace codegen {
 
 class OrderByTranslator : public OperatorTranslator {

@@ -110,7 +110,7 @@ bool CodeContext::Compile() {
   jit_engine_->finalizeObject();
 
   // Log the module
-  LOG_DEBUG("%s\n", GetIR().c_str());
+  LOG_TRACE("%s\n", GetIR().c_str());
 
   // All is well
   return true;
