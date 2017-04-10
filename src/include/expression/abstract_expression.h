@@ -16,6 +16,7 @@
 
 #include "common/printable.h"
 #include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 
