@@ -279,6 +279,10 @@ enum class ExpressionType {
   //===--------------------------------------------------------------------===//
   CAST = 900
 };
+
+// When short_str is true, return a short version of ExpressionType string
+// For example, + instead of Operator_Plus. It's used to generate the
+// expression name
 std::string ExpressionTypeToString(ExpressionType type, bool short_str = false);
 ExpressionType StringToExpressionType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
