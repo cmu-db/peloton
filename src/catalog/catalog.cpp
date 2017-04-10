@@ -767,12 +767,13 @@ storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
 }
 
 /* @breif Find a table using its name.
-* TODO: This should be deprecated, use GetXXWithOid() instead
 * Translating from name to oid requires transaction because it accesses catalog
 * table
 */
 storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
                                               const std::string &table_name) {
+  // TODO: should check pg_table and throw table not found (but this requires txn)
+
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
