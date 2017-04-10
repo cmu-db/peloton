@@ -61,6 +61,12 @@ class ValuesRuntimeProxy {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
+  // The proxy around ValuesRuntime::OutputVarbinary()
+  struct _OutputVarbinary {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
   // The proxy around ValuesRuntime::CompareStrings()
   struct _CompareStrings {
     static const std::string &GetFunctionName();
