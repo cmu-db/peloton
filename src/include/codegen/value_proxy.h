@@ -21,19 +21,16 @@ namespace codegen {
 class ValueProxy {
  public:
   // Get the LLVM Type for type::Value
-  static llvm::Type* GetType(CodeGen& codegen) {
-    static const std::string kValueTypeName = "peloton::Value";
-    auto* value_type = codegen.LookupTypeByName(kValueTypeName);
-    if (value_type != nullptr) {
-      return value_type;
-    }
+  static llvm::Type* GetType(CodeGen& codegen) ;
 
-    // Type isnt cached, create it
-    auto* opaque_arr_type =
-        codegen.VectorType(codegen.Int8Type(), sizeof(type::Value));
-    return llvm::StructType::create(codegen.GetContext(), {opaque_arr_type},
-                                    kValueTypeName);
-  }
+  static type::Value *GetValue(type::Value *values, uint32_t offset) ;
+
+  struct _GetValue {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
 };
 
 }  // namespace codegen

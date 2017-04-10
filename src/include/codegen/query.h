@@ -14,6 +14,7 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
+#include "type/value.h"
 
 namespace peloton {
 
@@ -63,6 +64,12 @@ class Query {
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
+  uint32_t StoreParam(type::Value param) {
+    uint32_t offset = params_.size();
+    params_.emplace_back(param);
+    return offset;
+  }
+
  private:
   friend class QueryCompiler;
 
@@ -84,6 +91,8 @@ class Query {
   compiled_function_t init_func_;
   compiled_function_t plan_func_;
   compiled_function_t tear_down_func_;
+
+  std::vector<type::Value> params_;
 
  private:
   // This class cannot be copy or move-constructed

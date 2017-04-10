@@ -63,6 +63,8 @@ class CompilationContext {
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
 
+  uint32_t StoreParam(type::Value param) { return query_.StoreParam(param); }
+
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
@@ -80,6 +82,8 @@ class CompilationContext {
 
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
+
+  llvm::Value *GetValuesPtr();
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -118,6 +122,7 @@ class CompilationContext {
   // The ID for the catalog and transaction state
   RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
+  RuntimeState::StateID values_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
