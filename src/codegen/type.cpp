@@ -117,7 +117,7 @@ struct CastDecimal : public Type::Cast {
   // Cast the given decimal value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
                type::Type::TypeId to_type) const override {
-    PL_ASSERT(Type::IsIntegral(value.GetType()));
+    PL_ASSERT(Type::IsNumeric(value.GetType()));
 
     // Types for the casted-to type
     llvm::Type *val_type = nullptr, *len_type = nullptr;
