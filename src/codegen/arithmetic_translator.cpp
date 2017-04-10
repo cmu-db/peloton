@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// arithmetic_translator.h
+// arithmetic_translator.cpp
 //
-// Identification: src/include/codegen/arithmetic_translator.h
+// Identification: src/codegen/arithmetic_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
