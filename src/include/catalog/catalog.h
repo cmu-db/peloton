@@ -76,18 +76,12 @@ class Catalog {
   */
   // Add a database
   void AddDatabase(storage::Database *database);
-  // Find a database using its name
-  // return nullptr and throw catalog exceptions if not found
-  storage::Database *GetDatabaseWithName(const std::string &db_name) const;
 
   // Find a database using vector offset
   storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
-  // Get table from a database with its name
-  storage::DataTable *GetTableWithName(const std::string &database_name,
-                                       const std::string &table_name);
   //===--------------------------------------------------------------------===//
-  // CREATE FUNCTIONs
+  // CREATE FUNCTIONS
   //===--------------------------------------------------------------------===//
   // Create a database
   ResultType CreateDatabase(const std::string &database_name,
@@ -120,7 +114,7 @@ class Catalog {
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
   //===--------------------------------------------------------------------===//
-  // Drop a database
+  // Drop a database with its name
   ResultType DropDatabaseWithName(const std::string &database_name,
                                   concurrency::Transaction *txn);
 
@@ -139,23 +133,57 @@ class Catalog {
   ResultType DropIndex(oid_t index_oid,
                        concurrency::Transaction *txn = nullptr);
 
-  // Returns true if the catalog contains the given database with the id
-  bool HasDatabase(oid_t db_oid) const;
+  //===--------------------------------------------------------------------===//
+  // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
+  //===--------------------------------------------------------------------===//
 
-  // Find a database using its id
-  // return nullptr and throw catalog exceptions if not found
+  /* Check database from pg_database with database_name using txn,
+   * get it from storage layer using database_oid,
+   * throw exception and abort txn if not exists/invisible
+   * */
+  // FIXME: enforce caller not to use nullptr as txn
+  storage::Database *GetDatabaseWithName(
+      const std::string &db_name,
+      concurrency::Transaction *txn = nullptr) const;
+
+  /* Check table from pg_table with table_name using txn,
+   * get it from storage layer using table_oid,
+   * throw exception and abort txn if not exists/invisible
+   * */
+  // FIXME: enforce caller not to use nullptr as txn
+  storage::DataTable *GetTableWithName(const std::string &database_name,
+                                       const std::string &table_name,
+                                       concurrency::Transaction *txn = nullptr);
+
+  //===--------------------------------------------------------------------===//
+  // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
+  //===--------------------------------------------------------------------===//
+
+  /* Find a database using its oid from storage layer,
+   * throw exception if not exists
+   * */
   storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
 
-  // Get table from a database with its oid
+  /* Find a table using its oid from storage layer,
+   * throw exception if not exists
+   * */
   storage::DataTable *GetTableWithOid(oid_t database_oid,
                                       oid_t table_oid) const;
 
-  // Get the number of databases currently in the catalog
-  oid_t GetDatabaseCount();
-
-  // Get a index with the oids of index, table, and database.
+  /* Find a index using its oid from storage layer,
+   * throw exception if not exists
+   * */
   index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
                                 oid_t index_oid) const;
+
+  //===--------------------------------------------------------------------===//
+  // HELPERS
+  //===--------------------------------------------------------------------===//
+  // Returns true if the catalog contains the given database with the id
+  bool HasDatabase(oid_t db_oid) const;
+
+  // Get the number of databases currently in the catalog
+  oid_t GetDatabaseCount();
 
   //===--------------------------------------------------------------------===//
   // METRIC
