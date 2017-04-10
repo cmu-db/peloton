@@ -220,6 +220,34 @@ llvm::Function *ValuesRuntimeProxy::_OutputVarchar::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
+// OUTPUT VARBINARY
+//===----------------------------------------------------------------------===//
+
+const std::string &ValuesRuntimeProxy::_OutputVarbinary::GetFunctionName() {
+  static const std::string kOutputVarbinaryFnName =
+      "_ZN7peloton7codegen13ValuesRuntime15OutputVarbinaryEPcjS2_j";
+  return kOutputVarbinaryFnName;
+}
+
+llvm::Function *ValuesRuntimeProxy::_OutputVarbinary::GetFunction(
+    CodeGen &codegen) {
+  const std::string &fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  auto *value_type = ValueProxy::GetType(codegen);
+  std::vector<llvm::Type *> arg_types = {
+      value_type->getPointerTo(), codegen.Int64Type(), codegen.CharPtrType(),
+      codegen.Int32Type()};
+  auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), arg_types, false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
 // COMPARE STRINGS
 //===----------------------------------------------------------------------===//
 

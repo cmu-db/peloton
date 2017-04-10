@@ -142,7 +142,13 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::VARBINARY:
+      case type::Type::TypeId::VARBINARY: {
+        codegen.CallFunc(
+            ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen),
+            {tuple_buffer_, codegen.Const64(i), val.GetValue(),
+             val.GetLength()});
+        break;
+      }
       case type::Type::TypeId::VARCHAR: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen),
@@ -151,9 +157,10 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
         break;
       }
       default: {
-        throw Exception{"Can't serialize type " +
-                        TypeIdToString(val.GetType()) + " at position " +
-                        std::to_string(i)};
+        std::string msg =
+            StringUtil::Format("Can't serialize value type '%s' at position %u",
+                               TypeIdToString(val.GetType()).c_str(), i);
+        throw Exception{msg};
       }
     }
   }
