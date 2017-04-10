@@ -677,17 +677,89 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
 }
 
 //===--------------------------------------------------------------------===//
-// HELPERS
+// GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
 //===--------------------------------------------------------------------===//
 
-// Only used for testing
-bool Catalog::HasDatabase(oid_t db_oid) const {
-  for (auto database : databases_)
-    if (database->GetOid() == db_oid) return (true);
-  return (false);
+/* Check database from pg_database with database_name using txn,
+ * get it from storage layer using database_oid,
+ * throw exception and abort txn if not exists/invisible
+ * */
+storage::Database *Catalog::GetDatabaseWithName(
+    const std::string &database_name, concurrency::Transaction *txn) const {
+  // FIXME: enforce caller to use txn
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  // Check in pg_database using txn
+  oid_t database_oid =
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
+
+  if (database_oid == INVALID_OID) {
+    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+    throw CatalogException("Database " + database_name + " is not found");
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return GetDatabaseWithOid(database_oid);
 }
 
-// Find a database using its id
+/* Check table from pg_table with table_name using txn,
+ * get it from storage layer using table_oid,
+ * throw exception and abort txn if not exists/invisible
+ * */
+storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
+                                              const std::string &table_name,
+                                              concurrency::Transaction *txn) {
+  // FIXME: enforce caller to use txn
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
+            database_name.c_str());
+
+  // Check in pg_database, throw exception and abort txn if not exists
+  auto database_oid =
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
+
+  if (database_oid == INVALID_OID) {
+    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+    throw CatalogException("Database " + database_name + " is not found");
+  }
+
+  // Check in pg_table using txn
+  auto table_oid =
+      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
+
+  if (table_oid == INVALID_OID) {
+    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+    throw CatalogException("Table " + table_name + " is not found");
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return GetTableWithOid(database_oid, table_oid);
+}
+
+//===--------------------------------------------------------------------===//
+// GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
+//===--------------------------------------------------------------------===//
+
+/* Find a database using its oid from storage layer,
+ * throw exception if not exists
+ * */
 storage::Database *Catalog::GetDatabaseWithOid(oid_t database_oid) const {
   for (auto database : databases_)
     if (database->GetOid() == database_oid) return database;
@@ -696,34 +768,42 @@ storage::Database *Catalog::GetDatabaseWithOid(oid_t database_oid) const {
   return nullptr;
 }
 
+/* Find a table using its oid from storage layer,
+ * throw exception if not exists
+ * */
 storage::DataTable *Catalog::GetTableWithOid(oid_t database_oid,
                                              oid_t table_oid) const {
   LOG_TRACE("Getting table with oid %d from database with oid %d", database_oid,
             table_oid);
-  // Lookup DB
-  auto database = GetDatabaseWithOid(database_oid);
-
-  // Lookup table
-  if (database != nullptr) {
-    auto table = database->GetTableWithOid(table_oid);
-    return table;
-  }
-
-  return nullptr;
+  // Lookup DB from storage layer
+  auto database =
+      GetDatabaseWithOid(database_oid);  // Throw exception if not exists
+  // Lookup table from storage layer
+  return database->GetTableWithOid(table_oid);  // Throw exception if not exists
 }
 
+/* Find a index using its oid from storage layer,
+ * throw exception if not exists
+ * */
 index::Index *Catalog::GetIndexWithOid(oid_t database_oid, oid_t table_oid,
                                        oid_t index_oid) const {
-  // Lookup table
-  auto table = GetTableWithOid(database_oid, table_oid);
+  // Lookup table from storage layer
+  auto table = GetTableWithOid(database_oid,
+                               table_oid);  // Throw exception if not exists
+  // Lookup index from storage layer
+  return table->GetIndexWithOid(index_oid)
+      .get();  // Throw exception if not exists
+}
 
-  // Lookup index
-  if (table != nullptr) {
-    auto index = table->GetIndexWithOid(index_oid);
-    return index.get();
-  }
+//===--------------------------------------------------------------------===//
+// HELPERS
+//===--------------------------------------------------------------------===//
 
-  return nullptr;
+// Only used for testing
+bool Catalog::HasDatabase(oid_t db_oid) const {
+  for (auto database : databases_)
+    if (database->GetOid() == db_oid) return (true);
+  return (false);
 }
 
 oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
@@ -747,49 +827,11 @@ void Catalog::AddDatabase(storage::Database *database) {
       nullptr);  // I guess this can pass tests
 }
 
-/* @breif Find a database using its name.
-* TODO: This should be deprecated, use GetXXWithOid() instead
-* Translating from name to oid requires transaction because it accesses catalog
-* table
-*/
-storage::Database *Catalog::GetDatabaseWithName(
-    const std::string &database_name) const {
-  oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, nullptr);
-  return GetDatabaseWithOid(database_oid);
-}
-
 // This is used as an iterator
 storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
-}
-
-/* @breif Find a table using its name.
-* Translating from name to oid requires transaction because it accesses catalog
-* table
-*/
-storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
-                                              const std::string &table_name) {
-  // TODO: should check pg_table and throw table not found (but this requires txn)
-
-  LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
-            database_name.c_str());
-  storage::Database *database = GetDatabaseWithName(database_name);
-  if (database != nullptr) {
-    storage::DataTable *table = database->GetTableWithName(table_name);
-    if (table) {
-      LOG_TRACE("Found table.");
-      return table;
-    } else {
-      LOG_TRACE("can't find table.");
-      return nullptr;
-    }
-  } else {
-    LOG_TRACE("Well, database wasn't found in the first place.");
-    return nullptr;
-  }
 }
 
 //===--------------------------------------------------------------------===//
