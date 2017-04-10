@@ -14,9 +14,13 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/expression_translator.h"
-#include "expression/operator_expression.h"
 
 namespace peloton {
+
+namespace expression {
+class OperatorExpression;
+}  // namespace expression
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -26,36 +30,11 @@ class ArithmeticTranslator : public ExpressionTranslator {
  public:
   // Constructor
   ArithmeticTranslator(const expression::OperatorExpression &arithmetic,
-                       CompilationContext &context)
-      : ExpressionTranslator(arithmetic, context) {
-    PL_ASSERT(arithmetic.GetChildrenSize() == 2);
-  }
+                       CompilationContext &context);
 
   // Produce the value that is the result of codegening the expression
   codegen::Value DeriveValue(CodeGen &codegen,
-                             RowBatch::Row &row) const override {
-    const auto &arithmetic = GetExpressionAs<expression::OperatorExpression>();
-    codegen::Value left = row.DeriveValue(codegen, *arithmetic.GetChild(0));
-    codegen::Value right = row.DeriveValue(codegen, *arithmetic.GetChild(1));
-
-    switch (arithmetic.GetExpressionType()) {
-      case ExpressionType::OPERATOR_PLUS:
-        return left.Add(codegen, right);
-      case ExpressionType::OPERATOR_MINUS:
-        return left.Sub(codegen, right);
-      case ExpressionType::OPERATOR_MULTIPLY:
-        return left.Mul(codegen, right);
-      case ExpressionType::OPERATOR_DIVIDE:
-        return left.Div(codegen, right);
-      case ExpressionType::OPERATOR_MOD:
-        return left.Mod(codegen, right);
-      default: {
-        throw Exception(
-            "Arithmetic expression has invalid type for translation: " +
-            ExpressionTypeToString(arithmetic.GetExpressionType()));
-      }
-    }
-  }
+                             RowBatch::Row &row) const override;
 };
 
 }  // namespace codegen

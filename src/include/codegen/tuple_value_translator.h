@@ -13,9 +13,13 @@
 #pragma once
 
 #include "codegen/expression_translator.h"
-#include "expression/tuple_value_expression.h"
 
 namespace peloton {
+
+namespace expression {
+class TupleValueExpression;
+}  // namespace expression
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -25,17 +29,10 @@ class TupleValueTranslator : public ExpressionTranslator {
  public:
   // Constructor
   TupleValueTranslator(const expression::TupleValueExpression &tve_expr,
-                       CompilationContext &context)
-      : ExpressionTranslator(tve_expr, context) {
-    PL_ASSERT(tve_expr.GetAttributeRef() != nullptr);
-  }
+                       CompilationContext &context);
 
-  // Produce the value that is the result of codegening the expression
-  codegen::Value DeriveValue(CodeGen &codegen,
-                             RowBatch::Row &row) const override {
-    const auto &tve_expr = GetExpressionAs<expression::TupleValueExpression>();
-    return row.DeriveValue(codegen, tve_expr.GetAttributeRef());
-  }
+  // Return the attribute from the row
+  Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
 };
 
 }  // namespace codegen
