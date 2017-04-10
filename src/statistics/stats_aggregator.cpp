@@ -266,6 +266,7 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
   auto index_count = table->GetIndexCount();
   for (oid_t index_offset = 0; index_offset < index_count; index_offset++) {
     auto index = table->GetIndex(index_offset);
+    if (index == nullptr) continue;
     auto index_oid = index->GetOid();
     auto index_metric =
         aggregated_stats_.GetIndexMetric(database_oid, table_oid, index_oid);

@@ -31,8 +31,6 @@
 #include "planner/index_scan_plan.h"
 #include "planner/seq_scan_plan.h"
 
-
-
 namespace peloton {
 namespace planner {
 
@@ -58,8 +56,8 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 // FIXME: Should remove when the simple_optimizer tears down
 //  Initializes the update plan without adding any child nodes and
 //  retrieves column ids for the child scan plan.
-void UpdatePlan::BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
-                                        std::vector<oid_t> &column_ids) {
+void UpdatePlan::BuildInitialUpdatePlan(
+    const parser::UpdateStatement *parse_tree, std::vector<oid_t> &column_ids) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   auto table_name = std::string(t_ref->GetTableName());
@@ -129,9 +127,8 @@ UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree)
   }
 
   LOG_TRACE("Creating a sequential scan plan");
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, where_ != nullptr ?
-                               where_->Copy() : nullptr, column_ids));
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(new planner::SeqScanPlan(
+      target_table_, where_ != nullptr ? where_->Copy() : nullptr, column_ids));
   AddChild(std::move(seq_scan_node));
 }
 
