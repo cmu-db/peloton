@@ -17,7 +17,7 @@
 namespace peloton {
 namespace codegen {
 
-class ThreadPoolProxy {
+class QueryThreadPoolProxy {
  public:
   static llvm::Type *GetType(CodeGen &codegen);
 
