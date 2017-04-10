@@ -89,31 +89,30 @@ void CopyExecutor::FlushBuffer() {
 }
 
 void CopyExecutor::InitParamColIds() {
-
   // If we're going to deserialize prepared statement, get the column ids for
   // the varbinary columns first
-  auto catalog = catalog::Catalog::GetInstance();
-  try {
-    auto query_metric_table =
-        catalog->GetTableWithName(CATALOG_DATABASE_NAME, QUERY_METRIC_NAME);
-    auto schema = query_metric_table->GetSchema();
-    auto &cols = schema->GetColumns();
-    for (unsigned int i = 0; i < cols.size(); i++) {
-      auto col_name = cols[i].column_name.c_str();
-      if (std::strcmp(col_name, QUERY_PARAM_TYPE_COL_NAME) == 0) {
-        param_type_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_PARAM_FORMAT_COL_NAME) == 0) {
-        param_format_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_PARAM_VAL_COL_NAME) == 0) {
-        param_val_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_NUM_PARAM_COL_NAME) == 0) {
-        num_param_col_id = i;
-      }
-    }
-  }
-  catch (Exception &e) {
-    e.PrintStackTrace();
-  }
+  // auto catalog = catalog::Catalog::GetInstance();
+  // try {
+  //   auto query_metric_table =
+  //       catalog->GetTableWithName(CATALOG_DATABASE_NAME, QUERY_METRIC_NAME);
+  //   auto schema = query_metric_table->GetSchema();
+  //   auto &cols = schema->GetColumns();
+  //   for (unsigned int i = 0; i < cols.size(); i++) {
+  //     auto col_name = cols[i].column_name.c_str();
+  //     if (std::strcmp(col_name, QUERY_PARAM_TYPE_COL_NAME) == 0) {
+  //       param_type_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_PARAM_FORMAT_COL_NAME) == 0) {
+  //       param_format_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_PARAM_VAL_COL_NAME) == 0) {
+  //       param_val_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_NUM_PARAM_COL_NAME) == 0) {
+  //       num_param_col_id = i;
+  //     }
+  //   }
+  // }
+  // catch (Exception &e) {
+  //   e.PrintStackTrace();
+  // }
 }
 
 void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {

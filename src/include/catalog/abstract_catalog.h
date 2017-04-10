@@ -46,6 +46,8 @@ class AbstractCatalog {
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
                   storage::Database *pg_catalog);
+  AbstractCatalog(std::string catalog_table_name,
+                  catalog::Schema *catalog_table_schema);
 
   // Construct catalog_table_ schema
   virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;

@@ -20,6 +20,7 @@
 #include "expression/string_functions.h"
 #include "index/index_factory.h"
 #include "util/string_util.h"
+#include "catalog/query_metrics_catalog.h"
 
 namespace peloton {
 namespace catalog {
@@ -814,9 +815,9 @@ void Catalog::CreateMetricsCatalog() {
   default_db->AddTable(table_metrics_catalog.release(), true);
 
   // Create table for query metrics
-  auto query_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
-  default_db->AddTable(query_metrics_catalog.release(), true);
+  // auto query_metrics_catalog =
+  //     CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
+  // default_db->AddTable(query_metrics_catalog.release(), true);
   LOG_TRACE("Metrics tables created");
 }
 
@@ -826,12 +827,12 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   bool own_schema = true;
   bool adapt_table = false;
   bool is_catalog = true;
-  auto table_schema = InitializeQueryMetricsSchema();
 
   catalog::Schema *schema = nullptr;
-  if (table_name == QUERY_METRIC_NAME) {
-    schema = InitializeQueryMetricsSchema().release();
-  } else if (table_name == TABLE_METRIC_NAME) {
+  // if (table_name == QUERY_METRIC_NAME) {
+  //   schema = InitializeQueryMetricsSchema().release();
+  // } else
+  if (table_name == TABLE_METRIC_NAME) {
     schema = InitializeTableMetricsSchema().release();
   } else if (table_name == DATABASE_METRIC_NAME) {
     schema = InitializeDatabaseMetricsSchema().release();
@@ -948,67 +949,70 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   return database_schema;
 }
 
-std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
-                                          not_null_constraint_name);
-  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  oid_t varbinary_type_size = type::Type::GetTypeSize(type::Type::VARBINARY);
+// std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
+//   const std::string not_null_constraint_name = "not_null";
+//   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
+//                                           not_null_constraint_name);
+//   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+//   oid_t varbinary_type_size = type::Type::GetTypeSize(type::Type::VARBINARY);
 
-  type::Type::TypeId integer_type = type::Type::INTEGER;
-  type::Type::TypeId varbinary_type = type::Type::VARBINARY;
+//   type::Type::TypeId integer_type = type::Type::INTEGER;
+//   type::Type::TypeId varbinary_type = type::Type::VARBINARY;
 
-  auto name_column = catalog::Column(
-      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::VARCHAR),
-      "query_name", false);
-  name_column.AddConstraint(not_null_constraint);
-  auto database_id_column =
-      catalog::Column(integer_type, integer_type_size, "database_id", true);
-  database_id_column.AddConstraint(not_null_constraint);
+//   auto name_column = catalog::Column(
+//       type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::VARCHAR),
+//       "query_name", false);
+//   name_column.AddConstraint(not_null_constraint);
+//   auto database_id_column =
+//       catalog::Column(integer_type, integer_type_size, "database_id", true);
+//   database_id_column.AddConstraint(not_null_constraint);
 
-  // Parameters
-  auto num_param_column = catalog::Column(integer_type, integer_type_size,
-                                          QUERY_NUM_PARAM_COL_NAME, true);
-  num_param_column.AddConstraint(not_null_constraint);
-  // For varbinary types, we don't want to inline it since it could be large
-  auto param_type_column = catalog::Column(varbinary_type, varbinary_type_size,
-                                           QUERY_PARAM_TYPE_COL_NAME, false);
-  auto param_format_column = catalog::Column(
-      varbinary_type, varbinary_type_size, QUERY_PARAM_FORMAT_COL_NAME, false);
-  auto param_val_column = catalog::Column(varbinary_type, varbinary_type_size,
-                                          QUERY_PARAM_VAL_COL_NAME, false);
+//   // Parameters
+//   auto num_param_column = catalog::Column(integer_type, integer_type_size,
+//                                           QUERY_NUM_PARAM_COL_NAME, true);
+//   num_param_column.AddConstraint(not_null_constraint);
+//   // For varbinary types, we don't want to inline it since it could be large
+//   auto param_type_column = catalog::Column(varbinary_type,
+//   varbinary_type_size,
+//                                            QUERY_PARAM_TYPE_COL_NAME, false);
+//   auto param_format_column = catalog::Column(
+//       varbinary_type, varbinary_type_size, QUERY_PARAM_FORMAT_COL_NAME,
+//       false);
+//   auto param_val_column = catalog::Column(varbinary_type,
+//   varbinary_type_size,
+//                                           QUERY_PARAM_VAL_COL_NAME, false);
 
-  // Physical statistics
-  auto reads_column =
-      catalog::Column(integer_type, integer_type_size, "reads", true);
-  reads_column.AddConstraint(not_null_constraint);
-  auto updates_column =
-      catalog::Column(integer_type, integer_type_size, "updates", true);
-  updates_column.AddConstraint(not_null_constraint);
-  auto deletes_column =
-      catalog::Column(integer_type, integer_type_size, "deletes", true);
-  deletes_column.AddConstraint(not_null_constraint);
-  auto inserts_column =
-      catalog::Column(integer_type, integer_type_size, "inserts", true);
-  inserts_column.AddConstraint(not_null_constraint);
-  auto latency_column =
-      catalog::Column(integer_type, integer_type_size, "latency", true);
-  latency_column.AddConstraint(not_null_constraint);
-  auto cpu_time_column =
-      catalog::Column(integer_type, integer_type_size, "cpu_time", true);
+//   // Physical statistics
+//   auto reads_column =
+//       catalog::Column(integer_type, integer_type_size, "reads", true);
+//   reads_column.AddConstraint(not_null_constraint);
+//   auto updates_column =
+//       catalog::Column(integer_type, integer_type_size, "updates", true);
+//   updates_column.AddConstraint(not_null_constraint);
+//   auto deletes_column =
+//       catalog::Column(integer_type, integer_type_size, "deletes", true);
+//   deletes_column.AddConstraint(not_null_constraint);
+//   auto inserts_column =
+//       catalog::Column(integer_type, integer_type_size, "inserts", true);
+//   inserts_column.AddConstraint(not_null_constraint);
+//   auto latency_column =
+//       catalog::Column(integer_type, integer_type_size, "latency", true);
+//   latency_column.AddConstraint(not_null_constraint);
+//   auto cpu_time_column =
+//       catalog::Column(integer_type, integer_type_size, "cpu_time", true);
 
-  // MAX_INT only tracks the number of seconds since epoch until 2037
-  auto timestamp_column =
-      catalog::Column(integer_type, integer_type_size, "time_stamp", true);
-  timestamp_column.AddConstraint(not_null_constraint);
+//   // MAX_INT only tracks the number of seconds since epoch until 2037
+//   auto timestamp_column =
+//       catalog::Column(integer_type, integer_type_size, "time_stamp", true);
+//   timestamp_column.AddConstraint(not_null_constraint);
 
-  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {name_column, database_id_column, num_param_column, param_type_column,
-       param_format_column, param_val_column, reads_column, updates_column,
-       deletes_column, inserts_column, latency_column, cpu_time_column,
-       timestamp_column}));
-  return database_schema;
-}
+//   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+//       {name_column, database_id_column, num_param_column, param_type_column,
+//        param_format_column, param_val_column, reads_column, updates_column,
+//        deletes_column, inserts_column, latency_column, cpu_time_column,
+//        timestamp_column}));
+//   return database_schema;
+// }
 
 //===--------------------------------------------------------------------===//
 // FUNCTION

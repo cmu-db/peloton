@@ -27,10 +27,14 @@ namespace catalog {
 #define CATALOG_DATABASE_NAME "pg_catalog"
 
 // Catalog tables
+// 4 basic catalog tables
 #define DATABASE_CATALOG_NAME "pg_database"
 #define TABLE_CATALOG_NAME "pg_table"
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
+
+// Exemplar catalog table
+#define QUERY_METRICS_CATALOG_NAME "pg_query"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 1000
