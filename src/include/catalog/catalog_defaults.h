@@ -43,7 +43,6 @@ namespace catalog {
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
 #define TABLE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TABLE))
 #define INDEX_OID_MASK (static_cast<oid_t>(catalog::CatalogType::INDEX))
-#define COLUMN_OID_MASK (static_cast<oid_t>(catalog::CatalogType::COLUMN))
 
 // Reserved pg_catalog database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)
