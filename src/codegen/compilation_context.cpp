@@ -13,8 +13,9 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/catalog_proxy.h"
-#include "common/timer.h"
 #include "codegen/transaction_proxy.h"
+#include "common/logger.h"
+#include "common/timer.h"
 
 namespace peloton {
 namespace codegen {

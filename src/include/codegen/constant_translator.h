@@ -13,9 +13,13 @@
 #pragma once
 
 #include "codegen/expression_translator.h"
-#include "expression/constant_value_expression.h"
 
 namespace peloton {
+
+namespace expression {
+class ConstantValueExpression;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//

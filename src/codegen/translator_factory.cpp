@@ -24,6 +24,11 @@
 #include "codegen/order_by_translator.h"
 #include "codegen/table_scan_translator.h"
 #include "codegen/tuple_value_translator.h"
+#include "expression/constant_value_expression.h"
+#include "planner/aggregate_plan.h"
+#include "planner/hash_join_plan.h"
+#include "planner/order_by_plan.h"
+#include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace codegen {

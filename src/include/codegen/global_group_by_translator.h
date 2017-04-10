@@ -16,9 +16,13 @@
 #include "codegen/compilation_context.h"
 #include "codegen/operator_translator.h"
 #include "codegen/pipeline.h"
-#include "planner/aggregate_plan.h"
 
 namespace peloton {
+
+namespace planner {
+class AggregatePlan;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//

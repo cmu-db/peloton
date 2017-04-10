@@ -14,8 +14,9 @@
 
 #include "codegen/if.h"
 #include "codegen/catalog_proxy.h"
-//#include "common/simd_util.h"
 #include "codegen/transaction_runtime_proxy.h"
+#include "planner/seq_scan_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace codegen {
@@ -91,6 +92,11 @@ std::string TableScanTranslator::GetName() const {
   }
   name.append(")");
   return name;
+}
+
+// Table accessor
+const storage::DataTable &TableScanTranslator::GetTable() const {
+  return *scan_.GetTable();
 }
 
 //===----------------------------------------------------------------------===//
@@ -172,6 +178,12 @@ void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
       codegen.CallFunc(txn_perform_read,
                        {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
   selection_vector.SetNumElements(out_idx);
+}
+
+// Get the predicate, if one exists
+const expression::AbstractExpression *
+TableScanTranslator::ScanConsumer::GetPredicate() const {
+  return translator_.GetScanPlan().GetPredicate();
 }
 
 void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(

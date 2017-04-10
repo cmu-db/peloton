@@ -17,10 +17,17 @@
 #include "codegen/operator_translator.h"
 #include "codegen/scan_consumer.h"
 #include "codegen/table.h"
-#include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
 
 namespace peloton {
+
+namespace planner {
+class SeqScanPlan;
+}  // namespace planner
+
+namespace storage {
+class DataTable;
+}  // namespace storage
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -96,9 +103,7 @@ class TableScanTranslator : public OperatorTranslator {
 
    private:
     // Get the predicate, if one exists
-    const expression::AbstractExpression *GetPredicate() const {
-      return translator_.GetScanPlan().GetPredicate();
-    }
+    const expression::AbstractExpression *GetPredicate() const;
 
     void SetupRowBatch(RowBatch &batch,
                        TileGroup::TileGroupAccess &tile_group_access,
@@ -133,7 +138,7 @@ class TableScanTranslator : public OperatorTranslator {
   const planner::SeqScanPlan &GetScanPlan() const { return scan_; }
 
   // Table accessor
-  const storage::DataTable &GetTable() const { return *scan_.GetTable(); }
+  const storage::DataTable &GetTable() const;
 
  private:
   // The scan
