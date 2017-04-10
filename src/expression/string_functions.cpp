@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression/string_functions.h"
 
 #include <string>
 
 #include "expression/abstract_expression.h"
+#include "expression/string_functions.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {

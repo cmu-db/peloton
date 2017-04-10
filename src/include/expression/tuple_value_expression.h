@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "common/abstract_tuple.h"
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 
@@ -22,7 +21,7 @@ namespace expression {
 //===----------------------------------------------------------------------===//
 // TupleValueExpression
 //===----------------------------------------------------------------------===//
-
+  
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
@@ -48,17 +47,9 @@ class TupleValueExpression : public AbstractExpression {
 
   ~TupleValueExpression() {}
 
-  type::Value Evaluate(
+  virtual type::Value Evaluate(
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    if (tuple_idx_ == 0) {
-      PL_ASSERT(tuple1 != nullptr);
-      return (tuple1->GetValue(value_idx_));
-    } else {
-      PL_ASSERT(tuple2 != nullptr);
-      return (tuple2->GetValue(value_idx_));
-    }
-  }
+      executor::ExecutorContext *context) const override;
 
   virtual void DeduceExpressionName() override {
     if (!alias.empty())
@@ -87,23 +78,14 @@ class TupleValueExpression : public AbstractExpression {
     return new TupleValueExpression(*this);
   }
 
-  virtual bool Equals(AbstractExpression *expr) override {
+  virtual bool Equals(AbstractExpression *expr) const override {
     if (exp_type_ != expr->GetExpressionType())
       return false;
     auto tup_expr = (TupleValueExpression *) expr;
     return bound_obj_id_ == tup_expr->bound_obj_id_;
   }
 
-  virtual hash_t Hash() const {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    hash = HashUtil::CombineHashes(
-        hash, HashUtil::Hash(&(std::get<0>(bound_obj_id_))));
-    hash = HashUtil::CombineHashes(
-        hash, HashUtil::Hash(&(std::get<1>(bound_obj_id_))));
-    hash = HashUtil::CombineHashes(
-        hash, HashUtil::Hash(&(std::get<2>(bound_obj_id_))));
-    return hash;
-  }
+  virtual hash_t Hash() const;
 
   int GetColumnId() const { return value_idx_; }
 

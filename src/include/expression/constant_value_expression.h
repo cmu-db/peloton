@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include "util/hash_util.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace expression {
@@ -42,7 +44,7 @@ class ConstantValueExpression : public AbstractExpression {
     expr_name_ = value_.ToString();
   }
   
-  virtual bool Equals(AbstractExpression *expr) override {
+  virtual bool Equals(AbstractExpression *expr) const override {
     if (exp_type_ != expr->GetExpressionType())
       return false;
     auto const_expr = (ConstantValueExpression *)expr;

@@ -14,22 +14,23 @@
 
 #include <string>
 
-#include "common/logger.h"
-#include "common/macros.h"
 #include "common/printable.h"
-#include "type/serializeio.h"
 #include "type/types.h"
-#include "type/value_factory.h"
-#include "common/sql_node_visitor.h"
-#include "util/hash_util.h"
 
 namespace peloton {
 
+// Forward Declaration
 class Printable;
 class AbstractTuple;
+class SqlNodeVisitor;
+enum class ExpressionType;
 
 namespace executor {
 class ExecutorContext;
+}
+
+namespace type {
+class Value;
 }
 
 namespace expression {
@@ -96,55 +97,13 @@ class AbstractExpression : public Printable {
   virtual void DeduceExpressionType() {}
   
   // Walks the expressoin trees and generate the correct expression name
-  virtual void DeduceExpressionName() {
-    // If alias exists, it will be used in TrafficCop
-    if (!alias.empty())
-      return;
+  virtual void DeduceExpressionName();
+
+  const std::string GetInfo() const;
     
-    for (auto& child : children_)
-      child->DeduceExpressionName();
-    auto op_str = ExpressionTypeToString(exp_type_, true);
-    auto children_size = children_.size();
-    PL_ASSERT(children_size <= 2);
-    if (children_size == 2) {
-      expr_name_ = GetChild(0)->expr_name_ + " " + op_str + " " +
-        GetChild(1)->expr_name_;
-    } else if (children_size == 1) {
-      expr_name_ = op_str + " " + GetChild(0)->expr_name_;
-    }
-  }
+  virtual bool Equals(AbstractExpression *expr) const;
 
-  const std::string GetInfo() const {
-    std::ostringstream os;
-
-    os << "\tExpression :: "
-       << " expression type = " << GetExpressionType() << ","
-       << " value type = "
-       << type::Type::GetInstance(GetValueType())->ToString() << ","
-       << std::endl;
-
-    return os.str();
-  }
-
-  virtual bool Equals(AbstractExpression *expr) {
-    if (exp_type_ != expr->exp_type_ ||
-        children_.size() != expr->children_.size())
-      return false;
-    for (unsigned i = 0; i < children_.size(); i++) {
-      if (!children_[i]->Equals(expr->children_[i].get()))
-        return false;
-    }
-    return true;
-  }
-
-  virtual hash_t Hash() const {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    for (size_t i = 0; i < GetChildrenSize(); i++) {
-      auto child = GetChild(i);
-      hash = HashUtil::CombineHashes(hash, child->Hash());
-    }
-    return hash;
-  }
+  virtual hash_t Hash() const;
 
   virtual AbstractExpression *Copy() const = 0;
 
