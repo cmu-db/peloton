@@ -103,6 +103,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
   // Index scan as child node
   std::vector<oid_t> column_offsets;  // No projection
   auto index = catalog_table_->GetIndex(index_offset);
+  PL_ASSERT(index != nullptr);
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
   PL_ASSERT(values.size() == key_column_offsets.size());

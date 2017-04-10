@@ -799,6 +799,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
 
   // Prepares arguments for the index scan plan
   auto index = target_table->GetIndex(index_id);
+  if (index == nullptr) return false;
 
   // Check whether the index is visible
   // This is for the IndexTuner demo
@@ -849,8 +850,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   LOG_TRACE("predicate before remove: %s", predicate->GetInfo().c_str());
   // Remove redundant predicate that index can search
+  auto index = target_table->GetIndex(index_id);
   predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-      predicate, target_table->GetIndex(index_id));
+      predicate, index);
   if (predicate != nullptr) {
     LOG_TRACE("predicate after remove: %s", predicate->GetInfo().c_str());
   } else {
@@ -859,7 +861,6 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   // Create index scan plan
   LOG_TRACE("Creating a index scan plan");
-  auto index = target_table->GetIndex(index_id);
   std::vector<expression::AbstractExpression*> runtime_keys;
 
   // Create index scan desc
