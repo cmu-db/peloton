@@ -12,7 +12,6 @@
 
 #include "codegen/negation_translator.h"
 
-#include "codegen/compilation_context.h"
 #include "expression/operator_expression.h"
 
 namespace peloton {
