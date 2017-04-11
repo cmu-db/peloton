@@ -200,7 +200,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
       new catalog::Schema({id_column, name_column}));
   auto ret = catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
-  if (ret != ResultType::SUCCESS) std::cout << "@@@ create table failed" << std::endl;
+  if (ret != ResultType::SUCCESS) LOG_TRACE("create table failed");
   txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES ($0, $1)
