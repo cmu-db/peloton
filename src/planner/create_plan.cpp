@@ -45,9 +45,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // TODO: Currently, the parser will parse the foreign key constraint and
       // put it into a ColumnDefinition. Later when we implement constraint
       // we may need to change this. Just skip foreign key constraint for now
-      if (col->type == parser::ColumnDefinition::FOREIGN)
-        continue;
-        
+      if (col->type == parser::ColumnDefinition::FOREIGN) continue;
+
       type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
@@ -65,7 +64,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string(col->name), false);
+                                    std::string(col->name), false);
       for (auto con : column_contraints) {
         column.AddConstraint(con);
       }

@@ -70,16 +70,19 @@ class CreatePlan : public AbstractPlan {
 
   std::string GetTriggerName() const { return trigger_name; }
 
-  std::vector<std::string> GetTriggerFuncName() const { return trigger_funcname; }
+  std::vector<std::string> GetTriggerFuncName() const {
+    return trigger_funcname;
+  }
 
   std::vector<std::string> GetTriggerArgs() const { return trigger_args; }
 
   std::vector<std::string> GetTriggerColumns() const { return trigger_columns; }
 
-  expression::AbstractExpression* GetTriggerWhen() const { return trigger_when; }
+  expression::AbstractExpression *GetTriggerWhen() const {
+    return trigger_when;
+  }
 
   int16_t GetTriggerType() const { return trigger_type; }
-
 
  private:
   // Target Table
@@ -113,8 +116,9 @@ class CreatePlan : public AbstractPlan {
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when;
-  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
+  expression::AbstractExpression *trigger_when;
+  int16_t trigger_type;  // information about row, timing, events, access by
+                         // pg_trigger
 };
 }
 }
