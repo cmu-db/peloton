@@ -34,7 +34,6 @@ using namespace optimizer;
 
 class StatsStorageTests : public PelotonTest {};
 
-
 TEST_F(StatsStorageTests, StatsTableTest) {
   StatsStorage *stats_storage = StatsStorage::GetInstance();
   storage::DataTable *stats_table = stats_storage->GetStatsTable();
@@ -53,11 +52,12 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                     true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
-  std::unique_ptr<optimizer::TableStats> table_stats(new TableStats(data_table.get()));
+  std::unique_ptr<optimizer::TableStats> table_stats(
+      new TableStats(data_table.get()));
   table_stats->CollectColumnStats();
 
   StatsStorage *stats_storage = StatsStorage::GetInstance();
@@ -69,9 +69,12 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   auto tile_group = stats_table->GetTileGroup(0);
 
   // Column ID
-  // EXPECT_EQ(tile_group->GetValue(0, 2), type::ValueFactory::GetIntegerValue(0));
-  // EXPECT_EQ(tile_group->GetValue(1, 2), type::ValueFactory::GetIntegerValue(1));
-  // EXPECT_EQ(tile_group->GetValue(2, 2), type::ValueFactory::GetIntegerValue(2));
+  // EXPECT_EQ(tile_group->GetValue(0, 2),
+  // type::ValueFactory::GetIntegerValue(0));
+  // EXPECT_EQ(tile_group->GetValue(1, 2),
+  // type::ValueFactory::GetIntegerValue(1));
+  // EXPECT_EQ(tile_group->GetValue(2, 2),
+  // type::ValueFactory::GetIntegerValue(2));
 
   auto tile = tile_group->GetTile(0);
   auto tile_schemas = tile_group->GetTileSchemas();
@@ -85,7 +88,6 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   LOG_DEBUG("Tuple Info: %s", tile_tuple2.GetInfo().c_str());
   storage::Tuple tile_tuple3(&schema, tile->GetTupleLocation(3));
   LOG_DEBUG("Tuple Info: %s", tile_tuple3.GetInfo().c_str());
-
 }
 
 TEST_F(StatsStorageTests, SamplesDBTest) {
@@ -104,14 +106,15 @@ TEST_F(StatsStorageTests, AddSamplesTableTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                     true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Acquire samples
   TupleSampler sampler(data_table.get());
   size_t sampled_count = sampler.AcquireSampleTuples(10);
-  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples = sampler.GetSampledTuples();
+  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples =
+      sampler.GetSampledTuples();
 
   // Add samples into database
   catalog::Catalog *catalog = catalog::Catalog::GetInstance();
@@ -120,10 +123,10 @@ TEST_F(StatsStorageTests, AddSamplesTableTest) {
 
   // Check the sampled tuples
   std::string samples_table_name = stats_storage->GenerateSamplesTableName(
-                                                  data_table->GetDatabaseOid(),
-                                                  data_table->GetOid());
+      data_table->GetDatabaseOid(), data_table->GetOid());
   storage::Database *samples_db = catalog->GetDatabaseWithName(SAMPLES_DB_NAME);
-  storage::DataTable *samples_table = samples_db->GetTableWithName(samples_table_name);
+  storage::DataTable *samples_table =
+      samples_db->GetTableWithName(samples_table_name);
   EXPECT_TRUE(samples_table != nullptr);
   EXPECT_EQ(samples_table->GetTupleCount(), sampled_count);
 }

@@ -25,12 +25,12 @@
 namespace peloton {
 
 namespace storage {
-  class DataTable;
-  class Tuple;
+class DataTable;
+class Tuple;
 }
 
 namespace catalog {
-  class Schema;
+class Schema;
 }
 
 namespace optimizer {
@@ -43,7 +43,6 @@ using ValueFrequencyPair = std::pair<type::Value, double>;
 
 class StatsStorage {
  public:
-
   // Global Singleton
   static StatsStorage *GetInstance();
 
@@ -61,19 +60,20 @@ class StatsStorage {
 
   /* Functions for adding, updating and quering stats */
 
-  void AddOrUpdateTableStats(storage::DataTable *table, TableStats *table_stats);
+  void AddOrUpdateTableStats(storage::DataTable *table,
+                             TableStats *table_stats);
 
-//  std::unique_ptr<TableStats> GetTableStatsWithName(const std::string table_name);
-
-  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id, oid_t table_id, oid_t column_id);
+  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
+                                                  oid_t table_id,
+                                                  oid_t column_id);
 
   /* Functions for managing tuple samples */
 
   void CreateSamplesDatabase();
 
   void AddSamplesTable(
-                storage::DataTable *data_table,
-                std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
+      storage::DataTable *data_table,
+      std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
 
   void GetTupleSamples(std::vector<storage::Tuple> &tuple_samples);
 
@@ -91,15 +91,15 @@ class StatsStorage {
   std::unique_ptr<type::AbstractPool> pool_;
 
   std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
-    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
-    oid_t column_id, int num_row, double cardinality, double frac_null,
-    std::vector<ValueFrequencyPair> &most_common_val_freqs,
-    std::vector<double> &histogram_bounds);
+      const catalog::Schema *schema, oid_t database_id, oid_t table_id,
+      oid_t column_id, int num_row, double cardinality, double frac_null,
+      std::vector<ValueFrequencyPair> &most_common_val_freqs,
+      std::vector<double> &histogram_bounds);
 
   std::string ConvertDoubleArrayToString(std::vector<double> &double_array) {
     std::stringstream ss;
-    for(size_t i = 0; i < double_array.size(); ++i) {
-      if(i != 0) {
+    for (size_t i = 0; i < double_array.size(); ++i) {
+      if (i != 0) {
         ss << ",";
       }
       ss << double_array[i];
@@ -113,17 +113,15 @@ class StatsStorage {
     double num;
 
     while (ss >> num) {
-        double_array.push_back(num);
+      double_array.push_back(num);
 
-        if (ss.peek() == ',') {
-            ss.ignore();
-        }
+      if (ss.peek() == ',') {
+        ss.ignore();
+      }
     }
 
     return double_array;
   }
 };
-
 }
-
 }

@@ -21,7 +21,6 @@
 
 #include "concurrency/transaction_manager_factory.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -33,8 +32,6 @@ using namespace optimizer;
 
 class TupleSamplerTests : public PelotonTest {};
 
-
-
 TEST_F(TupleSamplerTests, SampleCountTest) {
   const int tuple_count = 100;
 
@@ -43,8 +40,8 @@ TEST_F(TupleSamplerTests, SampleCountTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                     true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   TupleSampler sampler(data_table.get());
@@ -52,11 +49,10 @@ TEST_F(TupleSamplerTests, SampleCountTest) {
   size_t sampled_count = sampler.AcquireSampleTuples(10);
   EXPECT_EQ(sampled_count, 10);
 
-  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples = sampler.GetSampledTuples();
+  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples =
+      sampler.GetSampledTuples();
   EXPECT_EQ(sampled_tuples.size(), 10);
 }
-
-
 
 } /* namespace test */
 } /* namespace peloton */

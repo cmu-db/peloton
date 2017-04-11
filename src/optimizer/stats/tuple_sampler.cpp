@@ -21,34 +21,23 @@
 namespace peloton {
 namespace optimizer {
 
-void TupleSampler::InitState() {
-
-}
-
-bool TupleSampler::HasNext() {
-    return false;
-}
-
-int TupleSampler::GetNext() {
-    return 0;
-}
-
 /**
  * AcquireSampleTuples - Sample a certain number of tuples from a given table.
  *
  */
 size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
-//  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
+  //  auto &transaction_manager =
+  //  concurrency::TransactionManagerFactory::GetInstance();
+  //  auto txn = txn_manager.BeginTransaction();
 
-//  auto &manager = catalog::Manager::GetInstance();
+  //  auto &manager = catalog::Manager::GetInstance();
 
   size_t tuple_count = table->GetTupleCount();
   size_t tile_group_count = table->GetTileGroupCount();
-  LOG_TRACE("tuple_count = %lu, tile_group_count = %lu",
-              tuple_count, tile_group_count);
+  LOG_TRACE("tuple_count = %lu, tile_group_count = %lu", tuple_count,
+            tile_group_count);
 
-  if(tuple_count < target_sample_count) {
+  if (tuple_count < target_sample_count) {
     target_sample_count = tuple_count;
   }
   size_t sampled_count = 0;
@@ -57,39 +46,40 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
   srand(time(NULL));
   catalog::Schema *tuple_schema = table->GetSchema();
 
-  while(sampled_count < target_sample_count) {
+  while (sampled_count < target_sample_count) {
     // Generate a random tilegroup offset
     rand_tilegroup_offset = rand() % tile_group_count;
-    storage::TileGroup *tile_group = table->GetTileGroup(rand_tilegroup_offset).get();
+    storage::TileGroup *tile_group =
+        table->GetTileGroup(rand_tilegroup_offset).get();
     oid_t tuple_per_group = tile_group->GetActiveTupleCount();
     LOG_TRACE("tile_group: offset: %lu, addr: %p, tuple_per_group: %u",
-        rand_tilegroup_offset, tile_group, tuple_per_group);
-    if(tuple_per_group == 0) {
+              rand_tilegroup_offset, tile_group, tuple_per_group);
+    if (tuple_per_group == 0) {
       continue;
     }
 
     rand_tuple_offset = rand() % tuple_per_group;
 
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(tuple_schema, true));
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(tuple_schema, true));
 
     LOG_TRACE("tuple_group_offset = %lu, tuple_offset = %lu",
-                rand_tilegroup_offset, rand_tuple_offset);
-    if(!GetTupleInTileGroup(tile_group, rand_tuple_offset, tuple)) {
+              rand_tilegroup_offset, rand_tuple_offset);
+    if (!GetTupleInTileGroup(tile_group, rand_tuple_offset, tuple)) {
       continue;
     }
     LOG_TRACE("Add sampled tuple: %s", tuple->GetInfo().c_str());
     sampled_tuples.push_back(std::move(tuple));
-    sampled_count ++;
+    sampled_count++;
   }
   return sampled_tuples.size();
 }
 
 bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
-                          size_t tuple_offset,
-                          std::unique_ptr<storage::Tuple> &tuple) {
+                                       size_t tuple_offset,
+                                       std::unique_ptr<storage::Tuple> &tuple) {
   // Tile Group Header
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-//  LOG_DEBUG("Tile Group info: %s", tile_group_header->GetInfo().c_str());
 
   // Check whether tuple is valid at given offset in the tile_group
   // Reference: TileGroupHeader::GetActiveTupleCount()
@@ -121,14 +111,14 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
       tuple_column_itr++;
     }
   }
-  LOG_TRACE("offset %lu, Tuple info: %s", tuple_offset, tuple->GetInfo().c_str());
+  LOG_TRACE("offset %lu, Tuple info: %s", tuple_offset,
+            tuple->GetInfo().c_str());
   return true;
 }
 
 std::vector<std::unique_ptr<storage::Tuple>> &TupleSampler::GetSampledTuples() {
   return sampled_tuples;
 }
-
 
 } /* namespace optimizer */
 } /* namespace peloton */
