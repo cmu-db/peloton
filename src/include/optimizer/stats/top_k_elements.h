@@ -45,7 +45,7 @@ public:
   class ApproxTopEntryElem {
   public:
 
-    /*
+    /* 
      * types:
      * NON_TYPE: no type / not initialized
      * INT_TYPE: int
@@ -57,17 +57,17 @@ public:
       INT_TYPE,
       STR_TYPE
     };
-
+    
     ElemType item_type;
     int64_t int_item;
     const char* str_item;
 
-    ApproxTopEntryElem() :
+    ApproxTopEntryElem() : 
     item_type{ElemType::NON_TYPE},
     int_item{-1},
     str_item{nullptr}
     {}
-
+    
     ApproxTopEntryElem(int64_t intItem) :
     item_type{ElemType::INT_TYPE},
     int_item{intItem},
@@ -97,7 +97,7 @@ public:
       }
       return false;
     }
-
+    
   }; // end of class ApproxTopEntryElem
 
 
@@ -106,12 +106,12 @@ public:
     ApproxTopEntryElem approx_top_elem;
     int64_t approx_count;
 
-    ApproxTopEntry() :
+    ApproxTopEntry() : 
     approx_top_elem{},
     approx_count{0}
     {}
 
-    ApproxTopEntry(ApproxTopEntryElem elem, int64_t freq) :
+    ApproxTopEntry(ApproxTopEntryElem elem, int64_t freq) : 
     approx_top_elem{elem},
     approx_count{freq}
     {}
@@ -128,21 +128,21 @@ public:
         case ApproxTopEntryElem::ElemType::INT_TYPE:
           //sprintf(ret, "{int_elem: %ld, count: %ld}", approx_top_elem.int_item,  approx_count);
           ret += "{int_elem: ";
-          ret += std::to_string(approx_top_elem.int_item);
-          ret +=" count: ";
+          ret += std::to_string(approx_top_elem.int_item); 
+          ret +=" count: "; 
           ret += std::to_string(approx_count);
           ret += "}";
           break;
         case ApproxTopEntryElem::ElemType::STR_TYPE:
           //sprintf(ret, "{str_elem: %s, count: %ld}", approx_top_elem.str_item, approx_count);
           ret += "{str_elem: ";
-          ret += approx_top_elem.str_item;
-          ret +=" count: ";
+          ret += approx_top_elem.str_item; 
+          ret +=" count: "; 
           ret += std::to_string(approx_count);
           ret += "}";
           break;
         default:
-
+          
           break;
       }
       return ret;
@@ -176,7 +176,7 @@ public:
       auto first = this->c.cbegin();
       auto last = this->c.cend();
       while (first != last) {
-          if (*first == val) {
+          if (*first == val) { 
             return true;
           }
           ++first;
@@ -185,15 +185,15 @@ public:
     }
 
     bool remove(const T&val) {
-
+      
       // find the former entry first
       auto first = this->c.begin();
       auto last = this->c.end();
       auto idx_iter = last;
 
       while (first != last) {
-        if (*first == val) {
-          idx_iter = first;
+        if (*first == val) { 
+          idx_iter = first; 
         }
         ++first;
       }
@@ -404,14 +404,14 @@ public:
         incr_size();
         // update_lowest_count();
       }
-      // if we have more than K-items (including K),
+      // if we have more than K-items (including K), 
       // remove the item with the lowest frequency from our data structure
       else {
         // if and only if the lowest frequency is lower than the new one
         if (queue.top().approx_count < entry.approx_count) {
           queue.pop();
           queue.push(entry);
-        }
+        } 
       }
     }
 
@@ -419,7 +419,7 @@ public:
     void update(ApproxTopEntry entry) {
       // remove the former one (with the same entry elem) and insert the new entry
       // first remove the former entry
-      if (queue.remove(entry)) {
+      if (queue.remove(entry)) { 
         queue.push(entry);
       }
     }
@@ -438,15 +438,15 @@ public:
       return e;
     }
 
-    /*
-     * Retrieve all the items in the queue, unordered
+    /* 
+     * Retrieve all the items in the queue, unordered 
      */
     std::vector<ApproxTopEntry> retrieve_all() const{
       return queue.retrieve_all();
     }
 
-    /*
-     * Retrieve all the items in the queue, ordered, queue is maintained
+    /* 
+     * Retrieve all the items in the queue, ordered, queue is maintained 
      * Min first (smallest count first)
      */
     std::vector<ApproxTopEntry> retrieve_all_ordered() {
@@ -492,14 +492,14 @@ public:
     int k;
     //ApproxTopEntry **entries; // array of ApproxTopEntry pointers
     // maintain a MinHeap (lowest count on top)
-    //auto cmp = [](ApproxTopEntry left, ApproxTopEntry right) {
+    //auto cmp = [](ApproxTopEntry left, ApproxTopEntry right) { 
     //  return left.approx_count > right.approx_count;
     //};
-    //std::priority_queue<ApproxTopEntry, std::vector<ApproxTopEntry>, decltype(cmp)> queue;
-    UpdatableQueue<ApproxTopEntry, std::vector<ApproxTopEntry>, compare> queue;
+    //std::priority_queue<ApproxTopEntry, std::vector<ApproxTopEntry>, decltype(cmp)> queue; 
+    UpdatableQueue<ApproxTopEntry, std::vector<ApproxTopEntry>, compare> queue; 
     //int lowest_count;
     int size;
-
+    
   }; // end of class TopKQueue
 
   // TopKElements members
@@ -509,13 +509,13 @@ public:
   /*
    * TopKElements constructor
    */
-  TopKElements(CountMinSketch& sketch, int k) :
+  TopKElements(CountMinSketch sketch, int k) :
     tkq{k},
     cmsketch{sketch}
   {}
 
   /*
-   * Add an item into this bookkeeping datastructure as well as
+   * Add an item into this bookkeeping datastructure as well as 
    * the sketch
    */
   void Add(int64_t item, int count = 1) {
@@ -544,8 +544,22 @@ public:
    * Peloton type adapter
    */
   void Add(type::Value& value) {
-    const char * s = value.ToString().c_str();
-    Add(s, 1);
+    switch (value.GetTypeId()) {
+      case type::Type::INTEGER:
+      case type::Type::BIGINT:
+        int64_t n;
+        n = value.GetAs<int64_t>();
+        Add(n, 1);
+        break;
+      case type::Type::DECIMAL:
+      case type::Type::VARCHAR:
+      default:
+        // valgrind reports error on value.ToString().c_str();
+        std::string s0 = value.ToString();
+        const char * s = s0.c_str();
+        Add(s, 1);
+        break;
+    }
   }
 
   // TODO:
@@ -565,7 +579,7 @@ public:
     DecrFreqItem(ApproxTopEntry(elem, cmsketch.EstimateItemCount(item)));
   }
 
-  /*
+  /* 
    * Retrieve all the items in the queue, unordered
    */
   std::vector<ApproxTopEntry> RetrieveAll() {
@@ -703,8 +717,8 @@ public:
     return std::move(ApproxTopEntry(elem, freq));
   }
 
-  /*
-   * Add the frequency (approx count) and item (Element) pair (ApproxTopEntry)
+  /* 
+   * Add the frequency (approx count) and item (Element) pair (ApproxTopEntry) 
    * to the queue / update tkq structure
    */
   void AddFreqItem(ApproxTopEntry entry) {

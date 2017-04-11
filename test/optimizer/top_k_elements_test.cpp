@@ -86,9 +86,9 @@ TEST_F(TopKElementsTests, SimpleArrivalAndDepartureTest) {
 }
 
 TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
-  CountMinSketch sketch(10, 20, 0);
+  CountMinSketch sketch(1000, 1000, 0);
   
-  const int k = 20;
+  const int k = 20, num0 = 10;
   TopKElements top_k_elements(sketch, k);
  
   top_k_elements.Add("10", 10);
@@ -102,12 +102,17 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   //top_k_elements.PrintTopKQueueOrderedMaxFirst();
   //top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
   //top_k_elements.PrintAllOrderedMaxFirst();
-  top_k_elements.PrintOrderedMaxFirst(10);
+  top_k_elements.PrintOrderedMaxFirst(num0);
   EXPECT_EQ(top_k_elements.tkq.size, k);
-  EXPECT_EQ(top_k_elements.GetOrderedMaxFirst(10).size(), 10);
+  EXPECT_EQ(top_k_elements.GetOrderedMaxFirst(num0).size(), num0);
   EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), k);
   //top_k_elements.PrintTopKQueuePops();
   //EXPECT_EQ(top_k_elements.tkq.size, 0);
+
+  for (i = 1000; i < 2000; ++i) {
+    top_k_elements.Add(i, i);
+  }
+  top_k_elements.PrintAllOrderedMaxFirst();
 }
 
 TEST_F(TopKElementsTests, WrapperTest) {

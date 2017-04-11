@@ -13,7 +13,8 @@ ColumnStats::ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
       column_type_{column_type},
       hll_{},
       hist_{},
-      sketch_{100, 100, 0},
+      // the size of the sketch is arbitrary for now
+      sketch_{1000, 1000, 0},
       topk_{sketch_, 10} {}
 
 ColumnStats::~ColumnStats() {}
