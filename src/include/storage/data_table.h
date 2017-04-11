@@ -154,6 +154,8 @@ class DataTable : public AbstractTable {
 
   commands::Trigger* GetTriggerByIndex(int n);
 
+  commands::TriggerList* GetTriggerList();
+
 
   //===--------------------------------------------------------------------===//
   // INDEX

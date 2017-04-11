@@ -21,6 +21,8 @@
 #include "executor/create_executor.h"
 #include "commands/trigger.h"
 #include "storage/data_table.h"
+#include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
 
 #include "gtest/gtest.h"
 
@@ -184,9 +186,13 @@ TEST_F(CreateTests, CreatingTrigger) {
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                         "accounts");
-  EXPECT_EQ(target_table->GetTriggerNumber(), 1);
+  EXPECT_EQ(1, target_table->GetTriggerNumber());
   commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
+
+  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
