@@ -394,6 +394,14 @@ enum class EpochType {
   DECENTRALIZED_EPOCH = 1  // decentralized epoch manager
 };
 
+
+enum class TimestampType {
+  INVALID = INVALID_TYPE_ID,
+  SNAPSHOT_READ = 1,
+  READ = 2,
+  COMMIT = 3
+};
+
 //===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//

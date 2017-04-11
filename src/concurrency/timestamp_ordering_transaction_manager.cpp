@@ -85,11 +85,13 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
 
 TimestampOrderingTransactionManager &
 TimestampOrderingTransactionManager::GetInstance(
-      const IsolationLevelType level, 
+      const ProtocolType protocol,
+      const IsolationLevelType isolation, 
       const ConflictAvoidanceType conflict) {
 
   static TimestampOrderingTransactionManager txn_manager;
-  txn_manager.Init(level, conflict);
+
+  txn_manager.Init(protocol, isolation, conflict);
 
   return txn_manager;
 }
