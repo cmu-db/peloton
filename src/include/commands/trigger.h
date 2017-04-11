@@ -2,6 +2,7 @@
 
 #include "vector"
 #include "planner/create_plan.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace commands {
@@ -47,6 +48,10 @@ class TriggerList {
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
+  //list of trigger functions
+  void ExecBRInsertTriggers();
+  //list of trigger helper functions
+  void ExecCallTriggerFunc();
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
