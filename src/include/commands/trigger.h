@@ -11,13 +11,15 @@ class Trigger {
   Trigger(const planner::CreatePlan& plan);
   inline int16_t GetTriggerType() { return trigger_type; }
   inline std::string GetTriggerName() { return trigger_name; }
+
  private:
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
   expression::AbstractExpression* trigger_when;
-  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
+  int16_t trigger_type;  // information about row, timing, events, access by
+                         // pg_trigger
 };
 
 typedef enum TriggerType {
@@ -44,12 +46,10 @@ class TriggerList {
   inline int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
-  Trigger* Get(int n) { return &triggers[n]; } // get trigger by index
+  Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
-
 };
-
 }
 }

@@ -44,8 +44,7 @@ class PostgresParser {
 
   // Parse a given query
   static parser::SQLStatementList* ParseSQLString(const char* sql);
-  static parser::SQLStatementList* ParseSQLString(
-      const std::string& sql);
+  static parser::SQLStatementList* ParseSQLString(const std::string& sql);
 
   static PostgresParser& GetInstance();
 
@@ -116,7 +115,8 @@ class PostgresParser {
   static parser::TableRef* FromTransform(List* root);
 
   // transform helper for select targets
-  static std::vector<expression::AbstractExpression*>* TargetTransform(List* root);
+  static std::vector<expression::AbstractExpression*>* TargetTransform(
+      List* root);
 
   // transform helper for all expr nodes
   static expression::AbstractExpression* ExprTransform(Node* root);
@@ -158,11 +158,11 @@ class PostgresParser {
   static parser::OrderDescription* OrderByTransform(List* order);
 
   // transform helper for table column definitions
-  static parser::ColumnDefinition* ColumnDefTransform(ColumnDef *root);
+  static parser::ColumnDefinition* ColumnDefTransform(ColumnDef* root);
 
   // transform helper for create statements
   static parser::SQLStatement* CreateTransform(CreateStmt* root);
-  
+
   // transform helper for create index statements
   static parser::SQLStatement* CreateIndexTransform(IndexStmt* root);
 
@@ -177,7 +177,7 @@ class PostgresParser {
 
   // transform helper for ListsTransform (insert multiple rows)
   static std::vector<std::vector<expression::AbstractExpression*>*>*
-      ValueListsTransform(List* root);
+  ValueListsTransform(List* root);
 
   // transform helper for insert statements
   static parser::SQLStatement* InsertTransform(InsertStmt* root);
@@ -205,9 +205,10 @@ class PostgresParser {
 
   // transform helper for truncate statement
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
-  
+
   // transform helper for transaction statement
-  static parser::TransactionStatement* TransactionTransform(TransactionStmt* root);
+  static parser::TransactionStatement* TransactionTransform(
+      TransactionStmt* root);
 
   // transform helper for execute statement
   static parser::ExecuteStatement* ExecuteTransform(ExecuteStmt* root);
@@ -215,7 +216,8 @@ class PostgresParser {
   // transform helper for constant values
   static expression::AbstractExpression* ValueTransform(value val);
 
-  static std::vector<expression::AbstractExpression*>* ParamListTransform(List* root);
+  static std::vector<expression::AbstractExpression*>* ParamListTransform(
+      List* root);
 
   // transform helper for execute statement
   static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);
