@@ -8,7 +8,7 @@ namespace commands {
 
 class Trigger {
  public:
-  Trigger(planner::CreatePlan& plan);
+  Trigger(const planner::CreatePlan& plan);
   inline int16_t GetTriggerType() { return trigger_type; }
  private:
   std::string trigger_name;

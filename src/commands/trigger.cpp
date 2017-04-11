@@ -3,7 +3,7 @@
 
 namespace peloton {
 namespace commands {
-Trigger::Trigger(peloton::planner::CreatePlan& plan) {
+Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
 
   trigger_name = plan.GetTriggerName();
   trigger_funcname = plan.GetTriggerFuncName();
