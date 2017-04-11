@@ -42,7 +42,8 @@ class HLL {
 
   uint64_t Hash(type::Value& value) {
     uint64_t hash[2];
-    const char* raw_value = value.ToString().c_str();
+    std::string value_str = value.ToString();
+    const char* raw_value = value_str.c_str();
     MurmurHash3_x64_128(raw_value, (uint64_t)strlen(raw_value), 0, hash);
     return hash[0];
   }
