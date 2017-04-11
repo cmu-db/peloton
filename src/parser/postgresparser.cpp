@@ -855,13 +855,16 @@ parser::FuncParameter* PostgresParser::FunctionParameterTransform(FunctionParame
     data_type = FuncParameter::DataType::TEXT;
   } else if (strcmp(name, "tinyint") == 0) {
     data_type = FuncParameter::DataType::TINYINT;
+  } else if(strcmp(name, "bool") == 0) {
+     data_type = FuncParameter::DataType::BOOL;
   } else {
     LOG_ERROR("Column DataType %s not supported yet...\n", name);
     throw NotImplementedException("...");
   }
 
   // Transform Varchar parameter name
-  result = new FuncParameter(cstrdup(root->name), data_type);
+  std::string param_name(root->name ? root->name : "");
+  result = new FuncParameter(param_name, data_type);
 
   return result;
 }
@@ -890,6 +893,8 @@ parser::ReturnType* PostgresParser::ReturnTypeTransform(TypeName* root) {
     data_type = FuncParameter::DataType::TEXT;
   } else if (strcmp(name, "tinyint") == 0) {
     data_type = FuncParameter::DataType::TINYINT;
+  } else if(strcmp(name, "bool") == 0) {
+     data_type = FuncParameter::DataType::BOOL;
   } else {
     LOG_ERROR("Column DataType %s not supported yet...\n", name);
     throw NotImplementedException("...");
@@ -908,7 +913,7 @@ parser::ReturnType* PostgresParser::ReturnTypeTransform(TypeName* root) {
 parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt* root) {
   UNUSED_ATTRIBUTE CreateFunctionStmt* temp = root;
   parser::CreateFunctionStatement* result = new CreateFunctionStatement();
-  
+   
   result->replace = root->replace;
   //FunctionParameter* parameters = root->parameters;
 
@@ -944,11 +949,16 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
         result->function_body.push_back(cell->val.str);
       } */
       auto list_of_arg = reinterpret_cast<List*>(def_elem->arg);
-      auto query_string = reinterpret_cast<value*>((list_of_arg->head)->data.ptr_value)->val.str;
-     // auto query_string = (reinterpret_cast<value*>(def_elem->arg))->val.str;
-    //  LOG_DEBUG("%s\n",actual_string);
-      std::string new_func_body(query_string);
-      result->function_body.push_back(new_func_body);
+
+      for(auto cell2 = list_of_arg->head; cell2 != NULL; cell2 = cell2->next){
+        auto query_string = reinterpret_cast<value*>(cell2->data.ptr_value)->val.str;
+        // auto query_string = (reinterpret_cast<value*>(def_elem->arg))->val.str;
+       // LOG_DEBUG("%s\n",query_string);
+        std::string new_func_body(query_string);
+        result->function_body.push_back(new_func_body);
+
+      }
+    
       result->set_as_type();
     }
     else if(strcmp(def_elem->defname, "language") == 0) {

@@ -725,6 +725,7 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   delete stmt_list;
 }
 
+
 TEST_F(PostgresParserTests, DistinctFromTest) {
   std::string query = "SELECT id, value FROM foo WHERE id IS DISTINCT FROM value;";
 
@@ -923,7 +924,6 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   delete stmt_list;
 }
 
-
 TEST_F(PostgresParserTests, CreatePGSQLFuncTest) {
   std::string query = "CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$   BEGIN  RET  j;  END; $$ LANGUAGE plpgsql;";
 
@@ -945,6 +945,7 @@ TEST_F(PostgresParserTests, CreateCFuncTest) {
 
   delete stmt_list;
 }
+
 
 }  // End test namespace
 }  // End peloton namespace
