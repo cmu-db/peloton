@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {
@@ -34,9 +36,9 @@ class ComparisonExpression : public AbstractExpression {
       : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
 
   type::Value Evaluate(
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+      const AbstractTuple *tuple1,
+      const AbstractTuple *tuple2,
+      executor::ExecutorContext *context) const override {
     PL_ASSERT(children_.size() == 2);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);

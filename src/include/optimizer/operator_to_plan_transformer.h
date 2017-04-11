@@ -13,6 +13,7 @@
 #pragma once
 
 #include "optimizer/operator_visitor.h"
+#include "properties.h"
 
 namespace peloton {
 
@@ -22,6 +23,7 @@ class HashJoinPlan;
 class NestedLoopJoinPlan;
 class ProjectionPlan;
 class SeqScanPlan;
+class AggregatePlan;
 }
 
 namespace optimizer {
@@ -38,9 +40,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
       std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
       std::vector<PropertySet> *required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-      std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
-          children_output_columns,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns);
+      std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
   void Visit(const PhysicalScan *op) override;
 
@@ -74,19 +74,33 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalUpdate *) override;
 
+  void Visit(const PhysicalHashGroupBy *) override;
 
+  void Visit(const PhysicalSortGroupBy *) override;
+
+  void Visit(const PhysicalDistinct *) override;
+
+  void Visit(const PhysicalAggregate *) override;
 
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
+
+  void GenerateTableExprMap(ExprMap &expr_map, storage::DataTable *table);
+
+
+  // Generate group by plan
+  std::unique_ptr<planner::AggregatePlan> GenerateAggregatePlan(
+      const PropertyColumns* prop_col, AggregateType agg_type,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>* group_by_exprs,
+      expression::AbstractExpression *having);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;
   PropertySet *requirements_;
   std::vector<PropertySet> *required_input_props_;
 
-  std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>>
-      children_output_columns_;
-  std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns_;
+  std::vector<ExprMap> children_expr_map_;
+  ExprMap *output_expr_map_;
 };
 
 } /* namespace optimizer */

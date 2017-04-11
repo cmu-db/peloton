@@ -69,12 +69,12 @@ struct GroupByDescription {
   GroupByDescription() : columns(NULL), having(NULL) {}
 
   ~GroupByDescription() {
-    if (columns) {
+    if (columns != nullptr) {
       for (auto col : *columns) delete col;
       delete columns;
     }
-
-    delete having;
+    if (having != nullptr)
+      delete having;
   }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }

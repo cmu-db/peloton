@@ -55,19 +55,18 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
-
   void Reset() override;
 
  private:
-
-  /* HandleDDLStatement - Check and handle DDL statment (currently only support CREATE), set
+  /* HandleDDLStatement - Check and handle DDL statment (currently only support
+   *CREATE), set
    * is_ddl_stmt to false if there is no DDL statement.
    *
    * tree: a peloton query tree representing a select query
    * return: the DDL plan if it is a DDL statement
    */
-  std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(parser::SQLStatement *tree,
-                                                            bool& is_ddl_stmt);
+  std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
+      parser::SQLStatement *tree, bool &is_ddl_stmt);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
@@ -95,9 +94,7 @@ class Optimizer : public AbstractOptimizer {
       std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
       std::vector<PropertySet> &required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-      std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
-          children_output_columns,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns);
+      std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
@@ -105,11 +102,12 @@ class Optimizer : public AbstractOptimizer {
    * id: the id of the group to produce the best physical
    * requirements: the set of properties the produced physical operator tree
    *     must satisfy
+   * output_expr_map: The map of expression generate by this group to their
+   * corresponding offsets
    * return: the lowest cost tree of physical plan nodes
    */
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
-      GroupID id, PropertySet requirements,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns = nullptr);
+      GroupID id, PropertySet requirements, ExprMap *output_expr_map);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After
@@ -215,6 +213,12 @@ class Optimizer : public AbstractOptimizer {
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group);
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// Other Helper functions
+  Property *GenerateNewPropertyCols(PropertySet requirements);
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// Member variables
   Memo memo_;
   ColumnManager column_manager_;
 

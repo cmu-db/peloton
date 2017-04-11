@@ -48,7 +48,7 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table->GetOid();
-  hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
 }
 
@@ -108,13 +108,21 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregate::make(
-    std::vector<expression::AbstractExpression *> *columns,
-    expression::AbstractExpression *having) {
+Operator LogicalAggregate::make() {
   LogicalAggregate *agg = new LogicalAggregate;
-  agg->columns = columns;
-  agg->having = having;
   return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// Aggregate
+//===--------------------------------------------------------------------===//
+Operator LogicalGroupBy::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+    expression::AbstractExpression *having) {
+  LogicalGroupBy *group_by = new LogicalGroupBy;
+  group_by->columns = move(columns);
+  group_by->having = having;
+  return Operator(group_by);
 }
 
 //===--------------------------------------------------------------------===//
@@ -153,9 +161,12 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // Update
 //===--------------------------------------------------------------------===//
-Operator LogicalUpdate::make(const parser::UpdateStatement *update_stmt) {
+Operator LogicalUpdate::make(
+    storage::DataTable *target_table,
+    std::vector<peloton::parser::UpdateClause*> updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
-  update_op->update_stmt = update_stmt;
+  update_op->target_table = target_table;
+  update_op->updates = updates;
   return Operator(update_op);
 }
 
@@ -178,7 +189,7 @@ bool PhysicalScan::operator==(const BaseOperatorNode &node) {
 hash_t PhysicalScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table_->GetOid();
-  hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
 }
 
@@ -193,12 +204,9 @@ Operator PhysicalProject::make() {
 //===--------------------------------------------------------------------===//
 // OrderBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalOrderBy::make(
-    std::vector<expression::TupleValueExpression *> &sort_columns,
-    std::vector<bool> &sort_ascending) {
+Operator PhysicalOrderBy::make() {
   PhysicalOrderBy *order_by = new PhysicalOrderBy;
-  order_by->sort_columns = sort_columns;
-  order_by->sort_ascending = sort_ascending;
+
   return Operator(order_by);
 }
 
@@ -310,10 +318,53 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
-Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
+Operator PhysicalUpdate::make(
+    storage::DataTable *target_table,
+    std::vector<peloton::parser::UpdateClause*> updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
-  update->update_stmt = update_stmt;
+  update->target_table = target_table;
+  update->updates = updates;
   return Operator(update);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalHashGroupBy
+//===--------------------------------------------------------------------===//
+Operator PhysicalHashGroupBy::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+    expression::AbstractExpression *having) {
+  PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
+  agg->columns = std::move(columns);
+  agg->having = having;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalSortGroupBy
+//===--------------------------------------------------------------------===//
+Operator PhysicalSortGroupBy::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+    expression::AbstractExpression *having) {
+  PhysicalSortGroupBy *agg = new PhysicalSortGroupBy;
+  agg->columns = std::move(columns);
+  agg->having = having;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalAggregate
+//===--------------------------------------------------------------------===//
+Operator PhysicalAggregate::make() {
+  PhysicalAggregate *agg = new PhysicalAggregate;
+  return Operator(agg);
+}
+
+//===--------------------------------------------------------------------===//
+// Physical Hash
+//===--------------------------------------------------------------------===//
+Operator PhysicalDistinct::make() {
+  PhysicalDistinct *hash = new PhysicalDistinct;
+  return Operator(hash);
 }
 
 //===--------------------------------------------------------------------===//
@@ -347,6 +398,9 @@ void OperatorNode<LogicalOuterJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
 void OperatorNode<LogicalAggregate>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalGroupBy>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
 void OperatorNode<LogicalLimit>::Accept(
@@ -383,6 +437,8 @@ template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
+template <>
+std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
 template <>
 std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
@@ -426,6 +482,14 @@ template <>
 std::string OperatorNode<PhysicalDelete>::name_ = "PhysicalDelete";
 template <>
 std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
+template <>
+std::string OperatorNode<PhysicalHashGroupBy>::name_ = "PhysicalHashGroupBy";
+template <>
+std::string OperatorNode<PhysicalSortGroupBy>::name_ = "PhysicalSortGroupBy";
+template <>
+std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
+template <>
+std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -445,7 +509,9 @@ OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregate>::type_ = OpType::Aggregate;
+OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
+template <>
+OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
@@ -460,6 +526,8 @@ template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
+template <>
+OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
 template <>
 OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>
@@ -486,7 +554,12 @@ template <>
 OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
 template <>
 OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
-
+template <>
+OpType OperatorNode<PhysicalHashGroupBy>::type_ = OpType::HashGroupBy;
+template <>
+OpType OperatorNode<PhysicalSortGroupBy>::type_ = OpType::SortGroupBy;
+template <>
+OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
 //===--------------------------------------------------------------------===//
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
