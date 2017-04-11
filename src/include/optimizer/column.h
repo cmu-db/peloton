@@ -14,7 +14,6 @@
 
 #include "catalog/column.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/util.h"
 
 #include "type/types.h"
 

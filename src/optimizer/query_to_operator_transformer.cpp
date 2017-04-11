@@ -28,6 +28,9 @@
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 
+using std::vector;
+using std::shared_ptr;
+
 namespace peloton {
 namespace optimizer {
 
@@ -45,15 +48,43 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
   if (op->from_table != nullptr) op->from_table->Accept(this);
   if (op->group_by != nullptr) {
+    // Make copies of groupby columns
+    vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
+    for (auto col : *op->group_by->columns)
+      group_by_cols.emplace_back(col->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalAggregate::make(op->group_by->columns, op->group_by->having));
+        LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
+  } else {
+    // Check plain aggregation
+    bool aggregation = false;
+    bool non_aggregation = false;
+    for (auto expr : *op->getSelectList()) {
+      if (expression::ExpressionUtil::IsAggregateExpression(
+              expr->GetExpressionType()))
+        aggregation = true;
+      else
+        non_aggregation = true;
+    }
+    // Syntax error when there are mixture of aggregation and other exprs
+    // when group by is absent
+    if (aggregation && non_aggregation)
+      throw SyntaxException(
+          "Non aggregation expressionmust appear in the GROUP BY "
+          "clause or be used in an aggregate function");
+    // Plain aggregation
+    else if (aggregation && !non_aggregation) {
+      auto aggregate =
+          std::make_shared<OperatorExpression>(LogicalAggregate::make());
+      aggregate->PushChild(output_expr);
+      output_expr = aggregate;
+    }
   }
+
   if (op->limit != nullptr) {
     // When offset is not specified in the query, parser will set offset to -1
-    if (op->limit->offset == -1)
-      op->limit->offset = 0;
+    if (op->limit->offset == -1) op->limit->offset = 0;
     auto limit = std::make_shared<OperatorExpression>(
         LogicalLimit::make(op->limit->limit, op->limit->offset));
     limit->PushChild(output_expr);
@@ -153,42 +184,30 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   }
 }
 
-// Not support ORDER BY in sub-queries
 void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
-void QueryToOperatorTransformer::Visit(
-    const parser::InsertStatement *op) {
-  storage::DataTable* target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          op->GetDatabaseName(), op->GetTableName());
+void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
+  storage::DataTable *target_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
+                                                        op->GetTableName());
 
-  auto insert_expr =
-      std::make_shared<OperatorExpression>(
-          LogicalInsert::make(target_table, op->columns, op->insert_values));
+  auto insert_expr = std::make_shared<OperatorExpression>(
+      LogicalInsert::make(target_table, op->columns, op->insert_values));
 
   output_expr = insert_expr;
 }
-void QueryToOperatorTransformer::Visit(
-    const parser::DeleteStatement *op) {
+void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName());
-  auto table_scan =
-      std::make_shared<OperatorExpression>(
-          LogicalGet::make(target_table, op->GetTableName()));
+  auto table_scan = std::make_shared<OperatorExpression>(
+      LogicalGet::make(target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);
-
-  // Fills in information about columns and functions i
-  // n their respective objects given a set of schemas.
-  // Otherwise tuple_idx will equals to -1 for scan plan, causing error.
-  if (op->expr != nullptr) {
-    expression::ExpressionUtil::TransformExpression(target_table->GetSchema(), op->expr);
-  }
 
   output_expr = delete_expr;
 }
@@ -200,54 +219,18 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::ExecuteStatement *op) {}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
-void QueryToOperatorTransformer::Visit(
-    const parser::UpdateStatement *op) {
-
+void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->table->GetDatabaseName(),
-      op->table->GetTableName());
-
-  auto update_clauses = op->updates;
-
-  for (auto clause : *update_clauses) {
-    auto clause_expr = clause->value;
-    auto columnID = target_table->GetSchema()->GetColumnID(clause->column);
-    auto column = target_table->GetSchema()->GetColumn(columnID);
-
-    if (clause_expr->GetExpressionType() ==
-        ExpressionType::VALUE_CONSTANT) {
-      auto value = static_cast<const expression::ConstantValueExpression*>(
-          clause_expr)
-          ->GetValue()
-          .CastAs(column.GetType());
-      auto value_expression =
-          new expression::ConstantValueExpression(value);
-
-      delete clause->value;
-      clause->value = value_expression;
-
-    } else {
-      for (unsigned int child_index = 0;
-           child_index < clause_expr->GetChildrenSize(); child_index++) {
-        auto child = clause_expr->GetChild(child_index);
-
-        if (child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-          auto value =
-              static_cast<const expression::ConstantValueExpression*>(child)
-                  ->GetValue()
-                  .CastAs(column.GetType());
-          auto value_expression =
-              new expression::ConstantValueExpression(value);
-
-          clause_expr->SetChild(child_index, value_expression);
-        }
-      }
-    }
-  }
+      op->table->GetDatabaseName(), op->table->GetTableName());
 
   auto update_expr =
       std::make_shared<OperatorExpression>(
-          LogicalUpdate::make(op));
+          LogicalUpdate::make(target_table, *op->updates));
+
+  auto table_scan = std::make_shared<OperatorExpression>(
+      LogicalGet::make(target_table, op->table->GetTableName()));
+
+  update_expr->PushChild(table_scan);
 
   output_expr = update_expr;
 }

@@ -13,7 +13,7 @@
 #pragma once
 
 #include "optimizer/property_set.h"
-#include "optimizer/util.h"
+#include "util/hash_util.h"
 
 #include <memory>
 #include <string>
@@ -34,7 +34,9 @@ enum class OpType {
   RightJoin,
   OuterJoin,
   SemiJoin,
-  Aggregate,
+  LogicalAggregate,
+  LogicalGroupBy,
+  LogicalHash,
   Limit,
   LogicalInsert,
   LogicalDelete,
@@ -46,6 +48,7 @@ enum class OpType {
   Project,
   OrderBy,
   PhysicalLimit,
+  Distinct,
   ComputeExprs,
   Filter,
   InnerNLJoin,
@@ -58,7 +61,10 @@ enum class OpType {
   OuterHashJoin,
   Insert,
   Delete,
-  Update
+  Update,
+  Aggregate,
+  HashGroupBy,
+  SortGroupBy
 };
 
 //===--------------------------------------------------------------------===//
@@ -87,7 +93,7 @@ struct BaseOperatorNode {
 
   virtual hash_t Hash() const {
     OpType t = type();
-    return util::Hash(&t);
+    return HashUtil::Hash(&t);
   }
 
   virtual bool operator==(const BaseOperatorNode &r) {

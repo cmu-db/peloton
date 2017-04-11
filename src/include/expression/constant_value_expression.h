@@ -12,8 +12,9 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
@@ -36,6 +37,19 @@ class ConstantValueExpression : public AbstractExpression {
     return value_;
   }
 
+  virtual void DeduceExpressionName() override {
+    if (!alias.empty())
+      return;
+    expr_name_ = value_.ToString();
+  }
+  
+  virtual bool Equals(AbstractExpression *expr) const override {
+    if (exp_type_ != expr->GetExpressionType())
+      return false;
+    auto const_expr = (ConstantValueExpression *)expr;
+    return value_.CompareEquals(const_expr->value_);
+  }
+
   type::Value GetValue() const { return value_; }
 
   bool HasParameter() const override { return false; }
@@ -45,6 +59,11 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+
+  virtual hash_t Hash() const {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, value_.Hash());
+  }
 
  protected:
   ConstantValueExpression(const ConstantValueExpression &other)

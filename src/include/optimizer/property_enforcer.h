@@ -16,7 +16,6 @@
 #include "optimizer/operator_expression.h"
 #include "optimizer/property_visitor.h"
 
-
 namespace peloton {
 namespace optimizer {
 
@@ -32,7 +31,7 @@ class PropertyEnforcer : public PropertyVisitor {
  public:
   PropertyEnforcer(ColumnManager &manager) : manager_(manager) {}
 
-  std::shared_ptr<OperatorExpression> EnforceProperty(
+  std::shared_ptr<GroupExpression> EnforceProperty(
       std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
       std::shared_ptr<Property> property);
 
@@ -40,11 +39,12 @@ class PropertyEnforcer : public PropertyVisitor {
   virtual void Visit(const PropertyProjection *) override;
   virtual void Visit(const PropertySort *) override;
   virtual void Visit(const PropertyPredicate *) override;
+  virtual void Visit(const PropertyDistinct *) override;
 
  private:
   ColumnManager &manager_;
   std::shared_ptr<GroupExpression> input_gexpr_;
-  std::shared_ptr<OperatorExpression> output_expr_;
+  std::shared_ptr<GroupExpression> output_gexpr_;
   PropertySet *input_properties_;
 };
 

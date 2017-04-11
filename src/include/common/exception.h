@@ -54,6 +54,7 @@ enum ExceptionType {
   EXCEPTION_TYPE_INDEX = 19,             // index related
   EXCEPTION_TYPE_STAT = 20,              // stat related
   EXCEPTION_TYPE_CONNECTION = 21,        // connection related
+  EXCEPTION_TYPE_SYNTAX = 22,            // syntax related
 };
 
 class Exception : public std::runtime_error {
@@ -118,6 +119,8 @@ class Exception : public std::runtime_error {
         return "Stat";
       case EXCEPTION_TYPE_CONNECTION:
         return "Connection";
+      case EXCEPTION_TYPE_SYNTAX:
+        return "Syntax";
       default:
         return "Unknown";
     }
@@ -379,6 +382,14 @@ class ExecutorException : public Exception {
  public:
   ExecutorException(std::string msg)
       : Exception(EXCEPTION_TYPE_EXECUTOR, msg) {}
+};
+
+class SyntaxException : public Exception {
+  SyntaxException() = delete;
+
+ public:
+  SyntaxException(std::string msg)
+      : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
 };
 
 class ConstraintException : public Exception {

@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include "type/value_factory.h"
+
 
 namespace peloton {
 namespace expression {
