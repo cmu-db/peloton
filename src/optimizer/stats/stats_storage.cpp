@@ -26,8 +26,13 @@ StatsStorage *StatsStorage::GetInstance(void) {
 }
 
 StatsStorage::StatsStorage() {
+  pool_.reset(new type::EphemeralPool());
   CreateStatsCatalog();
   CreateSamplesDatabase();
+}
+
+StatsStorage::~StatsStorage() {
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(SAMPLES_DB_NAME, nullptr);
 }
 
 void StatsStorage::CreateStatsCatalog() {
@@ -185,9 +190,9 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
   tuple->SetValue(3, val_num_row, nullptr);
   tuple->SetValue(4, val_cardinality, nullptr);
   tuple->SetValue(5, val_frac_null, nullptr);
-  tuple->SetValue(6, val_common_val, nullptr);
+  tuple->SetValue(6, val_common_val, pool_.get());
   tuple->SetValue(7, val_common_freq, nullptr);
-  tuple->SetValue(8, val_hist_bounds, nullptr);
+  tuple->SetValue(8, val_hist_bounds, pool_.get());
   return std::move(tuple);
 }
 

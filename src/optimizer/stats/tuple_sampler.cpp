@@ -117,7 +117,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
       type::Value val = (tile_tuple.GetValue(tile_column_itr));
-      tuple->SetValue(tuple_column_itr, val);
+      tuple->SetValue(tuple_column_itr, val, pool_.get());
       tuple_column_itr++;
     }
   }

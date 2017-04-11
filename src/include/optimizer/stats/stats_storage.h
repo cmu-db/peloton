@@ -49,6 +49,8 @@ class StatsStorage {
 
   StatsStorage();
 
+  ~StatsStorage();
+
   /* Functions for managing stats table and schema */
 
   void CreateStatsCatalog();
@@ -86,6 +88,8 @@ class StatsStorage {
   void CollectStatsForAllTables();
 
  private:
+  std::unique_ptr<type::AbstractPool> pool_;
+
   std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
     oid_t column_id, int num_row, double cardinality, double frac_null,

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "type/types.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace storage {
@@ -31,7 +32,9 @@ namespace optimizer {
 class TupleSampler {
  public:
   TupleSampler(storage::DataTable *table)
-                : table{table} {}
+                : table{table} {
+    pool_.reset(new type::EphemeralPool());
+  }
 
   size_t AcquireSampleTuples(size_t target_sample_count);
   bool GetTupleInTileGroup(storage::TileGroup *tile_group, size_t tuple_offset,
@@ -43,6 +46,8 @@ class TupleSampler {
   void InitState();
   bool HasNext();
   int GetNext();
+
+  std::unique_ptr<type::AbstractPool> pool_;
 
   storage::DataTable *table;
 
