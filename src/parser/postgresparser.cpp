@@ -994,8 +994,10 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
       for (auto cell = def_elem->arg; cell != nullptr; cell = cell->next) {
         result->function_body.push_back(cell->val.str);
       } */
-    
-      auto query_string = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      auto list_of_arg = reinterpret_cast<List*>(def_elem->arg);
+      auto query_string = reinterpret_cast<value*>((list_of_arg->head)->data.ptr_value)->val.str;
+     // auto query_string = (reinterpret_cast<value*>(def_elem->arg))->val.str;
+    //  LOG_DEBUG("%s\n",actual_string);
       std::string new_func_body(query_string);
       result->function_body.push_back(new_func_body);
       result->set_as_type();
