@@ -23,17 +23,25 @@ TEST_F(ColumnStatsTests, BasicTests) {
     type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
   }
+  
   // Minimum accuracy requirement
   uint64_t cardinality = colstats.GetCardinality();
   EXPECT_GE(cardinality, 50000);
   EXPECT_LE(cardinality, 150000);
+  
   // Histogram bound
   std::vector<double> bounds = colstats.GetHistogramBound();
+  
   // Null value fraction
-  EXPECT_EQ(colstats.GetFracNull(), 0);
+  EXPECT_EQ(colstats.GetFracNull(), 0); 
+  
   // Common value with frequency
   std::vector<std::pair<type::Value, double>> valfreq =
-			colstats.GetCommonValueAndFrequency();
+      colstats.GetCommonValueAndFrequency();
+  EXPECT_EQ(valfreq.size(), 10); // 10 comes from src/optimizer/stats/column_stats.cpp
+  for (auto const& p : valfreq) {
+    LOG_INFO("\n [Print k Values] %s, %f", p.first.GetInfo().c_str(), p.second);
+  }
 }
 
 TEST_F(ColumnStatsTests, SkewedTests) {
@@ -50,9 +58,20 @@ TEST_F(ColumnStatsTests, SkewedTests) {
   EXPECT_GE(cardinality, 1);
   EXPECT_LE(cardinality, 5);
   // Common value with frequency
+  for (int i = 0; i < 100; i++) {
+    type::Value v = type::ValueFactory::GetDecimalValue(5.1525 + i);
+    colstats.AddValue(v);
+    colstats.AddValue(v);
+    colstats.AddValue(v);
+  }
   std::vector<std::pair<type::Value, double>> valfreq =
-			colstats.GetCommonValueAndFrequency();
+      colstats.GetCommonValueAndFrequency();
+  EXPECT_EQ(valfreq.size(), 10);
+  for (auto const& p : valfreq) {
+    LOG_INFO("\n [Print k Values] %s, %f", p.first.GetInfo().c_str(), p.second);
+  }
 }
 
 } /* namespace test */
 } /* namespace peloton */
+

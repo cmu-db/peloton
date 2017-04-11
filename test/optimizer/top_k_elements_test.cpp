@@ -1,4 +1,3 @@
-
 #include "common/harness.h"
 
 #define private public
@@ -7,6 +6,9 @@
 #include "optimizer/stats/top_k_elements.h"
 #include "common/logger.h"
 #include "common/statement.h"
+#include "type/type.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {
@@ -99,12 +101,34 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   }
   //top_k_elements.PrintTopKQueueOrderedMaxFirst();
   //top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
-  top_k_elements.PrintAllOrderedMaxFirst();
+  //top_k_elements.PrintAllOrderedMaxFirst();
   top_k_elements.PrintOrderedMaxFirst(10);
   EXPECT_EQ(top_k_elements.tkq.size, k);
+  EXPECT_EQ(top_k_elements.GetOrderedMaxFirst(10).size(), 10);
+  EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), k);
   //top_k_elements.PrintTopKQueuePops();
   //EXPECT_EQ(top_k_elements.tkq.size, 0);
 }
+
+TEST_F(TopKElementsTests, WrapperTest) {
+  CountMinSketch sketch(10, 20, 0);
+  
+  const int k = 5;
+  TopKElements top_k_elements(sketch, k);
+
+  type::Value v1 = type::ValueFactory::GetDecimalValue(7.12);
+  type::Value v2 = type::ValueFactory::GetDecimalValue(10.25);
+  top_k_elements.Add(v1);
+  top_k_elements.Add(v2);
+  EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), 2);
+
+  for (int i = 0; i < 1000; i++) {
+    type::Value v = type::ValueFactory::GetDecimalValue(4.1525);
+    top_k_elements.Add(v);
+  }
+  EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), 3);
+}
+
 
 }
 }
