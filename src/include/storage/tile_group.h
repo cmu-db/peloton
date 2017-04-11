@@ -144,7 +144,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
-  bool GetTileCompressionStatus(const oid_t tile_id) const;
+  bool GetCompressionStatus() const;
 
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
@@ -208,6 +208,9 @@ class TileGroup : public Printable {
 
   // set of tiles
   std::vector<std::shared_ptr<Tile>> tiles;
+
+  // compression status
+  bool compression_status;
 
   // associated tile group
   TileGroupHeader *tile_group_header;

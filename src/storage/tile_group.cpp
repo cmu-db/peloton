@@ -54,8 +54,9 @@ TileGroup::TileGroup(BackendType backend_type,
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
     std::cout<<"tile_group.cpp Tile_Group Constructor: Tile with tile_id: "<< tile_id << " added\n";
-    std::cout << "Compression Status of tile with tile_id: " << tile_id << " is: " << GetTileCompressionStatus(tiles.size() - 1) << "\n";
+    std::cout << "Compression Status of tile with tile_id: " << tile_id << " is: " << (&*tile)->IsCompressed() << "\n";
   }
+  compression_status = false;
 }
 
 TileGroup::~TileGroup() {
@@ -70,9 +71,8 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   return tiles[tile_id]->GetTileId();
 }
 
-bool TileGroup::GetTileCompressionStatus(const oid_t tile_id) const {
-  PL_ASSERT(tiles[tile_id]);
-  return tiles[tile_id]->IsCompressed();
+bool TileGroup::GetCompressionStatus() const {
+  return compression_status;
 }
 
 type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
@@ -334,6 +334,7 @@ void TileGroup::CompressTiles() {
     if (new_tile->IsCompressed()) {
       LOG_INFO("Tile was successfully compressed and pointer was updated"); 
       tiles[i] = std::shared_ptr<Tile> (new_tile);
+      compression_status = true;
     }
   }
 }
