@@ -413,9 +413,9 @@ enum class IsolationLevelType {
   INVALID = INVALID_TYPE_ID,
   SERIALIZABLE = 1,     // serializable
   SNAPSHOT = 2,         // snapshot isolation
-  REPEATABLE_READS = 2, // repeatable reads
-  READ_COMMITTED = 3,   // read committed
-  READ_ONLY = 4         // read only
+  REPEATABLE_READS = 3, // repeatable reads
+  READ_COMMITTED = 4,   // read committed
+  READ_ONLY = 5         // read only
 };
 
 //===--------------------------------------------------------------------===//
