@@ -44,7 +44,7 @@ class TriggerList {
   void UpdateTypeSummary(int16_t type);
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
-  std::vector triggers;
+  std::vector<Trigger> triggers;
 
 };
 
