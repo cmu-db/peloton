@@ -23,15 +23,10 @@ namespace optimizer {
 
 /**
  * AcquireSampleTuples - Sample a certain number of tuples from a given table.
- *
+ * This function performs random sampling by generating random tile_group_offset
+ * and random tuple_offset.
  */
 size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
-  //  auto &transaction_manager =
-  //  concurrency::TransactionManagerFactory::GetInstance();
-  //  auto txn = txn_manager.BeginTransaction();
-
-  //  auto &manager = catalog::Manager::GetInstance();
-
   size_t tuple_count = table->GetTupleCount();
   size_t tile_group_count = table->GetTileGroupCount();
   LOG_TRACE("tuple_count = %lu, tile_group_count = %lu", tuple_count,
@@ -75,6 +70,10 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
   return sampled_tuples.size();
 }
 
+/**
+ * GetTupleInTileGroup - This function is a helper function to get a tuple in
+ * a tile group.
+ */
 bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
                                        size_t tuple_offset,
                                        std::unique_ptr<storage::Tuple> &tuple) {
@@ -116,6 +115,9 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   return true;
 }
 
+/**
+ * GetSampledTuples - This function returns the sampled tuples.
+ */
 std::vector<std::unique_ptr<storage::Tuple>> &TupleSampler::GetSampledTuples() {
   return sampled_tuples;
 }

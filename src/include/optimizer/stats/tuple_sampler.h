@@ -41,10 +41,6 @@ class TupleSampler {
   std::vector<std::unique_ptr<storage::Tuple>> &GetSampledTuples();
 
  private:
-  void InitState();
-  bool HasNext();
-  int GetNext();
-
   std::unique_ptr<type::AbstractPool> pool_;
 
   storage::DataTable *table;

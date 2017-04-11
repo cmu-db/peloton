@@ -25,17 +25,31 @@ StatsStorage *StatsStorage::GetInstance(void) {
   return global_stats_storage.get();
 }
 
+/**
+ * StatsStorage - Constructor of StatsStorage.
+ * In the construcotr, `stats` table and `samples_db` database are created.
+ */
 StatsStorage::StatsStorage() {
   pool_.reset(new type::EphemeralPool());
   CreateStatsCatalog();
   CreateSamplesDatabase();
 }
 
+/**
+ * ~StatsStorage - Deconstructor of StatsStorage.
+ * It deletes(drops) the 'samples_db' from catalog in case of memory leak.
+ * TODO: Remove this when catalog frees the databases memory in its
+ * deconstructor
+ * in the future.
+ */
 StatsStorage::~StatsStorage() {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(SAMPLES_DB_NAME,
                                                         nullptr);
 }
 
+/**
+ * CreateStatsCatalog - Create 'stats' table in the catalog database.
+ */
 void StatsStorage::CreateStatsCatalog() {
   auto catalog = catalog::Catalog::GetInstance();
   auto catalog_db = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
@@ -53,6 +67,9 @@ void StatsStorage::CreateStatsCatalog() {
   catalog_db->AddTable(table.release(), true);
 }
 
+/**
+ * InitializeStatsSchema - Initialize the table schema for 'stats' table.
+ */
 std::unique_ptr<catalog::Schema> StatsStorage::InitializeStatsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -100,6 +117,9 @@ std::unique_ptr<catalog::Schema> StatsStorage::InitializeStatsSchema() {
   return table_schema;
 }
 
+/**
+ *  GetStatsTable - Get the pointer to the 'stats' table.
+ */
 storage::DataTable *StatsStorage::GetStatsTable() {
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *catalog_db =
@@ -109,6 +129,13 @@ storage::DataTable *StatsStorage::GetStatsTable() {
   return stats_table;
 }
 
+/**
+ * AddOrUpdateTableStats - Add or update all column stats of a table.
+ * This function iterates all column stats in the table stats and insert column
+ * stats tuples into the 'stats' table in the catalog database.
+ * This function only add table stats to the catalog for now.
+ * TODO: Implement stats UPDATE if the column stats already exists.
+ */
 void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
                                          TableStats *table_stats) {
   // All tuples are inserted in a single txn
@@ -127,8 +154,9 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
     (void)column_stats;
     double cardinality = column_stats->GetCardinality();
     double frac_null = column_stats->GetFracNull();
-    // TODO: Get most_common_vals, most_common_freqs and histogram_bounds from
-    // column_stats.
+    // Currently, we only store the most common value and its frequency in stats
+    // table because Peloton doesn't support ARRAY type now.
+    // TODO: Store multiple common values and freqs in stats table.
     std::vector<ValueFrequencyPair> most_common_val_freqs =
         column_stats->GetCommonValueAndFrequency();
     std::vector<double> histogram_bounds = column_stats->GetHistogramBound();
@@ -145,8 +173,7 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
 }
 
 /**
- * Generate a column stats tuple.
- * TODO: deal with array type.
+ * GetColumnStatsTuple - Generate a column stats tuple.
  */
 std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
@@ -161,9 +188,10 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
   auto val_cardinality = type::ValueFactory::GetDecimalValue(cardinality);
   auto val_frac_null = type::ValueFactory::GetDecimalValue(frac_null);
 
-  LOG_DEBUG("Most cmmon val count: %lu", most_common_val_freqs.size());
-  // Currently, only store the most common value and its frequency
-  // TODO: support array
+  // Currently, only store the most common value and its frequency because
+  // Peloton doesn't suppport ARRAY type now.
+  // TODO: store the array of most common values and freqs when Peloton supports
+  // ARRAY type.
   type::Value val_common_val, val_common_freq;
   if (most_common_val_freqs.size() > 0) {
     val_common_val = type::ValueFactory::GetVarcharValue(
@@ -176,7 +204,9 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
     val_common_freq =
         type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
   }
-  // Convert the double array to a string by concatening them with ","
+  // Since Peloton doesn't support ARRAY type, we temporarily convert the
+  // double array to a string by concatening them with ",". Then we can store
+  // the histogram bounds array as VARCHAR in the datatable.
   type::Value val_hist_bounds;
   if (histogram_bounds.size() > 0) {
     val_hist_bounds = type::ValueFactory::GetVarcharValue(
@@ -198,12 +228,21 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
   return std::move(tuple);
 }
 
+/**
+ * GetColumnStatsByID - Query the 'stats' table to get the column stats by IDs.
+ * TODO: Implement this function.
+ */
 std::unique_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(
-    UNSUED_ATTRIBUTE oid_t database_id, UNSUED_ATTRIBUTE oid_t table_id,
-    UNSUED_ATTRIBUTE oid_t column_id) {
+    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
+    UNUSED_ATTRIBUTE oid_t column_id) {
   return nullptr;
 }
 
+/**
+ * CollectStatsForAllTables - This function iterates all databases and
+ * datatables
+ * to collect their stats and store them in the 'stats' table.
+ */
 void StatsStorage::CollectStatsForAllTables() {
   auto catalog = catalog::Catalog::GetInstance();
 
@@ -221,10 +260,17 @@ void StatsStorage::CollectStatsForAllTables() {
   }
 }
 
+/**
+ * CreateSamplesDatabase - Create a database for storing samples tables.
+ */
 void StatsStorage::CreateSamplesDatabase() {
   catalog::Catalog::GetInstance()->CreateDatabase(SAMPLES_DB_NAME, nullptr);
 }
 
+/**
+ * AddSamplesTable - Add a samples table into the 'samples_db'.
+ * The table name is generated by concatenating db_id and table_id with '_'.
+ */
 void StatsStorage::AddSamplesTable(
     storage::DataTable *data_table,
     std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples) {
@@ -251,10 +297,21 @@ void StatsStorage::AddSamplesTable(
   }
 }
 
+/**
+ * GetTupleSamples - Query tuple samples by db_id and table_id.
+ * Implement this function.
+ */
 void StatsStorage::GetTupleSamples(
+    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
     UNUSED_ATTRIBUTE std::vector<storage::Tuple> &tuple_samples) {}
 
+/**
+ * GetColumnSamples - Query column samples by db_id, table_id and column_id.
+ * TODO: Implement this function.
+ */
 void StatsStorage::GetColumnSamples(
+    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
+    UNUSED_ATTRIBUTE oid_t column_id,
     UNUSED_ATTRIBUTE std::vector<type::Value> &column_samples) {}
 
 } /* namespace optimizer */

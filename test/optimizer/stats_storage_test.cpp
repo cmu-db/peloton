@@ -68,14 +68,6 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
 
   auto tile_group = stats_table->GetTileGroup(0);
 
-  // Column ID
-  // EXPECT_EQ(tile_group->GetValue(0, 2),
-  // type::ValueFactory::GetIntegerValue(0));
-  // EXPECT_EQ(tile_group->GetValue(1, 2),
-  // type::ValueFactory::GetIntegerValue(1));
-  // EXPECT_EQ(tile_group->GetValue(2, 2),
-  // type::ValueFactory::GetIntegerValue(2));
-
   auto tile = tile_group->GetTile(0);
   auto tile_schemas = tile_group->GetTileSchemas();
   const catalog::Schema &schema = tile_schemas[0];

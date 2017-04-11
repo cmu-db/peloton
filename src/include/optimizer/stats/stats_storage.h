@@ -19,7 +19,6 @@
 
 #include "common/macros.h"
 #include "type/types.h"
-
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -36,7 +35,6 @@ class Schema;
 namespace optimizer {
 
 #define STATS_TABLE_NAME "stats"
-
 #define SAMPLES_DB_NAME "samples_db"
 
 using ValueFrequencyPair = std::pair<type::Value, double>;
@@ -75,9 +73,11 @@ class StatsStorage {
       storage::DataTable *data_table,
       std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
 
-  void GetTupleSamples(std::vector<storage::Tuple> &tuple_samples);
+  void GetTupleSamples(oid_t database_id, oid_t table_id,
+                       std::vector<storage::Tuple> &tuple_samples);
 
-  void GetColumnSamples(std::vector<type::Value> &column_samples);
+  void GetColumnSamples(oid_t database_id, oid_t table_id, oid_t column_id,
+                        std::vector<type::Value> &column_samples);
 
   std::string GenerateSamplesTableName(oid_t db_id, oid_t table_id) {
     return std::to_string(db_id) + "_" + std::to_string(table_id);
