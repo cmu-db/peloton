@@ -77,16 +77,16 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) delete[] (key);
+      for (auto key : *primary_key) delete[](key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[] (key);
+      for (auto key : *foreign_key_source) delete[](key);
       delete foreign_key_source;
     }
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[] (key);
+      for (auto key : *foreign_key_sink) delete[](key);
       delete foreign_key_sink;
     }
     delete[] name;
@@ -214,9 +214,7 @@ class CreateStatement : public TableRefStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CreateType type;
   bool if_not_exists;
@@ -236,9 +234,8 @@ class CreateStatement : public TableRefStatement {
   std::vector<char*>* trigger_args = nullptr;
   std::vector<char*>* trigger_columns = nullptr;
   expression::AbstractExpression* trigger_when = nullptr;
-  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
-
-
+  int16_t trigger_type;  // information about row, timing, events, access by
+                         // pg_trigger
 };
 
 }  // namespace parser

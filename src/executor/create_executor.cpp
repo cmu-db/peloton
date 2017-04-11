@@ -98,7 +98,9 @@ bool CreateExecutor::DExecute() {
     commands::Trigger newTrigger(node);
 
     // new approach: add trigger to the data_table instance directly
-    storage::DataTable *target_table = catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
+    storage::DataTable *target_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name);
     target_table->AddTrigger(newTrigger);
 
     // if (current_txn->GetResult() == ResultType::SUCCESS) {

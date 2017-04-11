@@ -754,7 +754,6 @@ expression::AbstractExpression* PostgresParser::WhenTransform(Node* root) {
   return result;
 }
 
-
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object
 parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
@@ -990,15 +989,15 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
 // CreateTrigStmt parsenodes.
-parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* root) {
+parser::SQLStatement* PostgresParser::CreateTriggerTransform(
+    CreateTrigStmt* root) {
   parser::CreateStatement* result =
-    new parser::CreateStatement(CreateStatement::kTrigger);
+      new parser::CreateStatement(CreateStatement::kTrigger);
 
   // funcname
   result->trigger_funcname = new std::vector<char*>;
   if (root->funcname) {
-    for (auto cell = root->funcname->head; cell != nullptr;
-         cell = cell->next) {
+    for (auto cell = root->funcname->head; cell != nullptr; cell = cell->next) {
       char* name = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
       result->trigger_funcname->push_back(cstrdup(name));
     }
@@ -1006,8 +1005,7 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* roo
   // args
   result->trigger_args = new std::vector<char*>;
   if (root->args) {
-    for (auto cell = root->args->head; cell != nullptr;
-         cell = cell->next) {
+    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
       char* arg = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
       result->trigger_args->push_back(cstrdup(arg));
     }
@@ -1015,8 +1013,7 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* roo
   // columns
   result->trigger_columns = new std::vector<char*>;
   if (root->columns) {
-    for (auto cell = root->columns->head; cell != nullptr;
-         cell = cell->next) {
+    for (auto cell = root->columns->head; cell != nullptr; cell = cell->next) {
       char* column = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
       result->trigger_columns->push_back(cstrdup(column));
     }
@@ -1026,8 +1023,7 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(CreateTrigStmt* roo
 
   int16_t& tgtype = result->trigger_type;
   TRIGGER_CLEAR_TYPE(tgtype);
-  if (root->row)
-    TRIGGER_SETT_ROW(tgtype);
+  if (root->row) TRIGGER_SETT_ROW(tgtype);
   tgtype |= root->timing;
   tgtype |= root->events;
 

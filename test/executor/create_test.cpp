@@ -71,13 +71,13 @@ TEST_F(CreateTests, CreatingTable) {
 }
 
 TEST_F(CreateTests, CreatingTrigger) {
-
   // Bootstrap
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Insert a table first
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "balance", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "balance", true);
   auto name_column =
       catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
@@ -91,8 +91,7 @@ TEST_F(CreateTests, CreatingTrigger) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFAULT_DB_NAME,
-                           std::move(table_schema),
+  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
                            CreateType::TABLE);
 
   // Create executer
@@ -107,7 +106,6 @@ TEST_F(CreateTests, CreatingTrigger) {
                 ->GetTableCount(),
             1);
 
-
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
   std::string query =
@@ -119,7 +117,8 @@ TEST_F(CreateTests, CreatingTrigger) {
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
-  auto create_trigger_stmt = static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  auto create_trigger_stmt =
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -154,11 +153,15 @@ TEST_F(CreateTests, CreatingTrigger) {
   auto left = when->GetChild(0);
   auto right = when->GetChild(1);
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
-  EXPECT_EQ("old", static_cast<const expression::TupleValueExpression*>(left)->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression*>(left)->GetColumnName());
+  EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
+                       ->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
-  EXPECT_EQ("new", static_cast<const expression::TupleValueExpression*>(right)->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression*>(right)->GetColumnName());
+  EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
+                       ->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level
@@ -173,9 +176,11 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_FALSE(TRIGGER_FOR_DELETE(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(trigger_type));
 
-  storage::DataTable *target_table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "accounts");
+  storage::DataTable *target_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                        "accounts");
   EXPECT_EQ(target_table->GetTriggerNumber(), 1);
-  commands::Trigger* new_trigger = target_table->GetTriggerByIndex(0);
+  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
 
   // free the database just created

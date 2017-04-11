@@ -91,7 +91,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class PostgresValueType {
   INVALID = INVALID_TYPE_ID,
   BOOLEAN = 16,
-  TINYINT = 16, // BOOLEAN is an alias for TINYINT
+  TINYINT = 16,  // BOOLEAN is an alias for TINYINT
   SMALLINT = 21,
   INTEGER = 23,
   VARBINARY = 17,
