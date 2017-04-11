@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "util/hash_util.h"
 #include "optimizer/property_set.h"
 #include "common/logger.h"
 
@@ -24,7 +25,19 @@ const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
 
 void PropertySet::AddProperty(std::shared_ptr<Property> property) {
   LOG_TRACE("Add property with type %d", static_cast<int>(property->Type()));
-  properties_.push_back(property);
+  auto iter = properties_.begin();
+  for (; iter != properties_.end(); ++iter)
+    if (property->Type() < (*iter)->Type()) break;
+
+  properties_.insert(iter, property);
+}
+
+void PropertySet::RemoveProperty(PropertyType type) {
+  auto iter = properties_.begin();
+  for (; iter != properties_.end(); ++iter) {
+    if ((*iter)->Type() == type) break;
+  }
+  if (iter != properties_.end()) properties_.erase(iter);
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
@@ -61,11 +74,19 @@ bool PropertySet::operator==(const PropertySet &r) const {
   return *this >= r && r >= *this;
 }
 
+std::string PropertySet::ToString() const {
+  std::string str = "PropertySet:\n";
+  for (auto &property : properties_) {
+    str += property->ToString();
+  }
+  return str;
+}
+
 hash_t PropertySet::Hash() const {
   size_t prop_size = properties_.size();
-  hash_t hash = util::Hash<size_t>(&prop_size);
+  hash_t hash = HashUtil::Hash<size_t>(&prop_size);
   for (auto &prop : properties_) {
-    hash = util::CombineHashes(hash, prop->Hash());
+    hash = HashUtil::CombineHashes(hash, prop->Hash());
   }
   return hash;
 }

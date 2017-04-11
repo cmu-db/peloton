@@ -42,8 +42,10 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(storage::DataTable *table,
                       std::unique_ptr<const planner::ProjectInfo> project_info);
 
+  // FIXME: Should remove when the simple_optimizer tears down
   explicit UpdatePlan(const parser::UpdateStatement *parse_tree);
 
+  // FIXME: Should remove when the simple_optimizer tears down
   explicit UpdatePlan(const parser::UpdateStatement *parse_tree,
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
@@ -86,14 +88,14 @@ class UpdatePlan : public AbstractPlan {
   /** @brief Target table. */
   storage::DataTable *target_table_;
 
-  std::string table_name;
-
   /** @brief Projection info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
+  // FIXME: Should remove when the simple_optimizer tears down
   // Vector of Update clauses
   std::vector<parser::UpdateClause *> updates_;
 
+  // FIXME: Should remove when the simple_optimizer tears down
   // The where condition
   expression::AbstractExpression *where_;
 

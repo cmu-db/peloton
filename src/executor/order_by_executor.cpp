@@ -68,7 +68,7 @@ bool OrderByExecutor::DExecute() {
   }
 
   PL_ASSERT(sort_done_);
-  PL_ASSERT(input_schema_.get());
+  PL_ASSERT(output_schema_.get());
   PL_ASSERT(input_tiles_.size() > 0);
 
   // Returned tiles must be newly created physical tiles.
@@ -79,7 +79,7 @@ bool OrderByExecutor::DExecute() {
 
   std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
       BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-      nullptr, *input_schema_, nullptr, tile_size));
+      nullptr, *output_schema_, nullptr, tile_size));
 
   for (size_t id = 0; id < tile_size; id++) {
     oid_t source_tile_id =
@@ -87,10 +87,10 @@ bool OrderByExecutor::DExecute() {
     oid_t source_tuple_id =
         sort_buffer_[num_tuples_returned_ + id].item_pointer.offset;
     // Insert a physical tuple into physical tile
-    for (oid_t col = 0; col < input_schema_->GetColumnCount(); col++) {
+    for (oid_t i = 0; i < output_schema_->GetColumnCount(); i++) {
       type::Value val =
-          (input_tiles_[source_tile_id]->GetValue(source_tuple_id, col));
-      ptile.get()->SetValue(val, id, col);
+          (input_tiles_[source_tile_id]->GetValue(source_tuple_id, output_column_ids_[i]));
+      ptile.get()->SetValue(val, id, i);
     }
   }
 
@@ -156,8 +156,9 @@ bool OrderByExecutor::DoSort() {
   for (auto id : node.GetOutputColumnIds()) {
     output_key_columns.push_back(physical_schema->GetColumn(id));
   }
+  output_column_ids_ = node.GetOutputColumnIds();
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
-  input_schema_.reset(new catalog::Schema(output_key_columns));
+  output_schema_.reset(new catalog::Schema(output_key_columns));
   auto executor_pool = executor_context_->GetPool();
 
   // Extract all valid tuples into a single std::vector (the sort buffer)

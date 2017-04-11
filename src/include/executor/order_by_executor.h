@@ -78,8 +78,11 @@ class OrderByExecutor : public AbstractExecutor {
   /** All tiles returned by child. */
   std::vector<std::unique_ptr<LogicalTile>> input_tiles_;
 
-  /** Physical (not logical) schema of input tiles */
-  std::unique_ptr<catalog::Schema> input_schema_;
+  /** Physical (not logical) schema of output tiles */
+  std::unique_ptr<catalog::Schema> output_schema_;
+  
+  /** Projected output column ids corresponding to input schema */
+  std::vector<oid_t> output_column_ids_;
 
   /** All valid tuples in sorted order */
   std::vector<sort_buffer_entry_t> sort_buffer_;

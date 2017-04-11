@@ -279,7 +279,11 @@ enum class ExpressionType {
   //===--------------------------------------------------------------------===//
   CAST = 900
 };
-std::string ExpressionTypeToString(ExpressionType type);
+
+// When short_str is true, return a short version of ExpressionType string
+// For example, + instead of Operator_Plus. It's used to generate the
+// expression name
+std::string ExpressionTypeToString(ExpressionType type, bool short_str = false);
 ExpressionType StringToExpressionType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
 ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
@@ -760,7 +764,7 @@ enum class PostgresConstraintType {
 
 enum class ConstraintType {
   INVALID = INVALID_TYPE_ID,  // invalid
-  NOT_NULL = 1,              // notnull
+  NOT_NULL = 1,               // notnull
   NOTNULL = 2,                // notnull
   DEFAULT = 3,                // default
   CHECK = 4,                  // check
@@ -826,8 +830,10 @@ enum class LoggerMappingStrategyType {
   MANUAL = 3
 };
 std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
-LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggerMappingStrategyType &type);
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(
+    const std::string &str);
+std::ostream &operator<<(std::ostream &os,
+                         const LoggerMappingStrategyType &type);
 
 enum class CheckpointType {
   INVALID = INVALID_TYPE_ID,
@@ -853,16 +859,12 @@ enum class LoggingStatusType {
 };
 std::string LoggingStatusTypeToString(LoggingStatusType type);
 LoggingStatusType StringToLoggingStatusType(const std::string &str);
-std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type);
+std::ostream &operator<<(std::ostream &os, const LoggingStatusType &type);
 
-enum class LoggerType {
-  INVALID = INVALID_TYPE_ID,
-  FRONTEND = 1,
-  BACKEND = 2
-};
+enum class LoggerType { INVALID = INVALID_TYPE_ID, FRONTEND = 1, BACKEND = 2 };
 std::string LoggerTypeToString(LoggerType type);
 LoggerType StringToLoggerType(const std::string &str);
-std::ostream& operator<<(std::ostream& os, const LoggerType& type);
+std::ostream &operator<<(std::ostream &os, const LoggerType &type);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
@@ -951,10 +953,7 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum class TupleSerializationFormat {
-  NATIVE = 0,
-  DR = 1
-};
+enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
 
 // ------------------------------------------------------------------
 // Entity types
@@ -981,6 +980,8 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 //===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
+
+typedef size_t hash_t;
 
 typedef uint32_t oid_t;
 
@@ -1068,8 +1069,7 @@ typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
 // block -> offset -> is_index_deletion
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    GCSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
@@ -1129,6 +1129,34 @@ typedef std::vector<Target> TargetList;
 typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
+
+//===--------------------------------------------------------------------===//
+// Optimizer
+//===--------------------------------------------------------------------===//
+enum class PropertyType {
+  PREDICATE,
+  PROJECT,
+  COLUMNS,
+  DISTINCT,
+  SORT,
+};
+
+namespace expression {
+class AbstractExpression;
+class ExprHasher;
+class ExprEqualCmp;
+}
+
+// Mapping of Expression -> Column Offset created by operator
+typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
+                           unsigned, expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprMap;
+// Used in optimizer to speed up expression comparsion
+typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
+
+std::string PropertyTypeToString(PropertyType type);
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

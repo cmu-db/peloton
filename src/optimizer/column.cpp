@@ -33,7 +33,7 @@ std::string Column::Name() const { return name; }
 
 bool Column::Inlined() const { return inlined; }
 
-hash_t Column::Hash() const { return util::Hash<ColumnID>(&id); }
+hash_t Column::Hash() const { return HashUtil::Hash<ColumnID>(&id); }
 
 //===--------------------------------------------------------------------===//
 // TableColumn
