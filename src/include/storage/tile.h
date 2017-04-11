@@ -38,6 +38,7 @@ class Tuple;
 class TileGroup;
 class TileGroupHeader;
 class TupleIterator;
+class CompressedTile;
 
 /**
  * Represents a Tile.
@@ -51,17 +52,21 @@ class Tile : public Printable {
   friend class TupleIterator;
   friend class TileGroupHeader;
   friend class gc::GCManager;
-
+  friend class CompressedTile;
+  
+  
   Tile() = delete;
   Tile(Tile const &) = delete;
 
  public:
+
   // Tile creator
   Tile(BackendType backend_type, TileGroupHeader *tile_header,
        const catalog::Schema &tuple_schema, TileGroup *tile_group,
        int tuple_count);
 
   virtual ~Tile();
+
 
   //===--------------------------------------------------------------------===//
   // Operations
@@ -118,12 +123,11 @@ class Tile : public Printable {
   Tile *CopyTile(BackendType backend_type);
 
   // 
-  virtual bool IsCompressed() const { return false; }
+  virtual bool IsCompressed() {
+    return false;
+  }
 
-  Tile *CompressTile();
-
-  std::vector<type::Value> CompressIntegerColumn(oid_t column_id);
-
+  virtual void CompressTile(Tile *tile);
   //===--------------------------------------------------------------------===//
   // Size Stats
   //===--------------------------------------------------------------------===//

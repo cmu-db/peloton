@@ -23,6 +23,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "storage/compressed_tile.h"
 
 namespace peloton {
 namespace storage {
@@ -325,10 +326,13 @@ void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
     std::cout << " Compressing Tile: " << i << "\n";
-    Tile *new_tile;
-    new_tile = tiles[i]->CompressTile();
-    if (new_tile != nullptr) {
-      LOG_INFO("Tile was successfully compressed and pointer was updated");
+    CompressedTile *new_tile;
+    Tile *old_tile = &*tiles[i];
+
+    new_tile = new CompressedTile(backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()), old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount());
+    new_tile->CompressTile(old_tile);
+    if (new_tile->IsCompressed()) {
+      LOG_INFO("Tile was successfully compressed and pointer was updated"); 
       tiles[i] = std::shared_ptr<Tile> (new_tile);
     }
   }
