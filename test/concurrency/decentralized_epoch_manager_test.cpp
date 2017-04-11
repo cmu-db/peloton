@@ -43,7 +43,7 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   epoch_manager.Reset(2);
 
   // create a transaction at epoch 2.
-  cid_t txn_id = epoch_manager.EnterEpoch(0, false);
+  cid_t txn_id = epoch_manager.EnterEpoch(0, TimestampType::READ);
 
   eid_t epoch_id = txn_id >> 32;
 
@@ -89,7 +89,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   epoch_manager.Reset(2);
 
   // create a transaction at epoch 2.
-  cid_t txn_id1 = epoch_manager.EnterEpoch(0, false);
+  cid_t txn_id1 = epoch_manager.EnterEpoch(0, TimestampType::READ);
 
   eid_t epoch_id1 = txn_id1 >> 32;
 
@@ -101,7 +101,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   epoch_manager.Reset(3);
 
   // create a transaction at epoch 3.
-  cid_t txn_id2 = epoch_manager.EnterEpoch(1, false);
+  cid_t txn_id2 = epoch_manager.EnterEpoch(1, TimestampType::READ);
 
   eid_t epoch_id2 = txn_id2 >> 32;
 

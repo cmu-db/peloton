@@ -31,7 +31,8 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual ~TimestampOrderingTransactionManager() {}
 
   static TimestampOrderingTransactionManager &GetInstance(
-      const IsolationLevelType level, 
+      const ProtocolType protocol,
+      const IsolationLevelType isolation, 
       const ConflictAvoidanceType conflict);
 
   // This method tests whether the current transaction is the owner of a tuple.

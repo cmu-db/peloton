@@ -40,6 +40,13 @@ class Transaction : public Printable {
     Init(thread_id, isolation, read_id);
   }
 
+  Transaction(const size_t thread_id,
+              const IsolationLevelType isolation,
+              const cid_t &read_id, 
+              const cid_t &commit_id) {
+    Init(thread_id, isolation, read_id, commit_id);
+  }
+
   ~Transaction() {}
 
  private:
@@ -47,16 +54,23 @@ class Transaction : public Printable {
   void Init(const size_t thread_id, 
             const IsolationLevelType isolation, 
             const cid_t &read_id) {
+    Init(thread_id, isolation, read_id, read_id);
+  }
+
+  void Init(const size_t thread_id, 
+            const IsolationLevelType isolation, 
+            const cid_t &read_id, 
+            const cid_t &commit_id) {
     // initially, all the three ids are set to read_id.
     txn_id_ = read_id;
     
     read_id_ = read_id;
 
     // commit id can be set at a transaction's commit phase.
-    commit_id_ = read_id;
+    commit_id_ = commit_id;
 
     epoch_id_ = read_id_ >> 32;
-    
+
     thread_id_ = thread_id;
 
     isolation_level_ = isolation;
