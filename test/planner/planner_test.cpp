@@ -49,10 +49,12 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
   // DELETE FROM department_table WHERE id = $0
 
   // id = $0
+  txn = txn_manager.BeginTransaction();
   auto parameter_expr = new expression::ParameterValueExpression(0);
   auto tuple_expr =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
@@ -118,8 +120,10 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
   // UPDATE department_table SET name = $0 WHERE id = $1
+  txn = txn_manager.BeginTransaction();
   parser::UpdateStatement *update_statement = new parser::UpdateStatement();
   parser::TableRef *table_ref =
       new parser::TableRef(peloton::TableReferenceType::JOIN);
@@ -166,8 +170,10 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   // bind values to parameters in plan
   update_plan->SetParameterValues(values);
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -192,10 +198,13 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Catalog::GetInstance()->CreateTable(
+  auto ret = catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+  if (ret != ResultType::SUCCESS) std::cout << "@@@ create table failed" << std::endl;
+  txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES ($0, $1)
+  txn = txn_manager.BeginTransaction();
   auto insert_statement =
       new parser::InsertStatement(peloton::InsertType::VALUES);
 
@@ -238,8 +247,10 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
   // bind values to parameters in plan
   insert_plan->SetParameterValues(values);
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -250,11 +261,13 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
 TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   // Bootstrapping peloton
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
-  // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Create table
+  txn = txn_manager.BeginTransaction();
   auto id_column =
       catalog::Column(type::Type::INTEGER,
                       type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
@@ -264,8 +277,10 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES (1, $1)
+  txn = txn_manager.BeginTransaction();
   auto insert_statement =
       new parser::InsertStatement(peloton::InsertType::VALUES);
 
@@ -305,8 +320,10 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   // bind values to parameters in plan
   insert_plan->SetParameterValues(values);
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
