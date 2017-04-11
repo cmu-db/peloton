@@ -10,6 +10,7 @@ class Trigger {
  public:
   Trigger(const planner::CreatePlan& plan);
   inline int16_t GetTriggerType() { return trigger_type; }
+  inline std::string GetTriggerName() { return trigger_name; }
  private:
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
@@ -40,6 +41,7 @@ class TriggerList {
   inline bool HasTriggerType(EnumTriggerType type) const {
     return types_summary[type];
   }
+  inline int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
  private:
