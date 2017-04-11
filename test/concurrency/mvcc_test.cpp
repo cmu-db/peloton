@@ -25,15 +25,15 @@ namespace test {
 
 class MVCCTests : public PelotonTest {};
 
-static std::vector<ProtocolType> TEST_TYPES = {
+static std::vector<ProtocolType> PROTOCOL_TYPES = {
     ProtocolType::TIMESTAMP_ORDERING};
 
 TEST_F(MVCCTests, SingleThreadVersionChainTest) {
   LOG_INFO("SingleThreadVersionChainTest");
 
-  for (auto protocol : TEST_TYPES) {
+  for (auto protocol : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE);
+        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
@@ -94,9 +94,9 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
 TEST_F(MVCCTests, AbortVersionChainTest) {
   LOG_INFO("AbortVersionChainTest");
 
-  for (auto protocol : TEST_TYPES) {
+  for (auto protocol : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE);
+        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
@@ -126,10 +126,10 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
 TEST_F(MVCCTests, VersionChainTest) {
   LOG_INFO("VersionChainTest");
 
-  for (auto protocol : TEST_TYPES) {
+  for (auto protocol : PROTOCOL_TYPES) {
     LOG_INFO("Validating %d", static_cast<int>(protocol));
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE);
+        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
 
     const int num_txn = 2;  // 5
     const int scale = 1;    // 20

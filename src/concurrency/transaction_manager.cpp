@@ -23,7 +23,9 @@
 namespace peloton {
 namespace concurrency {
 
-IsolationLevelType TransactionManager::default_isolation_level_ =
+ProtocolType TransactionManager::protocol_ = 
+    ProtocolType::TIMESTAMP_ORDERING;
+IsolationLevelType TransactionManager::isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
@@ -32,17 +34,19 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
   
   Transaction *txn = nullptr;
   
-  cid_t read_id = INVALID_CID;
-
   if (type == IsolationLevelType::READ_ONLY) {
 
     // transaction processing with decentralized epoch manager
-    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
+    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
+    txn = new Transaction(thread_id, type, read_id); 
   
   } else if (type == IsolationLevelType::SNAPSHOT) {
     
     // transaction processing with decentralized epoch manager
-    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
+    // the DBMS must acquire 
+    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
+    cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::COMMIT);
+    txn = new Transaction(thread_id, type, read_id, commit_id);
 
   } else {
     
@@ -52,11 +56,10 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // - READ_COMMITTED.
   
     // transaction processing with decentralized epoch manager
-    read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);
-    
-  }
+    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::READ);
+    txn = new Transaction(thread_id, type, read_id); 
   
-  txn = new Transaction(thread_id, type, read_id);
+  }
   
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()

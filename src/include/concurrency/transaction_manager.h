@@ -46,9 +46,11 @@ class TransactionManager {
 
   virtual ~TransactionManager() {}
 
-  void Init(const IsolationLevelType level, 
+  void Init(const ProtocolType protocol,
+            const IsolationLevelType isolation, 
             const ConflictAvoidanceType conflict) {
-    default_isolation_level_ = level;
+    protocol_ = protocol;
+    isolation_level_ = isolation;
     conflict_avoidance_ = conflict;
   }
 
@@ -126,7 +128,7 @@ class TransactionManager {
   }
 
   Transaction *BeginTransaction(const size_t thread_id = 0, 
-                                const IsolationLevelType type = default_isolation_level_);
+                                const IsolationLevelType type = isolation_level_);
 
   void EndTransaction(Transaction *current_txn);
 
@@ -146,7 +148,7 @@ class TransactionManager {
   }
 
   IsolationLevelType GetIsolationLevel() {
-    return default_isolation_level_;
+    return isolation_level_;
   }
 
  protected:
@@ -159,7 +161,8 @@ class TransactionManager {
       std::make_pair(INVALID_CID, INVALID_CID);
 
  protected:
-  static IsolationLevelType default_isolation_level_;
+  static ProtocolType protocol_;
+  static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
 
 };

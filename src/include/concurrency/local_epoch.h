@@ -50,10 +50,10 @@ class LocalEpoch {
 
 public:
   LocalEpoch(const size_t thread_id) : 
-    epoch_lower_bound_(UINT64_MAX), 
+    epoch_id_lower_bound_(UINT64_MAX), 
     thread_id_(thread_id) {}
 
-  bool EnterEpoch(const eid_t epoch_id, const bool is_snapshot_read);
+  bool EnterEpoch(const eid_t epoch_id, const TimestampType ts_type);
 
   void ExitEpoch(const eid_t epoch_id);
   
@@ -62,7 +62,7 @@ public:
 private:
   Spinlock epoch_lock_;
   
-  uint64_t epoch_lower_bound_;
+  uint64_t epoch_id_lower_bound_;
 
   size_t thread_id_;
   
