@@ -24,6 +24,7 @@
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
+#include "commands/trigger.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -142,6 +143,17 @@ class DataTable : public AbstractTable {
 
   // Get a tile group with given layout
   TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
+
+  //===--------------------------------------------------------------------===//
+  // TRIGGER
+  //===--------------------------------------------------------------------===//
+
+  void AddTrigger(commands::Trigger new_trigger);
+
+  int GetTriggerNumber();
+
+  commands::Trigger* GetTriggerByIndex(int n);
+
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -376,6 +388,9 @@ class DataTable : public AbstractTable {
   std::mutex index_samples_mutex_;
 
   static oid_t invalid_tile_group_id;
+
+  // trigger list
+  commands::TriggerList trigger_list;
 };
 
 }  // End storage namespace

@@ -14,6 +14,8 @@
 #include "executor/executor_context.h"
 #include "common/logger.h"
 #include "catalog/catalog.h"
+#include "commands/trigger.h"
+#include "storage/data_table.h"
 
 #include <vector>
 
@@ -86,22 +88,29 @@ bool CreateExecutor::DExecute() {
 
   // Check if query was for creating trigger
   if (node.GetCreateType() == CreateType::TRIGGER) {
+    LOG_INFO("enter CreateType::TRIGGER");
+    std::string database_name = node.GetDatabaseName();
     std::string table_name = node.GetTableName();
     std::string trigger_name = node.GetTriggerName();
-    std::unique_ptr<catalog::Schema> schema(node.GetSchema());
+    // std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
-    // TODO: add trigger into catalog (waiting for the changes of catalog API)
-    ResultType result = ResultType::SUCCESS;
-    current_txn->SetResult(result);
+    commands::Trigger newTrigger(node);
 
-    if (current_txn->GetResult() == ResultType::SUCCESS) {
-      LOG_TRACE("Creating trigger succeeded!");
-    } else if (current_txn->GetResult() == ResultType::FAILURE) {
-      LOG_TRACE("Creating trigger failed!");
-    } else {
-      LOG_TRACE("Result is: %s", ResultTypeToString(
-        current_txn->GetResult()).c_str());
-    }
+    // new approach: add trigger to the data_table instance directly
+    storage::DataTable *target_table = catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
+    target_table->AddTrigger(newTrigger);
+
+    // if (current_txn->GetResult() == ResultType::SUCCESS) {
+    //   LOG_TRACE("Creating trigger succeeded!");
+    // } else if (current_txn->GetResult() == ResultType::FAILURE) {
+    //   LOG_TRACE("Creating trigger failed!");
+    // } else {
+    //   LOG_TRACE("Result is: %s", ResultTypeToString(
+    //     current_txn->GetResult()).c_str());
+    // }
+
+    // hardcode return true
+    return true;
   }
 
   return false;
