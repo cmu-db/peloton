@@ -42,7 +42,9 @@ namespace parser {
       SMALLINT,
       BIGINT,
       VARCHAR,
-      TEXT
+      TEXT,
+      BOOL,
+      BOOLEAN
     };
 
     Parameter(DataType type): type(type) {};	
@@ -75,6 +77,10 @@ namespace parser {
         case TEXT:
         case VARCHAR:
           return type::Type::VARCHAR;
+          break;
+        case BOOL:
+        case BOOLEAN:
+          return type::Type::BOOLEAN;
           break;
           // add other types as necessary 
       }
