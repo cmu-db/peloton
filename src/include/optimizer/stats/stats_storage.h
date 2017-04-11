@@ -61,12 +61,6 @@ class StatsStorage {
 
   void AddOrUpdateTableStats(storage::DataTable *table, TableStats *table_stats);
 
-  std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
-    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
-    oid_t column_id, int num_row, double cardinality, double frac_null,
-    std::vector<ValueFrequencyPair> most_common_val_freqs,
-    std::vector<double> histogram_bounds);
-
 //  std::unique_ptr<TableStats> GetTableStatsWithName(const std::string table_name);
 
   std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id, oid_t table_id, oid_t column_id);
@@ -92,7 +86,11 @@ class StatsStorage {
   void CollectStatsForAllTables();
 
  private:
-  void StoreColumnStats(ColumnStats *column_stats);
+  std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
+    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
+    oid_t column_id, int num_row, double cardinality, double frac_null,
+    std::vector<ValueFrequencyPair> &most_common_val_freqs,
+    std::vector<double> &histogram_bounds);
 
   std::string ConvertDoubleArrayToString(std::vector<double> &double_array) {
     std::stringstream ss;

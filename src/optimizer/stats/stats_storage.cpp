@@ -79,11 +79,11 @@ std::unique_ptr<catalog::Schema> StatsStorage::InitializeStatsSchema() {
   frac_null_column.AddConstraint(not_null_constraint);
 
   auto most_common_vals_column = catalog::Column(varchar_type, varchar_type_size,
-      "most_common_vals_column");
+      "most_common_vals");
 //  most_common_vals_column.AddConstraint(not_null_constraint);
 
   auto most_common_freqs_column = catalog::Column(decimal_type, decimal_type_size,
-      "most_common_freqs_column");
+      "most_common_freqs");
 //  most_common_freqs_column.AddConstraint(not_null_constraint);
 
   auto histogram_bounds_column = catalog::Column(varchar_type, varchar_type_size,
@@ -147,8 +147,8 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
 std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
     const catalog::Schema *schema, oid_t database_id, oid_t table_id,
     oid_t column_id, int num_row, double cardinality, double frac_null,
-    std::vector<ValueFrequencyPair> most_common_val_freqs,
-    std::vector<double> histogram_bounds) {
+    std::vector<ValueFrequencyPair> &most_common_val_freqs,
+    std::vector<double> &histogram_bounds) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
   auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
