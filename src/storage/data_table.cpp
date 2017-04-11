@@ -1097,5 +1097,19 @@ column_map_type DataTable::GetDefaultLayout() const {
   return default_partition_;
 }
 
-}  // namespace storage
-}  // namespace peloton
+void DataTable::AddTrigger(commands::Trigger new_trigger) {
+  trigger_list.AddTrigger(new_trigger);
+}
+
+int DataTable::GetTriggerNumber() {
+  return trigger_list.GetTriggerListSize();
+}
+
+commands::Trigger* DataTable::GetTriggerByIndex(int n) {
+  if (trigger_list.GetTriggerListSize() <= n)
+    return nullptr;
+  return trigger_list.Get(n);
+}
+
+}  // End storage namespace
+}  // End peloton namespace

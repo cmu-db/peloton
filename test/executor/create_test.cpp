@@ -72,6 +72,42 @@ TEST_F(CreateTests, CreatingTable) {
 
 TEST_F(CreateTests, CreatingTrigger) {
 
+  // Bootstrap
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  // Insert a table first
+  auto id_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "balance", true);
+  auto name_column =
+      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+
+  // Schema
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Create plans
+  planner::CreatePlan node("accounts", DEFAULT_DB_NAME,
+                           std::move(table_schema),
+                           CreateType::TABLE);
+
+  // Create executer
+  executor::CreateExecutor executor(&node, context.get());
+
+  executor.Init();
+  executor.Execute();
+
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetTableCount(),
+            1);
+
+
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
   std::string query =
@@ -87,6 +123,12 @@ TEST_F(CreateTests, CreatingTrigger) {
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
+
+  // Create executer
+  executor::CreateExecutor createTriggerExecutor(&plan, context.get());
+
+  createTriggerExecutor.Init();
+  createTriggerExecutor.Execute();
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -131,8 +173,15 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_FALSE(TRIGGER_FOR_DELETE(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(trigger_type));
 
+  storage::DataTable *target_table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "accounts");
+  EXPECT_EQ(target_table->GetTriggerNumber(), 1);
+  commands::Trigger* new_trigger = target_table->GetTriggerByIndex(0);
+  EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
 
-
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // End test namespace

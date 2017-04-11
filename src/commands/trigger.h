@@ -44,6 +44,7 @@ class TriggerList {
   inline int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
+  Trigger* Get(int n) { return &triggers[n]; } // get trigger by index
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
