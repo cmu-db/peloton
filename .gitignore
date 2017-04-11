@@ -1,6 +1,7 @@
 #==============================================================================#
 # This file specifies intentionally untracked files that git should ignore.
 #==============================================================================#
+script/installation/Vagrantfile
 
 #==============================================================================#
 # File extensions to be ignored anywhere in the tree.
