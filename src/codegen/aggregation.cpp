@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/aggregation.h"
+
 #include "codegen/if.h"
 #include "codegen/type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace codegen {

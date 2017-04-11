@@ -81,7 +81,7 @@ class LogicalDeleteToPhysical : public Rule {
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-  const override;
+      const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,7 +94,7 @@ class LogicalUpdateToPhysical : public Rule {
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-  const override;
+      const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,7 +107,47 @@ class LogicalInsertToPhysical : public Rule {
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalGroupByToHashGroupBy
+class LogicalGroupByToHashGroupBy : public Rule {
+ public:
+  LogicalGroupByToHashGroupBy();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalGroupByToSortGroupBy
+class LogicalGroupByToSortGroupBy : public Rule {
+ public:
+  LogicalGroupByToSortGroupBy();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
   const override;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalAggregateToPhysical
+class LogicalAggregateToPhysical : public Rule {
+ public:
+  LogicalAggregateToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

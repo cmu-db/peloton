@@ -89,10 +89,7 @@ class OrderByPlan : public AbstractPlan {
   /** @brief Sort order flags. */
   const std::vector<bool> descend_flags_;
 
-  /** @brief Projected columns Ids.
-   * TODO Not used now.
-   * Now we just output the same schema as input tiles.
-   */
+  /** @brief Projected columns Ids. */
   const std::vector<oid_t> output_column_ids_;
 
   std::vector<const AttributeInfo *> output_ais_;

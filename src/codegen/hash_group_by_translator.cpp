@@ -15,6 +15,7 @@
 #include "codegen/if.h"
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/vectorized_loop.h"
+#include "common/logger.h"
 #include "planner/aggregate_plan.h"
 
 namespace peloton {

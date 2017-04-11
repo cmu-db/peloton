@@ -282,12 +282,16 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
   for (auto cell = group->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     switch (temp->type) {
-      case T_ColumnRef: {
-        result->columns->push_back(
-            ColumnRefTransform(reinterpret_cast<ColumnRef*>(temp)));
+      case T_ColumnRef:
+        result->columns->push_back(ColumnRefTransform((ColumnRef*)temp));
         break;
+      case T_A_Expr:
+        result->columns->push_back(AExprTransform((A_Expr*)temp));
+        break;
+      default: {
+        LOG_ERROR("Group By type %d not supported...", temp->type);
+        throw NotImplementedException("");
       }
-      default: { LOG_ERROR("Group By type %d not supported...", temp->type); }
     }
   }
 
@@ -410,11 +414,20 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
   } else {
     if (root->args->length < 2) {
       // auto children_expr_list = TargetTransform(root->args);
-      ColumnRef* temp =
-          reinterpret_cast<ColumnRef*>(root->args->head->data.ptr_value);
-      expression::AbstractExpression* children = ColumnRefTransform(temp);
+      expression::AbstractExpression* child;
+      auto expr_node = (Node*)root->args->head->data.ptr_value;
+      if (expr_node->type == T_A_Expr) {
+        child = AExprTransform((A_Expr*)expr_node);
+      } else if (expr_node->type == T_A_Const) {
+        child = ConstTransform((A_Const*)expr_node);
+      } else if (expr_node->type == T_ColumnRef) {
+        child = ColumnRefTransform((ColumnRef*)expr_node);
+      } else {
+        LOG_ERROR("Function within Aggregate is not supported yet\n");
+        throw NotImplementedException("");
+      }
       result = new expression::AggregateExpression(
-          StringToExpressionType(type_string), root->agg_distinct, children);
+          StringToExpressionType(type_string), root->agg_distinct, child);
     } else {
       LOG_ERROR("Aggregation over multiple columns not supported yet...\n");
       return nullptr;
@@ -1170,7 +1183,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-  // print_pg_parse_tree(result.tree);
+//   print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);

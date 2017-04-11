@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/abstract_tuple.h"
+#include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
 #include "planner/binding_context.h"
@@ -23,7 +23,7 @@ namespace expression {
 //===----------------------------------------------------------------------===//
 // TupleValueExpression
 //===----------------------------------------------------------------------===//
-
+  
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
@@ -50,21 +50,29 @@ class TupleValueExpression : public AbstractExpression {
 
   ~TupleValueExpression() {}
 
-  type::Value Evaluate(
+  virtual type::Value Evaluate(
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    if (tuple_idx_ == 0) {
-      PL_ASSERT(tuple1 != nullptr);
-      return (tuple1->GetValue(value_idx_));
-    } else {
-      PL_ASSERT(tuple2 != nullptr);
-      return (tuple2->GetValue(value_idx_));
-    }
-  }
+      executor::ExecutorContext *context) const override;
 
+  virtual void DeduceExpressionName() override {
+    if (!alias.empty())
+      return;
+    expr_name_ = col_name_;
+  }
+  
+  // TODO: Delete this when TransformExpression is completely depracated
   void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
     return_value_type_ = type_id;
+    value_idx_ = value_idx;
+    tuple_idx_ = tuple_idx;
+  }
+  
+  inline void SetValueType(type::Type::TypeId type_id) {
+    return_value_type_ = type_id;
+  }
+  
+  inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
@@ -89,6 +97,15 @@ class TupleValueExpression : public AbstractExpression {
 
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 
+  virtual bool Equals(AbstractExpression *expr) const override {
+    if (exp_type_ != expr->GetExpressionType())
+      return false;
+    auto tup_expr = (TupleValueExpression *) expr;
+    return bound_obj_id_ == tup_expr->bound_obj_id_;
+  }
+
+  virtual hash_t Hash() const;
+
   int GetColumnId() const { return value_idx_; }
 
   int GetTupleId() const { return tuple_idx_; }
@@ -99,18 +116,19 @@ class TupleValueExpression : public AbstractExpression {
 
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
 
-  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
-    bound_obj_id_ = col_pos_tuple;
-  }
-
   bool GetIsBound() const { return is_bound_; }
 
-  std::tuple<oid_t, oid_t, oid_t> GetBoundOid() const { return bound_obj_id_; }
-
-  void SetIsBound() { is_bound_ = true; }
-
+  const std::tuple<oid_t, oid_t, oid_t> &GetBoundOid() const {
+    return bound_obj_id_;
+  }
+  void SetBoundOid(oid_t db_id, oid_t table_id, oid_t col_id) {
+    bound_obj_id_ = std::make_tuple(db_id, table_id, col_id);
+    is_bound_ = true;
+  }
+  
   void SetBoundOid(std::tuple<oid_t, oid_t, oid_t> &bound_oid) {
     bound_obj_id_ = bound_oid;
+    is_bound_ = true;
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }

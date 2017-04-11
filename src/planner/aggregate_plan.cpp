@@ -12,6 +12,8 @@
 
 #include "planner/aggregate_plan.h"
 
+#include "common/logger.h"
+
 namespace peloton {
 namespace planner {
 
@@ -43,6 +45,8 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
       term.agg_ai.nullable = term_exp->IsNullable();
       term.agg_ai.type = term_exp->GetValueType();
     } else {
+      // TODO: This isn't right. This type logic should be done MUCH earlier,
+      //       but while we're missing a good optimizer, this'll do.
       term.agg_ai.type = type::Type::TypeId::BIGINT;
     }
   }

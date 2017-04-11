@@ -18,6 +18,8 @@
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {
