@@ -60,7 +60,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
 
   // Create delete plan
   planner::DeletePlan *delete_plan =
@@ -221,7 +221,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   insert_statement->insert_values->push_back(parameter_exprs);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
 
   planner::InsertPlan *insert_plan = new planner::InsertPlan(
       target_table, insert_statement->columns, insert_statement->insert_values);
@@ -291,7 +291,7 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   insert_statement->insert_values->push_back(exprs);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
 
   planner::InsertPlan *insert_plan = new planner::InsertPlan(
       target_table, insert_statement->columns, insert_statement->insert_values);
