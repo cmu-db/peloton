@@ -1102,6 +1102,12 @@ commands::Trigger* DataTable::GetTriggerByIndex(int n) {
   return trigger_list.Get(n);
 }
 
+commands::TriggerList* DataTable::GetTriggerList() {
+  if (trigger_list.GetTriggerListSize() <= 0)
+    return nullptr;
+  return &trigger_list;
+}
+
 
 }  // End storage namespace
 }  // End peloton namespace
