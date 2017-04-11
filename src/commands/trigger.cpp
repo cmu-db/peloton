@@ -44,6 +44,9 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
       type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE);
 }
 
+/**
+ * execute trigger on each row before inserting tuple.
+ */
 void TriggerList::ExecBRInsertTriggers() {
   unsigned i;
   LOG_INFO("enter into ExecBRInsertTriggers");
@@ -61,7 +64,7 @@ void TriggerList::ExecBRInsertTriggers() {
       continue;
     }
 
-    //check if trigger is enabled
+    //TODO: check if trigger is enabled
 
     //call trigger function
     ExecCallTriggerFunc();
@@ -69,8 +72,12 @@ void TriggerList::ExecBRInsertTriggers() {
   return;
 }
 
+/**
+ * Call a trigger function.
+ */
 void TriggerList::ExecCallTriggerFunc() {
   LOG_INFO("enter into ExecCallTriggerFunc");
+  //TODO: call UDF function.
   return;
 }
 
