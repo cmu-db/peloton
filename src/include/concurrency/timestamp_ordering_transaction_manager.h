@@ -26,10 +26,7 @@ namespace concurrency {
 
 class TimestampOrderingTransactionManager : public TransactionManager {
  public:
-  TimestampOrderingTransactionManager(
-      const IsolationLevelType level, 
-      const ConflictAvoidanceType conflict) :
-    TransactionManager(level, conflict) {}
+  TimestampOrderingTransactionManager() {}
 
   virtual ~TimestampOrderingTransactionManager() {}
 

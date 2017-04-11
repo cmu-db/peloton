@@ -42,15 +42,15 @@ class Transaction;
 
 class TransactionManager {
  public:
-  TransactionManager(
-      const IsolationLevelType level, 
-      const ConflictAvoidanceType conflict) {
+  TransactionManager() {}
 
+  virtual ~TransactionManager() {}
+
+  void Init(const IsolationLevelType level, 
+            const ConflictAvoidanceType conflict) {
     default_isolation_level_ = level;
     conflict_avoidance_ = conflict;
   }
-
-  virtual ~TransactionManager() {}
 
   // This method is used for avoiding concurrent inserts.
   bool IsOccupied(
@@ -143,6 +143,10 @@ class TransactionManager {
 
   void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
     this->dirty_range_ = dirty_range;
+  }
+
+  IsolationLevelType GetIsolationLevel() {
+    return default_isolation_level_;
   }
 
  protected:
