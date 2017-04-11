@@ -363,7 +363,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   }
 
   LOG_TRACE("Trying to create index %s for table %s",
-            index_name.c_str() table_name.c_str());
+            index_name.c_str(), table_name.c_str());
 
   oid_t database_oid =
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
@@ -515,8 +515,8 @@ ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
 ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
                                         concurrency::Transaction *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to create database: %s",
-              database_name.c_str());
+    LOG_TRACE("Do not have transaction to create database: %d",
+              (int)database_oid);
     return ResultType::FAILURE;
   }
 
@@ -664,14 +664,14 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
       return ResultType::SUCCESS;
     } catch (CatalogException &e) {
       LOG_TRACE(
-          "Can't find the table %s to drop the index. Return RESULT_FAILURE.",
-          table_oid);
+          "Can't find the table %d to drop the index. Return RESULT_FAILURE.",
+          (int)table_oid);
       return ResultType::FAILURE;
     }
   } catch (CatalogException &e) {
     LOG_TRACE(
-        "Can't found database %s to drop the index. Return RESULT_FAILURE",
-        database_oid);
+        "Can't found database %d to drop the index. Return RESULT_FAILURE",
+        (int)database_oid);
     return ResultType::FAILURE;
   }
 }
