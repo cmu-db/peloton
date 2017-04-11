@@ -12,6 +12,7 @@ class Trigger {
   Trigger(const planner::CreatePlan& plan);
   inline int16_t GetTriggerType() { return trigger_type; }
   inline std::string GetTriggerName() { return trigger_name; }
+  void ExecCallTriggerFunc();
 
  private:
   std::string trigger_name;
@@ -49,7 +50,6 @@ class TriggerList {
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
   void ExecBRInsertTriggers();
-  void ExecCallTriggerFunc();
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;

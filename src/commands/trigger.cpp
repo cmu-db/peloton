@@ -67,7 +67,7 @@ void TriggerList::ExecBRInsertTriggers() {
     //TODO: check if trigger is enabled
 
     //call trigger function
-    ExecCallTriggerFunc();
+    obj.ExecCallTriggerFunc();
   }
   return;
 }
@@ -75,7 +75,7 @@ void TriggerList::ExecBRInsertTriggers() {
 /**
  * Call a trigger function.
  */
-void TriggerList::ExecCallTriggerFunc() {
+void Trigger::ExecCallTriggerFunc() {
   LOG_INFO("enter into ExecCallTriggerFunc");
   //TODO: call UDF function.
   return;
