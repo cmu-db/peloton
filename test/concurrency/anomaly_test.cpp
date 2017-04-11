@@ -30,9 +30,9 @@ static std::vector<ProtocolType> PROTOCOL_TYPES = {
 
 static std::vector<IsolationLevelType> ISOLATION_LEVEL_TYPES = {
   IsolationLevelType::SERIALIZABLE, 
-  // IsolationLevelType::SNAPSHOT, 
-  // IsolationLevelType::REPEATABLE_READS, 
-  // IsolationLevelType::READ_COMMITTED
+  IsolationLevelType::SNAPSHOT, 
+  IsolationLevelType::REPEATABLE_READS, 
+  IsolationLevelType::READ_COMMITTED
 };
 
 static std::vector<ConflictAvoidanceType> CONFLICT_AVOIDANCE_TYPES = {
@@ -41,193 +41,468 @@ static std::vector<ConflictAvoidanceType> CONFLICT_AVOIDANCE_TYPES = {
 };
 
 
-void DirtyWriteTest() {
+// Dirty write:
+// Transaction T1 modifies a data item. Another transaction T2 then further 
+// modifies that data item before T1 performs a COMMIT or ROLLBACK.
+// If T1 or T2 then performs a ROLLBACK, it is unclear what the correct 
+// data value should be.
+
+// for all isolation levels, dirty write must never happen.
+void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE, 
+                    const IsolationLevelType isolation UNUSED_ATTRIBUTE, 
+                    const ConflictAvoidanceType conflict) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-    // T1 updates (0, ?) to (0, 1)
-    // T2 updates (0, ?) to (0, 2)
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T0 commits
     // T1 commits
-    // T2 commits
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(1).Update(0, 2);
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
 
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
+
     scheduler.Run();
     auto &schedules = scheduler.schedules;
 
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::ABORTED) ||
-                (schedules[0].txn_result == ResultType::ABORTED &&
-                 schedules[1].txn_result == ResultType::SUCCESS));
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(2, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+    }
+
     schedules.clear();
   }
 
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T1 commits
+    // T0 commits
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(1).Update(0, 2);
     scheduler.Txn(1).Commit();
     scheduler.Txn(0).Commit();
 
-    scheduler.Run();
-    auto &schedules = scheduler.schedules;
-
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::ABORTED) ||
-                (schedules[0].txn_result == ResultType::ABORTED &&
-                 schedules[1].txn_result == ResultType::SUCCESS));
-  }
-
-  {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-    // T0 delete (0, ?)
-    // T1 update (0, ?) to (0, 3)
-    // T0 commit
-    // T1 commit
-    scheduler.Txn(0).Delete(0);
-    scheduler.Txn(1).Update(0, 3);
-    scheduler.Txn(0).Commit();
-    scheduler.Txn(1).Commit();
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
 
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::ABORTED) ||
-                (schedules[0].txn_result == ResultType::ABORTED &&
-                 schedules[1].txn_result == ResultType::SUCCESS));
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+    }
+
     schedules.clear();
   }
 
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-    // T0 delete (1, ?)
-    // T1 delete (1, ?)
-    // T0 commit
-    // T1 commit
-    scheduler.Txn(0).Delete(1);
-    scheduler.Txn(1).Delete(1);
-    scheduler.Txn(0).Commit();
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T0 aborts
+    // T1 commits
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(0).Abort();
     scheduler.Txn(1).Commit();
+
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
 
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
-                 schedules[1].txn_result == ResultType::ABORTED) ||
-                (schedules[0].txn_result == ResultType::ABORTED &&
-                 schedules[1].txn_result == ResultType::SUCCESS));
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(2, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    schedules.clear();
+  }
+
+  {
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T1 commits
+    // T0 aborts
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Abort();
+
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
+
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(2, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    schedules.clear();
+  }
+
+
+  {
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T0 aborts
+    // T1 aborts
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(0).Abort();
+    scheduler.Txn(1).Abort();
+
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
+
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    schedules.clear();
+  }
+
+
+  {
+    std::unique_ptr<storage::DataTable> table(
+      TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 updates (0, ?) to (0, 2)
+    // T1 aborts
+    // T0 aborts
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(1).Abort();
+    scheduler.Txn(0).Abort();
+
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
+
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
+      
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
     schedules.clear();
   }
 }
 
-void DirtyReadTest() {
+
+// Dirty read:
+// Transaction T1 modifies a data item. Another transaction T2 then reads
+// that data item before T1 performs a COMMIT or ROLLBACK.
+// If T1 then performs a ROLLBACK, T2 has read a data item that was never
+// committed and so never really existed.
+
+// for all isolation levels except READ_UNCOMMITTED, 
+// dirty read must never happen.
+void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE, 
+                   const IsolationLevelType isolation UNUSED_ATTRIBUTE, 
+                   const ConflictAvoidanceType conflict) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-
-    // T1 updates (0, ?) to (0, 1)
-    // T2 reads (0, ?)
-    // T1 commit
-    // T2 commit
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 reads (0, ?)
+    // T0 commits
+    // T1 commits
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(1).Read(0);
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
 
-    scheduler.Run();
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
 
-    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
-        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
-      // Don't read uncommitted value
-      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
     }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+      
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+    }
+
+    schedules.clear();
   }
 
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-
-    scheduler.Txn(0).Update(1, 1);
-    scheduler.Txn(1).Read(1);
-    scheduler.Txn(1).Commit();
-    scheduler.Txn(0).Commit();
-
-    scheduler.Run();
-
-    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
-        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
-      // Don't read uncommitted value
-      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
-    }
-  }
-
-  {
-    TransactionScheduler scheduler(2, table, &txn_manager);
-
-    scheduler.Txn(0).Delete(2);
-    scheduler.Txn(1).Read(2);
-    scheduler.Txn(0).Commit();
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable());
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 updates (0, ?) to (0, 1)
+    // T1 reads (0, ?)
+    // T0 aborts
+    // T1 commits
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Abort();
     scheduler.Txn(1).Commit();
 
-    scheduler.Run();
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
 
-    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
-        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
-      // Don't read uncommitted value
-      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+
     }
+
+    if (conflict == ConflictAvoidanceType::ABORT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+      
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+    }
+
+    schedules.clear();
   }
+
 }
 
-void FuzzyReadTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
-  // The constraints are the value of 0 and 1 should be equal
+// Fuzzy read:
+// Transaction T1 reads a data item. Another transaction T2 then modifies
+// or deletes that data item and commits. If T1 then attempts to reread
+// the data item, it receives a modified value or discovers that the data
+// item has been deleted.
+
+// for all isolation levels except READ_UNCOMMITTED and READ_COMMITTED, 
+// dirty read must never happen.
+void FuzzyReadTest(const ProtocolType protocol, 
+                   const IsolationLevelType isolation UNUSED_ATTRIBUTE, 
+                   const ConflictAvoidanceType conflict) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable());
+
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T0 obtains a smaller timestamp.
+    // T0 reads (0, ?)
+    // T1 updates (0, ?) to (0, 1)
+    // T1 commits
+    // T0 reads (0, ?)
+    // T0 commits
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
-    scheduler.Txn(1).Update(1, 1);
     scheduler.Txn(1).Commit();
-    scheduler.Txn(0).Read(1);
+    scheduler.Txn(0).Read(0);
     scheduler.Txn(0).Commit();
 
-    scheduler.Run();
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
 
-    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
-        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
-      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
-      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+
+    if (protocol == ProtocolType::TIMESTAMP_ORDERING) {
+      if (conflict == ConflictAvoidanceType::ABORT) {
+        if (isolation != IsolationLevelType::READ_COMMITTED && 
+            isolation != IsolationLevelType::SNAPSHOT) {
+        
+          EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+          EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+          EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+          EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+
+          EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+        }
+      }
     }
+
+    schedules.clear();
+  }
+
+
+  {
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable());
+
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    // T1 obtains a smaller timestamp.
+    // T1 reads (0, ?)
+    // T0 reads (0, ?)
+    // T1 updates (0, ?) to (0, 1)
+    // T1 commits
+    // T0 reads (0, ?)
+    // T0 commits
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(1).Update(0, 1);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Commit();
+
+    // observer
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Commit();
+
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    if (protocol == ProtocolType::TIMESTAMP_ORDERING) {
+      if (conflict == ConflictAvoidanceType::ABORT) {
+        if (isolation == IsolationLevelType::SERIALIZABLE || 
+            isolation == IsolationLevelType::REPEATABLE_READS) {
+
+          EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+          EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
+          EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+          EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+          EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+
+          EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+        }
+        else if (isolation == IsolationLevelType::SNAPSHOT) {
+
+          EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+          EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+          EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+          // TODO: double check!
+          EXPECT_EQ(1, scheduler.schedules[0].results[1]);
+          EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+
+          // TODO: double check!
+          EXPECT_EQ(1, scheduler.schedules[2].results[0]);          
+        }
+        else if (isolation == IsolationLevelType::READ_COMMITTED) {
+
+          EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
+          EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+          EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+          EXPECT_EQ(1, scheduler.schedules[0].results[1]);
+          EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+
+          EXPECT_EQ(1, scheduler.schedules[2].results[0]);          
+        }
+      }
+    }
+
+    schedules.clear();
   }
 
   // The constraints are 0 and 1 should both exist or bot not exist
   {
-    TransactionScheduler scheduler(2, table, &txn_manager);
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable());
+
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Delete(0);
     scheduler.Txn(1).Delete(1);
@@ -236,12 +511,17 @@ void FuzzyReadTest() {
     scheduler.Txn(0).Commit();
 
     scheduler.Run();
+    auto &schedules = scheduler.schedules;
 
-    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
-        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
-      EXPECT_EQ(1, scheduler.schedules[0].results[0]);
-      EXPECT_EQ(1, scheduler.schedules[0].results[1]);
+    if (conflict == ConflictAvoidanceType::WAIT) {
+      EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
+
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+
     }
+
+    schedules.clear();
   }
 }
 
@@ -400,13 +680,15 @@ TEST_F(AnomalyTests, SerializableTest) {
       for (auto conflict_avoidance_type : CONFLICT_AVOIDANCE_TYPES) {
         concurrency::TransactionManagerFactory::Configure(
             protocol_type, isolation_level_type, conflict_avoidance_type);
-        DirtyWriteTest();
-        DirtyReadTest();
-        FuzzyReadTest();
-        // WriteSkewTest();
-        ReadSkewTest();
-        PhantomTest();
-        SIAnomalyTest1();
+
+        // DirtyWriteTest(protocol_type, isolation_level_type, conflict_avoidance_type);
+        // DirtyReadTest(protocol_type, isolation_level_type, conflict_avoidance_type);
+        FuzzyReadTest(protocol_type, isolation_level_type, conflict_avoidance_type);
+        // // WriteSkewTest();
+        // ReadSkewTest(isolation_level_type, conflict_avoidance_type);
+        // PhantomTest(isolation_level_type, conflict_avoidance_type);
+        // SIAnomalyTest1(isolation_level_type, conflict_avoidance_type);
+
       }
     }
   }
@@ -417,13 +699,18 @@ TEST_F(AnomalyTests, StressTest) {
   const int scale = 1;    // 20
   const int num_key = 2;  // 256
   srand(15721);
-
   for (auto protocol_type : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol_type, IsolationLevelType::SERIALIZABLE);
+        protocol_type, 
+        IsolationLevelType::SERIALIZABLE, 
+        ConflictAvoidanceType::ABORT);
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    
+    EXPECT_EQ(IsolationLevelType::SERIALIZABLE, txn_manager.GetIsolationLevel());
+
     std::unique_ptr<storage::DataTable> table(
         TestingTransactionUtil::CreateTable(num_key));
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table, &txn_manager);
     scheduler.SetConcurrent(true);

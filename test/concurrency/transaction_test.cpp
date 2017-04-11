@@ -23,7 +23,7 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-static std::vector<ProtocolType> TEST_TYPES = {
+static std::vector<ProtocolType> PROTOCOL_TYPES = {
     ProtocolType::TIMESTAMP_ORDERING
 };
 
@@ -47,8 +47,8 @@ void TransactionTest(concurrency::TransactionManager *txn_manager,
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type);
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
@@ -56,8 +56,8 @@ TEST_F(TransactionTests, TransactionTest) {
 }
 
 TEST_F(TransactionTests, ReadOnlyTransactionTest) {
-  for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type);
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     storage::DataTable *table = TestingTransactionUtil::CreateTable();
     // Just scan the table
@@ -75,8 +75,8 @@ TEST_F(TransactionTests, ReadOnlyTransactionTest) {
 }
 
 TEST_F(TransactionTests, SingleTransactionTest) {
-  for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type);
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     storage::DataTable *table = TestingTransactionUtil::CreateTable();
     // Just scan the table
@@ -190,8 +190,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 }
 
 TEST_F(TransactionTests, AbortTest) {
-  for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type);
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     storage::DataTable *table = TestingTransactionUtil::CreateTable();
     {

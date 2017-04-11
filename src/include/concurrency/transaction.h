@@ -34,10 +34,6 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction() { 
-    Init(0, IsolationLevelType::SERIALIZABLE, INVALID_CID); 
-  }
-
   Transaction(const size_t thread_id,
               const IsolationLevelType isolation,
               const cid_t &read_id) {

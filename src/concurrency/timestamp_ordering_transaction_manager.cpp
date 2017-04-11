@@ -87,7 +87,10 @@ TimestampOrderingTransactionManager &
 TimestampOrderingTransactionManager::GetInstance(
       const IsolationLevelType level, 
       const ConflictAvoidanceType conflict) {
-  static TimestampOrderingTransactionManager txn_manager(level, conflict);
+
+  static TimestampOrderingTransactionManager txn_manager;
+  txn_manager.Init(level, conflict);
+
   return txn_manager;
 }
 
