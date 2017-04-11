@@ -41,17 +41,16 @@ TEST_F(TopKElementsTests, SimpleArrivalOnlyTest) {
   EXPECT_EQ(top_k_elements.cmsketch.EstimateItemCount(3), 1);
   EXPECT_EQ(top_k_elements.cmsketch.EstimateItemCount(4), 1000000);
 
-  //EXPECT_EQ(top_k_elements.cmsketch.size, 4);
+  // EXPECT_EQ(top_k_elements.cmsketch.size, 4);
   EXPECT_EQ(top_k_elements.tkq.size, 4);
 
   top_k_elements.Add(5, 15);
   top_k_elements.Add("6", 20);
   top_k_elements.Add("7", 100);
   top_k_elements.Add("8", 1);
-  
+
   EXPECT_EQ(top_k_elements.tkq.size, 5);
   top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
-
 }
 
 TEST_F(TopKElementsTests, SimpleArrivalAndDepartureTest) {
@@ -87,10 +86,10 @@ TEST_F(TopKElementsTests, SimpleArrivalAndDepartureTest) {
 
 TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   CountMinSketch sketch(1000, 1000, 0);
-  
+
   const int k = 20, num0 = 10;
   TopKElements top_k_elements(sketch, k);
- 
+
   top_k_elements.Add("10", 10);
   top_k_elements.Add("5", 5);
   top_k_elements.Add("1", 1);
@@ -99,15 +98,15 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   for (i = 0; i < 30; ++i) {
     top_k_elements.Add(i, i);
   }
-  //top_k_elements.PrintTopKQueueOrderedMaxFirst();
-  //top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
-  //top_k_elements.PrintAllOrderedMaxFirst();
+  // top_k_elements.PrintTopKQueueOrderedMaxFirst();
+  // top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
+  // top_k_elements.PrintAllOrderedMaxFirst();
   top_k_elements.PrintOrderedMaxFirst(num0);
   EXPECT_EQ(top_k_elements.tkq.size, k);
   EXPECT_EQ(top_k_elements.GetOrderedMaxFirst(num0).size(), num0);
   EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), k);
-  //top_k_elements.PrintTopKQueuePops();
-  //EXPECT_EQ(top_k_elements.tkq.size, 0);
+  // top_k_elements.PrintTopKQueuePops();
+  // EXPECT_EQ(top_k_elements.tkq.size, 0);
 
   for (i = 1000; i < 2000; ++i) {
     top_k_elements.Add(i, i);
@@ -117,7 +116,7 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
 
 TEST_F(TopKElementsTests, WrapperTest) {
   CountMinSketch sketch(10, 20, 0);
-  
+
   const int k = 5;
   TopKElements top_k_elements(sketch, k);
 
@@ -133,7 +132,5 @@ TEST_F(TopKElementsTests, WrapperTest) {
   }
   EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), 3);
 }
-
-
 }
 }

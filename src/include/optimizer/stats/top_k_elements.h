@@ -509,7 +509,7 @@ public:
   /*
    * TopKElements constructor
    */
-  TopKElements(CountMinSketch sketch, int k) :
+  TopKElements(CountMinSketch &sketch, int k) :
     tkq{k},
     cmsketch{sketch}
   {}

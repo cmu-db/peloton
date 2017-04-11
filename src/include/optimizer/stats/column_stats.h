@@ -16,11 +16,11 @@ namespace optimizer {
 // ColumnStats
 //===--------------------------------------------------------------------===//
 class ColumnStats {
-public:
+ public:
   using ValueFrequencyPair = std::pair<type::Value, double>;
 
   ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-    type::Type::TypeId column_type);
+              type::Type::TypeId column_type);
 
   ~ColumnStats();
 
@@ -34,7 +34,7 @@ public:
 
   std::vector<double> GetHistogramBound();
 
-private:
+ private:
   const oid_t database_id_;
   const oid_t table_id_;
   const oid_t column_id_;
@@ -49,8 +49,8 @@ private:
   void operator=(const ColumnStats&);
 
   size_t null_count_ = 0;
-  size_t total_count_ = 0; // <- just number of rows
-  uint8_t num_bins = 5; // <- make it a parameter
+  size_t total_count_ = 0;  // <- just number of rows
+  uint8_t num_bins = 5;     // <- make it a parameter
 };
 
 } /* namespace optimizer */

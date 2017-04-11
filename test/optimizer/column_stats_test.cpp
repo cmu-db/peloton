@@ -23,22 +23,23 @@ TEST_F(ColumnStatsTests, BasicTests) {
     type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
   }
-  
+
   // Minimum accuracy requirement
   uint64_t cardinality = colstats.GetCardinality();
   EXPECT_GE(cardinality, 50000);
   EXPECT_LE(cardinality, 150000);
-  
+
   // Histogram bound
   std::vector<double> bounds = colstats.GetHistogramBound();
-  
+
   // Null value fraction
-  EXPECT_EQ(colstats.GetFracNull(), 0); 
-  
+  EXPECT_EQ(colstats.GetFracNull(), 0);
+
   // Common value with frequency
   std::vector<std::pair<type::Value, double>> valfreq =
       colstats.GetCommonValueAndFrequency();
-  EXPECT_EQ(valfreq.size(), 10); // 10 comes from src/optimizer/stats/column_stats.cpp
+  EXPECT_EQ(valfreq.size(),
+            10);  // 10 comes from src/optimizer/stats/column_stats.cpp
   for (auto const& p : valfreq) {
     LOG_INFO("\n [Print k Values] %s, %f", p.first.GetInfo().c_str(), p.second);
   }
@@ -74,4 +75,3 @@ TEST_F(ColumnStatsTests, SkewedTests) {
 
 } /* namespace test */
 } /* namespace peloton */
-
