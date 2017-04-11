@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/include/concurrency/transaction_manager.h
+// Identification: src/include/codegen/transaction_manager/transaction_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // hash_group_by_translator.h
 //
-// Identification: src/include/codegen/hash_group_by_translator.h
+// Identification: src/include/codegen/insert/abstract_insert_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -23,14 +23,14 @@
 namespace peloton {
 namespace codegen {
 
-class InsertTranslator : public OperatorTranslator {
+class AbstractInsertTranslator : public OperatorTranslator {
  public:
 
   /**
    * @brief Constructor.
    */
-  InsertTranslator(const planner::InsertPlan &insert_plan,
-                   CompilationContext &context, Pipeline &pipeline);
+  AbstractInsertTranslator(const planner::InsertPlan &insert_plan,
+                           CompilationContext &context, Pipeline &pipeline);
   /**
    * @brief Codegen any initialization work for this operator.
    */
@@ -44,13 +44,13 @@ class InsertTranslator : public OperatorTranslator {
   /**
    * @brief Codegen produce new tuples.
    */
-  void Produce() const override;
+  void Produce() const override = 0;
 
   /**
    * @brief The method that consumes tuples from child operators.
    */
-  void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
-  void Consume(ConsumerContext &context, RowBatch &batch) const override;
+  void Consume(ConsumerContext &context, RowBatch::Row &row) const override = 0;
+  void Consume(ConsumerContext &context, RowBatch &batch) const override = 0;
 
   /**
    * @brief Codegen any cleanup work for this translator.
