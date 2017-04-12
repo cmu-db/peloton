@@ -17,10 +17,11 @@
 #include "common/harness.h"
 
 #include "brain/layout_tuner.h"
+
+#include "executor/testing_executor_util.h"
 #include "common/generator.h"
 
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executor_tests_util.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 
@@ -41,8 +42,8 @@ TEST_F(LayoutTunerTests, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
   false,
                                    true, txn);
   txn_manager.CommitTransaction(txn);

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/column.h"
 #include "catalog/column.h"
 
@@ -34,7 +33,7 @@ std::string Column::Name() const { return name; }
 
 bool Column::Inlined() const { return inlined; }
 
-hash_t Column::Hash() const { return util::Hash<ColumnID>(&id); }
+hash_t Column::Hash() const { return HashUtil::Hash<ColumnID>(&id); }
 
 //===--------------------------------------------------------------------===//
 // TableColumn
@@ -53,8 +52,8 @@ oid_t TableColumn::ColumnIndexOid() const { return column_index; }
 //===--------------------------------------------------------------------===//
 // ExprColumn
 //===--------------------------------------------------------------------===//
-ExprColumn::ExprColumn(ColumnID id, type::Type::TypeId type, int size, std::string name,
-                       bool inlined)
+ExprColumn::ExprColumn(ColumnID id, type::Type::TypeId type, int size,
+                       std::string name, bool inlined)
     : Column(id, type, size, name, inlined) {}
 
 catalog::Column GetSchemaColumnFromOptimizerColumn(Column *column) {

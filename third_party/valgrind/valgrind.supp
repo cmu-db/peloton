@@ -28,3 +28,26 @@
         ...
 }
 
+{
+    Handles invalid free in NetworkAddress::Parse because of 'getaddrinfo'
+        Memcheck:Free
+        fun:free
+        fun:__libc_freeres
+        fun:_vgnU_freeres
+        fun:__run_exit_handlers
+        fun:exit
+        fun:(below main)
+}
+
+{
+   Handles leaks in libpg_query
+        Memcheck:Leak
+        match-leak-kinds: definite
+        ...
+        fun:AllocSetContextCreate
+        fun:MemoryContextInit
+        fun:pg_query_init
+        fun:pg_query_enter_memory_context
+        ...
+}
+

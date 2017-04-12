@@ -24,6 +24,7 @@ extern configuration state;
 void CreateYCSBDatabase();
 
 void LoadYCSBDatabase();
+void LoadYCSBRows(const int begin_rowid, const int end_rowid);
 
 }  // namespace ycsb
 }  // namespace benchmark

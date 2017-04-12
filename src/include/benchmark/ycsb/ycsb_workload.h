@@ -33,7 +33,7 @@ extern storage::DataTable* user_table;
 
 void RunWorkload();
 
-bool RunMixed(ZipfDistribution &zipf, FastRandom &rng);
+bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng);
 
 /////////////////////////////////////////////////////////
 
@@ -41,6 +41,7 @@ std::vector<std::vector<type::Value>> ExecuteRead(executor::AbstractExecutor* ex
 
 void ExecuteUpdate(executor::AbstractExecutor* executor);
 
+void PinToCore(size_t core);
 
 }  // namespace ycsb
 }  // namespace benchmark

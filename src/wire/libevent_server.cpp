@@ -24,23 +24,30 @@
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>>
+std::unordered_map<int, std::unique_ptr<LibeventSocket>>
     &LibeventServer::GetGlobalSocketList() {
-  static std::vector<std::unique_ptr<LibeventSocket>>
-      // 2 fd's per thread for pipe and 1 listening socket
-      global_socket_list(FLAGS_max_connections + QUERY_THREAD_COUNT * 2 + 1);
+  // mapping from socket id to socket object.
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> global_socket_list;
+
   return global_socket_list;
 }
 
 LibeventSocket *LibeventServer::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
-  return global_socket_list[connfd].get();
+  if (global_socket_list.find(connfd) != global_socket_list.end()) {
+    return global_socket_list.at(connfd).get();
+  } else {
+    return nullptr;
+  }
 }
 
 void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
                                    LibeventThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
+  if (global_socket_list.find(connfd) == global_socket_list.end()) {
+    LOG_INFO("create new connection: id = %d", connfd);
+  }
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
 }
@@ -68,9 +75,9 @@ LibeventServer::LibeventServer() {
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
-  // TODO: Make pool size a global
+  // a master thread is responsible for coordinating worker threads.
   std::shared_ptr<LibeventThread> master_thread(
-      new LibeventMasterThread(QUERY_THREAD_COUNT, base));
+      new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;

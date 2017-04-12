@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-#include "concurrency/transaction_tests_util.h"
 
 namespace peloton {
 

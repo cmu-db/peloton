@@ -33,10 +33,11 @@ int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
 int TEST_TUPLES_PER_TILEGROUP = 5;
 
 // For threads
-size_t QUERY_THREAD_COUNT = 1;
+size_t CONNECTION_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
+size_t MAX_CONCURRENCY = 10;
 
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
@@ -414,22 +415,22 @@ std::ostream& operator<<(std::ostream& os, const StatementType& type) {
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ExpressionTypeToString(ExpressionType type) {
+std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
   switch (type) {
     case ExpressionType::INVALID: {
       return ("INVALID");
     }
     case ExpressionType::OPERATOR_PLUS: {
-      return ("OPERATOR_PLUS");
+      return short_str ? "+" : ("OPERATOR_PLUS");
     }
     case ExpressionType::OPERATOR_MINUS: {
-      return ("OPERATOR_MINUS");
+      return short_str ? "-" : ("OPERATOR_MINUS");
     }
     case ExpressionType::OPERATOR_MULTIPLY: {
-      return ("OPERATOR_MULTIPLY");
+      return short_str ? "*" : ("OPERATOR_MULTIPLY");
     }
     case ExpressionType::OPERATOR_DIVIDE: {
-      return ("OPERATOR_DIVIDE");
+      return short_str ? "/" : ("OPERATOR_DIVIDE");
     }
     case ExpressionType::OPERATOR_CONCAT: {
       return ("OPERATOR_CONCAT");
@@ -453,28 +454,28 @@ std::string ExpressionTypeToString(ExpressionType type) {
       return ("OPERATOR_UNARY_MINUS");
     }
     case ExpressionType::COMPARE_EQUAL: {
-      return ("COMPARE_EQUAL");
+      return short_str ? "=" : ("COMPARE_EQUAL");
     }
     case ExpressionType::COMPARE_NOTEQUAL: {
-      return ("COMPARE_NOTEQUAL");
+      return short_str ? "!=" : ("COMPARE_NOTEQUAL");
     }
     case ExpressionType::COMPARE_LESSTHAN: {
-      return ("COMPARE_LESSTHAN");
+      return short_str ? "<" : ("COMPARE_LESSTHAN");
     }
     case ExpressionType::COMPARE_GREATERTHAN: {
-      return ("COMPARE_GREATERTHAN");
+      return short_str ? ">" : ("COMPARE_GREATERTHAN");
     }
     case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
-      return ("COMPARE_LESSTHANOREQUALTO");
+      return short_str ? "<=" : ("COMPARE_LESSTHANOREQUALTO");
     }
     case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
-      return ("COMPARE_GREATERTHANOREQUALTO");
+      return short_str ? ">=" : ("COMPARE_GREATERTHANOREQUALTO");
     }
     case ExpressionType::COMPARE_LIKE: {
-      return ("COMPARE_LIKE");
+      return short_str ? "~~" : ("COMPARE_LIKE");
     }
     case ExpressionType::COMPARE_NOTLIKE: {
-      return ("COMPARE_NOTLIKE");
+      return short_str ? "!~~" : ("COMPARE_NOTLIKE");
     }
     case ExpressionType::COMPARE_IN: {
       return ("COMPARE_IN");
@@ -645,13 +646,13 @@ ExpressionType StringToExpressionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ExpressionType::INVALID;
-  } else if (upper_str == "OPERATOR_PLUS") {
+  } else if (upper_str == "OPERATOR_PLUS" || upper_str == "+") {
     return ExpressionType::OPERATOR_PLUS;
-  } else if (upper_str == "OPERATOR_MINUS") {
+  } else if (upper_str == "OPERATOR_MINUS" || upper_str == "-") {
     return ExpressionType::OPERATOR_MINUS;
-  } else if (upper_str == "OPERATOR_MULTIPLY") {
+  } else if (upper_str == "OPERATOR_MULTIPLY" || upper_str == "*") {
     return ExpressionType::OPERATOR_MULTIPLY;
-  } else if (upper_str == "OPERATOR_DIVIDE") {
+  } else if (upper_str == "OPERATOR_DIVIDE" || upper_str == "/") {
     return ExpressionType::OPERATOR_DIVIDE;
   } else if (upper_str == "OPERATOR_CONCAT") {
     return ExpressionType::OPERATOR_CONCAT;
@@ -667,21 +668,21 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_EXISTS;
   } else if (upper_str == "OPERATOR_UNARY_MINUS") {
     return ExpressionType::OPERATOR_UNARY_MINUS;
-  } else if (upper_str == "COMPARE_EQUAL") {
+  } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-  } else if (upper_str == "COMPARE_NOTEQUAL") {
+  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=") {
     return ExpressionType::COMPARE_NOTEQUAL;
-  } else if (upper_str == "COMPARE_LESSTHAN") {
+  } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
-  } else if (upper_str == "COMPARE_GREATERTHAN") {
+  } else if (upper_str == "COMPARE_GREATERTHAN" || upper_str == ">") {
     return ExpressionType::COMPARE_GREATERTHAN;
-  } else if (upper_str == "COMPARE_LESSTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_LESSTHANOREQUALTO" || upper_str == "<=") {
     return ExpressionType::COMPARE_LESSTHANOREQUALTO;
-  } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO" || upper_str == ">=") {
     return ExpressionType::COMPARE_GREATERTHANOREQUALTO;
-  } else if (upper_str == "COMPARE_LIKE") {
+  } else if (upper_str == "COMPARE_LIKE" || upper_str == "~~") {
     return ExpressionType::COMPARE_LIKE;
-  } else if (upper_str == "COMPARE_NOTLIKE") {
+  } else if (upper_str == "COMPARE_NOTLIKE" || upper_str == "!~~") {
     return ExpressionType::COMPARE_NOTLIKE;
   } else if (upper_str == "COMPARE_IN") {
     return ExpressionType::COMPARE_IN;
@@ -802,6 +803,9 @@ std::string IndexTypeToString(IndexType type) {
     case IndexType::HASH: {
       return "HASH";
     }
+    case IndexType::SKIPLIST: {
+      return "SKIPLIST";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for IndexType value '%d'",
@@ -819,6 +823,8 @@ IndexType StringToIndexType(const std::string& str) {
     return IndexType::BWTREE;
   } else if (upper_str == "HASH") {
     return IndexType::HASH;
+  } else if (upper_str == "SKIPLIST") {
+    return IndexType::SKIPLIST;
   } else {
     throw ConversionException(StringUtil::Format(
         "No IndexType conversion from string '%s'", upper_str.c_str()));
@@ -1025,6 +1031,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PlanNodeType::MOCK: {
       return ("MOCK");
+    }
+    case PlanNodeType::POPULATE_INDEX: {
+      return ("POPULATE_INDEX");
     }
     default: {
       throw ConversionException(
@@ -1620,31 +1629,31 @@ std::ostream& operator<<(std::ostream& os, const ResultType& type) {
 
 std::string ConstraintTypeToString(ConstraintType type) {
   switch (type) {
-    case CONSTRAINT_TYPE_INVALID: {
+    case ConstraintType::INVALID: {
       return ("INVALID");
     }
-    case CONSTRAINT_TYPE_NULL: {
-      return ("NULL");
+    case ConstraintType::NOT_NULL: {
+      return ("NOT_NULL");
     }
-    case CONSTRAINT_TYPE_NOTNULL: {
+    case ConstraintType::NOTNULL: {
       return ("NOTNULL");
     }
-    case CONSTRAINT_TYPE_DEFAULT: {
+    case ConstraintType::DEFAULT: {
       return ("DEFAULT");
     }
-    case CONSTRAINT_TYPE_CHECK: {
+    case ConstraintType::CHECK: {
       return ("CHECK");
     }
-    case CONSTRAINT_TYPE_PRIMARY: {
+    case ConstraintType::PRIMARY: {
       return ("PRIMARY");
     }
-    case CONSTRAINT_TYPE_UNIQUE: {
+    case ConstraintType::UNIQUE: {
       return ("UNIQUE");
     }
-    case CONSTRAINT_TYPE_FOREIGN: {
+    case ConstraintType::FOREIGN: {
       return ("FOREIGN");
     }
-    case CONSTRAINT_TYPE_EXCLUSION: {
+    case ConstraintType::EXCLUSION: {
       return ("EXCLUSION");
     }
     default: {
@@ -1659,28 +1668,88 @@ std::string ConstraintTypeToString(ConstraintType type) {
 ConstraintType StringToConstraintType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return CONSTRAINT_TYPE_INVALID;
-  } else if (upper_str == "NULL") {
-    return CONSTRAINT_TYPE_NULL;
+    return ConstraintType::INVALID;
+  } else if (upper_str == "NOT_NULL") {
+    return ConstraintType::NOT_NULL;
   } else if (upper_str == "NOTNULL") {
-    return CONSTRAINT_TYPE_NOTNULL;
+    return ConstraintType::NOTNULL;
   } else if (upper_str == "DEFAULT") {
-    return CONSTRAINT_TYPE_DEFAULT;
+    return ConstraintType::DEFAULT;
   } else if (upper_str == "CHECK") {
-    return CONSTRAINT_TYPE_CHECK;
+    return ConstraintType::CHECK;
   } else if (upper_str == "PRIMARY") {
-    return CONSTRAINT_TYPE_PRIMARY;
+    return ConstraintType::PRIMARY;
   } else if (upper_str == "UNIQUE") {
-    return CONSTRAINT_TYPE_UNIQUE;
+    return ConstraintType::UNIQUE;
   } else if (upper_str == "FOREIGN") {
-    return CONSTRAINT_TYPE_FOREIGN;
+    return ConstraintType::FOREIGN;
   } else if (upper_str == "EXCLUSION") {
-    return CONSTRAINT_TYPE_EXCLUSION;
+    return ConstraintType::EXCLUSION;
   } else {
     throw ConversionException(StringUtil::Format(
         "No ConstraintType conversion from string '%s'", upper_str.c_str()));
   }
-  return CONSTRAINT_TYPE_INVALID;
+  return ConstraintType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
+  os << ConstraintTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// SetOpType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string SetOpTypeToString(SetOpType type) {
+  switch (type) {
+    case SetOpType::INVALID: {
+      return "INVALID";
+    }
+    case SetOpType::INTERSECT: {
+      return "INTERSECT";
+    }
+    case SetOpType::INTERSECT_ALL: {
+      return "INTERSECT_ALL";
+    }
+    case SetOpType::EXCEPT: {
+      return "EXCEPT";
+    }
+    case SetOpType::EXCEPT_ALL: {
+      return "EXCEPT_ALL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for SetOpType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+SetOpType StringToSetOpType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return SetOpType::INVALID;
+  } else if (upper_str == "INTERSECT") {
+    return SetOpType::INTERSECT;
+  } else if (upper_str == "INTERSECT_ALL") {
+    return SetOpType::INTERSECT_ALL;
+  } else if (upper_str == "EXCEPT") {
+    return SetOpType::EXCEPT;
+  } else if (upper_str == "EXCEPT_ALL") {
+    return SetOpType::EXCEPT_ALL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No SetOpType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return SetOpType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const SetOpType& type) {
+  os << SetOpTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1689,23 +1758,23 @@ ConstraintType StringToConstraintType(const std::string& str) {
 
 std::string LoggingTypeToString(LoggingType type) {
   switch (type) {
-    case LOGGING_TYPE_INVALID:
+    case LoggingType::INVALID:
       return "INVALID";
 
     // WAL Based
-    case LOGGING_TYPE_NVM_WAL:
+    case LoggingType::NVM_WAL:
       return "NVM_WAL";
-    case LOGGING_TYPE_SSD_WAL:
+    case LoggingType::SSD_WAL:
       return "SSD_WAL";
-    case LOGGING_TYPE_HDD_WAL:
+    case LoggingType::HDD_WAL:
       return "HDD_WAL";
 
     // WBL Based
-    case LOGGING_TYPE_NVM_WBL:
+    case LoggingType::NVM_WBL:
       return "NVM_WBL";
-    case LOGGING_TYPE_SSD_WBL:
+    case LoggingType::SSD_WBL:
       return "SSD_WBL";
-    case LOGGING_TYPE_HDD_WBL:
+    case LoggingType::HDD_WBL:
       return "HDD_WBL";
 
     default: {
@@ -1720,44 +1789,143 @@ std::string LoggingTypeToString(LoggingType type) {
 LoggingType StringToLoggingType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGING_TYPE_INVALID;
+    return LoggingType::INVALID;
   } else if (upper_str == "NVM_WAL") {
-    return LOGGING_TYPE_NVM_WAL;
+    return LoggingType::NVM_WAL;
   } else if (upper_str == "SSD_WAL") {
-    return LOGGING_TYPE_SSD_WAL;
+    return LoggingType::SSD_WAL;
   } else if (upper_str == "HDD_WAL") {
-    return LOGGING_TYPE_HDD_WAL;
+    return LoggingType::HDD_WAL;
   } else if (upper_str == "NVM_WBL") {
-    return LOGGING_TYPE_NVM_WBL;
+    return LoggingType::NVM_WBL;
   } else if (upper_str == "SSD_WBL") {
-    return LOGGING_TYPE_SSD_WBL;
+    return LoggingType::SSD_WBL;
   } else if (upper_str == "HDD_WBL") {
-    return LOGGING_TYPE_HDD_WBL;
+    return LoggingType::HDD_WBL;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggingType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGING_TYPE_INVALID;
+  return LoggingType::INVALID;
 }
+
+std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
+  os << LoggingTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// LoggerMappingStrategyType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type) {
+  switch (type) {
+    case LoggerMappingStrategyType::INVALID: {
+      return "INVALID";
+    }
+    case LoggerMappingStrategyType::ROUND_ROBIN: {
+      return "ROUND_ROBIN";
+    }
+    case LoggerMappingStrategyType::AFFINITY: {
+      return "AFFINITY";
+    }
+    case LoggerMappingStrategyType::MANUAL: {
+      return "MANUAL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for LoggerMappingStrategyType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return LoggerMappingStrategyType::INVALID;
+  } else if (upper_str == "ROUND_ROBIN") {
+    return LoggerMappingStrategyType::ROUND_ROBIN;
+  } else if (upper_str == "AFFINITY") {
+    return LoggerMappingStrategyType::AFFINITY;
+  } else if (upper_str == "MANUAL") {
+    return LoggerMappingStrategyType::MANUAL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No LoggerMappingStrategyType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return LoggerMappingStrategyType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggerMappingStrategyType& type) {
+  os << LoggerMappingStrategyTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// CheckpointType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CheckpointTypeToString(CheckpointType type) {
+  switch (type) {
+    case CheckpointType::INVALID: {
+      return "INVALID";
+    }
+    case CheckpointType::NORMAL: {
+      return "NORMAL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CheckpointType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CheckpointType StringToCheckpointType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CheckpointType::INVALID;
+  } else if (upper_str == "NORMAL") {
+    return CheckpointType::NORMAL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No CheckpointType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return CheckpointType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const CheckpointType& type) {
+  os << CheckpointTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// LoggingStatusType - String Utilities
+//===--------------------------------------------------------------------===//
 
 std::string LoggingStatusTypeToString(LoggingStatusType type) {
   switch (type) {
-    case LOGGING_STATUS_TYPE_INVALID: {
+    case LoggingStatusType::INVALID: {
       return "INVALID";
     }
-    case LOGGING_STATUS_TYPE_STANDBY: {
+    case LoggingStatusType::STANDBY: {
       return "STANDBY";
     }
-    case LOGGING_STATUS_TYPE_RECOVERY: {
+    case LoggingStatusType::RECOVERY: {
       return "RECOVERY";
     }
-    case LOGGING_STATUS_TYPE_LOGGING: {
+    case LoggingStatusType::LOGGING: {
       return "LOGGING";
     }
-    case LOGGING_STATUS_TYPE_TERMINATE: {
+    case LoggingStatusType::TERMINATE: {
       return "TERMINATE";
     }
-    case LOGGING_STATUS_TYPE_SLEEP: {
+    case LoggingStatusType::SLEEP: {
       return "SLEEP";
     }
     default: {
@@ -1772,33 +1940,42 @@ std::string LoggingStatusTypeToString(LoggingStatusType type) {
 LoggingStatusType StringToLoggingStatusType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGING_STATUS_TYPE_INVALID;
+    return LoggingStatusType::INVALID;
   } else if (upper_str == "STANDBY") {
-    return LOGGING_STATUS_TYPE_STANDBY;
+    return LoggingStatusType::STANDBY;
   } else if (upper_str == "RECOVERY") {
-    return LOGGING_STATUS_TYPE_RECOVERY;
+    return LoggingStatusType::RECOVERY;
   } else if (upper_str == "LOGGING") {
-    return LOGGING_STATUS_TYPE_LOGGING;
+    return LoggingStatusType::LOGGING;
   } else if (upper_str == "TERMINATE") {
-    return LOGGING_STATUS_TYPE_TERMINATE;
+    return LoggingStatusType::TERMINATE;
   } else if (upper_str == "SLEEP") {
-    return LOGGING_STATUS_TYPE_SLEEP;
+    return LoggingStatusType::SLEEP;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGING_STATUS_TYPE_INVALID;
+  return LoggingStatusType::INVALID;
 }
+
+std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type) {
+  os << LoggingStatusTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// LoggerType - String Utilities
+//===--------------------------------------------------------------------===//
 
 std::string LoggerTypeToString(LoggerType type) {
   switch (type) {
-    case LOGGER_TYPE_INVALID: {
+    case LoggerType::INVALID: {
       return "INVALID";
     }
-    case LOGGER_TYPE_FRONTEND: {
+    case LoggerType::FRONTEND: {
       return "FRONTEND";
     }
-    case LOGGER_TYPE_BACKEND: {
+    case LoggerType::BACKEND: {
       return "BACKEND";
     }
     default: {
@@ -1813,16 +1990,21 @@ std::string LoggerTypeToString(LoggerType type) {
 LoggerType StringToLoggerType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGER_TYPE_INVALID;
+    return LoggerType::INVALID;
   } else if (upper_str == "FRONTEND") {
-    return LOGGER_TYPE_FRONTEND;
+    return LoggerType::FRONTEND;
   } else if (upper_str == "BACKEND") {
-    return LOGGER_TYPE_BACKEND;
+    return LoggerType::BACKEND;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggerType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGER_TYPE_INVALID;
+  return LoggerType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggerType& type) {
+  os << LoggerTypeToString(type);
+  return os;
 }
 
 std::string LogRecordTypeToString(LogRecordType type) {
@@ -1925,6 +2107,61 @@ LogRecordType StringToLogRecordType(const std::string& str) {
   return LOGRECORD_TYPE_INVALID;
 }
 
+//===--------------------------------------------------------------------===//
+// CheckpointStatus - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CheckpointStatusToString(CheckpointStatus type) {
+  switch (type) {
+    case CheckpointStatus::INVALID: {
+      return "INVALID";
+    }
+    case CheckpointStatus::STANDBY: {
+      return "STANDBY";
+    }
+    case CheckpointStatus::RECOVERY: {
+      return "RECOVERY";
+    }
+    case CheckpointStatus::DONE_RECOVERY: {
+      return "DONE_RECOVERY";
+    }
+    case CheckpointStatus::CHECKPOINTING: {
+      return "CHECKPOINTING";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CheckpointStatus value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CheckpointStatus StringToCheckpointStatus(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CheckpointStatus::INVALID;
+  } else if (upper_str == "STANDBY") {
+    return CheckpointStatus::STANDBY;
+  } else if (upper_str == "RECOVERY") {
+    return CheckpointStatus::RECOVERY;
+  } else if (upper_str == "DONE_RECOVERY") {
+    return CheckpointStatus::DONE_RECOVERY;
+  } else if (upper_str == "CHECKPOINTING") {
+    return CheckpointStatus::CHECKPOINTING;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No CheckpointStatus conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return CheckpointStatus::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const CheckpointStatus& type) {
+  os << CheckpointStatusToString(type);
+  return os;
+}
+
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
     case PostgresValueType::BOOLEAN:
@@ -1965,39 +2202,39 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType type) {
-  ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
+  ConstraintType constraintType = ConstraintType::INVALID;
 
   switch (type) {
-    case POSTGRES_CONSTRAINT_NULL:
-      constraintType = CONSTRAINT_TYPE_NULL;
+    case PostgresConstraintType::NOT_NULL:
+      constraintType = ConstraintType::NOT_NULL;
       break;
 
-    case POSTGRES_CONSTRAINT_NOTNULL:
-      constraintType = CONSTRAINT_TYPE_NOTNULL;
+    case PostgresConstraintType::NOTNULL:
+      constraintType = ConstraintType::NOTNULL;
       break;
 
-    case POSTGRES_CONSTRAINT_DEFAULT:
-      constraintType = CONSTRAINT_TYPE_DEFAULT;
+    case PostgresConstraintType::DEFAULT:
+      constraintType = ConstraintType::DEFAULT;
       break;
 
-    case POSTGRES_CONSTRAINT_CHECK:
-      constraintType = CONSTRAINT_TYPE_CHECK;
+    case PostgresConstraintType::CHECK:
+      constraintType = ConstraintType::CHECK;
       break;
 
-    case POSTGRES_CONSTRAINT_PRIMARY:
-      constraintType = CONSTRAINT_TYPE_PRIMARY;
+    case PostgresConstraintType::PRIMARY:
+      constraintType = ConstraintType::PRIMARY;
       break;
 
-    case POSTGRES_CONSTRAINT_UNIQUE:
-      constraintType = CONSTRAINT_TYPE_UNIQUE;
+    case PostgresConstraintType::UNIQUE:
+      constraintType = ConstraintType::UNIQUE;
       break;
 
-    case POSTGRES_CONSTRAINT_FOREIGN:
-      constraintType = CONSTRAINT_TYPE_FOREIGN;
+    case PostgresConstraintType::FOREIGN:
+      constraintType = ConstraintType::FOREIGN;
       break;
 
-    case POSTGRES_CONSTRAINT_EXCLUSION:
-      constraintType = CONSTRAINT_TYPE_EXCLUSION;
+    case PostgresConstraintType::EXCLUSION:
+      constraintType = ConstraintType::EXCLUSION;
       break;
 
     default:
@@ -2007,6 +2244,152 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
   }
   return constraintType;
+}
+
+//===--------------------------------------------------------------------===//
+// EntityType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string EntityTypeToString(EntityType type) {
+  switch (type) {
+    case EntityType::INVALID: {
+      return "INVALID";
+    }
+    case EntityType::TABLE: {
+      return "TABLE";
+    }
+    case EntityType::SCHEMA: {
+      return "SCHEMA";
+    }
+    case EntityType::INDEX: {
+      return "INDEX";
+    }
+    case EntityType::VIEW: {
+      return "VIEW";
+    }
+    case EntityType::PREPARED_STATEMENT: {
+      return "PREPARED_STATEMENT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for EntityType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+EntityType StringToEntityType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return EntityType::INVALID;
+  } else if (upper_str == "TABLE") {
+    return EntityType::TABLE;
+  } else if (upper_str == "SCHEMA") {
+    return EntityType::SCHEMA;
+  } else if (upper_str == "INDEX") {
+    return EntityType::INDEX;
+  } else if (upper_str == "VIEW") {
+    return EntityType::VIEW;
+  } else if (upper_str == "PREPARED_STATEMENT") {
+    return EntityType::PREPARED_STATEMENT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No EntityType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return EntityType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const EntityType& type) {
+  os << EntityTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// RWType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string RWTypeToString(RWType type) {
+  switch (type) {
+    case RWType::INVALID: {
+      return "INVALID";
+    }
+    case RWType::READ: {
+      return "READ";
+    }
+    case RWType::READ_OWN: {
+      return "READ_OWN";
+    }
+    case RWType::UPDATE: {
+      return "UPDATE";
+    }
+    case RWType::INSERT: {
+      return "INSERT";
+    }
+    case RWType::DELETE: {
+      return "DELETE";
+    }
+    case RWType::INS_DEL: {
+      return "INS_DEL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for RWType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+RWType StringToRWType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return RWType::INVALID;
+  } else if (upper_str == "READ") {
+    return RWType::READ;
+  } else if (upper_str == "READ_OWN") {
+    return RWType::READ_OWN;
+  } else if (upper_str == "UPDATE") {
+    return RWType::UPDATE;
+  } else if (upper_str == "INSERT") {
+    return RWType::INSERT;
+  } else if (upper_str == "DELETE") {
+    return RWType::DELETE;
+  } else if (upper_str == "INS_DEL") {
+    return RWType::INS_DEL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No RWType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return RWType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const RWType& type) {
+  os << RWTypeToString(type);
+  return os;
+}
+//===--------------------------------------------------------------------===//
+// Optimizer
+//===--------------------------------------------------------------------===//
+std::string PropertyTypeToString(PropertyType type) {
+  switch (type) {
+    case PropertyType::SORT:
+      return "SORT";
+    case PropertyType::COLUMNS:
+      return "COLUMNS";
+    case PropertyType::PREDICATE:
+      return "PREDICATE";
+    case PropertyType::PROJECT:
+      return "PROJECT";
+    case PropertyType::DISTINCT:
+      return "DISTINCT";
+    default:
+      throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
+                                                   static_cast<int>(type)));
+  }
+  return "INVALID";
 }
 
 //===--------------------------------------------------------------------===//

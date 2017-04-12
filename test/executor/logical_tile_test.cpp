@@ -21,6 +21,8 @@
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
+
+#include "executor/testing_executor_util.h"
 #include "executor/logical_tile_factory.h"
 #include "storage/temp_table.h"
 #include "storage/tile.h"
@@ -29,7 +31,6 @@
 #include "type/types.h"
 #include "type/value_factory.h"
 
-#include "executor/executor_tests_util.h"
 
 namespace peloton {
 namespace test {
@@ -45,8 +46,8 @@ TEST_F(LogicalTileTests, TempTableTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   catalog::Schema *schema = new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(2)});
+      {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
+       TestingExecutorUtil::GetColumnInfo(2)});
 
   // Create our TempTable
   storage::TempTable table(INVALID_OID, schema, true);
@@ -56,11 +57,11 @@ TEST_F(LogicalTileTests, TempTableTest) {
   for (int i = 0; i < tuple_count; i++) {
     storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
     auto val1 = type::ValueFactory::GetIntegerValue(
-        ExecutorTestsUtil::PopulatedValue(i, 0));
+        TestingExecutorUtil::PopulatedValue(i, 0));
     auto val2 = type::ValueFactory::GetIntegerValue(
-        ExecutorTestsUtil::PopulatedValue(i, 1));
+        TestingExecutorUtil::PopulatedValue(i, 1));
     auto val3 = type::ValueFactory::GetDecimalValue(
-        ExecutorTestsUtil::PopulatedValue(i, 2));
+        TestingExecutorUtil::PopulatedValue(i, 2));
     tuple->SetValue(0, val1, pool);
     tuple->SetValue(1, val2, pool);
     tuple->SetValue(2, val3, pool);
@@ -102,7 +103,7 @@ TEST_F(LogicalTileTests, TempTableTest) {
 TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;
   std::shared_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(tuple_count));
+      TestingExecutorUtil::CreateTileGroup(tuple_count));
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();

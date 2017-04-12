@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "planner/set_op_plan.h"
@@ -23,7 +24,6 @@
 #include "storage/data_table.h"
 #include "type/types.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -54,12 +54,12 @@ void RunTest(executor::HashSetOpExecutor &executor,
 
   // In case you want to see it by yourself ...
   LOG_DEBUG("Tile Vectors:\n%s",
-            ExecutorTestsUtil::GetTileVectorInfo(result_tiles).c_str());
+            TestingExecutorUtil::GetTileVectorInfo(result_tiles).c_str());
 }
 
 TEST_F(HashSetOptTests, ExceptTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_EXCEPT);
+  planner::SetOpPlan node(SetOpType::EXCEPT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -89,13 +89,13 @@ TEST_F(HashSetOptTests, ExceptTest) {
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false, txn);
 
   std::unique_ptr<storage::DataTable> data_table2(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false, txn);
 
   txn_manager.CommitTransaction(txn);
@@ -129,7 +129,7 @@ TEST_F(HashSetOptTests, ExceptTest) {
 
 TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_EXCEPT_ALL);
+  planner::SetOpPlan node(SetOpType::EXCEPT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -161,20 +161,20 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table3(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table4(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
                                    false, false, txn);
 
   txn_manager.CommitTransaction(txn);
@@ -217,7 +217,7 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
 
 TEST_F(HashSetOptTests, IntersectTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_INTERSECT);
+  planner::SetOpPlan node(SetOpType::INTERSECT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -247,12 +247,12 @@ TEST_F(HashSetOptTests, IntersectTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table1(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false, txn);
 
   txn_manager.CommitTransaction(txn);
@@ -286,7 +286,7 @@ TEST_F(HashSetOptTests, IntersectTest) {
 
 TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_INTERSECT_ALL);
+  planner::SetOpPlan node(SetOpType::INTERSECT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -318,20 +318,20 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table3(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
                                    false, false, txn);
   std::unique_ptr<storage::DataTable> data_table4(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
                                    false, false, txn);
 
   txn_manager.CommitTransaction(txn);

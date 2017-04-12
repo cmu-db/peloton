@@ -81,14 +81,8 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 
 /* Helpers */
 
-/* Helper used by master thread to dispatch new connection to worker thread */
-void DispatchConnection(int new_conn_fd, short event_flags);
-
 /* Runs the state machine for the protocol. Invoked by event handler callback */
 void StateMachine(LibeventSocket *conn);
-
-// Update event
-void UpdateEvent(LibeventSocket *conn, short flags);
 
 /* Set the socket to non-blocking mode */
 inline void SetNonBlocking(evutil_socket_t fd) {
@@ -154,6 +148,7 @@ struct NewConnQueueItem {
  */
 class LibeventSocket {
  public:
+  int thread_id;
   int sock_fd;                    // socket file descriptor
   struct event *event = nullptr;  // libevent handle
   short event_flags;              // event flags mask
@@ -164,6 +159,7 @@ class LibeventSocket {
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:
+
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
@@ -232,7 +228,7 @@ struct LibeventServer {
 
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
-
+  
  public:
   LibeventServer();
   static LibeventSocket *GetConn(const int &connfd);
@@ -243,7 +239,7 @@ struct LibeventServer {
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::vector<std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
 };
 }
 }

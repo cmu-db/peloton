@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/macros.h"
+#include "common/logger.h"
 #include "logging/checkpoint_tile_scanner.h"
 #include "storage/tile_group_header.h"
 #include "executor/logical_tile_factory.h"

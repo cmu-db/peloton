@@ -316,7 +316,7 @@ StorageManager::StorageManager()
   // Check if we need a data pool
   if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
           true ||
-      peloton_logging_mode == LOGGING_TYPE_INVALID) {
+      peloton_logging_mode == LoggingType::INVALID) {
     return;
   }
 
@@ -349,7 +349,7 @@ StorageManager::StorageManager()
 
   switch (peloton_logging_mode) {
     // Check for NVM FS for data
-    case LOGGING_TYPE_NVM_WBL: {
+    case LoggingType::NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
@@ -359,7 +359,7 @@ StorageManager::StorageManager()
     } break;
 
     // Check for SSD FS for data
-    case LOGGING_TYPE_SSD_WBL: {
+    case LoggingType::SSD_WBL: {
       int status = stat(SSD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
@@ -369,7 +369,7 @@ StorageManager::StorageManager()
     } break;
 
     // Check for HDD FS
-    case LOGGING_TYPE_HDD_WBL: {
+    case LoggingType::HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
@@ -424,7 +424,7 @@ StorageManager::~StorageManager() {
   LOG_TRACE("Allocation count : %ld \n", allocation_count);
 
   // Check if we need a PMEM pool
-  if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
+  if (peloton_logging_mode != LoggingType::NVM_WBL) return;
 
   // sync and unmap the data file
   if (data_file_address != nullptr) {

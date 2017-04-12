@@ -14,20 +14,24 @@
 
 #include <string>
 
-#include "common/logger.h"
-#include "common/macros.h"
 #include "common/printable.h"
-#include "type/serializeio.h"
 #include "type/types.h"
-#include "type/value_factory.h"
+#include "type/value.h"
 
 namespace peloton {
 
+// Forward Declaration
 class Printable;
 class AbstractTuple;
+class SqlNodeVisitor;
+enum class ExpressionType;
 
 namespace executor {
 class ExecutorContext;
+}
+
+namespace type {
+class Value;
 }
 
 namespace expression {
@@ -49,8 +53,8 @@ namespace expression {
 class AbstractExpression : public Printable {
  public:
   virtual type::Value Evaluate(const AbstractTuple *tuple1,
-                         const AbstractTuple *tuple2,
-                         executor::ExecutorContext *context) const = 0;
+                               const AbstractTuple *tuple2,
+                               executor::ExecutorContext *context) const = 0;
 
   /**
    * Return true if this expression or any descendent has a value that should be
@@ -87,22 +91,20 @@ class AbstractExpression : public Printable {
 
   /** accessors */
 
-  ExpressionType GetExpressionType() const { return exp_type_; }
+  inline ExpressionType GetExpressionType() const { return exp_type_; }
 
-  type::Type::TypeId GetValueType() const { return return_value_type_; }
+  inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   virtual void DeduceExpressionType() {}
+  
+  // Walks the expressoin trees and generate the correct expression name
+  virtual void DeduceExpressionName();
 
-  const std::string GetInfo() const {
-    std::ostringstream os;
+  const std::string GetInfo() const;
+    
+  virtual bool Equals(AbstractExpression *expr) const;
 
-    os << "\tExpression :: "
-       << " expression type = " << GetExpressionType() << ","
-       << " value type = " << type::Type::GetInstance(GetValueType())->ToString()
-       << "," << std::endl;
-
-    return os.str();
-  }
+  virtual hash_t Hash() const;
 
   virtual AbstractExpression *Copy() const = 0;
 
@@ -118,7 +120,7 @@ class AbstractExpression : public Printable {
 
   // virtual bool SerializeTo(SerializeOutput &output) const {}
 
-  // virtual bool DeserializeFrom(SerializeInput &input) const {}
+  // virtual bool DeserializeFrom(SerializeInput &input) const {
 
   virtual int SerializeSize() { return 0; }
 
@@ -132,11 +134,21 @@ class AbstractExpression : public Printable {
 
   bool distinct_ = false;
 
+  virtual void Accept(SqlNodeVisitor *) = 0;
+
+  virtual void AcceptChildren(SqlNodeVisitor *v) {
+    for (auto &child : children_) {
+      child->Accept(v);
+    }
+  }
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type)
+  AbstractExpression(ExpressionType exp_type,
+                     type::Type::TypeId return_value_type)
       : exp_type_(exp_type), return_value_type_(return_value_type) {}
-  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type,
+  AbstractExpression(ExpressionType exp_type,
+                     type::Type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right)
       : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!
@@ -164,6 +176,23 @@ class AbstractExpression : public Printable {
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 
   bool has_parameter_ = false;
+};
+
+// Equality Comparator class for Abstract Expression
+class ExprEqualCmp {
+ public:
+  inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
+                         std::shared_ptr<AbstractExpression> expr2) const {
+    return expr1->Equals(expr2.get());
+  }
+};
+
+// Hasher class for Abstract Expression
+class ExprHasher {
+ public:
+  inline size_t operator()(std::shared_ptr<AbstractExpression> expr) const {
+    return expr->Hash();
+  }
 };
 
 }  // End expression namespace

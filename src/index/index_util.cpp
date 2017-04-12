@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// btree_index.cpp
+// index_util.cpp
 //
 // Identification: src/index/index_util.cpp
 //
@@ -26,33 +26,6 @@ namespace peloton {
 namespace index {
 
 /*
- * DefinesLowerBound() - Returns true if the expression is > or >= or ==
- *
- * Note: Since we consider equality (==) as both forward and backward
- * expression, when dealing with expression type both could be true
- *
- * NOTE 2: We put equality at the first to compare since we want a fast result
- * when it is equality (lazy evaluation)
- */
-inline bool DefinesLowerBound(ExpressionType e) {
-  // To reduce branch misprediction penalty
-  return e == ExpressionType::COMPARE_EQUAL ||
-         e == ExpressionType::COMPARE_GREATERTHAN ||
-         e == ExpressionType::COMPARE_GREATERTHANOREQUALTO;
-}
-
-/*
- * DefinesUpperBound() - Returns true if the expression is < or <= or ==
- *
- * Please refer to DefinesLowerBound() for more information
- */
-inline bool DefinesUpperBound(ExpressionType e) {
-  return e == ExpressionType::COMPARE_EQUAL ||
-         e == ExpressionType::COMPARE_LESSTHAN ||
-         e == ExpressionType::COMPARE_LESSTHANOREQUALTO;
-}
-
-/*
  * HasNonOptimizablePredicate() - Check whether there are expressions that
  *                                cause the entire predicate non-optmizable
  *
@@ -71,7 +44,7 @@ inline bool DefinesUpperBound(ExpressionType e) {
  * Please refer to src/include/type/types.h for a complete list of comparison
  * operators
  */
-bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
+bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
   for(auto t : expr_types) {
     if (t == ExpressionType::COMPARE_NOTEQUAL ||
         t == ExpressionType::COMPARE_IN       ||
@@ -126,7 +99,7 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
  * NOTE 3: This function does not guarantee it is ma11oc()-free, since it calls
  * reserve() on value_index_list.
  */
-bool FindValueIndex(const IndexMetadata *metadata_p,
+bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
                     std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
@@ -218,8 +191,8 @@ bool FindValueIndex(const IndexMetadata *metadata_p,
  * If values are equal then compare the second element which is an int
  * and return the result
  */
-bool ValuePairComparator(const std::pair<type::Value, int> &i,
-                         const std::pair<type::Value, int> &j) {
+bool IndexUtil::ValuePairComparator(const std::pair<type::Value, int> &i,
+                                    const std::pair<type::Value, int> &j) {
 
   // If first elements are equal then compare the second element
   if (i.first.CompareEquals(j.first) == type::CMP_TRUE) {
@@ -230,7 +203,7 @@ bool ValuePairComparator(const std::pair<type::Value, int> &i,
   return i.first.CompareLessThan(j.first) == type::CMP_TRUE;
 }
 
-void ConstructIntervals(oid_t leading_column_id,
+void IndexUtil::ConstructIntervals(oid_t leading_column_id,
                         const std::vector<type::Value> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
@@ -304,7 +277,7 @@ void ConstructIntervals(oid_t leading_column_id,
   // Finish invtervals building.
 };
 
-void FindMaxMinInColumns(oid_t leading_column_id,
+void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
                          const std::vector<type::Value> &values,
                          const std::vector<oid_t> &key_column_ids,
                          const std::vector<ExpressionType> &expr_types,
@@ -374,7 +347,20 @@ void FindMaxMinInColumns(oid_t leading_column_id,
           type::Type::GetMinValue(k_v.second.second.GetTypeId());
     }
   }
-};
+}
+
+std::string IndexUtil::Debug(Index *index) {
+  std::vector<ItemPointer *> location_ptrs;
+  index->ScanAllKeys(location_ptrs);
+
+  std::ostringstream os;
+  int i = 0;
+  for (auto ptr : location_ptrs) {
+    os << StringUtil::Format("%03d: {%d, %d}\n", i, ptr->block, ptr->offset);
+    i += 1;
+  }
+  return (os.str());
+}
 
 }  // End index namespace
 }  // End peloton namespace

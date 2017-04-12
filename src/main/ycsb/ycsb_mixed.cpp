@@ -77,11 +77,11 @@ namespace benchmark {
 namespace ycsb {
 
   
-bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
+bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  concurrency::Transaction *txn = txn_manager.BeginTransaction();
+  concurrency::Transaction *txn = txn_manager.BeginTransaction(thread_id);
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

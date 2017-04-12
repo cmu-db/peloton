@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "executor/testing_executor_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
@@ -28,7 +29,6 @@
 #include "executor/logical_tile_factory.h"
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/index_scan_plan.h"
@@ -36,7 +36,6 @@
 #include "storage/data_table.h"
 #include "tcop/tcop.h"
 
-#include "executor/executor_tests_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -50,7 +49,7 @@ class IndexScanTests : public PelotonTest {};
 TEST_F(IndexScanTests, IndexPredicateTest) {
   // First, generate the table with index
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateAndPopulateTable());
+      TestingExecutorUtil::CreateAndPopulateTable());
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids({0, 1, 3});
@@ -113,7 +112,7 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
 TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   // First, generate the table with index
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateAndPopulateTable());
+      TestingExecutorUtil::CreateAndPopulateTable());
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids({0, 1, 3});

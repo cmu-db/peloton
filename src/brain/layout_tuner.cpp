@@ -12,6 +12,10 @@
 
 #include "brain/layout_tuner.h"
 
+#include <vector>
+#include <string>
+#include <algorithm>
+
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/timer.h"

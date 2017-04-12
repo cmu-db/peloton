@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "parser/abstract_parse.h"
 
 #include <sstream>
@@ -33,7 +32,7 @@ void AbstractParse::AddChild(std::unique_ptr<AbstractParse> &&child) {
 }
 
 const std::vector<std::unique_ptr<AbstractParse>> &AbstractParse::GetChildren()
-const {
+    const {
   return children_;
 }
 
@@ -53,7 +52,7 @@ const std::string AbstractParse::GetInfo() const {
   // Traverse the tree
   std::string child_spacer = "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
-      ctr++) {
+       ctr++) {
     os << child_spacer << children_[ctr].get()->GetParseNodeType() << "\n";
     os << children_[ctr].get()->GetInfo();
   }

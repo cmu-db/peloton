@@ -100,9 +100,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
 
-  virtual Transaction *BeginTransaction();
+  virtual Transaction *BeginTransaction(const size_t thread_id = 0);
 
-  virtual Transaction *BeginReadonlyTransaction();
+  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0);
 
   virtual void EndTransaction(Transaction *current_txn);
 

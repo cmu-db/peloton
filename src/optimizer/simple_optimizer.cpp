@@ -35,6 +35,7 @@
 #include "planner/limit_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/populate_index_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
@@ -80,9 +81,32 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
-      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
-          new planner::CreatePlan((parser::CreateStatement*)parse_tree2));
+
+      auto create_plan =
+          new planner::CreatePlan((parser::CreateStatement*)parse_tree2);
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       child_plan = std::move(child_CreatePlan);
+      // If creating index, populate with existing data first.
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        auto create_stmt = (parser::CreateStatement*)parse_tree2;
+        auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName());
+        std::vector<oid_t> column_ids;
+        auto schema = target_table->GetSchema();
+        for (auto column_name : create_plan->GetIndexAttributes()) {
+          column_ids.push_back(schema->GetColumnID(column_name));
+        }
+        // Create a plan to retrieve data
+        std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan =
+            CreateScanPlan(target_table, column_ids, nullptr, false);
+        child_SeqScanPlan->AddChild(std::move(child_plan));
+        child_plan = std::move(child_SeqScanPlan);
+        // Create a plan to add data to index
+        std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
+            new planner::PopulateIndexPlan(target_table, column_ids));
+        child_PopulateIndexPlan->AddChild(std::move(child_plan));
+        child_plan = std::move(child_PopulateIndexPlan);
+      }
     } break;
 
     case StatementType::SELECT: {
@@ -91,6 +115,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       LOG_TRACE("SELECT Info: %s", select_stmt->GetInfo().c_str());
       auto agg_type = AggregateType::PLAIN;  // default aggregator
       std::vector<oid_t> group_by_columns;
+      bool order_plan_added = false;
       auto group_by = select_stmt->group_by;
       expression::AbstractExpression* having = nullptr;
 
@@ -144,9 +169,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto predicate = select_stmt->where_clause;
       bool needs_projection = false;
       expression::ExpressionUtil::TransformExpression(&schema, predicate);
-      bool is_star =
-              (*select_stmt->getSelectList())[0]->GetExpressionType() 
-				== ExpressionType::STAR;
+      bool is_star = (*select_stmt->getSelectList())[0]->GetExpressionType() ==
+                     ExpressionType::STAR;
 
       for (auto col : *select_stmt->select_list) {
         expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
@@ -157,11 +181,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // select_list
       // No problem given that the underlying structure is a map.
       // If query is 'select *', the column will be already added.
-      if(select_stmt->order != nullptr && !is_star) {
+      if (select_stmt->order != nullptr && !is_star) {
         expression::ExpressionUtil::TransformExpression(
-            column_ids, select_stmt->order->expr, schema, needs_projection);
+            column_ids, select_stmt->order->exprs->at(0), schema,
+            needs_projection);
       }
-
 
       // Check if there are any aggregate functions
       bool agg_flag = false;
@@ -213,6 +237,24 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                                   "expr" + std::to_string(i)));
             }
           }
+          if (select_stmt->order != NULL) {
+            if (select_stmt->limit != NULL) {
+              auto order_limit_plan = CreateOrderByLimitPlan(
+                  select_stmt, child_SelectPlan.get(),
+                  target_table->GetSchema(), column_ids, is_star);
+              order_limit_plan->GetChildren()[0]->AddChild(
+                  std::move(child_SelectPlan));
+              child_SelectPlan = std::move(order_limit_plan);
+            } else {
+              auto order_plan = CreateOrderByPlan(
+                  select_stmt, child_SelectPlan.get(),
+                  target_table->GetSchema(), column_ids, is_star);
+              order_plan->AddChild(std::move(child_SelectPlan));
+              child_SelectPlan = std::move(order_plan);
+            }
+            order_plan_added = true;
+          }
+
           // build the projection plan node and insert aboce the scan
           std::unique_ptr<planner::ProjectInfo> proj_info(
               new planner::ProjectInfo(std::move(tl), std::move(dml)));
@@ -224,173 +266,47 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           child_SelectPlan = std::move(child_ProjectPlan);
         }
 
-        if (select_stmt->order != NULL && select_stmt->limit != NULL) {
-          LOG_TRACE("OrderBy + Limit query");
-          auto schema_columns = target_table->GetSchema()->GetColumns();
-          std::vector<oid_t> keys;
-          // Add all selected columns to the output
-          // We already generated the "real" physical output schema in the scan
-          // plan, so now we just need to directly copy all the columns.
-          // In the 'select *' case, they need to be copied manually.
-          if(is_star){
-              for (size_t column_ctr = 0;
-                   column_ctr < schema_columns.size(); column_ctr++) {
-                keys.push_back(column_ctr);
-              }
+        // Workflow for DISTINCT
+        if (select_stmt->select_distinct) {
+          std::vector<std::unique_ptr<const expression::AbstractExpression>>
+              hash_keys;
+          if (is_star) {
+            for (auto col : target_table->GetSchema()->GetColumns()) {
+              auto key =
+                  expression::ExpressionUtil::ConvertToTupleValueExpression(
+                      target_table->GetSchema(), col.GetName());
+              hash_keys.emplace_back(key);
+            }
           } else {
-            for (size_t column_ctr = 0;
-                   column_ctr < select_stmt->select_list->size(); 
-				   column_ctr++) {
-              keys.push_back(column_ctr);
+            for (auto col : *select_stmt->select_list) {
+              // Copy column for handling of unique_ptr
+              auto copy_col = col->Copy();
+              hash_keys.emplace_back(copy_col);
             }
           }
-
-          LOG_TRACE("Get and set OrderBy descending");
-          std::vector<bool> flags;
-          if (select_stmt->order->type == 0) {
-            flags.push_back(false);
-          } else {
-            flags.push_back(true);
-          }
-          std::vector<oid_t> key;
-
-          LOG_TRACE("Set OrderBy expr");
-          std::string sort_col_name(
-              ((expression::TupleValueExpression*)select_stmt->order->expr)
-                  ->GetColumnName());
-
-          for (size_t column_ctr = 0; column_ctr < schema_columns.size();
-               column_ctr++) {
-            std::string col_name(schema_columns.at(column_ctr).GetName());
-            if (col_name == sort_col_name) {
-                if(is_star){
-                    //The whole schema is already added, and column_ids
-                    //doesn't represent faithfully the columns.
-                    key.push_back(column_ctr);
-                } else {
-                    // The column_ctr is not reliable anymore given that we are
-                    // looking to the whole schema.
-                    // Since the columns were added in the column_ids, it is 
-                    // safe to retrieve only those indexes.
-                    auto iter =
-                        find(column_ids.begin(), column_ids.end(), column_ctr);
-                    auto column_offset = 
-						std::distance(column_ids.begin(), iter);
-                    key.push_back(column_offset);
-                }
-            }
-          }
-          
-          LOG_TRACE("Set order by offset");
-          // Get offset
-          int offset = select_stmt->limit->offset;
-          if (offset < 0) {
-            offset = 0;
-          }
-
-          // Set the flag for the underlying index scan plan to accelerate the
-          // limit operation speed. That is to say the limit flags are passed
-          // to index, then index returns the tuples matched with the limit
-          SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
-                           offset, flags.front());
-
-          // Create order_by_plan
-          std::unique_ptr<planner::OrderByPlan> order_by_plan(
-              new planner::OrderByPlan(key, flags, keys));
-
-          // Whether underlying child's output has the same order
-          // with the order_by clause
-          LOG_TRACE("order by column id is %d",
-                    target_table->GetSchema()->GetColumnID(sort_col_name));
-          if (UnderlyingSameOrder(
-                  child_SelectPlan.get(),
-                  target_table->GetSchema()->GetColumnID(sort_col_name),
-                  flags.front()) == true) {
-            LOG_TRACE(
-                "Underlying plan has the same ordering output with"
-                "order_by plan with limit");
-            order_by_plan->SetUnderlyingOrder(true);
-            order_by_plan->SetLimit(true);
-            order_by_plan->SetLimitNumber(select_stmt->limit->limit);
-            order_by_plan->SetLimitOffset(offset);
-          }
-
-          order_by_plan->AddChild(std::move(child_SelectPlan));
-
-          // Create limit_plan
-          std::unique_ptr<planner::LimitPlan> limit_plan(
-              new planner::LimitPlan(select_stmt->limit->limit, offset));
-          limit_plan->AddChild(std::move(order_by_plan));
-          child_plan = std::move(limit_plan);
+          // Create hash plan node
+          std::unique_ptr<planner::HashPlan> hash_plan_node(
+              new planner::HashPlan(hash_keys));
+          hash_plan_node->AddChild(std::move(child_SelectPlan));
+          child_SelectPlan = std::move(hash_plan_node);
+        }
+        // Workflow for ORDER_BY and LIMIT
+        if (select_stmt->order != NULL && select_stmt->limit != NULL &&
+            !order_plan_added) {
+          auto order_limit_plan = CreateOrderByLimitPlan(
+              select_stmt, child_SelectPlan.get(), target_table->GetSchema(),
+              column_ids, is_star);
+          order_limit_plan->GetChildren()[0]->AddChild(
+              std::move(child_SelectPlan));
+          child_plan = std::move(order_limit_plan);
         }
         // Only order by statement (without limit)
-        else if (select_stmt->order != NULL) {
-          auto schema_columns = target_table->GetSchema()->GetColumns();
-          std::vector<oid_t> keys;
-          // The order_by plan is oblivious to the type of query, so,
-          // the columns must be manually added for it.
-          if(is_star){
-              for (size_t column_ctr = 0;
-                   column_ctr < schema_columns.size(); column_ctr++) {
-                keys.push_back(column_ctr);
-              }
-          } else {
-            for (size_t column_ctr = 0;
-                   column_ctr < select_stmt->select_list->size(); 
-				   column_ctr++) {
-              keys.push_back(column_ctr);
-            }
-          }
-          std::vector<bool> flags;
-          if (select_stmt->order->type == 0) {
-            flags.push_back(false);
-          } else {
-            flags.push_back(true);
-          }
-          std::vector<oid_t> key;
-          std::string sort_col_name(
-              ((expression::TupleValueExpression*)select_stmt->order->expr)
-                  ->GetColumnName());
-          for (size_t column_ctr = 0; column_ctr < schema_columns.size();
-               column_ctr++) {
-            std::string col_name(schema_columns.at(column_ctr).GetName());
-            if (col_name == sort_col_name) { 
-              if(is_star){
-                  //The whole schema is already added, and column_ids
-                  //doesn't represent faithfully the columns.
-                  key.push_back(column_ctr);
-              } else {
-                  // The column_ctr is not reliable anymore given that we are
-                  // looking to the whole schema.
-            	  // Since the columns were added in the column_ids, it is safe 
-             	  // to retrieve only those indexes.
-                  auto iter =
-                      find(column_ids.begin(), column_ids.end(), column_ctr);
-                  auto column_offset = std::distance(column_ids.begin(), iter);
-                  key.push_back(column_offset);
-              }
-            }
-          }
-
-          std::unique_ptr<planner::OrderByPlan> order_by_plan(
-              new planner::OrderByPlan(key, flags, keys));
-
-          // Whether underlying child's output has the same order with the
-          // order_by clause.
-          LOG_TRACE("order by column id is %d",
-                    target_table->GetSchema()->GetColumnID(sort_col_name));
-          if (UnderlyingSameOrder(
-                  child_SelectPlan.get(),
-                  target_table->GetSchema()->GetColumnID(sort_col_name),
-                  flags.front()) == true) {
-            LOG_TRACE(
-                "Underlying plan has the same ordering output with"
-                "order_by plan without limit");
-            order_by_plan->SetUnderlyingOrder(true);
-          }
-
-          order_by_plan->AddChild(std::move(child_SelectPlan));
-          child_plan = std::move(order_by_plan);
+        else if (select_stmt->order != NULL && !order_plan_added) {
+          auto order_plan =
+              CreateOrderByPlan(select_stmt, child_SelectPlan.get(),
+                                target_table->GetSchema(), column_ids, is_star);
+          order_plan->AddChild(std::move(child_SelectPlan));
+          child_plan = std::move(order_plan);
         }
         // limit statement without order by
         else if (select_stmt->limit != NULL) {
@@ -448,11 +364,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_TRACE("Function name: %s",
                         ((expression::TupleValueExpression*)agg_expr)
                             ->GetExpressionName());
-              LOG_TRACE(
-                  "Aggregate type: %s",
-                  ExpressionTypeToString(ParserExpressionNameToExpressionType(
-                                             expr->GetExpressionName()))
-                      .c_str());
+              LOG_TRACE("Aggregate type: %s",
+                        ExpressionTypeToString(
+                            ParserExpressionNameToExpressionType(
+                                expr->GetExpressionName())).c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(), agg_over->Copy(),
                   agg_expr->distinct_);
@@ -490,7 +405,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                              // used only when
                                                              // there is no AS
-                    true);
+                    false);
 
                 output_schema_columns.push_back(column);
               }
@@ -686,6 +601,44 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
           updateStmt->table->GetDatabaseName(),
           updateStmt->table->GetTableName());
+
+      auto update_clauses = updateStmt->updates;
+
+      for (auto clause : *update_clauses) {
+        auto clause_expr = clause->value;
+        auto columnID = target_table->GetSchema()->GetColumnID(clause->column);
+        auto column = target_table->GetSchema()->GetColumn(columnID);
+
+        if (clause_expr->GetExpressionType() ==
+            ExpressionType::VALUE_CONSTANT) {
+          auto value = static_cast<const expression::ConstantValueExpression*>(
+                           clause_expr)
+                           ->GetValue()
+                           .CastAs(column.GetType());
+          auto value_expression =
+              new expression::ConstantValueExpression(value);
+
+          delete clause->value;
+          clause->value = value_expression;
+
+        } else {
+          for (unsigned int child_index = 0;
+               child_index < clause_expr->GetChildrenSize(); child_index++) {
+            auto child = clause_expr->GetChild(child_index);
+
+            if (child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+              auto value =
+                  static_cast<const expression::ConstantValueExpression*>(child)
+                      ->GetValue()
+                      .CastAs(column.GetType());
+              auto value_expression =
+                  new expression::ConstantValueExpression(value);
+
+              clause_expr->SetChild(child_index, value_expression);
+            }
+          }
+        }
+      }
 
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
                                expr_types, values, index_id)) {
@@ -969,19 +922,15 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))
-                             ->GetValue());
+                             expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))
-                      ->GetValueType());
+                      expression->GetModifiableChild(1))->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(1))
-                    ->GetValueIdx())
-                .Copy());
+                    expression->GetModifiableChild(1))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -999,19 +948,15 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))
-                             ->GetValue());
+                             expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))
-                      ->GetValueType());
+                      expression->GetModifiableChild(0))->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(0))
-                    ->GetValueIdx())
-                .Copy());
+                    expression->GetModifiableChild(0))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
@@ -1228,7 +1173,7 @@ std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
                                 "S_I_ID", 1);
 
   column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   return std::shared_ptr<const peloton::catalog::Schema>(
       new catalog::Schema({column}));
 }
@@ -1259,13 +1204,13 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   auto right_schema = right_table->GetSchema();
 
   // Get the key column name based on the join condition
-  auto right_key_col_name = static_cast<expression::TupleValueExpression*>(
-                                join_condition->GetModifiableChild(0))
-                                ->GetColumnName();
+  auto right_key_col_name =
+      static_cast<expression::TupleValueExpression*>(
+          join_condition->GetModifiableChild(0))->GetColumnName();
   if (right_schema->GetColumnID(right_key_col_name) == (oid_t)-1)
-    right_key_col_name = static_cast<expression::TupleValueExpression*>(
-                             join_condition->GetModifiableChild(1))
-                             ->GetColumnName();
+    right_key_col_name =
+        static_cast<expression::TupleValueExpression*>(
+            join_condition->GetModifiableChild(1))->GetColumnName();
   // Generate hash for right table
   auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(
       right_schema, right_key_col_name);
@@ -1480,6 +1425,115 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
   // All the checking is done, return true
   LOG_TRACE("All checking is done, so ordering is the same");
   return true;
+}
+
+std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByPlan(
+    parser::SelectStatement* select_stmt, planner::AbstractPlan* child_plan,
+    catalog::Schema* schema, std::vector<oid_t> column_ids, bool is_star) {
+  auto schema_columns = schema->GetColumns();
+  std::vector<oid_t> keys;
+  // The order_by plan is oblivious to the type of query, so,
+  // the columns must be manually added for it.
+  if (is_star) {
+    for (size_t column_ctr = 0; column_ctr < schema_columns.size();
+         column_ctr++) {
+      keys.push_back(column_ctr);
+    }
+  } else {
+    for (size_t column_ctr = 0; column_ctr < select_stmt->select_list->size();
+         column_ctr++) {
+      keys.push_back(column_ctr);
+    }
+  }
+  std::vector<bool> flags;
+  if (select_stmt->order->types->at(0) == 0) {
+    flags.push_back(false);
+  } else {
+    flags.push_back(true);
+  }
+  std::vector<oid_t> key;
+  std::string sort_col_name(
+      ((expression::TupleValueExpression*)select_stmt->order->exprs->at(0))
+          ->GetColumnName());
+  for (size_t column_ctr = 0; column_ctr < schema_columns.size();
+       column_ctr++) {
+    std::string col_name(schema_columns.at(column_ctr).GetName());
+    if (col_name == sort_col_name) {
+      if (is_star) {
+        // The whole schema is already added, and column_ids
+        // doesn't represent faithfully the columns.
+        key.push_back(column_ctr);
+      } else {
+        // The column_ctr is not reliable anymore given that we are
+        // looking to the whole schema.
+        // Since the columns were added in the column_ids, it is safe
+        // to retrieve only those indexes.
+        auto iter = find(column_ids.begin(), column_ids.end(), column_ctr);
+        auto column_offset = std::distance(column_ids.begin(), iter);
+        key.push_back(column_offset);
+      }
+    }
+  }
+
+  std::unique_ptr<planner::OrderByPlan> order_by_plan(
+      new planner::OrderByPlan(key, flags, keys));
+
+  // Whether underlying child's output has the same order with the
+  // order_by clause.
+  LOG_TRACE("order by column id is %d", schema->GetColumnID(sort_col_name));
+  if (UnderlyingSameOrder(child_plan, schema->GetColumnID(sort_col_name),
+                          flags.front()) == true) {
+    LOG_TRACE(
+        "Underlying plan has the same ordering output with"
+        "order_by plan without limit");
+    order_by_plan->SetUnderlyingOrder(true);
+  }
+  return std::move(order_by_plan);
+}
+
+std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
+    parser::SelectStatement* select_stmt, planner::AbstractPlan* child_plan,
+    catalog::Schema* schema, std::vector<oid_t> column_ids, bool is_star) {
+  LOG_TRACE("OrderBy + Limit query");
+  auto abstract_plan =
+      CreateOrderByPlan(select_stmt, child_plan, schema, column_ids, is_star);
+  // Cast needed for desired fields.
+  auto order_by_plan = static_cast<planner::OrderByPlan*>(abstract_plan.get());
+  LOG_TRACE("Set order by offset");
+  // Get offset
+  int offset = select_stmt->limit->offset;
+  if (offset < 0) {
+    offset = 0;
+  }
+
+  // Set the flag for the underlying index scan plan to accelerate the
+  // limit operation speed. That is to say the limit flags are passed
+  // to index, then index returns the tuples matched with the limit
+  SetIndexScanFlag(child_plan, select_stmt->limit->limit, offset,
+                   order_by_plan->GetDescendFlags().front());
+
+  // Whether underlying child's output has the same order
+  // with the order_by clause
+  LOG_TRACE("order by column id is %d", order_by_plan->GetSortKeys().front());
+  // This step has a little redundance with the order_by plan
+  // but changes more stuff inside.
+  if (UnderlyingSameOrder(child_plan, order_by_plan->GetSortKeys().front(),
+                          order_by_plan->GetDescendFlags().front()) == true) {
+    LOG_TRACE(
+        "Underlying plan has the same ordering output with"
+        "order_by plan with limit");
+    order_by_plan->SetUnderlyingOrder(true);
+    order_by_plan->SetLimit(true);
+    order_by_plan->SetLimitNumber(select_stmt->limit->limit);
+    order_by_plan->SetLimitOffset(offset);
+  }
+
+  // Create limit_plan
+  std::unique_ptr<planner::LimitPlan> limit_plan(
+      new planner::LimitPlan(select_stmt->limit->limit, offset));
+  // Adding the unique_ptr
+  limit_plan->AddChild(std::move(abstract_plan));
+  return std::move(limit_plan);
 }
 }  // namespace optimizer
 }  // namespace peloton

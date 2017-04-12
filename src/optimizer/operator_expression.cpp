@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "../include/optimizer/operator_expression.h"
+#include "optimizer/operator_expression.h"
 
 #include <limits>
 
@@ -29,8 +28,8 @@ void OperatorExpression::PushChild(std::shared_ptr<OperatorExpression> op) {
 
 void OperatorExpression::PopChild() { children.pop_back(); }
 
-const std::vector<std::shared_ptr<OperatorExpression>> &OperatorExpression::Children()
-    const {
+const std::vector<std::shared_ptr<OperatorExpression>> &
+OperatorExpression::Children() const {
   return children;
 }
 

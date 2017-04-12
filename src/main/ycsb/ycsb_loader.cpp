@@ -123,9 +123,8 @@ void CreateYCSBDatabase() {
   user_table->AddIndex(pkey_index);
 }
 
-void LoadYCSBDatabase() {
+void LoadYCSBRows(const int begin_rowid, const int end_rowid) {
   const oid_t col_count = state.column_count + 1;
-  const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Pick the user table
   auto table_schema = user_table->GetSchema();
@@ -143,8 +142,7 @@ void LoadYCSBDatabase() {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  int rowid;
-  for (rowid = 0; rowid < tuple_count; rowid++) {
+  for (int rowid = begin_rowid; rowid < end_rowid; rowid++) {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
 
@@ -170,6 +168,40 @@ void LoadYCSBDatabase() {
   }
 
   txn_manager.CommitTransaction(txn);
+}
+
+void LoadYCSBDatabase() {
+
+  std::chrono::steady_clock::time_point start_time;
+  start_time = std::chrono::steady_clock::now();
+
+  const int tuple_count = state.scale_factor * 1000;
+  int row_per_thread = tuple_count / state.loader_count;
+  
+  std::vector<std::unique_ptr<std::thread>> load_threads(state.loader_count);
+
+  for (int thread_id = 0; thread_id < state.loader_count - 1; ++thread_id) {
+    int begin_rowid = row_per_thread * thread_id;
+    int end_rowid = row_per_thread * (thread_id + 1);
+    load_threads[thread_id].reset(new std::thread(LoadYCSBRows, begin_rowid, end_rowid));
+  }
+  
+  int thread_id = state.loader_count - 1;
+  int begin_rowid = row_per_thread * thread_id;
+  int end_rowid = tuple_count;
+  load_threads[thread_id].reset(new std::thread(LoadYCSBRows, begin_rowid, end_rowid));
+
+  for (int thread_id = 0; thread_id < state.loader_count; ++thread_id) {
+    load_threads[thread_id]->join();
+  }
+
+  std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+  double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+  LOG_INFO("database table loading time = %lf ms", diff);
+
+  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("user count = %lu", user_table->GetTupleCount());
+
 }
 
 }  // namespace ycsb

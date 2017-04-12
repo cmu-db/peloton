@@ -31,21 +31,21 @@ BackendType LoggingUtil::GetBackendType(const LoggingType &logging_type) {
   BackendType backend_type = BackendType::MM;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_WBL:
+    case LoggingType::NVM_WBL:
       backend_type = BackendType::NVM;
       break;
 
-    case LOGGING_TYPE_SSD_WBL:
+    case LoggingType::SSD_WBL:
       backend_type = BackendType::SSD;
       break;
 
-    case LOGGING_TYPE_HDD_WBL:
+    case LoggingType::HDD_WBL:
       backend_type = BackendType::HDD;
       break;
 
-    case LOGGING_TYPE_NVM_WAL:
-    case LOGGING_TYPE_SSD_WAL:
-    case LOGGING_TYPE_HDD_WAL:
+    case LoggingType::NVM_WAL:
+    case LoggingType::SSD_WAL:
+    case LoggingType::HDD_WAL:
       backend_type = BackendType::MM;
       break;
 
@@ -61,9 +61,9 @@ bool LoggingUtil::IsBasedOnWriteAheadLogging(
   bool status = false;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_WAL:
-    case LOGGING_TYPE_SSD_WAL:
-    case LOGGING_TYPE_HDD_WAL:
+    case LoggingType::NVM_WAL:
+    case LoggingType::SSD_WAL:
+    case LoggingType::HDD_WAL:
       status = true;
       break;
 
@@ -79,9 +79,9 @@ bool LoggingUtil::IsBasedOnWriteBehindLogging(const LoggingType &logging_type) {
   bool status = true;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_WBL:
-    case LOGGING_TYPE_SSD_WBL:
-    case LOGGING_TYPE_HDD_WBL:
+    case LoggingType::NVM_WBL:
+    case LoggingType::SSD_WBL:
+    case LoggingType::HDD_WBL:
       status = true;
       break;
 

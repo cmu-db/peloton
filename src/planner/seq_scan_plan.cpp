@@ -12,7 +12,7 @@
 
 #include "planner/seq_scan_plan.h"
 
-#include "../include/parser/select_statement.h"
+#include "parser/select_statement.h"
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"

@@ -20,6 +20,8 @@
 
 #include "type/types.h"
 #include "common/logger.h"
+#include "common/init.h"
+#include "common/thread_pool.h"
 #include "gc/gc_manager.h"
 
 #include "container/lock_free_queue.h"
@@ -32,23 +34,21 @@ namespace gc {
 
 
 struct GarbageContext {
-  GarbageContext() : timestamp_(INVALID_CID), gc_set_type_(GC_SET_TYPE_COMMITTED) {}
-  GarbageContext(std::shared_ptr<ReadWriteSet> gc_set, 
-                 const cid_t &timestamp, 
-                 const GCSetType gc_set_type) : timestamp_(timestamp), gc_set_type_(gc_set_type) {
+  GarbageContext() : timestamp_(INVALID_CID) {}
+  GarbageContext(std::shared_ptr<GCSet> gc_set, 
+                 const cid_t &timestamp) {
     gc_set_ = gc_set;
+    timestamp_ = timestamp;
   }
 
-  std::shared_ptr<ReadWriteSet> gc_set_;
+  std::shared_ptr<GCSet> gc_set_;
   cid_t timestamp_;
-  GCSetType gc_set_type_;
 };
 
 class TransactionLevelGCManager : public GCManager {
 public:
   TransactionLevelGCManager(int thread_count) 
     : gc_thread_count_(thread_count),
-      gc_threads_(thread_count),
       reclaim_maps_(thread_count) {
 
     unlink_queues_.reserve(thread_count);
@@ -68,23 +68,30 @@ public:
     return gc_manager;
   }
 
+  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) {
+    LOG_TRACE("Starting GC");
+    this->is_running_ = true;
+    gc_threads.resize(gc_thread_count_);
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
+
+    }
+  }
+
   virtual void StartGC() override {
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
     for (int i = 0; i < gc_thread_count_; ++i) {
-      StartGC(i);
+      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
     }
   };
 
   virtual void StopGC() override {
     LOG_TRACE("Stopping GC");
     this->is_running_ = false;
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      StopGC(i);
-    }
   }
 
-  virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType) override;
+  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
@@ -108,9 +115,6 @@ public:
   }
 
 private:
-  void StartGC(int thread_id);
-
-  void StopGC(int thread_id);
 
   inline unsigned int HashToThread(const cid_t &ts) {
     return (unsigned int)ts % gc_thread_count_;
@@ -139,20 +143,22 @@ private:
 
   int gc_thread_count_;
 
-  std::vector<std::unique_ptr<std::thread>> gc_threads_;
-
   // queues for to-be-unlinked tuples.
+  // # unlink_queues == # gc_threads
   std::vector<std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
   
   // local queues for to-be-unlinked tuples.
+  // # local_unlink_queues == # gc_threads
   std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
 
   // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
+  // # reclaim_maps == # gc_threads
   std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>> reclaim_maps_;
 
   // queues for to-be-reused tuples.
+  // # recycle_queue_maps == # tables
   std::unordered_map<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>> recycle_queue_map_;
 
 };

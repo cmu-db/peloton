@@ -251,7 +251,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 
 TEST_F(TypesTests, IndexTypeTest) {
   std::vector<IndexType> list = {IndexType::INVALID, IndexType::BWTREE,
-                                 IndexType::HASH};
+                                 IndexType::HASH, IndexType::SKIPLIST};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -445,11 +445,11 @@ TEST_F(TypesTests, ResultTypeTest) {
 
 TEST_F(TypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
-      CONSTRAINT_TYPE_INVALID,  CONSTRAINT_TYPE_NULL,
-      CONSTRAINT_TYPE_NOTNULL,  CONSTRAINT_TYPE_DEFAULT,
-      CONSTRAINT_TYPE_CHECK,    CONSTRAINT_TYPE_PRIMARY,
-      CONSTRAINT_TYPE_UNIQUE,   CONSTRAINT_TYPE_FOREIGN,
-      CONSTRAINT_TYPE_EXCLUSION};
+      ConstraintType::INVALID,  ConstraintType::NOT_NULL,
+      ConstraintType::NOTNULL,  ConstraintType::DEFAULT,
+      ConstraintType::CHECK,    ConstraintType::PRIMARY,
+      ConstraintType::UNIQUE,   ConstraintType::FOREIGN,
+      ConstraintType::EXCLUSION};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -470,9 +470,9 @@ TEST_F(TypesTests, ConstraintTypeTest) {
 
 TEST_F(TypesTests, LoggingTypeTest) {
   std::vector<LoggingType> list = {
-      LOGGING_TYPE_INVALID, LOGGING_TYPE_NVM_WBL, LOGGING_TYPE_SSD_WBL,
-      LOGGING_TYPE_HDD_WBL, LOGGING_TYPE_NVM_WAL, LOGGING_TYPE_SSD_WAL,
-      LOGGING_TYPE_HDD_WAL,
+      LoggingType::INVALID, LoggingType::NVM_WBL, LoggingType::SSD_WBL,
+      LoggingType::HDD_WBL, LoggingType::NVM_WAL, LoggingType::SSD_WAL,
+      LoggingType::HDD_WAL,
   };
 
   // Make sure that ToString and FromString work
@@ -493,9 +493,9 @@ TEST_F(TypesTests, LoggingTypeTest) {
 
 TEST_F(TypesTests, LoggingStatusTypeTest) {
   std::vector<LoggingStatusType> list = {
-      LOGGING_STATUS_TYPE_INVALID,   LOGGING_STATUS_TYPE_STANDBY,
-      LOGGING_STATUS_TYPE_RECOVERY,  LOGGING_STATUS_TYPE_LOGGING,
-      LOGGING_STATUS_TYPE_TERMINATE, LOGGING_STATUS_TYPE_SLEEP};
+      LoggingStatusType::INVALID,   LoggingStatusType::STANDBY,
+      LoggingStatusType::RECOVERY,  LoggingStatusType::LOGGING,
+      LoggingStatusType::TERMINATE, LoggingStatusType::SLEEP};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -515,8 +515,8 @@ TEST_F(TypesTests, LoggingStatusTypeTest) {
 }
 
 TEST_F(TypesTests, LoggerTypeTest) {
-  std::vector<LoggerType> list = {LOGGER_TYPE_INVALID, LOGGER_TYPE_FRONTEND,
-                                  LOGGER_TYPE_BACKEND};
+  std::vector<LoggerType> list = {LoggerType::INVALID, LoggerType::FRONTEND,
+                                  LoggerType::BACKEND};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

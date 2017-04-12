@@ -19,6 +19,7 @@ class PropertyColumns;
 class PropertyProjection;
 class PropertySort;
 class PropertyPredicate;
+class PropertyDistinct;
 
 //===--------------------------------------------------------------------===//
 // Property Visitor
@@ -33,6 +34,7 @@ class PropertyVisitor {
   virtual void Visit(const PropertyProjection *) = 0;
   virtual void Visit(const PropertySort *) = 0;
   virtual void Visit(const PropertyPredicate *) = 0;
+  virtual void Visit(const PropertyDistinct *) = 0;
 };
 
 } /* namespace optimizer */

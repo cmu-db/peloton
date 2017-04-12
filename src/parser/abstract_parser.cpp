@@ -10,20 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "parser/abstract_parser.h"
 
 namespace peloton {
 namespace parser {
 
-AbstractParser::AbstractParser(){
+AbstractParser::AbstractParser() {
   // Nothing to do here !
 }
 
-AbstractParser::~AbstractParser(){
+AbstractParser::~AbstractParser() {
   // Nothing to do here !
 }
-
 
 }  // End parser namespace
 }  // End peloton namespace

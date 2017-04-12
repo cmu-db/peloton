@@ -49,17 +49,20 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       auto col_id = target.first;
       update_primary_key_ =
           target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+      if (update_primary_key_)
+        break;
     }
   }
 }
 
+// FIXME: Should remove when the simple_optimizer tears down
 //  Initializes the update plan without adding any child nodes and
 //  retrieves column ids for the child scan plan.
-void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
+void UpdatePlan::BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
                                         std::vector<oid_t> &column_ids) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
-  table_name = std::string(t_ref->GetTableName());
+  auto table_name = std::string(t_ref->GetTableName());
   auto database_name = t_ref->GetDatabaseName();
   LOG_TRACE("Update database %s table %s", database_name, table_name.c_str());
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
@@ -109,8 +112,9 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
                                                   where_);
 }
 
+// FIXME: Should remove when the simple_optimizer tears down
 // Creates the update plan with sequential scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
+UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree)
     : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
@@ -126,12 +130,14 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
 
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, where_->Copy(), column_ids));
+      new planner::SeqScanPlan(target_table_, where_ != nullptr ?
+                               where_->Copy() : nullptr, column_ids));
   AddChild(std::move(seq_scan_node));
 }
 
+// FIXME: Should remove when the simple_optimizer tears down
 // Creates the update plan with index scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
+UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
                        std::vector<type::Value> &values, oid_t &index_id)

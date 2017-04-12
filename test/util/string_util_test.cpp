@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// boolean_value_test.cpp
+// string_util_test.cpp
 //
-// Identification: test/common/boolean_value_test.cpp
+// Identification: test/common/string_util_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -161,6 +161,35 @@ TEST_F(StringUtilTests, FormatFloatTest) {
     std::string result = StringUtil::Format(x.first, val);
     EXPECT_EQ(x.second, result);
   }
+}
+
+TEST_F(StringUtilTests, SplitTest) {
+  // clang-format off
+  std::vector<std::string> words = {
+		  "Come", "on", "motherfuckers," "come", "on"};
+  // clang-format on
+
+  std::string splitChar = "_";
+  for (int i = 1; i <= 5; i++) {
+    std::string split = StringUtil::Repeat(splitChar, i);
+    EXPECT_EQ(i, split.size());
+    std::ostringstream os;
+    for (auto w : words) {
+      os << split << w;
+    }
+    os << split;
+    std::string input = os.str();
+
+    // Check that we can split both with the single char
+    // and with the full string
+    std::vector<std::string> result0 = StringUtil::Split(input, splitChar);
+    EXPECT_EQ(words.size(), result0.size());
+    EXPECT_EQ(words, result0);
+
+    std::vector<std::string> result1 = StringUtil::Split(os.str(), split);
+    EXPECT_EQ(words.size(), result1.size());
+    EXPECT_EQ(words, result1);
+  }  // FOR
 }
 
 }  // End test namespace

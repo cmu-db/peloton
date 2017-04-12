@@ -17,6 +17,7 @@
 #include <vector>
 #include <atomic>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "catalog/schema.h"
@@ -35,7 +36,6 @@
 #include "storage/tile_group.h"
 #include "storage/table_factory.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 #include "planner/insert_plan.h"
@@ -68,7 +68,7 @@ void InsertTuple(storage::DataTable *table, type::AbstractPool *pool,
   // Start a txn for each insert
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::Tuple> tuple(
-      ExecutorTestsUtil::GetTuple(table, ++loader_tuple_id, pool));
+      TestingExecutorUtil::GetTuple(table, ++loader_tuple_id, pool));
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -100,7 +100,7 @@ TEST_F(InsertPerformanceTests, LoadingTest) {
   UNUSED_ATTRIBUTE oid_t tuple_size = 41;
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
+      TestingExecutorUtil::CreateTable(tuples_per_tilegroup, build_indexes));
 
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 

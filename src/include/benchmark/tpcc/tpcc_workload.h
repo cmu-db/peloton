@@ -51,6 +51,8 @@ void ExecuteUpdate(executor::AbstractExecutor* executor);
 
 void ExecuteDelete(executor::AbstractExecutor* executor);
 
+void PinToCore(size_t core);
+
 }  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton

@@ -125,8 +125,6 @@ const std::string data_constant = std::string("FOO");
 
 NURandConstant nu_rand_const;
 
-const int loading_thread_count = 4;
-
 /////////////////////////////////////////////////////////
 // Create the tables
 /////////////////////////////////////////////////////////
@@ -1704,7 +1702,7 @@ void LoadTPCCDatabase() {
 
   LoadItems();
 
-  if (state.warehouse_count < loading_thread_count) {
+  if (state.warehouse_count < state.loader_count) {
     std::vector<std::unique_ptr<std::thread>> load_threads(state.warehouse_count);
     for (int thread_id = 0; thread_id < state.warehouse_count; ++thread_id) {
       int warehouse_from = thread_id;
@@ -1717,27 +1715,28 @@ void LoadTPCCDatabase() {
     }
 
   } else {
-    std::vector<std::unique_ptr<std::thread>> load_threads(loading_thread_count);
-    int warehouse_per_thread = state.warehouse_count / loading_thread_count;
-    for (int thread_id = 0; thread_id < loading_thread_count - 1; ++thread_id) {
+    std::vector<std::unique_ptr<std::thread>> load_threads(state.loader_count);
+    int warehouse_per_thread = state.warehouse_count / state.loader_count;
+    for (int thread_id = 0; thread_id < state.loader_count - 1; ++thread_id) {
       int warehouse_from = warehouse_per_thread * thread_id;
       int warehouse_to = warehouse_per_thread * (thread_id + 1);
       load_threads[thread_id].reset(new std::thread(LoadWarehouses, warehouse_from, warehouse_to));
     }
-    int thread_id = loading_thread_count - 1;
+    int thread_id = state.loader_count - 1;
     int warehouse_from = warehouse_per_thread * thread_id;
     int warehouse_to = state.warehouse_count;
     load_threads[thread_id].reset(new std::thread(LoadWarehouses, warehouse_from, warehouse_to));
 
-    for (auto thread_id = 0; thread_id < loading_thread_count; ++thread_id) {
+    for (auto thread_id = 0; thread_id < state.loader_count; ++thread_id) {
       load_threads[thread_id]->join();
     }
   }
 
   std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
   UNUSED_ATTRIBUTE double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-  LOG_INFO("loading time = %lf ms", diff);
+  LOG_INFO("database loading time = %lf ms", diff);
 
+  LOG_INFO("============TABLE SIZES==========");
   LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
   LOG_INFO("district count  = %lu", district_table->GetTupleCount());
   LOG_INFO("item count = %lu", item_table->GetTupleCount());

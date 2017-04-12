@@ -14,7 +14,6 @@
 
 #include "catalog/column.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/util.h"
 
 #include "type/types.h"
 
@@ -66,9 +65,8 @@ class Column {
 //===--------------------------------------------------------------------===//
 class TableColumn : public Column {
  public:
-  TableColumn(ColumnID id, type::Type::TypeId type, int size,
-              std::string name, bool inlined, oid_t base_table,
-              oid_t column_index);
+  TableColumn(ColumnID id, type::Type::TypeId type, int size, std::string name,
+              bool inlined, oid_t base_table, oid_t column_index);
 
   oid_t BaseTableOid() const;
 

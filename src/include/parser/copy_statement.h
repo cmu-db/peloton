@@ -15,7 +15,7 @@
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 #include "expression/constant_value_expression.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -39,7 +39,7 @@ struct CopyStatement : SQLStatement {
 
   TableRef* cpy_table;
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 

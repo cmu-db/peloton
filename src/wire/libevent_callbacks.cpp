@@ -152,7 +152,7 @@ void StateMachine(LibeventSocket *conn) {
           conn->pkt_manager.is_started = true;
         } else {
           // Process all other packets
-          status = conn->pkt_manager.ProcessPacket(&conn->rpkt);
+          status = conn->pkt_manager.ProcessPacket(&conn->rpkt, (size_t)conn->thread_id);
         }
 
         if (status == false) {

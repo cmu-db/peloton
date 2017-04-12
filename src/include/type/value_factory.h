@@ -503,9 +503,9 @@ class ValueFactory {
         case Type::VARCHAR: {
           std::string str = value.ToString();
           std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-          if (str == "true" || str == "1")
+          if (str == "true" || str == "1" || str == "t")
             return ValueFactory::GetBooleanValue(true);
-          else if (str == "false" || str == "0")
+          else if (str == "false" || str == "0" || str == "f")
             return ValueFactory::GetBooleanValue(false);
           else
             throw Exception("Boolean value format error.");

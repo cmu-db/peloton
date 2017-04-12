@@ -31,7 +31,7 @@ class TableParse : public AbstractParse {
 
   /*
   explicit TableParse(RangeVar *table_node) {
-    entity_type_ = ENTITY_TYPE_TABLE;
+    entity_type_ = EntityType::TABLE;
 
     entity_name_ = std::string(table_node->relname);
 
@@ -45,7 +45,7 @@ class TableParse : public AbstractParse {
 
  private:
   // Type of entity
-  EntityType entity_type_ = ENTITY_TYPE_INVALID;
+  EntityType entity_type_ = EntityType::INVALID;
 
   // Name of entity
   std::string entity_name_;

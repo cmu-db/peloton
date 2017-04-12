@@ -59,6 +59,98 @@ class LogicalFilterToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalLimitToPhysical
+class LogicalLimitToPhysical : public Rule {
+ public:
+  LogicalLimitToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalDeleteToPhysical
+class LogicalDeleteToPhysical : public Rule {
+ public:
+  LogicalDeleteToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalUpdateToPhysical
+class LogicalUpdateToPhysical : public Rule {
+ public:
+  LogicalUpdateToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalInsertToPhysical
+class LogicalInsertToPhysical : public Rule {
+ public:
+  LogicalInsertToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalGroupByToHashGroupBy
+class LogicalGroupByToHashGroupBy : public Rule {
+ public:
+  LogicalGroupByToHashGroupBy();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalGroupByToSortGroupBy
+class LogicalGroupByToSortGroupBy : public Rule {
+ public:
+  LogicalGroupByToSortGroupBy();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalAggregateToPhysical
+class LogicalAggregateToPhysical : public Rule {
+ public:
+  LogicalAggregateToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 class InnerJoinToInnerNLJoin : public Rule {
  public:

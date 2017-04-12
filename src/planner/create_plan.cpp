@@ -12,7 +12,7 @@
 
 #include "planner/create_plan.h"
 
-#include "../include/parser/create_statement.h"
+#include "parser/create_statement.h"
 #include "storage/data_table.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
@@ -38,33 +38,46 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   table_name = parse_tree->GetTableName();
   database_name = parse_tree->GetDatabaseName();
   std::vector<catalog::Column> columns;
-  std::vector<catalog::Constraint> column_contraints;
+  std::vector<catalog::Constraint> column_constraints;
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
+      // TODO: Currently, the parser will parse the foreign key constraint and
+      // put it into a ColumnDefinition. Later when we implement constraint
+      // we may need to change this. Just skip foreign key constraint for now
+      if (col->type == parser::ColumnDefinition::FOREIGN)
+        continue;
+        
       type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
 
       // Check main constraints
       if (col->primary) {
-        catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
-        column_contraints.push_back(constraint);
-        LOG_TRACE("Added a primary key constraint on column \"%s\"", col->name);
+        catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a primary key constraint on column \"%s\"", col->name);
       }
 
       if (col->not_null) {
-        catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL, "con_not_null");
-        column_contraints.push_back(constraint);
+        catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a not-null constraint on column \"%s\"", col->name);
+      }
+
+      if (col->unique) {
+        catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a unique constraint on column \"%s\"", col->name);
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string(col->name), false);
-      for (auto con : column_contraints) {
+                                    std::string(col->name), false);
+      for (auto con : column_constraints) {
         column.AddConstraint(con);
       }
 
-      column_contraints.clear();
+      column_constraints.clear();
       columns.push_back(column);
     }
     catalog::Schema *schema = new catalog::Schema(columns);

@@ -18,10 +18,11 @@
 #include "common/harness.h"
 
 #include "brain/brain_util.h"
+
+#include "executor/testing_executor_util.h"
 #include "brain/sample.h"
 #include "common/generator.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executor_tests_util.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "util/file_util.h"
