@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vector"
+#include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
 #include "common/logger.h"
 #include "storage/tuple.h"
@@ -11,6 +12,19 @@ namespace commands {
 class Trigger {
  public:
   Trigger(const planner::CreatePlan& plan);
+  Trigger(const Trigger& that) {
+    trigger_name = that.trigger_name;
+    trigger_funcname = that.trigger_funcname;
+    trigger_args = that.trigger_args;
+    trigger_columns = that.trigger_columns;
+    trigger_when = that.trigger_when->Copy();
+    trigger_type = that.trigger_type;
+  }
+  ~Trigger() {
+    if (trigger_when) {
+      delete trigger_when;
+    }
+  }
   inline int16_t GetTriggerType() { return trigger_type; }
   inline std::string GetTriggerName() { return trigger_name; }
   storage::Tuple* ExecCallTriggerFunc(storage::Tuple *new_tuple);
@@ -20,7 +34,7 @@ class Trigger {
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when;
+  expression::AbstractExpression* trigger_when = nullptr;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
 };

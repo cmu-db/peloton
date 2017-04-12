@@ -197,6 +197,14 @@ TEST_F(CreateTests, CreatingTrigger) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+
+  if (when) {
+    delete when;
+  }
+
+  if (stmt_list) {
+    delete stmt_list;
+  }
 }
 
 }  // End test namespace

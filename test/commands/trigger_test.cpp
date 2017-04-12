@@ -75,6 +75,10 @@ TEST_F(TriggerTests, BasicTest) {
       commands::EnumTriggerType::BEFORE_INSERT_ROW));
   LOG_INFO("before test ExecBSInsertTriggers");
   trigger_list.ExecBRInsertTriggers();
+
+  delete stmt_list1;
+  delete stmt_list2;
+
 }
 }
 }

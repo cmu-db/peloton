@@ -104,7 +104,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   if (parse_tree->type == parse_tree->CreateType::kTrigger) {
     create_type = CreateType::TRIGGER;
     trigger_name = std::string(parse_tree->trigger_name);
-    trigger_when = parse_tree->trigger_when;
+    trigger_when = parse_tree->trigger_when->Copy();
     trigger_type = parse_tree->trigger_type;
 
     for (auto s : *(parse_tree->trigger_funcname)) {
