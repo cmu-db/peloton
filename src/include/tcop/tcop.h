@@ -51,7 +51,8 @@ class TrafficCop {
   ResultType ExecuteStatement(const std::string &query,
                           std::vector<StatementResult> &result,
                           std::vector<FieldInfo> &tuple_descriptor,
-                          int &rows_changed, std::string &error_message);
+                          int &rows_changed, std::string &error_message,
+                          const size_t thread_id = 0);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   ResultType ExecuteStatement(
@@ -59,13 +60,15 @@ class TrafficCop {
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<StatementResult> &result,
-      int &rows_change, std::string &error_message);
+      int &rows_change, std::string &error_message,
+      const size_t thread_id = 0);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
-  bridge::peloton_status ExecuteStatementPlan(
+  executor::ExecuteResult ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-      std::vector<StatementResult> &result, const std::vector<int> &result_format);
+      std::vector<StatementResult> &result, const std::vector<int> &result_format,
+      const size_t thread_id = 0);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
@@ -98,7 +101,7 @@ class TrafficCop {
 
   TcopTxnState &GetCurrentTxnState();
 
-  ResultType BeginQueryHelper();
+  ResultType BeginQueryHelper(const size_t thread_id);
 
   ResultType CommitQueryHelper();
 

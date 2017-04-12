@@ -12,7 +12,7 @@
 
 #include "planner/delete_plan.h"
 
-#include "../include/parser/delete_statement.h"
+#include "parser/delete_statement.h"
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
@@ -64,7 +64,7 @@ void DeletePlan::BuildInitialDeletePlan(
 
 // Creates the delete plan. The index plan should be added outside
 DeletePlan::DeletePlan(storage::DataTable *table,
-                       expression::AbstractExpression *predicate) {
+                       const expression::AbstractExpression *predicate) {
   target_table_ = table;
 
   // if expr is null , delete all tuples from table

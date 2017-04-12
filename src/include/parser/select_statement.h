@@ -12,9 +12,10 @@
 
 #pragma once
 
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
+#include <vector>
 
 namespace peloton {
 namespace parser {
@@ -28,15 +29,21 @@ namespace parser {
 typedef enum { kOrderAsc, kOrderDesc } OrderType;
 
 struct OrderDescription {
-  OrderDescription(OrderType type, expression::AbstractExpression* expr)
-      : type(type), expr(expr) {}
+  OrderDescription() {}
 
-  virtual ~OrderDescription() { delete expr; }
+  virtual ~OrderDescription() {
+    delete types;
 
-  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+    for (auto expr : *exprs)
+      delete expr;
 
-  OrderType type;
-  expression::AbstractExpression* expr;
+    delete exprs;
+  }
+
+  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+
+  std::vector<OrderType>* types;
+  std::vector<expression::AbstractExpression*>* exprs;
 };
 
 /**
@@ -49,7 +56,7 @@ struct LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
 
-  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -62,15 +69,15 @@ struct GroupByDescription {
   GroupByDescription() : columns(NULL), having(NULL) {}
 
   ~GroupByDescription() {
-    if (columns) {
+    if (columns != nullptr) {
       for (auto col : *columns) delete col;
       delete columns;
     }
-
-    delete having;
+    if (having != nullptr)
+      delete having;
   }
 
-  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
   std::vector<expression::AbstractExpression*>* columns;
   expression::AbstractExpression* having;
@@ -111,7 +118,7 @@ struct SelectStatement : SQLStatement {
     delete limit;
   }
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 

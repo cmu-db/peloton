@@ -20,7 +20,7 @@
 #include "storage/tuple_iterator.h"
 
 namespace peloton {
-namespace bridge {
+namespace executor {
 
 /*
  * Added for network invoking efficiently
@@ -42,11 +42,11 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-peloton_status PlanExecutor::ExecutePlan(
+ExecuteResult PlanExecutor::ExecutePlan(
     const planner::AbstractPlan *plan, concurrency::Transaction *txn,
     const std::vector<type::Value> &params, std::vector<StatementResult> &result,
     const std::vector<int> &result_format) {
-  peloton_status p_status;
+  ExecuteResult p_status;
   if (plan == nullptr) return p_status;
 
   LOG_TRACE("PlanExecutor Start ");
@@ -339,7 +339,10 @@ executor::AbstractExecutor *BuildExecutorTree(
       LOG_TRACE("Adding Copy Executer");
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
-
+    case PlanNodeType::POPULATE_INDEX:
+      LOG_TRACE("Adding PopulateIndex Executor");
+      child_executor = new executor::PopulateIndexExecutor(plan, executor_context);
+      break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
                 PlanNodeTypeToString(plan_node_type).c_str());
@@ -380,5 +383,5 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   }
 }
 
-}  // namespace bridge
+}  // namespace executor
 }  // namespace peloton

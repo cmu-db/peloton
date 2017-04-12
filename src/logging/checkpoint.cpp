@@ -40,11 +40,11 @@ void Checkpoint::MainLoop(void) {
   LOG_TRACE("Checkpoint Standby Mode");
 
   // Standby before we need to do RECOVERY
-  checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_STANDBY, false);
+  checkpoint_manager.WaitForModeTransition(CheckpointStatus::STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
   switch (checkpoint_manager.GetCheckpointStatus()) {
-    case CHECKPOINT_STATUS_RECOVERY: {
+    case CheckpointStatus::RECOVERY: {
       LOG_TRACE("Checkpoint Recovery Mode");
       /////////////////////////////////////////////////////////////////////
       // RECOVERY MODE
@@ -53,11 +53,11 @@ void Checkpoint::MainLoop(void) {
       // First, do recovery if needed
       DoRecovery();
       LOG_TRACE("Checkpoint DoRecovery Done");
-      checkpoint_status = CHECKPOINT_STATUS_DONE_RECOVERY;
+      checkpoint_status = CheckpointStatus::DONE_RECOVERY;
       break;
     }
 
-    case CHECKPOINT_STATUS_CHECKPOINTING: {
+    case CheckpointStatus::CHECKPOINTING: {
       LOG_TRACE("Checkpoint Checkpointing Mode");
     } break;
 
@@ -65,8 +65,8 @@ void Checkpoint::MainLoop(void) {
       break;
   }
 
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_DONE_RECOVERY);
-  checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_CHECKPOINTING,
+  checkpoint_manager.SetCheckpointStatus(CheckpointStatus::DONE_RECOVERY);
+  checkpoint_manager.WaitForModeTransition(CheckpointStatus::CHECKPOINTING,
                                            true);
 
   /////////////////////////////////////////////////////////////////////
@@ -74,8 +74,8 @@ void Checkpoint::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
   // Periodically, wake up and do checkpointing
   while (checkpoint_manager.GetCheckpointStatus() ==
-         CHECKPOINT_STATUS_CHECKPOINTING) {
-    checkpoint_status = CHECKPOINT_STATUS_CHECKPOINTING;
+         CheckpointStatus::CHECKPOINTING) {
+    checkpoint_status = CheckpointStatus::CHECKPOINTING;
     sleep(checkpoint_interval_);
     DoCheckpoint();
   }
@@ -98,7 +98,7 @@ void Checkpoint::InitDirectory() {
 
 std::unique_ptr<Checkpoint> Checkpoint::GetCheckpoint(
     CheckpointType checkpoint_type, bool disable_file_access) {
-  if (checkpoint_type == CHECKPOINT_TYPE_NORMAL) {
+  if (checkpoint_type == CheckpointType::NORMAL) {
     std::unique_ptr<Checkpoint> checkpoint(
         new SimpleCheckpoint(disable_file_access));
     return std::move(checkpoint);

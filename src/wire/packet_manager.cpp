@@ -294,7 +294,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 }
 
 // The Simple Query Protocol
-void PacketManager::ExecQueryMessage(InputPacket *pkt) {
+void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
 
@@ -323,7 +323,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
 
       // execute the query using tcop
       auto status = traffic_cop_->ExecuteStatement(
-          query, result, tuple_descriptor, rows_affected, error_message);
+          query, result, tuple_descriptor, rows_affected, error_message,
+          thread_id);
 
       // check status
       if (status == ResultType::FAILURE) {
@@ -768,7 +769,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
+void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
@@ -814,7 +815,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
 
   auto status = traffic_cop_->ExecuteStatement(
       statement, param_values, unnamed, param_stat, result_format_, results,
-      rows_affected, error_message);
+      rows_affected, error_message,
+      thread_id);
 
   switch (status) {
     case ResultType::FAILURE:
@@ -879,7 +881,7 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(InputPacket *pkt) {
+bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -887,7 +889,7 @@ bool PacketManager::ProcessPacket(InputPacket *pkt) {
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      ExecQueryMessage(pkt);
+      ExecQueryMessage(pkt, thread_id);
       force_flush = true;
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
@@ -904,7 +906,7 @@ bool PacketManager::ProcessPacket(InputPacket *pkt) {
     } break;
     case NetworkMessageType::EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
-      ExecExecuteMessage(pkt);
+      ExecExecuteMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");

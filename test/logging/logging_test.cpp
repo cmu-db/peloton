@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/testing_executor_util.h"
+#include "logging/testing_logging_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 
@@ -22,9 +24,7 @@
 #include "storage/table_factory.h"
 #include "storage/tile.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "logging/logging_tests_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -42,7 +42,7 @@ namespace test {
 class LoggingTests : public PelotonTest {};
 
 TEST_F(LoggingTests, BasicLoggingTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -70,7 +70,7 @@ TEST_F(LoggingTests, BasicLoggingTest) {
 }
 
 TEST_F(LoggingTests, AllCommittedTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -99,7 +99,7 @@ TEST_F(LoggingTests, AllCommittedTest) {
 }
 
 TEST_F(LoggingTests, LaggardTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -138,7 +138,7 @@ TEST_F(LoggingTests, LaggardTest) {
 }
 
 TEST_F(LoggingTests, FastLoggerTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -182,7 +182,7 @@ TEST_F(LoggingTests, FastLoggerTest) {
 }
 
 TEST_F(LoggingTests, BothPreparingTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -235,7 +235,7 @@ TEST_F(LoggingTests, BothPreparingTest) {
 }
 
 TEST_F(LoggingTests, TwoRoundTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -276,7 +276,7 @@ TEST_F(LoggingTests, TwoRoundTest) {
 }
 
 TEST_F(LoggingTests, InsertUpdateDeleteTest) {
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -317,15 +317,15 @@ TEST_F(LoggingTests, InsertUpdateDeleteTest) {
 }
 
 TEST_F(LoggingTests, BasicLogManagerTest) {
-  peloton_logging_mode = LOGGING_TYPE_INVALID;
+  peloton_logging_mode = LoggingType::INVALID;
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.DropFrontendLoggers();
-  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  log_manager.SetLoggingStatus(LoggingStatusType::INVALID);
   // just start, write a few records and exit
   catalog::Schema *table_schema = new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(2),
-       ExecutorTestsUtil::GetColumnInfo(3)});
+      {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
+       TestingExecutorUtil::GetColumnInfo(2),
+       TestingExecutorUtil::GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
 
   // Create table.
@@ -341,16 +341,16 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   concurrency::TransactionManager &txn_manager =
       concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ExecutorTestsUtil::PopulateTable(table, 5, true, false, false, txn);
+  TestingExecutorUtil::PopulateTable(table, 5, true, false, false, txn);
   txn_manager.CommitTransaction(txn);
-  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
+  peloton_logging_mode = LoggingType::NVM_WAL;
 
   log_manager.SetSyncCommit(true);
   EXPECT_FALSE(log_manager.ContainsFrontendLogger());
   log_manager.StartStandbyMode();
   log_manager.GetFrontendLogger(0)->SetTestMode(true);
   log_manager.StartRecoveryMode();
-  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
+  log_manager.WaitForModeTransition(LoggingStatusType::LOGGING, true);
   EXPECT_TRUE(log_manager.ContainsFrontendLogger());
   log_manager.SetGlobalMaxFlushedCommitId(4);
   concurrency::Transaction test_txn;

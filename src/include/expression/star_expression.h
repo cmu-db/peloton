@@ -13,6 +13,7 @@
 #pragma once
 
 #include "expression/star_expression.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace expression {
@@ -21,28 +22,25 @@ namespace expression {
 // StarExpression
 //===----------------------------------------------------------------------===//
 
-class StarExpression: public AbstractExpression {
-public:
-  StarExpression() :
-      AbstractExpression(ExpressionType::STAR){
-  }
+class StarExpression : public AbstractExpression {
+ public:
+  StarExpression() : AbstractExpression(ExpressionType::STAR) {}
 
-  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-  UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-  UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+  type::Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     return type::ValueFactory::GetBooleanValue(true);
   }
 
-  AbstractExpression * Copy() const{
-    return new StarExpression(*this);
-  }
+  AbstractExpression *Copy() const { return new StarExpression(*this); }
 
-protected:
-  StarExpression(const FunctionExpression& other) :
-      AbstractExpression(other) {
-  }
-private:
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
+ protected:
+  StarExpression(const AbstractExpression &other) : AbstractExpression(other) {}
+
+ private:
 };
 
 }  // End expression namespace

@@ -84,16 +84,16 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t thread_id) {
+
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
-  txn_id_t txn_id = GetNextTransactionId();
-  cid_t begin_cid = GetNextCommitId();
-  Transaction *txn = new Transaction(txn_id, begin_cid);
+  Transaction *txn = nullptr;
 
-  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  // transaction processing with centralized epoch manager
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
+  txn = new Transaction(begin_cid, thread_id);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -104,15 +104,12 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   return txn;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
-  txn_id_t txn_id = READONLY_TXN_ID;
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
+Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
+  Transaction *txn = nullptr;
 
-  cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-  Transaction *txn = new Transaction(txn_id, begin_cid, true);
-
-  auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  // transaction processing with centralized epoch manager
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
+  txn = new Transaction(begin_cid, thread_id, true);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -125,29 +122,34 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
 
 void TimestampOrderingTransactionManager::EndTransaction(
     Transaction *current_txn) {
-  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+  
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
+
+
+  // logging logic
   auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().RecycleTransaction(
-          current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(),
-          GC_SET_TYPE_COMMITTED);
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
     }
     // Log the transaction's commit
     // For time stamp ordering, every transaction only has one timestamp
     log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().RecycleTransaction(
-          current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
     }
     log_manager.DoneLogging();
   }
 
   delete current_txn;
   current_txn = nullptr;
-
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
@@ -157,13 +159,16 @@ void TimestampOrderingTransactionManager::EndTransaction(
 
 void TimestampOrderingTransactionManager::EndReadonlyTransaction(
     Transaction *current_txn) {
-  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
-  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(
-      current_txn->GetEpochId());
 
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
+  
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
+  
   delete current_txn;
   current_txn = nullptr;
-
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
@@ -211,7 +216,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(
       PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
-    } else if (current_txn->GetRWType(position) == RW_TYPE_READ_OWN) {
+    } else if (current_txn->GetRWType(position) == RWType::READ_OWN) {
       // the ownership is from a select-for-update read operation
       return true;
     } else {
@@ -285,7 +290,7 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
       // the only version that is visible is the newly inserted/updated one.
       return VisibilityType::OK;
     } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) ==
-               RW_TYPE_READ_OWN) {
+               RWType::READ_OWN) {
       // the ownership is from a select-for-update read operation
       return VisibilityType::OK;
     } else if (tuple_end_cid == INVALID_CID) {
@@ -430,7 +435,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // Can not acquire ownership
       return false;
     }
-    // Promote to RW_TYPE_READ_OWN
+    // Promote to RWType::READ_OWN
     current_txn->RecordReadOwn(location);
   }
 
@@ -570,20 +575,22 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     ItemPointer *index_entry_ptr =
         tile_group_header->GetIndirection(old_location.offset);
 
-    PL_ASSERT(index_entry_ptr != nullptr);
+    if (index_entry_ptr != nullptr) {
 
-    new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
+      new_tile_group_header->SetIndirection(new_location.offset,
+                                            index_entry_ptr);
 
-    // Set the index header in an atomic way.
-    // We do it atomically because we don't want any one to see a half-done
-    // pointer.
-    // In case of contention, no one can update this pointer when we are
-    // updating it
-    // because we are holding the write lock. This update should success in its
-    // first trial.
-    UNUSED_ATTRIBUTE auto res =
-        AtomicUpdateItemPointer(index_entry_ptr, new_location);
-    PL_ASSERT(res == true);
+      // Set the index header in an atomic way.
+      // We do it atomically because we don't want any one to see a half-done
+      // pointer.
+      // In case of contention, no one can update this pointer when we are
+      // updating it
+      // because we are holding the write lock. This update should success in
+      // its first trial.
+      UNUSED_ATTRIBUTE auto res =
+          AtomicUpdateItemPointer(index_entry_ptr, new_location);
+      PL_ASSERT(res == true);
+    }
   }
 
   // Add the old tuple into the update set
@@ -788,12 +795,12 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+      if (tuple_entry.second == RWType::READ_OWN) {
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RWType::UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
         ItemPointer new_version =
@@ -821,13 +828,13 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_UPDATE;
+        gc_set->operator[](tile_group_id)[tuple_slot] = false;
 
         // add to log manager
         log_manager.LogUpdate(
             end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
 
-      } else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -851,13 +858,18 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_DELETE;
+        // we need to recycle both old and new versions.
+        // we require the GC to delete tuple from index only once.
+        // recycle old version, delete from index
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        // recycle new version (which is an empty version), do not delete from index
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
 
         // add to log manager
         log_manager.LogDelete(end_commit_id,
                               ItemPointer(tile_group_id, tuple_slot));
 
-      } else if (tuple_entry.second == RW_TYPE_INSERT) {
+      } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
         // set the begin commit id to persist insert
@@ -875,7 +887,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         log_manager.LogInsert(end_commit_id,
                               ItemPointer(tile_group_id, tuple_slot));
 
-      } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
+      } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
 
@@ -889,7 +901,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INS_DEL;
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
 
         // no log is needed for this case
       }
@@ -936,12 +948,12 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+      if (tuple_entry.second == RWType::READ_OWN) {
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RWType::UPDATE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -997,10 +1009,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] =
-            RW_TYPE_UPDATE;
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
 
-      } else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -1052,10 +1063,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] =
-            RW_TYPE_DELETE;
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
 
-      } else if (tuple_entry.second == RW_TYPE_INSERT) {
+      } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -1065,9 +1075,10 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INSERT;
+        // delete from index
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
 
-      } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
+      } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -1077,7 +1088,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INS_DEL;
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
       }
     }
   }

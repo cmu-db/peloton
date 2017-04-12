@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/column_manager.h"
 
 #include <tuple>
@@ -40,14 +39,14 @@ Column *ColumnManager::LookupColumnByID(ColumnID id) {
   return id_to_column.at(id);
 }
 
-Column *ColumnManager::AddBaseColumn(type::Type::TypeId type, int size, std::string name,
-                                     bool inlined, oid_t base_table,
-                                     oid_t column_index) {
+Column *ColumnManager::AddBaseColumn(type::Type::TypeId type, int size,
+                                     std::string name, bool inlined,
+                                     oid_t base_table, oid_t column_index) {
   LOG_TRACE(
       "Adding base column: %s, type %d, size %d, inlined %s, "
       "table %u, col %u",
-      name.c_str(), type, size,
-      inlined ? "yes" : "no", base_table, column_index);
+      name.c_str(), type, size, inlined ? "yes" : "no", base_table,
+      column_index);
   Column *col = new TableColumn(next_column_id++, type, size, name, inlined,
                                 base_table, column_index);
 
@@ -59,11 +58,10 @@ Column *ColumnManager::AddBaseColumn(type::Type::TypeId type, int size, std::str
   return col;
 }
 
-Column *ColumnManager::AddExprColumn(type::Type::TypeId type, int size, std::string name,
-                                     bool inlined) {
+Column *ColumnManager::AddExprColumn(type::Type::TypeId type, int size,
+                                     std::string name, bool inlined) {
   LOG_TRACE("Adding expr column: %s, type %d, size %d, inlined %s",
-            name.c_str(), type, size,
-            inlined ? "yes" : "no");
+            name.c_str(), type, size, inlined ? "yes" : "no");
   Column *col = new ExprColumn(next_column_id++, type, size, name, inlined);
 
   id_to_column.insert(std::pair<ColumnID, Column *>(col->ID(), col));

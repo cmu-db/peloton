@@ -155,6 +155,9 @@ class configuration {
   // index type
   IndexType index;
 
+  // epoch type
+  EpochType epoch;
+
   // scale factor
   double scale_factor;
 
@@ -190,6 +193,9 @@ class configuration {
 
   // number of gc threads
   bool gc_backend_count;
+
+  // number of loaders
+  int loader_count;
 
   // throughput
   double throughput = 0;

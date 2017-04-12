@@ -6,7 +6,7 @@
 //
 // Identification: src/include/index/index_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,23 +15,17 @@
 #include <iostream>
 #include <sstream>
 
-#include "type/value_peeker.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "storage/tuple.h"
 #include "index/index.h"
+#include "storage/tuple.h"
+#include "type/value_peeker.h"
 
 #include <boost/functional/hash.hpp>
 
-namespace peloton {
-namespace index {
+// There is nothing else to put in here expect the includes for
+// the different index key implementations that we have
 
-}  // End index namespace
-}  // End peloton namespace
-
-#include "ints_key.h"
-#include "generic_key.h" 
-#include "tuple_key.h" 
-
-
-
+#include "compact_ints_key.h"
+#include "generic_key.h"
+#include "tuple_key.h"

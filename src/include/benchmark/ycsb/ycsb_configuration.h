@@ -40,6 +40,9 @@ class configuration {
   // index type
   IndexType index;
 
+  // epoch type
+  EpochType epoch;
+
   // size of the table
   int scale_factor;
 
@@ -74,7 +77,10 @@ class configuration {
   bool gc_mode;
 
   // number of gc threads
-  bool gc_backend_count;
+  int gc_backend_count;
+
+  // number of loaders
+  int loader_count;
 
   // throughput
   double throughput = 0;

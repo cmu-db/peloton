@@ -9,8 +9,8 @@
 
 ## What Is Peloton?
 
-* Peloton is a self-driving SQL database management system.
-* Integrated artificial intelligence components that enable autonomous optimizations.
+* A self-driving SQL database management system.
+* Integrated artificial intelligence components that enable autonomous optimization.
 * Native support for byte-addressable non-volatile memory (NVM) storage technology.
 * Lock-free multi-version concurrency control to support real-time analytics.
 * Postgres wire-protocol and JDBC compatible.
@@ -19,9 +19,9 @@
 
 ## What Problem Does Peloton Solve?
 
-In the last two decades, both researchers and vendors have built advisory tools to assist database administrators in various aspects of system tuning and physical design. Most of this previous work, however, is incomplete because they still require humans to make the final decisions about any changes to the database and are reactionary measures that fix problems after they occur.
+During last two decades, researchers and vendors have built advisory tools to assist database administrators in system tuning and physical design. This work is incomplete because they still require the final decisions on changes in the database, and are reactionary measures that fix problems after they occur.
 
-What is needed for a truly “self-driving” database management system (DBMS) is a new architecture that is designed for autonomous operation. This is different than earlier attempts because all aspects of the system are controlled by an integrated planning component that not only optimizes the system for the current workload, but also predicts future workload trends so that the system can prepare itself accordingly. With this, the DBMS can support all of the previous tuning techniques without requiring a human to determine the right way and proper time to deploy them. It also enables new optimizations that are important for modern high-performance DBMSs, but which are not possible today because the complexity of managing these systems has surpassed the abilities of human experts.
+A new architecture is needed for a truly “self-driving” database management system (DBMS) which is designed for autonomous operations. This is different than earlier attempts because all aspects of the system are controlled by an integrated planning component. In addition to optimizing the system for the current workload, it predicts future workload trends which lets the system prepare itself accordingly. This eliminates the requirement of a human to determine the right way, and reduces time taken to deploy the changes, optimizing the DBMS to provide high-performance. Auto-management of these systems has surpassed the abilities of human experts.
 
 Peloton is a relational database management system designed for fully autonomous optimization of hybrid workloads. See the [peloton wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") for more information.
 
@@ -31,11 +31,13 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 
 ## Supported Platforms
 
-Peloton is known to work on the following platforms. Please note that it will not compile on 32-bit systems.
+Peloton has been tested to work on the following platforms:
 
 * Ubuntu Linux 14.04+ (64-bit)
 * Fedora Linux 24+ (64-bit)
 * <s>Mac OS X 10.9+ (64-bit)</s>
+
+ Please note that it will not compile on 32-bit systems.
 
 ## Development / Contributing
 
@@ -43,11 +45,11 @@ We invite you to help us build the future of self-driving DBMSs. Please look up 
 
 ## Issues
 
-Before reporting a problem, check out this how to [file an issue](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#file-an-issue) guide.
+Before reporting a problem, please check how to [file an issue](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#file-an-issue) guide.
 
 ## Status
 
-_Technology preview_: currently unsupported, may be functionally incomplete or unsuitable for production use.
+_Technology preview_: currently unsupported, possibly due to incomplete functionality or unsuitability for production use.
 
 ## Contributors
 
@@ -55,5 +57,5 @@ See the [people page](https://github.com/cmu-db/peloton/graphs/contributors) for
 
 ## License
 
-Copyright (c) 2014-16 [CMU Database Group](http://db.cs.cmu.edu/)  
+Copyright (c) 2014-17 [CMU Database Group](http://db.cs.cmu.edu/)  
 Licensed under the [Apache License](LICENSE).

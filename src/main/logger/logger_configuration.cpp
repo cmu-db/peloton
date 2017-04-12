@@ -59,8 +59,8 @@ static struct option opts[] = {
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
-  if (state.logging_type <= LOGGING_TYPE_INVALID) {
-    LOG_ERROR("Invalid logging_type :: %d", state.logging_type);
+  if (state.logging_type <= LoggingType::INVALID) {
+    LOG_ERROR("Invalid logging_type :: %d", static_cast<int>(state.logging_type));
     exit(EXIT_FAILURE);
   }
 
@@ -221,7 +221,7 @@ static void ValidateLogFileDir(configuration& state) {
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Logger Values
-  state.logging_type = LOGGING_TYPE_SSD_WAL;
+  state.logging_type = LoggingType::SSD_WAL;
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
@@ -232,7 +232,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
-  state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
+  state.checkpoint_type = CheckpointType::INVALID;
 
   // YCSB Default Values
   ycsb::state.index = IndexType::BWTREE;
@@ -386,11 +386,11 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
-  if (state.checkpoint_type == CHECKPOINT_TYPE_NORMAL &&
-      (state.logging_type == LOGGING_TYPE_NVM_WAL ||
-       state.logging_type == LOGGING_TYPE_SSD_WAL ||
-       state.logging_type == LOGGING_TYPE_HDD_WAL)) {
-    peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
+  if (state.checkpoint_type == CheckpointType::NORMAL &&
+      (state.logging_type == LoggingType::NVM_WAL ||
+       state.logging_type == LoggingType::SSD_WAL ||
+       state.logging_type == LoggingType::HDD_WAL)) {
+    peloton_checkpoint_mode = CheckpointType::NORMAL;
   }
 
   // Print Logger configuration

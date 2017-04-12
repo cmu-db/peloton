@@ -68,7 +68,7 @@ namespace logger {
 void WriteOutput() {
   std::ofstream out("outputfile-log.summary");
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, state.logging_type,
+  LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, static_cast<int>(state.logging_type),
            state.nvm_latency, state.pcommit_latency, state.flush_mode,
            state.asynchronous_mode);
 
@@ -95,7 +95,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
   auto& log_manager = logging::LogManager::GetInstance();
 
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+  if (peloton_checkpoint_mode != CheckpointType::INVALID) {
     auto& checkpoint_manager =
         peloton::logging::CheckpointManager::GetInstance();
 
@@ -107,7 +107,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
                       &checkpoint_manager);
       checkpoint_thread.swap(local_thread);
       checkpoint_manager.WaitForModeTransition(
-          peloton::CHECKPOINT_STATUS_STANDBY, true);
+          peloton::CheckpointStatus::STANDBY, true);
 
       // Clean up table tile state before recovery from checkpoint
       log_manager.PrepareRecovery();
@@ -117,27 +117,27 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
 
       // Wait for standby mode
       checkpoint_manager.WaitForModeTransition(
-          peloton::CHECKPOINT_STATUS_DONE_RECOVERY, true);
+          peloton::CheckpointStatus::DONE_RECOVERY, true);
     }
 
     // start checkpointing mode after recovery
-    if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    if (peloton_checkpoint_mode != CheckpointType::INVALID) {
       if (!checkpoint_manager.IsInCheckpointingMode()) {
         // Now, enter CHECKPOINTING mode
         checkpoint_manager.SetCheckpointStatus(
-            peloton::CHECKPOINT_STATUS_CHECKPOINTING);
+            peloton::CheckpointStatus::CHECKPOINTING);
       }
     }
   }
 
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
       // Wait for standby mode
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
       log_thread.swap(local_thread);
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
+      log_manager.WaitForModeTransition(peloton::LoggingStatusType::STANDBY,
                                         true);
 
       // Clean up database tile state before recovery from checkpoint
@@ -147,7 +147,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       log_manager.StartRecoveryMode();
 
       // Wait for logging mode
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
+      log_manager.WaitForModeTransition(peloton::LoggingStatusType::LOGGING,
                                         true);
 
       // Done recovery
@@ -286,7 +286,7 @@ bool PrepareLogFile() {
 
     case ASYNCHRONOUS_TYPE_DISABLED:
       // No logging
-      peloton_logging_mode = LOGGING_TYPE_INVALID;
+      peloton_logging_mode = LoggingType::INVALID;
       break;
     case ASYNCHRONOUS_TYPE_NO_WRITE:
       log_manager.SetNoWrite(true);
@@ -307,14 +307,14 @@ bool PrepareLogFile() {
   BuildLog();
 
   // Stop frontend logger if in a valid logging mode
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+  if (peloton_checkpoint_mode != CheckpointType::INVALID) {
     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
-    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+    checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
+    checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
     checkpoint_thread.join();
   }
   // Stop frontend logger if in a valid logging mode
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
     if (log_manager.EndLogging()) {
       logging_thread.join();
@@ -371,7 +371,7 @@ void DoRecovery() {
   timer.Stop();
 
   // Synchronize and finish recovery
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     if (log_manager.EndLogging()) {
       thread.join();
     } else {
@@ -380,9 +380,9 @@ void DoRecovery() {
   }
   auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
   // Synchronize and finish recovery
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
-    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
-    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+  if (peloton_checkpoint_mode != CheckpointType::INVALID) {
+    checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
+    checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
     cp_thread.join();
   }
 

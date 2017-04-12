@@ -89,14 +89,18 @@ enum class GarbageCollectionType {
 };
 
 //===--------------------------------------------------------------------===//
-// Value types
+// Postgres Value Types
 // This file defines all the types that we will support
 // We do not allow for user-defined types, nor do we try to do anything dynamic.
+//
+// For more information, see 'pg_type.h' in Postgres
+// https://github.com/postgres/postgres/blob/master/src/include/catalog/pg_type.h#L273
 //===--------------------------------------------------------------------===//
 
 enum class PostgresValueType {
   INVALID = INVALID_TYPE_ID,
   BOOLEAN = 16,
+  TINYINT = 16, // BOOLEAN is an alias for TINYINT
   SMALLINT = 21,
   INTEGER = 23,
   VARBINARY = 17,
@@ -275,7 +279,11 @@ enum class ExpressionType {
   //===--------------------------------------------------------------------===//
   CAST = 900
 };
-std::string ExpressionTypeToString(ExpressionType type);
+
+// When short_str is true, return a short version of ExpressionType string
+// For example, + instead of Operator_Plus. It's used to generate the
+// expression name
+std::string ExpressionTypeToString(ExpressionType type, bool short_str = false);
 ExpressionType StringToExpressionType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
 ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
@@ -385,6 +393,15 @@ enum class ConcurrencyType {
 };
 
 //===--------------------------------------------------------------------===//
+// Epoch Types
+//===--------------------------------------------------------------------===//
+
+enum class EpochType {
+  INVALID = INVALID_TYPE_ID,
+  DECENTRALIZED_EPOCH = 1  // decentralized epoch manager
+};
+
+//===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//
 
@@ -428,7 +445,8 @@ std::ostream &operator<<(std::ostream &os, const BackendType &type);
 enum class IndexType {
   INVALID = INVALID_TYPE_ID,  // invalid index type
   BWTREE = 1,                 // bwtree
-  HASH = 2                    // hash
+  HASH = 2,                   // hash
+  SKIPLIST = 3                // skiplist
 };
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);
@@ -523,6 +541,7 @@ enum class PlanNodeType {
   // DDL Nodes
   DROP = 33,
   CREATE = 34,
+  POPULATE_INDEX = 35,
 
   // Communication Nodes
   SEND = 40,
@@ -728,70 +747,73 @@ std::ostream &operator<<(std::ostream &os, const ResultType &type);
 // Constraint Types
 //===--------------------------------------------------------------------===//
 
-enum PostgresConstraintType {
-  POSTGRES_CONSTRAINT_NULL, /* not standard SQL, but a lot of people * expect it
-                               */
-  POSTGRES_CONSTRAINT_NOTNULL,
-  POSTGRES_CONSTRAINT_DEFAULT,
-  POSTGRES_CONSTRAINT_CHECK,
-  POSTGRES_CONSTRAINT_PRIMARY,
-  POSTGRES_CONSTRAINT_UNIQUE,
-  POSTGRES_CONSTRAINT_EXCLUSION,
-  POSTGRES_CONSTRAINT_FOREIGN,
-  POSTGRES_CONSTRAINT_ATTR_DEFERRABLE, /* attributes for previous constraint
-                                          node */
-  POSTGRES_CONSTRAINT_ATTR_NOT_DEFERRABLE,
-  POSTGRES_CONSTRAINT_ATTR_DEFERRED,
-  POSTGRES_CONSTRAINT_ATTR_IMMEDIATE
+enum class PostgresConstraintType {
+  NOT_NULL, /* not standard SQL, but a lot of people * expect it */
+  NOTNULL,
+  DEFAULT,
+  CHECK,
+  PRIMARY,
+  UNIQUE,
+  EXCLUSION,
+  FOREIGN,
+  ATTR_DEFERRABLE, /* attributes for previous constraint node */
+  ATTR_NOT_DEFERRABLE,
+  ATTR_DEFERRED,
+  ATTR_IMMEDIATE
 };
 
-enum ConstraintType {
-  CONSTRAINT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid
-  CONSTRAINT_TYPE_NULL = 1,                   // notnull
-  CONSTRAINT_TYPE_NOTNULL = 2,                // notnull
-  CONSTRAINT_TYPE_DEFAULT = 3,                // default
-  CONSTRAINT_TYPE_CHECK = 4,                  // check
-  CONSTRAINT_TYPE_PRIMARY = 5,                // primary key
-  CONSTRAINT_TYPE_UNIQUE = 6,                 // unique
-  CONSTRAINT_TYPE_FOREIGN = 7,                // foreign key
-  CONSTRAINT_TYPE_EXCLUSION = 8               // foreign key
+enum class ConstraintType {
+  INVALID = INVALID_TYPE_ID,  // invalid
+  NOT_NULL = 1,               // notnull
+  NOTNULL = 2,                // notnull
+  DEFAULT = 3,                // default
+  CHECK = 4,                  // check
+  PRIMARY = 5,                // primary key
+  UNIQUE = 6,                 // unique
+  FOREIGN = 7,                // foreign key
+  EXCLUSION = 8               // foreign key
 };
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 
 //===--------------------------------------------------------------------===//
 // Set Operation Types
 //===--------------------------------------------------------------------===//
-enum SetOpType {
-  SETOP_TYPE_INVALID = INVALID_TYPE_ID,
-  SETOP_TYPE_INTERSECT = 1,
-  SETOP_TYPE_INTERSECT_ALL = 2,
-  SETOP_TYPE_EXCEPT = 3,
-  SETOP_TYPE_EXCEPT_ALL = 4
+enum class SetOpType {
+  INVALID = INVALID_TYPE_ID,
+  INTERSECT = 1,
+  INTERSECT_ALL = 2,
+  EXCEPT = 3,
+  EXCEPT_ALL = 4
 };
+std::string SetOpTypeToString(SetOpType type);
+SetOpType StringToSetOpType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const SetOpType &type);
 
 //===--------------------------------------------------------------------===//
 // Logging + Recovery Types
 //===--------------------------------------------------------------------===//
 
-// LOGGING_TYPE_AAA_BBB
+// AAA_BBB
 // Data stored in AAA
 // Log stored in BBB
-enum LoggingType {
-  LOGGING_TYPE_INVALID = INVALID_TYPE_ID,
+enum class LoggingType {
+  INVALID = INVALID_TYPE_ID,
 
   // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 1,
-  LOGGING_TYPE_SSD_WBL = 2,
-  LOGGING_TYPE_HDD_WBL = 3,
+  NVM_WBL = 1,
+  SSD_WBL = 2,
+  HDD_WBL = 3,
 
   // Based on write ahead logging
-  LOGGING_TYPE_NVM_WAL = 4,
-  LOGGING_TYPE_SSD_WAL = 5,
-  LOGGING_TYPE_HDD_WAL = 6,
+  NVM_WAL = 4,
+  SSD_WAL = 5,
+  HDD_WAL = 6,
 };
 std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -801,17 +823,25 @@ typedef enum LayoutType {
   LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
 } LayoutType;
 
-enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
-  LOGGER_MAPPING_TYPE_AFFINITY = 2,
-  LOGGER_MAPPING_TYPE_MANUAL = 3
+enum class LoggerMappingStrategyType {
+  INVALID = INVALID_TYPE_ID,
+  ROUND_ROBIN = 1,
+  AFFINITY = 2,
+  MANUAL = 3
 };
+std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(
+    const std::string &str);
+std::ostream &operator<<(std::ostream &os,
+                         const LoggerMappingStrategyType &type);
 
-enum CheckpointType {
-  CHECKPOINT_TYPE_INVALID = INVALID_TYPE_ID,
-  CHECKPOINT_TYPE_NORMAL = 1,
+enum class CheckpointType {
+  INVALID = INVALID_TYPE_ID,
+  NORMAL = 1,
 };
+std::string CheckpointTypeToString(CheckpointType type);
+CheckpointType StringToCheckpointType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CheckpointType &type);
 
 enum ReplicationType {
   ASYNC_REPLICATION,
@@ -819,24 +849,22 @@ enum ReplicationType {
   SEMISYNC_REPLICATION
 };
 
-enum LoggingStatusType {
-  LOGGING_STATUS_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGING_STATUS_TYPE_STANDBY = 1,
-  LOGGING_STATUS_TYPE_RECOVERY = 2,
-  LOGGING_STATUS_TYPE_LOGGING = 3,
-  LOGGING_STATUS_TYPE_TERMINATE = 4,
-  LOGGING_STATUS_TYPE_SLEEP = 5
+enum class LoggingStatusType {
+  INVALID = INVALID_TYPE_ID,
+  STANDBY = 1,
+  RECOVERY = 2,
+  LOGGING = 3,
+  TERMINATE = 4,
+  SLEEP = 5
 };
 std::string LoggingStatusTypeToString(LoggingStatusType type);
 LoggingStatusType StringToLoggingStatusType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LoggingStatusType &type);
 
-enum LoggerType {
-  LOGGER_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGER_TYPE_FRONTEND = 1,
-  LOGGER_TYPE_BACKEND = 2
-};
+enum class LoggerType { INVALID = INVALID_TYPE_ID, FRONTEND = 1, BACKEND = 2 };
 std::string LoggerTypeToString(LoggerType type);
 LoggerType StringToLoggerType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LoggerType &type);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
@@ -870,13 +898,16 @@ enum LogRecordType {
 std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
 
-enum CheckpointStatus {
-  CHECKPOINT_STATUS_INVALID = INVALID_TYPE_ID,
-  CHECKPOINT_STATUS_STANDBY = 1,
-  CHECKPOINT_STATUS_RECOVERY = 2,
-  CHECKPOINT_STATUS_DONE_RECOVERY = 3,
-  CHECKPOINT_STATUS_CHECKPOINTING = 4,
+enum class CheckpointStatus {
+  INVALID = INVALID_TYPE_ID,
+  STANDBY = 1,
+  RECOVERY = 2,
+  DONE_RECOVERY = 3,
+  CHECKPOINTING = 4,
 };
+std::string CheckpointStatusToString(CheckpointStatus type);
+CheckpointStatus StringToCheckpointStatus(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
@@ -922,23 +953,23 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum TupleSerializationFormat {
-  TUPLE_SERIALIZATION_NATIVE = 0,
-  TUPLE_SERIALIZATION_DR = 1
-};
+enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
 
 // ------------------------------------------------------------------
 // Entity types
 // ------------------------------------------------------------------
 
-enum EntityType {
-  ENTITY_TYPE_INVALID = INVALID_TYPE_ID,
-  ENTITY_TYPE_TABLE = 1,
-  ENTITY_TYPE_SCHEMA = 2,
-  ENTITY_TYPE_INDEX = 3,
-  ENTITY_TYPE_VIEW = 4,
-  ENTITY_TYPE_PREPARED_STATEMENT = 5,
+enum class EntityType {
+  INVALID = INVALID_TYPE_ID,
+  TABLE = 1,
+  SCHEMA = 2,
+  INDEX = 3,
+  VIEW = 4,
+  PREPARED_STATEMENT = 5,
 };
+std::string EntityTypeToString(EntityType type);
+EntityType StringToEntityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const EntityType &type);
 
 // ------------------------------------------------------------------
 // Endianess
@@ -949,6 +980,8 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 //===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
+
+typedef size_t hash_t;
 
 typedef uint32_t oid_t;
 
@@ -990,10 +1023,11 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 static const size_t EPOCH_LENGTH = 40;
 
 // For threads
-extern size_t QUERY_THREAD_COUNT;
+extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
+extern size_t MAX_CONCURRENCY;
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata
@@ -1015,20 +1049,27 @@ typedef std::bitset<max_col_count> ColBitmap;
 // read-write set
 //===--------------------------------------------------------------------===//
 
-enum RWType {
-  RW_TYPE_INVALID,
-  RW_TYPE_READ,
-  RW_TYPE_READ_OWN,  // select for update
-  RW_TYPE_UPDATE,
-  RW_TYPE_INSERT,
-  RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL,  // delete after insert.
+enum class RWType {
+  INVALID,
+  READ,
+  READ_OWN,  // select for update
+  UPDATE,
+  INSERT,
+  DELETE,
+  INS_DEL,  // delete after insert.
 };
+std::string RWTypeToString(RWType type);
+RWType StringToRWType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const RWType &type);
 
-enum GCSetType { GC_SET_TYPE_COMMITTED, GC_SET_TYPE_ABORTED };
+enum class GCSetType { COMMITTED, ABORTED };
 
+// block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
+
+// block -> offset -> is_index_deletion
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
@@ -1088,6 +1129,34 @@ typedef std::vector<Target> TargetList;
 typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
+
+//===--------------------------------------------------------------------===//
+// Optimizer
+//===--------------------------------------------------------------------===//
+enum class PropertyType {
+  PREDICATE,
+  PROJECT,
+  COLUMNS,
+  DISTINCT,
+  SORT,
+};
+
+namespace expression {
+class AbstractExpression;
+class ExprHasher;
+class ExprEqualCmp;
+}
+
+// Mapping of Expression -> Column Offset created by operator
+typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
+                           unsigned, expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprMap;
+// Used in optimizer to speed up expression comparsion
+typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
+
+std::string PropertyTypeToString(PropertyType type);
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

@@ -29,7 +29,7 @@ namespace peloton {
 namespace logging {
 
 FrontendLogger::FrontendLogger() {
-  logger_type = LOGGER_TYPE_FRONTEND;
+  logger_type = LoggerType::FRONTEND;
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;
@@ -98,11 +98,11 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("FrontendLogger Standby Mode");
 
   // Standby before we need to do RECOVERY
-  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_STANDBY, false);
+  log_manager.WaitForModeTransition(LoggingStatusType::STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
   switch (log_manager.GetLoggingStatus()) {
-    case LOGGING_STATUS_TYPE_RECOVERY: {
+    case LoggingStatusType::RECOVERY: {
       LOG_TRACE("Frontendlogger Recovery Mode");
 
       /////////////////////////////////////////////////////////////////////
@@ -115,17 +115,17 @@ void FrontendLogger::MainLoop(void) {
       LOG_TRACE("DoRecovery done");
 
       // Now, enter LOGGING mode
-      // log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+      // log_manager.SetLoggingStatus(LoggingStatusType::LOGGING);
       // Notify log manager that this frontend logger has completed recovery
       log_manager.NotifyRecoveryDone();
 
       // Now wait until the other frontend loggers also complete their recovery
-      log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
+      log_manager.WaitForModeTransition(LoggingStatusType::RECOVERY, false);
 
       break;
     }
 
-    case LOGGING_STATUS_TYPE_LOGGING: {
+    case LoggingStatusType::LOGGING: {
       LOG_TRACE("Frontendlogger Logging Mode");
     } break;
 
@@ -138,7 +138,7 @@ void FrontendLogger::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
 
   // Periodically, wake up and do logging
-  while (log_manager.GetLoggingStatus() == LOGGING_STATUS_TYPE_LOGGING) {
+  while (log_manager.GetLoggingStatus() == LoggingStatusType::LOGGING) {
     // Collect LogRecords from all backend loggers
     // LOG_TRACE("Log manager: Invoking CollectLogRecordsFromBackendLoggers");
     CollectLogRecordsFromBackendLoggers();
@@ -166,7 +166,7 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger Sleep Mode");
 
   // Setting frontend logger status to sleep
-  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_SLEEP);
+  log_manager.SetLoggingStatus(LoggingStatusType::SLEEP);
 }
 
 /**

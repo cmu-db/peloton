@@ -28,7 +28,7 @@ function install_repo_package() {
         dpath=$(basename "$1")
     fi
     pushd $TMPDIR
-    wget -nc "$1"
+    wget -nc --no-check-certificate "$1"
     sudo yum install -y "$dpath"
     popd
     return 0
@@ -41,7 +41,7 @@ function install_package() {
     fi
 
     pushd $TMPDIR
-    wget -nc "$1"
+    wget -nc --no-check-certificate "$1"
     tpath=$(basename "$1")
     dpath=$(tar --exclude='*/*' -tf "$tpath")
     tar xzf $tpath
@@ -79,7 +79,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libjemalloc-dev \
         valgrind \
         lcov \
-        postgresql-client
+        postgresql-client \
+        libpqxx-dev
 ## ------------------------------------------------
 ## FEDORA
 ## ------------------------------------------------
@@ -96,7 +97,9 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         jemalloc-devel \
         valgrind \
         lcov \
-        postgresql
+        postgresql \
+        libpqxx-devel \
+        libpqxx
 ## ------------------------------------------------
 ## REDHAT
 ## ------------------------------------------------
@@ -130,7 +133,8 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         m4 \
         doxygen \
         graphviz \
-        postgresql93
+        postgresql93 \
+        libpqxx-devel
 
     # Manually download some packages to guarantee
     # version compatibility
@@ -151,6 +155,7 @@ else
     echo
     exit 1
 fi
+
 
 
 

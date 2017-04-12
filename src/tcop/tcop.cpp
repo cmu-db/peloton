@@ -25,23 +25,31 @@
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "common/exception.h"
 #include "parser/select_statement.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
+#include <include/parser/postgresparser.h>
+
+// #define NEW_OPTIMIZER
 
 namespace peloton {
 namespace tcop {
 
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
+#ifdef NEW_OPTIMIZER
+  optimizer_.reset(new optimizer::Optimizer);
+#else
   optimizer_.reset(new optimizer::SimpleOptimizer());
+#endif
 }
 
 void TrafficCop::Reset() {
@@ -80,9 +88,9 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
-ResultType TrafficCop::BeginQueryHelper() {
+ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction(thread_id);
 
   // this shouldn't happen
   if (txn == nullptr) {
@@ -132,7 +140,8 @@ ResultType TrafficCop::AbortQueryHelper() {
 ResultType TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message) {
+    std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
@@ -149,7 +158,7 @@ ResultType TrafficCop::ExecuteStatement(
   std::vector<type::Value> params;
   auto status =
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
-                       result, rows_changed, error_message);
+                       result, rows_changed, error_message, thread_id);
 
   if (status == ResultType::SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -166,7 +175,8 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
@@ -180,14 +190,15 @@ ResultType TrafficCop::ExecuteStatement(
 
   try {
     if (statement->GetQueryType() == "BEGIN")
-      return BeginQueryHelper();
+      return BeginQueryHelper(thread_id);
     else if (statement->GetQueryType() == "COMMIT")
       return CommitQueryHelper();
     else if (statement->GetQueryType() == "ROLLBACK")
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                         result, result_format);
+                                         result, result_format,
+                                         thread_id);
       LOG_TRACE("Statement executed. Result: %s",
                 ResultTypeToString(status.m_result).c_str());
       rows_changed = status.m_processed;
@@ -199,12 +210,13 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format) {
+    std::vector<StatementResult> &result, const std::vector<int> &result_format,
+    const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
-  bridge::peloton_status p_status;
+  executor::ExecuteResult p_status;
 
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
@@ -212,7 +224,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
     curr_state.second = ResultType::SUCCESS;
-    txn = txn_manager.BeginTransaction();
+    txn = txn_manager.BeginTransaction(thread_id);
     single_statement_txn = true;
   } else {
     // get ptr to current active txn
@@ -222,7 +234,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                  result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
@@ -270,7 +282,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
   try {
-    auto &peloton_parser = parser::Parser::GetInstance();
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
@@ -372,7 +384,6 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
         // Get the columns of the table
         auto &table_columns = target_table->GetSchema()->GetColumns();
         for (auto column : table_columns) {
-          LOG_DEBUG("Column name: %s", column.column_name.c_str());
           tuple_descriptor.push_back(
               GetColumnFieldForValueType(column.GetName(), column.GetType()));
         }
@@ -399,9 +410,25 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
+    case type::Type::BOOLEAN:
+    case type::Type::TINYINT: {
+      field_type = PostgresValueType::BOOLEAN;
+      field_size = 1;
+      break;
+    }
+    case type::Type::SMALLINT: {
+      field_type = PostgresValueType::SMALLINT;
+      field_size = 2;
+      break;
+    }
     case type::Type::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
+      break;
+    }
+    case type::Type::BIGINT: {
+      field_type = PostgresValueType::BIGINT;
+      field_size = 8;
       break;
     }
     case type::Type::DECIMAL: {
@@ -417,7 +444,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64;
+      field_size = 64; // FIXME: Bytes???
       break;
     }
     default: {

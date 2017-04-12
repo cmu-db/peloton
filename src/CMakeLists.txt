@@ -14,40 +14,13 @@ peloton_default_properties(peloton-proto)
 
 ##################################################################################
 
-# --[ Parser library
+# --[ Libpg_query library
 
-find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
+add_custom_target(libpg_query ALL
+                  COMMAND ${CMAKE_MAKE_PROGRAM}
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
+                  COMMENT "Original libpg makefile target")
 
-set(SQLParser_BISON "${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y")
-set(SQLScanner_FLEX "${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l")
-set(SQLParser_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
-set(SQLScanner_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
-
-# Skip rebuilding parser if it is already built
-if(EXISTS ${SQLParser_SOURCE})
-	message("-- Found peloton parser")
-else()
-  	message("-- Building peloton parser")
-	BISON_TARGET(SQLParser ${SQLParser_BISON} ${SQLParser_SOURCE})
-	FLEX_TARGET(SQLScanner ${SQLScanner_FLEX} ${SQLScanner_SOURCE})
-	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
-endif()
-
-# Check if the parser is built
-add_custom_target(peloton-parser-check
-	COMMAND sed -i -e 's/Parser/Parser/g' ${PROJECT_SOURCE_DIR}/src/CMakeLists.txt
-)
-
-set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
-set_source_files_properties(${SQLParser_SOURCE} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
-set_source_files_properties(${SQLScanner_SOURCE} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
-
-add_library(peloton-parser STATIC ${SQLParser_SOURCE} ${SQLScanner_SOURCE})
-add_dependencies(peloton-parser peloton-parser-check)
-
-set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
-peloton_default_properties(peloton-parser)
 
 ##################################################################################
 
@@ -58,7 +31,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES

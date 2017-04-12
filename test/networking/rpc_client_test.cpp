@@ -12,7 +12,7 @@
 
 #include "common/harness.h"
 
-#include "networking/tcp_address.h"
+#include "networking/network_address.h"
 #include "networking/rpc_type.h"
 #include "networking/rpc_client.h"
 #include "networking/rpc_server.h"

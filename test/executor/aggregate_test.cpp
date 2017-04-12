@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "type/types.h"
@@ -29,7 +30,6 @@
 #include "planner/aggregate_plan.h"
 #include "storage/data_table.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -49,8 +49,8 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    false, true, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -147,8 +147,8 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    false, true, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -247,9 +247,9 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
+      TestingExecutorUtil::CreateTable(tuple_count, false));
 
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    false, true, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -354,8 +354,8 @@ TEST_F(AggregateTests, MinMaxTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    false, false, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -474,8 +474,8 @@ TEST_F(AggregateTests, HashDistinctTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    true, true,
                                    txn);  // let it be random
   txn_manager.CommitTransaction(txn);
@@ -563,8 +563,8 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    true, true, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -652,8 +652,8 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    true, true, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -761,8 +761,8 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+      TestingExecutorUtil::CreateTable(tuple_count, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    true, true, txn);
   txn_manager.CommitTransaction(txn);
 

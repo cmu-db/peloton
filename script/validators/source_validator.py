@@ -67,7 +67,7 @@ SKIP_FILES_LIST = [
     "src/wire/protocol.cpp",
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
-    "src/include/parser/sql_scanner.h",
+    "src/include/parser/sql_scanner.h", # There is a free() in comments
     "src/parser/parser_utils.cpp",
     "src/include/parser/sql_statement.h",
     "src/include/parser/create_statement.h",
@@ -80,7 +80,7 @@ SKIP_FILES_LIST = [
     "src/include/parser/update_statement.h",
     "src/parser/table_ref.cpp",
     "src/include/index/bloom_filter.h",
-    "src/include/index/ints_key.h",
+    "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
 ]
 

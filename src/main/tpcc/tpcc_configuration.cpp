@@ -26,7 +26,7 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : tpcc <options> \n"
           "   -h --help              :  print help message \n"
-          "   -i --index             :  index type: bwtree (default) or btree\n"
+          "   -i --index             :  index type: bwtree (default) \n"
           "   -k --scale_factor      :  scale factor \n"
           "   -d --duration          :  execution duration \n"
           "   -p --profile_duration  :  profile duration \n"
@@ -36,6 +36,8 @@ void Usage(FILE *out) {
           "   -a --affinity          :  enable client affinity \n"
           "   -g --gc_mode           :  enable garbage collection \n"
           "   -n --gc_backend_count  :  # of gc backends \n"
+          "   -l --loader_count      :  # of loaders \n"
+          "   -y --epoch             :  epoch type: centralized or decentralized \n"
   );
 }
 
@@ -50,6 +52,8 @@ static struct option opts[] = {
     { "affinity", no_argument, NULL, 'a' },
     { "gc_mode", no_argument, NULL, 'g' },
     { "gc_backend_count", optional_argument, NULL, 'n' },
+    { "loader_count", optional_argument, NULL, 'n' },
+    { "epoch", optional_argument, NULL, 'y' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -118,6 +122,7 @@ void ValidateGCBackendCount(const configuration &state) {
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.index = IndexType::BWTREE;
+  state.epoch = EpochType::DECENTRALIZED_EPOCH;
   state.scale_factor = 1;
   state.duration = 10;
   state.profile_duration = 1;
@@ -127,11 +132,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.affinity = false;
   state.gc_mode = false;
   state.gc_backend_count = 1;
+  state.loader_count = 1;
+
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "heagi:k:d:p:b:w:n:", opts, &idx);
+    int c = getopt_long(argc, argv, "heagi:k:d:p:b:w:n:l:y:", opts, &idx);
 
     if (c == -1) break;
 
@@ -146,6 +153,19 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         }
         break;
       }
+      case 'y': {
+        char *epoch = optarg;
+        if (strcmp(epoch, "decentralized") == 0) {
+          state.epoch = EpochType::DECENTRALIZED_EPOCH;
+        } else {
+          LOG_ERROR("Unknown epoch: %s", epoch);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'l':
+        state.loader_count = atoi(optarg);
+        break;
       case 'k':
         state.scale_factor = atof(optarg);
         break;
@@ -171,7 +191,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.gc_mode = true;
         break;
       case 'n':
-        state.gc_backend_count = atof(optarg);
+        state.gc_backend_count = atoi(optarg);
         break;
 
       case 'h':

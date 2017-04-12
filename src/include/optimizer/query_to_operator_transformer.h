@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -26,7 +26,7 @@ class ColumnManager;
 namespace optimizer {
 
 // Transform a query from parsed statement to operator expressions.
-class QueryToOperatorTransformer : public QueryNodeVisitor {
+class QueryToOperatorTransformer : public SqlNodeVisitor {
  public:
   QueryToOperatorTransformer(ColumnManager &manager);
 
@@ -35,6 +35,8 @@ class QueryToOperatorTransformer : public QueryNodeVisitor {
 
   void Visit(const parser::SelectStatement *op) override;
 
+  void Visit(const parser::TableRef *) override;
+  void Visit(const parser::JoinDefinition *) override;
   void Visit(const parser::GroupByDescription *) override;
   void Visit(const parser::OrderDescription *) override;
   void Visit(const parser::LimitDescription *) override;
@@ -50,7 +52,7 @@ class QueryToOperatorTransformer : public QueryNodeVisitor {
   void Visit(const parser::CopyStatement *op) override;
 
  private:
-  ColumnManager &manager;
+  ColumnManager &manager_;
 
   std::shared_ptr<OperatorExpression> output_expr;
   // For expr nodes

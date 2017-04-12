@@ -365,7 +365,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         ss_plan->DeserializeFrom(input);
 
         std::vector<std::unique_ptr<executor::LogicalTile>> logical_tile_list;
-        int tuple_count = peloton::bridge::PlanExecutor::ExecutePlan(
+        int tuple_count = peloton::executor::PlanExecutor::ExecutePlan(
             ss_plan.get(), params, logical_tile_list);
         // Return result
         if (tuple_count < 0) {

@@ -13,6 +13,9 @@
 #pragma once
 
 #include "expression/abstract_expression.h"
+#include "common/sql_node_visitor.h"
+#include "type/value_factory.h"
+
 
 namespace peloton {
 namespace expression {
@@ -42,7 +45,8 @@ class OperatorExpression : public AbstractExpression {
       else if (vl.IsFalse())
         return (type::ValueFactory::GetBooleanValue(true));
       else
-        return (type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
+        return (
+            type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
     }
     PL_ASSERT(children_.size() == 2);
     type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
@@ -78,6 +82,8 @@ class OperatorExpression : public AbstractExpression {
     return new OperatorExpression(*this);
   }
 
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+
  protected:
   OperatorExpression(const OperatorExpression &other)
       : AbstractExpression(other) {}
@@ -90,7 +96,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
                            left->GetValueType(), left, nullptr) {}
 
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const override {
+                       executor::ExecutorContext *context) const override {
     PL_ASSERT(children_.size() == 1);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     type::Value zero(type::ValueFactory::GetIntegerValue(0));
@@ -100,6 +106,8 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   AbstractExpression *Copy() const override {
     return new OperatorUnaryMinusExpression(*this);
   }
+
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
   OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)

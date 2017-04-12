@@ -23,7 +23,7 @@
 #include "executor/plan_executor.h"
 #include "executor/update_executor.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -64,7 +64,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
                                 "PRIMARY KEY, student_id INT, dept_name "
                                 "TEXT);"));
 
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   LOG_INFO("Building parse tree...");
   auto create_stmt = peloton_parser.BuildParseTree(
@@ -83,7 +83,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());

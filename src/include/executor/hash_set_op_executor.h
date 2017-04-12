@@ -77,7 +77,7 @@ class HashSetOpExecutor : public AbstractExecutor {
   HashSetOpMapType htable_;
 
   /** @brief The specified set-op type */
-  SetOpType set_op_ = SETOP_TYPE_INVALID;
+  SetOpType set_op_ = SetOpType::INVALID;
 
   /** @brief Hash table is built or not */
   bool hash_done_ = false;

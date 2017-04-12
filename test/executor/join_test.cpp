@@ -12,6 +12,8 @@
 
 #include <memory>
 
+#include "executor/testing_executor_util.h"
+#include "executor/testing_join_util.h"
 #include "common/harness.h"
 
 #include "executor/logical_tile.h"
@@ -39,8 +41,6 @@
 
 #include "concurrency/transaction_manager_factory.h"
 
-#include "executor/executor_tests_util.h"
-#include "executor/join_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -65,9 +65,9 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
   return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(0),
-       ExecutorTestsUtil::GetColumnInfo(0)}));
+      {TestingExecutorUtil::GetColumnInfo(1), TestingExecutorUtil::GetColumnInfo(1),
+       TestingExecutorUtil::GetColumnInfo(0),
+       TestingExecutorUtil::GetColumnInfo(0)}));
 }
 
 // PlanNodeType::NESTLOOP is picked out as a separated test
@@ -278,14 +278,14 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
 
   // Left table has 3 tile groups (15 tuples)
   std::unique_ptr<storage::DataTable> left_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(
+      TestingExecutorUtil::CreateTable(tile_group_size));
+  TestingExecutorUtil::PopulateTable(
       left_table.get(), tile_group_size * left_table_tile_group_count, false,
       false, false, txn);
 
   // Right table has 2 tile groups (10 tuples)
   std::unique_ptr<storage::DataTable> right_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
+      TestingExecutorUtil::CreateTable(tile_group_size));
   PopulateTable(right_table.get(),
                 tile_group_size * right_table_tile_group_count, false, txn);
 
@@ -369,7 +369,7 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
   oid_t result_tuple_count = 0;
   oid_t tuples_with_null = 0;
 
-  auto projection = JoinTestsUtil::CreateProjection();
+  auto projection = TestingJoinUtil::CreateProjection();
   // setup the projection schema
   auto schema = CreateJoinSchema();
 
@@ -440,15 +440,15 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
 
   // Left table has 3 tile groups (15 tuples)
   std::unique_ptr<storage::DataTable> left_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(
+      TestingExecutorUtil::CreateTable(tile_group_size));
+  TestingExecutorUtil::PopulateTable(
       left_table.get(), tile_group_size * left_table_tile_group_count, false,
       false, false, txn);
 
   // Right table has 2 tile groups (10 tuples)
   std::unique_ptr<storage::DataTable> right_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(
+      TestingExecutorUtil::CreateTable(tile_group_size));
+  TestingExecutorUtil::PopulateTable(
       right_table.get(), tile_group_size * right_table_tile_group_count, false,
       false, false, txn);
 
@@ -580,13 +580,13 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
 
   oid_t result_tuple_count = 0;
   oid_t tuples_with_null = 0;
-  auto projection = JoinTestsUtil::CreateProjection();
+  auto projection = TestingJoinUtil::CreateProjection();
   // setup the projection schema
   auto schema = CreateJoinSchema();
 
   // Construct predicate
   std::unique_ptr<const expression::AbstractExpression> predicate(
-      JoinTestsUtil::CreateJoinPredicate());
+      TestingJoinUtil::CreateJoinPredicate());
 
   // Differ based on join algorithm
   switch (join_algorithm) {

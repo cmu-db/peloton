@@ -45,7 +45,7 @@ class PacketManager {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(InputPacket* pkt);
+  bool ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -135,7 +135,7 @@ class PacketManager {
   bool HardcodedExecuteFilter(std::string query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(InputPacket* pkt);
+  void ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket* pkt);
@@ -147,7 +147,7 @@ class PacketManager {
   bool ExecDescribeMessage(InputPacket* pkt);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(InputPacket* pkt);
+  void ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the optional CLOSE message of the extended query protocol */
   void ExecCloseMessage(InputPacket* pkt);

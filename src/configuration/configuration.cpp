@@ -110,7 +110,7 @@ DEFINE_bool(layout_tuner,
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
-peloton::LoggingType peloton_logging_mode = peloton::LOGGING_TYPE_INVALID;
+peloton::LoggingType peloton_logging_mode = peloton::LoggingType::INVALID;
 
 // GC mode
 peloton::GarbageCollectionType peloton_gc_mode;

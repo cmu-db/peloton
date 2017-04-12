@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-#include "concurrency/transaction_tests_util.h"
 
 namespace peloton {
 
@@ -63,7 +63,7 @@ TEST_F(TransactionTests, ReadonlyTransactionTest) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
     // Just scan the table
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager, true);
@@ -83,7 +83,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+        TestingTransactionUtil::CreateTable());
     // Just scan the table
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
@@ -200,7 +200,7 @@ TEST_F(TransactionTests, AbortTest) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+        TestingTransactionUtil::CreateTable());
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);

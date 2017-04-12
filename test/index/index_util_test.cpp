@@ -138,7 +138,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test basic
 
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {3, 0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
@@ -146,7 +146,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   EXPECT_EQ(ret, true);
   value_index_list.clear();
 
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {1, 0, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
@@ -154,7 +154,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   EXPECT_EQ(ret, true);
   value_index_list.clear();
 
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {0, 1, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
@@ -164,14 +164,14 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test whether reconizes if only two columns are matched
 
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {3, 0},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
@@ -180,14 +180,14 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test empty
 
-  ret = FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
+  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
   // Test redundant conditions
 
   // This should return false, since the < already defines a lower bound
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
       {ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
@@ -197,7 +197,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   value_index_list.clear();
 
   // This should return true
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_LESSTHAN,
@@ -207,8 +207,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   value_index_list.clear();
 
   // Test duplicated conditions on a single column
-
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {3, 3, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
@@ -216,13 +215,10 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
-  //
   // The last test should logically be classified as point query
   // but our procedure does not give positive result to reduce
   // the complexity
-  //
-
-  ret = FindValueIndex(
+  ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {3, 0, 1, 0},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHANOREQUALTO,
        ExpressionType::COMPARE_EQUAL,

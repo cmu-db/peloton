@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
@@ -26,16 +27,30 @@ namespace expression {
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const type::Value &value)
-    : AbstractExpression(ExpressionType::VALUE_CONSTANT,
-                         value.GetTypeId()), value_(value.Copy()) {}
-  
-  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+      : AbstractExpression(ExpressionType::VALUE_CONSTANT, value.GetTypeId()),
+        value_(value.Copy()) {}
+
+  type::Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     return value_;
   }
 
-  type::Value GetValue() const { return value_;}
+  virtual void DeduceExpressionName() override {
+    if (!alias.empty())
+      return;
+    expr_name_ = value_.ToString();
+  }
+  
+  virtual bool Equals(AbstractExpression *expr) const override {
+    if (exp_type_ != expr->GetExpressionType())
+      return false;
+    auto const_expr = (ConstantValueExpression *)expr;
+    return value_.CompareEquals(const_expr->value_);
+  }
+
+  type::Value GetValue() const { return value_; }
 
   bool HasParameter() const override { return false; }
 
@@ -43,8 +58,16 @@ class ConstantValueExpression : public AbstractExpression {
     return new ConstantValueExpression(*this);
   }
 
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+
+  virtual hash_t Hash() const {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, value_.Hash());
+  }
+
  protected:
-  ConstantValueExpression(const ConstantValueExpression& other) : AbstractExpression(other), value_(other.value_){}
+  ConstantValueExpression(const ConstantValueExpression &other)
+      : AbstractExpression(other), value_(other.value_) {}
 
   type::Value value_;
 };

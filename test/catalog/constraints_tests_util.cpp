@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/constraints_tests_util.h"
+#include "constraints_tests_util.h"
 
 #include <cstdlib>
 #include <ctime>
@@ -60,31 +60,31 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
   switch (index) {
     case 0: {
-      auto column =
-          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_A", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
 
     case 1: {
-      auto column =
-          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_B", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
 
     case 2: {
-      auto column =
-          catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
-                          "COL_C", is_inlined);
+      auto column = catalog::Column(
+          type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+          "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -95,12 +95,23 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
                                     "COL_D",
                                     !is_inlined);  // inlined.
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       column.AddConstraint(
-          catalog::Constraint(CONSTRAINT_TYPE_UNIQUE, unique_constraint_name));
+          catalog::Constraint(ConstraintType::UNIQUE, unique_constraint_name));
       return column;
     } break;
+
+    case 114: {
+      auto column = catalog::Column(type::Type::INTEGER,
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
+
+      column.AddConstraint(
+          catalog::Constraint(ConstraintType::CHECK, not_null_constraint_name));
+      return column;
+    }
 
     default: {
       throw ExecutorException("Invalid column index : " +
@@ -127,12 +138,15 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     int populate_value = rowid;
 
     // First column is unique in this case
-    auto col1 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
+    auto col1 =
+        type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
 
     // In case of random, make sure this column has duplicated values
-    auto col2 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
+    auto col2 =
+        type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    auto col3 = type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
+    auto col3 =
+        type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
     auto col4 = type::ValueFactory::GetVarcharValue(
@@ -260,6 +274,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
  *
  * @return Table generated for test.
  */
+
 storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
@@ -271,6 +286,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
 
   return table;
 }
+/
 
 }  // namespace test
 }  // namespace peloton

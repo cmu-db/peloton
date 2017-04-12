@@ -363,9 +363,79 @@ class ExpressionUtil {
 
  public:
   /**
+   * Walks an expression trees and find all TupleValueExprs in the tree, add
+   * them to a map for order preserving.
+   */
+  static void GetTupleValueExprs(ExprMap &expr_map, AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      GetTupleValueExprs(expr_map, expr->GetModifiableChild(i));
+
+    // Here we need a deep copy to void double delete subtree
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      expr_map.emplace(std::shared_ptr<AbstractExpression>(expr->Copy()),
+                       expr_map.size());
+  }
+
+  /**
+   * Walks an expression trees and find all TupleValueExprs in the tree
+   */
+  static void GetTupleValueExprs(ExprSet &expr_set, AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
+
+    // Here we need a deep copy to void double delete subtree
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      expr_set.emplace(expr->Copy());
+  }
+
+  /**
+   * Walks an expression trees. Set the value_idx for the leaf tuple_value_expr
+   * Deduce the return value type of expression. Set the function ptr for
+   * function expression.
+   *
+   * Plz notice: this function should only be used in the optimizer.
+   * The following version TransformExpression will eventually be depracated
+   */
+  static void EvaluateExpression(const ExprMap &expr_map,
+                                 AbstractExpression *expr) {
+    // To evaluate the return type, we need a bottom up approach.
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      EvaluateExpression(expr_map, expr->GetModifiableChild(i));
+
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      // Point to the correct column returned in the logical tuple underneath
+      // HACK: Need to construct shared_ptr for probing but not want the
+      // shared_ptr to delete the object. Use alias constructor
+      auto tup_expr = (TupleValueExpression *)expr;
+      std::shared_ptr<AbstractExpression> probe_expr(
+          std::shared_ptr<AbstractExpression>{}, tup_expr);
+      tup_expr->SetValueIdx(expr_map.at(probe_expr));
+    } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
+      auto func_expr = (expression::FunctionExpression *)expr;
+      // Check and set the function ptr
+      auto catalog = catalog::Catalog::GetInstance();
+      const catalog::FunctionData &func_data =
+          catalog->GetFunction(func_expr->func_name_);
+      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+                                                 func_data.return_type_,
+                                                 func_data.argument_types_);
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+      auto const_expr = (expression::ConstantValueExpression *)expr;
+      const_expr->expr_name_ = const_expr->GetValue().ToString();
+    } else {
+      expr->DeduceExpressionType();
+    }
+  }
+
+  /* All following functions will be depracated when switch to new optimizer */
+
+  /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects given a
-   * set of schemas. This function
+   * set of schemas.
    */
   static void TransformExpression(std::vector<const catalog::Schema *> &schemas,
                                   AbstractExpression *expr) {
@@ -485,7 +555,7 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData& func_data =
+      const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,

@@ -43,14 +43,11 @@ class Transaction;
 class TransactionManager {
  public:
   TransactionManager() {
-    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
   }
 
   virtual ~TransactionManager() {}
-
-  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
   cid_t GetNextCommitId() {
     cid_t temp_cid = next_cid_++;
@@ -82,8 +79,7 @@ class TransactionManager {
   virtual bool IsWritten(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id
-  ) = 0;
+    const oid_t &tuple_id) = 0;
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -136,9 +132,9 @@ class TransactionManager {
 
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction() = 0;
+  virtual Transaction *BeginTransaction(const size_t thread_id = 0) = 0;
 
-  virtual Transaction *BeginReadonlyTransaction() = 0;
+  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0) = 0;
 
   virtual void EndTransaction(Transaction *current_txn) = 0;
 
@@ -149,7 +145,6 @@ class TransactionManager {
   virtual ResultType AbortTransaction(Transaction *const current_txn) = 0;
 
   void ResetStates() {
-    next_txn_id_ = START_TXN_ID;
     next_cid_ = START_CID;
   }
 
@@ -157,7 +152,7 @@ class TransactionManager {
   // please note that this function only returns a "safe" value instead of a
   // precise value.
   cid_t GetMaxCommittedCid() {
-    return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
+    return EpochManagerFactory::GetInstance().GetMaxCommittedCid();
   }
 
   void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
@@ -174,9 +169,9 @@ class TransactionManager {
       std::make_pair(INVALID_CID, INVALID_CID);
 
  private:
-  std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
   std::atomic<cid_t> maximum_grant_cid_;
+
 };
 }  // End storage namespace
 }  // End peloton namespace

@@ -21,14 +21,6 @@
 namespace peloton {
 namespace gc {
 
-void TransactionLevelGCManager::StartGC(int thread_id) {
-  gc_threads_[thread_id].reset(new std::thread(&TransactionLevelGCManager::Running, this, thread_id));
-}
-
-void TransactionLevelGCManager::StopGC(int thread_id) {
-  this->gc_threads_[thread_id]->join();
-  ClearGarbage(thread_id);
-}
 
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
@@ -55,14 +47,17 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 }
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
-
+  PL_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
-
   while (true) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
-
-    PL_ASSERT(max_cid != MAX_CID);
+    
+    // When the DBMS has started working but it never processes any transaction,
+    // we may see max_cid == MAX_CID.
+    if (max_cid == MAX_CID) {
+      continue;
+    }
 
     int reclaimed_count = Reclaim(thread_id, max_cid);
 
@@ -71,7 +66,6 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     if (is_running_ == false) {
       return;
     }
-
     if (reclaimed_count == 0 && unlinked_count == 0) {
       // sleep at most 0.8192 s
       if (backoff_shifts < 13) {
@@ -87,10 +81,9 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType gc_set_type) {
-
+void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) {
   // Add the garbage context to the lock-free queue
-  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
+  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp));
   unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
@@ -179,13 +172,12 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_ci
 
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> garbage_ctx) {
-  
   for (auto &entry : *(garbage_ctx->gc_set_.get())) {
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
 
-    // During the resetting, a table may deconstruct because of the DROP TABLE request
+    // During the resetting, a table may be deconstructed because of the DROP TABLE request
     if (tile_group == nullptr) {
       return;
     }
@@ -208,8 +200,9 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
         continue;
       }
       // if the entry for table_id exists.
-      PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
-      recycle_queue_map_[table_id]->Enqueue(location);
+      if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+        recycle_queue_map_[table_id]->Enqueue(location);
+      }
 
     }
   }
@@ -223,7 +216,6 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
     return INVALID_ITEMPOINTER;
   }
-
   ItemPointer location;
   PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
   auto recycle_queue = recycle_queue_map_[table_id];
@@ -250,41 +242,19 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
 
 void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx) {
 
-  GCSetType gc_set_type = garbage_ctx->gc_set_type_;
-  
-  if (gc_set_type == GC_SET_TYPE_COMMITTED) {
-    // if the transaction is committed, 
-    // then we need to remove tuples that are deleted by the transaction from indexes.
-    for (auto entry : *(garbage_ctx->gc_set_.get())) {
-      for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
-          // only old versions are stored in the gc set.
-          // so we can safely get indirection from the indirection array.
-          auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
-          if (tile_group != nullptr){
-            auto tile_group_header = catalog::Manager::GetInstance()
-                                         .GetTileGroup(entry.first)
-                                         ->GetHeader();
-            ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
-
-            DeleteTupleFromIndexes(indirection);
-          }
-        }
-      }
-    }
-
-  } else {
-    PL_ASSERT(gc_set_type == GC_SET_TYPE_ABORTED);
-
-    for (auto entry : *(garbage_ctx->gc_set_.get())) {
-      for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_INSERT || element.second == RW_TYPE_INS_DEL) {
+  for (auto entry : *(garbage_ctx->gc_set_.get())) {
+    for (auto &element : entry.second) {
+      if (element.second == true) {
+        // only old versions are stored in the gc set.
+        // so we can safely get indirection from the indirection array.
+        auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
+        if (tile_group != nullptr){
           auto tile_group_header = catalog::Manager::GetInstance()
                                        .GetTileGroup(entry.first)
                                        ->GetHeader();
           ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
-          DeleteTupleFromIndexes(indirection);
 
+          DeleteTupleFromIndexes(indirection);
         }
       }
     }

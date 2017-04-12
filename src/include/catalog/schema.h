@@ -13,9 +13,12 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "catalog/column.h"
+#include "catalog/multi_constraint.h"
 #include "common/printable.h"
 #include "type/type.h"
+#include "boost/algorithm/string.hpp"
 
 namespace peloton {
 namespace catalog {
@@ -165,10 +168,48 @@ class Schema : public Printable {
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
-      if (constraint.GetType() == CONSTRAINT_TYPE_NOTNULL) return false;
+      if (constraint.GetType() == ConstraintType::NOTNULL) return false;
     }
     return true;
   }
+
+// For single column default
+  inline bool AllowDefault(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Get the default value for the column
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return constraint.getDefaultValue();
+      }
+    }
+
+    return nullptr;
+  }
+
+  /*
+  inline std::pair<ExpressionType, type::Value> AllowExpConstrain(
+      const oid_t column_id) const {
+    std::string column_name = columns[column_id].GetName();
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::CHECK)
+        return constraint.GetExp();
+    }
+    std::pair<ExpressionType, type::Value> tmp =
+        std::pair<ExpressionType, type::Value>();
+    tmp.first = ExpressionType::INVALID;
+    return tmp;
+    // return std::pair<ExpressionType, type::Value>();
+  }
+  */
 
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
@@ -186,6 +227,14 @@ class Schema : public Printable {
     }
   }
 
+  inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {
+    multi_constraints.push_back(mc);
+  }
+
+  inline std::vector<MultiConstraint> GetMultiConstraints() {
+    return multi_constraints;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -198,6 +247,9 @@ class Schema : public Printable {
 
   // keeps track of unlined columns
   std::vector<oid_t> uninlined_columns;
+
+  // keeps multi_constraints
+  std::vector<MultiConstraint> multi_constraints;
 
   // keep these in sync with the vectors above
   oid_t column_count = INVALID_OID;

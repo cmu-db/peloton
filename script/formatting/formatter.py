@@ -45,7 +45,7 @@ header_comment_line_3  = "// "
 header_comment_line_4  = "//\n"
 header_comment_line_5  = "// Identification: "
 header_comment_line_6  = "//\n"
-header_comment_line_7  = "// Copyright (c) 2015-16, Carnegie Mellon University Database Group\n"
+header_comment_line_7  = "// Copyright (c) 2015-17, Carnegie Mellon University Database Group\n"
 header_comment_line_8  = "//\n"
 header_comment_line_9  = "//===----------------------------------------------------------------------===//\n\n\n"
 
@@ -131,7 +131,6 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 
 #format all the files in the dir passed as argument
 def format_dir(dir_path, add_header, strip_header, clang_format_code):
-
 	for subdir, dirs, files in os.walk(dir_path):
 		for file in files:
 			#print os.path.join(subdir, file)
@@ -155,8 +154,8 @@ if __name__ == '__main__':
 	parser.add_argument("-a", "--add-header", help='add suitable header(s)', action='store_true')
 	parser.add_argument("-s", "--strip-header", help='strip existing header(s)', action='store_true')
 	parser.add_argument("-c", "--clang-format-code", help='clang-format source code', action='store_true')
-	parser.add_argument("-f", "--file-name", help='file to be acted on', nargs=1)
-	parser.add_argument("-d", "--dir-name", help='directory containing files to be acted on', nargs=1)
+	parser.add_argument("-f", "--file-name", help='file to be acted on', nargs='+')
+	parser.add_argument("-d", "--dir-name", help='directory containing files to be acted on', nargs='+')
 
 	args = parser.parse_args()
 
@@ -169,13 +168,14 @@ if __name__ == '__main__':
 		sys.exit("file_name and dir_name cannot be specified together")
 
 	if args.clang_format_code:
-		
 		if args.file_name:
-			LOG.info("Scanning file: " + ''.join(args.file_name))
-			format_file(args.file_name, args.add_header, args.strip_header, args.clang_format_code)
+      			for file_name in args.file_name:
+        			LOG.info("Scanning file: " + file_name)
+        			format_file(file_name, args.add_header, args.strip_header, args.clang_format_code)
 		elif args.dir_name:
-			LOG.info("Scanning directory " + ''.join(args.dir_name))
-			format_dir(args.dir_name, args.add_header, args.strip_header, args.clang_format_code)
+      			for dir in args.dir_name:
+        			LOG.info("Scanning directory " + dir)
+        			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
 		# BY DEFAULT, WE SCAN THE DEFAULT DIRS AND FIX THEM
 		else:
 			LOG.info("Default scan")		

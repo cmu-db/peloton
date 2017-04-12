@@ -34,34 +34,39 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction() { Init(INVALID_TXN_ID, INVALID_CID); }
-
-  Transaction(const txn_id_t &txn_id) { Init(txn_id, INVALID_CID); }
-
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
-    Init(txn_id, begin_cid);
+  
+  Transaction() { 
+    Init(INVALID_CID, 0, false); 
   }
 
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid, bool ro) {
-    Init(txn_id, begin_cid);
-    declared_readonly_ = ro;
+  Transaction(const cid_t &begin_cid, const size_t thread_id, bool ro = false) {
+    Init(begin_cid, thread_id, ro);
   }
 
   ~Transaction() {}
 
-  void Init(const txn_id_t &txn_id, const cid_t &begin_cid) {
-    txn_id_ = txn_id;
+ private:
+
+  void Init(const cid_t &begin_cid, const size_t thread_id, const bool readonly) {
+    txn_id_ = begin_cid;
     begin_cid_ = begin_cid;
+    thread_id_ = thread_id;
+    
+    declared_readonly_ = readonly;
+
     end_cid_ = MAX_CID;
     is_written_ = false;
-    declared_readonly_ = false;
     insert_count_ = 0;
-    gc_set_.reset(new ReadWriteSet());
+    gc_set_.reset(new GCSet());
   }
 
+
+ public:
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
+
+  inline size_t GetThreadId() const { return thread_id_; }
 
   inline txn_id_t GetTransactionId() const { return txn_id_; }
 
@@ -69,11 +74,7 @@ class Transaction : public Printable {
 
   inline cid_t GetEndCommitId() const { return end_cid_; }
 
-  inline size_t GetEpochId() const { return epoch_id_; }
-
   inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
-
-  inline void SetEpochId(const size_t eid) { epoch_id_ = eid; }
 
   void RecordRead(const ItemPointer &);
 
@@ -90,7 +91,9 @@ class Transaction : public Printable {
 
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
-  inline std::shared_ptr<ReadWriteSet> GetGCSetPtr() { return gc_set_; }
+  inline std::shared_ptr<GCSet> GetGCSetPtr() {
+    return gc_set_;
+  }
 
   inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
 
@@ -109,6 +112,7 @@ class Transaction : public Printable {
 
   inline bool IsDeclaredReadOnly() const { return declared_readonly_; }
 
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -117,19 +121,19 @@ class Transaction : public Printable {
   // transaction id
   txn_id_t txn_id_;
 
+  // thread id
+  size_t thread_id_;
+
   // start commit id
   cid_t begin_cid_;
 
   // end commit id
   cid_t end_cid_;
 
-  // epoch id
-  size_t epoch_id_;
-
   ReadWriteSet rw_set_;
 
   // this set contains data location that needs to be gc'd in the transaction.
-  std::shared_ptr<ReadWriteSet> gc_set_;
+  std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
   ResultType result_ = peloton::ResultType::SUCCESS;

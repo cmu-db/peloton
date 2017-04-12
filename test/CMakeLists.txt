@@ -40,16 +40,23 @@ include_directories(SYSTEM ${GMOCK_DIR})
 # --[ Tests Common library
 
 set(HARNESS ${PROJECT_SOURCE_DIR}/test/common/harness.cpp)
-set(EXECUTOR_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/executor_tests_util.cpp)
-set(LOGGING_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/logging/logging_tests_util.cpp)
-set(JOIN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/join_tests_util.cpp)
-set(TXN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/concurrency/transaction_tests_util.cpp)
-set(STATS_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/statistics/stats_tests_util.cpp)
-set(SQL_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/sql/sql_tests_util.cpp)
+set(TESTING_UTIL_EXECUTOR   ${PROJECT_SOURCE_DIR}/test/executor/testing_executor_util.cpp)
+set(TESTING_UTIL_JOIN       ${PROJECT_SOURCE_DIR}/test/executor/testing_join_util.cpp)
+set(TESTING_UTIL_LOGGING    ${PROJECT_SOURCE_DIR}/test/logging/testing_logging_util.cpp)
+set(TESTING_UTIL_TXN        ${PROJECT_SOURCE_DIR}/test/concurrency/testing_transaction_util.cpp)
+set(TESTING_UTIL_STATS      ${PROJECT_SOURCE_DIR}/test/statistics/testing_stats_util.cpp)
+set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp)
+set(TESTING_UTIL_INDEX      ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
 
-add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} 
-            ${HARNESS} ${EXECUTOR_TESTS_UTIL} ${LOGGING_TESTS_UTIL} ${JOIN_TESTS_UTIL}
-            ${TXN_TESTS_UTIL} ${STATS_TESTS_UTIL} ${SQL_TESTS_UTIL})
+add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
+            ${TESTING_UTIL_EXECUTOR}
+            ${TESTING_UTIL_LOGGING}
+            ${TESTING_UTIL_JOIN}
+            ${TESTING_UTIL_TXN}
+            ${TESTING_UTIL_STATS}
+            ${TESTING_UTIL_INDEX}
+            ${TESTING_UTIL_SQL}
+)
 
 # --[ Add "make check" target
 
@@ -61,8 +68,16 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 # --[ Memcheck
 
 find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
-set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes
-    --soname-synonyms=somalloc=*jemalloc* --error-exitcode=1)
+
+# Note you can add '--gen-suppressions=all' to MEMORYCHECK_COMMAND_OPTIONS
+# if you want valgrind to print out the syntax to use to suppress a particular
+# memory leak
+set(MEMORYCHECK_COMMAND_OPTIONS
+    --trace-children=yes
+    --leak-check=full
+    --track-origins=yes
+    --soname-synonyms=somalloc=*jemalloc*
+    --error-exitcode=1)
 set(MEMORYCHECK_SUPPRESSIONS_FILE ${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp)
 
 ##################################################################################

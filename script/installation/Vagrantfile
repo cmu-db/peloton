@@ -1,5 +1,5 @@
 # -*- mode: ruby -*-
-# vi: set ft=ruby :
+# vi: set ft=ruby et:
 
 # Customize VM resources
 VM_CPUS = "4"
@@ -29,7 +29,9 @@ Vagrant.configure(2) do |config|
   # Setup environment
   config.vm.provision :shell, :inline => "apt-get update"
   config.vm.provision "shell", :path => "https://raw.githubusercontent.com/cmu-db/peloton/master/script/installation/packages.sh"
-  config.vm.provision :shell, :inline => "git clone --recursive https://github.com/cmu-db/peloton", :privileged => false
   config.vm.provision "shell", :path => "https://raw.githubusercontent.com/cmu-db/peloton/master/script/installation/customize.sh", :privileged => false
+  
+  # Link current repo into VM
+  config.vm.synced_folder "../..", "/peloton"
 
   end

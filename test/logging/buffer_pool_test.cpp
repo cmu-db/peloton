@@ -13,9 +13,10 @@
 
 #include "common/harness.h"
 #include "logging/circular_buffer_pool.h"
-#include "logging/logging_tests_util.h"
-#include "executor/executor_tests_util.h"
 #include <stdlib.h>
+
+#include "executor/testing_executor_util.h"
+#include "logging/testing_logging_util.h"
 
 namespace peloton {
 namespace test {
@@ -94,17 +95,17 @@ TEST_F(BufferPoolTests, LogBufferBasicTest) {
   size_t table_tile_group_count = 3;
 
   std::unique_ptr<storage::DataTable> recovery_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
+      TestingExecutorUtil::CreateTable(tile_group_size));
 
   // prepare tuples
   auto mutate = true;
   auto random = false;
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-      LoggingTestsUtil::BuildTuples(recovery_table.get(), num_rows, mutate,
+      TestingLoggingUtil::BuildTuples(recovery_table.get(), num_rows, mutate,
                                     random);
   std::vector<logging::TupleRecord> records =
-      LoggingTestsUtil::BuildTupleRecords(tuples, tile_group_size,
+      TestingLoggingUtil::BuildTupleRecords(tuples, tile_group_size,
                                           table_tile_group_count);
   logging::LogBuffer log_buffer(0);
   size_t total_length = 0;
@@ -160,8 +161,8 @@ TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
   unsigned int txn_count = 9999;
 
   auto &log_manager = logging::LogManager::GetInstance();
-  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true);
-  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  logging::LogManager::GetInstance().Configure(LoggingType::NVM_WAL, true);
+  log_manager.SetLoggingStatus(LoggingStatusType::LOGGING);
   log_manager.InitFrontendLoggers();
 
   logging::WriteAheadFrontendLogger *frontend_logger =
