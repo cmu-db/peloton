@@ -28,7 +28,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
 // that order. We also need to correctly handle cases where _any_ of those
 // functions throw exceptions.
 void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
-                    RuntimeStats *stats) {
+                    RuntimeStats *stats, executor::ExecutorContext *exec_context) {
   CodeGen codegen{GetCodeContext()};
 
   llvm::Type *runtime_state_type = runtime_state_.FinalizeType(codegen);
@@ -38,9 +38,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
   type::Value values[params_.size()];
-  for (uint32_t i = 0; i < params_.size(); i ++) {
-    values[i] = params_[i];
-  }
+  GetParams(values, exec_context);
 
   // Grab an non-owning pointer to the space
   char *param = param_data.get();
@@ -142,6 +140,27 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
 
   // All is well
   return true;
+}
+
+uint32_t Query::StoreParam(Parameter param) {
+  uint32_t offset = params_.size();
+  params_.emplace_back(param);
+  return offset;
+}
+
+void Query::GetParams(type::Value *values,
+           executor::ExecutorContext *exec_context) {
+  for (uint32_t i = 0; i < params_.size(); i ++) {
+    if (params_[i].IsConstant()) {
+        values[i] = params_[i].GetValue();
+    } else {
+        PL_ASSERT(exec_context != nullptr);
+        type::Value param =
+                exec_context->GetParams().at(params_[i].GetParamIdx());
+        params_[i].FinalizeType(param.GetTypeId());
+        values[i] = param;
+    }
+  }
 }
 
 }  // namespace codegen

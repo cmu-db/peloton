@@ -63,7 +63,7 @@ class CompilationContext {
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
 
-  uint32_t StoreParam(type::Value param) { return query_.StoreParam(param); }
+  uint32_t StoreParam(Parameter param) { return query_.StoreParam(param); }
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

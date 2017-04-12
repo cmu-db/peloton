@@ -2,37 +2,60 @@
 //
 //                         Peloton
 //
-// constant_translator.cpp
+// parameter_translator.cpp
 //
-// Identification: src/codegen/constant_translator.cpp
+// Identification: src/codegen/parameter_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/constant_translator.h"
+#include "codegen/parameter_translator.h"
 
 #include "expression/constant_value_expression.h"
+#include "expression/parameter_value_expression.h"
 #include "type/value_peeker.h"
 #include "codegen/value_peeker_proxy.h"
 #include "codegen/value_proxy.h"
 #include "codegen/parameter.h"
 
 namespace peloton {
+
+namespace expression {
+  class ParameterValueExpression;
+}  // namespace planner
+
 namespace codegen {
 
 // Constructor
-ConstantTranslator::ConstantTranslator(
-    const expression::ConstantValueExpression &exp, CompilationContext &ctx)
+ParameterTranslator::ParameterTranslator(
+    const expression::AbstractExpression &exp, CompilationContext &ctx)
     : ExpressionTranslator(exp, ctx), ctx_(ctx) {
-  const type::Value &constant =
-    GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-  typeId_ = constant.GetTypeId();
-  offset_ = ctx.StoreParam(Parameter{true, &typeId_, constant, 0});
+  switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_PARAMETER: {
+      type::Value dummy = type::ValueFactory::GetBooleanValue(false);
+      int param_idx = GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
+      Parameter param{false, &typeId_, dummy, param_idx};
+      offset_ = ctx_.StoreParam(param);
+      break;
+    }
+    case ExpressionType::VALUE_CONSTANT: {
+      const type::Value &constant =
+            GetExpressionAs<expression::ConstantValueExpression>().GetValue();
+      typeId_ = constant.GetTypeId();
+      Parameter param{true, &typeId_, constant, 0};
+      offset_ = ctx_.StoreParam(param);
+      break;
+    }
+    default: {
+      throw Exception{"We don't have a translator for expression type: " +
+                      ExpressionTypeToString(exp.GetExpressionType())};
+    }
+  }
 }
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
-codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
+codegen::Value ParameterTranslator::DeriveValue(CodeGen &codegen,
                                                RowBatch::Row &) const {
   std::vector<llvm::Value *> args =
           {ctx_.GetValuesPtr(), codegen.Const64(offset_)};
