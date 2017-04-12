@@ -160,7 +160,7 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
         auto sort_prop = prop->As<PropertySort>();
         auto sort_col_len = sort_prop->GetSortColumnSize();
         if (sort_col_len > group_by_col_len) break;
-        for (size_t col_idx; col_idx < sort_col_len; col_idx++) {
+        for (size_t col_idx = 0; col_idx < sort_col_len; col_idx++) {
           if (!sort_prop->GetSortColumn(col_idx)
                    ->Equals(op->columns[col_idx].get())) {
             sort_fulfilled = false;
