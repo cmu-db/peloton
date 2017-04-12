@@ -64,9 +64,15 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  // This method test whether the current transaction is the owner of a tuple.
+  // This method test whether the current transaction is the owner of this version.
   virtual bool IsOwner(
       Transaction *const current_txn, 
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
+
+  // This method tests whether any other transaction has owned this version.
+  virtual bool IsOwned(
+      Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
