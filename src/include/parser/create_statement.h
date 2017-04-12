@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "memory"
 #include "common/sql_node_visitor.h"
-#include "parser/sql_statement.h"
 #include "expression/abstract_expression.h"
+#include "parser/sql_statement.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace parser {
@@ -204,12 +205,31 @@ struct CreateStatement : TableRefStatement {
       for (auto attr : *index_attrs) delete[] (attr);
       delete index_attrs;
     }
+    if (trigger_funcname) {
+      for (auto t : *trigger_funcname) delete[](t);
+      delete trigger_funcname;
+    }
+    if (trigger_args) {
+      for (auto t : *trigger_args) delete[](t);
+      delete trigger_args;
+    }
+    if (trigger_columns) {
+      for (auto t : *trigger_columns) delete[](t);
+      delete trigger_columns;
+    }
 
     if (index_name != nullptr) {
       delete[] (index_name);
     }
-    if (database_name != nullptr) {
-      delete[] (database_name);
+    if (trigger_name) {
+      delete[](trigger_name);
+    }
+    if (database_name) {
+      delete[](database_name);
+    }
+
+    if (trigger_when) {
+      delete trigger_when;
     }
   }
 

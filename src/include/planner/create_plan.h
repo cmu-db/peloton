@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "expression/abstract_expression.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -30,6 +31,15 @@ namespace planner {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
+  CreatePlan(const CreatePlan &) = delete;
+  CreatePlan &operator=(const CreatePlan &) = delete;
+  CreatePlan(CreatePlan &&) = delete;
+  CreatePlan &operator=(CreatePlan &&) = delete;
+  ~CreatePlan() {
+    if (trigger_when) {
+      delete trigger_when;
+    }
+  }
 
   explicit CreatePlan(storage::DataTable *table);
 
@@ -75,8 +85,9 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetTriggerColumns() const { return trigger_columns; }
 
+  // Remeber to release the pointer
   expression::AbstractExpression *GetTriggerWhen() const {
-    return trigger_when;
+    return trigger_when->Copy();
   }
 
   int16_t GetTriggerType() const { return trigger_type; }
