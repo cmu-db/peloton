@@ -48,7 +48,6 @@ CompressedTile::~CompressedTile() {
 
 }
 
-
 void CompressedTile::CompressTile(Tile *tile) {
 
   auto allocated_tuple_count = tile->GetAllocatedTupleCount();
@@ -69,6 +68,15 @@ void CompressedTile::CompressTile(Tile *tile) {
         if (new_column_values.size()!=0) {
           compressed_columns_count += 1;
           std::cout << "Compressed values for column " << tile_schema->GetColumn(i).GetName() << " : SUCCESS\n";
+
+          type::Value old_value = tile->GetValue(0, i);
+          type::Value new_value = new_column_values[0];
+
+          type::Value base_value = GetBaseValue(old_value, new_value);
+          type::Type::TypeId type_id = GetCompressedType(new_value);
+
+          SetCompressedMapValue(i, type_id, base_value);
+
         } else {
           std::cout << "Compressed values for column " << tile_schema->GetColumn(i).GetName() << " : FAILURE\n";
         }
@@ -98,7 +106,7 @@ void CompressedTile::CompressTile(Tile *tile) {
           std::cout<< "Pushing uncompressed column as is into the schema \t" << column_name << "\n";
           columns.push_back(column);
           } else {
-            type::Type::TypeId new_column_type = new_columns[i][0].GetTypeId();
+            type::Type::TypeId new_column_type = GetCompressedType(i);
             catalog::Column column(new_column_type, type::Type::GetTypeSize(new_column_type),
                                 column_name, column_is_inlined);
             std::cout<< "Pushing Compressed column into the schema \t" << column_name << "\n";
@@ -108,8 +116,6 @@ void CompressedTile::CompressTile(Tile *tile) {
           }
       }
       
-
-
        // reclaim the tile memory (INLINED data)
       auto &storage_manager = storage::StorageManager::GetInstance();
       
@@ -131,7 +137,33 @@ void CompressedTile::CompressTile(Tile *tile) {
       // zero out the data
       PL_MEMSET(data, 0, tile_size);
       
+      for (oid_t i = 0; i < column_count; i++) {
+        bool is_inlined = schema.IsInlined(i);
+        size_t new_column_offset = schema.GetOffset(i);
+
+        if(GetCompressedType(i) == type::Type::INVALID) {
+          size_t old_column_offset = tile_schema->GetOffset(i);
+          auto old_column_type = tile_schema->GetColumn(i).GetType();
+
+          for (oid_t j = 0; j < num_tuple_slots; j++ ) {
+            type::Value old_value = tile-> GetValueFast(j, old_column_offset, old_column_type, is_inlined);
+            Tile::SetValueFast(old_value, j, new_column_offset, old_column_type, is_inlined);
+          }
+
+        } else {
+
+          auto new_column_type = schema.GetColumn(i).GetType();
+          
+          for (oid_t j = 0; j < num_tuple_slots; j++ ) {
+            Tile::SetValueFast(new_columns[i][j], j, new_column_offset, new_column_type, is_inlined);
+          }
+
+        }
+      }
+      
       is_compressed = true;
+      std::cout<< "Compressed Tile Details: \n";
+      std::cout<<GetInfo()<<"\n";
     }
 
 }
@@ -191,6 +223,20 @@ std::vector<type::Value> CompressedTile::CompressColumn(Tile* tile, oid_t column
   }
   return modified_values;
 }
+
+void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
+
+  if(is_compressed) {
+    LOG_INFO("Peloton does not support insert into compressed tiles.");
+    (void) tuple_offset;
+    (void) tuple;
+    PL_ASSERT(false);
+  } else {
+    Tile::InsertTuple(tuple_offset, tuple);
+  }
+}
+
+
 }
 }
 
