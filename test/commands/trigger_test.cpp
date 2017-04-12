@@ -74,7 +74,10 @@ TEST_F(TriggerTests, BasicTest) {
   EXPECT_FALSE(trigger_list.HasTriggerType(
       commands::EnumTriggerType::BEFORE_INSERT_ROW));
   LOG_INFO("before test ExecBSInsertTriggers");
-  trigger_list.ExecBRInsertTriggers();
+  trigger_list.ExecBRInsertTriggers(nullptr);
+  // TODO: the effect of this operation should be verified
+  // automatically. We have check the log output manually.
+  // Auto check can be implemented after UDF is implemented
 
   delete stmt_list1;
   delete stmt_list2;
