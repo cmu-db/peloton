@@ -6,7 +6,7 @@ namespace peloton {
 namespace optimizer {
 
 ColumnStats::ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-  type::Type::TypeId column_type)
+                         type::Type::TypeId column_type)
     : database_id_{database_id},
       table_id_{table_id},
       column_id_{column_id},
@@ -21,7 +21,7 @@ ColumnStats::ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
 ColumnStats::~ColumnStats() {}
 
 void ColumnStats::CheckColumnType(type::Type::TypeId type) {
-  switch(type) {
+  switch (type) {
     case type::Type::PARAMETER_OFFSET:
     case type::Type::TINYINT:
     case type::Type::SMALLINT:
@@ -44,10 +44,10 @@ void ColumnStats::CheckColumnType(type::Type::TypeId type) {
 }
 
 uint8_t ColumnStats::TuneHLLPrecision(type::Type::TypeId type) {
-  switch(type) {
+  switch (type) {
     case type::Type::BIGINT:
     case type::Type::TIMESTAMP:
-      return 5; // TODO: use more complicated tuning
+      return 5;  // TODO: use more complicated tuning
     default:
       return hll_precision;
   }
@@ -92,13 +92,12 @@ double ColumnStats::GetFracNull() {
   return (static_cast<double>(null_count_) / total_count_);
 }
 
-std::vector<ColumnStats::ValueFrequencyPair> ColumnStats::GetCommonValueAndFrequency() {
+std::vector<ColumnStats::ValueFrequencyPair>
+ColumnStats::GetCommonValueAndFrequency() {
   return topk_.GetAllOrderedMaxFirst();
 }
 
-uint64_t ColumnStats::GetCardinality() {
-  return hll_.EstimateCardinality();
-}
+uint64_t ColumnStats::GetCardinality() { return hll_.EstimateCardinality(); }
 
 std::vector<double> ColumnStats::GetHistogramBound() {
   return hist_.Uniform(num_bins);

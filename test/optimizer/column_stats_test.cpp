@@ -20,14 +20,16 @@ class ColumnStatsTests : public PelotonTest {};
 
 using ValueFrequencyPair = std::pair<type::Value, double>;
 
-void PrintCommonValueAndFrequency(std::vector<std::pair<type::Value, double>> valfreq) {
+void PrintCommonValueAndFrequency(
+    std::vector<std::pair<type::Value, double>> valfreq) {
   for (auto const& p : valfreq) {
     LOG_INFO("\n [Print k Values] %s, %f", p.first.GetInfo().c_str(), p.second);
   }
 }
 
 TEST_F(ColumnStatsTests, BasicTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID, type::Type::TypeId::INTEGER};
+  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
+                       type::Type::TypeId::INTEGER};
   for (int i = 0; i < 10; i++) {
     type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
@@ -40,30 +42,34 @@ TEST_F(ColumnStatsTests, BasicTest) {
 
 // Test categorical values
 TEST_F(ColumnStatsTests, DistinctValueTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID, type::Type::TypeId::BOOLEAN};
+  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
+                       type::Type::TypeId::BOOLEAN};
   for (int i = 0; i < 1250; i++) {
     type::Value v = type::ValueFactory::GetBooleanValue(i % 5 == 0);
     colstats.AddValue(v);
   }
   EXPECT_EQ(colstats.GetCardinality(), 2);
   EXPECT_EQ(colstats.GetFracNull(), 0);
-  EXPECT_EQ(colstats.GetHistogramBound().size(), 0); // No histogram for categorical data
-  std::vector<ValueFrequencyPair> valfreq = colstats.GetCommonValueAndFrequency();
+  EXPECT_EQ(colstats.GetHistogramBound().size(),
+            0);  // No histogram for categorical data
+  std::vector<ValueFrequencyPair> valfreq =
+      colstats.GetCommonValueAndFrequency();
   // EXPECT_EQ(valfreq.size(), 2);
-  //PrintCommonValueAndFrequency(colstats.GetCommonValueAndFrequency());
+  // PrintCommonValueAndFrequency(colstats.GetCommonValueAndFrequency());
 }
 
 // All stats collectors should work with trivial case
 TEST_F(ColumnStatsTests, TrivialValueTest) {
   ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID, type::Type::TypeId::ARRAY};
-  EXPECT_EQ(colstats.GetFracNull(), 0); // Should also log error
+  EXPECT_EQ(colstats.GetFracNull(), 0);  // Should also log error
   EXPECT_EQ(colstats.GetCardinality(), 0);
   EXPECT_EQ(colstats.GetHistogramBound().size(), 0);
   EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), 0);
 }
 
 TEST_F(ColumnStatsTests, LeftSkewedDistTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID, type::Type::TypeId::BIGINT};
+  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
+                       type::Type::TypeId::BIGINT};
   int big_int = 12345;
   for (int i = 1; i <= 10; i++) {
     type::Value v = type::ValueFactory::GetBigIntValue(i * big_int);

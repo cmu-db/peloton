@@ -65,6 +65,5 @@ TEST_F(CountMinSketchTests, SimpleCountMinSketchMixTest) {
   sketch.Remove("1", 3);
   EXPECT_EQ(sketch.size, 3);
 }
-
 }
 }

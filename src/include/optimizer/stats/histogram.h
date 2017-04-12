@@ -78,10 +78,7 @@ class Histogram {
     * Peloton type adapter
     */
   void Update(type::Value& value) {
-    if(!(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL)) {
-      return;
-    }
-//     PL_ASSERT(value.CheckInteger() || value.GetTypeId() == type::Type::DECIMAL);
+		// Hack for handling unimplemented GetData()
     double raw_value = atof(value.ToString().c_str());
     Update(raw_value);
   }
@@ -103,7 +100,7 @@ class Histogram {
       // -1 because we want index to be element less than b
       i = std::abs(i + 1) - 1;
     }
-//    assert(i >= 0 && i < bins.size() - 1);
+		// PL_ASSERT(i >= 0 && i < bins.size() - 1);
 
     Bin b_i = bins[i];
     Bin b_i1 = bins[i + 1];
@@ -141,20 +138,17 @@ class Histogram {
     int i = 0;
     double sum_i = 0;
     double sum_i1 = bins[0].m;
-    //double sum_i1 = 0;
     if (total_count > 0) {
       for (uint8_t j = 1; j < B; j++) {
         double s = j * gap;
-        // printf("s=%f\n", s);
-
         while (sum_i1 < s) {
           sum_i  = sum_i1;
           sum_i1 += bins[i].m;
           i += 1;
         }
         double u_j;
-
-        if (i == 0) { // TODO: I come up with this solution....it may break the algorithm
+				// TODO: Original paper does not cover this case!
+        if (i == 0) {
           u_j = s;
         } else {
           Bin b_i = bins[i - 1];
@@ -185,26 +179,22 @@ class Histogram {
 
   // Utility function to visualize histogram
   void Print() {
-    printf("Histogram: total_count=[%f] num_bins=[%lu]\n", total_count, bins.size());
+    LOG_INFO("Histogram: total_count=[%f] num_bins=[%lu]", total_count, bins.size());
     for (Bin b : bins) {
       b.Print();
     }
-    printf("\n");
   }
 
   void PrintUniform(const std::vector<double> &vec) {
-    printf("Printing uniform histogram...\n");
+    LOG_INFO("Printing uniform histogram...");
     for (double x : vec) {
-      printf("[%f]", x);
+      LOG_INFO("[%f]", x);
     }
-    printf("\n");
   }
 
  private:
 
   void InsertBin(Bin &bin) {
-    // CheckBin(bin);
-
     total_count += bin.m;
     if (bin.p < minimum) {
       minimum = bin.p;
@@ -234,7 +224,7 @@ class Histogram {
         min_gap_idx = i;
       }
     }
-//    assert(min_gap_idx >= 0 && min_gap_idx < bins.size());
+		// assert(min_gap_idx >= 0 && min_gap_idx < bins.size());
     Bin &prev_bin = bins[min_gap_idx];
     Bin &next_bin = bins[min_gap_idx + 1];
     prev_bin.MergeWith(next_bin);
@@ -299,7 +289,7 @@ class Histogram {
     }
 
     void Print() {
-      printf("Bin: p=[%f],m=[%f]\n", p, m);
+      LOG_INFO("Bin: p=[%f],m=[%f]", p, m);
     }
   };
 };
