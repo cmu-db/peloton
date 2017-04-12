@@ -71,6 +71,8 @@ public:
 	std::vector<type::Value> CompressColumn(Tile* tile, oid_t column_id, 
 																type::Type::TypeId compression_type);
 
+	void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
+
 
   //===--------------------------------------------------------------------===//
   // Utility Functions
@@ -78,6 +80,32 @@ public:
 
 	bool IsCompressed () {
 		return is_compressed;
+	}
+
+	inline type::Value GetBaseValue(type::Value old_value, type::Value new_value) {
+  		return old_value.Add(new_value).CastAs(old_value.GetTypeId());
+	}
+
+	inline type::Type::TypeId GetCompressedType(type::Value new_value) {
+  		return new_value.GetTypeId();
+	}
+
+	inline void SetCompressedMapValue(oid_t column_id, type::Type::TypeId type_id, type::Value base_value) {
+  		compressed_column_map[column_id] = std::make_pair(type_id, base_value);
+	}
+
+	inline type::Value GetBaseValue(oid_t column_id) {
+  		if(compressed_column_map.find(column_id) != compressed_column_map.end()) {
+    		return compressed_column_map[column_id].second;
+  		}
+  		return type::Value();
+	}
+
+	inline type::Type::TypeId GetCompressedType(oid_t column_id) {
+		if(compressed_column_map.find(column_id) != compressed_column_map.end()) {
+			return compressed_column_map[column_id].first;
+  		}
+  		return type::Type::INVALID;
 	}
 
 protected:
@@ -88,6 +116,8 @@ protected:
 	bool is_compressed;
 	oid_t compressed_columns_count;
 	int tuple_count;
+
+	std::map <oid_t, std::pair<type::Type::TypeId, type::Value>> compressed_column_map;
 };
 }
 }

@@ -76,7 +76,7 @@ class Tile : public Printable {
    * Insert tuple at slot
    * NOTE : No checks, must be at valid slot.
    */
-  void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
+  virtual void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
   // allocated tuple slots
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
@@ -91,27 +91,27 @@ class Tile : public Printable {
   /**
    * Returns value present at slot
    */
-  type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
+  virtual type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+  virtual type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
                            const type::Type::TypeId column_type,
                            const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(const type::Value &value, const oid_t tuple_offset,
+  virtual void SetValue(const type::Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(const type::Value &value, const oid_t tuple_offset,
+  virtual void SetValueFast(const type::Value &value, const oid_t tuple_offset,
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
@@ -171,14 +171,14 @@ class Tile : public Printable {
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
 
-  bool SerializeTo(SerializeOutput &output, oid_t num_tuples);
-  bool SerializeHeaderTo(SerializeOutput &output);
-  bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
+  virtual bool SerializeTo(SerializeOutput &output, oid_t num_tuples);
+  virtual bool SerializeHeaderTo(SerializeOutput &output);
+  virtual bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
                          int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInput &serialize_in,
+  virtual void DeserializeTuplesFrom(SerializeInput &serialize_in,
                              type::AbstractPool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
+  virtual void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
                                           type::AbstractPool *pool = nullptr);
 
   type::AbstractPool *GetPool() { return (pool); }
