@@ -3,6 +3,17 @@
 * [compressed_tile.cpp](https://github.com/rohit-cmu/compression-peloton/blob/master/src/storage/compressed_tile.cpp)
 * [compressed_tile.h](https://github.com/rohit-cmu/compression-peloton/blob/master/src/include/storage/compressed_tile.h)
 
+### Other Existing Files Modified
+
+Some additional functions have been added to support database compression. Here are the following files:
+
+* [tile.h](https://github.com/rohit-cmu/compression-peloton/blob/master/src/include/storage/tile.h)
+* [tile.cpp](https://github.com/rohit-cmu/compression-peloton/blob/master/src/storage/tile.cpp)
+* [tile_group.h](https://github.com/rohit-cmu/compression-peloton/blob/master/src/include/storage/tile_group.h)
+* [tile_group.cpp](https://github.com/rohit-cmu/compression-peloton/blob/master/src/storage/tile_group.cpp)
+* [data_table.cpp](https://github.com/rohit-cmu/compression-peloton/blob/master/src/storage/data_table.cpp)
+
+
 ## Strategy for Compressing
 
 * Once a tile gets full (all slots occupied by tuples), the CompressTile is created.
@@ -20,7 +31,7 @@
 * [Compression Size Test](https://github.com/rohit-cmu/compression-peloton/blob/master/test/storage/compression_test.cpp)
 
 
-Compression Correctness Test:
+### Compression Correctness Test:
 * This test inserts 25 tuples
 * Each tuple is of the form (i, i*100) where i belongs to (0,25)
 * Since each tile group contains 1 tile and 10 tuples per tile, there are 3 tile groups formed.
@@ -29,7 +40,7 @@ Compression Correctness Test:
 * Thus we now have compressed and uncompressed data.
 * We now perform a SELECT * on this and expect to correctly recieve the true value of the compressed data and uncompressed data.
 
-Compression Size Test:
+### Compression Size Test:
 * This test inserts 100 tuples
 * Each tuple is of the form [Integer, Integer, Decimal, Varchar]
 * Thus the tuple length is (4+ 4+ 8+ 8) = 24 bytes.
