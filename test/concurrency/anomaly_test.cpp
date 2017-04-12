@@ -693,72 +693,72 @@ TEST_F(AnomalyTests, SerializableTest) {
   }
 }
 
-// TEST_F(AnomalyTests, StressTest) {
-//   const int num_txn = 2;  // 16
-//   const int scale = 1;    // 20
-//   const int num_key = 2;  // 256
-//   srand(15721);
-//   for (auto protocol_type : PROTOCOL_TYPES) {
-//     concurrency::TransactionManagerFactory::Configure(
-//         protocol_type, 
-//         IsolationLevelType::SERIALIZABLE, 
-//         ConflictAvoidanceType::ABORT);
+TEST_F(AnomalyTests, StressTest) {
+  const int num_txn = 2;  // 16
+  const int scale = 1;    // 20
+  const int num_key = 2;  // 256
+  srand(15721);
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(
+        protocol_type, 
+        IsolationLevelType::SERIALIZABLE, 
+        ConflictAvoidanceType::ABORT);
 
-//     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     
-//     EXPECT_EQ(IsolationLevelType::SERIALIZABLE, txn_manager.GetIsolationLevel());
+    EXPECT_EQ(IsolationLevelType::SERIALIZABLE, txn_manager.GetIsolationLevel());
 
-//     std::unique_ptr<storage::DataTable> table(
-//         TestingTransactionUtil::CreateTable(num_key));
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable(num_key));
 
-//     TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-//     scheduler.SetConcurrent(true);
-//     for (int i = 0; i < num_txn; i++) {
-//       for (int j = 0; j < scale; j++) {
-//         // randomly select two unique keys
-//         int key1 = rand() % num_key;
-//         int key2 = rand() % num_key;
-//         int delta = rand() % 1000;
-//         // Store subtracted value
-//         scheduler.Txn(i).ReadStore(key1, -delta);
-//         scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-//         LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
-//         // Store increased value
-//         scheduler.Txn(i).ReadStore(key2, delta);
-//         scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
-//         LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
-//       }
-//       scheduler.Txn(i).Commit();
-//     }
-//     scheduler.Run();
+    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+    scheduler.SetConcurrent(true);
+    for (int i = 0; i < num_txn; i++) {
+      for (int j = 0; j < scale; j++) {
+        // randomly select two unique keys
+        int key1 = rand() % num_key;
+        int key2 = rand() % num_key;
+        int delta = rand() % 1000;
+        // Store subtracted value
+        scheduler.Txn(i).ReadStore(key1, -delta);
+        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+        LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
+        // Store increased value
+        scheduler.Txn(i).ReadStore(key2, delta);
+        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+        LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
+      }
+      scheduler.Txn(i).Commit();
+    }
+    scheduler.Run();
 
-//     // Read all values
-//     TransactionScheduler scheduler2(1, table.get(), &txn_manager);
-//     for (int i = 0; i < num_key; i++) {
-//       scheduler2.Txn(0).Read(i);
-//     }
-//     scheduler2.Txn(0).Commit();
-//     scheduler2.Run();
+    // Read all values
+    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    for (int i = 0; i < num_key; i++) {
+      scheduler2.Txn(0).Read(i);
+    }
+    scheduler2.Txn(0).Commit();
+    scheduler2.Run();
 
-//     EXPECT_EQ(ResultType::SUCCESS,
-//               scheduler2.schedules[0].txn_result);
-//     // The sum should be zero
-//     int sum = 0;
-//     for (auto result : scheduler2.schedules[0].results) {
-//       LOG_INFO("Table has tuple value: %d", result);
-//       sum += result;
-//     }
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler2.schedules[0].txn_result);
+    // The sum should be zero
+    int sum = 0;
+    for (auto result : scheduler2.schedules[0].results) {
+      LOG_INFO("Table has tuple value: %d", result);
+      sum += result;
+    }
 
-//     EXPECT_EQ(0, sum);
+    EXPECT_EQ(0, sum);
 
-//     // stats
-//     int nabort = 0;
-//     for (auto &schedule : scheduler.schedules) {
-//       if (schedule.txn_result == ResultType::ABORTED) nabort += 1;
-//     }
-//     LOG_INFO("Abort: %d out of %d", nabort, num_txn);
-//   }
-// }
+    // stats
+    int nabort = 0;
+    for (auto &schedule : scheduler.schedules) {
+      if (schedule.txn_result == ResultType::ABORTED) nabort += 1;
+    }
+    LOG_INFO("Abort: %d out of %d", nabort, num_txn);
+  }
+}
 
 }  // End test namespace
 }  // End peloton namespace
