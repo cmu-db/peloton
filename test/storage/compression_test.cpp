@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// data_table_test.cpp
+// compression_test.cpp
 //
-// Identification: test/storage/data_table_test.cpp
+// Identification: test/storage/compression_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -27,7 +27,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Data Table Tests
+// Compression Tests
 //===--------------------------------------------------------------------===//
 
 std::unique_ptr<storage::DataTable> data_table_test_table;
