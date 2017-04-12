@@ -21,6 +21,8 @@
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 #include "storage/tuple_iterator.h"
+#include "commands/trigger.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace executor {
@@ -76,7 +78,7 @@ bool InsertExecutor::DExecute() {
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_TRACE("Insert executor :: 1 child ");
+    LOG_DEBUG("Insert executor :: 1 child ");
 
     if (!children_[0]->Execute()) {
       return false;
@@ -127,7 +129,7 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    LOG_TRACE("Insert executor :: 0 child ");
+    LOG_DEBUG("Insert executor :: 0 child ");
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
@@ -161,11 +163,27 @@ bool InsertExecutor::DExecute() {
       if (!project_info) {
         tuple = node.GetTuple(insert_itr);
       }
+
+      // check whether there are per-row-before-insert triggers on this table
+      commands::TriggerList* trigger_list = target_table->GetTriggerList();
+      if (trigger_list == nullptr) {
+        LOG_INFO("target table doesn't have trigger list");
+      } else {
+        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+
+        if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
+          LOG_INFO("target table has per-row-before-insert triggers!");
+          LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          auto new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple));
+          LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+        }
+      }
+
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer location =
           target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
-      LOG_TRACE("Inserted into location: %u, %u", location.block,
+      LOG_DEBUG("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
         type::Value val = (tuple->GetValue(2));

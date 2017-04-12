@@ -47,15 +47,16 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
 /**
  * execute trigger on each row before inserting tuple.
  */
-void TriggerList::ExecBRInsertTriggers() {
+storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
   unsigned i;
   LOG_INFO("enter into ExecBRInsertTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_INSERT_ROW]) {
-    return;
+    return nullptr;
   }
 
+  storage::Tuple* new_tuple = tuple;
   for (i = 0; i < triggers.size(); i++) {
     Trigger obj = triggers[i];
 
@@ -66,19 +67,19 @@ void TriggerList::ExecBRInsertTriggers() {
 
     //TODO: check if trigger is enabled
 
-    //call trigger function
-    obj.ExecCallTriggerFunc();
+    // apply all per-row-before-insert triggers on the tuple
+    new_tuple = obj.ExecCallTriggerFunc(tuple);
   }
-  return;
+  return new_tuple;
 }
 
 /**
  * Call a trigger function.
  */
-void Trigger::ExecCallTriggerFunc() {
+storage::Tuple* Trigger::ExecCallTriggerFunc(storage::Tuple *tuple) {
   LOG_INFO("enter into ExecCallTriggerFunc");
   //TODO: call UDF function.
-  return;
+  return tuple;
 }
 
 }
