@@ -1224,6 +1224,8 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
             const std::string& sql) {
       std::string str = (std::string&) sql;
       std::cout << str << std::endl;
+      // "=" and "in" have very similar effect
+      // replace "in" as "=" for easy parsing
       size_t start_pos = str.find(" in ");
       if (start_pos != std::string::npos) {
         str.replace(start_pos, 3, "=");
