@@ -160,7 +160,7 @@ void CompressedTile::CompressTile(Tile *tile) {
 
         }
       }
-      
+
       is_compressed = true;
       std::cout<< "Compressed Tile Details: \n";
       std::cout<<GetInfo()<<"\n";
@@ -226,15 +226,93 @@ std::vector<type::Value> CompressedTile::CompressColumn(Tile* tile, oid_t column
 
 void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
 
-  if(is_compressed) {
+  if(IsCompressed()) {
     LOG_INFO("Peloton does not support insert into compressed tiles.");
-    (void) tuple_offset;
-    (void) tuple;
     PL_ASSERT(false);
   } else {
     Tile::InsertTuple(tuple_offset, tuple);
   }
 }
+
+
+type::Value CompressedTile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
+
+
+  type::Value deserizedValue = Tile::GetValue(tuple_offset, column_id);
+
+  if(!IsCompressed()) {
+    return deserizedValue;
+  }
+
+  if(GetCompressedType(column_id) == type::Type::INVALID) {
+    return deserizedValue;
+  }
+
+  type::Type::TypeId compressed_type = GetCompressedType(column_id);
+
+  PL_ASSERT(compressed_type != type::Type::INVALID);
+
+  type::Value original = GetUncompressedValue(column_id, deserizedValue);
+
+  return original;
+}
+
+
+ type::Value CompressedTile::GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+                           const type::Type::TypeId column_type,
+                           const bool is_inlined) {
+
+  type::Value deserizedValue = Tile::GetValueFast(tuple_offset, column_offset, column_type, is_inlined);
+
+  if(!IsCompressed()) {
+    return deserizedValue;
+  }
+
+  oid_t column_id = GetColumnFromOffsest(column_offset);
+
+  PL_ASSERT(column_id < column_count);
+
+  if(GetCompressedType(column_id) != type::Type::INVALID) {
+    type::Value original = GetUncompressedValue(column_id, deserizedValue);
+    return original;
+  }
+
+  return deserizedValue;
+
+ }
+
+
+ void CompressedTile::SetValue(const type::Value &value, const oid_t tuple_offset,
+                const oid_t column_id) {
+  if(IsCompressed()) {
+    if(GetCompressedType(column_id) != type::Type::INVALID) {
+      LOG_INFO("Peloton does not support SetValue on a Compressed Class");
+      PL_ASSERT(false);
+    }
+  }
+
+  Tile::SetValue(value, tuple_offset, column_id);
+
+ }
+ 
+ void CompressedTile::SetValueFast(const type::Value &value, const oid_t tuple_offset,
+                    const size_t column_offset, const bool is_inlined,
+                    const size_t column_length) {
+      
+    oid_t column_id = GetColumnFromOffsest(column_offset);
+
+    PL_ASSERT(column_id < column_count);
+
+    if(IsCompressed()) {
+      if(GetCompressedType(column_id) != type::Type::INVALID) {
+        LOG_INFO("Peloton does not support");
+        PL_ASSERT(false);
+      }
+    }
+
+    Tile::SetValueFast(value, tuple_offset, column_offset, is_inlined, column_length);
+ }
+
 
 
 }
