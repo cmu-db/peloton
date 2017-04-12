@@ -3,6 +3,7 @@
 #include "vector"
 #include "planner/create_plan.h"
 #include "common/logger.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace commands {
@@ -12,7 +13,7 @@ class Trigger {
   Trigger(const planner::CreatePlan& plan);
   inline int16_t GetTriggerType() { return trigger_type; }
   inline std::string GetTriggerName() { return trigger_name; }
-  void ExecCallTriggerFunc();
+  storage::Tuple* ExecCallTriggerFunc(storage::Tuple *new_tuple);
 
  private:
   std::string trigger_name;
@@ -49,7 +50,7 @@ class TriggerList {
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
-  void ExecBRInsertTriggers();
+  storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple);
  private:
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
