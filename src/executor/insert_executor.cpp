@@ -165,6 +165,7 @@ bool InsertExecutor::DExecute() {
 
       // check whether there are per-row-before-insert triggers on this table
       commands::TriggerList* trigger_list = target_table->GetTriggerList();
+      auto new_tuple = tuple;
       if (trigger_list == nullptr) {
         LOG_INFO("target table doesn't have trigger list");
       } else {
@@ -173,19 +174,25 @@ bool InsertExecutor::DExecute() {
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
           LOG_INFO("target table has per-row-before-insert triggers!");
           LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
-          auto new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple));
+          new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple));
           LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
         }
+      }
+
+      if (new_tuple == nullptr) {
+        // trigger doesn't allow this tuple to be inserted
+        LOG_INFO("this tuple is rejected by trigger");
+        continue;
       }
 
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer location =
-          target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
+          target_table->InsertTuple(new_tuple, current_txn, &index_entry_ptr);
       LOG_DEBUG("Inserted into location: %u, %u", location.block,
                 location.offset);
-      if (tuple->GetColumnCount() > 2) {
-        type::Value val = (tuple->GetValue(2));
+      if (new_tuple->GetColumnCount() > 2) {
+        type::Value val = (new_tuple->GetValue(2));
         LOG_TRACE("value: %s", val.GetInfo().c_str());
       }
 
