@@ -10,20 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/transaction_manager_factory.h"
 #include "codegen/insert/insert_helpers.h"
-
-#include "codegen/if.h"
-#include "codegen/oa_hash_table_proxy.h"
-#include "codegen/vectorized_loop.h"
 
 namespace peloton {
 namespace codegen {
 
 bool InsertHelpers::InsertRawTuple(
     concurrency::TransactionManager *txn_mgr,
-    concurrency::Transaction        *txn,
-    storage::DataTable              *table,
-    const storage::Tuple            *tuple) {
+    concurrency::Transaction *txn,
+    storage::DataTable *table,
+    const storage::Tuple *tuple) {
 
   // Insert tuple into the table.
   // Tuple will be copied.
@@ -42,6 +39,28 @@ bool InsertHelpers::InsertRawTuple(
   // @todo executor_context->num_processed += 1;
 
   return true;
+}
+
+void InsertHelpers::InsertValue(concurrency::Transaction *txn,
+                                storage::DataTable *table,
+                                type::Value *value) {
+
+  const storage::Tuple * const *tuples =
+      reinterpret_cast<const storage::Tuple * const *>(value->GetData());
+
+  uint32_t num_tuples = value->GetLength() / sizeof(const storage::Tuple *);
+
+  LOG_DEBUG("num_tuples = %u", num_tuples);
+
+  concurrency::TransactionManager *txn_mgr =
+      &concurrency::TransactionManagerFactory::GetInstance();
+
+  for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
+    const storage::Tuple *tuple = tuples[i];
+    LOG_DEBUG("tuple[%u] = %p", i, tuple);
+
+    InsertRawTuple(txn_mgr, txn, table, tuple);
+  }
 }
 
 }  // namespace codegen
