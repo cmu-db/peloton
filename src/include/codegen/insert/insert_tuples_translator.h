@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.h
+// insert_tuples_translator.h
 //
 // Identification: src/include/codegen/insert/insert_tuples_translator.h
 //
@@ -72,7 +72,7 @@ class InsertTuplesTranslator : public AbstractInsertTranslator {
   std::string GetName() const override { return "Insert"; }
 
  private:
-
+  uint32_t tuples_offset_;
 };
 
 }  // namespace codegen

@@ -4,7 +4,7 @@
 //
 // hash_group_by_translator.h
 //
-// Identification: src/include/codegen/insert/insert_helper.h
+// Identification: src/include/codegen/insert/insert_helpers.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -37,6 +37,9 @@ class InsertHelpers {
                              storage::DataTable *table,
                              const storage::Tuple *tuple);
 
+  static void InsertValue(concurrency::Transaction *txn,
+                          storage::DataTable *table,
+                          type::Value *value);
 };
 
 }  // namespace codegen

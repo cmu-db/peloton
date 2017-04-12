@@ -23,6 +23,20 @@
 namespace peloton {
 namespace codegen {
 
+/**
+ * @brief There are 3 different flavors of INSERT.
+ *
+ * - INSERT INTO TABLE_NAME (column1, column2, column3,...columnN)
+ *   VALUES (value1, value2, value3,...valueN);
+ *
+ * - INSERT INTO TABLE_NAME
+ *   VALUES (value1,value2,value3,...valueN);
+ *
+ * - INSERT INTO first_table_name [(column1, column2, ... columnN)]
+ *     SELECT column1, column2, ...columnN
+ *     FROM second_table_name
+ *     [WHERE condition];
+ */
 class AbstractInsertTranslator : public OperatorTranslator {
  public:
 
@@ -62,7 +76,7 @@ class AbstractInsertTranslator : public OperatorTranslator {
    */
   std::string GetName() const override { return "Insert"; }
 
- private:
+ protected:
   const planner::InsertPlan &insert_plan_;
 
 };

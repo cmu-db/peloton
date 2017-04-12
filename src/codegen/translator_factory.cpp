@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "codegen/translator_factory.h"
 
 #include "codegen/arithmetic_translator.h"
@@ -18,6 +19,7 @@
 #include "codegen/conjunction_translator.h"
 #include "codegen/constant_translator.h"
 #include "codegen/delete/delete_translator.h"
+#include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/global_group_by_translator.h"
 #include "codegen/hash_group_by_translator.h"
 #include "codegen/hash_join_translator.h"
@@ -32,7 +34,9 @@
 #include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+
 #include "planner/aggregate_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
@@ -89,6 +93,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       auto &delete_plan = const_cast<planner::DeletePlan &>(
           static_cast<const planner::DeletePlan &>(plan_node));
       translator = new DeleteTranslator(delete_plan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::INSERT: {
+      auto &insert_plan = static_cast<const planner::InsertPlan &>(plan_node);
+      translator = new InsertTuplesTranslator(insert_plan, context, pipeline);
       break;
     }
     default: {
