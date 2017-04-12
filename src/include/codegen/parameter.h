@@ -24,11 +24,6 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Parameter {
  public:
-  Parameter(bool is_constant, type::Type::TypeId *typeId,
-            type::Value value, int param_idx)
-          : is_constant_(is_constant), typeId_(typeId),
-            value_(value), param_idx_(param_idx) {}
-
   static Parameter GetConstValParamInstance(type::Value value) {
     return Parameter{true, nullptr, value, 0};
   }
@@ -56,6 +51,11 @@ class Parameter {
     return param_idx_;
   }
 
+ private:
+  Parameter(bool is_constant, type::Type::TypeId *typeId,
+            type::Value value, int param_idx)
+          : is_constant_(is_constant), typeId_(typeId),
+            value_(value), param_idx_(param_idx) {}
  private:
   // Distinguish whether the structure comes from constant/param value
   bool is_constant_;

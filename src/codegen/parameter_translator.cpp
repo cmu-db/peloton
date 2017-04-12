@@ -34,8 +34,10 @@ ParameterTranslator::ParameterTranslator(
   switch (exp.GetExpressionType()) {
     case ExpressionType::VALUE_PARAMETER: {
       type::Value dummy = type::ValueFactory::GetBooleanValue(false);
-      int param_idx = GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
-      Parameter param{false, &typeId_, dummy, param_idx};
+      int param_idx =
+              GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
+      Parameter param = Parameter::GetParamValParamInstance(
+              &typeId_, dummy, param_idx);
       offset_ = ctx_.StoreParam(param);
       break;
     }
@@ -43,7 +45,7 @@ ParameterTranslator::ParameterTranslator(
       const type::Value &constant =
             GetExpressionAs<expression::ConstantValueExpression>().GetValue();
       typeId_ = constant.GetTypeId();
-      Parameter param{true, &typeId_, constant, 0};
+      Parameter param =  Parameter::GetConstValParamInstance(constant);
       offset_ = ctx_.StoreParam(param);
       break;
     }
