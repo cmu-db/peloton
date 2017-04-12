@@ -98,7 +98,6 @@ TimestampOrderingTransactionManager::GetInstance(
 
 
 // check whether the current transaction owns the tuple version.
-// this function is called by update/delete executors.
 bool TimestampOrderingTransactionManager::IsOwner(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -107,6 +106,19 @@ bool TimestampOrderingTransactionManager::IsOwner(
 
   return tuple_txn_id == current_txn->GetTransactionId();
 }
+
+
+// check whether any other transaction owns the tuple version.
+bool TimestampOrderingTransactionManager::IsOwned(
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
+  return tuple_txn_id != current_txn->GetTransactionId() && 
+         tuple_txn_id != INITIAL_TXN_ID;
+}
+
 
 // This method tests whether the current transaction has created this version of
 // the tuple
@@ -121,7 +133,6 @@ bool TimestampOrderingTransactionManager::IsWritten(
 
 // if the tuple is not owned by any transaction and is visible to current
 // transaction.
-// this function is called by update/delete executors.
 bool TimestampOrderingTransactionManager::IsOwnable(
     UNUSED_ATTRIBUTE Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -306,16 +317,40 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
     } else {
 
-      // if it's not select for update, then update read set and return true.
-      
-      current_txn->RecordRead(location);
+      // a transaction can never read an uncommitted version.
+      if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
 
-      // Increment table read op stats
-      if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-            location.block);
+        if (IsOwned(current_txn, tile_group_header, tuple_id) == false) {
+
+          current_txn->RecordRead(location);
+
+          // Increment table read op stats
+          if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+            stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+                location.block);
+          }
+          return true;
+
+        } else {
+          // if the tuple has been owned by some concurrent transactions, 
+          // then read fails.
+          LOG_TRACE("Transaction read failed");
+          return false;
+
+        }
+
+      } else {
+
+        current_txn->RecordRead(location);
+
+        // Increment table read op stats
+        if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+          stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+              location.block);
+        }
+        return true;
+
       }
-      return true;
     }
 
   } // end READ_COMMITTED
