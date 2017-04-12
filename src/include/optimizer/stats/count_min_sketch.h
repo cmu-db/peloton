@@ -32,7 +32,6 @@ class CountMinSketch {
       confidence{1 - 1 / pow(2, depth)},
       size{0} {
     InitTable(depth, width, seed);
-    PrintSketch();
   }
 
   CountMinSketch(double eps, double confidence, unsigned int seed) :
@@ -42,7 +41,6 @@ class CountMinSketch {
       confidence{confidence},
       size{0} {
     InitTable(depth, width, seed);
-    PrintSketch();
   }
 
   // Have two different method headers for integer and string

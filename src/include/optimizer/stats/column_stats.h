@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <libcount/hll.h>
 
 #include "type/types.h"
@@ -16,7 +17,15 @@ namespace optimizer {
 // ColumnStats
 //===--------------------------------------------------------------------===//
 class ColumnStats {
- public:
+public:
+  /* Default parameters for probabilistic stats collector */
+  int hll_precision = 8;
+  double cmsketch_eps = 0.1;
+  double cmsketch_gamma = 0.01;
+  uint8_t max_bins = 64;
+  uint8_t num_bins = 10;
+  uint8_t top_k = 10;
+
   using ValueFrequencyPair = std::pair<type::Value, double>;
 
   ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
@@ -44,13 +53,20 @@ class ColumnStats {
   CountMinSketch sketch_;
   TopKElements topk_;
 
+  std::function<void(type::Value&)> f_add_value;
+
   // Not allow copy
   ColumnStats(const ColumnStats&);
   void operator=(const ColumnStats&);
 
-  size_t null_count_ = 0;
-  size_t total_count_ = 0;  // <- just number of rows
-  uint8_t num_bins = 5;     // <- make it a parameter
+  size_t null_count_ = 0;   // Number of null values
+  size_t total_count_ = 0;  // Total number of values
+
+  void CheckColumnType(type::Type::TypeId type);
+  uint8_t TuneHLLPrecision(type::Type::TypeId type);
+  void ComputeTrivialStats(type::Value& value);
+  void ComputeScalarStats(type::Value& value);
+  void ComputeDistinctStats(type::Value& value);
 };
 
 } /* namespace optimizer */

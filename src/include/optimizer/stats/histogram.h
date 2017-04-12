@@ -135,8 +135,8 @@ class Histogram {
   */
   std::vector<double> Uniform(uint8_t B) {
     assert(B != 0);
-    // check bins.size() <= 1 return empty
     std::vector<double> res{};
+    if (bins.size() == 0) return res;
     double gap = total_count / B;
     int i = 0;
     double sum_i = 0;
@@ -179,7 +179,7 @@ class Histogram {
         res.push_back(u_j);
       }
     }
-    PrintUniform(res);
+    // PrintUniform(res);
     return res;
   }
 
