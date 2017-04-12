@@ -14,13 +14,22 @@
 // pg_query
 //
 // Schema: (column offset: column_name)
-// 0: database_oid (pkey)
-// 1: txn_committed
-// 2: txn_aborted
-// 3: time_stamp
+// 0: name (pkey)
+// 1: database_oid (pkey)
+// 2: num_params
+// 3: param_types
+// 4: param_formats
+// 5: param_values
+// 6: reads
+// 7: updates
+// 8: deletes
+// 9: inserts
+// 10: latency
+// 11: cpu_time
+// 12: time_stamp
 //
 // Indexes: (index offset: indexed columns)
-// 0: database_oid (unique & primary key)
+// 0: name & database_oid (unique & primary key)
 //
 //===----------------------------------------------------------------------===//
 
