@@ -21,329 +21,135 @@
 #include "planner/create_plan.h"
 #include "planner/order_by_plan.h"
 
+using std::vector;
+using std::unordered_set;
+using std::string;
+using std::unique_ptr;
+using std::shared_ptr;
+
 namespace peloton {
 namespace test {
 
-class OptimizerSQLTests : public PelotonTest {};
+class OptimizerSQLTests : public PelotonTest {
+ protected:
+  virtual void SetUp() override {
+    // Call parent virtual function first
+    PelotonTest::SetUp();
 
-void CreateAndLoadTable() {
-  // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
+    // Create test database
+    CreateAndLoadTable();
+    optimizer.reset(new optimizer::Optimizer());
+  }
 
-  // Insert tuples into table
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-}
+  virtual void TearDown() override {
+    // Destroy test database
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+
+    // Call parent virtual function
+    PelotonTest::TearDown();
+  }
+
+  /*** Helper functions **/
+  void CreateAndLoadTable() {
+    // Create database
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+    // Create a table first
+    TestingSQLUtil::ExecuteSQLQuery(
+        "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
+
+    // Insert tuples into table
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  }
+
+  void TestUtil(string query, vector<string> ref_result, bool ordered) {
+    LOG_DEBUG("Running Query \"%s\"", query.c_str());
+    TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
+                                                 tuple_descriptor, rows_changed,
+                                                 error_message);
+
+    EXPECT_EQ(ref_result.size(), result.size());
+    if (ordered) {
+      // If deterministic, do comparision with expected result in order
+      for (unsigned i = 0; i < ref_result.size(); i++) {
+        EXPECT_EQ(ref_result[i],
+                  TestingSQLUtil::GetResultValueAsString(result, i));
+      }
+    } else {
+      // If non-deterministic, make sure they have the same set of value
+      unordered_set<string> ref_set(ref_result.begin(), ref_result.end());
+      for (unsigned i = 0; i < result.size(); i++) {
+        string result_str = TestingSQLUtil::GetResultValueAsString(result, i);
+        EXPECT_TRUE(ref_set.find(result_str) != ref_set.end());
+      }
+    }
+  }
+
+ protected:
+  unique_ptr<optimizer::AbstractOptimizer> optimizer;
+  vector<StatementResult> result;
+  vector<FieldInfo> tuple_descriptor;
+  string error_message;
+  int rows_changed;
+};
 
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Testing select star expression
+  TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
+                                  "444", "4", "0", "555"}, false);
 
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  std::string query("SELECT * from test");
-  LOG_DEBUG("Running Query %s", query.c_str());
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-
-  // test small int
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 1, 22, 333
-  EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ(12, result.size());
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 9));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 10));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 11));
-
-  LOG_DEBUG("Running Query SELECT c, b from test where a=1");
-  // test small int
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT c, b from test where a=1", result, tuple_descriptor,
-      rows_changed, error_message);
-  // Check the return value
-  // Should be: 333, 22
-  EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Testing predicate
+  TestUtil("SELECT c, b from test where a=1", {"333", "22"}, false);
 }
 
 TEST_F(OptimizerSQLTests, SelectOrderByTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Testing order by columns different from select columns
+  TestUtil("SELECT b from test order by c", {"11", "22", "33", "0"}, true);
 
-  CreateAndLoadTable();
+  // Testing order by desc
+  TestUtil("SELECT a from test order by c desc", {"4", "3", "1", "2"}, true);
 
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  // Something wrong with column property.
-  std::string query("SELECT b from test order by c");
-
-  // check for plan node type
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::ORDERBY);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 11, 22
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  query = "SELECT a from test order by c desc";
-
-  // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::ORDERBY);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  // Something wrong with column property.
-  query = "SELECT * from test order by a + c";
-
-  // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::SEQSCAN);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-  EXPECT_EQ(12, result.size());
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 9));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 10));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 11));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Testing order by complex expression
+  TestUtil("SELECT * from test order by a + c", {"2", "11", "0", "1", "22",
+                                                 "333", "3", "33", "444", "4", "0", "555"}, true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  // Test limit without offset
-  std::string query("SELECT b FROM test ORDER BY b LIMIT 3");
-
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::ORDERBY);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::SEQSCAN);
-
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
-  EXPECT_EQ(3, result.size());
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
+  // Test limit with default offset
+  TestUtil("SELECT b FROM test ORDER BY b LIMIT 3", {"0", "11", "22"}, true);
 
   // Test limit with offset
-  query = "SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2";
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
-  EXPECT_EQ(2, result.size());
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  TestUtil("SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2", {"22", "33"}, true);
 }
 
 TEST_F(OptimizerSQLTests, SelectProjectionTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Test complex expression projection
+  TestUtil("SELECT a * 5 + b, -1 + c from test", {"27", "332", "48", "443",
+                                                  "21", "-1", "20", "554"}, false);
 
-  CreateAndLoadTable();
+  // Test complex expression in select and order by
+  TestUtil("SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b", {"21", "-306",
+                                                                  "-535", "-396"}, true);
 
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  std::string query("SELECT a * 5 + b, -1 + c from test");
-
-  // check for plan node type
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::SEQSCAN);
-
-  // test small int
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 27, 332
-  EXPECT_EQ("27", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("332", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  // test projection for order by
-  query = "SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b";
-  LOG_DEBUG("%s", query.c_str());
-
-  // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //            PlanNodeType::ORDERBY);
-
-  // test small int
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 27, 332
-  EXPECT_EQ(4, result.size());
-  EXPECT_EQ("21", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("-306", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("-535", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("-396", TestingSQLUtil::GetResultValueAsString(result, 3));
-
-  // test projection for order by
-  query = "SELECT a, a + c FROM test ORDER BY a * 3 * b DESC, b + c / 5 ASC";
-  LOG_DEBUG("%s", query.c_str());
-
-  // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
-  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-  //          PlanNodeType::ORDERBY);
-
-  // test small int
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 27, 332
-  EXPECT_EQ(8, result.size());
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("334", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 7));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Test mixing up select simple columns with complex expression
+  TestUtil("SELECT a, a + c FROM test ORDER BY a * 3 * b DESC, b + c / 5 ASC",
+           {"3", "447", "2", "2", "1", "334", "4", "559"}, true);
 }
 
 TEST_F(OptimizerSQLTests, DeleteSqlTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
   // TODO: Test for index scan
+
   // Delete with predicates
-  std::string query("DELETE FROM test WHERE a = 1 and c = 333");
-
-  // check for plan node type
-  auto delete_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
-  EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
+  string query = "DELETE FROM test WHERE a = 1 and c = 333";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(1, rows_changed);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
                                                result, tuple_descriptor,
                                                rows_changed, error_message);
@@ -351,18 +157,9 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Delete with predicates
   query = "DELETE FROM test WHERE b = 33";
-
-  // check for plan node type
-  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
-  EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(1, rows_changed);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
                                                result, tuple_descriptor,
                                                rows_changed, error_message);
@@ -370,18 +167,9 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Delete with false predicates
   query = "DELETE FROM test WHERE b = 123";
-
-  // check for plan node type
-  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
-  EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(0, rows_changed);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
                                                result, tuple_descriptor,
                                                rows_changed, error_message);
@@ -389,124 +177,37 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   // Full deletion
   query = "DELETE FROM test";
-
-  // check for plan node type
-  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
-  EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(2, rows_changed);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
                                                result, tuple_descriptor,
                                                rows_changed, error_message);
   EXPECT_EQ(0, result.size());
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(OptimizerSQLTests, UpdateSqlTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  std::string query("UPDATE test SET c = b + 1 WHERE a = 1");
-
-  // check for plan node type
-  auto update_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(update_plan->GetPlanNodeType(), PlanNodeType::UPDATE);
-
+  // Test Update with complex expression and predicate
+  string query = "UPDATE test SET c = b + 1 WHERE a = 1";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(1, rows_changed);
-
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor,
-      rows_changed, error_message);
-  EXPECT_EQ("23", TestingSQLUtil::GetResultValueAsString(result, 0));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  TestUtil("SELECT c FROM test WHERE a=1", {"23"}, false);
 }
 
 TEST_F(OptimizerSQLTests, InsertSqlTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  std::string query("INSERT INTO test VALUES (5, 55, 555);");
-
-  // check for plan node type
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
-
+  string query = "INSERT INTO test VALUES (5, 55, 555);";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
   EXPECT_EQ(1, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test WHERE a=5", result, tuple_descriptor,
-      rows_changed, error_message);
-  EXPECT_EQ(3, result.size());
-  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 2));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Test the tuple is succesfully inserted
+  TestUtil("SELECT * FROM test WHERE a=5", {"5", "55", "555"}, false);
 }
 
 TEST_F(OptimizerSQLTests, DDLSqlTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  std::string query("CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);");
-
+  // Test creating new table
+  string query = "CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
@@ -523,10 +224,8 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   EXPECT_EQ("c", cols[2].column_name);
   EXPECT_EQ(type::Type::INTEGER, cols[2].GetType());
 
+  // Test dropping existing table
   query = "DROP TABLE test2";
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::DROP);
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   try {
@@ -535,342 +234,86 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   } catch (Exception &e) {
     LOG_INFO("Correct! Exception(%s) catched", e.what());
   }
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(OptimizerSQLTests, GroupByTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  // Insert additional tuples to test group by
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
-  typedef std::vector<std::string> RawTuple;
-  typedef std::vector<RawTuple> ResultTuples;
-  struct SortByCol {
-    uint32_t col_id;
-    bool operator()(const RawTuple &a, const RawTuple &b) const {
-      return std::stod(a[col_id]) < std::stod(b[col_id]);
-    }
-  };
+  // Test basic case
+  TestUtil("SELECT b FROM test GROUP BY b having b=11 or b=22", {"22", "11"},
+           false);
 
-  // Basic case
-  std::string query = "SELECT b FROM test GROUP BY b having b=11 or b=22";
-  LOG_INFO("%s", query.c_str());
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(2, result.size());
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+  // Test Aggregate function: COUNT(*)
+  TestUtil("SELECT COUNT(*) FROM test GROUP BY b", {"1", "1", "2", "2"}, false);
 
-  // Aggregate function: COUNT(*)
-  query = "SELECT COUNT(*) FROM test GROUP BY b";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChild(0)->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  {
-    ResultTuples expected = {{"1"}, {"1"}, {"2"}, {"2"}};
-    ResultTuples actual;
-    for (uint32_t i = 0; i < result.size(); i++) {
-      actual.push_back({TestingSQLUtil::GetResultValueAsString(result, i)});
-    }
-    std::sort(actual.begin(), actual.end(), SortByCol{0});
-    EXPECT_EQ(expected, actual);
-  }
+  // Test Aggregate function: COUNT(a)
+  TestUtil("SELECT COUNT(a) FROM test GROUP BY b", {"1", "1", "2", "2"}, false);
 
-  // Aggregate function: COUNT(a)
-  query = "SELECT COUNT(a) FROM test GROUP BY b";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChild(0)->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  {
-    ResultTuples expected = {{"1"}, {"1"}, {"2"}, {"2"}};
-    ResultTuples actual;
-    for (uint32_t i = 0; i < result.size(); i++) {
-      actual.push_back({TestingSQLUtil::GetResultValueAsString(result, i)});
-    }
-    std::sort(actual.begin(), actual.end(), SortByCol{0});
-    EXPECT_EQ(expected, actual);
-  }
+  // Test basic case
+  TestUtil("SELECT b FROM test GROUP BY b having b=11 or b=22", {"22", "11"},
+           false);
 
-  // Aggregate function: AVG(a)
-  query = "SELECT AVG(a), b FROM test GROUP BY b having b=22";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChild(0)->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  {
-    ResultTuples expected = {{"3.5", "22"}};
-    ResultTuples actual;
-    for (uint32_t i = 0; i < result.size(); i += 2) {
-      RawTuple tuple = {TestingSQLUtil::GetResultValueAsString(result, i),
-                        TestingSQLUtil::GetResultValueAsString(result, i + 1)};
-      actual.push_back(tuple);
-    }
-    std::sort(actual.begin(), actual.end(), SortByCol{0});
-    EXPECT_EQ(expected, actual);
-  }
+  // Test Aggregate function: COUNT(*)
+  TestUtil("SELECT COUNT(*) FROM test GROUP BY b", {"1", "1", "2", "2"}, false);
 
-  // Aggregate function: MIN(b)
-  query = "SELECT MIN(a), b FROM test GROUP BY b having b=22";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChild(0)->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  {
-    ResultTuples expected = {{"1", "22"}};
-    ResultTuples actual;
-    for (uint32_t i = 0; i < result.size(); i += 2) {
-      RawTuple tuple = {TestingSQLUtil::GetResultValueAsString(result, i),
-                        TestingSQLUtil::GetResultValueAsString(result, i + 1)};
-      actual.push_back(tuple);
-    }
-    std::sort(actual.begin(), actual.end(), SortByCol{0});
-    EXPECT_EQ(expected, actual);
-  }
+  // Test Aggregate function: COUNT(a)
+  TestUtil("SELECT COUNT(a) FROM test GROUP BY b", {"1", "1", "2", "2"}, false);
 
-  // Aggregate function: MAX(b)
-  query = "SELECT MAX(a), b FROM test GROUP BY b having b=22";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChild(0)->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  {
-    ResultTuples expected = {{"6", "22"}};
-    ResultTuples actual;
-    for (uint32_t i = 0; i < result.size(); i += 2) {
-      RawTuple tuple = {TestingSQLUtil::GetResultValueAsString(result, i),
-                        TestingSQLUtil::GetResultValueAsString(result, i + 1)};
-      actual.push_back(tuple);
-    }
-    std::sort(actual.begin(), actual.end(), SortByCol{0});
-    EXPECT_EQ(expected, actual);
-  }
+  // Test group by with having
+  TestUtil("SELECT AVG(a), b FROM test GROUP BY b having b=22", {"3.5", "22"},
+           false);
 
-  // Combine with ORDER BY
-  query = "SELECT b FROM test GROUP BY b ORDER BY b";
-  LOG_INFO("%s", query.c_str());
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::AGGREGATE_V2);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(4, result.size());
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
+  // Test Aggregate function: MIN(b)
+  TestUtil("SELECT MIN(a), b FROM test GROUP BY b having b=22", {"1", "22"},
+           false);
+
+  // Test Aggregate function: MAX(b)
+  TestUtil("SELECT MAX(a), b FROM test GROUP BY b having b=22", {"6", "22"},
+           false);
+
+  // Test group by combined with ORDER BY
+  TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},
+           true);
 
   // Test complex expression in aggregation
-  query = "SELECT b, MAX(a + c) FROM test GROUP BY b ORDER BY b";
-  LOG_INFO("%s", query.c_str());
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(8, result.size());
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("559", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("339", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("447", TestingSQLUtil::GetResultValueAsString(result, 7));
+  TestUtil("SELECT b, MAX(a + c) FROM test GROUP BY b ORDER BY b",
+           {"0", "559", "11", "5", "22", "339", "33", "447"}, true);
 
   // Test complex expression in select list and order by complex expr
-  query = "SELECT b + c, SUM(c * a) FROM test GROUP BY b,c ORDER BY b + c";
-  LOG_INFO("%s", query.c_str());
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(8, result.size());
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("2331", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("1332", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("2220", TestingSQLUtil::GetResultValueAsString(result, 7));
+  TestUtil("SELECT b + c, SUM(c * a) FROM test GROUP BY b,c ORDER BY b + c",
+           {"11", "0", "355", "2331", "477", "1332", "555", "2220"}, true);
 
-  // Test complex expression in select list and order by complex expr
-  query = "SELECT b, c, MIN(a - b) FROM test GROUP BY c, b ORDER BY b+c";
-  LOG_INFO("%s", query.c_str());
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(12, result.size());
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("-9", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("-21", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("-30", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 9));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 10));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 11));
-
-  // Test plain aggregation
-  query = "SELECT SUM(c * a) FROM test";
-  LOG_INFO("%s", query.c_str());
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(1, result.size());
-  EXPECT_EQ("5883", TestingSQLUtil::GetResultValueAsString(result, 0));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Test Plain aggregation without group by
+  TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, false);
 }
 
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-
-  CreateAndLoadTable();
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  // Insert new tuples to test distinct
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
+  // Test distinct with order by
+  TestUtil("SELECT DISTINCT b FROM test ORDER BY b", {"0", "11", "22", "33"},
+           true);
 
-  // Test limit without offset
-  std::string query("SELECT DISTINCT b FROM test ORDER BY b");
+  // Test distinct with complex order by
+  TestUtil("SELECT DISTINCT b, c FROM test ORDER BY 10 * b + c", {"11", "0",
+                                                                  "0", "444", "22", "333", "0", "555", "33", "444"}, true);
 
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::HASH);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
+  // Test distinct with limit and star expression
+  TestUtil("SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c LIMIT 3",
+           {"2", "11", "0", "7", "0", "444", "1", "22", "333"}, true);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
-  EXPECT_EQ(4, result.size());
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 3));
-
-  query = "SELECT DISTINCT b, c FROM test ORDER BY 10 * b + c";
-
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::HASH);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::PROJECTION);
-
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
-  EXPECT_EQ(10, result.size());
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 9));
-
-  query = "SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c LIMIT 3";
-
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::HASH);
-
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
-  EXPECT_EQ(9, result.size());
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("7", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 8));
-
+  // Insert additional tuples to test distinct with group by
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
-  // Test group by complex expression
-  query = "SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c";
-  LOG_INFO("%s", query.c_str());
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  EXPECT_EQ(5, result.size());
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("355", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("477", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 4));
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  // Test distinct and group by complex expression
+  TestUtil("SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c",
+           {"11", "355", "444", "477", "555"}, true);
 }
 }  // namespace test
 }  // namespace peloton
