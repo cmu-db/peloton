@@ -28,7 +28,7 @@ ConstantTranslator::ConstantTranslator(
   const type::Value &constant =
     GetExpressionAs<expression::ConstantValueExpression>().GetValue();
   typeId_ = constant.GetTypeId();
-  offset_ = ctx.StoreParam(Parameter{true, &typeId_, constant, 0});
+  offset_ = ctx.StoreParam(Parameter::GetConstValParamInstance(constant));
 }
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
