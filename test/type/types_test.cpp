@@ -468,108 +468,209 @@ TEST_F(TypesTests, ConstraintTypeTest) {
       peloton::Exception);
 }
 
-// TEST_F(TypesTests, LoggingTypeTest) {
-//   std::vector<LoggingType> list = {
-//       LoggingType::INVALID, LoggingType::NVM_WBL, LoggingType::SSD_WBL,
-//       LoggingType::HDD_WBL, LoggingType::NVM_WAL, LoggingType::SSD_WAL,
-//       LoggingType::HDD_WAL,
-//   };
+TEST_F(TypesTests, LoggingTypeTest) {
+  std::vector<LoggingType> list = {
+      LoggingType::INVALID, LoggingType::OFF, LoggingType::ON
+  };
 
-//   // Make sure that ToString and FromString work
-//   for (auto val : list) {
-//     std::string str = peloton::LoggingTypeToString(val);
-//     EXPECT_TRUE(str.size() > 0);
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::LoggingTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
 
-//     auto newVal = peloton::StringToLoggingType(str);
-//     EXPECT_EQ(val, newVal);
-//   }
+    auto newVal = peloton::StringToLoggingType(str);
+    EXPECT_EQ(val, newVal);
+  }
 
-//   // Then make sure that we can't cast garbage
-//   std::string invalid("WU TANG");
-//   EXPECT_THROW(peloton::StringToLoggingType(invalid), peloton::Exception);
-//   EXPECT_THROW(peloton::LoggingTypeToString(static_cast<LoggingType>(-99999)),
-//                peloton::Exception);
-// }
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToLoggingType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::LoggingTypeToString(static_cast<LoggingType>(-99999)),
+               peloton::Exception);
+}
 
-// TEST_F(TypesTests, LoggingStatusTypeTest) {
-//   std::vector<LoggingStatusType> list = {
-//       LoggingStatusType::INVALID,   LoggingStatusType::STANDBY,
-//       LoggingStatusType::RECOVERY,  LoggingStatusType::LOGGING,
-//       LoggingStatusType::TERMINATE, LoggingStatusType::SLEEP};
+TEST_F(TypesTests, CheckpointingTypeTest) {
+  std::vector<CheckpointingType> list = {
+      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::ON
+  };
 
-//   // Make sure that ToString and FromString work
-//   for (auto val : list) {
-//     std::string str = peloton::LoggingStatusTypeToString(val);
-//     EXPECT_TRUE(str.size() > 0);
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::CheckpointingTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
 
-//     auto newVal = peloton::StringToLoggingStatusType(str);
-//     EXPECT_EQ(val, newVal);
-//   }
+    auto newVal = peloton::StringToCheckpointingType(str);
+    EXPECT_EQ(val, newVal);
+  }
 
-//   // Then make sure that we can't cast garbage
-//   std::string invalid("WU TANG");
-//   EXPECT_THROW(peloton::StringToLoggingStatusType(invalid), peloton::Exception);
-//   EXPECT_THROW(peloton::LoggingStatusTypeToString(
-//                    static_cast<LoggingStatusType>(-99999)),
-//                peloton::Exception);
-// }
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToCheckpointingType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::CheckpointingTypeToString(static_cast<CheckpointingType>(-99999)),
+               peloton::Exception);
+}
 
-// TEST_F(TypesTests, LoggerTypeTest) {
-//   std::vector<LoggerType> list = {LoggerType::INVALID, LoggerType::FRONTEND,
-//                                   LoggerType::BACKEND};
+TEST_F(TypesTests, GarbageCollectionTypeTest) {
+  std::vector<GarbageCollectionType> list = {
+      GarbageCollectionType::INVALID, GarbageCollectionType::OFF, GarbageCollectionType::ON
+  };
 
-//   // Make sure that ToString and FromString work
-//   for (auto val : list) {
-//     std::string str = peloton::LoggerTypeToString(val);
-//     EXPECT_TRUE(str.size() > 0);
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::GarbageCollectionTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
 
-//     auto newVal = peloton::StringToLoggerType(str);
-//     EXPECT_EQ(val, newVal);
-//   }
+    auto newVal = peloton::StringToGarbageCollectionType(str);
+    EXPECT_EQ(val, newVal);
+  }
 
-//   // Then make sure that we can't cast garbage
-//   std::string invalid("WU TANG");
-//   EXPECT_THROW(peloton::StringToLoggerType(invalid), peloton::Exception);
-//   EXPECT_THROW(peloton::LoggerTypeToString(static_cast<LoggerType>(-99999)),
-//                peloton::Exception);
-// }
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToGarbageCollectionType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::GarbageCollectionTypeToString(static_cast<GarbageCollectionType>(-99999)),
+               peloton::Exception);
+}
 
-// TEST_F(TypesTests, LogRecordTypeTest) {
-//   std::vector<LogRecordType> list = {
-//       LOGRECORD_TYPE_INVALID,
-//       LOGRECORD_TYPE_TRANSACTION_BEGIN,
-//       LOGRECORD_TYPE_TRANSACTION_COMMIT,
-//       LOGRECORD_TYPE_TRANSACTION_END,
-//       LOGRECORD_TYPE_TRANSACTION_ABORT,
-//       LOGRECORD_TYPE_TRANSACTION_DONE,
-//       LOGRECORD_TYPE_TUPLE_INSERT,
-//       LOGRECORD_TYPE_TUPLE_DELETE,
-//       LOGRECORD_TYPE_TUPLE_UPDATE,
-//       LOGRECORD_TYPE_WAL_TUPLE_INSERT,
-//       LOGRECORD_TYPE_WAL_TUPLE_DELETE,
-//       LOGRECORD_TYPE_WAL_TUPLE_UPDATE,
-//       LOGRECORD_TYPE_WBL_TUPLE_INSERT,
-//       LOGRECORD_TYPE_WBL_TUPLE_DELETE,
-//       LOGRECORD_TYPE_WBL_TUPLE_UPDATE,
-//       LOGRECORD_TYPE_ITERATION_DELIMITER,
-//   };
+TEST_F(TypesTests, ProtocolTypeTest) {
+  std::vector<ProtocolType> list = {
+      ProtocolType::INVALID, 
+      ProtocolType::TIMESTAMP_ORDERING
+  };
 
-//   // Make sure that ToString and FromString work
-//   for (auto val : list) {
-//     std::string str = peloton::LogRecordTypeToString(val);
-//     EXPECT_TRUE(str.size() > 0);
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::ProtocolTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
 
-//     auto newVal = peloton::StringToLogRecordType(str);
-//     EXPECT_EQ(val, newVal);
-//   }
+    auto newVal = peloton::StringToProtocolType(str);
+    EXPECT_EQ(val, newVal);
+  }
 
-//   // Then make sure that we can't cast garbage
-//   std::string invalid("WU TANG");
-//   EXPECT_THROW(peloton::StringToLogRecordType(invalid), peloton::Exception);
-//   EXPECT_THROW(
-//       peloton::LogRecordTypeToString(static_cast<LogRecordType>(-99999)),
-//       peloton::Exception);
-// }
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToProtocolType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::ProtocolTypeToString(static_cast<ProtocolType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, EpochTypeTest) {
+  std::vector<EpochType> list = {
+      EpochType::INVALID, 
+      EpochType::DECENTRALIZED_EPOCH
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::EpochTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToEpochType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToEpochType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::EpochTypeToString(static_cast<EpochType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, TimestampTypeTest) {
+  std::vector<TimestampType> list = {
+      TimestampType::INVALID, 
+      TimestampType::SNAPSHOT_READ, 
+      TimestampType::READ, 
+      TimestampType::COMMIT
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::TimestampTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToTimestampType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToTimestampType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::TimestampTypeToString(static_cast<TimestampType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, VisibilityTypeTest) {
+  std::vector<VisibilityType> list = {
+      VisibilityType::INVALID, 
+      VisibilityType::INVISIBLE, 
+      VisibilityType::DELETED, 
+      VisibilityType::OK
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::VisibilityTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToVisibilityType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToVisibilityType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::VisibilityTypeToString(static_cast<VisibilityType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, IsolationLevelTypeTest) {
+  std::vector<IsolationLevelType> list = {
+      IsolationLevelType::INVALID, 
+      IsolationLevelType::SERIALIZABLE, 
+      IsolationLevelType::SNAPSHOT, 
+      IsolationLevelType::REPEATABLE_READS, 
+      IsolationLevelType::READ_COMMITTED,
+      IsolationLevelType::READ_ONLY
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::IsolationLevelTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToIsolationLevelType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToIsolationLevelType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::IsolationLevelTypeToString(static_cast<IsolationLevelType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
+  std::vector<ConflictAvoidanceType> list = {
+      ConflictAvoidanceType::INVALID, 
+      ConflictAvoidanceType::WAIT, 
+      ConflictAvoidanceType::ABORT, 
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::ConflictAvoidanceTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToConflictAvoidanceType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToConflictAvoidanceType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::ConflictAvoidanceTypeToString(static_cast<ConflictAvoidanceType>(-99999)),
+               peloton::Exception);
+}
 
 }  // End test namespace
 }  // End peloton namespace

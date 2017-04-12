@@ -45,8 +45,13 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // transaction processing with decentralized epoch manager
     // the DBMS must acquire 
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
-    cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::COMMIT);
-    txn = new Transaction(thread_id, type, read_id, commit_id);
+
+    if (protocol_ == ProtocolType::TIMESTAMP_ORDERING) {
+      cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::COMMIT);
+      txn = new Transaction(thread_id, type, read_id, commit_id);
+    } else {
+      txn = new Transaction(thread_id, type, read_id);
+    }
 
   } else {
     
