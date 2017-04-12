@@ -112,8 +112,8 @@ bool CreateExecutor::DExecute() {
     //     current_txn->GetResult()).c_str());
     // }
 
-    // hardcode return true
-    return true;
+    // hardcode SUCCESS result for current_txn
+    current_txn->SetResult(ResultType::SUCCESS);
   }
 
   return false;
