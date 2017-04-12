@@ -162,7 +162,7 @@ bool DeleteTranslator::delete_wrapper(oid_t tile_group_id, oid_t tuple_id,
 
 const std::string &DeleteTranslator::_DeleteWrapper::GetFunctionName() {
   static const std::string deleteWrapperFnName =
-      "_ZN7peloton7codegen16DeleteTranslator7wrapperEjjPNS_"
+      "_ZN7peloton7codegen16DeleteTranslator14delete_wrapperEjjPNS_"
       "11concurrency11TransactionEPNS_7storage9DataTableE";
   return deleteWrapperFnName;
 }
