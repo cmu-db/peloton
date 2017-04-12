@@ -29,6 +29,16 @@ class Parameter {
           : is_constant_(is_constant), typeId_(typeId),
             value_(value), param_idx_(param_idx) {}
 
+  static Parameter GetConstValParamInstance(type::Value value) {
+    return Parameter{true, nullptr, value, 0};
+  }
+
+  static Parameter GetParamValParamInstance(type::Type::TypeId *typeId,
+                                            type::Value value,
+                                            int param_idx) {
+    return Parameter{false, typeId, value, param_idx};
+  }
+
   // Called at runtime to finalize type in param translator
   void FinalizeType(type::Type::TypeId typeId) {
     *typeId_ = typeId;
