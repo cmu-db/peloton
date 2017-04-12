@@ -15,6 +15,7 @@
 
 #include "codegen/catalog_proxy.h"
 #include "codegen/table.h"
+#include "codegen/parameter.h"
 #include "codegen/value_proxy.h"
 #include "codegen/value_peeker_proxy.h"
 #include "codegen/insert/insert_tuples_translator.h"
@@ -41,11 +42,13 @@ InsertTuplesTranslator::InsertTuplesTranslator(const planner::InsertPlan &insert
   }
 
   uint32_t offset = context.StoreParam(
+    Parameter::GetConstValParamInstance(
       type::ValueFactory::GetVarcharValue(
           reinterpret_cast<char *>(raw_tuples),
           num_tuples * sizeof(const storage::Tuple *),
           true
       )
+    )
   );
 
   LOG_DEBUG("num_tuples = %u", num_tuples);
