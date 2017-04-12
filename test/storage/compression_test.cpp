@@ -44,29 +44,30 @@ TEST_F(CompressionTests, SizeTest) {
   data_table_test_table.reset(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table_test_table.get(), tuple_count,
-                                   false, false, true, txn);
+                                     false, false, true, txn);
 
   txn_manager.CommitTransaction(txn);
   auto num_tile_groups = data_table_test_table->GetTileGroupCount();
   auto uncompressed_size = tuple_count * tuple_size;
   auto compressed_size = 0;
-  for(oid_t i = 1; i < num_tile_groups; i++) {
-    storage::TileGroup *tile_group = &*(data_table_test_table->GetTileGroupById(i));
+  for (oid_t i = 1; i < num_tile_groups; i++) {
+    storage::TileGroup *tile_group =
+        &*(data_table_test_table->GetTileGroupById(i));
 
     for (oid_t k = 0; k < tile_group->GetTileCount(); k++) {
-      compressed_size+= tile_group->GetTile(k)->GetSize();
+      compressed_size += tile_group->GetTile(k)->GetSize();
     }
   }
-  std::cout<< "Tuples Per Tile Group: " << tuples_per_tile_group << "\n";
-  std::cout<< "Number of Tile Groups: " << num_tile_groups << "\n";
-  std::cout<< "Tuples size in bytes: " << tuple_size << "\n";
-  std::cout<< "Uncompressed_Size in bytes: " << uncompressed_size << "\n";
-  std::cout<< "Compressed_Size in bytes: " << compressed_size << "\n";
-  
+  std::cout << "Tuples Per Tile Group: " << tuples_per_tile_group << "\n";
+  std::cout << "Number of Tile Groups: " << num_tile_groups << "\n";
+  std::cout << "Tuples size in bytes: " << tuple_size << "\n";
+  std::cout << "Uncompressed_Size in bytes: " << uncompressed_size << "\n";
+  std::cout << "Compressed_Size in bytes: " << compressed_size << "\n";
+
   auto data_table_pointer = data_table_test_table.release();
   delete data_table_pointer;
 
-  EXPECT_LE(compressed_size,uncompressed_size);
+  EXPECT_LE(compressed_size, uncompressed_size);
 }
 
 }  // End test namespace
