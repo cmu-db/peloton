@@ -24,6 +24,8 @@
 namespace peloton {
 namespace wire {
 
+int LibeventServer::recent_connfd = -1;
+
 std::unordered_map<int, std::unique_ptr<LibeventSocket>>
     &LibeventServer::GetGlobalSocketList() {
   // mapping from socket id to socket object.
@@ -45,6 +47,7 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
                                    LibeventThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
+  recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
     LOG_INFO("create new connection: id = %d", connfd);
   }
