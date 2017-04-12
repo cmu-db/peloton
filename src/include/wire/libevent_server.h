@@ -159,7 +159,6 @@ class LibeventSocket {
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:
-
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
@@ -228,18 +227,18 @@ struct LibeventServer {
 
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
-  //struct event_base *base;  // libevent event_base
-  struct event *evstop;     // libevent stop event
+  // struct event_base *base;  // libevent event_base
+  struct event *evstop;  // libevent stop event
   struct event *ev_timeout;
   std::shared_ptr<LibeventThread> master_thread;
   // std::shared_ptr<LibeventThread> master_thread(
   //    new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
-  
+
  public:
   bool is_started = false;
   bool is_closed = false;
   struct event_base *base;  // libevent event_base
-  static int recent_connfd;  
+  static int recent_connfd;
 
  public:
   LibeventServer();
@@ -253,7 +252,8 @@ struct LibeventServer {
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
+  GetGlobalSocketList();
 };
 }
 }

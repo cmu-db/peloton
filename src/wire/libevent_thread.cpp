@@ -25,8 +25,8 @@ namespace wire {
 /*
  * Get the vector of libevent worker threads
  */
-std::vector<std::shared_ptr<LibeventWorkerThread>>
-    &LibeventMasterThread::GetWorkerThreads() {
+std::vector<std::shared_ptr<LibeventWorkerThread>> &
+LibeventMasterThread::GetWorkerThreads() {
   static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
   return worker_threads;
 }
@@ -40,13 +40,11 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
     : LibeventThread(MASTER_THREAD_ID, libevent_base),
       num_threads_(num_threads),
       next_thread_id_(0) {
-  
   auto &threads = GetWorkerThreads();
 
-
   // register thread to epoch manager.
-  if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
-    
+  if (concurrency::EpochManagerFactory::GetEpochType() ==
+      EpochType::DECENTRALIZED_EPOCH) {
     for (int thread_id = 0; thread_id < num_threads; thread_id++) {
       concurrency::EpochManagerFactory::GetInstance().RegisterThread(thread_id);
     }
@@ -54,7 +52,6 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
 
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
-
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(
         new LibeventWorkerThread(thread_id)));
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
@@ -81,7 +78,7 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
 }
 
 void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
+                           UNUSED_ATTRIBUTE short what, void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
   if (!thread->is_started) {
     thread->is_started = true;
@@ -111,8 +108,9 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
-  struct timeval two_seconds = {2,0};
-  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT|EV_PERSIST, ThreadStatus_Callback, this);
+  struct timeval two_seconds = {2, 0};
+  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
+                         ThreadStatus_Callback, this);
   event_add(ev_timeout, &two_seconds);
 
   if (event_add(new_conn_event_, 0) == -1) {
