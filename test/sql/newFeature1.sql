@@ -1,0 +1,5 @@
+CREATE TABLE data (a INT NOT NULL, b INT NOT NULL);
+INSERT INTO data VALUES (1, 2);
+SELECT SUM(a), SUM(b) FROM data;
+SELECT SUM(a + b) FROM data;
+SELECT SUM(a) + SUM(b) FROM data;
