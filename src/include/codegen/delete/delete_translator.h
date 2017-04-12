@@ -42,17 +42,22 @@ class DeleteTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
-  bool wrapper(oid_t tile_group_id, oid_t tuple_id, concurrency::Transaction *txn, storage::DataTable *table);
+  bool delete_wrapper(oid_t tile_group_id, oid_t tuple_id, concurrency::Transaction *txn, storage::DataTable *table);
   const planner::DeletePlan &delete_plan_;
   codegen::Table table_;
 
   //===--------------------------------------------------------------------===//
-  // A structure that proxies delete wrapper
+  // A structure that proxies delete wrapper function calls
   //===--------------------------------------------------------------------===//
   struct _DeleteWrapper {
-    // Return the symbol for the Manager.GetTableWithOid() function
+    // return the mingled function name for function with signature
+    // peloton::codegen::DeleteTranslator::wrapper(unsigned int,
+    //                                             unsigned int,
+    //                                             peloton::concurrency::Transaction*,
+    //                                             peloton::storage::DataTable*)
     static const std::string &GetFunctionName();
-    // Return the LLVM-typed function definition for Manager.GetTableWithOid()
+    // return the llvm function bound with the above function name.
+    // perform binding if no such function is found
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 };
