@@ -46,10 +46,10 @@
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
 #define CHECK_TEST
-#define DEFAULT_TEST
-//#define PRIMARY_UNIQUEKEY_TEST
-#define FOREIGHN_KEY_TEST
-#define FOREIGHN_MULTI_KEY_TEST
+// #define DEFAULT_TEST
+// #define PRIMARY_UNIQUEKEY_TEST
+// #define FOREIGHN_KEY_TEST
+// #define FOREIGHN_MULTI_KEY_TEST
 #define UNIQUE_TEST
 #define MULTI_UNIQUE_TEST
 
@@ -98,7 +98,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Test1: insert a tuple with column 1 = null
   txn = txn_manager.BeginTransaction();
   bool hasException = false;
-/*
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
         txn, table,
@@ -107,7 +106,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
-*/
 
   // Test2: insert a legal tuple
   hasException = false;
@@ -197,18 +195,6 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
   }
   EXPECT_FALSE(hasException);
 
-  // Test2: insert not a valid column violate the constraint
-  hasException = false;
-  try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
@@ -258,9 +244,6 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   planner::CreatePlan node("test_table", DEFAULT_DB_NAME,
                            std::move(table_schema), CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
-
-  create_executor.Init();
-  create_executor.Execute();
 
   create_executor.Init();
   create_executor.Execute();
@@ -364,7 +347,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 #endif
 
 #ifdef FOREIGHN_KEY_TEST
-TEST_F(ConstraintsTests, ForeignKeyTest) {
+TEST_F(ConstraintsTests, SimpleForeignKeyTest) {
   // Create the database
   auto catalog = catalog::Catalog::GetInstance();
   catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
@@ -562,6 +545,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
 
   // begin this transaction
   auto txn = txn_manager.BeginTransaction();
+
   // Test1: insert a tuple with column  meet the constraint requirment
   bool hasException = false;
   try {
@@ -587,38 +571,6 @@ TEST_F(ConstraintsTests, CHECKTest) {
   delete data_table.release();
 }
 #endif
-
-TEST_F(ConstraintsTests, DEFAULTTEST) {
-  std::unique_ptr<storage::DataTable> data_table(
-    ConstraintsTestsUtil::CreateAndPopulateTable());
-
-  auto schema = data_table->GetSchema();
-
-  catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
-  auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
-  constraint.addDefaultValue(v);
-  schema->AddConstraint(1, constraint);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
-
-  ConstraintsTestsUtil::ExecuteInsert(
-    txn, data_table.get(),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 0)),
-    type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 2)),
-    type::ValueFactory::GetVarcharValue(
-      std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-
-
-  txn_manager.CommitTransaction(txn);
-  delete data_table.release();
-}
 
 #ifdef UNIQUE_TEST
 TEST_F(ConstraintsTests, UNIQUETest) {
@@ -975,9 +927,7 @@ TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
   //  2             2
   //  .....
   //  9             9
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
   {
     std::unique_ptr<storage::DataTable> data_table(
         TransactionTestsUtil::CreateCombinedPrimaryKeyTable());
@@ -991,14 +941,11 @@ TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Insert(1, 1);
     scheduler.Txn(1).Commit();
-
     scheduler.Run();
-
     EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[0].txn_result);
     EXPECT_TRUE(ResultType::ABORTED == scheduler.schedules[1].txn_result);
   }
 }
-
 TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
   // First, generate the table with index
   // this table has 10 rows:
@@ -1008,9 +955,7 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
   //  2             2
   //  .....
   //  9             9
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
   {
     std::unique_ptr<storage::DataTable> data_table(
         TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable());
@@ -1020,15 +965,12 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
     scheduler.Txn(1).Insert(10, 11);
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
-
     scheduler.Run();
-
     EXPECT_TRUE((ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
                  ResultType::ABORTED == scheduler.schedules[1].txn_result) ||
                 (ResultType::SUCCESS == scheduler.schedules[1].txn_result &&
                  ResultType::ABORTED == scheduler.schedules[0].txn_result));
   }
-
   {
     std::unique_ptr<storage::DataTable> data_table(
         TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable());
@@ -1042,13 +984,10 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(1).Commit();
     scheduler.Txn(0).Commit();
-
     scheduler.Run();
-
     EXPECT_TRUE(ResultType::ABORTED == scheduler.schedules[0].txn_result);
     EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[1].txn_result);
   }
-
   {
     std::unique_ptr<storage::DataTable> data_table(
         TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable());
@@ -1062,15 +1001,12 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
     scheduler.Txn(1).Commit();
     scheduler.Txn(0).Update(0, 1);
     scheduler.Txn(0).Commit();
-
     scheduler.Run();
-
     EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[0].txn_result);
     EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
 #endif
-
 */
 }  // End test namespace
 }  // End peloton namespace
