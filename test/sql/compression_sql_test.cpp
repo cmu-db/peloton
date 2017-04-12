@@ -24,14 +24,15 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE foo(id integer, year integer);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE foo(id integer primary key, year integer);");
   int i;
-  for (i = 0; i < 100; i++) {
+
+  for (i = 0; i < 20; i++) {
     std::ostringstream os;
     os << "insert into foo values("<< i << ", " << i*100 <<");";
     TestingSQLUtil::ExecuteSQLQuery(os.str());
   }
-    EXPECT_EQ(i, 100);
+    EXPECT_EQ(i, 20);
   }
 }
 }

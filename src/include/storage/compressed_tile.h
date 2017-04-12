@@ -73,6 +73,19 @@ public:
 
 	void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
+	type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
+
+  	type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+                           const type::Type::TypeId column_type,
+                           const bool is_inlined);
+
+  	void SetValue(const type::Value &value, const oid_t tuple_offset,
+                const oid_t column_id);
+
+	void SetValueFast(const type::Value &value, const oid_t tuple_offset,
+                    const size_t column_offset, const bool is_inlined,
+                    const size_t column_length);
+
 
   //===--------------------------------------------------------------------===//
   // Utility Functions
@@ -83,7 +96,7 @@ public:
 	}
 
 	inline type::Value GetBaseValue(type::Value old_value, type::Value new_value) {
-  		return old_value.Add(new_value).CastAs(old_value.GetTypeId());
+  		return old_value.Subtract(new_value).CastAs(old_value.GetTypeId());
 	}
 
 	inline type::Type::TypeId GetCompressedType(type::Value new_value) {
@@ -106,6 +119,27 @@ public:
 			return compressed_column_map[column_id].first;
   		}
   		return type::Type::INVALID;
+	}
+
+	inline type::Value GetUncompressedValue(oid_t column_id, type::Value compressed_value) {
+		
+		if(compressed_column_map.find(column_id) != compressed_column_map.end()) {
+			type::Value base_value = GetBaseValue(column_id);
+			return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
+		}
+
+		return type::Value();
+	}
+
+	oid_t GetColumnFromOffsest(const size_t column_offset) {
+		oid_t i;
+		PL_ASSERT(column_offset < schema.GetLength());
+		for(i = 0; i < column_count; i++) {
+			if(schema.GetOffset(i) == column_offset) {
+				break;
+			}
+		}
+		return i;
 	}
 
 protected:

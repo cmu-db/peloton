@@ -120,6 +120,7 @@ class Tile : public Printable {
                          const ItemPointer *tuple_location);
 
   // Copy current tile in given backend and return new tile
+  //TODO: Make virtual and copy meta-data for CompressedTile
   Tile *CopyTile(BackendType backend_type);
 
   // 
