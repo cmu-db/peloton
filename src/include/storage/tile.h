@@ -53,20 +53,17 @@ class Tile : public Printable {
   friend class TileGroupHeader;
   friend class gc::GCManager;
   friend class CompressedTile;
-  
-  
+
   Tile() = delete;
   Tile(Tile const &) = delete;
 
  public:
-
   // Tile creator
   Tile(BackendType backend_type, TileGroupHeader *tile_header,
        const catalog::Schema &tuple_schema, TileGroup *tile_group,
        int tuple_count);
 
   virtual ~Tile();
-
 
   //===--------------------------------------------------------------------===//
   // Operations
@@ -97,36 +94,35 @@ class Tile : public Printable {
    * Faster way to get value
    * By amortizing schema lookups
    */
-  virtual type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                           const type::Type::TypeId column_type,
-                           const bool is_inlined);
+  virtual type::Value GetValueFast(const oid_t tuple_offset,
+                                   const size_t column_offset,
+                                   const type::Type::TypeId column_type,
+                                   const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
   virtual void SetValue(const type::Value &value, const oid_t tuple_offset,
-                const oid_t column_id);
+                        const oid_t column_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
   virtual void SetValueFast(const type::Value &value, const oid_t tuple_offset,
-                    const size_t column_offset, const bool is_inlined,
-                    const size_t column_length);
+                            const size_t column_offset, const bool is_inlined,
+                            const size_t column_length);
 
   // Get tuple at location
   static Tuple *GetTuple(catalog::Manager *catalog,
                          const ItemPointer *tuple_location);
 
   // Copy current tile in given backend and return new tile
-  //TODO: Make virtual and copy meta-data for CompressedTile
+  // TODO: Make virtual and copy meta-data for CompressedTile
   Tile *CopyTile(BackendType backend_type);
 
-  // 
-  virtual bool IsCompressed() {
-    return false;
-  }
+  //
+  virtual bool IsCompressed() { return false; }
 
   virtual void CompressTile(Tile *tile);
   //===--------------------------------------------------------------------===//
@@ -175,12 +171,12 @@ class Tile : public Printable {
   virtual bool SerializeTo(SerializeOutput &output, oid_t num_tuples);
   virtual bool SerializeHeaderTo(SerializeOutput &output);
   virtual bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
-                         int num_tuples);
+                                 int num_tuples);
 
   virtual void DeserializeTuplesFrom(SerializeInput &serialize_in,
-                             type::AbstractPool *pool = nullptr);
-  virtual void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                          type::AbstractPool *pool = nullptr);
+                                     type::AbstractPool *pool = nullptr);
+  virtual void DeserializeTuplesFromWithoutHeader(
+      SerializeInput &input, type::AbstractPool *pool = nullptr);
 
   type::AbstractPool *GetPool() { return (pool); }
 

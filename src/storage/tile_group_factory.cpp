@@ -42,7 +42,7 @@ TileGroup *TileGroupFactory::GetTileGroup(
   tile_group->tile_group_id = tile_group_id;
   tile_group->table_id = table_id;
   LOG_INFO("Get Tile Group Details");
-  LOG_INFO("Tile Group ID: %d",tile_group_id);
+  LOG_INFO("Tile Group ID: %d", tile_group_id);
   LOG_INFO("Table ID: %d", table_id);
   LOG_INFO("Tuple Count for this tile group: %d", tuple_count);
 

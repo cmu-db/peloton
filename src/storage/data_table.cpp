@@ -62,7 +62,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
-        tuples_per_tilegroup_ = 10;
+  tuples_per_tilegroup_ = 10;
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -170,7 +170,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  //Avoid inserting into recycled slot. Needs to be Modified!!!
+  // Avoid inserting into recycled slot. Needs to be Modified!!!
   /*auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
@@ -300,7 +300,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
-
 
   return location;
 }
@@ -491,8 +490,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(
-    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -811,7 +810,6 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 }
 
 void DataTable::DropIndexes() {
-
   // TODO: iterate over all indexes, and actually drop them
 
   indexes_.Clear(nullptr);
@@ -1080,10 +1078,9 @@ void DataTable::SetDefaultLayout(const column_map_type &layout) {
   default_partition_ = layout;
 }
 
-column_map_type DataTable::GetDefaultLayout() const{
+column_map_type DataTable::GetDefaultLayout() const {
   return default_partition_;
 }
-
 
 }  // End storage namespace
 }  // End peloton namespace
