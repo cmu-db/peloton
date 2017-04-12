@@ -730,21 +730,14 @@ TEST_F(PostgresParserTests, CreatePGSQLFuncTest) {
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
-  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
-  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
-
   delete stmt_list;
 }
 
 TEST_F(PostgresParserTests, CreateCFuncTest) {
   std::string query = "CREATE FUNCTION c_overpaid(integer, integer) RETURNS boolean AS 'DIRECTORY/funcs', 'c_overpaid' LANGUAGE C STRICT;";
-
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
-  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
-  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
-
   delete stmt_list;
 }
 
