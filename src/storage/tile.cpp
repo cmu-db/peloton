@@ -100,12 +100,8 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   // Find slot location
   char *location = tuple_offset * tuple_length + data;
 
-  LOG_INFO("Insert Tuple at Tile Level");
-  std::cout<< "At Tuple Offset: "<< tuple_offset;
-
   // Copy over the tuple data into the tuple slot in the tile
   PL_MEMCPY(location, tuple->tuple_data_, tuple_length);
-  LOG_INFO("Memcopy of tuple at location: SUCCESS");
 }
 
 /**
