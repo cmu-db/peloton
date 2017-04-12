@@ -45,7 +45,11 @@ static void *SimpleQueryTest(void *) {
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
     pqxx::work W(C);
-
+    
+    peloton::wire::LibeventSocket *conn = peloton::wire::LibeventServer::GetConn(peloton::wire::LibeventServer::recent_connfd);
+    
+    EXPECT_EQ(conn->pkt_manager.is_started, true);
+    EXPECT_EQ(conn->state, peloton::wire::CONN_READ);  
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -69,6 +73,7 @@ static void *SimpleQueryTest(void *) {
 /**
  * named prepare statement test
  */
+/*
 static void *PrepareStatementTest(void *) {
   try {
     pqxx::connection C(
@@ -96,7 +101,7 @@ static void *PrepareStatementTest(void *) {
   LOG_INFO("[PrepareStatementTest] Client has closed");
   return NULL;
 }
-
+*/
 /**
  * Use std::thread to initiate peloton server and pqxx client in separate threads
  * Simple query test to guarantee both sides run correctly
@@ -115,7 +120,7 @@ TEST_F(PacketManagerTests, SimpleQueryTest) {
   SimpleQueryTest(NULL);
 
   /* TODO: monitor packet_manager's status when receiving prepare statement from client */
-  PrepareStatementTest(NULL);
+  // PrepareStatementTest(NULL);
 
   libeventserver.CloseServer();
   serverThread.join();
