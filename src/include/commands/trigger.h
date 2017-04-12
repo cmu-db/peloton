@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// trigger.h
+//
+// Identification: src/include/commands/trigger.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "vector"
@@ -66,6 +79,8 @@ class TriggerList {
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
   storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple);
  private:
+  // types_summary contains a boolean for each kind of EnumTriggerType, this is
+  // used for facilitate checking weather there is a trigger to be invoked
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
 };
