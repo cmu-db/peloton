@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// trigger.cpp
+//
+// Identification: src/commands/trigger.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "commands/trigger.h"
 #include "parser/pg_trigger.h"
 
@@ -11,12 +24,17 @@ Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
   trigger_when = plan.GetTriggerWhen();
   trigger_type = plan.GetTriggerType();
 }
-
+/*
+ * Add a trigger to the trigger list and update the summary
+ */
 void TriggerList::AddTrigger(Trigger trigger) {
   triggers.push_back(trigger);
   UpdateTypeSummary(trigger.GetTriggerType());
 }
 
+/*
+ * Update a type summary when a new type of trigger is added
+ */
 void TriggerList::UpdateTypeSummary(int16_t type) {
   types_summary[BEFORE_INSERT_ROW] |= TRIGGER_TYPE_MATCHES(
       type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT);
