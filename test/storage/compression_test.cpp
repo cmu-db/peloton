@@ -36,7 +36,7 @@ class CompressionTests : public PelotonTest {};
 
 TEST_F(CompressionTests, SizeTest) {
   const int tuple_count = 100;
-  UNUSED_ATTRIBUTE oid_t tuple_size = 41;
+  UNUSED_ATTRIBUTE oid_t tuple_size = 24;
   UNUSED_ATTRIBUTE oid_t tuples_per_tile_group = 10;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

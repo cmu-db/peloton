@@ -208,7 +208,6 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
-    std::cout << "Create New Tile Group: "<< active_tile_group_id << "\n";
     tile_group->CompressTiles();
     AddDefaultTileGroup(active_tile_group_id);
   }

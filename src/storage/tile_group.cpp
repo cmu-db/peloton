@@ -43,7 +43,6 @@ TileGroup::TileGroup(BackendType backend_type,
       column_map(column_map) {
   tile_count = tile_schemas.size();
 
-  LOG_INFO("Tile Count: %d", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
@@ -53,8 +52,6 @@ TileGroup::TileGroup(BackendType backend_type,
 
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
-    std::cout<<"tile_group.cpp Tile_Group Constructor: Tile with tile_id: "<< tile_id << " added\n";
-    std::cout << "Compression Status of tile with tile_id: " << tile_id << " is: " << (&*tile)->IsCompressed() << "\n";
   }
   compression_status = false;
 }
@@ -325,14 +322,16 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
-    std::cout << " Compressing Tile: " << i << "\n";
+    LOG_INFO ("Compressing Tile %d in Tile Group",i);
     CompressedTile *new_tile;
     Tile *old_tile = &*tiles[i];
-
-    new_tile = new CompressedTile(backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()), old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount());
+    new_tile = new CompressedTile(backend_type, 
+                                  old_tile->GetHeader(), 
+                                  *(old_tile->GetSchema()), 
+                                  old_tile->GetTileGroup(), 
+                                  old_tile->GetAllocatedTupleCount());
     new_tile->CompressTile(old_tile);
     if (new_tile->IsCompressed()) {
-      LOG_INFO("Tile was successfully compressed and pointer was updated"); 
       tiles[i] = std::shared_ptr<Tile> (new_tile);
       compression_status = true;
     }
