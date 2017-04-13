@@ -140,8 +140,7 @@ void DataTable::AddUNIQUEIndex() {
       std::string db_name = catalog::Catalog::GetInstance()
                                 ->GetDatabaseWithOid(database_oid)
                                 ->GetDBName();
-      std::cout << "********db name: " << db_name
-                << " index name: " << index_name << std::endl;
+      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
       ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
           db_name, table_name, index_attrs, index_name, true,
           IndexType::BWTREE);
