@@ -158,7 +158,7 @@ void DataTable::AddMultiUNIQUEIndex() {
   std::vector<catalog::MultiConstraint> multi_constraints;
   multi_constraints = schema->GetMultiConstraints();
   for (auto mc : multi_constraints) {
-    std::cout << mc.GetInfo();
+    LOG_DEBUG("%s", mc.GetInfo().c_str());
     std::vector<oid_t> cols = mc.GetCols();
     ConstraintType type = mc.GetType();
     if (cols.size() <= 0) continue;
@@ -173,8 +173,7 @@ void DataTable::AddMultiUNIQUEIndex() {
       std::string db_name = catalog::Catalog::GetInstance()
                                 ->GetDatabaseWithOid(database_oid)
                                 ->GetDBName();
-      std::cout << "********db name: " << db_name
-                << " index name: " << index_name << std::endl;
+      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
       ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
           db_name, table_name, index_attrs, index_name, true,
           IndexType::BWTREE);
@@ -415,7 +414,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
     }
     default: {
       // TODO: throw an exception
-      std::cout << "Operator NOT SUPPORT" << std::endl;
+      LOG_ERROR("Operator NOT SUPPORTED");
       return false;
     }
   }
@@ -836,7 +835,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   multi_constraints = schema->GetMultiConstraints();
   for (auto mc : multi_constraints) {
     // TODO multi constraints check
-    std::cout << mc.GetInfo();
+    LOG_DEBUG("%s", mc.GetInfo().c_str());
     std::vector<oid_t> cols = mc.GetCols();
     ConstraintType type = mc.GetType();
     if (cols.size() <= 0) continue;
