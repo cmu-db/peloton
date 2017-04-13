@@ -546,7 +546,12 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   UNUSED_ATTRIBUTE ExpressionType target_type;
   const char* name =
       (reinterpret_cast<value*>(root->name->head->data.ptr_value))->val.str;
-  target_type = StringToExpressionType(std::string(name));
+  if (root->kind != AEXPR_DISTINCT) {
+    target_type = StringToExpressionType(std::string(name));
+  }
+  else {
+    target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
+  }
   if (target_type == ExpressionType::INVALID) {
     LOG_ERROR("COMPARE type %s not supported yet...\n", name);
     return nullptr;

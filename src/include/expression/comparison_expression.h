@@ -57,6 +57,15 @@ class ComparisonExpression : public AbstractExpression {
       case (ExpressionType::COMPARE_GREATERTHANOREQUALTO):
         return type::ValueFactory::GetBooleanValue(
             vl.CompareGreaterThanEquals(vr));
+      case (ExpressionType::COMPARE_DISTINCT_FROM): {
+        if (vl.IsNull() && vr.IsNull()) {
+          return type::ValueFactory::GetBooleanValue(false);
+        }
+        else if (!vl.IsNull() && !vr.IsNull()) {
+          return type::ValueFactory::GetBooleanValue(vl.CompareNotEquals(vr));
+        }
+        return type::ValueFactory::GetBooleanValue(true);
+      }
       default:
         throw Exception("Invalid comparison expression type.");
     }
