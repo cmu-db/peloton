@@ -68,12 +68,28 @@ class OptimizerSQLTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   }
 
-  void TestUtil(string query, vector<string> ref_result, bool ordered) {
+  void TestUtil(string query, vector<string> ref_result, bool ordered,
+                vector<PlanNodeType> expected_plans={}) {
     LOG_DEBUG("Running Query \"%s\"", query.c_str());
+    
+    // Check Plan Nodes are correct if provided
+    if (expected_plans.size() > 0) {
+      auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+      auto plan_ptr = plan.get();
+      vector<PlanNodeType> actual_plans;
+      while (true) {
+        actual_plans.push_back(plan_ptr->GetPlanNodeType());
+        if (plan_ptr->GetChildren().size() == 0)
+          break;
+        plan_ptr = plan_ptr->GetChildren()[0].get();
+      }
+      EXPECT_EQ(actual_plans, expected_plans);
+    }
+    
+    // Check plan execution results are correct
     TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
                                                  tuple_descriptor, rows_changed,
                                                  error_message);
-
     EXPECT_EQ(ref_result.size(), result.size());
     if (ordered) {
       // If deterministic, do comparision with expected result in order
@@ -290,10 +306,24 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 }
 
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
-  // Insert new tuples to test distinct
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 00, 555);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
+  
+  // Test DISTINCT and GROUP BY have the same columns. Avoid additional HashPlan
+  TestUtil("SELECT DISTINCT b,c FROM test GROUP BY b,c",
+           {"0", "555", "33", "444", "11", "0", "22", "333"}, false,
+           {PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
+  
+  // Test GROUP BY cannot satisfied DISTINCT
+  TestUtil("SELECT DISTINCT b FROM test GROUP BY b,c",
+           {"22", "11", "0", "33"}, false, {PlanNodeType::HASH,
+             PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
+  
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
 
   // Test distinct with order by
   TestUtil("SELECT DISTINCT b FROM test ORDER BY b", {"0", "11", "22", "33"},
@@ -306,6 +336,8 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   // Test distinct with limit and star expression
   TestUtil("SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c LIMIT 3",
            {"2", "11", "0", "7", "0", "444", "1", "22", "333"}, true);
+  
+  
 
   // Insert additional tuples to test distinct with group by
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
