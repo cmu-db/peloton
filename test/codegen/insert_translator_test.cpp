@@ -42,11 +42,13 @@ TEST_F(InsertTranslatorTest, InsertTuples) {
 
   LOG_DEBUG("Before Insert: #tuples in table = %zu", table->GetTupleCount());
 
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(10));
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(11));
   tuple->SetValue(2, type::ValueFactory::GetIntegerValue(12));
-  tuple->SetValue(3, type::ValueFactory::GetVarcharValue("Hello", true));
+  tuple->SetValue(3, type::ValueFactory::GetVarcharValue("he", true), testing_pool);
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(table, std::move(tuple)));
