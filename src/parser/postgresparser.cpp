@@ -194,7 +194,10 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
               RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node)));
           break;
         }
-        default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
+        default: {
+          LOG_ERROR("From Type %d not supported yet...", node->type);
+          throw NotImplementedException(" ");
+        }
       }
     }
     return result;
@@ -219,7 +222,10 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
       result = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node));
       break;
     }
-    default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
+    default: {
+      LOG_ERROR("From Type %d not supported yet...", node->type);
+      throw NotImplementedException(" ");
+    }
   }
 
   return result;
@@ -252,6 +258,7 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
     default: {
       LOG_ERROR("Type %d of ColumnRef not handled yet...\n",
                 (reinterpret_cast<Node*>(fields->head->data.ptr_value))->type);
+      throw NotImplementedException(" ");
     }
   }
 
@@ -356,6 +363,7 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
       }
     } else {
       LOG_ERROR("ORDER BY list member type %d\n", temp->type);
+      throw NotImplementedException(" ");
     }
   }
   result->exprs = exprs;
@@ -386,6 +394,7 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
       break;
     default:
       LOG_ERROR("Value type %d not supported yet...\n", val.type);
+      throw NotImplementedException(" ");
   }
   return result;
 }
@@ -430,7 +439,7 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
           StringToExpressionType(type_string), root->agg_distinct, child);
     } else {
       LOG_ERROR("Aggregation over multiple columns not supported yet...\n");
-      return nullptr;
+      throw NotImplementedException(" ");
     }
   }
   return result;
@@ -466,6 +475,7 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
       }
       default: {
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
+        throw NotImplementedException(" ");
       }
     }
     if (target->name != nullptr) expr->alias = target->name;
@@ -500,7 +510,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
         break;
       default: {
         LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
-        return nullptr;
+        throw NotImplementedException(" ");
       }
     }
     switch (root->boolop) {
@@ -546,15 +556,14 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   UNUSED_ATTRIBUTE ExpressionType target_type;
   const char* name =
       (reinterpret_cast<value*>(root->name->head->data.ptr_value))->val.str;
-  if (root->kind != AEXPR_DISTINCT) {
+  if ((root->kind) != AEXPR_DISTINCT) {
     target_type = StringToExpressionType(std::string(name));
-  }
-  else {
+  } else {
     target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
   }
   if (target_type == ExpressionType::INVALID) {
     LOG_ERROR("COMPARE type %s not supported yet...\n", name);
-    return nullptr;
+    throw NotImplementedException(" ");
   }
   expression::AbstractExpression* left_expr = nullptr;
   switch (root->lexpr->type) {
@@ -576,7 +585,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     default: {
       LOG_ERROR("Left expr of type %d not supported yet...\n",
                 root->lexpr->type);
-      return nullptr;
+      throw NotImplementedException(" ");
     }
   }
   expression::AbstractExpression* right_expr = nullptr;
@@ -600,7 +609,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     default: {
       LOG_ERROR("Right expr of type %d not supported yet...\n",
                 root->rexpr->type);
-      return nullptr;
+      throw NotImplementedException(" ");
     }
   }
 
@@ -608,9 +617,15 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   if (type_id <= 4) {
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
-  } else if ((10 <= type_id) && (type_id <= 17)) {
+  } else if (((10 <= type_id) && (type_id <= 17)) || (type_id == 20)) {
     result = new expression::ComparisonExpression(target_type, left_expr,
                                                   right_expr);
+  } else {
+    delete left_expr;
+    delete right_expr;
+    LOG_ERROR("A_Expr Transform for type %d is not implemented yet...\n",
+                type_id);
+    throw NotImplementedException(" ");
   }
   return result;
 }
@@ -1154,6 +1169,7 @@ std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
         break;
       default: {
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
+        throw NotImplementedException(" ");
       }
     }
     result->push_back(update_clause);
