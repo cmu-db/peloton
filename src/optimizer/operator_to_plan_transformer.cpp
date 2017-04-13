@@ -54,7 +54,7 @@ OperatorToPlanTransformer::ConvertOpExpression(
   return move(output_plan_);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
+void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
@@ -95,6 +95,11 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
   output_plan_ = move(seq_scan_plan);
+}
+
+void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
+  // TODO construct IndexScanPlan
+  (void) op;
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {

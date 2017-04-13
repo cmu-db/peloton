@@ -58,7 +58,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
 //  physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
-  physical_implementation_rules_.emplace_back(new GetToScan());
+  physical_implementation_rules_.emplace_back(new GetToSeqScan());
+  // physical_implementation_rules_.emplace_back(new GetToIndexScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());

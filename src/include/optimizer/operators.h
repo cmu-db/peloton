@@ -189,9 +189,23 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
-// Scan
+// SeqScan
 //===--------------------------------------------------------------------===//
-class PhysicalScan : public OperatorNode<PhysicalScan> {
+class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
+ public:
+  static Operator make(storage::DataTable *table);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  storage::DataTable *table_;
+};
+
+//===--------------------------------------------------------------------===//
+// IndexScan
+//===--------------------------------------------------------------------===//
+class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
   static Operator make(storage::DataTable *table);
 

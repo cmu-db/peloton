@@ -44,7 +44,8 @@ enum class OpType {
   // Separate between logical and physical ops
   LogicalPhysicalDelimiter,
   // Physical ops
-  Scan,
+  SeqScan,
+  IndexScan,
   Project,
   OrderBy,
   PhysicalLimit,

@@ -42,7 +42,9 @@ class OperatorToPlanTransformer : public OperatorVisitor {
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
       std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
-  void Visit(const PhysicalScan *op) override;
+  void Visit(const PhysicalSeqScan *op) override;
+
+  void Visit(const PhysicalIndexScan *op) override;
 
   void Visit(const PhysicalProject *) override;
 

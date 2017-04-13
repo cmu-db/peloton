@@ -171,22 +171,45 @@ Operator LogicalUpdate::make(
 }
 
 //===--------------------------------------------------------------------===//
-// Scan
+// SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalScan::make(storage::DataTable *table) {
-  PhysicalScan *scan = new PhysicalScan;
+Operator PhysicalSeqScan::make(storage::DataTable *table) {
+  PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
   return Operator(scan);
 }
 
-bool PhysicalScan::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Scan) return false;
-  const PhysicalScan &r = *static_cast<const PhysicalScan *>(&node);
+bool PhysicalSeqScan::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::SeqScan) return false;
+  const PhysicalSeqScan &r = *static_cast<const PhysicalSeqScan *>(&node);
   if (table_->GetOid() != r.table_->GetOid()) return false;
   return true;
 }
 
-hash_t PhysicalScan::Hash() const {
+hash_t PhysicalSeqScan::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  oid_t table_oid = table_->GetOid();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
+// IndexScan
+//===--------------------------------------------------------------------===//
+Operator PhysicalIndexScan::make(storage::DataTable *table) {
+  PhysicalIndexScan *scan = new PhysicalIndexScan;
+  scan->table_ = table;
+  return Operator(scan);
+}
+
+bool PhysicalIndexScan::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::IndexScan) return false;
+  const PhysicalIndexScan &r = *static_cast<const PhysicalIndexScan *>(&node);
+  if (table_->GetOid() != r.table_->GetOid()) return false;
+  return true;
+}
+
+hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table_->GetOid();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
@@ -448,7 +471,9 @@ std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
 template <>
 std::string OperatorNode<LogicalDelete>::name_ = "LogicalDelete";
 template <>
-std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
+std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
+template <>
+std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
 template <>
 std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
@@ -521,7 +546,9 @@ OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
 template <>
 OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
 template <>
-OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
+OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
+template <>
+OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
 template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>

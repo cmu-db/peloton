@@ -12,6 +12,7 @@
 
 #include "optimizer/rule_impls.h"
 #include "optimizer/operators.h"
+#include "storage/data_table.h"
 
 #include <memory>
 
@@ -52,25 +53,25 @@ void InnerJoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// GetToScan
-GetToScan::GetToScan() {
+/// GetToSeqScan
+GetToSeqScan::GetToSeqScan() {
   physical = true;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
-void GetToScan::Transform(
+void GetToSeqScan::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));
+      std::make_shared<OperatorExpression>(PhysicalSeqScan::make(get->table));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -78,6 +79,45 @@ void GetToScan::Transform(
 
   transformed.push_back(result_plan);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// GetToIndexScan
+GetToIndexScan::GetToIndexScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+  // If there is a index for the table, return true,
+  // else return false
+  // TODO The current executor seems to 
+  // have some limitation on index scan 
+  // but we can not do these check here
+  // since it's not compatible with the 
+  // optimizer's model
+  bool index_exist = false;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  if (get != nullptr && !get->table->GetIndexColumns().empty()) 
+    index_exist = true;
+  return index_exist;
+}
+
+void GetToIndexScan::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalGet *get = input->Op().As<LogicalGet>();
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(PhysicalIndexScan::make(get->table));
+
+  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
+      input->Children();
+  PL_ASSERT(children.size() == 0);
+
+  transformed.push_back(result_plan);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// SelectToFilter
