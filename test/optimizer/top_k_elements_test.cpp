@@ -9,6 +9,7 @@
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include <string>
 
 namespace peloton {
 namespace test {
@@ -94,6 +95,10 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   top_k_elements.Add("5", 5);
   top_k_elements.Add("1", 1);
   top_k_elements.Add("Million", 1000000);
+
+  top_k_elements.Add(std::string{"Cowboy"}, 2333);
+  top_k_elements.Add(std::string{"Bebop"}, 2334);
+  top_k_elements.Add(std::string{"RayCharles"}, 2335);
   int i;
   for (i = 0; i < 30; ++i) {
     top_k_elements.Add(i, i);
@@ -131,6 +136,15 @@ TEST_F(TopKElementsTests, WrapperTest) {
     top_k_elements.Add(v);
   }
   EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), 3);
+
+  type::Value v3 = type::ValueFactory::GetVarcharValue("luffy");
+  type::Value v4 = type::ValueFactory::GetVarcharValue(std::string("monkey"));
+  for (int i = 0; i < 500; i++) {
+    top_k_elements.Add(v3);
+    top_k_elements.Add(v4);
+  }
+  top_k_elements.PrintAllOrderedMaxFirst();
 }
 }
 }
+

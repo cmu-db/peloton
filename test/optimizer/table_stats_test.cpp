@@ -27,7 +27,6 @@ TEST_F(TableStatsTests, BasicTests) {
   table_stats.CollectColumnStats();
   EXPECT_EQ(table_stats.GetActiveTupleCount(), 0);
   EXPECT_EQ(table_stats.GetColumnCount(), 4);
-  data_table.release();
 }
 
 } /* namespace test */

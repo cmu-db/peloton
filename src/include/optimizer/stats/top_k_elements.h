@@ -3,6 +3,7 @@
 #include "type/value.h"
 #include "type/type.h"
 #include "type/types.h"
+#include "type/value_factory.h"
 #include "expression/abstract_expression.h"
 #include "common/macros.h"
 #include "common/logger.h"
@@ -61,18 +62,21 @@ class TopKElements {
 
     ElemType item_type;
     int64_t int_item;
-    const char* str_item;
+    std::string str_item;
 
     /*
      * Constructors
      */
     ApproxTopEntryElem()
-        : item_type{ElemType::NON_TYPE}, int_item{-1}, str_item{nullptr} {}
+        : item_type{ElemType::NON_TYPE}, int_item{-1}, str_item{""} {}
 
     ApproxTopEntryElem(int64_t intItem)
-        : item_type{ElemType::INT_TYPE}, int_item{intItem}, str_item{nullptr} {}
+        : item_type{ElemType::INT_TYPE}, int_item{intItem}, str_item{""} {}
 
-    ApproxTopEntryElem(const char* strItem)
+    ApproxTopEntryElem(const char * strItem)
+        : item_type{ElemType::STR_TYPE}, int_item{-1}, str_item{strItem} {}
+
+    ApproxTopEntryElem(std::string strItem)
         : item_type{ElemType::STR_TYPE}, int_item{-1}, str_item{strItem} {}
 
     /*
@@ -84,7 +88,7 @@ class TopKElements {
           case ElemType::INT_TYPE:
             return int_item == other.int_item;
           case ElemType::STR_TYPE:
-            if (strcmp(str_item, other.str_item) == 0) {
+            if (str_item.compare(other.str_item) == 0) {
               return true;
             } else {
               return false;
@@ -525,7 +529,8 @@ class TopKElements {
     // Estimate the frequency of this item using the sketch
     // Add it to the queue
     ApproxTopEntryElem elem{item};
-    AddFreqItem(ApproxTopEntry(elem, cmsketch.EstimateItemCount(item)));
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item));
+    AddFreqItem(e);
   }
 
   void Add(const char* item, int count = 1) {
@@ -534,9 +539,20 @@ class TopKElements {
 
     // Estimate the frequency of this item using the sketch
     // Add it to the queue
+    ApproxTopEntryElem elem{std::string(item)};
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item));
+    AddFreqItem(e);
+  }
+
+  void Add(std::string item, int count = 1) {
+    // Increment the count for this item in the Count-Min sketch
+    cmsketch.Add(item.c_str(), count);
+
+    // Estimate the frequency of this item using the sketch
+    // Add it to the queue
     ApproxTopEntryElem elem{item};
-    AddFreqItem(ApproxTopEntry(elem, cmsketch.EstimateItemCount(item)));
-    // AddFreqItem(MakeApproxTopEntry(EstimateItemCount(item), item));
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item.c_str()));
+    AddFreqItem(e);
   }
 
   /*
@@ -544,19 +560,34 @@ class TopKElements {
    */
   void Add(type::Value& value) {
     switch (value.GetTypeId()) {
+      case type::Type::TINYINT:
+        int8_t n_8;
+        n_8 = value.GetAs<int8_t>();
+        Add((int64_t) n_8, 1);
+        break;
+      case type::Type::SMALLINT:
+        int32_t n_16;
+        n_16 = value.GetAs<int16_t>();
+        Add((int64_t) n_16, 1);
+        break;
       case type::Type::INTEGER:
+      case type::Type::PARAMETER_OFFSET:
+      case type::Type::TIMESTAMP:
+        int32_t n_32;
+        n_32 = value.GetAs<int32_t>();
+        Add((int64_t) n_32, 1);
+        break;
       case type::Type::BIGINT:
-        int64_t n;
-        n = value.GetAs<int64_t>();
-        Add(n, 1);
+        int64_t n_64;
+        n_64 = value.GetAs<int64_t>();
+        Add(n_64, 1);
         break;
       case type::Type::DECIMAL:
       case type::Type::VARCHAR:
       default:
         // valgrind reports error on value.ToString().c_str();
         std::string s0 = value.ToString();
-        const char* s = s0.c_str();
-        Add(s, 1);
+        Add(s0, 1);
         break;
     }
   }
@@ -573,13 +604,22 @@ class TopKElements {
   void Remove(int64_t item, int count = 1) {
     cmsketch.Remove(item, count);
     ApproxTopEntryElem elem{item};
-    DecrFreqItem(ApproxTopEntry(elem, cmsketch.EstimateItemCount(item)));
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item));
+    DecrFreqItem(e);
   }
 
   void Remove(const char* item, int count = 1) {
     cmsketch.Remove(item, count);
+    ApproxTopEntryElem elem{std::string(item)};
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item));
+    DecrFreqItem(e);
+  }
+
+  void Remove(std::string item, int count = 1) {
+    cmsketch.Remove(item.c_str(), count);
     ApproxTopEntryElem elem{item};
-    DecrFreqItem(ApproxTopEntry(elem, cmsketch.EstimateItemCount(item)));
+    ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item.c_str()));
+    DecrFreqItem(e);
   }
 
   /*
@@ -736,7 +776,7 @@ class TopKElements {
   /*
    * Forge an ApproxTopEntry of string
    */
-  ApproxTopEntry MakeApproxTopEntry(uint64_t freq, const char* item) {
+  ApproxTopEntry MakeApproxTopEntry(uint64_t freq, std::string item) {
     ApproxTopEntryElem elem{item};
     return std::move(ApproxTopEntry(elem, freq));
   }
@@ -745,7 +785,7 @@ class TopKElements {
    * Add the frequency (approx count) and item (Element) pair (ApproxTopEntry)
    * to the queue / update tkq structure
    */
-  void AddFreqItem(ApproxTopEntry entry) {
+  void AddFreqItem(ApproxTopEntry& entry) {
     // If we have more than K-items, remove the item with the lowest frequency
     // from our data structure
     // If freq_item was already in our data structure, just update it instead.
@@ -764,7 +804,7 @@ class TopKElements {
   /*
    * Decrease / Remove
    */
-  void DecrFreqItem(ApproxTopEntry entry) {
+  void DecrFreqItem(ApproxTopEntry& entry) {
     if (!tkq.is_exist(entry)) {
       // not in the structure
       // do nothing
@@ -783,3 +823,4 @@ class TopKElements {
 
 } /* namespace optimizer */
 } /* namespace peloton */
+
