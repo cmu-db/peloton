@@ -93,7 +93,9 @@ class ConstraintsTestsUtil {
   /*
   static storage::DataTable *CreateTable(
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
-*/
+      bool indexes = true) {
+  return NULL;};
+    */
 
   static storage::DataTable *CreateTable(
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
