@@ -182,9 +182,24 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
 void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
   PropertySet child_input_property_set;
   PropertySet provided_property;
-  std::vector<bool> sort_ascending;
-  auto group_by_col_len = op->columns.size();
 
+  ExprSet child_col;
+  ExprSet provided_col;
+
+  ExprSet group_by_cols;
+
+  for (auto group_by_col : op->columns) group_by_cols.emplace(group_by_col);
+  // Group by columns are distint
+  // Add distinct to output properties.
+  // TODO add test for this feature
+
+  // Add child PropertyDistinct
+  provided_property.AddProperty(make_shared<PropertyDistinct>(
+      vector<shared_ptr<expression::AbstractExpression>>(group_by_cols.begin(),
+                                                         group_by_cols.end())));
+
+  vector<shared_ptr<expression::AbstractExpression>> sort_columns;
+  vector<bool> sort_ascending;
   for (auto prop : requirements_.Properties()) {
     switch (prop->Type()) {
       // Generate output columns for the child
@@ -197,23 +212,21 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
       case PropertyType::PROJECT:
         break;
       case PropertyType::SORT: {
-        bool sort_fulfilled = true;
         auto sort_prop = prop->As<PropertySort>();
         auto sort_col_len = sort_prop->GetSortColumnSize();
-        // if (sort_col_len > group_by_col_len) break;
-        // for (size_t col_idx = 0; col_idx < group)
+        // Sort order will be fulfilled by child operator
+        // in the following order :
+        // columns : sort_columns | group by cols that is not in the sort cols
+        // flags   : sort_flags   | all asc (flag doesn't matter here)
+
         for (size_t col_idx = 0; col_idx < sort_col_len; col_idx++) {
-          if (!sort_prop->GetSortColumn(col_idx)
-                   ->Equals(op->columns[col_idx].get())) {
-            sort_fulfilled = false;
-            break;
-          }
+          auto iter = group_by_cols.find(sort_prop->GetSortColumn(col_idx));
+          if (iter != group_by_cols.end()) group_by_cols.erase(iter);
+
+          sort_columns.push_back(sort_prop->GetSortColumn(col_idx));
+          sort_ascending.push_back(sort_prop->GetSortAscending(col_idx));
         }
-        if (sort_fulfilled) {
-          provided_property.AddProperty(prop);
-          for (size_t i = 0; i < sort_col_len; i++)
-            sort_ascending.push_back(sort_prop->GetSortAscending(i));
-        }
+
         break;
       }
       case PropertyType::COLUMNS: {
@@ -223,20 +236,15 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
         // PropertyColumn to generate child property
         auto col_prop = prop->As<PropertyColumns>();
         size_t col_len = col_prop->GetSize();
-        ExprSet child_col;
+
         for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
+          provided_col.insert(expr);
         }
         // Add group by columns
         for (auto group_by_col : op->columns)
           child_col.emplace(group_by_col->Copy());
-
-        // Add child PropertyColumn
-        child_input_property_set.AddProperty(make_shared<PropertyColumns>(
-            vector<shared_ptr<expression::AbstractExpression>>(
-                child_col.begin(), child_col.end())));
-        break;
       }
       case PropertyType::PREDICATE:
         // PropertyPredicate will be fulfilled by the child operator
@@ -246,36 +254,37 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
     }
   }
 
-  // Group by columns are distint
-  // Add distinct to output properties.
-  // TODO add test for this feature
-  ExprSet group_by_cols;
-
-  for (auto group_by_col : op->columns)
-    group_by_cols.emplace(group_by_col->Copy());
-  // Add child PropertyDistinct
-  provided_property.AddProperty(make_shared<PropertyDistinct>(
-      vector<shared_ptr<expression::AbstractExpression>>(group_by_cols.begin(),
-                                                         group_by_cols.end())));
-
-  // Start from the idx of the next elements in sort_ascending
-  // because it can be filled when the sort property is fulfilled
-  for (size_t i = sort_ascending.size(); i < group_by_col_len; i++)
+  // Add (remaining) group by columns to sort columns with asc flag
+  for (auto &group_by_col : group_by_cols) {
+    sort_columns.push_back(group_by_col);
     sort_ascending.push_back(true);
+  }
   child_input_property_set.AddProperty(
-      make_shared<PropertySort>(op->columns, sort_ascending));
+      make_shared<PropertySort>(move(sort_columns), move(sort_ascending)));
+
+  // Add child PropertyColumn
+  child_input_property_set.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(child_col.begin(),
+                                                         child_col.end())));
+
+  provided_property.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(provided_col.begin(),
+                                                         provided_col.end())));
+
   vector<PropertySet> child_input_properties{child_input_property_set};
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {
   PropertySet child_input_property_set;
-  PropertySet provided_property = requirements_;
+  PropertySet provided_property;
+
   for (auto prop : requirements_.Properties()) {
     // Sort must be performed after Distinct
-    if (prop->Type() != PropertyType::DISTINCT &&
-        prop->Type() != PropertyType::SORT) {
-      child_input_property_set.AddProperty(prop);
+    if (prop->Type() != PropertyType::SORT) {
+      provided_property.AddProperty(prop);
+      if (prop->Type() != PropertyType::DISTINCT)
+        child_input_property_set.AddProperty(prop);
     }
   }
 
