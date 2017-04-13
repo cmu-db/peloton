@@ -579,9 +579,14 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       left_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->lexpr));
       break;
     }
-    case T_ParamRef:
+    case T_ParamRef: {
       left_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->lexpr));
       break;
+    }
+    case T_FuncCall: {
+      left_expr = FuncCallTransform(reinterpret_cast<FuncCall*>(root->lexpr));
+      break;
+    }
     default: {
       LOG_ERROR("Left expr of type %d not supported yet...\n",
                 root->lexpr->type);
@@ -603,9 +608,14 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       right_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->rexpr));
       break;
     }
-    case T_ParamRef:
+    case T_ParamRef: {
       right_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->rexpr));
       break;
+    }
+    case T_FuncCall: {
+      right_expr = FuncCallTransform(reinterpret_cast<FuncCall*>(root->rexpr));
+      break;
+    }
     default: {
       LOG_ERROR("Right expr of type %d not supported yet...\n",
                 root->rexpr->type);
