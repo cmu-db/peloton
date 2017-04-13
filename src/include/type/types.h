@@ -157,7 +157,7 @@ enum class ExpressionType {
   OPERATOR_IS_NULL = 9,
   // exists test.
   OPERATOR_EXISTS = 18,
-  OPERATOR_UNARY_MINUS = 50,
+  OPERATOR_UNARY_MINUS = 60,
 
   // -----------------------------
   // Comparison Operators
@@ -180,12 +180,14 @@ enum class ExpressionType {
   COMPARE_NOTLIKE = 17,
   // IN operator [left IN (right1, right2, ...)]
   COMPARE_IN = 19,
+  // IS DISTINCT FROM operator
+  COMPARE_DISTINCT_FROM = 20,
 
   // -----------------------------
   // Conjunction Operators
   // -----------------------------
-  CONJUNCTION_AND = 20,
-  CONJUNCTION_OR = 21,
+  CONJUNCTION_AND = 50,
+  CONJUNCTION_OR = 51,
 
   // -----------------------------
   // Values
