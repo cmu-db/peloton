@@ -19,8 +19,10 @@
 
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
+#include "expression/comparison_expression.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "storage/tuple.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -130,6 +132,59 @@ TEST_F(ExpressionTests, HashTest) {
   delete root1;
   delete root2;
   delete root3;
+}
+
+TEST_F(ExpressionTests, DistinctFromTest) {
+  // Create a table with id column and value column
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "id",
+                          true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "value",
+                          true);
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  // Create "id IS DISTINCT FROM value" comparison
+  auto lexpr = new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+  auto rexpr = new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
+
+  expression::ComparisonExpression expr(StringToExpressionType("COMPARE_DISTINCT_FROM"),
+                                        lexpr, rexpr);
+
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
+  // id, value not NULL with the same values, should be false
+  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(10), pool);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(10), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsFalse());
+
+  // id, value not NULL with different values, should be true
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(5), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+
+  // id not NULL, value is NULL, should be true
+  tuple->SetValue(1, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+
+  // id is NULL, value not NULL, should be true
+  tuple->SetValue(0, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(10), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+
+  // id is NULL, value is NULL, should be false
+  tuple->SetValue(1, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsFalse());
+
+  delete tuple;
+  delete schema;
 }
 
 TEST_F(ExpressionTests, ExtractDateTests) {
