@@ -83,26 +83,45 @@ class OptimizerSQLTests : public PelotonTest {
           break;
         plan_ptr = plan_ptr->GetChildren()[0].get();
       }
-      EXPECT_EQ(actual_plans, expected_plans);
+      EXPECT_EQ(expected_plans, actual_plans);
     }
     
     // Check plan execution results are correct
     TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
                                                  tuple_descriptor, rows_changed,
                                                  error_message);
-    EXPECT_EQ(ref_result.size(), result.size());
     vector<string> actual_result;
+    for (unsigned i = 0; i < result.size(); i++)
+      actual_result.push_back(TestingSQLUtil::GetResultValueAsString(result, i));
+    
+    EXPECT_EQ(ref_result.size(), result.size());
     if (ordered) {
       // If deterministic, do comparision with expected result in order
-      for (unsigned i = 0; i < result.size(); i++)
-        actual_result.push_back(TestingSQLUtil::GetResultValueAsString(result, i));
-      EXPECT_EQ(actual_result, ref_result);
+      EXPECT_EQ(ref_result, actual_result);
     } else {
       // If non-deterministic, make sure they have the same set of value
       unordered_set<string> ref_set(ref_result.begin(), ref_result.end());
-      for (unsigned i = 0; i < result.size(); i++) {
-        string result_str = TestingSQLUtil::GetResultValueAsString(result, i);
-        EXPECT_TRUE(ref_set.find(result_str) != ref_set.end());
+      bool test_failed = false;
+      for (auto& result_str : actual_result) {
+        if (ref_set.count(result_str) == 0) {
+          test_failed = true;
+          EXPECT_TRUE(false);
+          break;
+        }
+      }
+      // Print actual results and expected result for debugging
+      if (test_failed || actual_result.size() != ref_result.size()) {
+        string actual_res_str = "[ ";
+        for (auto& res : actual_result)
+          actual_res_str += res + " ";
+        actual_res_str += "]";
+        LOG_DEBUG("actual result: %s", actual_res_str.c_str());
+        
+        string ref_res_str = "[ ";
+        for (auto& res : ref_result)
+          ref_res_str += res + " ";
+        ref_res_str += "]";
+        LOG_DEBUG("ref result: %s", ref_res_str.c_str());
       }
     }
   }
@@ -254,6 +273,10 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
 
 TEST_F(OptimizerSQLTests, GroupByTest) {
   // Insert additional tuples to test group by
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
@@ -285,10 +308,6 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   TestUtil("SELECT MIN(a), b FROM test GROUP BY b having b=22", {"1", "22"},
            false);
 
-  // Test Aggregate function: MAX(b)
-  TestUtil("SELECT MAX(a), b FROM test GROUP BY b having b=22", {"6", "22"},
-           false);
-
   // Test group by combined with ORDER BY
   TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},
            true);
@@ -306,8 +325,17 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   
   // Test ORDER BY columns not shown in select list
   TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY a + b",
-           {"4", "2", "5", "1", "6", "3"}, true, {PlanNodeType::ORDERBY,
-             PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
+           {"4", "2", "5", "1", "6", "3"}, true);
+  
+  // Test ORDER BY columns contains all group by columns
+  // In case of SortGroupBy, no additional sort should be enforced after groupby
+  TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY b,a, a+b",
+           {"4", "2","5", "1", "6", "3"}, true);
+  
+  // Test ORDER BY columns are a subset of group by columns
+  // In case of SortGroupBy, no additional sort should be enforced after groupby
+  TestUtil("SELECT a + b FROM test GROUP BY a,b ORDER BY a",
+           {"23", "13", "36", "4", "16", "28"}, true);
 }
 
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
@@ -320,13 +348,11 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   
   // Test DISTINCT and GROUP BY have the same columns. Avoid additional HashPlan
   TestUtil("SELECT DISTINCT b,c FROM test GROUP BY b,c",
-           {"0", "555", "33", "444", "11", "0", "22", "333"}, false,
-           {PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
+           {"0", "555", "33", "444", "11", "0", "22", "333"}, false);
   
   // Test GROUP BY cannot satisfied DISTINCT
   TestUtil("SELECT DISTINCT b FROM test GROUP BY b,c",
-           {"22", "11", "0", "33"}, false, {PlanNodeType::HASH,
-             PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
+           {"22", "11", "0", "33"}, false);
   
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
 
