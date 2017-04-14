@@ -33,19 +33,16 @@ ParameterTranslator::ParameterTranslator(
     : ExpressionTranslator(exp, ctx), ctx_(ctx) {
   switch (exp.GetExpressionType()) {
     case ExpressionType::VALUE_PARAMETER: {
-      type::Value dummy = type::ValueFactory::GetBooleanValue(false);
       int param_idx =
               GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
-      Parameter param = Parameter::GetParamValParamInstance(
-              &typeId_, dummy, param_idx);
+      Parameter param = Parameter::GetParamValParamInstance(param_idx);
       offset_ = ctx_.StoreParam(param);
       break;
     }
     case ExpressionType::VALUE_CONSTANT: {
       const type::Value &constant =
             GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-      typeId_ = constant.GetTypeId();
-      Parameter param =  Parameter::GetConstValParamInstance(constant);
+      Parameter param = Parameter::GetConstValParamInstance(constant);
       offset_ = ctx_.StoreParam(param);
       break;
     }
@@ -66,67 +63,12 @@ codegen::Value ParameterTranslator::DeriveValue(CodeGen &codegen,
           ValueProxy::_GetValue::GetFunction(codegen),
           args);
 
-  // Convert the value into an LLVM compile-time constant
-  llvm::Value *val = nullptr;
-  llvm::Value *len = nullptr;
-  switch (typeId_) {
-    case type::Type::TypeId::TINYINT: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekTinyInt::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::SMALLINT: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekSmallInt::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::INTEGER: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekInteger::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::BIGINT: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekBigInt::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::DECIMAL: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekDouble::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::DATE: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekDate::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::TIMESTAMP: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekTimestamp::GetFunction(codegen),
-              {value});
-      break;
-    }
-    case type::Type::TypeId::VARCHAR: {
-      val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekVarcharVal::GetFunction(codegen),
-              {value});
-      len = codegen.CallFunc(
-              ValuePeekerProxy::_PeekVarcharLen::GetFunction(codegen),
-              {value});
-      break;
-    }
-    default: {
-      throw Exception{"Unknown constant value type " +
-                      TypeIdToString(typeId_)};
-    }
-  }
-  return codegen::Value{typeId_, val, len};
+  return codegen::Value{type::Type::INVALID, value, nullptr};
+}
+
+codegen::Value ParameterTranslator::DeriveTypeValue(CodeGen &codegen,
+                                                    RowBatch::Row &row) const {
+  return DeriveValue(codegen, row);
 }
 
 }  // namespace codegen

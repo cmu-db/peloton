@@ -15,6 +15,7 @@
 #include "codegen/code_context.h"
 #include "type/type.h"
 #include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace codegen {
@@ -24,27 +25,35 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Parameter {
  public:
+  enum class ParamType {
+    Const = 0,
+    Param = 1,
+    Tuple = 2
+  };
+
   static Parameter GetConstValParamInstance(type::Value value) {
-    return Parameter{true, nullptr, value, 0};
+    return Parameter{ParamType::Const, value, 0};
   }
 
-  static Parameter GetParamValParamInstance(type::Type::TypeId *typeId,
-                                            type::Value value,
-                                            int param_idx) {
-    return Parameter{false, typeId, value, param_idx};
+  static Parameter GetParamValParamInstance(int param_idx) {
+    return Parameter{ParamType::Param,
+                     type::ValueFactory::GetBooleanValue(false),
+                     param_idx};
   }
 
-  // Called at runtime to finalize type in param translator
-  void FinalizeType(type::Type::TypeId typeId) {
-    *typeId_ = typeId;
+  static Parameter GetTupleValParamInstance() {
+    return Parameter{ParamType::Tuple,
+                     type::ValueFactory::GetBooleanValue(false),
+                     0};
   }
+
 
   type::Value GetValue() {
     return value_;
   }
 
-  bool IsConstant() {
-    return is_constant_;
+  ParamType GetType() {
+    return type_;
   }
 
   int GetParamIdx() {
@@ -52,23 +61,17 @@ class Parameter {
   }
 
  private:
-  Parameter(bool is_constant, type::Type::TypeId *typeId,
+  Parameter(ParamType type,
             type::Value value, int param_idx)
-          : is_constant_(is_constant), typeId_(typeId),
+          : type_(type),
             value_(value), param_idx_(param_idx) {}
  private:
-  // Distinguish whether the structure comes from constant/param value
-  bool is_constant_;
+  ParamType type_;
 
-  // Structure that comes from param value holds the ptr
-  // Since param is passed during runtime
-  // Type has to be determined at runtime
-  type::Type::TypeId *typeId_;
-
-  // Dummy value if the structure comes from param value
+  // Field for CVE, trivial for TVE/PVE
   type::Value value_;
 
-  // Index to executor context that holds params
+  // Field for PVE, trivial for CVE/TVE
   int param_idx_;
 };
 

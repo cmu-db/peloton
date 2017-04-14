@@ -37,8 +37,10 @@ class ParameterTranslator : public ExpressionTranslator {
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
 
+  codegen::Value DeriveTypeValue(CodeGen &codegen,
+                                 RowBatch::Row &row) const;
+
  private:
-  type::Type::TypeId typeId_;
   uint32_t offset_;
   CompilationContext &ctx_;
 };
