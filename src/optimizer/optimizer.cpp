@@ -51,7 +51,6 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
   logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
-  physical_implementation_rules_.emplace_back(new LogicalLimitToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
@@ -286,7 +285,9 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       new_cols_prop.reset(GenerateNewPropertyCols(requirements));
 
     // enforce missing properties
-    for (auto property : requirements.Properties()) {
+    auto& required_props = requirements.Properties();
+    for (unsigned i = 0; i < required_props.size(); i++) {
+      auto property = required_props[i];
       // When enforce PropertyColumns, use the new PropertyCols if necessary
       if (property->Type() == PropertyType::COLUMNS && new_cols_prop != nullptr)
         property = new_cols_prop;
@@ -366,10 +367,18 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // enforcing the property
   memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID());
 
-  // new output property would have the enforced Property
+  // For orderby, Restore the PropertyColumn back to the original one so that
+  // orderby does not output the additional columns only used in order by
+  if (property->Type() == PropertyType::SORT) {
+    output_properties.RemoveProperty(PropertyType::COLUMNS);
+    output_properties.AddProperty(requirements.GetPropertyOfType(PropertyType::COLUMNS));
+  }
   // If the property with the same type exists, remove it first
+  // For example, when enforcing PropertyColumns, there will already be a
+  // PropertyColumn in the output_properties
   if (output_properties.GetPropertyOfType(property->Type()) != nullptr)
     output_properties.RemoveProperty(property->Type());
+  // New output property would have the enforced Property
   output_properties.AddProperty(shared_ptr<Property>(property));
 
   DeriveCostAndStats(enforced_gexpr, output_properties, child_input_properties,
