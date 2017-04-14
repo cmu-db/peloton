@@ -186,29 +186,29 @@ enum class ExpressionType {
   // -----------------------------
   // Conjunction Operators
   // -----------------------------
-  CONJUNCTION_AND = 50,
-  CONJUNCTION_OR = 51,
+  CONJUNCTION_AND = 30,
+  CONJUNCTION_OR = 31,
 
   // -----------------------------
   // Values
   // -----------------------------
-  VALUE_CONSTANT = 30,
-  VALUE_PARAMETER = 31,
-  VALUE_TUPLE = 32,
-  VALUE_TUPLE_ADDRESS = 33,
-  VALUE_NULL = 34,
-  VALUE_VECTOR = 35,
-  VALUE_SCALAR = 36,
+  VALUE_CONSTANT = 40,
+  VALUE_PARAMETER = 41,
+  VALUE_TUPLE = 42,
+  VALUE_TUPLE_ADDRESS = 43,
+  VALUE_NULL = 44,
+  VALUE_VECTOR = 45,
+  VALUE_SCALAR = 46,
 
   // -----------------------------
   // Aggregates
   // -----------------------------
-  AGGREGATE_COUNT = 40,
-  AGGREGATE_COUNT_STAR = 41,
-  AGGREGATE_SUM = 42,
-  AGGREGATE_MIN = 43,
-  AGGREGATE_MAX = 44,
-  AGGREGATE_AVG = 45,
+  AGGREGATE_COUNT = 50,
+  AGGREGATE_COUNT_STAR = 51,
+  AGGREGATE_SUM = 52,
+  AGGREGATE_MIN = 53,
+  AGGREGATE_MAX = 54,
+  AGGREGATE_AVG = 55,
 
   // -----------------------------
   // Functions
