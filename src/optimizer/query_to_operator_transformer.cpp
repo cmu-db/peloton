@@ -219,7 +219,7 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
           LogicalUpdate::make(target_table, *op->updates));
 
   auto table_scan = std::make_shared<OperatorExpression>(
-      LogicalGet::make(target_table, op->table->GetTableName()));
+      LogicalGet::make(target_table, op->table->GetTableName(), true));
 
   update_expr->PushChild(table_scan);
 

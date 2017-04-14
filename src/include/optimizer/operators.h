@@ -51,7 +51,7 @@ class LeafOperator : OperatorNode<LeafOperator> {
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
   static Operator make(storage::DataTable *table = nullptr,
-                       std::string alias = "");
+                       std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -59,6 +59,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 
   storage::DataTable *table;
   std::string table_alias;
+  bool is_for_update;
 };
 
 //===--------------------------------------------------------------------===//
@@ -196,13 +197,14 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(storage::DataTable *table);
+  static Operator make(storage::DataTable *table, bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   storage::DataTable *table_;
+  bool is_for_update;
 };
 
 //===--------------------------------------------------------------------===//

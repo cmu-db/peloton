@@ -15,12 +15,14 @@
 
 #include "optimizer/operator_expression.h"
 #include "optimizer/operator_to_plan_transformer.h"
+#include "optimizer/util.h"
 #include "planner/hash_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/hash_plan.h"
+#include "planner/index_scan_plan.h"
 #include "expression/aggregate_expression.h"
 #include "planner/seq_scan_plan.h"
 
@@ -58,39 +60,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  vector<oid_t> column_ids;
-  if (column_prop->HasStarExpression()) {
-    size_t num_col = op->table_->GetSchema()->GetColumnCount();
-    for (oid_t col_id = 0; col_id < num_col; ++col_id)
-      column_ids.push_back(col_id);
-    GenerateTableExprMap(*output_expr_map_, op->table_);
-  } else {
-    auto output_column_size = column_prop->GetSize();
-    for (oid_t idx = 0; idx < output_column_size; ++idx) {
-      auto output_expr = column_prop->GetColumn(idx);
-      auto output_tvexpr =
-          (expression::TupleValueExpression *)output_expr.get();
-
-      // Set column offset
-      PL_ASSERT(output_tvexpr->GetIsBound() == true);
-      auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
-      column_ids.push_back(col_id);
-      (*output_expr_map_)[output_expr] = idx;
-    }
-  }
+  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
 
   // Add Scan Predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
-  expression::AbstractExpression *predicate = nullptr;
-  if (predicate_prop != nullptr) {
-    ExprMap table_expr_map;
-    GenerateTableExprMap(table_expr_map, op->table_);
-    predicate = predicate_prop->GetPredicate()->Copy();
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
-  }
 
+  expression::AbstractExpression *predicate =
+      GeneratePredicateForScan(predicate_prop, op->table_);
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
@@ -98,8 +76,51 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
-  // TODO construct IndexScanPlan
-  (void) op;
+  (void)op;
+  auto predicate_prop =
+      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
+
+  expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
+  vector<oid_t> key_column_ids;
+  vector<ExpressionType> expr_types;
+  vector<type::Value> values;
+  oid_t index_id = 0;
+
+  if (!util::CheckIndexSearchable(op->table_, predicate, key_column_ids,
+                                  expr_types, values, index_id)) {
+    // Can't be accelerated by index scan
+    // Just scan all keys using the first index 
+    index_id = 0;
+    key_column_ids.clear();
+    expr_types.clear();
+    values.clear();
+  } else {
+    // Indes Searchable 
+    // remove redundant predicates
+    predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+        predicate, op->table_->GetIndex(index_id));
+  }
+
+  // Generate column ids to pass into scan plan and generate output expr map
+  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                         ->As<PropertyColumns>();
+  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
+
+  predicate = GeneratePredicateForScan(predicate_prop, op->table_);
+  
+  // Create index scan plan
+  auto index = op->table_->GetIndex(index_id);
+  vector<expression::AbstractExpression *> runtime_keys;
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  // Create plan node.
+  std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
+      op->table_, predicate, column_ids, index_scan_desc, false));
+
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
@@ -162,7 +183,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
   PL_ASSERT(children_plans_.size() == 1);
-  
+
   auto limit_prop = requirements_->GetPropertyOfType(PropertyType::LIMIT)
                         ->As<PropertyLimit>();
 
@@ -226,12 +247,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
   PL_ASSERT(col_prop != nullptr);
 
   output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::HASH,
-                                     &op->columns, op->having));
+                                            &op->columns, op->having));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
   auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                      ->As<PropertyColumns>();
 
   PL_ASSERT(col_prop != nullptr);
 
@@ -245,8 +266,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
 
   PL_ASSERT(col_prop != nullptr);
 
-  output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::PLAIN,
-                                            nullptr, nullptr));
+  output_plan_ = move(
+      GenerateAggregatePlan(col_prop, AggregateType::PLAIN, nullptr, nullptr));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
@@ -343,7 +364,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
     auto column = std::string(update->column);
     auto col_id = schema->GetColumnID(column);
     if (update_col_ids.find(col_id) != update_col_ids.end())
-      throw SyntaxException("Multiple assignments to same column "+ column);
+      throw SyntaxException("Multiple assignments to same column " + column);
     update_col_ids.insert(col_id);
     expression::ExpressionUtil::EvaluateExpression(table_expr_map,
                                                    update->value);
@@ -355,9 +376,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
 
   // Add other columns to direct map
   auto col_size = schema->GetColumnCount();
-  for (size_t i = 0; i<col_size; i++) {
+  for (size_t i = 0; i < col_size; i++) {
     if (update_col_ids.find(i) == update_col_ids.end())
-      dml.emplace_back(i, std::pair<oid_t, oid_t >(0,i));
+      dml.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
   }
 
   unique_ptr<const planner::ProjectInfo> proj_info(
@@ -373,7 +394,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
 // Generate expr map for all the columns in the given table. Used to evaluate
 // the predicate.
 void OperatorToPlanTransformer::GenerateTableExprMap(
-    ExprMap &expr_map, storage::DataTable *table) {
+    ExprMap &expr_map, const storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   size_t num_col = table->GetSchema()->GetColumnCount();
@@ -388,11 +409,55 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
   }
 }
 
-std::unique_ptr<planner::AggregatePlan> OperatorToPlanTransformer::GenerateAggregatePlan(
-    const PropertyColumns *prop_col, AggregateType agg_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>>* group_by_exprs,
-    expression::AbstractExpression *having) {
+// Generate columns for scan plan
+vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
+    const PropertyColumns *column_prop, const storage::DataTable *table) {
+  vector<oid_t> column_ids;
+  if (column_prop->HasStarExpression()) {
+    size_t num_col = table->GetSchema()->GetColumnCount();
+    for (oid_t col_id = 0; col_id < num_col; ++col_id)
+      column_ids.push_back(col_id);
+    GenerateTableExprMap(*output_expr_map_, table);
+  } else {
+    auto output_column_size = column_prop->GetSize();
+    for (oid_t idx = 0; idx < output_column_size; ++idx) {
+      auto output_expr = column_prop->GetColumn(idx);
+      auto output_tvexpr =
+          (expression::TupleValueExpression *)output_expr.get();
 
+      // Set column offset
+      PL_ASSERT(output_tvexpr->GetIsBound() == true);
+      auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
+      column_ids.push_back(col_id);
+      (*output_expr_map_)[output_expr] = idx;
+    }
+  }
+
+  return move(column_ids);
+}
+
+// Generate predicate for scan plan
+expression::AbstractExpression *
+OperatorToPlanTransformer::GeneratePredicateForScan(
+    const PropertyPredicate *predicate_prop, const storage::DataTable *table) {
+  expression::AbstractExpression *predicate = nullptr;
+
+  if (predicate_prop != nullptr) {
+    ExprMap table_expr_map;
+    GenerateTableExprMap(table_expr_map, table);
+    predicate = predicate_prop->GetPredicate()->Copy();
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
+  }
+
+  return predicate;
+}
+
+std::unique_ptr<planner::AggregatePlan>
+OperatorToPlanTransformer::GenerateAggregatePlan(
+    const PropertyColumns *prop_col, AggregateType agg_type,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+        group_by_exprs,
+    expression::AbstractExpression *having) {
   auto child_expr_map = children_expr_map_[0];
 
   vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -451,7 +516,8 @@ std::unique_ptr<planner::AggregatePlan> OperatorToPlanTransformer::GenerateAggre
   }
 
   // Generate the Aggregate Plan
-  unique_ptr<const planner::ProjectInfo> proj_info(new planner::ProjectInfo(move(tl), move(dml)));
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
   unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
   shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(output_schema_columns));

@@ -91,14 +91,9 @@ GetToIndexScan::GetToIndexScan() {
 bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan) const {
   // If there is a index for the table, return true,
   // else return false
-  // TODO The current executor seems to 
-  // have some limitation on index scan 
-  // but we can not do these check here
-  // since it's not compatible with the 
-  // optimizer's model
   bool index_exist = false;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
-  if (get != nullptr && !get->table->GetIndexColumns().empty()) 
+  if (get != nullptr && !get->table->GetIndexColumns().empty())
     index_exist = true;
   return index_exist;
 }
@@ -108,8 +103,8 @@ void GetToIndexScan::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalIndexScan::make(get->table));
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalIndexScan::make(get->table, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -117,7 +112,6 @@ void GetToIndexScan::Transform(
 
   transformed.push_back(result_plan);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /// SelectToFilter

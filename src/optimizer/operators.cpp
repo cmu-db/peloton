@@ -28,10 +28,12 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(storage::DataTable *table, std::string alias) {
+Operator LogicalGet::make(storage::DataTable *table, std::string alias,
+                          bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
+  get->is_for_update = update;
   util::to_lower_string(get->table_alias);
   return Operator(get);
 }
@@ -42,7 +44,7 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
   //  if (table->GetOid() != r.table->GetOid()) return false;
   //
   //  return true;
-  return table_alias == r.table_alias;
+  return table_alias == r.table_alias && is_for_update == r.is_for_update;
 }
 
 hash_t LogicalGet::Hash() const {
@@ -153,7 +155,7 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<peloton::parser::UpdateClause *> updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -186,9 +188,10 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(storage::DataTable *table) {
+Operator PhysicalIndexScan::make(storage::DataTable *table, bool update) {
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
+  scan->is_for_update = update;
   return Operator(scan);
 }
 
@@ -226,9 +229,7 @@ Operator PhysicalOrderBy::make() {
 //===--------------------------------------------------------------------===//
 // Physical Limit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make() {
-  return Operator(new PhysicalLimit);
-}
+Operator PhysicalLimit::make() { return Operator(new PhysicalLimit); }
 
 //===--------------------------------------------------------------------===//
 // Filter
@@ -330,7 +331,7 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<peloton::parser::UpdateClause *> updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
