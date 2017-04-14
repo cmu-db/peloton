@@ -74,15 +74,10 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
-  uint64_t thread_id = 0;
-  uint64_t num_threads = 3;
-
-  //TODO: be attributes of multi_thread_context or parameters of GetRangeStart/End functions?
-  MultiThreadContext multi_thread_context{codegen.Const64(thread_id), codegen.Const64(num_threads), nullptr};
-  llvm::Value *tile_group_idx = multi_thread_context.GetRangeStart(codegen, num_tile_groups);
-  llvm::Value *tile_group_idx_end = multi_thread_context.GetRangeEnd(codegen, num_tile_groups);
-
-
+  // TODO(tq5124): get multi_thread_context from args and set tile_group_idx (calling proxy func).
+//  MultiThreadContext multi_thread_context{codegen.Const64(thread_id), codegen.Con/st64(num_threads), nullptr};
+  llvm::Value *tile_group_idx = codegen.Const64(0);
+  llvm::Value *tile_group_idx_end = num_tile_groups;
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,

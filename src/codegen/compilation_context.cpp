@@ -13,6 +13,7 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/catalog_proxy.h"
+#include "codegen/multi_thread_context_proxy.h"
 #include "codegen/transaction_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
@@ -165,12 +166,15 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
 
-  auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
-  FunctionBuilder function_builder{
+  auto inner_plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_inner_plan";
+  FunctionBuilder inner_function_builder{
       code_context,
-      plan_fn_name,
+      inner_plan_fn_name,
       codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+      {
+        {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
+        {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)}
+      }};
 
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
@@ -179,9 +183,26 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   Produce(root);
 
   // Finish the function
-  function_builder.ReturnAndFinish();
+  inner_function_builder.ReturnAndFinish();
 
   // Get the function
+  llvm::Function *inner_func = inner_function_builder.GetFunction();
+
+  auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
+  FunctionBuilder function_builder{
+        code_context,
+        plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+
+  llvm::Value *runtime_state_ptr = codegen_.GetState();
+  // TODO(tq5124): get multi_thread_context from proxy func.
+  llvm::Value *multi_thread_context = codegen_.Null(MultiThreadContextProxy::GetType(codegen_));
+  codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
+
+  function_builder.ReturnAndFinish();
+
   return function_builder.GetFunction();
 }
 

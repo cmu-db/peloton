@@ -32,6 +32,7 @@ class QueryThreadPool {
   }
 
   // submit a specialized query task to the thread pool
+  // TODO(tq5124): the thread func should be: void (RuntimeState *, MultiThreadContext).
   void SubmitQueryTask(MultiThreadContext context, void (*produce_func)(MultiThreadContext)) {
     pool.SubmitTask(produce_func, std::move(context));
   }

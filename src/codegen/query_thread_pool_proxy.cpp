@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/multi_thread_context.h"
+#include "codegen/multi_thread_context_proxy.h"
 #include "codegen/query_thread_pool_proxy.h"
 #include "codegen/query_thread_pool.h"
 
@@ -66,7 +66,7 @@ llvm::Function* QueryThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& cod
   llvm::FunctionType* fn_type = llvm::FunctionType::get(
     codegen.VoidType(), {
       thread_pool_type->getPointerTo(),
-      MultiThreadContext::GetType(codegen)
+      MultiThreadContextProxy::GetType(codegen)
     }, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
