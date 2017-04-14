@@ -90,6 +90,31 @@ bool ValueProxy::CmpGreaterEqual(type::Value *val1, type::Value *val2){
                             val1->GetTypeId(), val2->GetTypeId());
 }
 
+void ValueProxy::OpPlus(type::Value *val1, type::Value *val2,
+                                type::Value *values, uint32_t offset) {
+  values[offset] = val1->Add(*val2);
+}
+
+void ValueProxy::OpMinus(type::Value *val1, type::Value *val2,
+                         type::Value *values, uint32_t offset) {
+  values[offset] = val1->Subtract(*val2);
+}
+
+void ValueProxy::OpMultiply(type::Value *val1, type::Value *val2,
+                            type::Value *values, uint32_t offset) {
+  values[offset] = val1->Multiply(*val2);
+}
+
+void ValueProxy::OpDevide(type::Value *val1, type::Value *val2,
+                          type::Value *values, uint32_t offset) {
+  values[offset] = val1->Divide(*val2);
+}
+
+void ValueProxy::OpMod(type::Value *val1, type::Value *val2,
+                       type::Value *values, uint32_t offset) {
+  values[offset] = val1->Modulo(*val2);
+}
+
 //===----------------------------------------------------------------------===//
 // Return the symbol of the Catalog::GetTableWithOid() function
 //===----------------------------------------------------------------------===//
@@ -365,6 +390,191 @@ llvm::Function* ValueProxy::_CmpGreaterEqual::GetFunction(CodeGen& codegen) {
                 codegen.BoolType(),
                 {ValueProxy::GetType(codegen)->getPointerTo(),
                  ValueProxy::GetType(codegen)->getPointerTo()},
+                false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// Return the symbol of the Catalog::GetTableWithOid() function
+//===----------------------------------------------------------------------===//
+const std::string& ValueProxy::_OpPlus::GetFunctionName() {
+  static const std::string kGetTableByIdFnName =
+#ifdef __APPLE__
+        "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj";
+#else
+        "_ZN7peloton7codegen10ValueProxy6OpPlusEPNS_4type5ValueES4_S4_j";
+#endif
+  return kGetTableByIdFnName;
+}
+
+//===----------------------------------------------------------------------===//
+// Return the LLVM function definition for Catalog::GetTableWithOid()
+//===----------------------------------------------------------------------===//
+llvm::Function* ValueProxy::_OpPlus::GetFunction(CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::FunctionType* fn_type =
+        llvm::FunctionType::get(
+                codegen.VoidType(),
+                {ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 codegen.Int64Type()},
+                false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// Return the symbol of the Catalog::GetTableWithOid() function
+//===----------------------------------------------------------------------===//
+const std::string& ValueProxy::_OpMinus::GetFunctionName() {
+  static const std::string kGetTableByIdFnName =
+#ifdef __APPLE__
+        "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj";
+#else
+        "_ZN7peloton7codegen10ValueProxy7OpMinusEPNS_4type5ValueES4_S4_j";
+#endif
+  return kGetTableByIdFnName;
+}
+
+//===----------------------------------------------------------------------===//
+// Return the LLVM function definition for Catalog::GetTableWithOid()
+//===----------------------------------------------------------------------===//
+llvm::Function* ValueProxy::_OpMinus::GetFunction(CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::FunctionType* fn_type =
+        llvm::FunctionType::get(
+                codegen.VoidType(),
+                {ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 codegen.Int64Type()},
+                false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// Return the symbol of the Catalog::GetTableWithOid() function
+//===----------------------------------------------------------------------===//
+const std::string& ValueProxy::_OpMultiply::GetFunctionName() {
+  static const std::string kGetTableByIdFnName =
+#ifdef __APPLE__
+        "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj";
+#else
+        "_ZN7peloton7codegen10ValueProxy10OpMultiplyEPNS_4type5ValueES4_S4_j";
+#endif
+  return kGetTableByIdFnName;
+}
+
+//===----------------------------------------------------------------------===//
+// Return the LLVM function definition for Catalog::GetTableWithOid()
+//===----------------------------------------------------------------------===//
+llvm::Function* ValueProxy::_OpMultiply::GetFunction(CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::FunctionType* fn_type =
+        llvm::FunctionType::get(
+                codegen.VoidType(),
+                {ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 codegen.Int64Type()},
+                false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// Return the symbol of the Catalog::GetTableWithOid() function
+//===----------------------------------------------------------------------===//
+const std::string& ValueProxy::_OpDevide::GetFunctionName() {
+  static const std::string kGetTableByIdFnName =
+#ifdef __APPLE__
+        "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj";
+#else
+        "_ZN7peloton7codegen10ValueProxy8OpDevideEPNS_4type5ValueES4_S4_j";
+#endif
+  return kGetTableByIdFnName;
+}
+
+//===----------------------------------------------------------------------===//
+// Return the LLVM function definition for Catalog::GetTableWithOid()
+//===----------------------------------------------------------------------===//
+llvm::Function* ValueProxy::_OpDevide::GetFunction(CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::FunctionType* fn_type =
+        llvm::FunctionType::get(
+                codegen.VoidType(),
+                {ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 codegen.Int64Type()},
+                false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// Return the symbol of the Catalog::GetTableWithOid() function
+//===----------------------------------------------------------------------===//
+const std::string& ValueProxy::_OpMod::GetFunctionName() {
+  static const std::string kGetTableByIdFnName =
+#ifdef __APPLE__
+        "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj";
+#else
+        "_ZN7peloton7codegen10ValueProxy5OpModEPNS_4type5ValueES4_S4_j";
+#endif
+  return kGetTableByIdFnName;
+}
+
+//===----------------------------------------------------------------------===//
+// Return the LLVM function definition for Catalog::GetTableWithOid()
+//===----------------------------------------------------------------------===//
+llvm::Function* ValueProxy::_OpMod::GetFunction(CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::FunctionType* fn_type =
+        llvm::FunctionType::get(
+                codegen.VoidType(),
+                {ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 ValueProxy::GetType(codegen)->getPointerTo(),
+                 codegen.Int64Type()},
                 false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }

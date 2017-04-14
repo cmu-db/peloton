@@ -35,6 +35,8 @@ namespace test {
 class CodegenTestUtils {
  public:
   static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
+  static expression::ConstantValueExpression *ConstVarCharExpression(std::string str);
+  static expression::ParameterValueExpression *ParamExpression(int idx);
 };
 
 //===----------------------------------------------------------------------===//
@@ -67,7 +69,7 @@ class PelotonCodeGenTest : public PelotonTest {
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state);
+      char *consumer_state, std::vector<type::Value> *params = nullptr);
 
  private:
   storage::Database *test_db;

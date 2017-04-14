@@ -29,6 +29,11 @@ class NegationTranslator : public ExpressionTranslator {
                      CompilationContext &ctx);
 
   Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
+  codegen::Value DeriveTypeValue(CodeGen &codegen, RowBatch::Row &row) const;
+
+ private:
+  uint32_t offset_;
+  CompilationContext &ctx_;
 };
 
 }  // namespace codegen

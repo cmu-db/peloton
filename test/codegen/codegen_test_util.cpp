@@ -16,6 +16,7 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
+#include "expression/parameter_value_expression.h"
 
 namespace peloton {
 namespace test {
@@ -26,6 +27,15 @@ expression::ConstantValueExpression *CodegenTestUtils::ConstIntExpression(
       type::ValueFactory::GetIntegerValue(val));
 }
 
+expression::ConstantValueExpression *CodegenTestUtils::ConstVarCharExpression(
+    std::string str) {
+  return new expression::ConstantValueExpression(
+      type::ValueFactory::GetVarcharValue(str));
+}
+
+expression::ParameterValueExpression *CodegenTestUtils::ParamExpression(int idx) {
+  return new expression::ParameterValueExpression(idx);
+}
 //===----------------------------------------------------------------------===//
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
@@ -109,7 +119,7 @@ void PelotonCodeGenTest::LoadTestTable(uint32_t table_id, uint32_t num_rows) {
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
     const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state) {
+    char *consumer_state, std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -120,7 +130,9 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state);
+  compiled_query->Execute(*txn, consumer_state, nullptr, params ?
+         std::unique_ptr<executor::ExecutorContext> (
+            new executor::ExecutorContext{txn, *params}).get(): nullptr);
 
   txn_manager.CommitTransaction(txn);
 
