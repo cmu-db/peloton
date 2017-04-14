@@ -151,14 +151,19 @@ uint32_t Query::StoreParam(Parameter param) {
 void Query::GetParams(type::Value *values,
            executor::ExecutorContext *exec_context) {
   for (uint32_t i = 0; i < params_.size(); i ++) {
-    if (params_[i].IsConstant()) {
+    switch (params_[i].GetType()) {
+      case Parameter::ParamType::Const:
+      case Parameter::ParamType::Tuple:
         values[i] = params_[i].GetValue();
-    } else {
+        break;
+      case Parameter::ParamType::Param:
         PL_ASSERT(exec_context != nullptr);
-        type::Value param =
-                exec_context->GetParams().at(params_[i].GetParamIdx());
-        params_[i].FinalizeType(param.GetTypeId());
-        values[i] = param;
+        values[i] = exec_context->GetParams().at(
+                params_[i].GetParamIdx());
+        break;
+      default: {
+        throw Exception{"No Such Param Type"};
+      }
     }
   }
 }

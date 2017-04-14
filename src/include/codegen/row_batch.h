@@ -92,6 +92,9 @@ class RowBatch {
     // Does this row have a given attribute available?
     bool HasAttribute(const planner::AttributeInfo *ai) const;
 
+    codegen::Value DeriveTypeValue(CodeGen &codegen,
+                                   const expression::AbstractExpression &expr);
+
     // Register the temporary availability of an attribute in this row
     void RegisterAttributeValue(const planner::AttributeInfo *ai,
                                 codegen::Value &val);

@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/codegen/parameter_translator.h>
+#include <include/codegen/tuple_value_translator.h>
 #include "codegen/row_batch.h"
 
 #include "codegen/compilation_context.h"
@@ -17,6 +19,7 @@
 #include "codegen/vectorized_loop.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
@@ -125,6 +128,44 @@ codegen::Value RowBatch::Row::DeriveValue(
   auto ret = translator->DeriveValue(codegen, *this);
   cache_.insert(std::make_pair(&expr, ret));
   return ret;
+}
+
+codegen::Value RowBatch::Row::DeriveTypeValue(CodeGen &codegen,
+                                      const expression::AbstractExpression &expr) {
+  // Derive using expression translator
+  auto *translator = batch_.context_.GetTranslator(expr);
+
+  auto expr_type = expr.GetExpressionType();
+  switch (expr_type) {
+      /*
+    case ExpressionType::OPERATOR_PLUS:
+    case ExpressionType::OPERATOR_MINUS:
+    case ExpressionType::OPERATOR_MULTIPLY:
+    case ExpressionType::OPERATOR_DIVIDE:
+    case ExpressionType::OPERATOR_MOD: {
+      return ;
+    }
+    case ExpressionType::OPERATOR_UNARY_MINUS: {
+      return ;
+    }
+       */
+    case ExpressionType::VALUE_PARAMETER:
+    case ExpressionType::VALUE_CONSTANT: {
+      auto param_translator = reinterpret_cast<ParameterTranslator *>(translator);
+      PL_ASSERT(translator != nullptr);
+      return param_translator->DeriveTypeValue(codegen, *this);
+    }
+    case ExpressionType::VALUE_TUPLE: {
+      auto tuple_translator = reinterpret_cast<TupleValueTranslator *>(translator);
+      PL_ASSERT(translator != nullptr);
+      return tuple_translator->DeriveTypeValue(codegen, *this);
+    }
+    default : {
+      throw Exception{"Cannot translate type: " +
+                              ExpressionTypeToString(expr_type) +
+                      " into type::Value"};
+    }
+  }
 }
 
 void RowBatch::Row::RegisterAttributeValue(const planner::AttributeInfo *ai,
