@@ -12,6 +12,8 @@
 
 #include <include/codegen/parameter_translator.h>
 #include <include/codegen/tuple_value_translator.h>
+#include <include/codegen/arithmetic_translator.h>
+#include <include/codegen/negation_translator.h>
 #include "codegen/row_batch.h"
 
 #include "codegen/compilation_context.h"
@@ -137,27 +139,29 @@ codegen::Value RowBatch::Row::DeriveTypeValue(CodeGen &codegen,
 
   auto expr_type = expr.GetExpressionType();
   switch (expr_type) {
-      /*
     case ExpressionType::OPERATOR_PLUS:
     case ExpressionType::OPERATOR_MINUS:
     case ExpressionType::OPERATOR_MULTIPLY:
     case ExpressionType::OPERATOR_DIVIDE:
     case ExpressionType::OPERATOR_MOD: {
-      return ;
+      PL_ASSERT(translator != nullptr);
+      auto op_translator = reinterpret_cast<ArithmeticTranslator *>(translator);
+      return op_translator->DeriveTypeValue(codegen, *this);
     }
     case ExpressionType::OPERATOR_UNARY_MINUS: {
-      return ;
+        PL_ASSERT(translator != nullptr);
+        auto neg_translator = reinterpret_cast<NegationTranslator *>(translator);
+        return neg_translator->DeriveTypeValue(codegen, *this);
     }
-       */
     case ExpressionType::VALUE_PARAMETER:
     case ExpressionType::VALUE_CONSTANT: {
-      auto param_translator = reinterpret_cast<ParameterTranslator *>(translator);
       PL_ASSERT(translator != nullptr);
+      auto param_translator = reinterpret_cast<ParameterTranslator *>(translator);
       return param_translator->DeriveTypeValue(codegen, *this);
     }
     case ExpressionType::VALUE_TUPLE: {
-      auto tuple_translator = reinterpret_cast<TupleValueTranslator *>(translator);
       PL_ASSERT(translator != nullptr);
+      auto tuple_translator = reinterpret_cast<TupleValueTranslator *>(translator);
       return tuple_translator->DeriveTypeValue(codegen, *this);
     }
     default : {

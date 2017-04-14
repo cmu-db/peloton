@@ -34,6 +34,17 @@ class ValueProxy {
   static bool CmpGreater(type::Value *val1, type::Value *val2);
   static bool CmpGreaterEqual(type::Value *val1, type::Value *val2);
 
+  static void OpPlus(type::Value *val1, type::Value *val2,
+                     type::Value *values, uint32_t offset);
+  static void OpMinus(type::Value *val1, type::Value *val2,
+                      type::Value *values, uint32_t offset);
+  static void OpMultiply(type::Value *val1, type::Value *val2,
+                         type::Value *values, uint32_t offset);
+  static void OpDevide(type::Value *val1, type::Value *val2,
+                       type::Value *values, uint32_t offset);
+  static void OpMod(type::Value *val1, type::Value *val2,
+                    type::Value *values, uint32_t offset);
+
   struct _GetValue {
     // Return the symbol for the ValueProxy.GetValue() function
     static const std::string &GetFunctionName() ;
@@ -84,6 +95,41 @@ class ValueProxy {
   };
 
   struct _CmpGreaterEqual {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
+
+  struct _OpPlus {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
+
+  struct _OpMinus {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
+
+  struct _OpMultiply {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
+
+  struct _OpDevide {
+    // Return the symbol for the ValueProxy.GetValue() function
+    static const std::string &GetFunctionName() ;
+    // Return the LLVM-typed function definition for ValueProxy.GetValue()
+    static llvm::Function *GetFunction(CodeGen &codegen) ;
+  };
+
+  struct _OpMod {
     // Return the symbol for the ValueProxy.GetValue() function
     static const std::string &GetFunctionName() ;
     // Return the LLVM-typed function definition for ValueProxy.GetValue()
