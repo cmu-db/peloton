@@ -141,17 +141,6 @@ class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
 };
 
 //===--------------------------------------------------------------------===//
-// Limit
-//===--------------------------------------------------------------------===//
-class LogicalLimit : public OperatorNode<LogicalLimit> {
- public:
-  static Operator make(int64_t limit, int64_t offset);
-
-  int64_t limit;
-  int64_t offset;
-};
-
-//===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
 class LogicalInsert : public OperatorNode<LogicalInsert> {
@@ -237,10 +226,7 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
  public:
-  static Operator make(int64_t limit, int64_t offset);
-
-  int64_t limit;
-  int64_t offset;
+  static Operator make();
 };
 
 //===--------------------------------------------------------------------===//

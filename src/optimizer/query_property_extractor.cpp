@@ -56,9 +56,12 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   }
 
   // Generate PropertySort
-  if (select_stmt->order != nullptr) {
+  if (select_stmt->order != nullptr)
     select_stmt->order->Accept(this);
-  }
+  
+  // Generate PropertyLimit
+  if (select_stmt->limit != nullptr)
+    select_stmt->limit->Accept(this);
 };
 void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
@@ -76,7 +79,12 @@ void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   property_set_.AddProperty(shared_ptr<PropertySort>(
       new PropertySort(move(sort_cols), sort_ascendings)));
 }
-void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
+void QueryPropertyExtractor::Visit(const parser::LimitDescription *limit) {
+  // When offset is not specified in the query, parser will set offset to -1
+  int64_t offset = limit->offset == -1 ? 0 : limit->offset;
+  property_set_.AddProperty(shared_ptr<PropertyLimit>(
+      new PropertyLimit(offset, limit->limit)));
+}
 
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}

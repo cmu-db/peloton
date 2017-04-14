@@ -150,32 +150,6 @@ void LogicalFilterToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalLimitToPhysical
-LogicalLimitToPhysical::LogicalLimitToPhysical() {
-  physical = true;
-  match_pattern = std::make_shared<Pattern>(OpType::Limit);
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(child);
-}
-
-bool LogicalLimitToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
-}
-
-void LogicalLimitToPhysical::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalLimit *limit = input->Op().As<LogicalLimit>();
-  auto result = std::make_shared<OperatorExpression>(
-      PhysicalLimit::make(limit->limit, limit->offset));
-  PL_ASSERT(input->Children().size() == 1);
-  result->PushChild(input->Children().at(0));
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalDeleteToPhysical
 LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   physical = true;

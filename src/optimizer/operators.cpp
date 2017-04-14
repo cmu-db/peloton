@@ -126,16 +126,6 @@ Operator LogicalGroupBy::make(
 }
 
 //===--------------------------------------------------------------------===//
-// Limit
-//===--------------------------------------------------------------------===//
-Operator LogicalLimit::make(int64_t limit, int64_t offset) {
-  LogicalLimit *limit_op = new LogicalLimit;
-  limit_op->limit = limit;
-  limit_op->offset = offset;
-  return Operator(limit_op);
-}
-
-//===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
@@ -236,11 +226,8 @@ Operator PhysicalOrderBy::make() {
 //===--------------------------------------------------------------------===//
 // Physical Limit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make(int64_t limit, int64_t offset) {
-  PhysicalLimit *limit_op = new PhysicalLimit;
-  limit_op->limit = limit;
-  limit_op->offset = offset;
-  return Operator(limit_op);
+Operator PhysicalLimit::make() {
+  return Operator(new PhysicalLimit);
 }
 
 //===--------------------------------------------------------------------===//
@@ -426,9 +413,6 @@ template <>
 void OperatorNode<LogicalGroupBy>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLimit>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
 void OperatorNode<LogicalSemiJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -462,8 +446,6 @@ template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
 template <>
 std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
-template <>
-std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
 template <>
@@ -537,8 +519,6 @@ template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
 template <>
 OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
-template <>
-OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
 template <>

@@ -160,14 +160,17 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   output_plan_ = move(project_plan);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
+void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
   PL_ASSERT(children_plans_.size() == 1);
+  
+  auto limit_prop = requirements_->GetPropertyOfType(PropertyType::LIMIT)
+                        ->As<PropertyLimit>();
 
   // Limit Operator does not change the column mapping
   *output_expr_map_ = children_expr_map_[0];
 
   unique_ptr<planner::AbstractPlan> limit_plan(
-      new planner::LimitPlan(op->limit, op->offset));
+      new planner::LimitPlan(limit_prop->GetLimit(), limit_prop->GetOffset()));
   limit_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(limit_plan);
 }

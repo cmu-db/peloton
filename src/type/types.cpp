@@ -2386,10 +2386,10 @@ std::string PropertyTypeToString(PropertyType type) {
       return "COLUMNS";
     case PropertyType::PREDICATE:
       return "PREDICATE";
-    case PropertyType::PROJECT:
-      return "PROJECT";
     case PropertyType::DISTINCT:
       return "DISTINCT";
+    case PropertyType::LIMIT:
+      return "LIMIT";
     default:
       throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
                                                    static_cast<int>(type)));

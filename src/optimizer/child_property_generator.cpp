@@ -172,8 +172,8 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
           provided_property.AddProperty(prop);
         break;
       }
-      case PropertyType::PROJECT: {
-        // TODO: remove this when we remove PropertyProject
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
         break;
       }
       case PropertyType::SORT: {
@@ -259,8 +259,10 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
         // don't need to add
         break;
       }
-      case PropertyType::PROJECT:
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
         break;
+      }
       case PropertyType::SORT: {
         auto sort_prop = prop->As<PropertySort>();
         auto sort_col_len = sort_prop->GetSortColumnSize();
@@ -354,7 +356,6 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
       // Aggregation will break sort property
       case PropertyType::DISTINCT:
         break;
-      case PropertyType::PROJECT:
       case PropertyType::SORT: {
         // SORT property will be fullfilled after Aggregation
         // We need to make sure that sort columns are in
@@ -368,6 +369,10 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
           child_col.insert(expr);
           provided_col.insert(expr);
         }
+        break;
+      }
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
         break;
       }
       case PropertyType::COLUMNS: {
@@ -477,7 +482,6 @@ void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {
         child_input_property_set.AddProperty(prop);
         break;
       }
-      case PropertyType::PROJECT:
       case PropertyType::SORT: {
         auto sort_prop = prop->As<PropertySort>();
         size_t col_len = sort_prop->GetSortColumnSize();
@@ -485,6 +489,10 @@ void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {
           auto expr = sort_prop->GetSortColumn(col_idx);
           child_col.insert(expr);
         }
+        break;
+      }
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
         break;
       }
       case PropertyType::COLUMNS: {
