@@ -92,7 +92,7 @@ void ChildPropertyGenerator::Visit(const PhysicalSeqScan *) {
 };
 
 void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) {
-  // TODO PhysicalIndexScan and 
+  // TODO PhysicalIndexScan and
   // PhysicalSeqScan
   // exact the same behavior here, reduce duplicate code
   PropertySet provided_property;
@@ -137,7 +137,6 @@ void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) {
   output_.push_back(make_pair(move(provided_property), vector<PropertySet>()));
 };
 
-
 /**
  * Note:
  * Fulfill the entire projection property in the aggregation. Should
@@ -145,6 +144,9 @@ void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) {
  * projection.
  */
 void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
+  GroupByHelper(op);
+  return;
+  
   PropertySet child_input_property_set;
   PropertySet provided_property;
 
@@ -160,16 +162,15 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
         size_t distinct_col_size = distinct_prop->GetSize();
         for (size_t i = 0; i < distinct_col_size; i++)
           distinct_cols.insert(distinct_prop->GetDistinctColumn(i));
-        
+
         bool satisfied = true;
-        for (auto& group_by_col : op->columns) {
+        for (auto &group_by_col : op->columns) {
           if (distinct_cols.count(group_by_col) == 0) {
             satisfied = false;
             break;
           }
         }
-        if (satisfied)
-          provided_property.AddProperty(prop);
+        if (satisfied) provided_property.AddProperty(prop);
         break;
       }
       case PropertyType::LIMIT: {
@@ -203,8 +204,7 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
           provided_col.insert(expr);
         }
         // Add group by columns
-        for (auto& group_by_col : op->columns)
-          child_col.insert(group_by_col);
+        for (auto &group_by_col : op->columns) child_col.insert(group_by_col);
 
         break;
       }
@@ -230,6 +230,9 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
+  GroupByHelper(op);
+  return;
+  
   PropertySet child_input_property_set;
   PropertySet provided_property;
 
@@ -295,8 +298,7 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
           provided_col.insert(expr);
         }
         // Add group by columns
-        for (auto group_by_col : op->columns)
-          child_col.emplace(group_by_col->Copy());
+        for (auto group_by_col : op->columns) child_col.emplace(group_by_col);
       }
       case PropertyType::PREDICATE:
         // PropertyPredicate will be fulfilled by the child operator
@@ -314,6 +316,139 @@ void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
   child_input_property_set.AddProperty(
       make_shared<PropertySort>(move(sort_columns), move(sort_ascending)));
 
+  // Add child PropertyColumn
+  child_input_property_set.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(child_col.begin(),
+                                                         child_col.end())));
+
+  provided_property.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(provided_col.begin(),
+                                                         provided_col.end())));
+
+  vector<PropertySet> child_input_properties{child_input_property_set};
+  output_.push_back(make_pair(provided_property, move(child_input_properties)));
+}
+
+void ChildPropertyGenerator::GroupByHelper(const BaseOperatorNode *op) {
+  vector<shared_ptr<expression::AbstractExpression>> columns;
+  if (op->type() == OpType::HashGroupBy)
+    columns = ((const PhysicalHashGroupBy *)op)->columns;
+  else
+    columns = ((const PhysicalSortGroupBy *)op)->columns;
+
+  PropertySet child_input_property_set;
+  PropertySet provided_property;
+
+  ExprSet child_col;
+  ExprSet provided_col;
+  for (auto prop : requirements_.Properties()) {
+    switch (prop->Type()) {
+      case PropertyType::DISTINCT: {
+        // If DISTINCT columns are a superset of GROUP BY columns.
+        // PropertyDistinct can be satisfied
+        ExprSet distinct_cols;
+        auto distinct_prop = prop->As<PropertyDistinct>();
+        size_t distinct_col_size = distinct_prop->GetSize();
+        for (size_t i = 0; i < distinct_col_size; i++)
+          distinct_cols.insert(distinct_prop->GetDistinctColumn(i));
+
+        bool satisfied = true;
+        for (auto &group_by_col : columns) {
+          if (distinct_cols.count(group_by_col) == 0) {
+            satisfied = false;
+            break;
+          }
+        }
+        if (satisfied) provided_property.AddProperty(prop);
+        break;
+      }
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
+        break;
+      }
+      case PropertyType::SORT: {
+        // Add the ORDER BY columns to the output columns
+        // Also add those base columns to the child output columns
+        auto sort_prop = prop->As<PropertySort>();
+        size_t sort_col_len = sort_prop->GetSortColumnSize();
+
+        for (size_t col_idx = 0; col_idx < sort_col_len; ++col_idx) {
+          auto expr = sort_prop->GetSortColumn(col_idx);
+          // sort column will be provided by group by
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
+          provided_col.insert(expr);
+        }
+
+        // OPTIMIZATION for Sort Group By:
+        // TODO: Considering ORDER BY duplicate columns and aggregation
+        if (op->type() == OpType::SortGroupBy) {
+          ExprSet group_by_cols;
+          for (auto &group_by_col : columns) group_by_cols.insert(group_by_col);
+
+          auto sort_prop = prop->As<PropertySort>();
+          auto sort_col_len = sort_prop->GetSortColumnSize();
+          vector<shared_ptr<expression::AbstractExpression>> sort_columns;
+          vector<bool> sort_ascending;
+          size_t col_idx = 0;
+          for (; col_idx < sort_col_len; col_idx++) {
+            auto sort_expr = sort_prop->GetSortColumn(col_idx);
+            sort_columns.push_back(sort_expr);
+            sort_ascending.push_back(sort_prop->GetSortAscending(col_idx));
+            if (group_by_cols.count(sort_expr) > 0) {
+              group_by_cols.erase(sort_expr);
+            } else {
+              // Find a non group by column. Break
+              break;
+            }
+          }
+
+          if (group_by_cols.size() == 0) {
+            // Case 1: All the group by columns are in PropertySort and
+            // they are at the begining.
+            child_input_property_set.AddProperty(prop);
+            provided_property.AddProperty(prop);
+          } else if (group_by_cols.size() > 0 && col_idx == sort_col_len) {
+            // Case 2: Group By columns are a superset of Order By columns.
+            // Insert the missing columns and push down to the child.
+            for (auto &group_by_col : group_by_cols) {
+              sort_columns.push_back(group_by_col);
+              sort_ascending.push_back(true);
+            }
+            child_input_property_set.AddProperty(
+                make_shared<PropertySort>(sort_columns, sort_ascending));
+            provided_property.AddProperty(prop);
+          } else {
+            // PropertySort cannot be satisfied.
+            child_input_property_set.AddProperty(make_shared<PropertySort>(
+                columns, vector<bool>(columns.size(), true)));
+          }
+        }
+        break;
+      }
+      case PropertyType::COLUMNS: {
+        // Check group by columns and union it with the
+        // PropertyColumn to generate child property
+        auto col_prop = prop->As<PropertyColumns>();
+        size_t col_len = col_prop->GetSize();
+
+        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
+          auto expr = col_prop->GetColumn(col_idx);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
+          provided_col.insert(expr);
+        }
+        // Add group by columns
+        for (auto &group_by_col : columns) child_col.insert(group_by_col);
+
+        break;
+      }
+      case PropertyType::PREDICATE: {
+        // PropertyPredicate will be fulfilled by the child operator
+        child_input_property_set.AddProperty(prop);
+        provided_property.AddProperty(prop);
+        break;
+      }
+    }
+  }
   // Add child PropertyColumn
   child_input_property_set.AddProperty(make_shared<PropertyColumns>(
       vector<shared_ptr<expression::AbstractExpression>>(child_col.begin(),

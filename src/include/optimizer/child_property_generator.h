@@ -53,6 +53,10 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
+  /***** Helper functions *****/
+  void GroupByHelper(const BaseOperatorNode* op);
+  
+ private:
   ColumnManager &manager_;
   PropertySet requirements_;
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
