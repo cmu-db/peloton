@@ -33,12 +33,12 @@ namespace test {
 
 struct Stats {
   codegen::QueryCompiler::CompileStats compile_stats{0.0, 0.0, 0.0};
-  codegen::QueryStatement::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
+  codegen::Query::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
   double num_samples = 0.0;
   int32_t tuple_result_size = -1;
 
   void Merge(codegen::QueryCompiler::CompileStats &o_compile_stats,
-             codegen::QueryStatement::RuntimeStats &o_runtime_stats,
+             codegen::Query::RuntimeStats &o_runtime_stats,
              int32_t o_tuple_result_size) {
     compile_stats.ir_gen_ms += o_compile_stats.ir_gen_ms;
     compile_stats.jit_ms += o_compile_stats.jit_ms;
@@ -86,7 +86,7 @@ struct Stats {
 
 class BenchmarkScanTest : public PelotonCodeGenTest {
  public:
-  BenchmarkScanTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  BenchmarkScanTest() : PelotonCodeGenTest() {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }
@@ -110,7 +110,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
         codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
         // COMPILE and execute
-        codegen::QueryStatement::RuntimeStats runtime_stats;
+        codegen::Query::RuntimeStats runtime_stats;
         codegen::QueryCompiler::CompileStats compile_stats = CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &runtime_stats);
 
         stats.Merge(compile_stats, runtime_stats,
@@ -130,7 +130,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
         std::vector<std::vector<type::Value>> vals;
 
         codegen::QueryCompiler::CompileStats compile_stats;
-        codegen::QueryStatement::RuntimeStats runtime_stats;
+        codegen::Query::RuntimeStats runtime_stats;
 
         auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
         auto txn = txn_manager.BeginTransaction();
@@ -167,7 +167,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     }
 
  private:
-  uint32_t num_rows_to_insert = 64;
+  uint32_t num_rows_to_insert = 102400;
 };
 
 void PrintName(std::string test_name) {
