@@ -89,6 +89,9 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
       "INSERT INTO test VALUES (2, 2, 2, 2, 2.0, "
       "2.0, '23', '2016-12-06 00:00:02-04');");
   TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (5, 2, 2, 2, 2.0, "
+      "2.0, null, '2016-12-06 00:00:02-04');");
+  TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO test VALUES (1, 1, 1, 1, 1.0, "
       "1.0, '15', '2016-12-06 00:00:01-04');");
   TestingSQLUtil::ExecuteSQLQuery(
