@@ -91,12 +91,12 @@ class OptimizerSQLTests : public PelotonTest {
                                                  tuple_descriptor, rows_changed,
                                                  error_message);
     EXPECT_EQ(ref_result.size(), result.size());
+    vector<string> actual_result;
     if (ordered) {
       // If deterministic, do comparision with expected result in order
-      for (unsigned i = 0; i < ref_result.size(); i++) {
-        EXPECT_EQ(ref_result[i],
-                  TestingSQLUtil::GetResultValueAsString(result, i));
-      }
+      for (unsigned i = 0; i < result.size(); i++)
+        actual_result.push_back(TestingSQLUtil::GetResultValueAsString(result, i));
+      EXPECT_EQ(actual_result, ref_result);
     } else {
       // If non-deterministic, make sure they have the same set of value
       unordered_set<string> ref_set(ref_result.begin(), ref_result.end());
@@ -303,6 +303,11 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 
   // Test Plain aggregation without group by
   TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, false);
+  
+  // Test ORDER BY columns not shown in select list
+  TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY a + b",
+           {"4", "2", "5", "1", "6", "3"}, true, {PlanNodeType::ORDERBY,
+             PlanNodeType::AGGREGATE_V2, PlanNodeType::SEQSCAN});
 }
 
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
