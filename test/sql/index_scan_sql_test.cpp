@@ -18,7 +18,6 @@
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -34,7 +33,8 @@ void CreateAndLoadTable() {
       "INSERT INTO test VALUES (1, 22, 333, 'abcd');");
   TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO test VALUES (2, 33, 111, 'bcda');");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 11, 222, 'bcd');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (3, 11, 222, 'bcd');");
 }
 
 TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
@@ -47,10 +47,12 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
   std::string error_message;
   int rows_changed;
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(a);", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 3;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: 22, 33
@@ -74,10 +76,12 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
   std::string error_message;
   int rows_changed;
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(b, c);", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT a FROM test WHERE b < 33 AND c > 100 ORDER BY a;", result,
-                                tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQuery(
+      "SELECT a FROM test WHERE b < 33 AND c > 100 ORDER BY a;", result,
+      tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: 1, 3

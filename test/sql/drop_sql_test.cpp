@@ -19,7 +19,6 @@
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -29,7 +28,8 @@ TEST_F(DropSQLTests, DropTableTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
 
   // Check the table in catalog
   storage::DataTable *table;
@@ -48,9 +48,11 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Insert and query from that table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
-                                tuple_descriptor, rows_affected, error_message);
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
-                                rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '1');
 
   // Drop the table
@@ -59,8 +61,9 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Query from the dropped table
   result.clear();
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
-                                rows_affected, error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result.empty(), true);
 
   // Check the table does not exist

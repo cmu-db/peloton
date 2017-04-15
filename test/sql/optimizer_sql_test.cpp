@@ -160,8 +160,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   query = "SELECT a from test order by c desc";
 
   // check for plan node type
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -173,13 +172,11 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
 
-
   // Something wrong with column property.
   query = "SELECT * from test order by c";
 
   // check for plan node type
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -227,33 +224,31 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
 
   // Test limit without offset
   std::string query("SELECT b FROM test ORDER BY b LIMIT 3");
-  
+
   auto select_plan =
-  TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::ORDERBY);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
-  
+
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-                                               optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
   EXPECT_EQ(3, result.size());
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
-  
-  
+
   // Test limit with offset
   query = "SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-                                               optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
   EXPECT_EQ(2, result.size());
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -290,16 +285,16 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   EXPECT_EQ(1, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test", result, tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
+                                               result, tuple_descriptor,
+                                               rows_changed, error_message);
   EXPECT_EQ(9, result.size());
 
   // Delete with predicates
   query = "DELETE FROM test WHERE b = 33";
   optimizer->Reset();
   // check for plan node type
-  delete_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
   EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -309,17 +304,16 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   EXPECT_EQ(1, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test", result, tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
+                                               result, tuple_descriptor,
+                                               rows_changed, error_message);
   EXPECT_EQ(6, result.size());
-
 
   // Delete with false predicates
   query = "DELETE FROM test WHERE b = 123";
   optimizer->Reset();
   // check for plan node type
-  delete_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
   EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -329,17 +323,16 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   EXPECT_EQ(0, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test", result, tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
+                                               result, tuple_descriptor,
+                                               rows_changed, error_message);
   EXPECT_EQ(6, result.size());
-
 
   // Full deletion
   query = "DELETE FROM test";
   optimizer->Reset();
   // check for plan node type
-  delete_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  delete_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(delete_plan->GetPlanNodeType(), PlanNodeType::DELETE);
   EXPECT_EQ(delete_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
@@ -349,8 +342,9 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 
   EXPECT_EQ(2, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test", result, tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * FROM test",
+                                               result, tuple_descriptor,
+                                               rows_changed, error_message);
   EXPECT_EQ(0, result.size());
 
   // free the database just created
@@ -359,7 +353,6 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 TEST_F(OptimizerSQLTests, UpdateSqlTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
@@ -388,9 +381,9 @@ TEST_F(OptimizerSQLTests, UpdateSqlTest) {
   EXPECT_EQ(1, rows_changed);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor, rows_changed, error_message);
+      optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor,
+      rows_changed, error_message);
   EXPECT_EQ("-333", TestingSQLUtil::GetResultValueAsString(result, 0));
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -398,7 +391,6 @@ TEST_F(OptimizerSQLTests, UpdateSqlTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 TEST_F(OptimizerSQLTests, InsertSqlTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
@@ -415,8 +407,7 @@ TEST_F(OptimizerSQLTests, InsertSqlTest) {
   std::string query("INSERT INTO test VALUES (5, 55, 555);");
 
   // check for plan node type
-  auto plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
 
   optimizer->Reset();
@@ -427,13 +418,12 @@ TEST_F(OptimizerSQLTests, InsertSqlTest) {
   EXPECT_EQ(1, rows_changed);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test WHERE a=5", result, tuple_descriptor, rows_changed, error_message);
+      optimizer, "SELECT * FROM test WHERE a=5", result, tuple_descriptor,
+      rows_changed, error_message);
   EXPECT_EQ(3, result.size());
   EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 2));
-
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -441,7 +431,6 @@ TEST_F(OptimizerSQLTests, InsertSqlTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 TEST_F(OptimizerSQLTests, DDLSqlTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
@@ -460,7 +449,8 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "test2");
   EXPECT_NE(nullptr, table);
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
@@ -481,7 +471,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   try {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
     EXPECT_TRUE(false);
-  } catch (Exception& e) {
+  } catch (Exception &e) {
     LOG_INFO("Correct! Exception(%s) catched", e.what());
   }
 
@@ -491,7 +481,6 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 }  // namespace test
 }  // namespace peloton

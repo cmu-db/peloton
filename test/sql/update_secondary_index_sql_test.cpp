@@ -19,7 +19,6 @@
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -47,18 +46,21 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   int rows_affected;
 
   // test small int
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
-                                rows_affected, error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[6].second[0], '3');
 
   // Perform update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
 
   // test update result
   TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=1000", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '2');
 

@@ -99,8 +99,8 @@ oid_t TileGroup::GetActiveTupleCount() const {
  * Copy from tuple.
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
-  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-           tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -134,12 +134,12 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-           tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
-    LOG_INFO("Failed to get next empty tuple slot within tile group.");
+    LOG_TRACE("Failed to get next empty tuple slot within tile group.");
     return INVALID_OID;
   }
 
@@ -182,8 +182,8 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
     return tuple_slot_id;
   }
 
-  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-           tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -282,8 +282,8 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   // No more slots
   if (status == false) return INVALID_OID;
 
-  LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-           tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -320,7 +320,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
-    LOG_INFO("Compressing Tile %d in Tile Group", i);
+    LOG_TRACE("Compressing Tile %d in Tile Group", i);
     Tile *old_tile = &*tiles[i];
     std::shared_ptr<CompressedTile> new_tile(new CompressedTile(
         backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),

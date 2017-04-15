@@ -80,42 +80,42 @@ class Catalog {
 
   // Create a database
   ResultType CreateDatabase(std::string database_name,
-                        concurrency::Transaction *txn);
+                            concurrency::Transaction *txn);
 
   // Add a database
   void AddDatabase(storage::Database *database);
 
   // Add a database with name
-  void AddDatabase(std::string database_name,
-                   storage::Database *database);
+  void AddDatabase(std::string database_name, storage::Database *database);
 
   // Create a table in a database
   ResultType CreateTable(std::string database_name, std::string table_name,
-                     std::unique_ptr<catalog::Schema>,
-                     concurrency::Transaction *txn);
+                         std::unique_ptr<catalog::Schema>,
+                         concurrency::Transaction *txn);
 
   // Create the primary key index for a table
   ResultType CreatePrimaryIndex(const std::string &database_name,
-                            const std::string &table_name);
+                                const std::string &table_name);
 
   ResultType CreateIndex(const std::string &database_name,
-                     const std::string &table_name,
-                     std::vector<std::string> index_attr,
-                     std::string index_name, bool unique, IndexType index_type);
+                         const std::string &table_name,
+                         std::vector<std::string> index_attr,
+                         std::string index_name, bool unique,
+                         IndexType index_type);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
                                 const oid_t index_oid) const;
   // Drop a database
   ResultType DropDatabaseWithName(std::string database_name,
-                              concurrency::Transaction *txn);
+                                  concurrency::Transaction *txn);
 
   // Drop a database with its oid
   void DropDatabaseWithOid(const oid_t database_oid);
 
   // Drop a table
   ResultType DropTable(std::string database_name, std::string table_name,
-                   concurrency::Transaction *txn);
+                       concurrency::Transaction *txn);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(const oid_t db_oid) const;
@@ -184,10 +184,10 @@ class Catalog {
   //===--------------------------------------------------------------------===//
 
   // add and get methods for functions
-  void AddFunction(
-      const std::string &name, const std::vector<type::Type::TypeId>& argument_types,
-      const type::Type::TypeId return_type,
-      type::Value (*func_ptr)(const std::vector<type::Value> &));
+  void AddFunction(const std::string &name,
+                   const std::vector<type::Type::TypeId> &argument_types,
+                   const type::Type::TypeId return_type,
+                   type::Value (*func_ptr)(const std::vector<type::Value> &));
 
   const FunctionData GetFunction(const std::string &name);
 
@@ -217,10 +217,8 @@ class Catalog {
   std::unordered_map<std::string, FunctionData> functions_;
 
  public:
-
   // The pool for new varlen tuple fields
   type::AbstractPool *pool_ = new type::EphemeralPool();
 };
-
 }
 }

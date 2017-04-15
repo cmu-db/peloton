@@ -49,7 +49,8 @@ TEST_F(DistinctSQLTests, DistinctIntTest) {
   int rows_changed;
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT DISTINCT b FROM test;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: 22, 11
@@ -76,7 +77,8 @@ TEST_F(DistinctSQLTests, DistinctVarcharTest) {
   int rows_changed;
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT DISTINCT d FROM test;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: 'abcd', 'abc'
@@ -103,7 +105,8 @@ TEST_F(DistinctSQLTests, DistinctTupleTest) {
   int rows_changed;
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT DISTINCT b, c FROM test;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: [22,333]; [11,222]
@@ -141,7 +144,8 @@ TEST_F(DistinctSQLTests, DistinctStarTest) {
   int rows_changed;
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT DISTINCT * FROM test;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: [1,22,333,'abcd']; [1, 22, 222, 'abcd']

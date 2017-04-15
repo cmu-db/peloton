@@ -19,7 +19,6 @@
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -42,7 +41,8 @@ TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT a*5+b, -1+c, 6, a from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
   EXPECT_EQ(result[0].second[1], '5');

@@ -212,10 +212,10 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
       type::ValueFactory::GetNullValueByType(type::Type::VARBINARY);
 
   if (num_params != 0) {
-    param_type =
-        type::ValueFactory::GetVarbinaryValue(type_buf.buf, type_buf.len, false);
-    param_format =
-        type::ValueFactory::GetVarbinaryValue(format_buf.buf, format_buf.len, false);
+    param_type = type::ValueFactory::GetVarbinaryValue(type_buf.buf,
+                                                       type_buf.len, false);
+    param_format = type::ValueFactory::GetVarbinaryValue(format_buf.buf,
+                                                         format_buf.len, false);
     param_value =
         type::ValueFactory::GetVarbinaryValue(val_buf.buf, val_buf.len, false);
   }

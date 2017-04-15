@@ -19,7 +19,6 @@
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -29,7 +28,8 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
 
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -48,7 +48,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
     std::ostringstream os;
     os << "SELECT " << nullAggregates[i] << "(b) FROM xxx";
     TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
-                                  rows_affected, error_message);
+                                    rows_affected, error_message);
     std::string resultStr(result[0].second.begin(), result[0].second.end());
 
     EXPECT_EQ(expected, resultStr);
@@ -62,7 +62,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
     std::ostringstream os;
     os << "SELECT " << zeroAggregates[i] << "(b) FROM xxx";
     TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
-                                  rows_affected, error_message);
+                                    rows_affected, error_message);
     std::string resultStr(result[0].second.begin(), result[0].second.end());
 
     EXPECT_EQ(expected, resultStr);
@@ -103,7 +103,8 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(b) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
   // Check the return type
@@ -111,13 +112,15 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   // EXPECT_EQ(PostgresValueType::TINYINT, std::get<1>(tuple_descriptor[0]));
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT max(b) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '4');
   // EXPECT_EQ(PostgresValueType::TINYINT, std::get<1>(tuple_descriptor[0]));
 
   // test int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(a) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
   // Check the return type
@@ -125,14 +128,16 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
             std::get<1>(tuple_descriptor[0]));
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT max(a) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::INTEGER),
             std::get<1>(tuple_descriptor[0]));
 
   // test big int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(d) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '1');
   // Check the return type
   // TODO: LM: Right now we cannot deduce BIGINT
@@ -140,34 +145,39 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   //          std::get<1>(tuple_descriptor[0]));
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT max(d) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '4');
   // EXPECT_EQ(PostgresValueType::BIGINT,
   //          std::get<1>(tuple_descriptor[0]));
 
   // test double
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(e) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '1');
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::DOUBLE),
             std::get<1>(tuple_descriptor[0]));
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT max(e) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::DOUBLE),
             std::get<1>(tuple_descriptor[0]));
 
   // test decimal
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(f) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '1');
   // Right now we treat all double and decimal as double
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::DOUBLE),
             std::get<1>(tuple_descriptor[0]));
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT max(f) from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::DOUBLE),
             std::get<1>(tuple_descriptor[0]));
