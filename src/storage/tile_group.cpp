@@ -58,7 +58,7 @@ TileGroup::TileGroup(BackendType backend_type,
 
 TileGroup::~TileGroup() {
   // Drop references on all tiles
-
+  
   // clean up tile group header
   delete tile_group_header;
 }
@@ -321,15 +321,19 @@ void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
     LOG_INFO("Compressing Tile %d in Tile Group", i);
-    CompressedTile *new_tile;
     Tile *old_tile = &*tiles[i];
-    new_tile = new CompressedTile(
+    std::shared_ptr<CompressedTile> new_tile(new CompressedTile(
         backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),
-        old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount());
+        old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount()));
+
     new_tile->CompressTile(old_tile);
+    
     if (new_tile->IsCompressed()) {
-      tiles[i] = std::shared_ptr<Tile>(new_tile);
+      tiles[i].reset();
+      tiles[i] = new_tile;
       compression_status = true;
+    } else {
+      new_tile.reset();
     }
   }
 }
