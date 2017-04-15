@@ -50,7 +50,7 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
+//  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
@@ -519,28 +519,16 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 
 //////////////////////////////////////////////////////////////////////////////
 /// Memo insertion
+
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
-  vector<GroupID> child_groups = MemoTransformedChildren(expr);
-  return make_shared<GroupExpression>(expr->Op(), child_groups);
-}
-
-vector<GroupID> Optimizer::MemoTransformedChildren(
-    shared_ptr<OperatorExpression> expr) {
   vector<GroupID> child_groups;
-  for (shared_ptr<OperatorExpression> child : expr->Children()) {
-    child_groups.push_back(MemoTransformedExpression(child));
+  for (auto& child : expr->Children()) {
+    auto gexpr = MakeGroupExpression(child);
+    memo_.InsertExpression(gexpr);
+    child_groups.push_back(gexpr->GetGroupID());
   }
-  return child_groups;
-}
-
-GroupID Optimizer::MemoTransformedExpression(
-    shared_ptr<OperatorExpression> expr) {
-  shared_ptr<GroupExpression> gexpr = MakeGroupExpression(expr);
-  // Ignore whether this expression is new or not as we only care about that
-  // at the top level
-  (void)memo_.InsertExpression(gexpr);
-  return gexpr->GetGroupID();
+  return make_shared<GroupExpression>(expr->Op(), child_groups);
 }
 
 bool Optimizer::RecordTransformedExpression(
