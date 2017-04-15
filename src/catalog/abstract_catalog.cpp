@@ -192,6 +192,51 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
   return result_tiles;
 }
 
+/*@brief   Sequential scan helper function
+* NOTE: try to use efficient index scan instead of sequential scan, but you
+* shouldn't build too many indexes on one catalog table
+* @param   column_offsets    Column ids for search (projection)
+* @param   predicate         predicate for this sequential scan query
+* @param   txn               Transaction
+*
+* @return  Unique pointer of vector of logical tiles
+*/
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
+                                      expression::AbstractExpression *predicate,
+                                      concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  // Sequential scan
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  // Execute
+  seq_scan_executor.Init();
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
+
+  while (seq_scan_executor.Execute()) {
+    result_tiles->push_back(
+        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return result_tiles;
+}
+
 /*@brief   Add index on catalog table
 * @param   key_attrs    indexed column offset(position)
 * @param   index_oid    index id(global unique)
@@ -225,7 +270,7 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
   //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
   //     index_constraint, unique_keys, pool_.get(), nullptr);
 
-  LOG_TRACE("Successfully created primary key index '%s' for table '%d'",
+  LOG_TRACE("Successfully created index '%s' for table '%d'",
             index_name.c_str(), (int)catalog_table_->GetOid());
 }
 

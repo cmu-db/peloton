@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/delete_executor.h"
@@ -29,7 +30,6 @@
 #include "storage/database.h"
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
-#include "catalog/catalog_defaults.h"
 #include "type/types.h"
 #include "type/value_factory.h"
 
@@ -65,6 +65,11 @@ class AbstractCatalog {
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
                          concurrency::Transaction *txn);
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithSeqScan(std::vector<oid_t> column_offsets,
+                       expression::AbstractExpression *predicate,
+                       concurrency::Transaction *txn);
 
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
