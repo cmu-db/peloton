@@ -176,7 +176,7 @@ class ExpressionUtil {
       // If one child is removable, return the other child
       if (partial_removable) {
         for (auto child : new_children)
-          if (child != nullptr) return child;
+          if (child != nullptr) return child->Copy();
       } else {
         // Otherwise replace the child expressions with tailored ones
         for (size_t i = 0; i < children_size; ++i) {

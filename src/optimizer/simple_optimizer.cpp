@@ -557,10 +557,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         planner::IndexScanPlan::IndexScanDesc index_scan_desc(
             index, key_column_ids, expr_types, values, runtime_keys);
         LOG_TRACE("Creating a index scan plan");
+        auto predicate_cpy = child_DeletePlan->GetPredicate()
+                                 ? child_DeletePlan->GetPredicate()->Copy()
+                                 : nullptr;
         std::unique_ptr<planner::IndexScanPlan> index_scan_node(
-            new planner::IndexScanPlan(target_table,
-                                       child_DeletePlan->GetPredicate(),
-                                       columns, index_scan_desc, true));
+            new planner::IndexScanPlan(target_table, predicate_cpy, columns,
+                                       index_scan_desc, true));
         LOG_TRACE("Index scan plan created");
 
         // Add index scan plan
@@ -872,8 +874,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       index, key_column_ids, expr_types, values, runtime_keys);
 
   // Create plan node.
+  auto predicate_cpy = predicate == nullptr ? nullptr : predicate->Copy();
   std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
-      target_table, predicate, column_ids, index_scan_desc, for_update));
+      target_table, predicate_cpy, column_ids, index_scan_desc, for_update));
   LOG_TRACE("Index scan plan created");
 
   return std::move(node);

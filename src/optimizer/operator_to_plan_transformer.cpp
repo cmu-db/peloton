@@ -76,7 +76,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
-  (void)op;
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
@@ -97,16 +96,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
     expr_types.clear();
     values.clear();
   } else {
-    // Indes Searchable
-    // remove redundant predicates
-    LOG_TRACE("predicate before remove : %s", predicate->GetInfo().c_str());
+    // Indes Searchable. Remove predicates that has indexed columns
+    auto original_predicate = predicate;
     predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-        predicate, op->table_->GetIndex(index_id));
-    if (predicate != nullptr) {
-      LOG_TRACE("predicate after remove : %s", predicate->GetInfo().c_str());
-    } else {
-      LOG_TRACE("predicate after remove : null");
-    }
+        original_predicate, op->table_->GetIndex(index_id));
+    if (predicate != original_predicate)
+      delete original_predicate;
   }
 
   // Generate column ids to pass into scan plan and generate output expr map
@@ -451,7 +446,7 @@ OperatorToPlanTransformer::GeneratePredicateForScan(
   if (predicate_prop != nullptr) {
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, table);
-    predicate = predicate_prop->GetPredicate();
+    predicate = predicate_prop->GetPredicate()->Copy();
     expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
   }
   return predicate;
