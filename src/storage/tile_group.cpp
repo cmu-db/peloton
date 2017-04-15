@@ -58,7 +58,7 @@ TileGroup::TileGroup(BackendType backend_type,
 
 TileGroup::~TileGroup() {
   // Drop references on all tiles
-  
+
   // clean up tile group header
   delete tile_group_header;
 }
@@ -327,7 +327,7 @@ void TileGroup::CompressTiles() {
         old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount()));
 
     new_tile->CompressTile(old_tile);
-    
+
     if (new_tile->IsCompressed()) {
       tiles[i].reset();
       tiles[i] = new_tile;
