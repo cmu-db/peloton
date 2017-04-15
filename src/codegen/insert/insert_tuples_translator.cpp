@@ -24,6 +24,15 @@
 namespace peloton {
 namespace codegen {
 
+/**
+ * @brief Constructor of @c InsertTuplesTranslator.
+ *
+ * We store the raw tuples as parameters of the query.
+ *
+ * @param insert_plan
+ * @param context
+ * @param pipeline
+ */
 InsertTuplesTranslator::InsertTuplesTranslator(const planner::InsertPlan &insert_plan,
                                                CompilationContext &context,
                                                Pipeline &pipeline)
