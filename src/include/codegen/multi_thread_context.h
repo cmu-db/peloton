@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <atomic>
-
 #include "codegen/codegen.h"
 #include "codegen/code_context.h"
 #include "codegen/function_builder.h"
@@ -26,23 +24,23 @@ namespace codegen {
 class MultiThreadContext {
  public:
 
-  static MultiThreadContext GetInstance(uint64_t thread_id, uint64_t thread_count) {
+  static MultiThreadContext GetInstance(int64_t thread_id, int64_t thread_count) {
     std::cout << "Constructing MTC with "
             << thread_id << "," << thread_count << std::endl;
     return MultiThreadContext(thread_id, thread_count);
   }
 
-  uint64_t GetRangeStart(uint64_t tile_group_num) {
-    uint64_t slice_size = tile_group_num / thread_count_;
-	  uint64_t start = thread_id_ * slice_size;
+  int64_t GetRangeStart(int64_t tile_group_num) {
+    int64_t slice_size = tile_group_num / thread_count_;
+	  int64_t start = thread_id_ * slice_size;
 
 	  std::cout << "Get start," << thread_id_ << "," << thread_count_ << "," << tile_group_num << "->" << start << std::endl;
 	  return start;
   }
 
-  uint64_t GetRangeEnd(uint64_t tile_group_num) {
-    uint64_t slice_size = tile_group_num / thread_count_;
-    uint64_t end = std::min(tile_group_num, (thread_id_ + 1) * slice_size);
+  int64_t GetRangeEnd(int64_t tile_group_num) {
+    int64_t slice_size = tile_group_num / thread_count_;
+    int64_t end = std::min(tile_group_num, (thread_id_ + 1) * slice_size);
 
     std::cout << "Get end," << thread_id_ << "," << thread_count_ << "," << tile_group_num << "->" << end << std::endl;
     return end;
@@ -50,11 +48,11 @@ class MultiThreadContext {
 
  private:
 
-  MultiThreadContext(uint64_t thread_id, uint64_t thread_count)
+  MultiThreadContext(int64_t thread_id, int64_t thread_count)
      : thread_id_(thread_id), thread_count_(thread_count) {}
 
-  uint64_t thread_id_;
-  uint64_t thread_count_;
+  int64_t thread_id_;
+  int64_t thread_count_;
 };
 
 }
