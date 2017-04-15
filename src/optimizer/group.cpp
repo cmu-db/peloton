@@ -26,10 +26,14 @@ void Group::add_item(Operator op) {
   // TODO(abpoms): do duplicate checking
   items_.push_back(op);
 }
-void Group::AddExpression(std::shared_ptr<GroupExpression> expr) {
+void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
+                          bool enforced) {
   // Do duplicate detection
   expr->SetGroupID(id_);
-  expressions_.push_back(expr);
+  if (enforced)
+    enforced_exprs_.push_back(expr);
+  else
+    expressions_.push_back(expr);
 }
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,

@@ -50,12 +50,14 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-//  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  //  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-//  physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
-  physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
+  //  physical_implementation_rules_.emplace_back(new
+  //  LogicalGroupByToHashGroupBy());
+  physical_implementation_rules_.emplace_back(
+      new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
   physical_implementation_rules_.emplace_back(new GetToIndexScan());
@@ -177,7 +179,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, PropertySet requirements, ExprMap *output_expr_map) {
-  
   Group *group = memo_.GetGroupByID(id);
   shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
@@ -206,13 +207,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
                                          children_plans, children_expr_map,
                                          output_expr_map);
-  
+
   LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
 }
 
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
-  LOG_TRACE("Optimizing group %d with req %s", id, requirements.ToString().c_str());
+  LOG_TRACE("Optimizing group %d with req %s", id,
+            requirements.ToString().c_str());
   Group *group = memo_.GetGroupByID(id);
 
   // Whether required properties have already been optimized for the group
@@ -234,20 +236,20 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
   vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
       move(DeriveChildProperties(gexpr, requirements));
-  
+
   size_t num_property_pairs = output_input_property_pairs.size();
 
   auto child_group_ids = gexpr->GetChildGroupIDs();
-  
+
   for (size_t pair_offset = 0; pair_offset < num_property_pairs;
        ++pair_offset) {
     auto output_properties = output_input_property_pairs[pair_offset].first;
     const auto &input_properties_list =
         output_input_property_pairs[pair_offset].second;
-    
+
     vector<shared_ptr<Stats>> best_child_stats;
     vector<double> best_child_costs;
-    for (size_t i = 0; i < child_group_ids.size(); ++i) { 
+    for (size_t i = 0; i < child_group_ids.size(); ++i) {
       GroupID child_group_id = child_group_ids[i];
       const PropertySet &input_properties = input_properties_list[i];
       // Optimize child
@@ -264,7 +266,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       best_child_stats.push_back(best_expression->GetStats(input_properties));
       best_child_costs.push_back(best_expression->GetCost(input_properties));
     }
-    
+
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
     DeriveCostAndStats(gexpr, output_properties, input_properties_list,
@@ -285,7 +287,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       new_cols_prop.reset(GenerateNewPropertyCols(requirements));
 
     // enforce missing properties
-    auto& required_props = requirements.Properties();
+    auto &required_props = requirements.Properties();
     for (unsigned i = 0; i < required_props.size(); i++) {
       auto property = required_props[i];
       // When enforce PropertyColumns, use the new PropertyCols if necessary
@@ -352,7 +354,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-  
+
   auto child_stats = vector<shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = vector<double>();
@@ -362,16 +364,15 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   auto enforced_gexpr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
 
-  // the new gexpr have the
-  // same GrouID as the one beforce
-  // enforcing the property
-  memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID());
+  // the new enforced gexpr have the same GrouID as the parent expr
+  memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID(), true);
 
   // For orderby, Restore the PropertyColumn back to the original one so that
   // orderby does not output the additional columns only used in order by
   if (property->Type() == PropertyType::SORT) {
     output_properties.RemoveProperty(PropertyType::COLUMNS);
-    output_properties.AddProperty(requirements.GetPropertyOfType(PropertyType::COLUMNS));
+    output_properties.AddProperty(
+        requirements.GetPropertyOfType(PropertyType::COLUMNS));
   }
   // If the property with the same type exists, remove it first
   // For example, when enforcing PropertyColumns, there will already be a
@@ -523,9 +524,9 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
   vector<GroupID> child_groups;
-  for (auto& child : expr->Children()) {
+  for (auto &child : expr->Children()) {
     auto gexpr = MakeGroupExpression(child);
-    memo_.InsertExpression(gexpr);
+    memo_.InsertExpression(gexpr, false);
     child_groups.push_back(gexpr->GetGroupID());
   }
   return make_shared<GroupExpression>(expr->Op(), child_groups);
@@ -540,7 +541,7 @@ bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             shared_ptr<GroupExpression> &gexpr,
                                             GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
-  return memo_.InsertExpression(gexpr, target_group);
+  return memo_.InsertExpression(gexpr, target_group, false) != gexpr;
 }
 
 }  // namespace optimizer

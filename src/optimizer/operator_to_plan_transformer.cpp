@@ -66,9 +66,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
-
   expression::AbstractExpression *predicate =
       GeneratePredicateForScan(predicate_prop, op->table_);
+  
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
@@ -448,14 +448,12 @@ expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
     const PropertyPredicate *predicate_prop, const storage::DataTable *table) {
   expression::AbstractExpression *predicate = nullptr;
-
   if (predicate_prop != nullptr) {
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, table);
-    predicate = predicate_prop->GetPredicate()->Copy();
+    predicate = predicate_prop->GetPredicate();
     expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
   }
-
   return predicate;
 }
 

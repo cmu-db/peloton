@@ -34,7 +34,7 @@ class Group {
   Group(GroupID id);
   void add_item(Operator op);
 
-  void AddExpression(std::shared_ptr<GroupExpression> expr);
+  void AddExpression(std::shared_ptr<GroupExpression> expr, bool enforced);
 
   void SetExpressionCost(std::shared_ptr<GroupExpression> expr, double cost,
                          PropertySet properties);
@@ -53,6 +53,7 @@ class Group {
   GroupID id_;
   std::vector<Operator> items_;
   std::vector<std::shared_ptr<GroupExpression>> expressions_;
+  std::vector<std::shared_ptr<GroupExpression>> enforced_exprs_;
   std::unordered_map<PropertySet,
                      std::tuple<double, std::shared_ptr<GroupExpression>>>
       lowest_cost_expressions_;
