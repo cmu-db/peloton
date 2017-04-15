@@ -1088,6 +1088,26 @@ column_map_type DataTable::GetDefaultLayout() const{
   return default_partition_;
 }
 
+void DataTable::AddTrigger(commands::Trigger new_trigger) {
+  trigger_list.AddTrigger(new_trigger);
+}
+
+int DataTable::GetTriggerNumber() {
+  return trigger_list.GetTriggerListSize();
+}
+
+commands::Trigger* DataTable::GetTriggerByIndex(int n) {
+  if (trigger_list.GetTriggerListSize() <= n)
+    return nullptr;
+  return trigger_list.Get(n);
+}
+
+commands::TriggerList* DataTable::GetTriggerList() {
+  if (trigger_list.GetTriggerListSize() <= 0)
+    return nullptr;
+  return &trigger_list;
+}
+
 
 }  // End storage namespace
 }  // End peloton namespace

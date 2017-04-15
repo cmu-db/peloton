@@ -18,6 +18,7 @@
 #include "common/macros.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 
 namespace peloton {
@@ -575,10 +576,12 @@ TEST_F(PostgresParserTests, InsertTest) {
     EXPECT_EQ("foo", insert_stmt->GetTableName());
     EXPECT_TRUE(insert_stmt->insert_values != nullptr);
     EXPECT_EQ(2, insert_stmt->insert_values->size());
-    
+
     // Test NULL Value parsing
     EXPECT_TRUE(((expression::ConstantValueExpression *)
-                 insert_stmt->insert_values->at(0)->at(0))->GetValue().IsNull());
+                     insert_stmt->insert_values->at(0)->at(0))
+                    ->GetValue()
+                    .IsNull());
     // Test normal value
     type::Value five = type::ValueFactory::GetIntegerValue(5);
     type::CmpBool res = five.CompareEquals(
@@ -720,6 +723,70 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   EXPECT_TRUE(stmt_list->is_valid);
   //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
   //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, CreateTriggerTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+
+  std::string query =
+      "CREATE TRIGGER check_update "
+      "BEFORE UPDATE OF balance ON accounts "
+      "FOR EACH ROW "
+      "WHEN (OLD.balance <> NEW.balance) "
+      "EXECUTE PROCEDURE check_account_update();";
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (stmt_list->is_valid == false) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
+  auto create_trigger_stmt =
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  // trigger name
+  EXPECT_EQ("check_update", std::string(create_trigger_stmt->trigger_name));
+  // table name
+  EXPECT_EQ("accounts", create_trigger_stmt->GetTableName());
+  // funcname
+  std::vector<char *> *funcname = create_trigger_stmt->trigger_funcname;
+  EXPECT_EQ(1, funcname->size());
+  EXPECT_EQ("check_account_update", std::string((*funcname)[0]));
+  // args
+  EXPECT_EQ(0, create_trigger_stmt->trigger_args->size());
+  // columns
+  std::vector<char *> *columns = create_trigger_stmt->trigger_columns;
+  EXPECT_EQ(1, columns->size());
+  EXPECT_EQ("balance", std::string((*columns)[0]));
+  // when
+  auto when = create_trigger_stmt->trigger_when;
+  EXPECT_NE(nullptr, when);
+  EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
+  EXPECT_EQ(2, when->GetChildrenSize());
+  auto left = when->GetChild(0);
+  auto right = when->GetChild(1);
+  EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
+  EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
+                       ->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
+  EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
+  EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
+                       ->GetTableName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
+  // level
+  EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
+  // timing
+  EXPECT_TRUE(TRIGGER_FOR_BEFORE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_AFTER(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_INSTEAD(create_trigger_stmt->trigger_type));
+  // event
+  EXPECT_TRUE(TRIGGER_FOR_UPDATE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_INSERT(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_DELETE(create_trigger_stmt->trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(create_trigger_stmt->trigger_type));
 
   delete stmt_list;
 }
