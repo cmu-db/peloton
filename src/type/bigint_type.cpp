@@ -289,7 +289,7 @@ void BigintType::SerializeTo(const Value& val, SerializeOutput &out) const {
 void BigintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
     AbstractPool *pool UNUSED_ATTRIBUTE) const {
 
-  *reinterpret_cast<int32_t *>(storage) = val.value_.bigint;
+  *reinterpret_cast<int64_t *>(storage) = val.value_.bigint;
 
 }
 
