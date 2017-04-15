@@ -58,7 +58,7 @@ hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
   for (auto expr : column_exprs_) {
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
+    hash = HashUtil::SumHashes(hash, expr->Hash());
   }
   return hash;
 }

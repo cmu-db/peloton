@@ -432,6 +432,31 @@ class ExpressionUtil {
     }
   }
 
+  static bool EqualExpressions(
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>& l,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>& r,
+      bool ordered = false) {
+    if (l.size() != r.size())
+      return false;
+    // Consider expression order in the comparison
+    if (ordered) {
+      size_t num_exprs = l.size();
+      for (size_t i = 0; i<num_exprs; i++)
+        if (!l[i]->Equals(r[i].get()))
+          return false;
+      return true;
+    }
+    else {
+      ExprSet l_set, r_set;
+      for (auto expr : l)
+        l_set.insert(expr);
+      for (auto expr : r)
+        r_set.insert(expr);
+      return l_set == r_set;
+    }
+
+  }
+
   /* All following functions will be depracated when switch to new optimizer */
 
   /**

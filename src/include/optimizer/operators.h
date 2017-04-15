@@ -348,6 +348,9 @@ class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       expression::AbstractExpression *having);
 
+  bool operator==(const BaseOperatorNode &r) override;
+  hash_t Hash() const override;
+
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
 };
@@ -360,6 +363,9 @@ class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       expression::AbstractExpression *having);
+
+  bool operator==(const BaseOperatorNode &r) override;
+  hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;

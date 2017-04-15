@@ -13,6 +13,7 @@
 #include "optimizer/operators.h"
 #include "optimizer/operator_visitor.h"
 #include "storage/data_table.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -350,6 +351,23 @@ Operator PhysicalHashGroupBy::make(
   return Operator(agg);
 }
 
+bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::HashGroupBy) return false;
+  const PhysicalHashGroupBy &r = *static_cast<const PhysicalHashGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+    return false;
+  return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
+}
+
+hash_t PhysicalHashGroupBy::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  if (having != nullptr)
+    hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns)
+    hash = HashUtil::SumHashes(hash, expr->Hash());
+  return hash;
+}
+
 //===--------------------------------------------------------------------===//
 // PhysicalSortGroupBy
 //===--------------------------------------------------------------------===//
@@ -360,6 +378,23 @@ Operator PhysicalSortGroupBy::make(
   agg->columns = std::move(columns);
   agg->having = having;
   return Operator(agg);
+}
+
+bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::SortGroupBy) return false;
+  const PhysicalSortGroupBy &r = *static_cast<const PhysicalSortGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+    return false;
+  return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
+}
+
+hash_t PhysicalSortGroupBy::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  if (having != nullptr)
+    hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns)
+    hash = HashUtil::SumHashes(hash, expr->Hash());
+  return hash;
 }
 
 //===--------------------------------------------------------------------===//
