@@ -15,6 +15,7 @@
 #include "catalog/schema.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/loop.h"
+#include "codegen/multi_thread_context_proxy.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "storage/data_table.h"
 #include "codegen/multi_thread_context.h"
@@ -74,10 +75,26 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
-  // TODO(tq5124): get multi_thread_context from args and set tile_group_idx (calling proxy func).
-//  MultiThreadContext multi_thread_context{codegen.Const64(thread_id), codegen.Con/st64(num_threads), nullptr};
+
+  // TODO(tq5124): fix this.
+//  llvm::Value *multi_thread_context = codegen.GetArgument(1);
+//  llvm::Value *tile_group_idx = codegen.CallFunc(
+//      MultiThreadContextProxy::GetRangeStartFunction(codegen),
+//      {
+//          multi_thread_context,
+//          num_tile_groups
+//      });
+//  llvm::Value *tile_group_idx_end = codegen.CallFunc(
+//      MultiThreadContextProxy::GetRangeEndFunction(codegen),
+//      {
+//          multi_thread_context,
+//          num_tile_groups
+//      });;
   llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *tile_group_idx_end = num_tile_groups;
+
+  codegen.CallPrintf("Number of tile groups: %u.\n", {num_tile_groups});
+  codegen.CallPrintf("Scanning table, from [%u to %u).\n", {tile_group_idx, tile_group_idx_end});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,

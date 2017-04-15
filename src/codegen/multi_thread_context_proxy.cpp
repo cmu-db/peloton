@@ -35,22 +35,56 @@ llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
   return thread_pool_type;
 }
 
-llvm::Function *MultiThreadContextProxy::GetInstanceFunction(UNUSED_ATTRIBUTE CodeGen &codegen) {
-  static std::string func_name = "_ZN7peloton7codegen18MultiThreadContextC1Emm";
-  // TODO(tq5124): fix this.
-  return nullptr;
+llvm::Function *MultiThreadContextProxy::GetInstanceFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext11GetInstanceEmm";
+
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      MultiThreadContextProxy::GetType(codegen),
+      {
+          codegen.Int64Type(),
+          codegen.Int64Type()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
 }
 
-llvm::Function *MultiThreadContextProxy::GetRangeStartFunction(UNUSED_ATTRIBUTE CodeGen &codegen) {
-  static std::string func_name = "_ZN7peloton7codegen18MultiThreadContext13GetRangeStartEmm";
-  // TODO(tq5124): fix this.
-  return nullptr;
+llvm::Function *MultiThreadContextProxy::GetRangeStartFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext13GetRangeStartEm";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.Int64Type(),
+      {
+          MultiThreadContextProxy::GetType(codegen),
+          codegen.Int64Type()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
 }
 
-llvm::Function *MultiThreadContextProxy::GetRangeEndFunction(UNUSED_ATTRIBUTE CodeGen &codegen) {
-  static std::string func_name = "_ZN7peloton7codegen18MultiThreadContext11GetRangeEndEmm";
-  // TODO(tq5124): fix this.
-  return nullptr;
+llvm::Function *MultiThreadContextProxy::GetRangeEndFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext11GetRangeEndEm";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.Int64Type(),
+      {
+          MultiThreadContextProxy::GetType(codegen),
+          codegen.Int64Type()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
 }
 
 } // codegen
