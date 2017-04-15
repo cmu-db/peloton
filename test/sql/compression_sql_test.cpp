@@ -52,7 +52,6 @@ TEST_F(CompressionTest, BasicInsertionTest) {
     EXPECT_EQ(resultStr, expectedStr);
   }
 
-
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
