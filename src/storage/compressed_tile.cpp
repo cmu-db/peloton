@@ -43,7 +43,8 @@ CompressedTile::CompressedTile(BackendType backend_type,
   compressed_columns_count = 0;
 }
 
-CompressedTile::~CompressedTile() {}
+CompressedTile::~CompressedTile() {
+}
 
 void CompressedTile::CompressTile(Tile *tile) {
   auto allocated_tuple_count = tile->GetAllocatedTupleCount();
