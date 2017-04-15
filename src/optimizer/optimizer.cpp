@@ -58,7 +58,7 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
-  // physical_implementation_rules_.emplace_back(new GetToIndexScan());
+  physical_implementation_rules_.emplace_back(new GetToIndexScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
@@ -177,8 +177,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, PropertySet requirements, ExprMap *output_expr_map) {
-  LOG_TRACE("Choosing best plan for group %d", id);
-
+  
   Group *group = memo_.GetGroupByID(id);
   shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
@@ -207,7 +206,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
                                          children_plans, children_expr_map,
                                          output_expr_map);
-
+  
+  LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
 }
 

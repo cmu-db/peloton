@@ -35,10 +35,11 @@ void CostAndStatsCalculator::CalculateCostAndStats(
 void CostAndStatsCalculator::Visit(const PhysicalSeqScan *) {
   // TODO: Replace with more accurate cost
   output_stats_.reset(new Stats(nullptr));
-  output_cost_ = 1;
+  output_cost_ = 2;
 };
 void CostAndStatsCalculator::Visit(const PhysicalIndexScan *) {
-  // TODO: Replace with more accurate cost
+  // TODO: Simple cost function
+  // indexSearchable ? SeqScan : IndexScan
   output_stats_.reset(new Stats(nullptr));
   output_cost_ = 1;
 };

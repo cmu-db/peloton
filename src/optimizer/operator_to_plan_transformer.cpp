@@ -81,7 +81,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
 
-  expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
+  expression::AbstractExpression *predicate =
+      GeneratePredicateForScan(predicate_prop, op->table_);
   vector<oid_t> key_column_ids;
   vector<ExpressionType> expr_types;
   vector<type::Value> values;
@@ -90,16 +91,22 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   if (!util::CheckIndexSearchable(op->table_, predicate, key_column_ids,
                                   expr_types, values, index_id)) {
     // Can't be accelerated by index scan
-    // Just scan all keys using the first index 
+    // Just scan all keys using the first index
     index_id = 0;
     key_column_ids.clear();
     expr_types.clear();
     values.clear();
   } else {
-    // Indes Searchable 
+    // Indes Searchable
     // remove redundant predicates
+    LOG_TRACE("predicate before remove : %s", predicate->GetInfo().c_str());
     predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
         predicate, op->table_->GetIndex(index_id));
+    if (predicate != nullptr) {
+      LOG_TRACE("predicate after remove : %s", predicate->GetInfo().c_str());
+    } else {
+      LOG_TRACE("predicate after remove : null");
+    }
   }
 
   // Generate column ids to pass into scan plan and generate output expr map
@@ -107,8 +114,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
                          ->As<PropertyColumns>();
   vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
 
-  predicate = GeneratePredicateForScan(predicate_prop, op->table_);
-  
   // Create index scan plan
   auto index = op->table_->GetIndex(index_id);
   vector<expression::AbstractExpression *> runtime_keys;
@@ -118,9 +123,11 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
       index, key_column_ids, expr_types, values, runtime_keys);
 
   // Create plan node.
-  std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
-      op->table_, predicate, column_ids, index_scan_desc, false));
+  std::unique_ptr<planner::IndexScanPlan> index_scan_plan(
+      new planner::IndexScanPlan(op->table_, predicate, column_ids,
+                                 index_scan_desc, false));
 
+  output_plan_ = move(index_scan_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
