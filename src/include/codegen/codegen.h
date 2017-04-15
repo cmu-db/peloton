@@ -126,6 +126,15 @@ class CodeGen {
   // Get the runtime state function argument
   llvm::Value *GetState() const { return &*GetFunction()->arg_begin(); }
 
+  // Get arguments from function.
+  llvm::Value *GetArgument(uint64_t idx) const {
+    auto iter = GetFunction()->arg_begin();
+    for (uint64_t i = 0; i < idx; ++i) {
+      iter++;
+    }
+    return &*iter;
+  }
+
   // Get the LLVM context
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 

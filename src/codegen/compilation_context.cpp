@@ -13,6 +13,7 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/catalog_proxy.h"
+#include "codegen/multi_thread_context.h"
 #include "codegen/multi_thread_context_proxy.h"
 #include "codegen/transaction_proxy.h"
 #include "common/logger.h"
@@ -175,6 +176,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
         {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)}
       }};
+  codegen_.CallPrintf("Inner plan func started.\n", {});
 
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
@@ -183,10 +185,12 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   Produce(root);
 
   // Finish the function
+  codegen_.CallPrintf("Inner plan func executed.\n", {});
   inner_function_builder.ReturnAndFinish();
 
   // Get the function
   llvm::Function *inner_func = inner_function_builder.GetFunction();
+  LOG_DEBUG("Finish build inner plan function.");
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
@@ -195,14 +199,38 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         codegen_.VoidType(),
         {
           {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+  codegen_.CallPrintf("Plan func started.\n", {});
 
   llvm::Value *runtime_state_ptr = codegen_.GetState();
-  // TODO(tq5124): get multi_thread_context from proxy func.
-  llvm::Value *multi_thread_context = codegen_.Null(MultiThreadContextProxy::GetType(codegen_));
-  codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
+  llvm::Value *thread_id = codegen_.Const64(0);
+  llvm::Value *thread_count = codegen_.Const64(1);
 
+  Loop loop{codegen_, codegen_->CreateICmpULT(thread_id, thread_count),
+    {
+        {"threadId", thread_id}
+    }};
+  {
+    thread_id = loop.GetLoopVar(0);
+    llvm::Value *multi_thread_context = codegen_.CallFunc(
+        MultiThreadContextProxy::GetInstanceFunction(codegen_), {thread_id, thread_count});
+    codegen_.CallPrintf("Construct MultiThreadContext for thread id: %u, thread count: %u.\n", {thread_id, thread_count});
+
+    // TODO: submit multi thread tasks here.
+    codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
+
+    // Move to next thread id in loop.
+    thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
+    loop.LoopEnd(codegen_->CreateICmpULT(thread_id, thread_count), {thread_id});
+  }
+
+  codegen_.CallPrintf("Plan func executed.\n", {});
   function_builder.ReturnAndFinish();
 
+  // TOBE REMOVE
+  MultiThreadContext _context = MultiThreadContext::GetInstance(0, 4);
+  std::cout << _context.GetRangeStart(100) << std::endl << _context.GetRangeEnd(100) << std::endl;
+
+  LOG_DEBUG("Finish building plan func.");
   return function_builder.GetFunction();
 }
 
