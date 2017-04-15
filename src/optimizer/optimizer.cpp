@@ -363,7 +363,9 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
       enforcer.EnforceProperty(gexpr, &output_properties, property);
 
   // the new enforced gexpr have the same GrouID as the parent expr
-  memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID(), true);
+  // The enforced expression may already exist
+  enforced_gexpr = memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID(),
+                                          true);
 
   // For orderby, Restore the PropertyColumn back to the original one so that
   // orderby does not output the additional columns only used in order by
