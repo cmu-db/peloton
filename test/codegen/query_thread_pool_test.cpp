@@ -31,21 +31,16 @@ TEST_F(QueryThreadPoolTests, BasicTest) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen(code_context);
 
-  std::atomic<bool> finished(false);
-  codegen::MultiThreadContext context(codegen.Const64(0), codegen.Const64(4), &finished);
+  codegen::MultiThreadContext context = codegen::MultiThreadContext::GetInstance(0, 4);
 
   thread_pool.SubmitQueryTask(context, [](__attribute__ ((unused)) codegen::MultiThreadContext context){
     // Thread blocks for 100 ms.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    context.ThreadFinish();
+    LOG_DEBUG("Thread finish.");
     return;
   });
 
-  while (finished.load() == false) {
-    LOG_DEBUG("Thread not finish, wait for another 10ms...");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-  LOG_DEBUG("All threads finish.");
+  LOG_DEBUG("All threads submitted.");
 }
 
 }  // End test namespace
