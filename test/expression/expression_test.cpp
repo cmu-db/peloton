@@ -58,6 +58,80 @@ TEST_F(ExpressionTests, FunctionExpressionTest) {
               type::CMP_TRUE);
 }
 
+TEST_F(ExpressionTests, EqualityTest) {
+  // First tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
+  std::tuple<oid_t, oid_t, oid_t> bound_oid1(1, 1, 1);
+  auto left1 = new expression::TupleValueExpression("a", "A");
+  left1->SetBoundOid(bound_oid1);
+  auto right1 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1);
+  // Second tree operator_expr(-) -> (tup_expr(A.b), const_expr(2))
+  std::tuple<oid_t, oid_t, oid_t> bound_oid2(1, 1, 0);
+  auto left2 = new expression::TupleValueExpression("b", "A");
+  left2->SetBoundOid(bound_oid2);
+  auto right2 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root2 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2);
+  EXPECT_FALSE(root1->Equals(root2));
+
+  // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
+  auto left3 = new expression::TupleValueExpression("a", "a");
+  left3->SetBoundOid(bound_oid1);
+  auto right3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root3 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3);
+  EXPECT_TRUE(root1->Equals(root3));
+
+  delete root1;
+  delete root2;
+  delete root3;
+}
+
+
+TEST_F(ExpressionTests, HashTest) {
+  // First tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
+  auto left1 = new expression::TupleValueExpression("a", "A");
+  auto oids1 = std::make_tuple<oid_t, oid_t, oid_t>(0,0,0);
+  left1->SetBoundOid(oids1);
+  auto right1 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1);
+  LOG_INFO("Hash(tree1)=%ld", root1->Hash());
+
+  // Second tree operator_expr(-) -> (tup_expr(A.b), const_expr(2))
+  auto left2 = new expression::TupleValueExpression("b", "A");
+  auto oids2 = std::make_tuple<oid_t, oid_t, oid_t>(0,0,1);
+  left2->SetBoundOid(oids2);
+  auto right2 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root2 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2);
+  LOG_INFO("Hash(tree2)=%ld", root2->Hash());
+
+  EXPECT_NE(root1->Hash(), root2->Hash());
+
+  // Third tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
+  auto left3 = new expression::TupleValueExpression("a", "A");
+  auto oids3 = oids1;
+  left3->SetBoundOid(oids3);
+  auto right3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto root3 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3);
+  LOG_INFO("Hash(tree3)=%ld", root3->Hash());
+
+  EXPECT_EQ(root1->Hash(), root3->Hash());
+
+  delete root1;
+  delete root2;
+  delete root3;
+}
+
 TEST_F(ExpressionTests, ExtractDateTests) {
   // PAVLO: 2017-01-18
   // This will test whether we can invoke the EXTRACT function

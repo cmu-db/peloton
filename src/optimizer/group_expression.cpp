@@ -69,7 +69,8 @@ hash_t GroupExpression::Hash() const {
   size_t hash = op.Hash();
 
   for (size_t i = 0; i < child_groups.size(); ++i) {
-    hash = util::CombineHashes(hash, util::Hash<GroupID>(&(child_groups[i])));
+    hash = HashUtil::CombineHashes(hash,
+                                   HashUtil::Hash<GroupID>(&(child_groups[i])));
   }
 
   return hash;

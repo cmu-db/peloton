@@ -16,7 +16,6 @@
 #include "optimizer/column.h"
 #include "optimizer/group.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/util.h"
 
 #include <vector>
 
@@ -24,6 +23,10 @@ namespace peloton {
 
 namespace expression {
 class AbstractExpression;
+}
+
+namespace parser {
+class UpdateClause;
 }
 
 namespace storage {
@@ -47,7 +50,8 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table = nullptr, std::string alias = "");
+  static Operator make(storage::DataTable *table = nullptr,
+                       std::string alias = "");
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -120,10 +124,19 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {
  public:
-  static Operator make(std::vector<expression::AbstractExpression *> *columns,
-                       expression::AbstractExpression *having);
+  static Operator make();
+};
 
-  std::vector<expression::AbstractExpression *> *columns;
+//===--------------------------------------------------------------------===//
+// GroupBy
+//===--------------------------------------------------------------------===//
+class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
+ public:
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
 };
 
@@ -141,38 +154,39 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
-class LogicalInsert: public OperatorNode<LogicalInsert> {
+class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      storage::DataTable* target_table,
-      std::vector<char*>* columns,
-      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+      storage::DataTable *target_table, std::vector<char *> *columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+          values);
 
-  storage::DataTable* target_table;
-  std::vector<char*>* columns;
-  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
+  storage::DataTable *target_table;
+  std::vector<char *> *columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression *> *> *values;
 };
 
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
-class LogicalDelete: public OperatorNode<LogicalDelete> {
+class LogicalDelete : public OperatorNode<LogicalDelete> {
  public:
-  static Operator make(storage::DataTable* target_table);
+  static Operator make(storage::DataTable *target_table);
 
-  storage::DataTable* target_table;
+  storage::DataTable *target_table;
 };
 
 //===--------------------------------------------------------------------===//
 // Update
 //===--------------------------------------------------------------------===//
-class LogicalUpdate: public OperatorNode<LogicalUpdate> {
+class LogicalUpdate : public OperatorNode<LogicalUpdate> {
  public:
-  static Operator make(const parser::UpdateStatement* update_stmt);
+  static Operator make(storage::DataTable *target_table,
+                       std::vector<peloton::parser::UpdateClause*> updates);
 
-  const parser::UpdateStatement* update_stmt;
+  storage::DataTable *target_table;
+  std::vector<peloton::parser::UpdateClause*> updates;
 };
-
 
 //===--------------------------------------------------------------------===//
 // Scan
@@ -201,11 +215,7 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 //===--------------------------------------------------------------------===//
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
-  static Operator make(std::vector<expression::TupleValueExpression *> &sort_columns,
-                       std::vector<bool> &sort_ascending);
-
-  std::vector<expression::TupleValueExpression *> sort_columns;
-  std::vector<bool> sort_ascending;
+  static Operator make();
 };
 
 //===--------------------------------------------------------------------===//
@@ -297,13 +307,13 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      storage::DataTable* target_table,
-      std::vector<char*>* columns,
-      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+      storage::DataTable *target_table, std::vector<char *> *columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+          values);
 
-  storage::DataTable* target_table;
-  std::vector<char*>* columns;
-  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
+  storage::DataTable *target_table;
+  std::vector<char *> *columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression *> *> *values;
 };
 
 //===--------------------------------------------------------------------===//
@@ -311,9 +321,8 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
 //===--------------------------------------------------------------------===//
 class PhysicalDelete : public OperatorNode<PhysicalDelete> {
  public:
-  static Operator make(storage::DataTable* target_table);
-  storage::DataTable* target_table;
-
+  static Operator make(storage::DataTable *target_table);
+  storage::DataTable *target_table;
 };
 
 //===--------------------------------------------------------------------===//
@@ -321,9 +330,51 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 //===--------------------------------------------------------------------===//
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
-  static Operator make(const parser::UpdateStatement* update_stmt);
+  static Operator make(storage::DataTable *target_table,
+  std::vector<peloton::parser::UpdateClause*> updates);
 
-  const parser::UpdateStatement* update_stmt;
+  storage::DataTable *target_table;
+  std::vector<peloton::parser::UpdateClause*> updates;
 };
+
+//===--------------------------------------------------------------------===//
+// PhysicalHashGroupBy
+//===--------------------------------------------------------------------===//
+class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
+ public:
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
+  expression::AbstractExpression *having;
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalSortGroupBy
+//===--------------------------------------------------------------------===//
+class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
+ public:
+  static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
+      expression::AbstractExpression *having);
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
+  expression::AbstractExpression *having;
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalAggregate
+//===--------------------------------------------------------------------===//
+class PhysicalAggregate : public OperatorNode<PhysicalAggregate> {
+ public:
+  static Operator make();
+};
+
+class PhysicalDistinct : public OperatorNode<PhysicalDistinct> {
+ public:
+  static Operator make();
+};
+
 } /* namespace optimizer */
 } /* namespace peloton */

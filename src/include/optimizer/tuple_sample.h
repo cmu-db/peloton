@@ -14,7 +14,6 @@
 
 #include "optimizer/column.h"
 #include "storage/tile_group.h"
-#include "optimizer/util.h"
 
 #include <vector>
 

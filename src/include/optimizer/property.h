@@ -15,19 +15,12 @@
 #include <typeinfo>
 
 #include "common/logger.h"
-#include "optimizer/util.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace optimizer {
 
 class PropertyVisitor;
-
-enum class PropertyType {
-  SORT,
-  COLUMNS,
-  PREDICATE,
-  PROJECT,
-};
 
 /*
  * Physical properties are those fields that can be directly added to the plan,
@@ -51,6 +44,8 @@ class Property {
   virtual bool operator>=(const Property &r) const;
 
   virtual void Accept(PropertyVisitor *v) const = 0;
+
+  virtual std::string ToString() const;
 
   template <typename T>
   const T *As() const {

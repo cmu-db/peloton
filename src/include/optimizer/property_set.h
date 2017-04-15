@@ -13,7 +13,6 @@
 #pragma once
 
 #include "optimizer/property.h"
-#include "optimizer/util.h"
 
 #include <memory>
 #include <vector>
@@ -30,6 +29,8 @@ class PropertySet {
 
   void AddProperty(std::shared_ptr<Property> property);
 
+  void RemoveProperty(PropertyType type);
+
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
   hash_t Hash() const;
@@ -40,6 +41,8 @@ class PropertySet {
   bool operator>=(const PropertySet &r) const;
 
   bool operator==(const PropertySet &r) const;
+
+  std::string ToString() const;
 
  private:
   std::vector<std::shared_ptr<Property>> properties_;
