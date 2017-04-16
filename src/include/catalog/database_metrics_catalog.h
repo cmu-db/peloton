@@ -40,8 +40,6 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   static DatabaseMetricsCatalog *GetInstance(
       concurrency::Transaction *txn = nullptr);
 
-  inline oid_t GetNextOid() { return INVALID_OID; }
-
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
@@ -67,8 +65,6 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
 
  private:
   DatabaseMetricsCatalog(concurrency::Transaction *txn);
-
-  std::unique_ptr<catalog::Schema> InitializeSchema();
 
   enum IndexId {
     PRIMARY_KEY = 0,

@@ -26,43 +26,18 @@ DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
 }
 
 DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::Transaction *txn)
-    : AbstractCatalog(DATABASE_METRICS_CATALOG_NAME,
-                      InitializeSchema().release(), txn) {
+    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
+                      "." DATABASE_METRICS_CATALOG_NAME
+                      " ("
+                      "database_oid  INT NOT NULL PRIMARY KEY, "
+                      "txn_committed INT NOT NULL, "
+                      "txn_aborted   INT NOT NULL, "
+                      "time_stamp    INT NOT NULL);",
+                      txn) {
   // Add secondary index here if necessary
 }
 
 DatabaseMetricsCatalog::~DatabaseMetricsCatalog() {}
-
-// initialize schema for pg_databse_metrics
-std::unique_ptr<catalog::Schema> DatabaseMetricsCatalog::InitializeSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
-                                          not_null_constraint_name);
-  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  type::Type::TypeId integer_type = type::Type::INTEGER;
-
-  auto id_column =
-      catalog::Column(integer_type, integer_type_size, "database_oid", true);
-  id_column.AddConstraint(not_null_constraint);
-  id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
-
-  auto txn_committed_column =
-      catalog::Column(integer_type, integer_type_size, "txn_committed", true);
-  txn_committed_column.AddConstraint(not_null_constraint);
-
-  auto txn_aborted_column =
-      catalog::Column(integer_type, integer_type_size, "txn_aborted", true);
-  txn_aborted_column.AddConstraint(not_null_constraint);
-
-  auto timestamp_column =
-      catalog::Column(integer_type, integer_type_size, "time_stamp", true);
-  timestamp_column.AddConstraint(not_null_constraint);
-
-  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(
-      {id_column, txn_committed_column, txn_aborted_column, timestamp_column}));
-  return schema;
-}
 
 bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
     oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,

@@ -56,7 +56,7 @@ class AbstractCatalog {
                   concurrency::Transaction *txn);
 
   // Construct catalog_table_ schema
-  virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
+  // virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
 
   //===--------------------------------------------------------------------===//
   // Helper Functions
