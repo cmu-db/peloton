@@ -18,19 +18,16 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
-    storage::Database *pg_catalog, type::AbstractPool *pool) {
+DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(concurrency::Transaction *txn) {
   static std::unique_ptr<DatabaseMetricsCatalog> database_metrics_catalog(
-      new DatabaseMetricsCatalog(pg_catalog, pool));
+      new DatabaseMetricsCatalog(txn));
 
   return database_metrics_catalog.get();
 }
 
-DatabaseMetricsCatalog::DatabaseMetricsCatalog(
-    UNUSED_ATTRIBUTE storage::Database *pg_catalog,
-    UNUSED_ATTRIBUTE type::AbstractPool *pool)
+DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::Transaction *txn)
     : AbstractCatalog(DATABASE_METRICS_CATALOG_NAME,
-                      InitializeSchema().release()) {
+                      InitializeSchema().release(), txn) {
   // Add secondary index here if necessary
 }
 

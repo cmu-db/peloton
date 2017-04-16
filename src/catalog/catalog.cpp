@@ -134,6 +134,7 @@ void Catalog::Bootstrap() {
   auto txn = txn_manager.BeginTransaction();
 
   QueryMetricsCatalog::GetInstance(txn);
+  DatabaseMetricsCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
 }

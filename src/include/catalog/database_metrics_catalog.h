@@ -37,9 +37,7 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   ~DatabaseMetricsCatalog();
 
   // Global Singleton
-  static DatabaseMetricsCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr);
+  static DatabaseMetricsCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -66,8 +64,7 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  DatabaseMetricsCatalog(storage::Database *pg_catalog,
-                         type::AbstractPool *pool);
+  DatabaseMetricsCatalog(concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
