@@ -95,7 +95,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   QueryMetricsCatalog(concurrency::Transaction *txn);
 
   enum IndexId {
-    PRIMARY_KEY = 0,
+    SECONDARY_KEY_0 = 0,
     // Add new indexes here in creation order
   };
 };

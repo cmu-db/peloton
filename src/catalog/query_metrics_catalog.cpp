@@ -29,8 +29,8 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." QUERY_METRICS_CATALOG_NAME
                       " ("
-                      "query_name   VARCHAR NOT NULL PRIMARY KEY, "
-                      "database_oid INT NOT NULL PRIMARY KEY, "
+                      "query_name   VARCHAR NOT NULL, "
+                      "database_oid INT NOT NULL, "
                       "num_params   INT NOT NULL, "
                       "param_types    VARBINARY, "
                       "param_formats  VARBINARY, "
@@ -44,6 +44,10 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
                       "time_stamp INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
+  catalog::Catalog::GetInstance()->CreateIndex(
+      CATALOG_DATABASE_NAME, QUERY_METRICS_CATALOG_NAME,
+      {"query_name", "database_oid"}, QUERY_METRICS_CATALOG_NAME "_skey0",
+      false, IndexType::BWTREE, txn);
 }
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
@@ -107,7 +111,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
                                              oid_t database_oid,
                                              concurrency::Transaction *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
+  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -120,7 +124,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
     const std::string &name, oid_t database_oid,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
-  oid_t index_offset = IndexId::PRIMARY_KEY;               // Primary key index
+  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -147,7 +151,7 @@ int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
                                           oid_t database_oid,
                                           concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
-  oid_t index_offset = IndexId::PRIMARY_KEY;              // Primary key index
+  oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
