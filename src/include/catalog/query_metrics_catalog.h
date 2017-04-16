@@ -46,9 +46,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   ~QueryMetricsCatalog();
 
   // Global Singleton
-  static QueryMetricsCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr);
+  static QueryMetricsCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   inline oid_t GetNextOid() { return INVALID_OID; }
 
@@ -95,7 +93,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  QueryMetricsCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  QueryMetricsCatalog(concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

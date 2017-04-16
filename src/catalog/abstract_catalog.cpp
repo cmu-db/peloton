@@ -30,18 +30,14 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 }
 
 AbstractCatalog::AbstractCatalog(std::string catalog_table_name,
-                                 catalog::Schema *catalog_table_schema) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
+                                 catalog::Schema *catalog_table_schema,
+                                 concurrency::Transaction *txn) {
   // create catalog table
   Catalog::GetInstance()->CreateTable(
       CATALOG_DATABASE_NAME, catalog_table_name,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
   oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
       catalog_table_name, CATALOG_DATABASE_OID, txn);
-
-  txn_manager.CommitTransaction(txn);
 
   // set catalog_table_
   catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,

@@ -38,7 +38,7 @@ namespace catalog {
 #define DATABASE_METRICS_CATALOG_NAME "pg_databse_metrics"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
-#define OID_OFFSET 1000
+#define OID_OFFSET 100
 
 // Oid mask for each type
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))

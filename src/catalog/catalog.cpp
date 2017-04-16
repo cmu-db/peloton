@@ -38,16 +38,6 @@ Catalog *Catalog::GetInstance(void) {
 * 3) insert pg_catalog into pg_database, catalog tables into pg_table
 */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
-  InitializeCatalog();
-
-  // Create metrics table in default database
-  // TODO: stats?
-  CreateMetricsCatalog();
-
-  InitializeFunctions();
-}
-
-void Catalog::InitializeCatalog() {
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
@@ -130,6 +120,21 @@ void Catalog::InitializeCatalog() {
                         CATALOG_DATABASE_OID, pool_.get(), txn);
 
   // Commit transaction
+  txn_manager.CommitTransaction(txn);
+
+//  // Create metrics table in default database
+//  // TODO: stats?
+//  CreateMetricsCatalog();
+//
+//  InitializeFunctions();
+}
+
+void Catalog::Bootstrap() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  QueryMetricsCatalog::GetInstance(txn);
+
   txn_manager.CommitTransaction(txn);
 }
 
