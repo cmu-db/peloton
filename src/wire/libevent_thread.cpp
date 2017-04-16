@@ -74,6 +74,9 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   worker_thread->is_closed = false;
+  if (worker_thread->sock_fd != -1) {
+    event_free(LibeventServer::GetConn(worker_thread->sock_fd)->event);
+  }
   event_free(worker_thread->new_conn_event_);
   event_free(worker_thread->ev_timeout);
   event_base_free(worker_thread->GetEventBase());
