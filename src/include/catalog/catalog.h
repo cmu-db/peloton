@@ -13,7 +13,6 @@
 #pragma once
 
 #include "catalog/catalog_defaults.h"
-#include "catalog/catalog_util.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
@@ -26,11 +25,6 @@
 #include "type/abstract_pool.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
-
-// #define DATABASE_METRIC_NAME "database_metric"
-//#define TABLE_METRIC_NAME "table_metric"
-//#define INDEX_METRIC_NAME "index_metric"
-// #define QUERY_METRIC_NAME "query_metric"
 
 namespace peloton {
 
@@ -188,29 +182,6 @@ class Catalog {
 
   // Get the number of databases currently in the catalog
   oid_t GetDatabaseCount();
-
-  //===--------------------------------------------------------------------===//
-  // METRIC
-  //===--------------------------------------------------------------------===//
-
-  // Creates the metric tables for statistics
-  void CreateMetricsCatalog();
-
-  // Create Table for metrics tables
-  std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
-      oid_t database_id, std::string table_name);
-
-  // Initialize the schema of the database metrics table
-  std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
-
-  // Initialize the schema of the table metrics table
-  std::unique_ptr<Schema> InitializeTableMetricsSchema();
-
-  // Initialize the schema of the index metrics table
-  std::unique_ptr<Schema> InitializeIndexMetricsSchema();
-
-  // Initialize the schema of the query metrics table
-  // std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
 
   //===--------------------------------------------------------------------===//
   // USER DEFINE FUNCTION
