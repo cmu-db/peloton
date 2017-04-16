@@ -80,6 +80,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       child_plan = std::move(child_DropPlan);
     } break;
 
+    case StatementType::CREATE_FUNC: {
+      LOG_TRACE("Adding Create function plan...");
+      auto create_func_plan =
+          new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)parse_tree2);
+      std::unique_ptr<planner::AbstractPlan> child_CreateFuncPlan(create_plan);
+      child_plan = std::move(child_CreateFuncPlan);
+    } break;
+
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
 
