@@ -75,14 +75,14 @@ static void *SimpleQueryTest(void *) {
 /**
  * named prepare statement test
  */
-/*
+
 static void *PrepareStatementTest(void *) {
   try {
     pqxx::connection C(
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work W(C);
-
+    
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -94,8 +94,9 @@ static void *PrepareStatementTest(void *) {
     C.prepare("searchstmt","SELECT name FROM employee WHERE id=1;");
     // invocation as in variable binding
     pqxx::result R = W.prepared("searchstmt").exec();
+    
     W.commit();
-    LOG_INFO("Prepare statement search result:%lu",R.size());
+    // LOG_INFO("Prepare statement search result:%lu",R.size());
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred");
   }
@@ -103,7 +104,7 @@ static void *PrepareStatementTest(void *) {
   LOG_INFO("[PrepareStatementTest] Client has closed");
   return NULL;
 }
-*/
+
 /**
  * Use std::thread to initiate peloton server and pqxx client in separate
  * threads
@@ -133,24 +134,24 @@ TEST_F(PacketManagerTests, SimpleQueryTest) {
   LOG_INFO("Peloton has shut down\n");
 }
 
-// TEST_F(PacketManagerTests, PrepareStatementTest) {
-//  peloton::PelotonInit::Initialize();
-//  LOG_INFO("Server initialized");
-//  peloton::wire::LibeventServer libeventserver;
-//  std::thread serverThread(LaunchServer, libeventserver);
-//  while (!libeventserver.is_started) {
-//    sleep(1);
-//  }
-//
-//  PrepareStatementTest(NULL);
-////  SimpleQueryTest(NULL);
-//
-//  libeventserver.CloseServer();
-//  serverThread.join();
-//  LOG_INFO("Thread has joined");
-//  peloton::PelotonInit::Shutdown();
-//  LOG_INFO("Peloton has shut down\n");
-//}
+TEST_F(PacketManagerTests, PrepareStatementTest) {
+  peloton::PelotonInit::Initialize();
+  LOG_INFO("Server initialized");
+  peloton::wire::LibeventServer libeventserver;
+  std::thread serverThread(LaunchServer, libeventserver);
+  while (!libeventserver.is_started) {
+    sleep(1);
+  }
+
+  PrepareStatementTest(NULL);
+//  SimpleQueryTest(NULL);
+
+  libeventserver.CloseServer();
+  serverThread.join();
+  LOG_INFO("Thread has joined");
+  peloton::PelotonInit::Shutdown();
+  LOG_INFO("Peloton has shut down\n");
+}
 
 }  // End test namespace
 }  // End peloton namespace
