@@ -20,113 +20,86 @@
 namespace peloton {
 namespace parser {
 
-  struct Parameter {
+struct Parameter {
 
-
-
-    enum FuncParamMode {
-
-      FUNC_PARAM_IN = 'i',		/* input only */
-      FUNC_PARAM_OUT = 'o',		/* output only */
-      FUNC_PARAM_INOUT = 'b',		/* both */
-      FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
-      FUNC_PARAM_TABLE = 't'	
-
-    };
-
-
-    enum DataType {
-      INT,
-      INTEGER,
-      TINYINT,
-      SMALLINT,
-      BIGINT,
-      VARCHAR,
-      TEXT,
-      BOOL,
-      BOOLEAN
-    };
-
-    Parameter(DataType type): type(type) {};	
-
-   
-    virtual ~Parameter(){
-      //delete name
-      // delete type? 	 		
-    }	
-
-    DataType type; 
-    FuncParamMode mode;
-
-    static type::Type::TypeId GetValueType(DataType type) {
-      switch (type) {
-        case INT:
-        case INTEGER:
-          return type::Type::INTEGER;
-          break;
-
-        case TINYINT:
-          return type::Type::TINYINT;
-          break;
-        case SMALLINT:
-          return type::Type::SMALLINT;
-          break;
-        case BIGINT:
-          return type::Type::BIGINT;
-          break;
-        case TEXT:
-        case VARCHAR:
-          return type::Type::VARCHAR;
-          break;
-        case BOOL:
-        case BOOLEAN:
-          return type::Type::BOOLEAN;
-          break;
-          // add other types as necessary 
-      }
-    }	
-
-
+  enum FuncParamMode {
+    FUNC_PARAM_IN = 'i',		/* input only */
+    FUNC_PARAM_OUT = 'o',		/* output only */
+    FUNC_PARAM_INOUT = 'b',		/* both */
+    FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
+    FUNC_PARAM_TABLE = 't'	
   };
 
-struct ReturnType : Parameter {
-  
+  enum DataType {
+    INT,
+    INTEGER,
+    TINYINT,
+    SMALLINT,
+    BIGINT,
+    VARCHAR,
+    TEXT,
+    BOOL,
+    BOOLEAN
+  };
+
+  Parameter(DataType type): type(type) {};	
+
+  virtual ~Parameter(){
+    //delete name
+    // delete type? 	 		
+  }	
+
+  DataType type; 
+  FuncParamMode mode;
+
+  static type::Type::TypeId GetValueType(DataType type) {
+    switch (type) {
+      case INT:
+      case INTEGER:
+        return type::Type::INTEGER;
+        break;
+      case TINYINT:
+        return type::Type::TINYINT;
+        break;
+      case SMALLINT:
+        return type::Type::SMALLINT;
+        break;
+      case BIGINT:
+        return type::Type::BIGINT;
+        break;
+      case TEXT:
+      case VARCHAR:
+        return type::Type::VARCHAR;
+        break;
+      case BOOL:
+      case BOOLEAN:
+        return type::Type::BOOLEAN;
+        break;
+        // add other types as necessary 
+    }
+  }	
+};
+
+struct ReturnType : Parameter { 
   ReturnType(DataType type):Parameter(type){};
   virtual ~ReturnType(){}
- 
 };
 
 struct FuncParameter : Parameter {
   std::string name;
   FuncParameter(std::string name, DataType type):Parameter(type),name(name){};
- 
   virtual ~FuncParameter(){}
-
 };
-
-//move it to types.h
-enum PLType {
-	
-   PL_PGSQL=0,
-   PL_C=1
-	
-};
-
 
 //might want to change it to char* instead of string
 struct CreateFunctionStatement : public SQLStatement {
-
   enum ASclause {
-
     EXECUTABLE=0,
     QUERY_STRING=1	  	
-
   };
 
-
-  CreateFunctionStatement()
-    :SQLStatement(StatementType::CREATE_FUNC){
-    }; 
+  CreateFunctionStatement() :SQLStatement(StatementType::CREATE_FUNC){
+  }; 
 
   virtual ~CreateFunctionStatement() {
     //insert delete code for attributes later 
@@ -150,7 +123,6 @@ struct CreateFunctionStatement : public SQLStatement {
     else
       as_type = QUERY_STRING;
   }
-
 };
 
 }  // End parser namespace
