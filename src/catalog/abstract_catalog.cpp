@@ -12,6 +12,10 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog.h"
+#include "planner/create_plan.h"
+#include "optimizer/simple_optimizer.h"
+#include "parser/postgresparser.h"
+#include "common/statement.h"
 
 namespace peloton {
 namespace catalog {
@@ -36,6 +40,31 @@ AbstractCatalog::AbstractCatalog(std::string catalog_table_name,
   Catalog::GetInstance()->CreateTable(
       CATALOG_DATABASE_NAME, catalog_table_name,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
+  oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
+      catalog_table_name, CATALOG_DATABASE_OID, txn);
+
+  // set catalog_table_
+  catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
+                                                           catalog_table_oid);
+}
+
+AbstractCatalog::AbstractCatalog(const std::string &catalog_table_name,
+                                 const std::string &catalog_table_ddl,
+                                 concurrency::Transaction *txn) {
+  // get catalog table schema
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  // optimizer::SimpleOptimizer optimizer;
+  auto create_stmt = peloton_parser.BuildParseTree(catalog_table_ddl);
+  auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
+      optimizer::SimpleOptimizer().BuildPelotonPlanTree(create_stmt));
+  auto catalog_table_schema = create_plan->GetSchema();
+
+  // create catalog table
+  Catalog::GetInstance()->CreateTable(
+      CATALOG_DATABASE_NAME, catalog_table_name,
+      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
+
+  // get catalog table oid
   oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
       catalog_table_name, CATALOG_DATABASE_OID, txn);
 

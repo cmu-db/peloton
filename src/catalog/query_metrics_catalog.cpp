@@ -26,7 +26,22 @@ QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
 }
 
 QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
-    : AbstractCatalog(QUERY_METRICS_CATALOG_NAME, InitializeSchema().release(),
+    : AbstractCatalog(QUERY_METRICS_CATALOG_NAME,
+                      "CREATE TABLE " CATALOG_DATABASE_NAME
+                      "." QUERY_METRICS_CATALOG_NAME
+                      " ("
+                      "query_name   VARCHAR NOT NULL PRIMARY KEY, "
+                      "database_oid INT NOT NULL PRIMARY KEY, "
+                      "num_params   INT NOT NULL, "
+                      "param_types    VARBINARY, "
+                      "param_formats  VARBINARY, "
+                      "param_values   VARBINARY, "
+                      "reads    INT NOT NULL, "
+                      "updates  INT NOT NULL, "
+                      "deletes  INT NOT NULL, "
+                      "inserts  INT NOT NULL, "
+                      "latency  INT NOT NULL, "
+                      "cpu_time INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
