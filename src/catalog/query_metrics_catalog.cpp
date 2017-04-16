@@ -47,74 +47,6 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
 
-/*@brief   private function for initialize schema of pg_query_metrics
-* @return  unqiue pointer to schema
-*/
-std::unique_ptr<catalog::Schema> QueryMetricsCatalog::InitializeSchema() {
-  // convenience variables
-  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL, "not_null");
-  auto integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  auto varchar_type_size = type::Type::GetTypeSize(type::Type::VARCHAR);
-  auto varbinary_type_size = type::Type::GetTypeSize(type::Type::VARBINARY);
-
-  // Add columns
-  // Primary keys
-  auto name_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-                                     "query_name", false);
-  name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
-  name_column.AddConstraint(not_null_constraint);
-  auto database_oid_column = catalog::Column(
-      type::Type::INTEGER, integer_type_size, "database_oid", true);
-  database_oid_column.AddConstraint(
-      catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
-  database_oid_column.AddConstraint(not_null_constraint);
-
-  // Parameters
-  auto num_params_column = catalog::Column(
-      type::Type::INTEGER, integer_type_size, "num_params", true);
-  num_params_column.AddConstraint(not_null_constraint);
-  // For varbinary types, we don't want to inline it since it could be large
-  auto param_types_column = catalog::Column(
-      type::Type::VARBINARY, varbinary_type_size, "param_types", false);
-  auto param_formats_column = catalog::Column(
-      type::Type::VARBINARY, varbinary_type_size, "param_formats", false);
-  auto param_values_column = catalog::Column(
-      type::Type::VARBINARY, varbinary_type_size, "param_values", false);
-
-  // Physical statistics
-  auto reads_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "reads", true);
-  reads_column.AddConstraint(not_null_constraint);
-  auto updates_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "updates", true);
-  updates_column.AddConstraint(not_null_constraint);
-  auto deletes_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "deletes", true);
-  deletes_column.AddConstraint(not_null_constraint);
-  auto inserts_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "inserts", true);
-  inserts_column.AddConstraint(not_null_constraint);
-  auto latency_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "latency", true);
-  latency_column.AddConstraint(not_null_constraint);
-  auto cpu_time_column =
-      catalog::Column(type::Type::INTEGER, integer_type_size, "cpu_time", true);
-
-  // MAX_INT only tracks the number of seconds since epoch until 2037
-  auto timestamp_column = catalog::Column(
-      type::Type::INTEGER, integer_type_size, "time_stamp", true);
-  timestamp_column.AddConstraint(not_null_constraint);
-
-  std::unique_ptr<catalog::Schema> query_metrics_catalog_schema(
-      new catalog::Schema({name_column, database_oid_column, num_params_column,
-                           param_types_column, param_formats_column,
-                           param_values_column, reads_column, updates_column,
-                           deletes_column, inserts_column, latency_column,
-                           cpu_time_column, timestamp_column}));
-  return query_metrics_catalog_schema;
-}
-
 bool QueryMetricsCatalog::InsertQueryMetrics(
     const std::string &name, oid_t database_oid, int64_t num_params,
     const stats::QueryMetric::QueryParamBuf &type_buf,
@@ -200,7 +132,8 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       auto param_types_value = (*result_tiles)[0]->GetValue(0, 0);
-      param_types.buf = param_types_value.GetData();
+      param_types.buf = const_cast<uchar *>(
+          reinterpret_cast<const uchar *>(param_types_value.GetData()));
       param_types.len = param_types_value.GetLength();
     }
   }
