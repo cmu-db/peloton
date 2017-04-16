@@ -115,6 +115,45 @@ static void *PrepareStatementTest(void *) {
 }
 
 /**
+ * rollback test
+ */
+static void *RollbackTest(void *) {
+  try {
+    pqxx::connection C(
+        "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
+    LOG_INFO("[RollbackTest] Connected to %s", C.dbname());
+    pqxx::work W(C);
+
+    peloton::wire::LibeventSocket *conn =
+        peloton::wire::LibeventServer::GetConn(
+            peloton::wire::LibeventServer::recent_connfd);
+
+    EXPECT_EQ(conn->pkt_manager.is_started, true);
+    EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
+    // create table and insert some data
+    W.exec("DROP TABLE IF EXISTS employee;");
+    W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
+    w.abort();
+
+    // W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    // W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    // W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+
+    pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
+
+    EXPECT_EQ(R.size(), 1);
+    LOG_INFO("[RollbackTest] Found %lu employees", R.size());
+    W.commit();
+  } catch (const std::exception &e) {
+    LOG_INFO("[RollbackTest] Exception occurred");
+  }
+
+  LOG_INFO("[RollbackTest] Client has closed");
+  return NULL;
+}
+
+
+/**
  * Use std::thread to initiate peloton server and pqxx client in separate
  * threads
  * Simple query test to guarantee both sides run correctly
@@ -153,6 +192,25 @@ TEST_F(PacketManagerTests, PrepareStatementTest) {
   }
 
   PrepareStatementTest(NULL);
+
+  libeventserver.CloseServer();
+  serverThread.join();
+  LOG_INFO("Thread has joined");
+  peloton::PelotonInit::Shutdown();
+  LOG_INFO("Peloton has shut down\n");
+}
+
+
+TEST_F(PacketManagerTests, RollbackTest) {
+  peloton::PelotonInit::Initialize();
+  LOG_INFO("Server initialized");
+  peloton::wire::LibeventServer libeventserver;
+  std::thread serverThread(LaunchServer, libeventserver);
+  while (!libeventserver.is_started) {
+    sleep(1);
+  }
+
+  RollbackTest(NULL);
 
   libeventserver.CloseServer();
   serverThread.join();
