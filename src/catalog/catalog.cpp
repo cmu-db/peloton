@@ -14,13 +14,13 @@
 #include <iostream>
 
 #include "catalog/manager.h"
+#include "catalog/query_metrics_catalog.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include "expression/date_functions.h"
 #include "expression/string_functions.h"
 #include "index/index_factory.h"
 #include "util/string_util.h"
-#include "catalog/query_metrics_catalog.h"
 
 namespace peloton {
 namespace catalog {
@@ -362,8 +362,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  LOG_TRACE("Trying to create index %s for table %s",
-            index_name.c_str(), table_name.c_str());
+  LOG_TRACE("Trying to create index %s for table %s", index_name.c_str(),
+            table_name.c_str());
 
   oid_t database_oid =
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
@@ -874,11 +874,12 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   catalog::Schema *schema = nullptr;
   // if (table_name == QUERY_METRIC_NAME) {
   //   schema = InitializeQueryMetricsSchema().release();
-  // } else
+  //}
+  // else if (table_name == DATABASE_METRIC_NAME) {
+  //   schema = InitializeDatabaseMetricsSchema().release();
+  // }
   if (table_name == TABLE_METRIC_NAME) {
     schema = InitializeTableMetricsSchema().release();
-  } else if (table_name == DATABASE_METRIC_NAME) {
-    schema = InitializeDatabaseMetricsSchema().release();
   } else if (table_name == INDEX_METRIC_NAME) {
     schema = InitializeIndexMetricsSchema().release();
   }
@@ -891,31 +892,33 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   return table;
 }
 
-std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
-                                          not_null_constraint_name);
-  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  type::Type::TypeId integer_type = type::Type::INTEGER;
-
-  auto id_column =
-      catalog::Column(integer_type, integer_type_size, "database_id", true);
-  id_column.AddConstraint(not_null_constraint);
-  auto txn_committed_column =
-      catalog::Column(integer_type, integer_type_size, "txn_committed", true);
-  txn_committed_column.AddConstraint(not_null_constraint);
-  auto txn_aborted_column =
-      catalog::Column(integer_type, integer_type_size, "txn_aborted", true);
-  txn_aborted_column.AddConstraint(not_null_constraint);
-
-  auto timestamp_column =
-      catalog::Column(integer_type, integer_type_size, "time_stamp", true);
-  timestamp_column.AddConstraint(not_null_constraint);
-
-  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {id_column, txn_committed_column, txn_aborted_column, timestamp_column}));
-  return database_schema;
-}
+// std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
+//   const std::string not_null_constraint_name = "not_null";
+//   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
+//                                           not_null_constraint_name);
+//   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+//   type::Type::TypeId integer_type = type::Type::INTEGER;
+//
+//   auto id_column =
+//       catalog::Column(integer_type, integer_type_size, "database_id", true);
+//   id_column.AddConstraint(not_null_constraint);
+//   auto txn_committed_column =
+//       catalog::Column(integer_type, integer_type_size, "txn_committed",
+//       true);
+//   txn_committed_column.AddConstraint(not_null_constraint);
+//   auto txn_aborted_column =
+//       catalog::Column(integer_type, integer_type_size, "txn_aborted", true);
+//   txn_aborted_column.AddConstraint(not_null_constraint);
+//
+//   auto timestamp_column =
+//       catalog::Column(integer_type, integer_type_size, "time_stamp", true);
+//   timestamp_column.AddConstraint(not_null_constraint);
+//
+//   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+//       {id_column, txn_committed_column, txn_aborted_column,
+//       timestamp_column}));
+//   return database_schema;
+// }
 
 std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";

@@ -36,7 +36,7 @@ DatabaseMetricsCatalog::DatabaseMetricsCatalog(
 
 DatabaseMetricsCatalog::~DatabaseMetricsCatalog() {}
 
-// initialize schema for your own table
+// initialize schema for pg_databse_metrics
 std::unique_ptr<catalog::Schema> Catalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,

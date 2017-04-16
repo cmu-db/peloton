@@ -32,7 +32,7 @@
 namespace peloton {
 namespace catalog {
 
-class DatabaseMetricsCatalog : public DatabaseMetricsCatalog {
+class DatabaseMetricsCatalog : public AbstractCatalog {
  public:
   ~DatabaseMetricsCatalog();
 
