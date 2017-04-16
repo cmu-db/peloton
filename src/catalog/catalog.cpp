@@ -13,6 +13,7 @@
 
 #include <iostream>
 
+#include "catalog/database_metrics_catalog.h"
 #include "catalog/manager.h"
 #include "catalog/query_metrics_catalog.h"
 #include "common/exception.h"
@@ -122,19 +123,19 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Commit transaction
   txn_manager.CommitTransaction(txn);
 
-//  // Create metrics table in default database
-//  // TODO: stats?
-//  CreateMetricsCatalog();
-//
-//  InitializeFunctions();
+  //  // Create metrics table in default database
+  //  // TODO: stats?
+  //  CreateMetricsCatalog();
+  //
+  //  InitializeFunctions();
 }
 
 void Catalog::Bootstrap() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  QueryMetricsCatalog::GetInstance(txn);
   DatabaseMetricsCatalog::GetInstance(txn);
+  QueryMetricsCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -849,9 +850,9 @@ void Catalog::CreateMetricsCatalog() {
   auto default_db_oid = default_db->GetOid();
 
   // Create table for database metrics
-  auto database_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, DATABASE_METRIC_NAME);
-  default_db->AddTable(database_metrics_catalog.release(), true);
+  // auto database_metrics_catalog =
+  //     CreateMetricsCatalog(default_db_oid, DATABASE_METRIC_NAME);
+  // default_db->AddTable(database_metrics_catalog.release(), true);
 
   // Create table for index metrics
   auto index_metrics_catalog =
