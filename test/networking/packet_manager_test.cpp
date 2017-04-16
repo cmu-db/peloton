@@ -73,7 +73,8 @@ static void *SimpleQueryTest(void *) {
 }
 
 /**
- * named prepare statement test
+ * named prepare statement without parameters
+ * TODO: add prepare's parameters when parser team fix the bug
  */
 
 static void *PrepareStatementTest(void *) {
@@ -83,6 +84,10 @@ static void *PrepareStatementTest(void *) {
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work W(C);
     
+    peloton::wire::LibeventSocket *conn =
+        peloton::wire::LibeventServer::GetConn(
+            peloton::wire::LibeventServer::recent_connfd);
+
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -94,9 +99,13 @@ static void *PrepareStatementTest(void *) {
     C.prepare("searchstmt","SELECT name FROM employee WHERE id=1;");
     // invocation as in variable binding
     pqxx::result R = W.prepared("searchstmt").exec();
-    
     W.commit();
-    // LOG_INFO("Prepare statement search result:%lu",R.size());
+
+    // test prepared statement already in statement cache
+//    LOG_INFO("[Prepare statement cache] %d",conn->pkt_manager.ExistCachedStatement("searchstmt"));
+    EXPECT_TRUE(conn->pkt_manager.ExistCachedStatement("searchstmt"));
+
+    LOG_INFO("Prepare statement search result:%lu",R.size());
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred");
   }
@@ -144,7 +153,6 @@ TEST_F(PacketManagerTests, PrepareStatementTest) {
   }
 
   PrepareStatementTest(NULL);
-//  SimpleQueryTest(NULL);
 
   libeventserver.CloseServer();
   serverThread.join();
