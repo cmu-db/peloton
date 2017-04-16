@@ -23,7 +23,7 @@ class CreateFunctionStatement;
 namespace planner {
 class CreateFunctionPlan : public AbstractPlan {
   public:
-  CreateFunctionPlan() = delete;
+  CreateFunctionPlan();
   CreateFunctionPlan(const CreateFunctionPlan &) = delete;
   CreateFunctionPlan &operator=(const CreateFunctionPlan &) = delete;
   CreateFunctionPlan(CreateFunctionPlan &&) = delete;
@@ -48,7 +48,7 @@ class CreateFunctionPlan : public AbstractPlan {
 
   std::string GetFunctionName() const { return function_name; }
 
-  std::PLType GetUDFLanguage() const { return language; }
+  PLType GetUDFLanguage() const { return language; }
 
   std::string GetFunctionBody() const { return function_body; }
 
