@@ -32,6 +32,9 @@ namespace catalog {
 #define TABLE_CATALOG_NAME "pg_table"
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
+
+// Exemplar catalog table
+#define QUERY_METRICS_CATALOG_NAME "pg_query"
 #define FUNCTION_CATALOG_NAME "pg_proc"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
@@ -66,7 +69,6 @@ namespace catalog {
 
 #define FUNCTION_CATALOG_PKEY_OID (6 | INDEX_OID_MASK)
 #define FUNCTION_CATALOG_SKEY0_OID (7 | INDEX_OID_MASK)
-#define FUNCTION_CATALOG_SKEY1_OID (8 | INDEX_OID_MASK)
 
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24
