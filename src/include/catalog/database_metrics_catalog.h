@@ -37,22 +37,24 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   ~DatabaseMetricsCatalog();
 
   // Global Singleton
-  static DatabaseMetricsCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static DatabaseMetricsCatalog *GetInstance(
+      concurrency::Transaction *txn = nullptr);
+
+  inline oid_t GetNextOid() { return INVALID_OID; }
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
-      oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,
-      oid_t time_stamp, concurrency::Transaction *txn);
-  bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
-      oid_t database_oid, concurrency::Transaction *txn);
+  bool InsertDatabaseMetrics(oid_t database_oid, oid_t txn_committed,
+                             oid_t txn_aborted, oid_t time_stamp,
+                             type::AbstractPool *pool,
+                             concurrency::Transaction *txn);
+  bool DeleteDatabaseMetrics(oid_t database_oid, concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  oid_t DatabaseMetricsCatalog::GetTimeStamp(oid_t database_oid,
-                                             concurrency::Transaction *txn);
+  oid_t GetTimeStamp(oid_t database_oid, concurrency::Transaction *txn);
   // TODO: add more if needed
 
   enum ColumnId {

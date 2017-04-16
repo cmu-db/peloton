@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/catalog.h"
 #include "catalog/catalog_defaults.h"
 #include "common/macros.h"
 
 namespace peloton {
 namespace catalog {
 
-DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(concurrency::Transaction *txn) {
+DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
+    concurrency::Transaction *txn) {
   static std::unique_ptr<DatabaseMetricsCatalog> database_metrics_catalog(
       new DatabaseMetricsCatalog(txn));
 
@@ -34,7 +34,7 @@ DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::Transaction *txn)
 DatabaseMetricsCatalog::~DatabaseMetricsCatalog() {}
 
 // initialize schema for pg_databse_metrics
-std::unique_ptr<catalog::Schema> Catalog::InitializeSchema() {
+std::unique_ptr<catalog::Schema> DatabaseMetricsCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
                                           not_null_constraint_name);
@@ -66,7 +66,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeSchema() {
 
 bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
     oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,
-    oid_t time_stamp, concurrency::Transaction *txn) {
+    oid_t time_stamp, type::AbstractPool *pool, concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -112,9 +112,12 @@ oid_t DatabaseMetricsCatalog::GetTimeStamp(oid_t database_oid,
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      param_types = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
+      time_stamp = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
     }
   }
 
   return time_stamp;
 }
+
+}  // end of namespace catalog
+}  // end of namespace peloton

@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/query_metrics_catalog.h"
-#include "catalog/catalog.h"
 #include "catalog/catalog_defaults.h"
 #include "common/macros.h"
 
 namespace peloton {
 namespace catalog {
 
-QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(concurrency::Transaction *txn) {
+QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
+    concurrency::Transaction *txn) {
   static std::unique_ptr<QueryMetricsCatalog> query_metrics_catalog(
       new QueryMetricsCatalog(txn));
 
@@ -26,8 +26,8 @@ QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(concurrency::Transaction *
 }
 
 QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
-    : AbstractCatalog(QUERY_METRICS_CATALOG_NAME,
-                      InitializeSchema().release(), txn) {
+    : AbstractCatalog(QUERY_METRICS_CATALOG_NAME, InitializeSchema().release(),
+                      txn) {
   // Add secondary index here if necessary
 }
 
