@@ -39,20 +39,20 @@ Catalog *Catalog::GetInstance(void) {
 * 3) insert pg_catalog into pg_database, catalog tables into pg_table
 */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
+  // Begin transaction for catalog initialization
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
   databases_.push_back(pg_catalog);
 
   // Create catalog tables
-  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get());
-  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get());
-  IndexCatalog::GetInstance(pg_catalog, pool_.get());
+  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  IndexCatalog::GetInstance(pg_catalog, pool_.get(), txn);
   //  ColumnCatalog::GetInstance(); // Called implicitly
-
-  // begin a transaction
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
 
   // Create indexes on catalog tables, insert them into pg_index
   // note that CreateIndex() from catalog.cpp will create index on storage level

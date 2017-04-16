@@ -18,20 +18,20 @@ namespace peloton {
 namespace catalog {
 
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool) {
+                                          type::AbstractPool *pool,
+                                          concurrency::Transaction *txn) {
   static std::unique_ptr<ColumnCatalog> column_catalog(
-      new ColumnCatalog(pg_catalog, pool));
+      new ColumnCatalog(pg_catalog, pool, txn));
 
   return column_catalog.get();
 }
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
-                             type::AbstractPool *pool)
+                             type::AbstractPool *pool,
+                             concurrency::Transaction *txn)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
-  // Add indexes for pg_attribute table
-  // note that pg_index is not initialized right now, so it's impossible to
-  // insert relative records into pg_index
+  // Add indexes for pg_attribute
   AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
   AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
@@ -39,13 +39,12 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   AddIndex({0}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
 
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
+  // Insert columns into pg_attribute
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
                  column.GetOffset(), column.GetType(), column.IsInlined(),
-                 column.GetConstraints(), pool, nullptr);
+                 column.GetConstraints(), pool, txn);
     column_id++;
   }
 }

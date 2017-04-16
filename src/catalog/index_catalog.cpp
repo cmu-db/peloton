@@ -17,19 +17,20 @@ namespace peloton {
 namespace catalog {
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool) {
+                                        type::AbstractPool *pool,
+                                        concurrency::Transaction *txn) {
   static std::unique_ptr<IndexCatalog> index_catalog(
-      new IndexCatalog(pg_catalog, pool));
+      new IndexCatalog(pg_catalog, pool, txn));
 
   return index_catalog.get();
 }
 
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool)
+                           type::AbstractPool *pool
+                           concurrency::Transaction *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
-  // Add indexes for pg_attribute table
-  // note that you have to build the index first before insert tuples
+  // Add indexes for pg_index
   AddIndex({0}, INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
   AddIndex({1}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
@@ -37,16 +38,15 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
   AddIndex({2}, INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
 
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
-  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
+  // Insert columns into pg_attribute
+  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool, txn);
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
-                               pool, nullptr);
+                               pool, txn);
     column_id++;
   }
 }

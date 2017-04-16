@@ -34,9 +34,10 @@ class DatabaseCatalog : public AbstractCatalog {
  public:
   ~DatabaseCatalog();
 
-  // Global Singleton
+  // Global Singleton, only the first call requires passing parameters.
   static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                      type::AbstractPool *pool = nullptr);
+                                      type::AbstractPool *pool = nullptr,
+                                      concurrency::Transaction *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
@@ -56,7 +57,8 @@ class DatabaseCatalog : public AbstractCatalog {
                        concurrency::Transaction *txn);
 
  private:
-  DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                  concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };

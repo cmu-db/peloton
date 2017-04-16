@@ -80,13 +80,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_name,
 */
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                                   concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  if (txn == nullptr)
+    throw CatalogException("Insert tuple requires transaction");
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -95,9 +90,6 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   executor.Init();
   bool status = executor.Execute();
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
   return status;
 }
 
@@ -110,13 +102,8 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
                                           std::vector<type::Value> values,
                                           concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  if (txn == nullptr)
+    throw CatalogException("Delete tuple requires transaction");
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -152,10 +139,6 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
   delete_executor.Init();
   bool status = delete_executor.Execute();
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
   return status;
 }
 
@@ -171,13 +154,8 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
                                         concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  if (txn == nullptr)
+    throw CatalogException("Scan table requires transaction");
 
   // Index scan
   std::unique_ptr<executor::ExecutorContext> context(
@@ -210,10 +188,6 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
         index_scan_executor.GetOutput()));
   }
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
   return result_tiles;
 }
 
@@ -230,13 +204,8 @@ std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
                                       concurrency::Transaction *txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  if (txn == nullptr)
+    throw CatalogException("Scan table requires transaction");
 
   // Sequential scan
   std::unique_ptr<executor::ExecutorContext> context(
@@ -253,10 +222,6 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   while (seq_scan_executor.Execute()) {
     result_tiles->push_back(
         std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
-  }
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
   }
 
   return result_tiles;
