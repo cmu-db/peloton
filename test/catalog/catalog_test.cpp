@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/query_metrics_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
@@ -86,6 +87,17 @@ TEST_F(CatalogTests, CreatingTable) {
       2, 3, 4, 5, nullptr, txn);
   oid_t time_stamp =
       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
+
+  // inset meaningless tuple into QUERY_METRICS_CATALOG and check
+  stats::QueryMetric::QueryParamBuf param;
+  param.len = 1;
+  param.buf = new unsigned char('a');
+  catalog::QueryMetricsCatalog::GetInstance()->InsertQueryMetrics(
+      "a query", 1, 1, param, param, param, 1, 1, 1, 1, 1, 1, 1, nullptr, txn);
+  auto param1 = catalog::QueryMetricsCatalog::GetInstance()->GetParamTypes(
+      "a query", 1, txn);
+  EXPECT_EQ(param1.len, 1);
+  EXPECT_EQ(*param1.buf, 'a');
 
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
