@@ -33,27 +33,13 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
   pg_catalog->AddTable(catalog_table_, true);
 }
 
-AbstractCatalog::AbstractCatalog(std::string catalog_table_name,
-                                 catalog::Schema *catalog_table_schema,
-                                 concurrency::Transaction *txn) {
-  // create catalog table
-  Catalog::GetInstance()->CreateTable(
-      CATALOG_DATABASE_NAME, catalog_table_name,
-      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
-  oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
-      catalog_table_name, CATALOG_DATABASE_OID, txn);
-
-  // set catalog_table_
-  catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
-                                                           catalog_table_oid);
-}
-
 AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
                                  concurrency::Transaction *txn) {
   // get catalog table schema
+  // Note: This is the simplest way to get schema from ddl...
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  // optimizer::SimpleOptimizer optimizer;
   auto create_stmt = peloton_parser.BuildParseTree(catalog_table_ddl);
+  // Note 2: Currently only simple optimizer works
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::SimpleOptimizer().BuildPelotonPlanTree(create_stmt));
   auto catalog_table_schema = create_plan->GetSchema();
@@ -153,8 +139,7 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
                                         concurrency::Transaction *txn) {
-  if (txn == nullptr)
-    throw CatalogException("Scan table requires transaction");
+  if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan
   std::unique_ptr<executor::ExecutorContext> context(
@@ -203,8 +188,7 @@ std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
                                       concurrency::Transaction *txn) {
-  if (txn == nullptr)
-    throw CatalogException("Scan table requires transaction");
+  if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Sequential scan
   std::unique_ptr<executor::ExecutorContext> context(

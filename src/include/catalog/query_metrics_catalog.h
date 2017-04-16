@@ -49,8 +49,6 @@ class QueryMetricsCatalog : public AbstractCatalog {
   static QueryMetricsCatalog *GetInstance(
       concurrency::Transaction *txn = nullptr);
 
-  inline oid_t GetNextOid() { return INVALID_OID; }
-
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
