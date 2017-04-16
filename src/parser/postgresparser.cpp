@@ -654,7 +654,10 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
       result = BoolExprTransform(reinterpret_cast<BoolExpr*>(root));
       break;
     }
-    default: { LOG_ERROR("WHERE of type %d not supported yet...", root->type); }
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+        "WHERE of type %d not supported yet...", root->type));
+    }
   }
   return result;
 }
