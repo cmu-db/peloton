@@ -17,6 +17,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/table_metrics_catalog.h"
+#include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
@@ -188,8 +190,6 @@ void StatsAggregator::UpdateMetrics() {
   // Get the target table metrics table
   LOG_TRACE("Inserting stat tuples into catalog database..");
   auto catalog = catalog::Catalog::GetInstance();
-  // auto database_metrics_table =
-  // GetMetricTable(DATABASE_METRICS_CATALOG_NAME);
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
   auto time_stamp =
@@ -207,11 +207,6 @@ void StatsAggregator::UpdateMetrics() {
     auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
     auto txn_aborted = database_metric->GetTxnAborted().GetCounter();
 
-    // auto db_tuple = catalog::GetDatabaseMetricsCatalogTuple(
-    //     database_metrics_table->GetSchema(), database_oid, txn_committed,
-    //     txn_aborted, time_stamp);
-    //
-    // catalog::InsertTuple(database_metrics_table, std::move(db_tuple), txn);
     catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
         database_oid, txn_committed, txn_aborted, time_stamp, pool_.get(), txn);
     LOG_TRACE("DB Metric Tuple inserted");
@@ -229,11 +224,8 @@ void StatsAggregator::UpdateMetrics() {
 void StatsAggregator::UpdateTableMetrics(storage::Database *database,
                                          int64_t time_stamp,
                                          concurrency::Transaction *txn) {
-  // Get the target table metrics table
-  auto database_oid = database->GetOid();
-  auto table_metrics_table = GetMetricTable(TABLE_METRIC_NAME);
-
   // Update table metrics table for each of the indices
+  auto database_oid = database->GetOid();
   auto table_count = database->GetTableCount();
   for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
     auto table = database->GetTable(table_offset);
@@ -246,11 +238,9 @@ void StatsAggregator::UpdateTableMetrics(storage::Database *database,
     auto deletes = table_access.GetDeletes();
     auto inserts = table_access.GetInserts();
 
-    // Generate and insert the tuple
-    auto table_tuple = catalog::GetTableMetricsCatalogTuple(
-        table_metrics_table->GetSchema(), database_oid, table_oid, reads,
-        updates, deletes, inserts, time_stamp);
-    catalog::InsertTuple(table_metrics_table, std::move(table_tuple), txn);
+    catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
+        database_oid, table_oid, reads, updates, deletes, inserts, time_stamp,
+        pool_.get(), txn);
     LOG_TRACE("Table Metric Tuple inserted");
 
     UpdateIndexMetrics(database, table, time_stamp, txn);
@@ -261,9 +251,6 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
                                          storage::DataTable *table,
                                          int64_t time_stamp,
                                          concurrency::Transaction *txn) {
-  // Get the target index metrics table
-  auto index_metrics_table = GetMetricTable(INDEX_METRIC_NAME);
-
   // Update index metrics table for each of the indices
   auto database_oid = database->GetOid();
   auto table_oid = table->GetOid();
@@ -280,12 +267,9 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
     auto deletes = index_access.GetDeletes();
     auto inserts = index_access.GetInserts();
 
-    // Generate and insert the tuple
-    auto index_tuple = catalog::GetIndexMetricsCatalogTuple(
-        index_metrics_table->GetSchema(), database_oid, table_oid, index_oid,
-        reads, deletes, inserts, time_stamp);
-
-    catalog::InsertTuple(index_metrics_table, std::move(index_tuple), txn);
+    catalog::IndexMetricsCatalog::GetInstance()->InsertIndexMetrics(
+        database_oid, table_oid, index_oid, reads, deletes, inserts, time_stamp,
+        pool_.get(), txn);
   }
 }
 

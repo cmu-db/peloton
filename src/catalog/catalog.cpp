@@ -847,8 +847,8 @@ storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
 //===--------------------------------------------------------------------===//
 
 void Catalog::CreateMetricsCatalog() {
-  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  auto default_db_oid = default_db->GetOid();
+//  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
+//  auto default_db_oid = default_db->GetOid();
 
   // Create table for database metrics
   // auto database_metrics_catalog =
