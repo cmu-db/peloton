@@ -36,22 +36,21 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
                                  concurrency::Transaction *txn) {
   // get catalog table schema
-  // Note: This is the simplest way to get schema from ddl...
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto create_stmt = peloton_parser.BuildParseTree(catalog_table_ddl);
-  // Note 2: Currently only simple optimizer works
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
-      optimizer::SimpleOptimizer().BuildPelotonPlanTree(create_stmt));
+      optimizer::SimpleOptimizer().BuildPelotonPlanTree(
+          peloton_parser.BuildParseTree(catalog_table_ddl)));
   auto catalog_table_schema = create_plan->GetSchema();
+  auto catalog_table_name = create_plan->GetTableName();
 
   // create catalog table
   Catalog::GetInstance()->CreateTable(
-      CATALOG_DATABASE_NAME, create_plan->GetTableName(),
-      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
+      CATALOG_DATABASE_NAME, catalog_table_name,
+      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
 
   // get catalog table oid
   oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
-      create_plan->GetTableName(), CATALOG_DATABASE_OID, txn);
+      catalog_table_name, CATALOG_DATABASE_OID, txn);
 
   // set catalog_table_
   catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
