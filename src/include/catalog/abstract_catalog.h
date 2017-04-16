@@ -18,6 +18,7 @@
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
+#include "executor/seq_scan_executor.h"
 #include "executor/insert_executor.h"
 #include "expression/comparison_expression.h"
 #include "expression/constant_value_expression.h"
