@@ -18,14 +18,14 @@
 namespace peloton {
 namespace planner {
 
-CreatePlan::CreatePlan(parser::CreateFunctionStatement *parse_tree) {
+CreateFunctionPlan::CreateFunctionPlan(parser::CreateFunctionStatement *parse_tree) {
 
   language = parse_tree->language;
-  function_body(parse_tree->function_body);
-  is_replace = parse_tree->is_replace;
-  function_name(parse_tree->function_name);
+  std::string function_body(parse_tree->function_body[0]);
+  is_replace = parse_tree->replace;
+  std::string function_name(parse_tree->function_name);
 
-  for (auto col : *(parse_tree->func_parameters) {
+  for (auto col : *(parse_tree->func_parameters)) {
     //Adds the function names
     function_param_names.push_back(col->name);
 

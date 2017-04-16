@@ -21,7 +21,6 @@ namespace peloton {
 namespace parser {
 
 struct Parameter {
-
   enum FuncParamMode {
     FUNC_PARAM_IN = 'i',		/* input only */
     FUNC_PARAM_OUT = 'o',		/* output only */
@@ -75,7 +74,9 @@ struct Parameter {
       case BOOLEAN:
         return type::Type::BOOLEAN;
         break;
-        // add other types as necessary 
+      default:
+        return type::Type::INVALID;
+        break;
     }
   }	
 };
