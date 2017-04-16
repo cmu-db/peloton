@@ -94,7 +94,8 @@ class Catalog {
   ResultType CreateTable(const std::string &database_name,
                          const std::string &table_name,
                          std::unique_ptr<catalog::Schema>,
-                         concurrency::Transaction *txn);
+                         concurrency::Transaction *txn,
+                         bool is_catalog = false);
 
   // Create the primary key index for a table, don't call this function outside
   // catalog.cpp

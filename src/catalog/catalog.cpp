@@ -191,7 +191,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::Transaction *txn) {
+                                concurrency::Transaction *txn,
+                                bool is_catalog) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to create table: %s",
               table_name.c_str());
@@ -241,8 +242,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     bool adapt_table = false;
     auto table = storage::TableFactory::GetDataTable(
         database_oid, table_oid, schema.release(), table_name,
-        DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-    database->AddTable(table);
+        DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
+    database->AddTable(table, is_catalog);
 
     // Update pg_table with table info
     pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(),
