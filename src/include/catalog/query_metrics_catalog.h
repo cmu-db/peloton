@@ -96,8 +96,6 @@ class QueryMetricsCatalog : public AbstractCatalog {
  private:
   QueryMetricsCatalog(concurrency::Transaction *txn);
 
-  // std::unique_ptr<catalog::Schema> InitializeSchema();
-
   enum IndexId {
     PRIMARY_KEY = 0,
     // Add new indexes here in creation order
