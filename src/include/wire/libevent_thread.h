@@ -52,6 +52,7 @@ class LibeventThread {
  public:
   bool is_started = false;
   bool is_closed = false;
+  int sock_fd = -1;
 
   LibeventThread(const int thread_id, struct event_base *libevent_base)
       : thread_id_(thread_id), libevent_base_(libevent_base) {
