@@ -38,8 +38,6 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
-  virtual oid_t GetNextOid(void) = 0;
-
   virtual ~AbstractCatalog() {}
 
  protected:
@@ -47,16 +45,10 @@ class AbstractCatalog {
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
                   storage::Database *pg_catalog);
-  /* For other catalogs */
-  AbstractCatalog(std::string catalog_table_name,
-                  catalog::Schema *catalog_table_schema,
-                  concurrency::Transaction *txn);
 
+  /* For other catalogs */
   AbstractCatalog(const std::string &catalog_table_ddl,
                   concurrency::Transaction *txn);
-
-  // Construct catalog_table_ schema
-  // virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
 
   //===--------------------------------------------------------------------===//
   // Helper Functions
