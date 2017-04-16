@@ -40,7 +40,8 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
                       "deletes  INT NOT NULL, "
                       "inserts  INT NOT NULL, "
                       "latency  INT NOT NULL, "
-                      "cpu_time INT NOT NULL);",
+                      "cpu_time INT NOT NULL, "
+                      "time_stamp INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
@@ -55,7 +56,6 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
     int64_t updates, int64_t deletes, int64_t inserts, int64_t latency,
     int64_t cpu_time, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::Transaction *txn) {
-  LOG_DEBUG("OK, I am tested!!!");
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -87,9 +87,11 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   tuple->SetValue(ColumnId::NAME, val0, pool);
   tuple->SetValue(ColumnId::DATABASE_OID, val1, pool);
   tuple->SetValue(ColumnId::NUM_PARAMS, val2, pool);
-  tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
-  tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
-  tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
+  if (num_params != 0) {
+    tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
+    tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
+    tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
+  }
   tuple->SetValue(ColumnId::READS, val6, pool);
   tuple->SetValue(ColumnId::UPDATES, val7, pool);
   tuple->SetValue(ColumnId::DELETES, val8, pool);
