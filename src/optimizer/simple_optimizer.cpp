@@ -26,6 +26,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/copy_plan.h"
 #include "planner/create_plan.h"
+#include "planner/create_function_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/hash_join_plan.h"
@@ -97,7 +98,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       child_plan = std::move(child_CreatePlan);
       // If creating index, populate with existing data first.
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
-        auto create_stmt = (parser::CreateStatement*)parse_tree2;
+        auto create_stmt = (parser::CrecateStatement*)parse_tree2;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName());
         std::vector<oid_t> column_ids;
