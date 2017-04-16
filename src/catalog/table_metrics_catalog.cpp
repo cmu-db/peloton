@@ -27,7 +27,7 @@ TableMetricsCatalog *TableMetricsCatalog::GetInstance(
 
 TableMetricsCatalog::TableMetricsCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." INDEX_METRICS_CATALOG_NAME
+                      "." TABLE_METRICS_CATALOG_NAME
                       " ("
                       "database_oid   INT NOT NULL, "
                       "table_oid      INT NOT NULL, "
@@ -74,7 +74,7 @@ bool TableMetricsCatalog::DeleteTableMetrics(oid_t table_oid,
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }

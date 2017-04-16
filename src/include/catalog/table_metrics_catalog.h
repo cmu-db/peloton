@@ -35,12 +35,12 @@
 namespace peloton {
 namespace catalog {
 
-class IndexMetricsCatalog : public AbstractCatalog {
+class TableMetricsCatalog : public AbstractCatalog {
  public:
-  ~IndexMetricsCatalog();
+  ~TableMetricsCatalog();
 
   // Global Singleton
-  static IndexMetricsCatalog *GetInstance(
+  static TableMetricsCatalog *GetInstance(
       concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
