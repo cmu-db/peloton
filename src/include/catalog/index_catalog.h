@@ -42,9 +42,10 @@ class IndexCatalog : public AbstractCatalog {
  public:
   ~IndexCatalog();
 
-  // Global Singleton
+  // Global Singleton, only the first call requires passing parameters.
   static IndexCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                   type::AbstractPool *pool = nullptr);
+                                   type::AbstractPool *pool = nullptr,
+                                   concurrency::Transaction *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
@@ -76,7 +77,8 @@ class IndexCatalog : public AbstractCatalog {
                                   concurrency::Transaction *txn);
 
  private:
-  IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+               concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };

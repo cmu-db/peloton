@@ -17,26 +17,27 @@ namespace peloton {
 namespace catalog {
 
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool) {
+                                        type::AbstractPool *pool,
+                                        concurrency::Transaction *txn) {
   static std::unique_ptr<TableCatalog> table_catalog(
-      new TableCatalog(pg_catalog, pool));
+      new TableCatalog(pg_catalog, pool, txn));
   return table_catalog.get();
 }
 
 TableCatalog::TableCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool)
+                           type::AbstractPool *pool,
+                           concurrency::Transaction *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
-  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
+  // Insert columns into pg_attribute
+  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool, txn);
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
-                               pool, nullptr);
+                               pool, txn);
     column_id++;
   }
 }

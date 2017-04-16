@@ -39,9 +39,10 @@ namespace catalog {
 
 class ColumnCatalog : public AbstractCatalog {
  public:
-  // Global Singleton
+  // Global Singleton, only the first call requires passing parameters.
   static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                    type::AbstractPool *pool = nullptr);
+                                    type::AbstractPool *pool = nullptr,
+                                    concurrency::Transaction *txn = nullptr);
 
   ~ColumnCatalog();
 
@@ -75,7 +76,8 @@ class ColumnCatalog : public AbstractCatalog {
                                    concurrency::Transaction *txn);
 
  private:
-  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
