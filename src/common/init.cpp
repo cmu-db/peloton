@@ -66,6 +66,7 @@ void PelotonInit::Initialize() {
 
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
+  pg_catalog->Bootstrap();  // Additional catalogs
 
   // begin a transaction
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();

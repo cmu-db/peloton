@@ -43,13 +43,14 @@ class AbstractCatalog {
   virtual ~AbstractCatalog() {}
 
  protected:
+  /* For pg_database, pg_table, pg_index, pg_column */
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
                   storage::Database *pg_catalog);
-  // constructor for catalog tables other than pg_database, pg_table, pg_index
-  // and pg_attribute
+  /* For other catalogs */
   AbstractCatalog(std::string catalog_table_name,
-                  catalog::Schema *catalog_table_schema);
+                  catalog::Schema *catalog_table_schema,
+                  concurrency::Transaction *txn);
 
   // Construct catalog_table_ schema
   virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;

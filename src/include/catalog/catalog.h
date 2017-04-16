@@ -65,6 +65,9 @@ class Catalog {
   // Global Singleton
   static Catalog *GetInstance(void);
 
+  // Bootstrap addtional catalogs, only used in system initialization phase
+  void Bootstrap(void);
+
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
   //===--------------------------------------------------------------------===//
@@ -225,8 +228,6 @@ class Catalog {
 
  private:
   Catalog();
-
-  void InitializeCatalog(void);
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
