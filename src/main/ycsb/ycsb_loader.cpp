@@ -104,7 +104,7 @@ void CreateYCSBDatabase() {
 
   auto tuple_schema = user_table->GetSchema();
   catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
+  catalog::IndexCatalogObject *index_catalog_object;
   bool unique;
 
   key_attrs = {0};
@@ -113,13 +113,13 @@ void CreateYCSBDatabase() {
 
   unique = true;
 
-  index_metadata = new index::IndexMetadata(
+  index_catalog_object = new catalog::IndexCatalogObject(
     "primary_index", user_table_pkey_index_oid, user_table_oid,
     ycsb_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetIndex(index_metadata));
+      index::IndexFactory::GetIndex(index_catalog_object));
   user_table->AddIndex(pkey_index);
 }
 

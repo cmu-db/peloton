@@ -12,6 +12,7 @@
 #include "index/index.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
+#include "catalog/index_catalog_object.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "storage/tuple.h"
@@ -25,101 +26,6 @@
 namespace peloton {
 namespace index {
 
-bool IndexMetadata::index_default_visibility = true;
-
-/*
- * GetColumnCount() - Returns the number of indexed columns
- *
- * Please note that this returns the column count of columns in the base
- * table that are indexed, i.e. not the column count of the base table
- */
-oid_t IndexMetadata::GetColumnCount() const {
-  return GetKeySchema()->GetColumnCount();
-}
-
-/*
- * Constructor - Initializes tuple key to index mapping
- *
- * NOTE: This metadata object owns key_schema since it is specially
- * constructed for the index
- *
- * However, tuple schema belongs to the table, such that this metadata should
- * not destroy the tuple schema object on destruction
- */
-IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
-                             oid_t table_oid, oid_t database_oid,
-                             IndexType index_type,
-                             IndexConstraintType index_constraint_type,
-                             const catalog::Schema *tuple_schema,
-                             const catalog::Schema *key_schema,
-                             const std::vector<oid_t> &key_attrs,
-                             bool unique_keys)
-    : name_(index_name),
-      index_oid(index_oid),
-      table_oid(table_oid),
-      database_oid(database_oid),
-      index_type_(index_type),
-      index_constraint_type_(index_constraint_type),
-      tuple_schema(tuple_schema),
-      key_schema(key_schema),
-      key_attrs(key_attrs),
-      tuple_attrs(),
-      unique_keys(unique_keys),
-      visible_(IndexMetadata::index_default_visibility) {
-  // Push the reverse mapping relation into tuple_attrs which maps
-  // tuple key's column into index key's column
-  // resize() automatially does allocation, extending and insertion
-  tuple_attrs.resize(tuple_schema->GetColumnCount(), INVALID_OID);
-
-  // For those column IDs not mapped, they are set to INVALID_OID
-  for (oid_t i = 0; i < key_attrs.size(); i++) {
-    // That is the tuple column ID that index key column i is mapped to
-    oid_t tuple_column_id = key_attrs[i];
-
-    // The tuple column must be included into key_attrs, otherwise
-    // the construction argument is malformed
-    PL_ASSERT(tuple_column_id < tuple_attrs.size());
-
-    tuple_attrs[tuple_column_id] = i;
-  }
-
-  // Just in case somebody forgets they set our flag to default and
-  // was wondering why there indexes weren't working...
-  if (visible_ == false) {
-    LOG_WARN(
-        "Creating IndexMetadata for '%s' (%s) but visible flag is set to "
-        "false.",
-        name_.c_str(), GetInfo().c_str());
-  }
-
-  return;
-}
-
-IndexMetadata::~IndexMetadata() {
-  // clean up key schema
-  delete key_schema;
-
-  // no need to clean the tuple schema
-  return;
-}
-
-const std::string IndexMetadata::GetInfo() const {
-  std::stringstream os;
-
-  os << "IndexMetadata["
-     << "Oid=" << index_oid << ", "
-     << "Name=" << name_ << ", "
-     << "Type=" << IndexTypeToString(index_type_) << ", "
-     << "ConstraintType=" << IndexConstraintTypeToString(index_constraint_type_)
-     << ", "
-     << "UtilityRatio=" << utility_ratio << ", "
-     << "Visible=" << visible_ << "]";
-
-  os << " -> " << key_schema->GetInfo();
-
-  return os.str();
-}
-
 /////////////////////////////////////////////////////////////////////
 // Member function definition for class Index
 /////////////////////////////////////////////////////////////////////
@@ -127,14 +33,14 @@ const std::string IndexMetadata::GetInfo() const {
 /*
  * Constructor
  *
- * NOTE: Though Index object receives the index metadata pointer
- * from the caller, the Index object owns that metadata and is responsible
- * for destructing the metadata object on its own destruction
+ * NOTE: Though Index object receives the index_catalog_object pointer
+ * from the caller, the Index object owns that index_catalog_object and is responsible
+ * for destructing the index_catalog_object on its own destruction
  */
-Index::Index(IndexMetadata *metadata)
-    : metadata(metadata), indexed_tile_group_offset(0) {
+Index::Index(catalog::IndexCatalogObject *index_catalog_object)
+    : index_catalog_object(index_catalog_object), indexed_tile_group_offset(0) {
   // This is redundant
-  index_oid = metadata->GetOid();
+  index_oid = index_catalog_object->GetOid();
 
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
@@ -149,10 +55,10 @@ Index::Index(IndexMetadata *metadata)
  * Destructor
  */
 Index::~Index() {
-  // Free metadata which frees the key schema but not tuple schema
+  // Free index_catalog_object which frees the key schema but not tuple schema
   // This is passed in as construction argument but Index object is
   // responsible for its destruction
-  delete metadata;
+  delete index_catalog_object;
 
   // Free the varlen pool - it is allocted during construction
   delete pool;
@@ -173,7 +79,7 @@ Index::~Index() {
  */
 oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
   // This stores the mapping
-  const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
+  const std::vector<oid_t> &mapping = index_catalog_object->GetTupleToIndexMapping();
 
   // First check whether the table column ID is valid
   PL_ASSERT(tuple_column_id < mapping.size());
@@ -221,7 +127,7 @@ bool Index::Compare(const AbstractTuple &index_key,
   PL_ASSERT(expr_list.size() == value_list.size());
 
   // Need the mapping
-  const IndexMetadata *metadata_p = GetMetadata();
+  const catalog::IndexCatalogObject *index_catalog_object_p = GetIndexCatalogObject();
 
   // This is the end of loop
   oid_t cond_num = tuple_column_id_list.size();
@@ -231,7 +137,7 @@ bool Index::Compare(const AbstractTuple &index_key,
   // we should first map them to columns on index and then retrieve
   // comparion operand
   const std::vector<oid_t> &tuple_to_index_map =
-      metadata_p->GetTupleToIndexMapping();
+      index_catalog_object_p->GetTupleToIndexMapping();
 
   // Go over each attribute in the list of comparison columns
   // The key_columns_ids, as the name shows, saves the key column ids that

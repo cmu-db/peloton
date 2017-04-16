@@ -77,7 +77,7 @@ bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &ex
  *   1. tuple_column_id_list contains indices into tuple key schema rather
  *      than the key schema
  *   2. tuple_column_id_list contains indices only for columns that are indexed
- *      For those columns not indexed by the current metadata they shall not
+ *      For those columns not indexed by the current index_catalog_object they shall not
  *      appear
  *   3. tuple_column_id_list is not sorted by any means
  *   4. tuple_column_id_list may have duplicated entries, because
@@ -99,7 +99,7 @@ bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &ex
  * NOTE 3: This function does not guarantee it is ma11oc()-free, since it calls
  * reserve() on value_index_list.
  */
-bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
+bool IndexUtil::FindValueIndex(const catalog::IndexCatalogObject *index_catalog_object_p,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
                     std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
@@ -108,7 +108,7 @@ bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
   // Number of columns in index key
-  size_t index_column_count = metadata_p->GetColumnCount();
+  size_t index_column_count = index_catalog_object_p->GetColumnCount();
 
   // This will call reserve() and also changes size accordingly
   // Since we want random accessibility on this vector
@@ -129,7 +129,7 @@ bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
 
     // Map tuple column to index column
     oid_t index_column_id = \
-      metadata_p->GetTupleToIndexMapping()[tuple_column_id];
+      index_catalog_object_p->GetTupleToIndexMapping()[tuple_column_id];
       
     // Make sure the mapping exists (i.e. the tuple column is in
     // index columns)
