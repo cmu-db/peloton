@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/catalog_defaults.h"
 #include "common/macros.h"
@@ -44,7 +45,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
                       "time_stamp INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
-  catalog::Catalog::GetInstance()->CreateIndex(
+  Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, QUERY_METRICS_CATALOG_NAME,
       {"query_name", "database_oid"}, QUERY_METRICS_CATALOG_NAME "_skey0",
       false, IndexType::BWTREE, txn);
