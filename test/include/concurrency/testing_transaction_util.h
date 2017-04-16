@@ -86,10 +86,10 @@ class Tuple;
 namespace catalog {
 class Column;
 class Manager;
+class IndexCatalogObject;
 }
 
 namespace index {
-class IndexMetadata;
 class IndexFactory;
 }
 

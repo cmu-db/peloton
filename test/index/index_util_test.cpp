@@ -39,7 +39,7 @@ class IndexUtilTests : public PelotonTest {};
  *                     tuple key)
  */
 
-// These two are here since the IndexMetadata object does not claim
+// These two are here since the catalog::IndexCatalogObject object does not claim
 // ownership for the two schema objects so they will be not destroyed
 // automatically
 //
@@ -89,7 +89,7 @@ static index::Index *BuildIndex() {
   index_column_list.push_back(column0);
   index_column_list.push_back(column1);
 
-  // This will be copied into the key schema as well as into the IndexMetadata
+  // This will be copied into the key schema as well as into the catalog::IndexCatalogObject
   // object to identify indexed columns
   std::vector<oid_t> key_attrs = {3, 0, 1};
 
@@ -97,21 +97,21 @@ static index::Index *BuildIndex() {
   auto key_schema = new catalog::Schema(index_column_list);
   key_schema->SetIndexedColumns(key_attrs);
 
-  // Build index metadata
+  // Build index index_catalog_object
   //
   // NOTE: Since here we use a relatively small key (size = 12)
   // so index_test is only testing with a certain kind of key
   // (most likely, GenericKey)
   //
   // For testing IntsKey and TupleKey we need more test cases
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+  catalog::IndexCatalogObject *index_catalog_object = new catalog::IndexCatalogObject(
       "index_util_test", 88888,  // Index oid
       INVALID_OID, INVALID_OID, IndexType::BWTREE,
       IndexConstraintType::DEFAULT, tuple_schema.get(), key_schema, key_attrs,
       true);  // unique_keys
 
   // Build index
-  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_catalog_object);
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway
@@ -139,7 +139,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // Test basic
 
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {3, 0, 1},
+      index_p->GetIndexCatalogObject(), {3, 0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
@@ -147,7 +147,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {1, 0, 3},
+      index_p->GetIndexCatalogObject(), {1, 0, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
@@ -155,7 +155,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {0, 1, 3},
+      index_p->GetIndexCatalogObject(), {0, 1, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
@@ -165,14 +165,14 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // Test whether reconizes if only two columns are matched
 
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {0, 1},
+      index_p->GetIndexCatalogObject(), {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {3, 0},
+      index_p->GetIndexCatalogObject(), {3, 0},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
@@ -180,7 +180,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test empty
 
-  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
+  ret = IndexUtil::FindValueIndex(index_p->GetIndexCatalogObject(), {}, {}, value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
@@ -188,7 +188,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // This should return false, since the < already defines a lower bound
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
+      index_p->GetIndexCatalogObject(), {0, 3, 3, 0, 3, 1},
       {ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
@@ -198,7 +198,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // This should return true
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
+      index_p->GetIndexCatalogObject(), {0, 3, 3, 0, 3, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_LESSTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
@@ -208,7 +208,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test duplicated conditions on a single column
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {3, 3, 3},
+      index_p->GetIndexCatalogObject(), {3, 3, 3},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
@@ -219,7 +219,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // but our procedure does not give positive result to reduce
   // the complexity
   ret = IndexUtil::FindValueIndex(
-      index_p->GetMetadata(), {3, 0, 1, 0},
+      index_p->GetIndexCatalogObject(), {3, 0, 1, 0},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHANOREQUALTO,
        ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_GREATERTHANOREQUALTO},

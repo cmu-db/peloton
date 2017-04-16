@@ -202,7 +202,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     auto tuple_schema = table->GetSchema();
     catalog::Schema *key_schema;
-    index::IndexMetadata *index_metadata;
+    catalog::IndexCatalogObject *index_catalog_object;
     bool unique;
 
     key_attrs = {0};
@@ -211,13 +211,13 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = true;
 
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
         IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
         key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
 
     table->AddIndex(pkey_index);
 
@@ -227,12 +227,12 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = false;
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "secondary_btree_index", 124, table->GetOid(), table->GetDatabaseOid(),
         IndexType::BWTREE, IndexConstraintType::DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
 
     table->AddIndex(sec_index);
 
@@ -242,12 +242,12 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = false;
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
         IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> unique_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
 
     table->AddIndex(unique_index);
   }
