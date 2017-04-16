@@ -55,7 +55,6 @@ std::unique_ptr<catalog::Schema> QueryMetricsCatalog::InitializeSchema() {
   // convenience variables
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL, "not_null");
   auto integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  // TODO: not sure if these varchar size is ok, copied from old code
   auto varchar_type_size = type::Type::GetTypeSize(type::Type::VARCHAR);
   auto varbinary_type_size = type::Type::GetTypeSize(type::Type::VARBINARY);
 
@@ -153,19 +152,19 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val11 = type::ValueFactory::GetIntegerValue(cpu_time);
   auto val12 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(0, val0, pool);
-  tuple->SetValue(1, val1, pool);
-  tuple->SetValue(2, val2, pool);
-  tuple->SetValue(3, val3, pool);
-  tuple->SetValue(4, val4, pool);
-  tuple->SetValue(5, val5, pool);
-  tuple->SetValue(6, val6, pool);
-  tuple->SetValue(7, val7, pool);
-  tuple->SetValue(8, val8, pool);
-  tuple->SetValue(9, val9, pool);
-  tuple->SetValue(10, val10, pool);
-  tuple->SetValue(11, val11, pool);
-  tuple->SetValue(12, val12, pool);
+  tuple->SetValue(ColumnId::NAME, val0, pool);
+  tuple->SetValue(ColumnId::DATABASE_OID, val1, pool);
+  tuple->SetValue(ColumnId::NUM_PARAMS, val2, pool);
+  tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
+  tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
+  tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
+  tuple->SetValue(ColumnId::READS, val6, pool);
+  tuple->SetValue(ColumnId::UPDATES, val7, pool);
+  tuple->SetValue(ColumnId::DELETES, val8, pool);
+  tuple->SetValue(ColumnId::INSERTS, val9, pool);
+  tuple->SetValue(ColumnId::LATENCY, val10, pool);
+  tuple->SetValue(ColumnId::CPU_TIME, val11, pool);
+  tuple->SetValue(ColumnId::TIME_STAMP, val12, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -200,9 +199,9 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      param_types = (*result_tiles)[0]
-                        ->GetValue(0, 0)
-                        .GetAs<stats::QueryMetric::QueryParamBuf>();
+      param_types_value = (*result_tiles)[0]->GetValue(0, 0);
+      param_types.buf = param_types_value.GetData();
+      param_types.len = param_types_value.GetLength();
     }
   }
 
