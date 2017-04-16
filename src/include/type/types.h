@@ -566,6 +566,7 @@ enum class PlanNodeType {
   // Utility
   RESULT = 70,
   COPY = 71,
+  CREATE_FUNC = 72,
 
   // Test
   MOCK = 80
@@ -584,6 +585,15 @@ enum class CreateType {
   TABLE = 2,                  // table create type
   INDEX = 3,                  // index create type
   CONSTRAINT = 4              // constraint create type
+};
+
+//===--------------------------------------------------------------------===//
+// Language Types for UDFs
+//===--------------------------------------------------------------------===//
+
+enum PLType {
+   PL_PGSQL=0,                // UDF language: Pl_PGSQL
+   PL_C=1                     // UDF language: PL_C
 };
 
 //===--------------------------------------------------------------------===//
