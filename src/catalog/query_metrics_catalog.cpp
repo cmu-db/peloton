@@ -124,6 +124,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
     int64_t updates, int64_t deletes, int64_t inserts, int64_t latency,
     int64_t cpu_time, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::Transaction *txn) {
+  LOG_DEBUG("OK, I am tested!!!");
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -199,7 +200,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      param_types_value = (*result_tiles)[0]->GetValue(0, 0);
+      auto param_types_value = (*result_tiles)[0]->GetValue(0, 0);
       param_types.buf = param_types_value.GetData();
       param_types.len = param_types_value.GetLength();
     }
