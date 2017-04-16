@@ -27,10 +27,10 @@
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
 
-#define DATABASE_METRIC_NAME "database_metric"
+// #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
 #define INDEX_METRIC_NAME "index_metric"
-#define QUERY_METRIC_NAME "query_metric"
+// #define QUERY_METRIC_NAME "query_metric"
 
 namespace peloton {
 
