@@ -35,7 +35,7 @@ namespace catalog {
 
 // Exemplar catalog table
 #define QUERY_METRICS_CATALOG_NAME "pg_query_metrics"
-#define DATABASE_METRICS_CATALOG_NAME "pg_databse_metrics"
+#define DATABASE_METRICS_CATALOG_NAME "pg_database_metric"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100

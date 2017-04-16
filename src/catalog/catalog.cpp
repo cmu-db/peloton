@@ -125,9 +125,9 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 
   //  // Create metrics table in default database
   //  // TODO: stats?
-  //  CreateMetricsCatalog();
+  CreateMetricsCatalog();
   //
-  //  InitializeFunctions();
+  InitializeFunctions();
 }
 
 void Catalog::Bootstrap() {

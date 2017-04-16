@@ -364,10 +364,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_TRACE("Function name: %s",
                         ((expression::TupleValueExpression*)agg_expr)
                             ->GetExpressionName());
-              LOG_TRACE("Aggregate type: %s",
-                        ExpressionTypeToString(
-                            ParserExpressionNameToExpressionType(
-                                expr->GetExpressionName())).c_str());
+              LOG_TRACE(
+                  "Aggregate type: %s",
+                  ExpressionTypeToString(ParserExpressionNameToExpressionType(
+                                             expr->GetExpressionName()))
+                      .c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(), agg_over->Copy(),
                   agg_expr->distinct_);
@@ -703,7 +704,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
 
   // If we're copying the query metric table, then we need to handle the
   // deserialization of prepared stmt parameters
-  if (table_name == QUERY_METRIC_NAME) {
+  if (table_name == QUERY_METRICS_CATALOG_NAME) {
     LOG_DEBUG("Copying the query_metric table.");
     deserialize_parameters = true;
   }
@@ -921,15 +922,19 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))->GetValueType());
+                      expression->GetModifiableChild(1))
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(1))->GetValueIdx()).Copy());
+                    expression->GetModifiableChild(1))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -947,15 +952,19 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))->GetValueType());
+                      expression->GetModifiableChild(0))
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(0))->GetValueIdx()).Copy());
+                    expression->GetModifiableChild(0))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
@@ -1203,13 +1212,13 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   auto right_schema = right_table->GetSchema();
 
   // Get the key column name based on the join condition
-  auto right_key_col_name =
-      static_cast<expression::TupleValueExpression*>(
-          join_condition->GetModifiableChild(0))->GetColumnName();
+  auto right_key_col_name = static_cast<expression::TupleValueExpression*>(
+                                join_condition->GetModifiableChild(0))
+                                ->GetColumnName();
   if (right_schema->GetColumnID(right_key_col_name) == (oid_t)-1)
-    right_key_col_name =
-        static_cast<expression::TupleValueExpression*>(
-            join_condition->GetModifiableChild(1))->GetColumnName();
+    right_key_col_name = static_cast<expression::TupleValueExpression*>(
+                             join_condition->GetModifiableChild(1))
+                             ->GetColumnName();
   // Generate hash for right table
   auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(
       right_schema, right_key_col_name);

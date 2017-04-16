@@ -12,12 +12,12 @@
 
 #include <iostream>
 
-#include "configuration/configuration.h"
 #include "common/harness.h"
+#include "configuration/configuration.h"
 
+#include <include/tcop/tcop.h>
 #include <sys/resource.h>
 #include <time.h>
-#include <include/tcop/tcop.h>
 #include "executor/testing_executor_util.h"
 #include "statistics/testing_stats_util.h"
 
@@ -114,6 +114,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
 
 TEST_F(StatsTests, MultiThreadStatsTest) {
   auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
 
   // Launch aggregator thread
   int64_t aggregate_interval = 100;
@@ -123,9 +124,9 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   // Create database, table and index
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column = catalog::Column(
@@ -156,6 +157,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 
   // Check database metrics
   auto db_oid = database->GetOid();
+  LOG_TRACE("db_oid is %lu", db_oid);
   auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
   ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(),
             num_threads * NUM_ITERATION * NUM_DB_COMMIT);
@@ -193,7 +195,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   txn_manager.CommitTransaction(txn);
 }
 //
-//TEST_F(StatsTests, PerThreadStatsTest) {
+// TEST_F(StatsTests, PerThreadStatsTest) {
 //  FLAGS_stats_mode = STATS_TYPE_ENABLE;
 //
 //  // Register to StatsAggregator
@@ -256,7 +258,8 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  for (int i = 0; i < num_rows; i += 2) {
 //    int result;
 //    TestingTransactionUtil::ExecuteRead(
-//        txn, data_table.get(), TestingExecutorUtil::PopulatedValue(i, 0), result);
+//        txn, data_table.get(), TestingExecutorUtil::PopulatedValue(i, 0),
+//        result);
 //  }
 //  txn_manager.CommitTransaction(txn);
 //
@@ -281,7 +284,8 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  txn = txn_manager.BeginTransaction();
 //  int result;
 //  TestingTransactionUtil::ExecuteRead(
-//      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(0, 0), result);
+//      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(0, 0),
+//      result);
 //  txn_manager.AbortTransaction(txn);
 //
 //  // Check: # txns committed = 2, # txns aborted = 1, # reads = 6
@@ -326,10 +330,12 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  // Delete the 6th tuple and read the 1st tuple
 //  txn = txn_manager.BeginTransaction();
 //  TestingTransactionUtil::ExecuteDelete(txn, data_table.get(),
-//                                      TestingExecutorUtil::PopulatedValue(5, 0));
+//                                      TestingExecutorUtil::PopulatedValue(5,
+//                                      0));
 //  LOG_TRACE("before read");
 //  TestingTransactionUtil::ExecuteRead(
-//      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(1, 0), result);
+//      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(1, 0),
+//      result);
 //  txn_manager.CommitTransaction(txn);
 //
 //  // Check: # txns committed = 4, # deletes = 1, # reads = 8
@@ -352,7 +358,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  aggregator.ShutdownAggregator();
 //}
 //
-//TEST_F(StatsTests, PerQueryStatsTest) {
+// TEST_F(StatsTests, PerQueryStatsTest) {
 //  int64_t aggregate_interval = 1000;
 //  LaunchAggregator(aggregate_interval);
 //  auto &aggregator = stats::StatsAggregator::GetInstance();

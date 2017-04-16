@@ -13,6 +13,7 @@
 #include <cstdio>
 
 #include "catalog/catalog.h"
+#include "catalog/database_metrics_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
@@ -28,13 +29,15 @@ class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
   EXPECT_EQ(catalog->GetDatabaseCount(), 1);
   storage::Database *database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   EXPECT_NE(database, nullptr);
-  // Check metric tables
-  //   auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
-  //   EXPECT_NE(db_metric_table, nullptr);
+  // Check database metric table
+  auto db_metric_table =
+      database->GetTableWithName(DATABASE_METRICS_CATALOG_NAME);
+  EXPECT_NE(db_metric_table, nullptr);
 }
 //
 TEST_F(CatalogTests, CreatingDatabase) {
@@ -78,6 +81,11 @@ TEST_F(CatalogTests, CreatingTable) {
                                                std::move(table_schema_2), txn);
   catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "salary_table",
                                                std::move(table_schema_3), txn);
+  // insert random tuple into DATABASE_METRICS_CATALOG and check
+  catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
+      2, 3, 4, 5, nullptr, txn);
+  oid_t time_stamp =
+      catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -87,18 +95,19 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetColumn(1)
                 .GetName(),
             "name");
+  EXPECT_EQ(time_stamp, 5);
   // 3 + 4
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_table")
                 ->GetTupleCount(),
-            7);
+            9);
   // 6 + pg_database(2) + pg_table(3) + pg_attribute(7) + pg_index(6)
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_attribute")
                 ->GetTupleCount(),
-            26);
+            43);
   // pg_catalog + EMP_DB
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
@@ -110,7 +119,7 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_index")
                 ->GetTupleCount(),
-            14);
+            16);
   // EXPECT_EQ(catalog::Catalog::GetInstance()
   //               ->GetDatabaseWithName("pg_catalog")
   //               ->GetTableWithName("pg_table")
