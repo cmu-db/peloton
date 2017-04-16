@@ -133,7 +133,7 @@ static void *RollbackTest(void *) {
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    w.abort();
+    W.abort();
 
     // W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
     // W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
@@ -153,52 +153,52 @@ static void *RollbackTest(void *) {
 }
 
 
-/**
- * Use std::thread to initiate peloton server and pqxx client in separate
- * threads
- * Simple query test to guarantee both sides run correctly
- * Callback method to close server after client finishes
- */
-TEST_F(PacketManagerTests, SimpleQueryTest) {
-  peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
-  std::thread serverThread(LaunchServer, libeventserver);
-  while (!libeventserver.is_started) {
-    sleep(1);
-  }
+// /**
+//  * Use std::thread to initiate peloton server and pqxx client in separate
+//  * threads
+//  * Simple query test to guarantee both sides run correctly
+//  * Callback method to close server after client finishes
+//  */
+// TEST_F(PacketManagerTests, SimpleQueryTest) {
+//   peloton::PelotonInit::Initialize();
+//   LOG_INFO("Server initialized");
+//   peloton::wire::LibeventServer libeventserver;
+//   std::thread serverThread(LaunchServer, libeventserver);
+//   while (!libeventserver.is_started) {
+//     sleep(1);
+//   }
 
-  /* server & client running correctly */
-  SimpleQueryTest(NULL);
+//   /* server & client running correctly */
+//   SimpleQueryTest(NULL);
 
-  /* TODO: monitor packet_manager's status when receiving prepare statement from
-   * client */
-  // PrepareStatementTest(NULL);
+//   /* TODO: monitor packet_manager's status when receiving prepare statement from
+//    * client */
+//   // PrepareStatementTest(NULL);
 
-  libeventserver.CloseServer();
-  serverThread.join();
-  LOG_INFO("Thread has joined");
-  peloton::PelotonInit::Shutdown();
-  LOG_INFO("Peloton has shut down\n");
-}
+//   libeventserver.CloseServer();
+//   serverThread.join();
+//   LOG_INFO("Thread has joined");
+//   peloton::PelotonInit::Shutdown();
+//   LOG_INFO("Peloton has shut down\n");
+// }
 
-TEST_F(PacketManagerTests, PrepareStatementTest) {
-  peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
-  std::thread serverThread(LaunchServer, libeventserver);
-  while (!libeventserver.is_started) {
-    sleep(1);
-  }
+// TEST_F(PacketManagerTests, PrepareStatementTest) {
+//   peloton::PelotonInit::Initialize();
+//   LOG_INFO("Server initialized");
+//   peloton::wire::LibeventServer libeventserver;
+//   std::thread serverThread(LaunchServer, libeventserver);
+//   while (!libeventserver.is_started) {
+//     sleep(1);
+//   }
 
-  PrepareStatementTest(NULL);
+//   PrepareStatementTest(NULL);
 
-  libeventserver.CloseServer();
-  serverThread.join();
-  LOG_INFO("Thread has joined");
-  peloton::PelotonInit::Shutdown();
-  LOG_INFO("Peloton has shut down\n");
-}
+//   libeventserver.CloseServer();
+//   serverThread.join();
+//   LOG_INFO("Thread has joined");
+//   peloton::PelotonInit::Shutdown();
+//   LOG_INFO("Peloton has shut down\n");
+// }
 
 
 TEST_F(PacketManagerTests, RollbackTest) {
