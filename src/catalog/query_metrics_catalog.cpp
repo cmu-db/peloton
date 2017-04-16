@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/query_metrics_catalog.h"
-#include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
+#include "catalog/catalog_defaults.h"
 #include "common/macros.h"
 
 namespace peloton {
@@ -36,7 +36,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
 
-/*@brief   private function for initialize schema of pg_database
+/*@brief   private function for initialize schema of pg_query_metrics
 * @return  unqiue pointer to schema
 */
 std::unique_ptr<catalog::Schema> QueryMetricsCatalog::InitializeSchema() {
