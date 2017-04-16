@@ -85,7 +85,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       LOG_TRACE("Adding Create function plan...");
       auto create_func_plan =
           new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)parse_tree2);
-      std::unique_ptr<planner::AbstractPlan> child_CreateFuncPlan(create_plan);
+      std::unique_ptr<planner::AbstractPlan> child_CreateFuncPlan(create_func_plan);
       child_plan = std::move(child_CreateFuncPlan);
     } break;
 
@@ -98,7 +98,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       child_plan = std::move(child_CreatePlan);
       // If creating index, populate with existing data first.
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
-        auto create_stmt = (parser::CrecateStatement*)parse_tree2;
+        auto create_stmt = (parser::CreateStatement*)parse_tree2;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName());
         std::vector<oid_t> column_ids;
