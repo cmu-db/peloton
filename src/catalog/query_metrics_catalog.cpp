@@ -26,8 +26,7 @@ QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
 }
 
 QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
-    : AbstractCatalog(QUERY_METRICS_CATALOG_NAME,
-                      "CREATE TABLE " CATALOG_DATABASE_NAME
+    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." QUERY_METRICS_CATALOG_NAME
                       " ("
                       "query_name   VARCHAR NOT NULL PRIMARY KEY, "
