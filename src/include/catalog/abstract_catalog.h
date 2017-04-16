@@ -52,8 +52,7 @@ class AbstractCatalog {
                   catalog::Schema *catalog_table_schema,
                   concurrency::Transaction *txn);
 
-  AbstractCatalog(const std::string &catalog_table_name,
-                  const std::string &catalog_table_ddl,
+  AbstractCatalog(const std::string &catalog_table_ddl,
                   concurrency::Transaction *txn);
 
   // Construct catalog_table_ schema

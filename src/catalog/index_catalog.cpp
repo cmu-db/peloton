@@ -26,7 +26,7 @@ IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
 }
 
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool
+                           type::AbstractPool *pool,
                            concurrency::Transaction *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {

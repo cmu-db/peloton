@@ -48,8 +48,7 @@ AbstractCatalog::AbstractCatalog(std::string catalog_table_name,
                                                            catalog_table_oid);
 }
 
-AbstractCatalog::AbstractCatalog(const std::string &catalog_table_name,
-                                 const std::string &catalog_table_ddl,
+AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
                                  concurrency::Transaction *txn) {
   // get catalog table schema
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -61,12 +60,12 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_name,
 
   // create catalog table
   Catalog::GetInstance()->CreateTable(
-      CATALOG_DATABASE_NAME, catalog_table_name,
+      CATALOG_DATABASE_NAME, create_plan->GetTableName(),
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
 
   // get catalog table oid
   oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
-      catalog_table_name, CATALOG_DATABASE_OID, txn);
+      create_plan->GetTableName(), CATALOG_DATABASE_OID, txn);
 
   // set catalog_table_
   catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
