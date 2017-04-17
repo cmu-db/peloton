@@ -23,8 +23,10 @@ namespace codegen {
 class QueryThreadPool {
  public:
 
-  QueryThreadPool(size_t thread_nums) {
-    pool.Initialize(thread_nums, 0);
+  static QueryThreadPool *GetInstance() {
+    int thread_count = std::thread::hardware_concurrency() + 3;
+    static std::unique_ptr<QueryThreadPool> global_query_thread_pool(new QueryThreadPool(thread_count));
+    return global_query_thread_pool.get();
   }
 
   ~QueryThreadPool() {
@@ -38,6 +40,11 @@ class QueryThreadPool {
   }
 
  private:
+
+  QueryThreadPool(size_t thread_nums) {
+    pool.Initialize(thread_nums, 0);
+  }
+
   ThreadPool pool;
 };
 
