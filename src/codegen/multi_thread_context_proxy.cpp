@@ -18,11 +18,11 @@ namespace peloton {
 namespace codegen {
 
 llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
-  static const std::string kThreadPoolTypeName = "peloton::codegen::MultiThreadContext";
+  static const std::string kMultiThreadContextTypeName = "peloton::codegen::MultiThreadContext";
   // Check if the type is already registered in the module, if so return it
-  auto* thread_pool_type = codegen.LookupTypeByName(kThreadPoolTypeName);
-  if (thread_pool_type != nullptr) {
-    return thread_pool_type;
+  auto* multithread_context_type = codegen.LookupTypeByName(kMultiThreadContextTypeName);
+  if (multithread_context_type != nullptr) {
+    return multithread_context_type;
   }
 
   // Right now we don't need to define each individual field
@@ -30,9 +30,9 @@ llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
   static constexpr uint64_t thread_pool_obj_size = sizeof(MultiThreadContext);
   auto* byte_arr_type =
       llvm::ArrayType::get(codegen.Int8Type(), thread_pool_obj_size);
-  thread_pool_type = llvm::StructType::create(codegen.GetContext(), {byte_arr_type},
-                                          kThreadPoolTypeName);
-  return thread_pool_type;
+  multithread_context_type = llvm::StructType::create(codegen.GetContext(), {byte_arr_type},
+                                          kMultiThreadContextTypeName);
+  return multithread_context_type;
 }
 
 llvm::Function *MultiThreadContextProxy::GetInstanceFunction(CodeGen &codegen) {
