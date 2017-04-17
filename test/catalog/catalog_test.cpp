@@ -83,17 +83,20 @@ TEST_F(CatalogTests, CreatingTable) {
   catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "salary_table",
                                                std::move(table_schema_3), txn);
   // insert random tuple into DATABASE_METRICS_CATALOG and check
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
-      2, 3, 4, 5, nullptr, txn);
+      2, 3, 4, 5, pool.get(), txn);
   oid_t time_stamp =
       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
   // inset meaningless tuple into QUERY_METRICS_CATALOG and check
   stats::QueryMetric::QueryParamBuf param;
   param.len = 1;
-  param.buf = new unsigned char('a');
+  param.buf = (unsigned char *)pool->Allocate(1);
+  *param.buf = 'a';
   catalog::QueryMetricsCatalog::GetInstance()->InsertQueryMetrics(
-      "a query", 1, 1, param, param, param, 1, 1, 1, 1, 1, 1, 1, nullptr, txn);
+      "a query", 1, 1, param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
+      txn);
   auto param1 = catalog::QueryMetricsCatalog::GetInstance()->GetParamTypes(
       "a query", 1, txn);
   EXPECT_EQ(param1.len, 1);
@@ -113,13 +116,13 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_table")
                 ->GetTupleCount(),
-            9);
+            11);
   // 6 + pg_database(2) + pg_table(3) + pg_attribute(7) + pg_index(6)
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_attribute")
                 ->GetTupleCount(),
-            43);
+            57);
   // pg_catalog + EMP_DB
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
@@ -131,7 +134,7 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_index")
                 ->GetTupleCount(),
-            16);
+            17);
   // EXPECT_EQ(catalog::Catalog::GetInstance()
   //               ->GetDatabaseWithName("pg_catalog")
   //               ->GetTableWithName("pg_table")
