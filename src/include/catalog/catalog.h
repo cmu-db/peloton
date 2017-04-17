@@ -129,7 +129,7 @@ class Catalog {
                        concurrency::Transaction *txn);
   // Drop an index, using its index_oid
   ResultType DropIndex(oid_t index_oid,
-                       concurrency::Transaction *txn = nullptr);
+                       concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
