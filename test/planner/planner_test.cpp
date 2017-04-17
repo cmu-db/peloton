@@ -21,6 +21,7 @@
 #include "planner/delete_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
+#include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace test {
