@@ -71,7 +71,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     // when group by is absent
     if (aggregation && non_aggregation)
       throw SyntaxException(
-          "Non aggregation expressionmust appear in the GROUP BY "
+          "Non aggregation expression must appear in the GROUP BY "
           "clause or be used in an aggregate function");
     // Plain aggregation
     else if (aggregation && !non_aggregation) {

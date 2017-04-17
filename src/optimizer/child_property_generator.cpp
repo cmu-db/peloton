@@ -42,94 +42,9 @@ ChildPropertyGenerator::GetProperties(shared_ptr<GroupExpression> gexpr,
   return move(output_);
 }
 
-void ChildPropertyGenerator::Visit(const PhysicalSeqScan *) {
-  PropertySet provided_property;
+void ChildPropertyGenerator::Visit(const PhysicalSeqScan *) { ScanHelper(); };
 
-  // Scan will provide PropertyPredicate
-  auto predicate_prop =
-      requirements_.GetPropertyOfType(PropertyType::PREDICATE);
-  if (predicate_prop != nullptr) provided_property.AddProperty(predicate_prop);
-
-  // AbstractExpression -> offset when insert
-  ExprMap columns;
-  vector<shared_ptr<expression::AbstractExpression>> column_exprs;
-  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
-                          ->As<PropertyColumns>();
-  if (columns_prop->HasStarExpression()) {
-    column_exprs.emplace_back(new expression::StarExpression());
-  } else {
-    // Add all the columns in PropertyColumn
-    // Note: columns from PropertyColumn has to be inserted before PropertySort
-    // to ensure we don't change the original column order in PropertyColumn
-    for (size_t i = 0; i < columns_prop->GetSize(); i++) {
-      auto expr = columns_prop->GetColumn(i);
-      expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
-    }
-
-    // Add all the columns from PropertySort to column_set
-    auto sort_prop =
-        requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
-    if (sort_prop != nullptr) {
-      for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
-        auto expr = sort_prop->GetSortColumn(i);
-        expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
-      }
-    }
-
-    // Generate the provided PropertyColumn
-    column_exprs.resize(columns.size());
-    for (auto iter : columns) column_exprs[iter.second] = iter.first;
-  }
-  provided_property.AddProperty(
-      shared_ptr<Property>(new PropertyColumns(move(column_exprs))));
-  output_.push_back(make_pair(move(provided_property), vector<PropertySet>()));
-};
-
-void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) {
-  // TODO PhysicalIndexScan and
-  // PhysicalSeqScan
-  // exact the same behavior here, reduce duplicate code
-  PropertySet provided_property;
-
-  // Scan will provide PropertyPredicate
-  auto predicate_prop =
-      requirements_.GetPropertyOfType(PropertyType::PREDICATE);
-  if (predicate_prop != nullptr) provided_property.AddProperty(predicate_prop);
-
-  // AbstractExpression -> offset when insert
-  ExprMap columns;
-  vector<shared_ptr<expression::AbstractExpression>> column_exprs;
-  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
-                          ->As<PropertyColumns>();
-  if (columns_prop->HasStarExpression()) {
-    column_exprs.emplace_back(new expression::StarExpression());
-  } else {
-    // Add all the columns in PropertyColumn
-    // Note: columns from PropertyColumn has to be inserted before PropertySort
-    // to ensure we don't change the original column order in PropertyColumn
-    for (size_t i = 0; i < columns_prop->GetSize(); i++) {
-      auto expr = columns_prop->GetColumn(i);
-      expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
-    }
-
-    // Add all the columns from PropertySort to column_set
-    auto sort_prop =
-        requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
-    if (sort_prop != nullptr) {
-      for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
-        auto expr = sort_prop->GetSortColumn(i);
-        expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
-      }
-    }
-
-    // Generate the provided PropertyColumn
-    column_exprs.resize(columns.size());
-    for (auto iter : columns) column_exprs[iter.second] = iter.first;
-  }
-  provided_property.AddProperty(
-      shared_ptr<Property>(new PropertyColumns(move(column_exprs))));
-  output_.push_back(make_pair(move(provided_property), vector<PropertySet>()));
-};
+void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) { ScanHelper(); };
 
 /**
  * Note:
@@ -143,6 +58,138 @@ void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
 
 void ChildPropertyGenerator::Visit(const PhysicalSortGroupBy *op) {
   GroupByHelper(op);
+}
+
+void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
+  PropertySet child_input_property_set;
+  PropertySet provided_property;
+
+  ExprSet child_col;
+  ExprSet provided_col;
+  for (auto prop : requirements_.Properties()) {
+    switch (prop->Type()) {
+      case PropertyType::DISTINCT:
+        break;
+      case PropertyType::SORT: {
+        // Add the ORDER BY columns to the output columns
+        // Also add base columns to the child output columns
+        auto sort_prop = prop->As<PropertySort>();
+        size_t sort_col_len = sort_prop->GetSortColumnSize();
+
+        for (size_t col_idx = 0; col_idx < sort_col_len; ++col_idx) {
+          auto expr = sort_prop->GetSortColumn(col_idx);
+          // sort column will be provided by group by
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
+          provided_col.insert(expr);
+        }
+        break;
+      }
+      case PropertyType::LIMIT: {
+        // LIMIT only provided by enforcer
+        break;
+      }
+      case PropertyType::COLUMNS: {
+        provided_property.AddProperty(prop);
+        auto col_prop = prop->As<PropertyColumns>();
+        size_t col_len = col_prop->GetSize();
+        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
+          auto expr = col_prop->GetColumn(col_idx);
+          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
+          provided_col.insert(expr);
+        }
+        break;
+      }
+      case PropertyType::PREDICATE:
+        // PropertyPredicate will be fulfilled by the child operator
+        child_input_property_set.AddProperty(prop);
+        provided_property.AddProperty(prop);
+        break;
+    }
+  }
+
+  // Add child PropertyColumn
+  child_input_property_set.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(child_col.begin(),
+                                                         child_col.end())));
+
+  provided_property.AddProperty(make_shared<PropertyColumns>(
+      vector<shared_ptr<expression::AbstractExpression>>(provided_col.begin(),
+                                                         provided_col.end())));
+
+  vector<PropertySet> child_input_properties{child_input_property_set};
+  output_.push_back(make_pair(provided_property, move(child_input_properties)));
+}
+
+void ChildPropertyGenerator::Visit(const PhysicalLimit *) {}
+void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
+void ChildPropertyGenerator::Visit(const PhysicalProject *){};
+void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
+void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
+void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalRightNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalOuterNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
+void ChildPropertyGenerator::Visit(const PhysicalUpdate *) {
+  // Let child fulfil all the required properties
+  vector<PropertySet> child_input_properties{requirements_};
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+}
+void ChildPropertyGenerator::Visit(const PhysicalDelete *) {
+  // Let child fulfil all the required properties
+  vector<PropertySet> child_input_properties{requirements_};
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+};
+
+/************************ Private helper Functions ****************************/
+
+void ChildPropertyGenerator::ScanHelper() {
+  PropertySet provided_property;
+
+  // Scan will provide PropertyPredicate
+  auto predicate_prop =
+      requirements_.GetPropertyOfType(PropertyType::PREDICATE);
+  if (predicate_prop != nullptr) provided_property.AddProperty(predicate_prop);
+
+  // AbstractExpression -> offset when insert
+  ExprMap columns;
+  vector<shared_ptr<expression::AbstractExpression>> column_exprs;
+  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
+                          ->As<PropertyColumns>();
+  if (columns_prop->HasStarExpression()) {
+    column_exprs.emplace_back(new expression::StarExpression());
+  } else {
+    // Add all the columns in PropertyColumn
+    // Note: columns from PropertyColumn has to be inserted before PropertySort
+    // to ensure we don't change the original column order in PropertyColumn
+    for (size_t i = 0; i < columns_prop->GetSize(); i++) {
+      auto expr = columns_prop->GetColumn(i);
+      expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
+    }
+
+    // Add all the columns from PropertySort to column_set
+    auto sort_prop =
+        requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+    if (sort_prop != nullptr) {
+      for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
+        auto expr = sort_prop->GetSortColumn(i);
+        expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
+      }
+    }
+
+    // Generate the provided PropertyColumn
+    column_exprs.resize(columns.size());
+    for (auto iter : columns) column_exprs[iter.second] = iter.first;
+  }
+  provided_property.AddProperty(
+      shared_ptr<Property>(new PropertyColumns(move(column_exprs))));
+  output_.push_back(make_pair(move(provided_property), vector<PropertySet>()));
 }
 
 void ChildPropertyGenerator::GroupByHelper(const BaseOperatorNode *op) {
@@ -185,7 +232,7 @@ void ChildPropertyGenerator::GroupByHelper(const BaseOperatorNode *op) {
       }
       case PropertyType::SORT: {
         // Add the ORDER BY columns to the output columns
-        // Also add those base columns to the child output columns
+        // Also add base columns to the child output columns
         auto sort_prop = prop->As<PropertySort>();
         size_t sort_col_len = sort_prop->GetSortColumnSize();
 
@@ -282,100 +329,6 @@ void ChildPropertyGenerator::GroupByHelper(const BaseOperatorNode *op) {
   vector<PropertySet> child_input_properties{child_input_property_set};
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
-
-void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
-  PropertySet child_input_property_set;
-  PropertySet provided_property;
-
-  ExprSet child_col;
-  ExprSet provided_col;
-  for (auto prop : requirements_.Properties()) {
-    switch (prop->Type()) {
-      // Generate output columns for the child
-      // Aggregation will break sort property
-      case PropertyType::DISTINCT:
-        break;
-      case PropertyType::SORT: {
-        // SORT property will be fullfilled after Aggregation
-        // We need to make sure that sort columns are in
-        // the output of the physical scan.
-        auto sort_prop = prop->As<PropertySort>();
-        size_t sort_col_len = sort_prop->GetSortColumnSize();
-
-        for (size_t col_idx = 0; col_idx < sort_col_len; ++col_idx) {
-          auto expr = sort_prop->GetSortColumn(col_idx);
-          // sort column will be pass to upper
-          child_col.insert(expr);
-          provided_col.insert(expr);
-        }
-        break;
-      }
-      case PropertyType::LIMIT: {
-        // LIMIT only provided by enforcer
-        break;
-      }
-      case PropertyType::COLUMNS: {
-        provided_property.AddProperty(prop);
-
-        // Check group by columns and union it with the
-        // PropertyColumn to generate child property
-        auto col_prop = prop->As<PropertyColumns>();
-        size_t col_len = col_prop->GetSize();
-        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
-          auto expr = col_prop->GetColumn(col_idx);
-          expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
-          provided_col.insert(expr);
-        }
-
-        break;
-      }
-      case PropertyType::PREDICATE:
-        // PropertyPredicate will be fulfilled by the child operator
-        child_input_property_set.AddProperty(prop);
-        provided_property.AddProperty(prop);
-        break;
-    }
-  }
-
-  // Add child PropertyColumn
-  child_input_property_set.AddProperty(make_shared<PropertyColumns>(
-      vector<shared_ptr<expression::AbstractExpression>>(child_col.begin(),
-                                                         child_col.end())));
-
-  provided_property.AddProperty(make_shared<PropertyColumns>(
-      vector<shared_ptr<expression::AbstractExpression>>(provided_col.begin(),
-                                                         provided_col.end())));
-
-  vector<PropertySet> child_input_properties{child_input_property_set};
-  output_.push_back(make_pair(provided_property, move(child_input_properties)));
-}
-
-void ChildPropertyGenerator::Visit(const PhysicalLimit *) {}
-void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
-void ChildPropertyGenerator::Visit(const PhysicalProject *) {};
-void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
-void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalRightNLJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalOuterNLJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
-void ChildPropertyGenerator::Visit(const PhysicalUpdate *) {
-  // Let child fulfil all the required properties
-  vector<PropertySet> child_input_properties{requirements_};
-
-  output_.push_back(make_pair(requirements_, move(child_input_properties)));
-}
-void ChildPropertyGenerator::Visit(const PhysicalDelete *) {
-  // Let child fulfil all the required properties
-  vector<PropertySet> child_input_properties{requirements_};
-
-  output_.push_back(make_pair(requirements_, move(child_input_properties)));
-};
 
 } /* namespace optimizer */
 } /* namespace peloton */
