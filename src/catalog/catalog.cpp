@@ -16,6 +16,8 @@
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/manager.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/table_metrics_catalog.h"
+#include "catalog/index_metrics_catalog.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include "expression/date_functions.h"
@@ -131,6 +133,8 @@ void Catalog::Bootstrap() {
   auto txn = txn_manager.BeginTransaction();
 
   DatabaseMetricsCatalog::GetInstance(txn);
+  TableMetricsCatalog::GetInstance(txn);
+  IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
@@ -826,9 +830,12 @@ Catalog::~Catalog() {
 void Catalog::AddDatabase(storage::Database *database) {
   std::lock_guard<std::mutex> lock(catalog_mutex);
   databases_.push_back(database);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   DatabaseCatalog::GetInstance()->InsertDatabase(
       database->GetOid(), database->GetDBName(), pool_.get(),
-      nullptr);  // I guess this can pass tests
+      txn);  // I guess this can pass tests
+  txn_manager.CommitTransaction(txn);
 }
 
 // This is used as an iterator
