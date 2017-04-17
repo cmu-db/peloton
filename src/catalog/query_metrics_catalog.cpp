@@ -92,11 +92,9 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   tuple->SetValue(ColumnId::NAME, val0, pool);
   tuple->SetValue(ColumnId::DATABASE_OID, val1, pool);
   tuple->SetValue(ColumnId::NUM_PARAMS, val2, pool);
-  if (num_params != 0) {
-    tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
-    tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
-    tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
-  }
+  tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
+  tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
+  tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
   tuple->SetValue(ColumnId::READS, val6, pool);
   tuple->SetValue(ColumnId::UPDATES, val7, pool);
   tuple->SetValue(ColumnId::DELETES, val8, pool);
