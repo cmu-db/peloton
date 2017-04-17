@@ -23,13 +23,14 @@ class CreateFunctionStatement;
 namespace planner {
 class CreateFunctionPlan : public AbstractPlan {
   public:
-  CreateFunctionPlan();
+  CreateFunctionPlan() = delete;
   CreateFunctionPlan(const CreateFunctionPlan &) = delete;
   CreateFunctionPlan &operator=(const CreateFunctionPlan &) = delete;
   CreateFunctionPlan(CreateFunctionPlan &&) = delete;
   CreateFunctionPlan &operator=(CreateFunctionPlan &&) = delete;
 
-  //explicit CreatePlan(storage::DataTable *table);
+  // Temporary fix to handle Copy()
+  explicit CreatePlan(std::string func);
 
   //explicit CreatePlan(std::string name, std::string database_name,
   //                    std::unique_ptr<catalog::Schema> schema,
@@ -43,7 +44,7 @@ class CreateFunctionPlan : public AbstractPlan {
 
   // //////////////////////Check if this gets called later from somewhere else/////////////////////////
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new CreateFunctionPlan());
+    return std::unique_ptr<AbstractPlan>(new CreateFunctionPlan("UDF function"));
   }
 
   std::string GetFunctionName() const { return function_name; }
