@@ -27,9 +27,9 @@ llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
 
   // Right now we don't need to define each individual field
   // since we only invoke functions on the class.
-  static constexpr uint64_t thread_pool_obj_size = sizeof(MultiThreadContext);
+  static constexpr uint64_t multithread_context_obj_size = sizeof(MultiThreadContext);
   auto* byte_arr_type =
-      llvm::ArrayType::get(codegen.Int8Type(), thread_pool_obj_size);
+      llvm::ArrayType::get(codegen.Int8Type(), multithread_context_obj_size);
   multithread_context_type = llvm::StructType::create(codegen.GetContext(), {byte_arr_type},
                                           kMultiThreadContextTypeName);
   return multithread_context_type;
