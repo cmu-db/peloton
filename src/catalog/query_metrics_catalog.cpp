@@ -64,7 +64,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetVarcharValue(name, nullptr);
+  auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
   auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(num_params);
 
@@ -73,12 +73,12 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val5 = type::ValueFactory::GetNullValueByType(type::Type::VARBINARY);
 
   if (num_params != 0) {
-    val3 = type::ValueFactory::GetVarbinaryValue(type_buf.buf, type_buf.len,
-                                                 false);
+    val3 =
+        type::ValueFactory::GetVarbinaryValue(type_buf.buf, type_buf.len, true);
     val4 = type::ValueFactory::GetVarbinaryValue(format_buf.buf, format_buf.len,
-                                                 false);
+                                                 true);
     val5 = type::ValueFactory::GetVarbinaryValue(value_buf.buf, value_buf.len,
-                                                 false);
+                                                 true);
   }
 
   auto val6 = type::ValueFactory::GetIntegerValue(reads);
