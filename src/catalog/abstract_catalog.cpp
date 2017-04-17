@@ -48,7 +48,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   // create catalog table
   Catalog::GetInstance()->CreateTable(
       CATALOG_DATABASE_NAME, catalog_table_name,
-      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn);
+      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
   // get catalog table oid
   oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
