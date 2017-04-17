@@ -16,6 +16,8 @@
 #include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
 #include "common/statement.h"
+#include "planner/seq_scan_plan.h"
+#include "executor/seq_scan_executor.h"
 
 namespace peloton {
 namespace catalog {
