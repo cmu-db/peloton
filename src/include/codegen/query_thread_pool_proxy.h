@@ -21,16 +21,8 @@ class QueryThreadPoolProxy {
  public:
   static llvm::Type *GetType(CodeGen &codegen);
 
-  //===--------------------------------------------------------------------===//
-  // LLVM wrapper/definition for QueryThreadPool::SubmitQueryTask(...) to
-  // submit a task to the thread pool
-  //===--------------------------------------------------------------------===//
-  struct _SubmitQueryTask {
-    // Get the symbol name
-    static const std::string &GetFunctionName();
-    // Get the actual function definition
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  static llvm::Function *GetSubmitQueryTaskFunction(CodeGen &codegen);
+  static llvm::Function *GetGetIntanceFunction(CodeGen &codegen);
 };
 
 }  // namespace codegen
