@@ -38,21 +38,9 @@ llvm::Type* QueryThreadPoolProxy::GetType(CodeGen& codegen) {
   return thread_pool_type;
 }
 
-//===----------------------------------------------------------------------===//
-// Return the symbol of the QueryThreadPool::SubmitQueryTask() function
-//===----------------------------------------------------------------------===//
-const std::string& QueryThreadPoolProxy::_SubmitQueryTask::GetFunctionName() {
-  static const std::string kThreadPoolProxyFnName =
-      // TODO: these symbols are incorrect!!
-      "_ZNK7peloton7codegen15QueryThreadPool15SubmitQueryTask";
-  return kThreadPoolProxyFnName;
-}
-
-//===----------------------------------------------------------------------===//
-// Return the LLVM function definition for QueryThreadPool::SubmitQueryTask()
-//===----------------------------------------------------------------------===//
-llvm::Function* QueryThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& codegen) {
-  const std::string& fn_name = GetFunctionName();
+llvm::Function *QueryThreadPoolProxy::GetSubmitQueryTaskFunction(CodeGen &codegen) {
+  // TODO(tq5124): fix this.
+  const std::string& fn_name = "_ZNK7peloton7codegen15QueryThreadPool15SubmitQueryTask";
 
   // Has the function already been registered?
   llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
@@ -68,6 +56,24 @@ llvm::Function* QueryThreadPoolProxy::_SubmitQueryTask::GetFunction(CodeGen& cod
       thread_pool_type->getPointerTo(),
       MultiThreadContextProxy::GetType(codegen)
     }, false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+llvm::Function *QueryThreadPoolProxy::GetGetIntanceFunction(CodeGen &codegen) {
+  // TODO(tq5124): fix this.
+  const std::string& fn_name = "_ZNK7peloton7codegen15QueryThreadPool11GetInstance";
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  llvm::Type* thread_pool_type = QueryThreadPoolProxy::GetType(codegen);
+
+  llvm::FunctionType* fn_type = llvm::FunctionType::get(
+    thread_pool_type->getPointerTo(), {}, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
