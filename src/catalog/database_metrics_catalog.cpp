@@ -50,10 +50,10 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
   auto val2 = type::ValueFactory::GetIntegerValue(txn_aborted);
   auto val3 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(0, val0, pool);
-  tuple->SetValue(1, val1, pool);
-  tuple->SetValue(2, val2, pool);
-  tuple->SetValue(3, val3, pool);
+  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
+  tuple->SetValue(ColumnId::TXN_COMMITTED, val1, pool);
+  tuple->SetValue(ColumnId::TXN_ABORTED, val2, pool);
+  tuple->SetValue(ColumnId::TIME_STAMP, val3, pool);
 
   // Insert the tuple into catalog table
   return InsertTuple(std::move(tuple), txn);
