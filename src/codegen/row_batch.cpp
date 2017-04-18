@@ -63,21 +63,31 @@ struct VectorizedCallbackAdapter : public RowBatch::VectorizedIterateCallback {
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
+// EXPRESSION ACCESS
+//===----------------------------------------------------------------------===//
+
+RowBatch::ExpressionAccess::ExpressionAccess(
+    const expression::AbstractExpression &expression)
+    : expression_(expression) {}
+
+Value RowBatch::ExpressionAccess::Access(CodeGen &codegen, Row &row) {
+  return row.DeriveValue(codegen, expression_);
+}
+
+//===----------------------------------------------------------------------===//
 // ROW
 //===----------------------------------------------------------------------===//
 
-RowBatch::Row::Row(const RowBatch &batch, llvm::Value *batch_pos,
-                   const RowBatch::AttributeMap &attributes,
+RowBatch::Row::Row(RowBatch &batch, llvm::Value *batch_pos,
                    OutputTracker *output_tracker)
     : batch_(batch),
       tid_(nullptr),
       batch_position_(batch_pos),
-      accessors_(attributes),
       output_tracker_(output_tracker) {}
 
 bool RowBatch::Row::HasAttribute(const planner::AttributeInfo *ai) const {
   return cache_.find(ai) != cache_.end() ||
-         accessors_.find(ai) != accessors_.end();
+         batch_.GetAttributes().find(ai) != batch_.GetAttributes().end();
 }
 
 codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
@@ -89,8 +99,8 @@ codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
   }
 
   // Not in cache, derive it using an accessor
-  auto accessor_iter = accessors_.find(ai);
-  if (accessor_iter != accessors_.end()) {
+  auto accessor_iter = batch_.GetAttributes().find(ai);
+  if (accessor_iter != batch_.GetAttributes().end()) {
     auto *accessor = accessor_iter->second;
     auto ret = accessor->Access(codegen, *this);
     cache_.insert(std::make_pair(ai, ret));
@@ -101,8 +111,8 @@ codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
   throw Exception{"Attribute '" + ai->name + "' is not an available attribute"};
 }
 
-codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
-    const expression::AbstractExpression &expr) {
+codegen::Value RowBatch::Row::DeriveValue(
+    CodeGen &codegen, const expression::AbstractExpression &expr) {
   // First check cache
   auto cache_iter = cache_.find(&expr);
   if (cache_iter != cache_.end()) {
@@ -123,8 +133,8 @@ void RowBatch::Row::RegisterAttributeValue(const planner::AttributeInfo *ai,
   // that overrides any attribute accessor available for the underlying batch
   // We place the value in the cache to ensure we don't go through the normal
   // attribute accessor.
-  auto iter = accessors_.find(ai);
-  if (iter != accessors_.end()) {
+  auto iter = batch_.GetAttributes().find(ai);
+  if (iter != batch_.GetAttributes().end()) {
     LOG_DEBUG(
         "Registering temporary attribute %s (%p) that overrides one available "
         "in batch",
@@ -204,8 +214,8 @@ void RowBatch::AddAttribute(const planner::AttributeInfo *ai,
 // Get the row in this batch at the given position. Note: the output tracker
 // is allowed to be null (hence the use of a pointer) for read-only rows.
 RowBatch::Row RowBatch::GetRowAt(llvm::Value *batch_position,
-                                 OutputTracker *output_tracker) const {
-  return RowBatch::Row{*this, batch_position, GetAttributes(), output_tracker};
+                                 OutputTracker *output_tracker) {
+  return RowBatch::Row{*this, batch_position, output_tracker};
 }
 
 // Iterate over all valid rows in this batch

@@ -42,17 +42,17 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &left_hash_keys,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &right_hash_keys)
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          left_hash_keys,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          right_hash_keys)
       : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                          proj_schema),
         left_hash_keys_(std::move(left_hash_keys)),
         right_hash_keys_(std::move(right_hash_keys)) {}
 
-  void HandleSubplanBinding(bool is_left,
-                            const BindingContext &context) override;
+  void HandleSubplanBinding(
+      bool is_left, const std::vector<const BindingContext *> &inputs) override;
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASHJOIN; }
 

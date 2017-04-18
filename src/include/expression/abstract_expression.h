@@ -14,26 +14,25 @@
 
 #include <string>
 
-#include "common/logger.h"
-#include "common/macros.h"
 #include "common/printable.h"
-#include "common/sql_node_visitor.h"
 #include "planner/attribute_info.h"
-#include "type/serializeio.h"
 #include "type/types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
 
+// Forward Declaration
 class Printable;
 class AbstractTuple;
-
-namespace planner {
-class BindingContext;
-}
+class SqlNodeVisitor;
+enum class ExpressionType;
 
 namespace executor {
 class ExecutorContext;
+}
+
+namespace planner {
+class BindingContext;
 }
 
 namespace expression {
@@ -106,16 +105,17 @@ class AbstractExpression : public Printable {
 
   /** accessors */
 
-  ExpressionType GetExpressionType() const { return exp_type_; }
+  inline ExpressionType GetExpressionType() const { return exp_type_; }
 
-  type::Type::TypeId GetValueType() const { return return_value_type_; }
+  inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   // Attribute binding
-  virtual void PerformBinding(const planner::BindingContext &binding_context) {
+  virtual void PerformBinding(
+      const std::vector<const planner::BindingContext *> &binding_contexts) {
     // Most expressions don't need attribute binding, except for those
     // that actually reference table attributes (i.e., TVE)
     for (uint32_t i = 0; i < GetChildrenSize(); i++) {
-      children_[i]->PerformBinding(binding_context);
+      children_[i]->PerformBinding(binding_contexts);
     }
   }
 
@@ -131,19 +131,19 @@ class AbstractExpression : public Printable {
 
   // Get all the attributes this expression uses
   virtual void GetUsedAttributes(
-      std::unordered_set<const planner::AttributeInfo*> &attributes) const {
+      std::unordered_set<const planner::AttributeInfo *> &attributes) const {
     for (uint32_t i = 0; i < GetChildrenSize(); i++) {
       children_[i]->GetUsedAttributes(attributes);
     }
   }
 
   virtual void DeduceExpressionType() {}
-  
+
   // Walks the expressoin trees and generate the correct expression name
   virtual void DeduceExpressionName();
 
   const std::string GetInfo() const;
-    
+
   virtual bool Equals(AbstractExpression *expr) const;
 
   virtual hash_t Hash() const;
@@ -220,5 +220,22 @@ class AbstractExpression : public Printable {
   bool has_parameter_ = false;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+// Equality Comparator class for Abstract Expression
+class ExprEqualCmp {
+ public:
+  inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
+                         std::shared_ptr<AbstractExpression> expr2) const {
+    return expr1->Equals(expr2.get());
+  }
+};
+
+// Hasher class for Abstract Expression
+class ExprHasher {
+ public:
+  inline size_t operator()(std::shared_ptr<AbstractExpression> expr) const {
+    return expr->Hash();
+  }
+};
+
+}  // namespace expression
+}  // namespace peloton

@@ -23,7 +23,7 @@ void HashPlan::PerformBinding(BindingContext &binding_context) {
   for (auto &hash_key : hash_keys_) {
     auto *key_expr =
         const_cast<expression::AbstractExpression *>(hash_key.get());
-    key_expr->PerformBinding(binding_context);
+    key_expr->PerformBinding({&binding_context});
   }
 }
 

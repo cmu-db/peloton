@@ -49,7 +49,9 @@ class UpdateableStorage {
   uint32_t GetStorageSize() const { return storage_size_; }
 
   // Return the number of elements this format is configured to handle
-  uint32_t GetNumElements() const { return types_.size(); }
+  uint32_t GetNumElements() const {
+    return static_cast<uint32_t>(types_.size());
+  }
 
  private:
   // The types we store in the storage area

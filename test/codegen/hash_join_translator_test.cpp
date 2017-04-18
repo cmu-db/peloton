@@ -103,7 +103,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
 
   std::vector<AbstractExprPtr> hash_keys;
   hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
 
   // Finally, the fucking join node
   std::unique_ptr<planner::HashJoinPlan> hj_plan{
