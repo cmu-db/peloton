@@ -149,7 +149,7 @@ namespace peloton {
       return function_catalog_schema;
     }
 
- bool  FunctionCatalog::InsertFunction(oid_t oid,const std::string &proname,
+ bool  FunctionCatalog::InsertFunction(const std::string &proname,
                           UNUSED_ATTRIBUTE oid_t pronamespace, UNUSED_ATTRIBUTE oid_t proowner, 
                           oid_t prolang, UNUSED_ATTRIBUTE float procost,
                          UNUSED_ATTRIBUTE float prorows,UNUSED_ATTRIBUTE oid_t provariadic,UNUSED_ATTRIBUTE bool proisagg,
@@ -168,6 +168,8 @@ namespace peloton {
       
       std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(catalog_table_->GetSchema(), true));
 
+      //generate a unique oid
+      auto oid = GetNextOid(); 
       auto val0 = type::ValueFactory::GetIntegerValue(oid);
       auto val1 = type::ValueFactory::GetVarcharValue(proname, nullptr);
       auto val2 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
