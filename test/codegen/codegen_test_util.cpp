@@ -151,8 +151,10 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCa
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
 
+  codegen::Query* query = codegen::QueryCache::Instance().FindPlan(plan);
   // Run
-  if (codegen::QueryCache::Instance().FindPlan(plan) == false) {
+  if (query == nullptr) {
+
     LOG_DEBUG("No plan found\n");
     auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
@@ -164,8 +166,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCa
   }
   else {
     LOG_DEBUG("Plan found\n");
-    codegen::Query* compiled_query = codegen::QueryCache::Instance().GetQuery(plan);
-    compiled_query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
+
+    query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
         new executor::ExecutorContext{txn, *params}).get(): nullptr);
     txn_manager.CommitTransaction(txn);
   }

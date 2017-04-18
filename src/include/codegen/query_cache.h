@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// value_peeker_proxy.h
+// query_cache.h
 //
 // Identification: src/include/codegen/query_cache.h
 //
@@ -30,14 +30,10 @@ public:
     cache.clear();
   }
 
-  bool FindPlan(planner::AbstractPlan& key) {
+  Query* FindPlan(planner::AbstractPlan& key) {
     auto it = cache.find(key.Copy());
     if (it == cache.end())
-      return false;
-    return true;
-  }
-
-  Query* GetQuery(const planner::AbstractPlan& key) {
+      return nullptr;
     return cache.find(key.Copy())->second.get();
   }
 
