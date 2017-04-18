@@ -32,6 +32,8 @@
 #include "catalog/abstract_catalog.h"
 #include "statistics/index_metric.h"
 
+#define INDEX_METRICS_CATALOG_NAME "pg_index_metrics"
+
 namespace peloton {
 namespace catalog {
 

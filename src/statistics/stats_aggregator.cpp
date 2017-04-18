@@ -192,9 +192,8 @@ void StatsAggregator::UpdateMetrics() {
   auto catalog = catalog::Catalog::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp =
-      std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch)
-          .count();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
 
   auto database_count = catalog->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;

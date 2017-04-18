@@ -33,12 +33,6 @@ namespace catalog {
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
 
-// Exemplar catalog table
-#define DATABASE_METRICS_CATALOG_NAME "pg_database_metrics"
-#define TABLE_METRICS_CATALOG_NAME "pg_table_metrics"
-#define INDEX_METRICS_CATALOG_NAME "pg_index_metrics"
-#define QUERY_METRICS_CATALOG_NAME "pg_query_metrics"
-
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
 
