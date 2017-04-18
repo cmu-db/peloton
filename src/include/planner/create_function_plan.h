@@ -30,7 +30,7 @@ class CreateFunctionPlan : public AbstractPlan {
   CreateFunctionPlan &operator=(CreateFunctionPlan &&) = delete;
 
   // Temporary fix to handle Copy()
-  explicit CreatePlan(std::string func);
+  explicit CreateFunctionPlan(std::string func);
 
   //explicit CreatePlan(std::string name, std::string database_name,
   //                    std::unique_ptr<catalog::Schema> schema,
