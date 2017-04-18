@@ -44,10 +44,11 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, concurrency::Transaction *txn,
-    const std::vector<type::Value> &params, std::vector<StatementResult> &result,
-    const std::vector<int> &result_format) {
+ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
+                                        concurrency::Transaction *txn,
+                                        const std::vector<type::Value> &params,
+                                        std::vector<StatementResult> &result,
+                                        const std::vector<int> &result_format) {
   ExecuteResult p_status;
   if (plan == nullptr) return p_status;
 
@@ -60,7 +61,6 @@ ExecuteResult PlanExecutor::ExecutePlan(
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
   if (codegen::QueryCompiler::IsSupported(*plan) == false) {
-
     LOG_TRACE("Building the executor tree");
     // Use const std::vector<type::Value> &params to make it more elegant for
     // network
@@ -112,7 +112,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
 
       // Set the result
       p_status.m_processed = executor_context->num_processed;
-     // success so far
+      // success so far
       p_status.m_result = ResultType::SUCCESS;
     } else {
       p_status.m_result = ResultType::FAILURE;
@@ -137,16 +137,20 @@ ExecuteResult PlanExecutor::ExecutePlan(
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
 
+    // Compile the query
     codegen::QueryCompiler compiler;
-    auto compiled = compiler.Compile(*plan, consumer);
-    compiled->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
-    const auto &results = consumer.GetOutputTuples();
+    auto query = compiler.Compile(*plan, consumer);
 
-    for (auto &tuple : results) {
-      for (unsigned int i = 0; i < tuple.tuple_.size(); i++) {
+    // Execute the query
+    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
+
+    // Iterate over results
+    const auto &results = consumer.GetOutputTuples();
+    for (const auto &tuple : results) {
+      for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
         auto res = StatementResult();
-        auto str = tuple.tuple_[i].ToString();
-        if (tuple.tuple_[i].IsNull()) str = "";
+        auto column_val = tuple.GetValue(i);
+        auto str = column_val.IsNull() ? "" : column_val.ToString();
         PlanExecutor::copyFromTo(str, res.second);
         LOG_TRACE("column content: [%s]", str.c_str());
         result.push_back(std::move(res));
@@ -382,7 +386,8 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
     case PlanNodeType::POPULATE_INDEX:
       LOG_TRACE("Adding PopulateIndex Executor");
-      child_executor = new executor::PopulateIndexExecutor(plan, executor_context);
+      child_executor =
+          new executor::PopulateIndexExecutor(plan, executor_context);
       break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",

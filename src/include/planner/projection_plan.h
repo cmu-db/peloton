@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <numeric>
 
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
