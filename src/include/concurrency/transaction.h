@@ -61,13 +61,13 @@ class Transaction : public Printable {
             const IsolationLevelType isolation, 
             const cid_t &read_id, 
             const cid_t &commit_id) {
-    // initially, all the three ids are set to read_id.
-    txn_id_ = read_id;
-    
     read_id_ = read_id;
 
     // commit id can be set at a transaction's commit phase.
     commit_id_ = commit_id;
+
+    // set txn_id to commit_id.
+    txn_id_ = commit_id_;
 
     epoch_id_ = read_id_ >> 32;
 
