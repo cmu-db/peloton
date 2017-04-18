@@ -28,7 +28,7 @@ public:
   EpochManager() {}
 
   // TODO: stop epoch threads before resetting epoch id.
-  virtual void Reset(const size_t &current_epoch) = 0;
+  virtual void Reset() = 0;
 
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) = 0;
 

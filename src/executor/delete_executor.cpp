@@ -75,11 +75,7 @@ bool DeleteExecutor::DExecute() {
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
-  storage::Tile *tile = source_tile->GetBaseTile(0);
-  storage::TileGroup *tile_group = tile->GetTileGroup();
-  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-  auto tile_group_id = tile_group->GetTileGroupId();
-
+  
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -95,12 +91,28 @@ bool DeleteExecutor::DExecute() {
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
+
+    storage::TileGroup *tile_group = source_tile->GetBaseTile(0)->GetTileGroup();
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    ItemPointer old_location(tile_group_id, physical_tuple_id);
+    ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
+
+    // if running at snapshot isolation, 
+    // then we need to retrieve the latest version of this tuple.
+    if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
+      old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
+      
+      auto &manager = catalog::Manager::GetInstance();
+      tile_group = manager.GetTileGroup(old_location.block).get();
+      tile_group_header = tile_group->GetHeader();
+
+      physical_tuple_id = old_location.offset;
+    }
 
     bool is_owner = 
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);

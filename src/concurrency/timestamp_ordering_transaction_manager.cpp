@@ -341,7 +341,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       } else {
 
-        current_txn->RecordRead(location);
+        // this version must already be in the read/write set.
+        // so no need to update read set.
+        // current_txn->RecordRead(location);
 
         // Increment table read op stats
         if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -446,8 +448,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
                   current_txn->GetCommitId() || 
                   GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
 
-        // update read set.
-        current_txn->RecordRead(location);
+        // this version must already be in the read/write set.
+        // so no need to update read set.
+        // current_txn->RecordRead(location);
 
         // Increment table read op stats
         if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -516,16 +519,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
                                   ->GetHeader();
   auto new_tile_group_header = manager.GetTileGroup(new_location.block)
                                       ->GetHeader();
-
-
-  // for snapshot isolation, we only update the latest version.
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
-
-    old_location = *(tile_group_header->GetIndirection(location.offset));
-
-    tile_group_header = manager.GetTileGroup(old_location.block)
-                               ->GetHeader();
-  }
 
   auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
@@ -649,15 +642,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
                                   ->GetHeader();
   auto new_tile_group_header = manager.GetTileGroup(new_location.block)
                                       ->GetHeader();
-
-  // for snapshot isolation, we only update the latest version.
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
-    
-    old_location = *(tile_group_header->GetIndirection(location.offset));
-
-    tile_group_header = manager.GetTileGroup(old_location.block)
-                                    ->GetHeader();
-  }
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -832,6 +816,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         PL_ASSERT(new_version.IsNull() == false);
 
         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
+        if (cid <= end_commit_id) {
+          printf("cid = %lu, end commit id = %lu\n", cid, end_commit_id);
+        }
         PL_ASSERT(cid > end_commit_id);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();

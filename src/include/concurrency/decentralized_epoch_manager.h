@@ -46,10 +46,13 @@ public:
     return epoch_manager;
   }
 
-  virtual void Reset(const size_t &current_epoch_id) override {
+  virtual void Reset() override {
     // epoch should be always larger than 0
-    PL_ASSERT(current_epoch_id != 0);
-    current_global_epoch_id_ = (uint64_t) current_epoch_id;
+    // PL_ASSERT(current_epoch_id != 0);
+    // current_global_epoch_id_ = (uint64_t) current_epoch_id;
+    current_global_epoch_id_ = 1;
+    next_txn_id_ = 0;
+    snapshot_global_epoch_id_ = 1;
   }
 
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) override {

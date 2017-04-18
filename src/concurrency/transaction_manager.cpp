@@ -200,6 +200,8 @@ VisibilityType TransactionManager::IsVisible(
   // the tuple is not visible.
   bool invalidated = (current_txn->GetReadId() >= tuple_end_cid);
 
+  printf("own = %d, active = %d, invalidate = %d, current txn id = %d\n", (int)own, (int)activated, (int)invalidated, (int)tuple_txn_id);
+
   if (tuple_txn_id == INVALID_TXN_ID || CidIsInDirtyRange(tuple_begin_cid)) {
     // the tuple is not available.
     if (activated && !invalidated) {
