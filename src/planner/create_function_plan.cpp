@@ -18,7 +18,7 @@
 namespace peloton {
 namespace planner {
 
-CreateFunctionPlan::CreateFunctionPlan(UNUSED std::string func) {
+CreateFunctionPlan::CreateFunctionPlan(UNUSED_ATTRIBUTE std::string func) {
 }
 
 CreateFunctionPlan::CreateFunctionPlan(parser::CreateFunctionStatement *parse_tree) {
