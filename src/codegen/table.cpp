@@ -75,23 +75,22 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
+ llvm::Value *multi_thread_context = codegen.GetArgument(1);
+ llvm::Value *tile_group_idx = codegen.CallFunc(
+     MultiThreadContextProxy::GetRangeStartFunction(codegen),
+     {
+         multi_thread_context,
+         num_tile_groups
+     });
 
-  // TODO(tq5124): fix this.
-//  llvm::Value *multi_thread_context = codegen.GetArgument(1);
-//  llvm::Value *tile_group_idx = codegen.CallFunc(
-//      MultiThreadContextProxy::GetRangeStartFunction(codegen),
-//      {
-//          multi_thread_context,
-//          num_tile_groups
-//      });
-//  llvm::Value *tile_group_idx_end = codegen.CallFunc(
-//      MultiThreadContextProxy::GetRangeEndFunction(codegen),
-//      {
-//          multi_thread_context,
-//          num_tile_groups
-//      });;
-  llvm::Value *tile_group_idx = codegen.Const64(0);
-  llvm::Value *tile_group_idx_end = num_tile_groups;
+ llvm::Value *tile_group_idx_end = codegen.CallFunc(
+     MultiThreadContextProxy::GetRangeEndFunction(codegen),
+     {
+         multi_thread_context,
+         num_tile_groups
+     });
+  // llvm::Value *tile_group_idx = codegen.Const64(0);
+  // llvm::Value *tile_group_idx_end = num_tile_groups;
 
   codegen.CallPrintf("Number of tile groups: %u.\n", {num_tile_groups});
   codegen.CallPrintf("Scanning table, from [%u to %u).\n", {tile_group_idx, tile_group_idx_end});
