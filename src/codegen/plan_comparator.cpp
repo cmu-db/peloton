@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// value_peeker_proxy.h
+// plan_comparator.cpp
 //
 // Identification: src/codegen/plan_comparator.cpp
 //
