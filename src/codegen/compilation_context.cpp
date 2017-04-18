@@ -218,10 +218,13 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
     codegen_.CallPrintf("Construct MultiThreadContext for thread id: %u, thread count: %u.\n", {thread_id, thread_count});
 
-    // TODO: submit multi thread tasks here.
+    //NOTE: single-threaded
     codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
-    UNUSED_ATTRIBUTE auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
-    // codegen_.CallFunc(QueryThreadPoolProxy::, {runtime_state_ptr, multi_thread_context});
+
+    // TODO: multi-threaded
+    // UNUSED_ATTRIBUTE auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
+    // TODO: submit task FAIL
+    // codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
 
     // Move to next thread id in loop.
     thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
