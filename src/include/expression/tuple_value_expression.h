@@ -80,10 +80,11 @@ class TupleValueExpression : public AbstractExpression {
   // Attribute binding
   void PerformBinding(const std::vector<const planner::BindingContext *> &
                           binding_contexts) override {
-    const auto &context = binding_contexts[tuple_idx_];
+    const auto &context = binding_contexts[GetTupleId()];
     ai_ = context->Find(GetColumnId());
-    LOG_DEBUG("TVE Column ID %u binds to AI %p", GetColumnId(), ai_);
     PL_ASSERT(ai_ != nullptr);
+    LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)",
+              GetTupleId(), GetColumnId(), ai_, ai_->name.c_str());
   }
 
   // Return the attributes this expression uses

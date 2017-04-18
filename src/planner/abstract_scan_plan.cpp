@@ -40,15 +40,16 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
     for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
       const auto column = schema->GetColumn(col_id);
       bool nullable = schema->AllowNull(col_id);
-      attributes_.push_back(AttributeInfo{column.GetType(), nullable, col_id,
-                                          column.GetName()});
+      attributes_.push_back(
+          AttributeInfo{column.GetType(), nullable, col_id, column.GetName()});
     }
 
     // Perform attribute binding only for actual output columns
     const auto &input_col_ids = GetColumnIds();
     for (oid_t col_id = 0; col_id < input_col_ids.size(); col_id++) {
       const auto &ai = attributes_[input_col_ids[col_id]];
-      LOG_DEBUG("Attribute %u binds to AI %p", col_id, &ai);
+      LOG_DEBUG("Attribute '%s.%s' (%u) binds to AI %p",
+                GetTable()->GetName().c_str(), ai.name.c_str(), col_id, &ai);
       binding_context.BindNew(col_id, &ai);
     }
   }

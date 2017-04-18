@@ -55,13 +55,12 @@ class MergeJoinPlan : public AbstractJoinPlan {
     // Nothing to see here...
   }
 
-  void HandleSubplanBinding(
-      bool from_left,
-      const std::vector<const BindingContext *> &inputs) override {
+  void HandleSubplanBinding(bool from_left,
+                            const BindingContext &input) override {
     for (auto &join_clause : *GetJoinClauses()) {
       auto &exp = from_left ? join_clause.left_ : join_clause.right_;
       const_cast<expression::AbstractExpression *>(exp.get())
-          ->PerformBinding(inputs);
+          ->PerformBinding({&input});
     }
   }
 

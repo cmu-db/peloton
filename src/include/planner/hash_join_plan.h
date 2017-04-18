@@ -51,8 +51,7 @@ class HashJoinPlan : public AbstractJoinPlan {
         left_hash_keys_(std::move(left_hash_keys)),
         right_hash_keys_(std::move(right_hash_keys)) {}
 
-  void HandleSubplanBinding(
-      bool is_left, const std::vector<const BindingContext *> &inputs) override;
+  void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASHJOIN; }
 

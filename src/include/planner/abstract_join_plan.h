@@ -73,8 +73,8 @@ class AbstractJoinPlan : public AbstractPlan {
   // For joins, attributes arrive from both the left and right side of the join
   // This method enables this merging by properly identifying each side's
   // attributes in separate contexts.
-  virtual void HandleSubplanBinding(
-      bool from_left, const std::vector<const BindingContext *> &inputs) = 0;
+  virtual void HandleSubplanBinding(bool from_left,
+                                    const BindingContext &input) = 0;
 
  private:
   /** @brief The type of join that we're going to perform */
