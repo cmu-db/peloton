@@ -20,11 +20,21 @@ namespace codegen {
 class MultiThreadContext {
  public:
 
-  static MultiThreadContext GetInstance(int64_t thread_id, int64_t thread_count);
+  static void InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count);
 
   int64_t GetRangeStart(int64_t tile_group_num);
 
   int64_t GetRangeEnd(int64_t tile_group_num);
+
+  void SetThreadId(int64_t thread_id)
+  {
+      thread_id_ = thread_id;
+  }
+
+  void SetThreadCount(int64_t thread_count)
+  {
+      thread_count_ = thread_count;
+  }
 
  private:
 

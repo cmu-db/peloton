@@ -5,10 +5,11 @@
 namespace peloton {
 namespace codegen {
 
-MultiThreadContext MultiThreadContext::GetInstance(int64_t thread_id, int64_t thread_count)
+void MultiThreadContext::InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count)
 {
     std::cout << "Constructing MTC with " << thread_id << "," << thread_count << std::endl;
-    return MultiThreadContext(thread_id, thread_count);
+    ins->SetThreadId(thread_id);
+    ins->SetThreadCount(thread_count);
 }
 
 int64_t MultiThreadContext::GetRangeStart(int64_t tile_group_num)

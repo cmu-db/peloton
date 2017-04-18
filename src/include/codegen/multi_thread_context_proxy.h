@@ -27,7 +27,7 @@ class MultiThreadContextProxy {
   // Return the LLVM type that matches the memory layout of our HashTable
   static llvm::Type *GetType(CodeGen &codegen);
 
-  static llvm::Function *GetInstanceFunction(CodeGen &codegen);
+  static llvm::Function *InitInstanceFunction(CodeGen &codegen);
   static llvm::Function *GetRangeStartFunction(CodeGen &codegen);
   static llvm::Function *GetRangeEndFunction(CodeGen &codegen);
 };
