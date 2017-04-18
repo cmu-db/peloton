@@ -60,7 +60,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
-  if (codegen::QueryCompiler::IsSupported(*plan) == false) {
+  if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     LOG_TRACE("Building the executor tree");
     // Use const std::vector<type::Value> &params to make it more elegant for
     // network
