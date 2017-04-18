@@ -263,7 +263,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
             LOG_TRACE("Not NULL constraint violated");
             throw ConstraintException("Not NULL constraint violated : " +
                                       std::string(tuple->GetInfo()));
-            return false;
           }
           break;
         }
@@ -274,7 +273,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
             throw ConstraintException(
                 "CHECK EXPRESSION constraint violated : " +
                 std::string(tuple->GetInfo()));
-            return false;
           }
           break;
         }
