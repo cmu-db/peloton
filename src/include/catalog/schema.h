@@ -194,22 +194,6 @@ class Schema : public Printable {
     return nullptr;
   }
 
-  /*
-  inline std::pair<ExpressionType, type::Value> AllowExpConstrain(
-      const oid_t column_id) const {
-    std::string column_name = columns[column_id].GetName();
-    for (auto constraint : columns[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::CHECK)
-        return constraint.GetExp();
-    }
-    std::pair<ExpressionType, type::Value> tmp =
-        std::pair<ExpressionType, type::Value>();
-    tmp.first = ExpressionType::INVALID;
-    return tmp;
-    // return std::pair<ExpressionType, type::Value>();
-  }
-  */
-
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
                             const catalog::Constraint &constraint) {
