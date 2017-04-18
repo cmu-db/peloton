@@ -16,6 +16,7 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
+#include "codegen/query_cache.h"
 #include "expression/parameter_value_expression.h"
 
 namespace peloton {
@@ -127,14 +128,53 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   // Compile
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state, nullptr, params ?
-         std::unique_ptr<executor::ExecutorContext> (
-            new executor::ExecutorContext{txn, *params}).get(): nullptr);
 
+  auto compiled_query = compiler.Compile(plan, consumer, &stats);
+
+  compiled_query->Execute(*txn, consumer_state, nullptr, params ?
+                                                           std::unique_ptr<executor::ExecutorContext> (
+                                                               new executor::ExecutorContext{txn, *params}).get(): nullptr);
   txn_manager.CommitTransaction(txn);
+
+
+
+  return stats;
+}
+
+
+codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCache(
+    planner::AbstractPlan& plan, codegen::QueryResultConsumer &consumer,
+    char *consumer_state, std::vector<type::Value> *params) {
+  // Start a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  // Compile
+  codegen::QueryCompiler::CompileStats stats;
+  codegen::QueryCompiler compiler;
+
+  // Run
+  if (codegen::QueryCache::Instance().FindPlan(plan) == false) {
+    LOG_DEBUG("No plan found\n");
+    auto compiled_query = compiler.Compile(plan, consumer, &stats);
+
+    compiled_query->Execute(*txn, consumer_state, nullptr, params ?
+                                                           std::unique_ptr<executor::ExecutorContext> (
+                                                               new executor::ExecutorContext{txn, *params}).get(): nullptr);
+    codegen::QueryCache::Instance().InsertPlan(plan, std::move(compiled_query));
+    txn_manager.CommitTransaction(txn);
+
+  }
+  else {
+    LOG_DEBUG("Plan found\n");
+    codegen::Query* compiled_query = codegen::QueryCache::Instance().GetQuery(plan);
+    compiled_query->Execute(*txn, consumer_state, nullptr, params ?
+                                                           std::unique_ptr<executor::ExecutorContext> (
+                                                               new executor::ExecutorContext{txn, *params}).get(): nullptr);
+    txn_manager.CommitTransaction(txn);
+  }
 
   return stats;
 }

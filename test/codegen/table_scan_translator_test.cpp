@@ -89,7 +89,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_20, {0, 1, 2}};
-
+  scan.Copy();
   // Do binding
   planner::BindingContext context;
   scan.PerformBinding(context);

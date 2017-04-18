@@ -19,6 +19,7 @@
 #include "planner/order_by_plan.h"
 #include "codegen/plan_comparator.h"
 #include "codegen/codegen_test_util.h"
+#include "codegen/query_cache.h"
 
 namespace peloton {
 namespace test {
@@ -48,13 +49,60 @@ public:
     LoadTestTable(TestTableId(), num_rows_to_insert);
     LoadTestTable(RightTableId(), 4 * num_rows_to_insert);
   }
-
+  uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
   uint32_t TestTableId() { return test_table1_id; }
   uint32_t RightTableId() const { return test_table2_id; }
 
 private:
   uint32_t num_rows_to_insert = 64;
 };
+
+
+TEST_F(PlanComparatorTest, SimpleCacheCheck) {
+  //
+  // SELECT b FROM table where a >= 40;
+  //
+  auto* a_col_exp =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+  auto* a_gt_40 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+
+  // 2) Setup the scan plan node
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_40, {0, 1}};
+
+  // Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer{{0}, context};
+
+  // COMPILE and execute
+  CompileAndExecuteWithCache(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+
+  // Check that we got all the results
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
+
+  auto* a_col_exp_2 =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_40_exp_2 = CodegenTestUtils::ConstIntExpression(40);
+  auto* a_gt_40_2 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_2, const_40_exp_2);
+
+  // 2) Setup the scan plan node
+  planner::SeqScanPlan scan_2{&GetTestTable(TestTableId()), a_gt_40_2, {0, 1}};
+
+  planner::BindingContext context_2;
+  scan_2.PerformBinding(context_2);
+
+  codegen::BufferingConsumer buffer_2{{0}, context_2};
+  CompileAndExecuteWithCache(scan_2, buffer_2, reinterpret_cast<char*>(buffer_2.GetState()));
+  const auto &results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable() - 4, results_2.size());
+
+}
 
 TEST_F(PlanComparatorTest, SeqScanConjunctionPredicateEqualityCheck) {
   //
