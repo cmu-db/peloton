@@ -12,7 +12,6 @@
 
 #include "catalog/catalog.h"
 #include "catalog/query_metrics_catalog.h"
-#include "catalog/catalog_defaults.h"
 #include "common/macros.h"
 
 namespace peloton {
