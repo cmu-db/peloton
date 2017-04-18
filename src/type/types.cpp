@@ -657,9 +657,9 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_MULTIPLY;
   } else if (upper_str == "OPERATOR_DIVIDE" || upper_str == "/") {
     return ExpressionType::OPERATOR_DIVIDE;
-  } else if (upper_str == "OPERATOR_CONCAT") {
+  } else if (upper_str == "OPERATOR_CONCAT" || upper_str == "||") {
     return ExpressionType::OPERATOR_CONCAT;
-  } else if (upper_str == "OPERATOR_MOD") {
+  } else if (upper_str == "OPERATOR_MOD" || upper_str == "%" ) {
     return ExpressionType::OPERATOR_MOD;
   } else if (upper_str == "OPERATOR_CAST") {
     return ExpressionType::OPERATOR_CAST;

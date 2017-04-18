@@ -594,7 +594,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
 
 
   int type_id = static_cast<int>(target_type);
-  if (type_id <= 4) {
+  if (type_id <= 6) {
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
   } else if (((10 <= type_id) && (type_id <= 17)) || (type_id == 20)) {
