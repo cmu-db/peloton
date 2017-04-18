@@ -205,7 +205,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
   llvm::Value *runtime_state_ptr = codegen_.GetState();
   llvm::Value *thread_id = codegen_.Const64(0);
-  llvm::Value *thread_count = codegen_.Const64(3);
+  llvm::Value *thread_count = codegen_.Const64(4);
 
   Loop loop{codegen_, codegen_->CreateICmpULT(thread_id, thread_count),
     {
