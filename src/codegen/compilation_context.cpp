@@ -211,7 +211,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     }};
   {
     thread_id = loop.GetLoopVar(0);
-    auto *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
+    llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
     codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count});
 
     codegen_.CallPrintf("Construct MultiThreadContext for thread id: %u, thread count: %u.\n", {thread_id, thread_count});
