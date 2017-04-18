@@ -56,7 +56,7 @@ class FunctionCatalog : public AbstractCatalog {
   //need to add protransoform, proargtypes, proallargtypes, proargmodes,
   //proargnames, prosrc, proconfig
 
- bool InsertFunction(oid_t oid,const std::string &proname,
+ bool InsertFunction(const std::string &proname,
                          oid_t pronamespace,oid_t proowner, 
                           oid_t prolang, float procost,
                          float prorows,oid_t provariadic,bool proisagg,

@@ -47,19 +47,19 @@ class CreateFunctionPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new CreateFunctionPlan("UDF function"));
   }
 
-  std::string GetFunctionName() const { return function_name; }
+  inline std::string GetFunctionName() const { return function_name; }
 
-  PLType GetUDFLanguage() const { return language; }
+  inline PLType GetUDFLanguage() const { return language; }
 
-  std::string GetFunctionBody() const { return function_body; }
+  inline std::vector<std::string> GetFunctionBody() const { return function_body; }
 
-  std::vector<std::string> GetFunctionParameterNames() const { return function_param_names; }
+  inline std::vector<std::string> GetFunctionParameterNames() const { return function_param_names; }
 
-  std::vector<type::Type::TypeId> GetFunctionParameterTypes() const { return function_param_types; }
+  inline std::vector<type::Type::TypeId> GetFunctionParameterTypes() const { return function_param_types; }
 
-  type::Type::TypeId GetReturnType() const { return return_type; }
+  inline type::Type::TypeId GetReturnType() const { return return_type; }
 
-  bool IsReplace() const { return is_replace; }
+  inline bool IsReplace() const { return is_replace; }
 
   private:
 
@@ -73,7 +73,7 @@ class CreateFunctionPlan : public AbstractPlan {
   std::vector<type::Type::TypeId> function_param_types;
 
   // Query string/ function body of the UDF
-  std::string function_body;
+  std::vector<std::string> function_body;
 
   // Indicates if the function definition needs to be replaced
   bool is_replace;
@@ -83,6 +83,8 @@ class CreateFunctionPlan : public AbstractPlan {
 
   // Return type of the UDF
   type::Type::TypeId return_type;
+
+  int param_count = 0;
 
 };
 }

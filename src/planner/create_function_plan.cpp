@@ -24,14 +24,15 @@ CreateFunctionPlan::CreateFunctionPlan(UNUSED_ATTRIBUTE std::string func) {
 CreateFunctionPlan::CreateFunctionPlan(parser::CreateFunctionStatement *parse_tree) {
 
   language = parse_tree->language;
-  std::string function_body(parse_tree->function_body[0]);
+  function_body = parse_tree->function_body;
   is_replace = parse_tree->replace;
-  std::string function_name(parse_tree->function_name);
+  function_name = parse_tree->function_name;
+
 
   for (auto col : *(parse_tree->func_parameters)) {
     //Adds the function names
     function_param_names.push_back(col->name);
-
+    param_count++;
     //Adds the function types
     function_param_types.push_back(col->GetValueType(col->type));
   }
