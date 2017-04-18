@@ -134,7 +134,7 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_index")
                 ->GetTupleCount(),
-            17);
+            18);
   // EXPECT_EQ(catalog::Catalog::GetInstance()
   //               ->GetDatabaseWithName("pg_catalog")
   //               ->GetTableWithName("pg_table")
