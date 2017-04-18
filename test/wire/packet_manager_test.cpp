@@ -61,11 +61,11 @@ void *SimpleQueryTest(int port) {
     W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
     W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
 
+    W.commit();
     pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
 
     EXPECT_EQ(R.size(), 1);
     LOG_INFO("[SimpleQueryTest] Found %lu employees", R.size());
-    W.commit();
   } catch (const std::exception &e) {
     LOG_INFO("[SimpleQueryTest] Exception occurred");
   }
