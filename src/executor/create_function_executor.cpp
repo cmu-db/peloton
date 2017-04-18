@@ -29,7 +29,7 @@ CreateFunctionExecutor::CreateFunctionExecutor(const planner::AbstractPlan *node
 
 // Initialize executer
 // Nothing to initialize now
-bool CreateExecutor::DInit() {
+bool CreateFunctionExecutor::DInit() {
   LOG_TRACE("Initializing Create Function Executer...");
   LOG_TRACE("Create Function Executer initialized!");
   return true;
@@ -37,8 +37,8 @@ bool CreateExecutor::DInit() {
 
 bool CreateFunctionExecutor::DExecute() {
   LOG_TRACE("Executing Create...");
-  const planner::CreateFunctionPlan &node = GetPlanNode<planner::CreatePlan>();
-  auto current_txn = context->GetTransaction();
+  UNUSED_ATTRIBUTE const planner::CreateFunctionPlan &node = GetPlanNode<planner::CreateFunctionPlan>();
+  UNUSED_ATTRIBUTE auto current_txn = context->GetTransaction();
 
   //Insert into the catalog
 
