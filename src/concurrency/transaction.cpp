@@ -117,7 +117,8 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
     }
     PL_ASSERT(false);
   } else {
-    PL_ASSERT(false);
+    rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
+    // PL_ASSERT(false);
   }
 }
 
@@ -164,7 +165,8 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
     }
     PL_ASSERT(false);
   } else {
-    PL_ASSERT(false);
+    rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
+    // PL_ASSERT(false);
   }
   return false;
 }

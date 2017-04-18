@@ -75,6 +75,7 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
+  printf("execute seq scan!!!\n");
   // Scanning over a logical tile.
   if (children_.size() == 1 &&
       //There will be a child node on the create index scenario,
