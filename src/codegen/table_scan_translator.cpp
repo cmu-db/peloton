@@ -157,8 +157,9 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   // 2. Add the attribute accessors into the row batch
   for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
     auto *attribute = ais[output_col_ids[col_idx]];
-    LOG_DEBUG("Putting AI %p [table: %u] into context", attribute,
-              translator_.GetTable().GetOid());
+    LOG_DEBUG("Putting AI '%s.%s' (%p) into context",
+              scan_plan.GetTable()->GetName().c_str(), attribute->name.c_str(),
+              attribute);
     batch.AddAttribute(attribute, &access[col_idx]);
   }
 }

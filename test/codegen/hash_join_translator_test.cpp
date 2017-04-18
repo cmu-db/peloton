@@ -99,7 +99,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
 
   std::vector<AbstractExprPtr> right_hash_keys;
   right_hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
 
   std::vector<AbstractExprPtr> hash_keys;
   hash_keys.emplace_back(
