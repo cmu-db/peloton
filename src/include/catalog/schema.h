@@ -173,6 +173,7 @@ class Schema : public Printable {
     return true;
   }
 
+// For single column default
   inline bool AllowDefault(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
