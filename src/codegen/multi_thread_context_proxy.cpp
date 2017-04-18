@@ -64,7 +64,7 @@ llvm::Function *MultiThreadContextProxy::GetRangeStartFunction(CodeGen &codegen)
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int64Type(),
       {
-          MultiThreadContextProxy::GetType(codegen),
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           codegen.Int64Type()
       },
       false);
@@ -81,7 +81,7 @@ llvm::Function *MultiThreadContextProxy::GetRangeEndFunction(CodeGen &codegen) {
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int64Type(),
       {
-          MultiThreadContextProxy::GetType(codegen),
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           codegen.Int64Type()
       },
       false);
