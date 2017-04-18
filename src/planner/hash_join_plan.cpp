@@ -44,11 +44,11 @@ HashJoinPlan::HashJoinPlan(
 }
 
 void HashJoinPlan::HandleSubplanBinding(
-    bool is_left, const BindingContext &context) {
+    bool is_left, const std::vector<const BindingContext *> &inputs) {
   auto &keys = is_left ? left_hash_keys_ : right_hash_keys_;
   for (auto &key : keys) {
     auto *key_exp = const_cast<expression::AbstractExpression *>(key.get());
-    key_exp->PerformBinding(context);
+    key_exp->PerformBinding(inputs);
   }
 }
 

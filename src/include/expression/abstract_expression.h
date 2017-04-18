@@ -110,11 +110,12 @@ class AbstractExpression : public Printable {
   inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   // Attribute binding
-  virtual void PerformBinding(const planner::BindingContext &binding_context) {
+  virtual void PerformBinding(
+      const std::vector<const planner::BindingContext *> &binding_contexts) {
     // Most expressions don't need attribute binding, except for those
     // that actually reference table attributes (i.e., TVE)
     for (uint32_t i = 0; i < GetChildrenSize(); i++) {
-      children_[i]->PerformBinding(binding_context);
+      children_[i]->PerformBinding(binding_contexts);
     }
   }
 
@@ -130,7 +131,7 @@ class AbstractExpression : public Printable {
 
   // Get all the attributes this expression uses
   virtual void GetUsedAttributes(
-      std::unordered_set<const planner::AttributeInfo*> &attributes) const {
+      std::unordered_set<const planner::AttributeInfo *> &attributes) const {
     for (uint32_t i = 0; i < GetChildrenSize(); i++) {
       children_[i]->GetUsedAttributes(attributes);
     }

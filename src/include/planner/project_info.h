@@ -56,7 +56,7 @@ class ProjectInfo {
 
   void PerformRebinding(
       BindingContext &output_context,
-      const std::vector<BindingContext *> &input_contexts) const;
+      const std::vector<const BindingContext *> &input_contexts) const;
 
   void PartitionInputs(std::vector<std::vector<oid_t>> &input) const;
 

@@ -14,6 +14,7 @@
 
 #include "codegen/if.h"
 #include "codegen/oa_hash_table_proxy.h"
+#include "codegen/projection_translator.h"
 #include "codegen/vectorized_loop.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
@@ -88,6 +89,12 @@ HashGroupByTranslator::HashGroupByTranslator(
     }
   }
 
+  // Prepare the projection (if one exists)
+  const auto *projection_info = group_by_.GetProjectInfo();
+  if (projection_info != nullptr) {
+    ProjectionTranslator::PrepareProjection(context, *projection_info);
+  }
+
   // Setup the aggregation logic for this group by
   aggregation_.Setup(codegen, aggregates);
 
@@ -157,8 +164,8 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
       hashes.SetValue(codegen, p, hash_val);
 
       // Prefetch the actual hash table bucket
-      hash_table_.PrefetchBucket(codegen, LoadStatePtr(hash_table_id_), hash_val,
-                                 OAHashTable::PrefetchType::Read,
+      hash_table_.PrefetchBucket(codegen, LoadStatePtr(hash_table_id_),
+                                 hash_val, OAHashTable::PrefetchType::Read,
                                  OAHashTable::Locality::Medium);
 
       // End prefetch loop
@@ -217,7 +224,8 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   auto &aggregates = group_by_.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
-      vals.push_back(row.DeriveValue(codegen, *agg_term.expression));
+      codegen::Value agg_value = row.DeriveValue(codegen, *agg_term.expression);
+      vals.push_back(agg_value);
     }
   }
 
@@ -229,10 +237,10 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   }
 
   // Perform the insertion into the hash table
+  llvm::Value *hash_table = LoadStatePtr(hash_table_id_);
   ConsumerProbe probe{aggregation_, vals};
   ConsumerInsert insert{aggregation_, vals};
-  hash_table_.ProbeOrInsert(codegen, LoadStatePtr(hash_table_id_), hash, key,
-                            probe, insert);
+  hash_table_.ProbeOrInsert(codegen, hash_table, hash, key, probe, insert);
 }
 
 // Cleanup by destroying the aggregation hash-table
@@ -335,15 +343,22 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
   // Register attributes in the row batch
   for (uint64_t i = 0; i < grouping_ais.size(); i++) {
-    LOG_DEBUG("Adding aggregate key attribute '%s' (%p) to batch\n",
+    LOG_DEBUG("Adding aggregate key attribute '%s' (%p) to batch",
               grouping_ais[i]->name.c_str(), grouping_ais[i]);
     batch.AddAttribute(grouping_ais[i], &accessors[i]);
   }
   for (uint64_t i = 0; i < aggregates.size(); i++) {
     auto &agg_term = aggregates[i];
-    LOG_DEBUG("Adding aggregate attribute '%s' (%p) to batch\n",
+    LOG_DEBUG("Adding aggregate attribute '%s' (%p) to batch",
               agg_term.agg_ai.name.c_str(), &agg_term.agg_ai);
     batch.AddAttribute(&agg_term.agg_ai, &accessors[i + grouping_ais.size()]);
+  }
+
+  std::vector<RowBatch::ExpressionAccess> derived_attribute_accessors;
+  const auto *project_info = group_by.GetProjectInfo();
+  if (project_info != nullptr) {
+    ProjectionTranslator::AddNonTrivialAttributes(batch, *project_info,
+                                                  derived_attribute_accessors);
   }
 
   // Row batch is set up, send it up
@@ -400,8 +415,8 @@ HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
 
 // Given free storage space in the hash table, store the initial values of all
 // the aggregates
-void HashGroupByTranslator::ConsumerInsert::StoreValue(CodeGen &codegen,
-                                                       llvm::Value *space) const {
+void HashGroupByTranslator::ConsumerInsert::StoreValue(
+    CodeGen &codegen, llvm::Value *space) const {
   aggregation_.CreateInitialValues(codegen, space, initial_vals_);
 }
 

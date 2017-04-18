@@ -112,14 +112,14 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
 
 void ProjectInfo::PerformRebinding(
     BindingContext &output_context,
-    const std::vector<BindingContext *> &input_contexts) const {
+    const std::vector<const BindingContext *> &input_contexts) const {
   // (A) First go over the direct mapping, mapping attributes from the
   // appropriate input context to the output context
   for (auto &dm : direct_map_list_) {
     oid_t dest_col_id = dm.first;
     oid_t src_col_id = dm.second.second;
 
-    BindingContext *src_context = input_contexts[dm.second.first];
+    const BindingContext *src_context = input_contexts[dm.second.first];
     const auto *dest_ai = src_context->Find(src_col_id);
     LOG_DEBUG("Direct: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
@@ -128,6 +128,10 @@ void ProjectInfo::PerformRebinding(
   // (B) Add the attributes produced by the target list expressions
   for (auto &target : target_list_) {
     oid_t dest_col_id = target.first;
+
+    PL_ASSERT(target.second.expr != nullptr);
+    auto *expr = const_cast<expression::AbstractExpression *>(target.second.expr);
+    expr->PerformBinding(input_contexts);
 
     const auto *dest_ai = &target.second.attribute_info;
     LOG_DEBUG("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);

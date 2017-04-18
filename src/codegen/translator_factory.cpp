@@ -22,6 +22,7 @@
 #include "codegen/hash_join_translator.h"
 #include "codegen/negation_translator.h"
 #include "codegen/order_by_translator.h"
+#include "codegen/projection_translator.h"
 #include "codegen/table_scan_translator.h"
 #include "codegen/tuple_value_translator.h"
 #include "expression/comparison_expression.h"
@@ -32,6 +33,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 
 namespace peloton {
@@ -48,6 +50,12 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::SEQSCAN: {
       auto &scan = static_cast<const planner::SeqScanPlan &>(plan_node);
       translator = new TableScanTranslator(scan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::PROJECTION: {
+      auto &projection =
+          static_cast<const planner::ProjectionPlan &>(plan_node);
+      translator = new ProjectionTranslator(projection, context, pipeline);
       break;
     }
     case PlanNodeType::HASHJOIN: {

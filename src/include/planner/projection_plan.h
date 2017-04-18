@@ -51,6 +51,11 @@ class ProjectionPlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
+    columns.resize(schema_->GetColumnCount());
+    std::iota(columns.begin(), columns.end(), 0);
+  }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(schema_.get()));

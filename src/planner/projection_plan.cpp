@@ -29,7 +29,7 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
   BindingContext child_context;
   children[0]->PerformBinding(child_context);
 
-  std::vector<BindingContext *> inputs = {&child_context};
+  std::vector<const BindingContext *> inputs = {&child_context};
   GetProjectInfo()->PerformRebinding(context, inputs);
 }
 

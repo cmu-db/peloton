@@ -64,7 +64,7 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
       all_cols_context.BindNew(col_id, &attributes_[col_id]);
     }
 
-    predicate->PerformBinding(all_cols_context);
+    predicate->PerformBinding({&all_cols_context});
   }
 }
 

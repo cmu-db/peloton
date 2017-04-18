@@ -67,6 +67,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // Now consider the sort columns
   const auto &sort_col_ais = plan_.GetSortKeyAIs();
   const auto &sort_col_ids = plan_.GetSortKeys();
+  PL_ASSERT(!sort_col_ids.empty());
+
   for (uint32_t i = 0; i < sort_col_ais.size(); i++) {
     const auto *ai = sort_col_ais[i];
 
@@ -85,7 +87,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
     } else {
       LOG_DEBUG("Adding sort column %p (%s) to tuple format @ %u", ai,
                 TypeIdToString(ai->type).c_str(),
-                i + static_cast<uint32_t>(output_col_ids.size()));
+                static_cast<uint32_t>(tuple_desc.size()));
       tuple_desc.push_back(ai->type);
       sort_key_info = {ai, false, static_cast<uint32_t>(tuple_desc.size() - 1)};
     }
@@ -151,14 +153,11 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   llvm::Value *left_tuple = compare.GetArgumentByName("leftTuple");
   llvm::Value *right_tuple = compare.GetArgumentByName("rightTuple");
 
-  // TODO: FIX ME
-  auto &sort_keys = plan_.GetSortKeys();
-  auto &descend_flags = plan_.GetDescendFlags();
-  PL_ASSERT(!sort_keys.empty());
+  const auto &sort_keys = plan_.GetSortKeys();
+  const auto &descend_flags = plan_.GetDescendFlags();
 
   // First pull out all the values from materialized state
-  std::vector<codegen::Value> left_vals;
-  std::vector<codegen::Value> right_vals;
+  std::vector<codegen::Value> left_vals, right_vals;
   for (size_t idx = 0; idx < sort_keys.size(); idx++) {
     auto &sort_key_info = sort_key_info_[idx];
     uint32_t slot = sort_key_info.tuple_slot;
@@ -166,6 +165,8 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
     left_vals.push_back(storage_format.GetValueAt(codegen, left_tuple, slot));
     right_vals.push_back(storage_format.GetValueAt(codegen, right_tuple, slot));
   }
+
+  // TODO: The logic here should be simplified.
 
   // The result of the overall comparison
   codegen::Value result;
@@ -179,32 +180,22 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   }
 
   // Do the remaining comparisons using cheaper options
+  const codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
   for (size_t idx = 1; idx < sort_keys.size(); idx++) {
     codegen::Value comp_result;
     if (!descend_flags[idx]) {
-      // If comparison says left < right, set comp_result to -1 (0 otherwise)
-      auto comparison = left_vals[idx].CompareLt(codegen, right_vals[idx]);
-      comp_result = codegen::Value{
-          type::Type::TypeId::INTEGER,
-          codegen->CreateSelect(comparison.GetValue(), codegen.Const32(-1),
-                                codegen.Const32(0))};
+      comp_result = left_vals[idx].CompareForSort(codegen, right_vals[idx]);
     } else {
-      // If comparison says left > right, set comp_result to 1 (0 otherwise)
-      auto comparison = right_vals[idx].CompareLt(codegen, left_vals[idx]);
-      comp_result = codegen::Value{
-          type::Type::TypeId::INTEGER,
-          codegen->CreateSelect(comparison.GetValue(), codegen.Const32(0),
-                                codegen.Const32(1))};
+      comp_result = right_vals[idx].CompareForSort(codegen, left_vals[idx]);
     }
     // If previous result is zero (meaning the values were equal), set the
     // running value to the result of the last comparison. Otherwise, carry
     // forward the comparison result of the previous attributes
-    auto *prev_zero =
-        codegen->CreateICmpEQ(result.GetValue(), codegen.Const32(0));
-    result =
-        codegen::Value{type::Type::TypeId::INTEGER,
-                       codegen->CreateSelect(prev_zero, comp_result.GetValue(),
-                                             result.GetValue())};
+    auto prev_zero = result.CompareEq(codegen, zero);
+    result = codegen::Value{
+        type::Type::TypeId::INTEGER,
+        codegen->CreateSelect(prev_zero.GetValue(), comp_result.GetValue(),
+                              result.GetValue())};
   }
 
   // At this point, all keys are equal (otherwise we would've jumped out)

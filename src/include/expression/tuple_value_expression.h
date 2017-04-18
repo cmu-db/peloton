@@ -23,7 +23,7 @@ namespace expression {
 //===----------------------------------------------------------------------===//
 // TupleValueExpression
 //===----------------------------------------------------------------------===//
-  
+
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
@@ -38,8 +38,8 @@ class TupleValueExpression : public AbstractExpression {
         value_idx_(-1),
         tuple_idx_(-1),
         table_name_(table_name),
-        col_name_ (col_name),
-        ai_(nullptr) { }
+        col_name_(col_name),
+        ai_(nullptr) {}
 
   TupleValueExpression(type::Type::TypeId type_id, const int tuple_idx,
                        const int value_idx)
@@ -55,11 +55,10 @@ class TupleValueExpression : public AbstractExpression {
       executor::ExecutorContext *context) const override;
 
   virtual void DeduceExpressionName() override {
-    if (!alias.empty())
-      return;
+    if (!alias.empty()) return;
     expr_name_ = col_name_;
   }
-  
+
   // TODO: Delete this when TransformExpression is completely depracated
   void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
@@ -67,26 +66,28 @@ class TupleValueExpression : public AbstractExpression {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
-  
+
   inline void SetValueType(type::Type::TypeId type_id) {
     return_value_type_ = type_id;
   }
-  
+
   inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
 
   // Attribute binding
-  void PerformBinding(const planner::BindingContext &binding_context) override {
-    ai_ = binding_context.Find(GetColumnId());
+  void PerformBinding(const std::vector<const planner::BindingContext *> &
+                          binding_contexts) override {
+    const auto &context = binding_contexts[tuple_idx_];
+    ai_ = context->Find(GetColumnId());
     LOG_DEBUG("TVE Column ID %u binds to AI %p", GetColumnId(), ai_);
     PL_ASSERT(ai_ != nullptr);
   }
 
   // Return the attributes this expression uses
-  void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *>
-                         &attributes) const override {
+  void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *> &
+                             attributes) const override {
     PL_ASSERT(GetAttributeRef() != nullptr);
     attributes.insert(GetAttributeRef());
   }
@@ -98,9 +99,8 @@ class TupleValueExpression : public AbstractExpression {
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 
   virtual bool Equals(AbstractExpression *expr) const override {
-    if (exp_type_ != expr->GetExpressionType())
-      return false;
-    auto tup_expr = (TupleValueExpression *) expr;
+    if (exp_type_ != expr->GetExpressionType()) return false;
+    auto tup_expr = (TupleValueExpression *)expr;
     return bound_obj_id_ == tup_expr->bound_obj_id_;
   }
 
@@ -125,7 +125,7 @@ class TupleValueExpression : public AbstractExpression {
     bound_obj_id_ = std::make_tuple(db_id, table_id, col_id);
     is_bound_ = true;
   }
-  
+
   void SetBoundOid(std::tuple<oid_t, oid_t, oid_t> &bound_oid) {
     bound_obj_id_ = bound_oid;
     is_bound_ = true;

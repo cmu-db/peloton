@@ -40,8 +40,9 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       std::vector<oid_t> &join_column_ids_right);
 
   // Nested loops don't need to perform any attribute binding
-  void HandleSubplanBinding(UNUSED_ATTRIBUTE bool,
-                            UNUSED_ATTRIBUTE const BindingContext &) override {}
+  void HandleSubplanBinding(
+      UNUSED_ATTRIBUTE bool,
+      UNUSED_ATTRIBUTE const std::vector<const BindingContext *> &) override {}
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::NESTLOOP; }
 

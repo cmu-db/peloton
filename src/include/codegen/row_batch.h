@@ -50,13 +50,27 @@ class RowBatch {
   };
 
   //===--------------------------------------------------------------------===//
+  // Deferred access to an expression over a given row
+  //===--------------------------------------------------------------------===//
+  class ExpressionAccess : public AttributeAccess {
+   public:
+    // Constructor
+    ExpressionAccess(const expression::AbstractExpression &expression);
+
+    Value Access(CodeGen &codegen, Row &row) override;
+
+   private:
+    // The expression we'll compute
+    const expression::AbstractExpression &expression_;
+  };
+
+  //===--------------------------------------------------------------------===//
   // A row in this batch
   //===--------------------------------------------------------------------===//
   class Row {
    public:
     // Constructor
-    Row(const RowBatch &batch, llvm::Value *batch_pos,
-        const AttributeMap &attributes, OutputTracker *output_tracker);
+    Row(RowBatch &batch, llvm::Value *batch_pos, OutputTracker *output_tracker);
 
     // Mark this row as valid or invalid in the output
     void SetValidity(CodeGen &codegen, llvm::Value *valid);
@@ -67,31 +81,30 @@ class RowBatch {
     // Get the unique TID of this row
     llvm::Value *GetTID(CodeGen &codegen);
 
-    bool HasAttribute(const planner::AttributeInfo *ai) const;
-
-    // Derive the value of the given attribute from this row
+    // Derive the value of the given attribute (expression) from this row
     codegen::Value DeriveValue(CodeGen &codegen,
                                const planner::AttributeInfo *ai);
-
     codegen::Value DeriveValue(CodeGen &codegen,
                                const expression::AbstractExpression &expr);
+
+    // Does this row have a given attribute available?
+    bool HasAttribute(const planner::AttributeInfo *ai) const;
 
     // Register the temporary availability of an attribute in this row
     void RegisterAttributeValue(const planner::AttributeInfo *ai,
                                 codegen::Value &val);
 
+    RowBatch &GetBatch() const { return batch_; }
+
    private:
     // The batch this row belongs to
-    const RowBatch &batch_;
+    RowBatch &batch_;
 
     // The row's physical (backing) position
     llvm::Value *tid_;
 
     // The position of the row in the batch
     llvm::Value *batch_position_;
-
-    // The attributes of this row
-    const AttributeMap &accessors_;
 
     class CacheKey {
      public:
@@ -111,6 +124,7 @@ class RowBatch {
           }
         }
       };
+
      private:
       const planner::AttributeInfo *ai_;
       const expression::AbstractExpression *expr_;
@@ -192,7 +206,7 @@ class RowBatch {
 
   // Get the row at the given position
   Row GetRowAt(llvm::Value *batch_position,
-               OutputTracker *output_tracker = nullptr) const;
+               OutputTracker *output_tracker = nullptr);
 
   // Iterate over all the rows in the batch
   void Iterate(CodeGen &codegen, IterateCallback &cb);

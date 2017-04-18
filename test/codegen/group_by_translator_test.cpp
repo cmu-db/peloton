@@ -250,7 +250,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
 
   // 5) The predicate on the average aggregate
   auto* x_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0);
   auto* const_50 = CodegenTestUtils::ConstIntExpression(50);
   std::unique_ptr<expression::AbstractExpression> x_gt_50{
       new expression::ComparisonExpression(ExpressionType::COMPARE_GREATERTHAN,
