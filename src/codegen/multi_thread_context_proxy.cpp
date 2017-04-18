@@ -35,8 +35,8 @@ llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
   return multithread_context_type;
 }
 
-llvm::Function *MultiThreadContextProxy::GetInstanceFunction(CodeGen &codegen) {
-  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext11GetInstanceEll";
+llvm::Function *MultiThreadContextProxy::InitInstanceFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext12InitInstanceEPS1_ll";
 
   auto *func = codegen.LookupFunction(func_name);
   if (func != nullptr) {
@@ -44,8 +44,9 @@ llvm::Function *MultiThreadContextProxy::GetInstanceFunction(CodeGen &codegen) {
   }
   // Not cached, create the type
   auto *fn_type = llvm::FunctionType::get(
-      MultiThreadContextProxy::GetType(codegen),
+      codegen.VoidType(),
       {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           codegen.Int64Type(),
           codegen.Int64Type()
       },
