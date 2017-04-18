@@ -22,7 +22,9 @@ namespace binder {
 BindNodeVisitor::BindNodeVisitor() { context_ = nullptr; }
 
 void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
+  LOG_INFO("Enter Binder...");
   tree->Accept(this);
+  LOG_INFO("Exit Binder...");
 }
 
 void BindNodeVisitor::Visit(const parser::SelectStatement *node) {

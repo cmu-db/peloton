@@ -136,12 +136,18 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
 }
 void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   // Nested select. Not supported in the current executors
-  if (node->select != nullptr) node->select->Accept(this);
+  if (node->select != nullptr) {
+    throw NotImplementedException("Not support joins");
+    node->select->Accept(this);
+  }
   // Join
-  else if (node->join != nullptr)
+  else if (node->join != nullptr) {
+    throw NotImplementedException("Not support joins");
     node->join->Accept(this);
+  }
   // Multiple tables
   else if (node->list != nullptr && node->list->size() > 1) {
+    throw NotImplementedException("Not support joins");
     std::shared_ptr<OperatorExpression> join_expr = nullptr;
     std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
 

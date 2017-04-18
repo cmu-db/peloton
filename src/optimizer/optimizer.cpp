@@ -69,7 +69,8 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list) {
-  LOG_TRACE("Enter new optimizer...");
+  LOG_INFO("Enter new optimizer...");
+  LOG_INFO("Optimize %ld queries...", parse_tree_list->GetNumStatements());
 
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
@@ -82,6 +83,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt);
   if (is_ddl_stmt) {
+    LOG_INFO("Exit new optimizer...");
     return move(ddl_plan);
   }
 
@@ -97,22 +99,26 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   PropertySet properties = GetQueryRequiredProperties(parse_tree);
 
   // Explore the logically equivalent plans from the root group
+  LOG_INFO("Logical Transformation...");
   ExploreGroup(root_id);
 
   // Implement all the physical operators
+  LOG_INFO("Physical Transformation...");
   ImplementGroup(root_id);
 
   // Find least cost plan for root group
+  LOG_INFO("Optimization...");
   OptimizeGroup(root_id, properties);
 
   ExprMap output_expr_map;
+  LOG_INFO("Get Best Plan...");
   auto best_plan = ChooseBestPlan(root_id, properties, &output_expr_map);
   if (best_plan == nullptr) return nullptr;
 
   // Reset memo after finishing the optimization
   Reset();
 
-  LOG_TRACE("Exit new optimizer...");
+  LOG_INFO("Exit new optimizer...");
 
   //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
   return move(best_plan);
@@ -125,7 +131,7 @@ void Optimizer::Reset() {
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt) {
-  unique_ptr<planner::AbstractPlan> ddl_plan;
+  unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
@@ -142,6 +148,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           new planner::CreatePlan((parser::CreateStatement *)tree));
       ddl_plan = move(create_plan);
     } break;
+    case StatementType::TRANSACTION:break;
     default:
       is_ddl_stmt = false;
   }
@@ -151,6 +158,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
+  LOG_INFO("Transform Parse Tree into Optimizer Operator Tree...");
   QueryToOperatorTransformer converter(column_manager_);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
@@ -161,6 +169,7 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 
 PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   QueryPropertyExtractor converter(column_manager_);
+  LOG_INFO("Extract Properties...");
   return move(converter.GetProperties(tree));
 }
 

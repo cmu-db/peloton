@@ -38,7 +38,7 @@
 #include <boost/algorithm/string.hpp>
 #include <include/parser/postgresparser.h>
 
-// #define NEW_OPTIMIZER
+#define NEW_OPTIMIZER
 
 namespace peloton {
 namespace tcop {
