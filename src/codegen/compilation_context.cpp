@@ -19,6 +19,8 @@
 #include "common/logger.h"
 #include "common/timer.h"
 
+#include "codegen/query_thread_pool_proxy.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -218,6 +220,8 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
     // TODO: submit multi thread tasks here.
     codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
+    UNUSED_ATTRIBUTE auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
+    // codegen_.CallFunc(QueryThreadPoolProxy::, {runtime_state_ptr, multi_thread_context});
 
     // Move to next thread id in loop.
     thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
