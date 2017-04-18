@@ -30,6 +30,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
       std::shared_ptr<GroupExpression> gexpr, PropertySet requirements);
 
+  void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
   void Visit(const PhysicalIndexScan *) override;
   void Visit(const PhysicalProject *) override;

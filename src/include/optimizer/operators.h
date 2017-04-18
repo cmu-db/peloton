@@ -179,6 +179,14 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
+// DummyScan
+//===--------------------------------------------------------------------===//
+class DummyScan : public OperatorNode<DummyScan> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {

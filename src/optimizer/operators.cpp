@@ -50,6 +50,8 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
 
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
+  if (table == nullptr)
+    return hash;
   oid_t table_oid = table->GetOid();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
@@ -164,9 +166,18 @@ Operator LogicalUpdate::make(
 }
 
 //===--------------------------------------------------------------------===//
+// DummyScan
+//===--------------------------------------------------------------------===//
+Operator DummyScan::make() {
+  DummyScan *dummy = new DummyScan;
+  return Operator(dummy);
+}
+
+//===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalSeqScan::make(storage::DataTable *table) {
+  assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
   return Operator(scan);
@@ -190,6 +201,7 @@ hash_t PhysicalSeqScan::Hash() const {
 // IndexScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(storage::DataTable *table, bool update) {
+  assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
   scan->is_for_update = update;
@@ -489,6 +501,8 @@ std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
 template <>
 std::string OperatorNode<LogicalDelete>::name_ = "LogicalDelete";
 template <>
+std::string OperatorNode<DummyScan>::name_ = "DummyScan";
+template <>
 std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
 template <>
 std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
@@ -561,6 +575,8 @@ template <>
 OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
 template <>
 OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
+template <>
+OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
 template <>
 OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
 template <>

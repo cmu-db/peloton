@@ -57,6 +57,7 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
+  physical_implementation_rules_.emplace_back(new GetToDummyScan());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
   physical_implementation_rules_.emplace_back(new GetToIndexScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
@@ -203,9 +204,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    children_plans.push_back(ChooseBestPlan(
-        child_groups[i], required_input_props[i], &child_expr_map));
-    children_expr_map.push_back(move(child_expr_map));
+    auto child_plan = ChooseBestPlan(
+        child_groups[i], required_input_props[i], &child_expr_map);
+    if (child_plan) {
+      children_plans.push_back(move(child_plan));
+      children_expr_map.push_back(move(child_expr_map));
+    }
   }
   // Derive root plan
   shared_ptr<OperatorExpression> op =

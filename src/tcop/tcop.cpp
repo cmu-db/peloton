@@ -337,42 +337,45 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  if (select_stmt->from_table->list == NULL) {
-    if (select_stmt->from_table->join == NULL) {
-      auto *target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              select_stmt->from_table->GetDatabaseName(),
-              select_stmt->from_table->GetTableName()));
-      target_tables.push_back(target_table);
+  if (select_stmt->from_table != nullptr) {
+    if (select_stmt->from_table->list == NULL) {
+      if (select_stmt->from_table->join == NULL) {
+        auto *target_table = static_cast<storage::DataTable *>(
+            catalog::Catalog::GetInstance()->GetTableWithName(
+                select_stmt->from_table->GetDatabaseName(),
+                select_stmt->from_table->GetTableName()));
+        target_tables.push_back(target_table);
+      }
+        // TODO: Only consider the simplest case by joining a regular table
+        // to the other regular table.
+        // Example: SELECT * FROM A JOIN B ON A.id=B.id
+      else {
+        auto *left_table = static_cast<storage::DataTable *>(
+            catalog::Catalog::GetInstance()->GetTableWithName(
+                select_stmt->from_table->join->left->GetDatabaseName(),
+                select_stmt->from_table->join->left->GetTableName()));
+        target_tables.push_back(left_table);
+        auto *right_table = static_cast<storage::DataTable *>(
+            catalog::Catalog::GetInstance()->GetTableWithName(
+                select_stmt->from_table->join->right->GetDatabaseName(),
+                select_stmt->from_table->join->right->GetTableName()));
+        target_tables.push_back(right_table);
+      }
     }
-    // TODO: Only consider the simplest case by joining a regular table
-    // to the other regular table.
-    // Example: SELECT * FROM A JOIN B ON A.id=B.id
-    else {
-      auto *left_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              select_stmt->from_table->join->left->GetDatabaseName(),
-              select_stmt->from_table->join->left->GetTableName()));
-      target_tables.push_back(left_table);
-      auto *right_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              select_stmt->from_table->join->right->GetDatabaseName(),
-              select_stmt->from_table->join->right->GetTableName()));
-      target_tables.push_back(right_table);
-    }
-  }
 
-  // Query has multiple tables
-  // Example: SELECT COUNT(ID) FROM A,B <Condition>
-  // For now we only pick the first table in the list
-  // FIX: Better handle for queries with multiple tables
-  else {
-    for (auto table : *select_stmt->from_table->list) {
-      auto *target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              table->GetDatabaseName(), table->GetTableName()));
-      target_tables.push_back(target_table);
-      break;
+
+      // Query has multiple tables
+      // Example: SELECT COUNT(ID) FROM A,B <Condition>
+      // For now we only pick the first table in the list
+      // FIX: Better handle for queries with multiple tables
+    else {
+      for (auto table : *select_stmt->from_table->list) {
+        auto *target_table = static_cast<storage::DataTable *>(
+            catalog::Catalog::GetInstance()->GetTableWithName(
+                table->GetDatabaseName(), table->GetTableName()));
+        target_tables.push_back(target_table);
+        break;
+      }
     }
   }
 

@@ -46,40 +46,46 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
-  if (op->from_table != nullptr) op->from_table->Accept(this);
-  if (op->group_by != nullptr) {
-    // Make copies of groupby columns
-    vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-    for (auto col : *op->group_by->columns)
-      group_by_cols.emplace_back(col->Copy());
-    auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
-    aggregate->PushChild(output_expr);
-    output_expr = aggregate;
-  } else {
-    // Check plain aggregation
-    bool aggregation = false;
-    bool non_aggregation = false;
-    for (auto expr : *op->getSelectList()) {
-      if (expression::ExpressionUtil::IsAggregateExpression(
-              expr->GetExpressionType()))
-        aggregation = true;
-      else
-        non_aggregation = true;
-    }
-    // Syntax error when there are mixture of aggregation and other exprs
-    // when group by is absent
-    if (aggregation && non_aggregation)
-      throw SyntaxException(
-          "Non aggregation expression must appear in the GROUP BY "
-          "clause or be used in an aggregate function");
-    // Plain aggregation
-    else if (aggregation && !non_aggregation) {
-      auto aggregate =
-          std::make_shared<OperatorExpression>(LogicalAggregate::make());
+  if (op->from_table != nullptr) {
+    op->from_table->Accept(this);
+    if (op->group_by != nullptr) {
+      // Make copies of groupby columns
+      vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
+      for (auto col : *op->group_by->columns)
+        group_by_cols.emplace_back(col->Copy());
+      auto aggregate = std::make_shared<OperatorExpression>(
+          LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
       aggregate->PushChild(output_expr);
       output_expr = aggregate;
+    } else {
+      // Check plain aggregation
+      bool aggregation = false;
+      bool non_aggregation = false;
+      for (auto expr : *op->getSelectList()) {
+        if (expression::ExpressionUtil::IsAggregateExpression(
+            expr->GetExpressionType()))
+          aggregation = true;
+        else
+          non_aggregation = true;
+      }
+      // Syntax error when there are mixture of aggregation and other exprs
+      // when group by is absent
+      if (aggregation && non_aggregation)
+        throw SyntaxException(
+            "Non aggregation expression must appear in the GROUP BY "
+                "clause or be used in an aggregate function");
+        // Plain aggregation
+      else if (aggregation && !non_aggregation) {
+        auto aggregate =
+            std::make_shared<OperatorExpression>(LogicalAggregate::make());
+        aggregate->PushChild(output_expr);
+        output_expr = aggregate;
+      }
     }
+  }
+  else {
+    // SELECT without FROM
+    output_expr = std::make_shared<OperatorExpression>(LogicalGet::make());
   }
 
   // Update output_expr if upper_expr exists

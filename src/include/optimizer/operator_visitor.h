@@ -25,6 +25,7 @@ class OperatorVisitor {
  public:
   virtual ~OperatorVisitor(){};
 
+  virtual void Visit(const DummyScan *) {}
   virtual void Visit(const PhysicalSeqScan *) = 0;
   virtual void Visit(const PhysicalIndexScan *) = 0;
   virtual void Visit(const PhysicalProject *) = 0;

@@ -378,5 +378,22 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   TestUtil("SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c",
            {"11", "355", "444", "477", "555"}, true);
 }
+
+TEST_F(OptimizerSQLTests, SelectConstantTest) {
+  // Test single constant
+  TestUtil("SELECT 1", {"1"}, true);
+
+  // Test complex arithmetic
+  TestUtil("SELECT 1 + 2 * (6 / 4)", {"3"}, true);
+
+  // Test multiple constant
+  TestUtil("SELECT 18 / 4, 2 / 3 * 8 - 1", {"4", "-1"}, true);
+
+  // Test combination of constant and column
+  TestUtil("SELECT 1, 3 * 7, a from test",
+           {"1", "21", "1", "1", "21", "2", "1", "21", "3", "1", "21", "4"}, true);
+
+}
+
 }  // namespace test
 }  // namespace peloton

@@ -46,6 +46,19 @@ class GetToSeqScan : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// GetToDummyScan
+class GetToDummyScan : public Rule {
+ public:
+  GetToDummyScan();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// GetToIndexScan
 class GetToIndexScan : public Rule {
  public:

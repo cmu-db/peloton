@@ -53,6 +53,29 @@ void InnerJoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// GetToDummyScan
+GetToDummyScan::GetToDummyScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table == nullptr;
+}
+
+void GetToDummyScan::Transform(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(DummyScan::make());
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// GetToSeqScan
 GetToSeqScan::GetToSeqScan() {
   physical = true;
@@ -61,8 +84,8 @@ GetToSeqScan::GetToSeqScan() {
 }
 
 bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table != nullptr;
 }
 
 void GetToSeqScan::Transform(
@@ -93,7 +116,7 @@ bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan) const {
   // else return false
   bool index_exist = false;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
-  if (get != nullptr && !get->table->GetIndexColumns().empty())
+  if (get != nullptr && get->table != nullptr && !get->table->GetIndexColumns().empty())
     index_exist = true;
   return index_exist;
 }

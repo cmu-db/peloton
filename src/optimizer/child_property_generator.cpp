@@ -147,6 +147,11 @@ void ChildPropertyGenerator::Visit(const PhysicalDelete *) {
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 };
 
+void ChildPropertyGenerator::Visit(const DummyScan *) {
+  // Provide nothing
+  output_.push_back(make_pair(PropertySet(), vector<PropertySet>()));
+}
+
 /************************ Private helper Functions ****************************/
 
 void ChildPropertyGenerator::ScanHelper() {

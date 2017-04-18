@@ -177,8 +177,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   unique_ptr<planner::AbstractPlan> project_plan(
       new planner::ProjectionPlan(move(proj_info), schema_ptr));
 
-  PL_ASSERT(children_plans_.size() == 1);
-  project_plan->AddChild(move(children_plans_[0]));
+  PL_ASSERT(children_plans_.size() < 2);
+  if (!children_plans_.empty())
+    project_plan->AddChild(move(children_plans_[0]));
 
   output_plan_ = move(project_plan);
 }

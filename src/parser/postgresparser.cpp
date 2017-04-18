@@ -177,6 +177,8 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
+  if (root == nullptr)
+    return nullptr;
   parser::TableRef* result = nullptr;
   Node* node;
   if (root->length > 1) {
