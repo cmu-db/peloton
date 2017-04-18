@@ -424,14 +424,15 @@ class ExpressionUtil {
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
-    } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-      auto const_expr = (expression::ConstantValueExpression *)expr;
-      const_expr->expr_name_ = const_expr->GetValue().ToString();
     } else {
       expr->DeduceExpressionType();
     }
   }
 
+  /*
+   * Check whether two vectors of expression equal to each other.
+   * ordered flag indicate whether the comparison should consider the order.
+   * */
   static bool EqualExpressions(
       const std::vector<std::shared_ptr<expression::AbstractExpression>>& l,
       const std::vector<std::shared_ptr<expression::AbstractExpression>>& r,

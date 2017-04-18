@@ -31,8 +31,8 @@ class AggregateExpression : public AbstractExpression {
   AggregateExpression(ExpressionType type, bool distinct,
                       AbstractExpression* child)
       : AbstractExpression(type) {
+    distinct_ = distinct;
     switch (type) {
-      distinct_ = distinct;
       case ExpressionType::AGGREGATE_COUNT:
         if (child != nullptr &&
             child->GetExpressionType() == ExpressionType::STAR) {
