@@ -71,6 +71,10 @@ class PelotonCodeGenTest : public PelotonTest {
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
       char *consumer_state, std::vector<type::Value> *params = nullptr);
 
+  codegen::QueryCompiler::CompileStats CompileAndExecuteWithCache(
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      char *consumer_state, std::vector<type::Value> *params = nullptr);
+
  private:
   storage::Database *test_db;
 };
