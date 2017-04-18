@@ -248,9 +248,9 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   auto col2 = catalog::Column(type::Type::INTEGER,
                               type::Type::GetTypeSize(
                                 type::Type::INTEGER), "col2", true);
-  catalog::Constraint defalut_constraint(ConstraintType::DEFAULT, "default");
-  defalut_constraint.addDefaultValue(type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
-  col2.AddConstraint(defalut_constraint);
+  catalog::Constraint default_constraint(ConstraintType::DEFAULT, "default");
+  default_constraint.addDefaultValue(type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
+  col2.AddConstraint(default_constraint);
 
   std::unique_ptr<catalog::Schema> table_schema(
     new catalog::Schema({primary_col, col1, col2}));
@@ -776,7 +776,7 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
 }
 #endif
 
-#ifdef FOREIGHN_KEY_TEST
+#ifdef FOREIGN_KEY_TEST
 TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
   // First, initial 2 tables like following
   //     TABLE A -- src table          TABLE B -- sink table
@@ -873,7 +873,7 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 }
 #endif
 
-#ifdef FOREIGHN_MULTI_KEY_TEST
+#ifdef FOREIGN_MULTI_KEY_TEST
 TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   // First, initial 2 tables like following
   //     TABLE A -- src table          TABLE B -- sink table
