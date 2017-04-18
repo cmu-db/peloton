@@ -4,7 +4,7 @@
 //
 // value_peeker_proxy.h
 //
-// Identification: src/include/codegen/cache.h
+// Identification: src/include/codegen/query_cache.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -20,6 +20,7 @@ public:
     return instance;
   }
 
+  //Test needed
   planner::AbstractPlan* GetFirst() {
     LOG_DEBUG("cache size %d", int(cache.size()));
     return cache.begin()->first.get();
@@ -42,7 +43,7 @@ public:
 
   void InsertPlan(planner::AbstractPlan &key,
                   std::unique_ptr<Query> val) {
-//
+
     int compare = codegen::PlanComparator::Compare(key, * key.Copy().get());
     LOG_DEBUG("insert compare result: %d\n", compare);
     cache.insert(std::pair<std::unique_ptr<planner::AbstractPlan>,

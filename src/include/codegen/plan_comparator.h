@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// value_peeker_proxy.h
+// plan_comparator.h
 //
-// Identification: src/include/codegen/plan_comparator.cpp
+// Identification: src/include/codegen/plan_comparator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
