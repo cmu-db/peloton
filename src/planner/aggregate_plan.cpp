@@ -43,6 +43,7 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
       term.agg_ai.nullable = term_exp->IsNullable();
       term.agg_ai.type = term_exp->GetValueType();
     } else {
+      PL_ASSERT(term.aggtype == ExpressionType::AGGREGATE_COUNT_STAR);
       term.agg_ai.type = type::Type::TypeId::BIGINT;
     }
   }

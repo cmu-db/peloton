@@ -300,8 +300,10 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
         codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
+        count = count.CastTo(codegen, type::Type::TypeId::DECIMAL);
+
         codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
-        sum = sum.CastTo(codegen, count.GetType());
+        sum = sum.CastTo(codegen, type::Type::TypeId::DECIMAL);
 
         codegen::Value final_val =
             sum.Div(codegen, count, Value::OnError::ReturnNull);
