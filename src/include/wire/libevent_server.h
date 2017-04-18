@@ -262,6 +262,8 @@ struct LibeventServer {
   void StartServer();
   void CloseServer();
 
+  void SetPort(int new_port);
+
  private:
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
