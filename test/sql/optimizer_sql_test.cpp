@@ -294,10 +294,6 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   TestUtil("SELECT AVG(a), b FROM test GROUP BY b having b=22", {"3.5", "22"},
            false);
 
-  // Test Aggregate function: MIN(b)
-  TestUtil("SELECT MIN(a), b FROM test GROUP BY b having b=22", {"1", "22"},
-           false);
-
   // Test group by combined with ORDER BY
   TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},
            true);
@@ -311,10 +307,14 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
            {"11", "0", "355", "2331", "477", "1332", "555", "2220"}, true);
 
   // Test Plain aggregation without group by
-  TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, true);
+  TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, false);
 
   // Test combining aggregation function
-  TestUtil("SELECT SUM(c * a) + MAX(b - 1) * 2 FROM test", {"5947"}, true);
+  TestUtil("SELECT SUM(c * a) + MAX(b - 1) * 2 FROM test", {"5947"}, false);
+  
+  // Test combining aggregation function with GroupBy
+  TestUtil("SELECT MIN(b + c) * SUM(a - 2) FROM test GROUP BY b,c",
+           {"1110", "477", "33", "1065"}, false);
 
   // Test ORDER BY columns not shown in select list
   TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY a + b",
