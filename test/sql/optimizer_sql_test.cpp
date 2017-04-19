@@ -41,7 +41,7 @@ void CreateAndLoadTable() {
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -98,7 +98,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -183,7 +183,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -233,7 +233,7 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
 TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -318,7 +318,7 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
 TEST_F(OptimizerSQLTests, DeleteSqlTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -417,7 +417,7 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
 TEST_F(OptimizerSQLTests, UpdateSqlTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -455,7 +455,7 @@ TEST_F(OptimizerSQLTests, UpdateSqlTest) {
 TEST_F(OptimizerSQLTests, InsertSqlTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -495,7 +495,7 @@ TEST_F(OptimizerSQLTests, InsertSqlTest) {
 TEST_F(OptimizerSQLTests, DDLSqlTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -547,7 +547,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
 TEST_F(OptimizerSQLTests, GroupByTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -737,7 +737,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();

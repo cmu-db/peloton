@@ -231,8 +231,10 @@ class DataTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
+  // deprecated, use catalog::TableCatalog::GetInstance()->GetTableName()
   inline std::string GetName() const { return (table_name); }
 
+  // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 
   inline oid_t GetTableOid() const { return (table_oid); }
@@ -326,7 +328,9 @@ class DataTable : public AbstractTable {
   size_t active_tilegroup_count_;
   size_t active_indirection_array_count_;
 
-  oid_t database_oid;
+  const oid_t database_oid;
+
+  // deprecated, use catalog::TableCatalog::GetInstance()->GetTableName()
   std::string table_name;
   oid_t table_oid;
 
