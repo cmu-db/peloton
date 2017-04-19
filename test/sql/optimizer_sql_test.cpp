@@ -43,7 +43,7 @@ class OptimizerSQLTests : public PelotonTest {
 
   virtual void TearDown() override {
     // Destroy test database
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
@@ -71,9 +71,9 @@ class OptimizerSQLTests : public PelotonTest {
   // If the query has OrderBy, the result is deterministic. Specify ordered to
   // be true. Otherwise, specify ordered to be false
   void TestUtil(string query, vector<string> ref_result, bool ordered,
-                vector<PlanNodeType> expected_plans={}) {
+                vector<PlanNodeType> expected_plans = {}) {
     LOG_DEBUG("Running Query \"%s\"", query.c_str());
-    
+
     // Check Plan Nodes are correct if provided
     if (expected_plans.size() > 0) {
       auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
@@ -81,21 +81,21 @@ class OptimizerSQLTests : public PelotonTest {
       vector<PlanNodeType> actual_plans;
       while (true) {
         actual_plans.push_back(plan_ptr->GetPlanNodeType());
-        if (plan_ptr->GetChildren().size() == 0)
-          break;
+        if (plan_ptr->GetChildren().size() == 0) break;
         plan_ptr = plan_ptr->GetChildren()[0].get();
       }
       EXPECT_EQ(expected_plans, actual_plans);
     }
-    
+
     // Check plan execution results are correct
     TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
                                                  tuple_descriptor, rows_changed,
                                                  error_message);
     vector<string> actual_result;
     for (unsigned i = 0; i < result.size(); i++)
-      actual_result.push_back(TestingSQLUtil::GetResultValueAsString(result, i));
-    
+      actual_result.push_back(
+          TestingSQLUtil::GetResultValueAsString(result, i));
+
     EXPECT_EQ(ref_result.size(), result.size());
     if (ordered) {
       // If deterministic, do comparision with expected result in order
@@ -103,27 +103,12 @@ class OptimizerSQLTests : public PelotonTest {
     } else {
       // If non-deterministic, make sure they have the same set of value
       unordered_set<string> ref_set(ref_result.begin(), ref_result.end());
-      bool test_failed = false;
       for (auto& result_str : actual_result) {
         if (ref_set.count(result_str) == 0) {
-          test_failed = true;
-          EXPECT_TRUE(false);
+          // Test Failed. Print both actual results and ref results
+          EXPECT_EQ(ref_result, actual_result);
           break;
         }
-      }
-      // Print actual results and expected result for debugging
-      if (test_failed || actual_result.size() != ref_result.size()) {
-        string actual_res_str = "[ ";
-        for (auto& res : actual_result)
-          actual_res_str += res + " ";
-        actual_res_str += "]";
-        LOG_DEBUG("actual result: %s", actual_res_str.c_str());
-        
-        string ref_res_str = "[ ";
-        for (auto& res : ref_result)
-          ref_res_str += res + " ";
-        ref_res_str += "]";
-        LOG_DEBUG("ref result: %s", ref_res_str.c_str());
       }
     }
   }
@@ -153,8 +138,10 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   TestUtil("SELECT a from test order by c desc", {"4", "3", "1", "2"}, true);
 
   // Testing order by complex expression
-  TestUtil("SELECT * from test order by a + c", {"2", "11", "0", "1", "22",
-                                                 "333", "3", "33", "444", "4", "0", "555"}, true);
+  TestUtil(
+      "SELECT * from test order by a + c",
+      {"2", "11", "0", "1", "22", "333", "3", "33", "444", "4", "0", "555"},
+      true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
@@ -162,17 +149,18 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
   TestUtil("SELECT b FROM test ORDER BY b LIMIT 3", {"0", "11", "22"}, true);
 
   // Test limit with offset
-  TestUtil("SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2", {"22", "33"}, true);
+  TestUtil("SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2", {"22", "33"},
+           true);
 }
 
 TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   // Test complex expression projection
-  TestUtil("SELECT a * 5 + b, -1 + c from test", {"27", "332", "48", "443",
-                                                  "21", "-1", "20", "554"}, false);
+  TestUtil("SELECT a * 5 + b, -1 + c from test",
+           {"27", "332", "48", "443", "21", "-1", "20", "554"}, false);
 
   // Test complex expression in select and order by
-  TestUtil("SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b", {"21", "-306",
-                                                                  "-535", "-396"}, true);
+  TestUtil("SELECT a * 5 + b - c FROM test ORDER BY a * 10 + b",
+           {"21", "-306", "-535", "-396"}, true);
 
   // Test mixing up select simple columns with complex expression
   TestUtil("SELECT a, a + c FROM test ORDER BY a * 3 * b DESC, b + c / 5 ASC",
@@ -268,17 +256,17 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   try {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
     EXPECT_TRUE(false);
-  } catch (Exception &e) {
+  } catch (Exception& e) {
     LOG_INFO("Correct! Exception(%s) catched", e.what());
   }
 }
 
 TEST_F(OptimizerSQLTests, GroupByTest) {
   // Insert additional tuples to test group by
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
@@ -323,17 +311,20 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
            {"11", "0", "355", "2331", "477", "1332", "555", "2220"}, true);
 
   // Test Plain aggregation without group by
-  TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, false);
-  
+  TestUtil("SELECT SUM(c * a) FROM test", {"5883"}, true);
+
+  // Test combining aggregation function
+  TestUtil("SELECT SUM(c * a) + MAX(b - 1) * 2 FROM test", {"5947"}, true);
+
   // Test ORDER BY columns not shown in select list
   TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY a + b",
            {"4", "2", "5", "1", "6", "3"}, true);
-  
+
   // Test ORDER BY columns contains all group by columns
   // In case of SortGroupBy, no additional sort should be enforced after groupby
   TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY b,a, a+b",
-           {"4", "2","5", "1", "6", "3"}, true);
-  
+           {"4", "2", "5", "1", "6", "3"}, true);
+
   // Test ORDER BY columns are a subset of group by columns
   // In case of SortGroupBy, no additional sort should be enforced after groupby
   TestUtil("SELECT a + b FROM test GROUP BY a,b ORDER BY a",
@@ -341,21 +332,21 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
 }
 
 TEST_F(OptimizerSQLTests, SelectDistinctTest) {
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 00, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
-  
+
   // Test DISTINCT and GROUP BY have the same columns. Avoid additional HashPlan
   TestUtil("SELECT DISTINCT b,c FROM test GROUP BY b,c",
            {"0", "555", "33", "444", "11", "0", "22", "333"}, false);
-  
+
   // Test GROUP BY cannot satisfied DISTINCT
-  TestUtil("SELECT DISTINCT b FROM test GROUP BY b,c",
-           {"22", "11", "0", "33"}, false);
-  
+  TestUtil("SELECT DISTINCT b FROM test GROUP BY b,c", {"22", "11", "0", "33"},
+           false);
+
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 00, 444);");
 
   // Test distinct with order by
@@ -363,14 +354,12 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
            true);
 
   // Test distinct with complex order by
-  TestUtil("SELECT DISTINCT b, c FROM test ORDER BY 10 * b + c", {"11", "0",
-                                                                  "0", "444", "22", "333", "0", "555", "33", "444"}, true);
+  TestUtil("SELECT DISTINCT b, c FROM test ORDER BY 10 * b + c",
+           {"11", "0", "0", "444", "22", "333", "0", "555", "33", "444"}, true);
 
   // Test distinct with limit and star expression
   TestUtil("SELECT DISTINCT * FROM test ORDER BY a + 10 * b + c LIMIT 3",
            {"2", "11", "0", "7", "0", "444", "1", "22", "333"}, true);
-  
-  
 
   // Insert additional tuples to test distinct with group by
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
