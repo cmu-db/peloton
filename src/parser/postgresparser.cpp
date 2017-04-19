@@ -973,6 +973,12 @@ PostgresParser::ValueListsTransform(List* root) {
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
       else if (expr->type == T_A_Const)
         cur_result->push_back(ConstTransform((A_Const*)expr));
+      else if (expr->type == T_SetToDefault){
+        // TODO handle default type
+        // add corresponding expression for
+        // default to cur_result
+        cur_result->push_back(nullptr); 
+      }
     }
     result->push_back(cur_result);
   }
