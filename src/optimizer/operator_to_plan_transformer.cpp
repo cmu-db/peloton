@@ -22,6 +22,7 @@
 #include "planner/limit_plan.h"
 #include "planner/hash_plan.h"
 #include "expression/aggregate_expression.h"
+#include "planner/seq_scan_plan.h"
 
 using std::vector;
 using std::make_pair;
