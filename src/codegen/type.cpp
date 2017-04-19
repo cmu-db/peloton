@@ -642,7 +642,7 @@ struct VarlenComparison : public Type::Comparison {
     llvm::Value *result = CallCompareStrings(codegen, left, right);
 
     // Check if the result is >= 0
-    result = codegen->CreateICmpSGT(result, codegen.Const32(0));
+    result = codegen->CreateICmpSGE(result, codegen.Const32(0));
 
     // Return the comparison
     return Value{type::Type::TypeId::BOOLEAN, result};

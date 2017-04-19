@@ -277,8 +277,7 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-        codegen::Value count =
-            vals[std::make_pair(source, ExpressionType::AGGREGATE_COUNT)];
+        codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
         codegen::Value final_calc = storage_.GetValueAt(
             codegen, storage_space, aggregate_info.storage_index);
 
