@@ -55,7 +55,6 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
   thread->sock_fd = connfd;
-  LOG_INFO("Thread's fd is %d", thread->sock_fd);
 }
 
 /**
@@ -169,9 +168,15 @@ void LibeventServer::StartServer() {
 void LibeventServer::CloseServer() {
   LOG_INFO("Begin to stop server");
   is_closed = true;
-  // event_base_loopbreak(base);
-  // static_cast<LibeventMasterThread
-  // *>(master_thread.get())->CloseConnection();
 }
+
+/**
+ * Change port to new_port
+ */
+void LibeventServer::SetPort(int new_port){
+  LOG_INFO("Change port to %d",new_port);
+  port_ = new_port;
+}
+
 }
 }

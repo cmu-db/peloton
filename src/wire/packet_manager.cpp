@@ -301,7 +301,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
-  if (queries.size() == 1) {
+  if (queries.size() == 0) {
     SendEmptyQueryResponse();
     SendReadyForQuery(txn_state_);
     return;
@@ -309,12 +309,12 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
   for (auto query : queries) {
     // iterate till before the empty string after the last ';'
-    if (query != queries.back()) {
-      if (query.empty()) {
-        SendEmptyQueryResponse();
-        SendReadyForQuery(NetworkTransactionStateType::IDLE);
-        return;
-      }
+    if (!query.empty()) {
+      // if (query.empty()) {
+      //  SendEmptyQueryResponse();
+      //  SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      //  return;
+      //}
 
       std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
@@ -341,9 +341,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
       // TODO: should change to query_type
       CompleteCommand(query, rows_affected);
-    } else if (queries.size() == 1) {
-      // just a ';' sent
+    } else {
       SendEmptyQueryResponse();
+      SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      return;
     }
   }
 
