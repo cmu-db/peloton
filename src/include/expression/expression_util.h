@@ -17,6 +17,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "expression/aggregate_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -246,6 +247,10 @@ class ExpressionUtil {
     return left;
   }
 
+  inline static bool IsAggregateExpression(AbstractExpression *expr) {
+    return IsAggregateExpression(expr->GetExpressionType());
+  }
+
   inline static bool IsAggregateExpression(ExpressionType type) {
     switch (type) {
       case ExpressionType::AGGREGATE_COUNT:
@@ -363,6 +368,20 @@ class ExpressionUtil {
 
  public:
   /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
+  static void GetAggregateExprs(
+      std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
+      AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      GetAggregateExprs(aggr_exprs, expr->GetModifiableChild(i));
+
+    if (IsAggregateExpression(expr->GetExpressionType()))
+      aggr_exprs.emplace_back((AggregateExpression *)expr->Copy());
+  }
+
+  /**
    * Walks an expression trees and find all TupleValueExprs in the tree, add
    * them to a map for order preserving.
    */
@@ -412,7 +431,14 @@ class ExpressionUtil {
       auto tup_expr = (TupleValueExpression *)expr;
       std::shared_ptr<AbstractExpression> probe_expr(
           std::shared_ptr<AbstractExpression>{}, tup_expr);
-      tup_expr->SetValueIdx(expr_map.at(probe_expr));
+      auto iter = expr_map.find(probe_expr);
+      if (iter != expr_map.end()) tup_expr->SetValueIdx(iter->second);
+    } else if (IsAggregateExpression(expr->GetExpressionType())) {
+      auto aggr_expr = (AggregateExpression *)expr;
+      std::shared_ptr<AbstractExpression> probe_expr(
+          std::shared_ptr<AbstractExpression>{}, aggr_expr);
+      auto iter = expr_map.find(probe_expr);
+      if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       // Check and set the function ptr
@@ -424,9 +450,11 @@ class ExpressionUtil {
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
-    } else {
-      expr->DeduceExpressionType();
     }
+
+    // Decude the expression type for Non-TupleValueExpressions
+    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
+      expr->DeduceExpressionType();
   }
 
   /*
@@ -434,28 +462,22 @@ class ExpressionUtil {
    * ordered flag indicate whether the comparison should consider the order.
    * */
   static bool EqualExpressions(
-      const std::vector<std::shared_ptr<expression::AbstractExpression>>& l,
-      const std::vector<std::shared_ptr<expression::AbstractExpression>>& r,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &l,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &r,
       bool ordered = false) {
-    if (l.size() != r.size())
-      return false;
+    if (l.size() != r.size()) return false;
     // Consider expression order in the comparison
     if (ordered) {
       size_t num_exprs = l.size();
-      for (size_t i = 0; i<num_exprs; i++)
-        if (!l[i]->Equals(r[i].get()))
-          return false;
+      for (size_t i = 0; i < num_exprs; i++)
+        if (!l[i]->Equals(r[i].get())) return false;
       return true;
-    }
-    else {
+    } else {
       ExprSet l_set, r_set;
-      for (auto expr : l)
-        l_set.insert(expr);
-      for (auto expr : r)
-        r_set.insert(expr);
+      for (auto expr : l) l_set.insert(expr);
+      for (auto expr : r) r_set.insert(expr);
       return l_set == r_set;
     }
-
   }
 
   /* All following functions will be depracated when switch to new optimizer */

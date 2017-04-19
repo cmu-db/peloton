@@ -41,6 +41,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
       std::vector<PropertySet> *required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
       std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
+  
+  void Visit(const DummyScan *) override;
 
   void Visit(const PhysicalSeqScan *op) override;
 

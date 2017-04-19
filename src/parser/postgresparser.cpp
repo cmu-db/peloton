@@ -1184,8 +1184,7 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
 }
 
 // Call postgres's parser and start transforming it into Peloton's parse tree
-parser::SQLStatementList* PostgresParser::ParseSQLString(
-    const char* text) {
+parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto ctx = pg_query_parse_init();
   auto result = pg_query_parse(text);
   if (result.error) {
@@ -1199,7 +1198,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-//  print_pg_parse_tree(result.tree);
+  //   print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
@@ -1216,7 +1215,7 @@ PostgresParser& PostgresParser::GetInstance() {
   static PostgresParser parser;
   return parser;
 }
-  
+
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);

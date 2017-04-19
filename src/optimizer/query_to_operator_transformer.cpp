@@ -46,44 +46,46 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
+
   if (op->from_table != nullptr) {
+    // SELECT with FROM
     op->from_table->Accept(this);
     if (op->group_by != nullptr) {
       // Make copies of groupby columns
       vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
       for (auto col : *op->group_by->columns)
         group_by_cols.emplace_back(col->Copy());
-      auto aggregate = std::make_shared<OperatorExpression>(
+      auto group_by = std::make_shared<OperatorExpression>(
           LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
-      aggregate->PushChild(output_expr);
-      output_expr = aggregate;
+      group_by->PushChild(output_expr);
+      output_expr = group_by;
     } else {
       // Check plain aggregation
-      bool aggregation = false;
-      bool non_aggregation = false;
+      bool has_aggregation = false;
+      bool has_other_exprs = false;
       for (auto expr : *op->getSelectList()) {
-        if (expression::ExpressionUtil::IsAggregateExpression(
-            expr->GetExpressionType()))
-          aggregation = true;
+        vector<shared_ptr<expression::AggregateExpression>> aggr_exprs;
+        expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr);
+        if (aggr_exprs.size() > 0)
+          has_aggregation = true;
         else
-          non_aggregation = true;
+          has_other_exprs = true;
       }
       // Syntax error when there are mixture of aggregation and other exprs
       // when group by is absent
-      if (aggregation && non_aggregation)
+      if (has_aggregation && has_other_exprs)
         throw SyntaxException(
             "Non aggregation expression must appear in the GROUP BY "
-                "clause or be used in an aggregate function");
-        // Plain aggregation
-      else if (aggregation && !non_aggregation) {
+            "clause or be used in an aggregate function");
+      // Plain aggregation
+      else if (has_aggregation && !has_other_exprs) {
         auto aggregate =
             std::make_shared<OperatorExpression>(LogicalAggregate::make());
         aggregate->PushChild(output_expr);
         output_expr = aggregate;
       }
     }
-  }
-  else {
+  } else {
     // SELECT without FROM
     output_expr = std::make_shared<OperatorExpression>(LogicalGet::make());
   }
@@ -226,9 +228,8 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->table->GetDatabaseName(), op->table->GetTableName());
 
-  auto update_expr =
-      std::make_shared<OperatorExpression>(
-          LogicalUpdate::make(target_table, *op->updates));
+  auto update_expr = std::make_shared<OperatorExpression>(
+      LogicalUpdate::make(target_table, *op->updates));
 
   auto table_scan = std::make_shared<OperatorExpression>(
       LogicalGet::make(target_table, op->table->GetTableName(), true));

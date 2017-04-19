@@ -68,6 +68,8 @@ class OptimizerSQLTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
   }
 
+  // If the query has OrderBy, the result is deterministic. Specify ordered to
+  // be true. Otherwise, specify ordered to be false
   void TestUtil(string query, vector<string> ref_result, bool ordered,
                 vector<PlanNodeType> expected_plans={}) {
     LOG_DEBUG("Running Query \"%s\"", query.c_str());

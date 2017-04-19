@@ -55,6 +55,10 @@ OperatorToPlanTransformer::ConvertOpExpression(
   VisitOpExpression(plan);
   return move(output_plan_);
 }
+  
+void OperatorToPlanTransformer::Visit(const DummyScan *op) {
+  // DummyScan is
+}
 
 void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
@@ -68,7 +72,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
           ->As<PropertyPredicate>();
   expression::AbstractExpression *predicate =
       GeneratePredicateForScan(predicate_prop, op->table_);
-  
+
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
@@ -100,8 +104,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
     auto original_predicate = predicate;
     predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
         original_predicate, op->table_->GetIndex(index_id));
-    if (predicate != original_predicate)
-      delete original_predicate;
+    if (predicate != original_predicate) delete original_predicate;
   }
 
   // Generate column ids to pass into scan plan and generate output expr map
@@ -151,8 +154,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   size_t curr_col_offset = 0;
   for (auto expr : output_exprs) {
     auto expr_type = expr->GetExpressionType();
-    if (expr_type == ExpressionType::VALUE_TUPLE ||
-        expression::ExpressionUtil::IsAggregateExpression(expr_type)) {
+    if (expr_type == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, we can just do a direct mapping.
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {

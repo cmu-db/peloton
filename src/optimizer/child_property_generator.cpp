@@ -89,13 +89,24 @@ void ChildPropertyGenerator::Visit(const PhysicalAggregate *) {
         break;
       }
       case PropertyType::COLUMNS: {
-        provided_property.AddProperty(prop);
         auto col_prop = prop->As<PropertyColumns>();
         size_t col_len = col_prop->GetSize();
         for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
-          provided_col.insert(expr);
+          // Expressions like sum(a) + max(b) needs another projection
+          // on top of aggregation. In this case, aggregation only needs to
+          // provide sum(a) and max(b)
+          vector<shared_ptr<expression::AggregateExpression>> aggr_exprs;
+          expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr.get());
+          if (!expression::ExpressionUtil::IsAggregateExpression(expr.get()) &&
+              aggr_exprs.size() > 0) {
+            for (auto &agg_expr : aggr_exprs) {
+              provided_col.insert(agg_expr);
+            }
+          } else {
+            provided_col.insert(expr);
+          }
         }
         break;
       }
