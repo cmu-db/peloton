@@ -263,17 +263,18 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 
 #ifdef DEFAULT_TEST
 TEST_F(ConstraintsTests, DEFAULTTEST) {
-  // Create the database
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  // Create the database
+  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  txn_manager.CommitTransaction(txn);
 
   // Create the table
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("================================================");
   LOG_INFO("========Starting to create the test table=======");
 
