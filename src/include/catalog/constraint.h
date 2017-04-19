@@ -75,15 +75,15 @@ class Constraint : public Printable {
   // Todo: default union data structure,
   // For default constraint
   void addDefaultValue(const type::Value &value) {
-    if (constraint_type != ConstraintType::DEFAULT || default_value != nullptr) {
+    if (constraint_type != ConstraintType::DEFAULT || default_value.get() != nullptr) {
       return;
     }
 
-    default_value = new peloton::type::Value(value);
+    default_value.reset(new peloton::type::Value(value));
   }
 
   type::Value* getDefaultValue() {
-    return default_value;
+    return default_value.get();
   }
 
   // Add check constrain
@@ -107,7 +107,7 @@ class Constraint : public Printable {
 
   std::string constraint_name;
 
-  type::Value *default_value = nullptr;
+  std::shared_ptr<type::Value> default_value;
 
   std::string check_cmd = "";
 
