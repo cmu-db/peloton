@@ -46,7 +46,7 @@
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
 #define CHECK_TEST
-// #define DEFAULT_TEST
+#define DEFAULT_TEST
 // #define PRIMARY_UNIQUEKEY_TEST
 // #define FOREIGN_KEY_TEST
 // #define FOREIGN_MULTI_KEY_TEST
@@ -159,8 +159,6 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 
   // two columns are both NULL
   bool hasException = false;
-/*
-
   try {
     std::vector<type::Value> ccs;
     ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
@@ -171,7 +169,6 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
-*/
 
   // one column is NULL
   hasException = false;
@@ -293,7 +290,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   std::vector<int> result_format;
   result_format =
     std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
     statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -317,7 +314,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   auto tuple_descriptor = traffic_cop.GenerateTupleDescriptor(
     select_stmt->GetStatement(0));
   result_format1 = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  UNUSED_ATTRIBUTE bridge::peloton_status status1 =
+  UNUSED_ATTRIBUTE executor::ExecuteResult status1 =
     traffic_cop.ExecuteStatementPlan(statement1->GetPlanTree().get(), params1,
                                       result1, result_format1);
   LOG_INFO("Statement executed. Result: %s",
