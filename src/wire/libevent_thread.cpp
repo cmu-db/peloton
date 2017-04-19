@@ -62,7 +62,7 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   // TODO wait for all threads to be up before exit from Init()
   // TODO replace sleep with future/promises
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
-    if (!threads[thread_id].get()->is_started) {
+    while (!threads[thread_id].get()->is_started) {
       sleep(1);
     }
   }
@@ -160,7 +160,7 @@ void LibeventMasterThread::CloseConnection() {
   }
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    if (threads[thread_id].get()->is_closed) {
+    while (threads[thread_id].get()->is_closed) {
       sleep(1);
     }
   }
