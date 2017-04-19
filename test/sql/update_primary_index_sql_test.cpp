@@ -74,7 +74,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value, it should not be changed
-  EXPECT_EQ(result[6].second[0], '3');
+  EXPECT_EQ(result[6].second[0], '5');
 
   // Perform normal update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET b=2000 WHERE c=200", result,
