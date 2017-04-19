@@ -30,6 +30,8 @@ public:
   // TODO: stop epoch threads before resetting epoch id.
   virtual void Reset() = 0;
 
+  virtual void Reset(const uint64_t epoch_id) = 0;
+
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) = 0;
 
   virtual void StartEpoch() = 0;

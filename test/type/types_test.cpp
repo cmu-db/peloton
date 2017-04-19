@@ -626,9 +626,8 @@ TEST_F(TypesTests, VisibilityTypeTest) {
 TEST_F(TypesTests, VisibilityIdTypeTest) {
   std::vector<VisibilityIdType> list = {
       VisibilityIdType::INVALID, 
-      VisibilityIdType::INVISIBLE, 
-      VisibilityIdType::DELETED, 
-      VisibilityIdType::OK
+      VisibilityIdType::READ_ID, 
+      VisibilityIdType::COMMIT_ID
   };
 
   // Make sure that ToString and FromString work
