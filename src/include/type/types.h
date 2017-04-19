@@ -425,6 +425,16 @@ std::string VisibilityTypeToString(VisibilityType type);
 VisibilityType StringToVisibilityType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const VisibilityType &type);
 
+
+enum class VisibilityIdType {
+  INVALID = INVALID_TYPE_ID,
+  READ_ID = 1,
+  COMMIT_ID = 2
+};
+std::string VisibilityIdTypeToString(VisibilityIdType type);
+VisibilityIdType StringToVisibilityIdType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type);
+
 //===--------------------------------------------------------------------===//
 // Isolation Levels
 //===--------------------------------------------------------------------===//

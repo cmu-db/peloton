@@ -1930,6 +1930,47 @@ std::ostream &operator<<(std::ostream &os, const VisibilityType &type) {
   return os;
 }
 
+
+std::string VisibilityIdTypeToString(VisibilityIdType type) {
+  switch (type) {
+    case VisibilityIdType::INVALID: {
+      return "INVALID";
+    }
+    case VisibilityIdType::READ_ID: {
+      return "READ_ID";
+    }
+    case VisibilityIdType::COMMIT_ID: {
+      return "COMMIT_ID";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for VisibilityIdType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+VisibilityIdType StringToVisibilityIdType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return VisibilityIdType::INVALID;
+  } else if (upper_str == "READ_ID") {
+    return VisibilityIdType::READ_ID;
+  } else if (upper_str == "COMMIT_ID") {
+    return VisibilityIdType::COMMIT_ID;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No VisibilityIdType conversion from string '%s'", upper_str.c_str()));
+  }
+  return VisibilityIdType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type) {
+  os << VisibilityIdTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // Isolation Levels
 //===--------------------------------------------------------------------===//
