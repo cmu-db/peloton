@@ -389,6 +389,7 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
   // Test multiple constant
   TestUtil("SELECT 18 / 4, 2 / 3 * 8 - 1", {"4", "-1"}, true);
   TestUtil("SELECT 18 % 4, 2 / 3 * 8 - 1", {"2", "-1"}, true);
+  TestUtil("SELECT not 1>3, 1!=1, not 1=1", {"true", "false", "false"}, true);
 
   // Test combination of constant and column
   TestUtil("SELECT 1, 3 * 7, a from test",
