@@ -149,7 +149,7 @@ namespace peloton {
       return function_catalog_schema;
     }
 
- bool  FunctionCatalog::InsertFunction(const std::string &proname,
+ ResultType  FunctionCatalog::InsertFunction(const std::string &proname,
                           UNUSED_ATTRIBUTE oid_t pronamespace, UNUSED_ATTRIBUTE oid_t proowner, 
                           oid_t prolang, UNUSED_ATTRIBUTE float procost,
                          UNUSED_ATTRIBUTE float prorows,UNUSED_ATTRIBUTE oid_t provariadic,UNUSED_ATTRIBUTE bool proisagg,
@@ -252,7 +252,10 @@ namespace peloton {
       tuple->SetValue(27, val27, pool);
    
 
-      return InsertTuple(std::move(tuple), txn);
+      if(InsertTuple(std::move(tuple), txn) == true)
+        return ResultType::SUCCESS;
+      else
+        return ResultType::FAILURE;
 }
 
    

@@ -60,6 +60,8 @@ class CreateFunctionPlan : public AbstractPlan {
   inline type::Type::TypeId GetReturnType() const { return return_type; }
 
   inline bool IsReplace() const { return is_replace; }
+ 
+  inline int GetNumParams() const {return param_count;}
 
   private:
 
