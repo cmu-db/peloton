@@ -52,7 +52,6 @@ class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
 class RollbackSegment;
-// class CompressedTile;
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
@@ -144,7 +143,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
-  bool GetCompressionStatus() const;
+  inline bool GetCompressionStatus() const { return compression_status; }
 
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 

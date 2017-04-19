@@ -122,7 +122,7 @@ class Tile : public Printable {
   Tile *CopyTile(BackendType backend_type);
 
   //
-  virtual bool IsCompressed() { return false; }
+  virtual inline bool IsCompressed() { return false; }
 
   virtual void CompressTile(Tile *tile);
   //===--------------------------------------------------------------------===//

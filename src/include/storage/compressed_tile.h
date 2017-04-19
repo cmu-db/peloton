@@ -32,7 +32,7 @@ class GCManager;
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Tile
+// CompressedTile
 //===--------------------------------------------------------------------===//
 
 class Tuple;
@@ -42,9 +42,9 @@ class TupleIterator;
 class Tile;
 
 /**
- * Represents a Tile.
+ * Represents a CompressedTile.
  *
- * Tiles are only instantiated via TileFactory.
+ * Tiles are only instantiated via TileGroup.
  *
  * NOTE: MVCC is implemented on the shared TileGroupHeader.
  */
@@ -89,7 +89,7 @@ class CompressedTile : public Tile {
   // Utility Functions
   //===--------------------------------------------------------------------===//
 
-  bool IsCompressed() { return is_compressed; }
+  inline bool IsCompressed() { return is_compressed; }
 
   inline type::Value GetBaseValue(type::Value old_value,
                                   type::Value new_value) {
