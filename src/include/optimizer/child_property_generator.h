@@ -55,9 +55,9 @@ class ChildPropertyGenerator : public OperatorVisitor {
 
  private:
   /***** Helper functions *****/
-  void GroupByHelper(const BaseOperatorNode* op);
+  void AggregateHelper(const BaseOperatorNode *op);
   void ScanHelper();
-  
+
  private:
   ColumnManager &manager_;
   PropertySet requirements_;

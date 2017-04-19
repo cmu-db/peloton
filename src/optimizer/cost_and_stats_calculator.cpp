@@ -32,6 +32,12 @@ void CostAndStatsCalculator::CalculateCostAndStats(
   gexpr->Op().Accept(this);
 }
 
+void CostAndStatsCalculator::Visit(const DummyScan *) {
+  // TODO: Replace with more accurate cost
+  output_stats_.reset(new Stats(nullptr));
+  output_cost_ = 0;
+}
+
 void CostAndStatsCalculator::Visit(const PhysicalSeqScan *) {
   // TODO: Replace with more accurate cost
   output_stats_.reset(new Stats(nullptr));
