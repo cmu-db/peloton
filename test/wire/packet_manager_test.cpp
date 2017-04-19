@@ -63,6 +63,7 @@ void *SimpleQueryTest(int port) {
     W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
 
     W.commit();
+    
     pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
 
     EXPECT_EQ(R.size(), 1);

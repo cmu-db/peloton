@@ -178,6 +178,7 @@ class LibeventSocket {
     Init(event_flags, thread, init_state);
   }
 
+  inline ~LibeventSocket() {}
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
