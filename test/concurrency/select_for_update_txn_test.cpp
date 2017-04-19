@@ -14,21 +14,21 @@
 //#include "common/harness.h"
 //#include "concurrency/transaction_tests_util.h"
 //
-//namespace peloton {
+// namespace peloton {
 //
-//namespace test {
+// namespace test {
 //
 ////===--------------------------------------------------------------------===//
 //// Transaction Tests
 ////===--------------------------------------------------------------------===//
 //
-//class SelectForUpdateTxnTests : public PelotonTest {};
+// class SelectForUpdateTxnTests : public PelotonTest {};
 //
-//static std::vector<ConcurrencyType> TEST_TYPES = {
+// static std::vector<ConcurrencyType> TEST_TYPES = {
 //  ConcurrencyType::TIMESTAMP_ORDERING
 //};
 //
-//TEST_F(SelectForUpdateTxnTests, SingleTransactionTest) {
+// TEST_F(SelectForUpdateTxnTests, SingleTransactionTest) {
 //  for (auto test_type : TEST_TYPES) {
 //    concurrency::TransactionManagerFactory::Configure(test_type);
 //    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -108,7 +108,7 @@
 //  }
 //}
 //
-//TEST_F(SelectForUpdateTxnTests, MultiTransactionTest) {
+// TEST_F(SelectForUpdateTxnTests, MultiTransactionTest) {
 //  for (auto test_type : TEST_TYPES) {
 //    concurrency::TransactionManagerFactory::Configure(test_type);
 //    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -203,8 +203,8 @@
 //
 //
 //    {
-//      // Test commit/abort protocol when part of the read-own tuples get updated
-//      TransactionScheduler scheduler(3, table.get(), &txn_manager);
+//      // Test commit/abort protocol when part of the read-own tuples get
+//      updated TransactionScheduler scheduler(3, table.get(), &txn_manager);
 //      scheduler.Txn(0).Read(3, true);
 //      scheduler.Txn(0).Read(4, true);
 //      scheduler.Txn(0).Update(3, 1);

@@ -56,8 +56,7 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup,
-      true, false);
+     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
 
   // Create index on the (id, value) column
   std::vector<oid_t> key_attrs = {0, 1};
@@ -67,7 +66,7 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
@@ -103,8 +102,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup,
-      true, false);
+     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
 
   // Create primary index on the id column
   std::vector<oid_t> key_attrs = {0};
@@ -114,7 +112,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
@@ -129,10 +127,10 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   bool unique2 = false;
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
-  auto index_metadata2 = new index::IndexMetadata(
-      "unique_btree_index", 1235, INVALID_OID, INVALID_OID, IndexType::BWTREE,
-      IndexConstraintType::UNIQUE, tuple_schema2, key_schema2, key_attrs2,
-      unique2);
+  auto index_metadata2 =
+      new index::IndexMetadata("unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+                               IndexType::BWTREE, IndexConstraintType::UNIQUE,
+                               tuple_schema2, key_schema2, key_attrs2, unique2);
 
   std::shared_ptr<index::Index> ukey_index(
       index::IndexFactory::GetIndex(index_metadata2));
@@ -177,9 +175,9 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", index_oid, INVALID_OID, INVALID_OID,
-      IndexType::BWTREE, need_primary_index ? IndexConstraintType::PRIMARY_KEY
-                                            : IndexConstraintType::DEFAULT,
+      "primary_btree_index", index_oid, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
+      need_primary_index ? IndexConstraintType::PRIMARY_KEY
+                         : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -189,11 +187,10 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
   // add this table to current database
   auto catalog = catalog::Catalog::GetInstance();
-  try {
-    storage::Database *db = catalog->GetDatabaseWithOid(database_id);
-    db->AddTable(table);
-  } catch (CatalogException &e) {
-  }
+  LOG_INFO("the database_id is %d", database_id);
+  storage::Database *db = catalog->GetDatabaseWithOid(database_id);
+  PL_ASSERT(db);
+  db->AddTable(table);
 
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -221,9 +218,9 @@ TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
       std::move(target_list), std::move(direct_map_list)));
 }
 
-bool TestingTransactionUtil::ExecuteInsert(concurrency::Transaction *transaction,
-                                         storage::DataTable *table, int id,
-                                         int value) {
+bool TestingTransactionUtil::ExecuteInsert(
+    concurrency::Transaction *transaction, storage::DataTable *table, int id,
+    int value) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -242,7 +239,8 @@ bool TestingTransactionUtil::ExecuteInsert(concurrency::Transaction *transaction
   return executor.Execute();
 }
 
-expression::ComparisonExpression *TestingTransactionUtil::MakePredicate(int id) {
+expression::ComparisonExpression *TestingTransactionUtil::MakePredicate(
+    int id) {
   auto tup_val_exp =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
@@ -271,8 +269,8 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
 }
 
 bool TestingTransactionUtil::ExecuteRead(concurrency::Transaction *transaction,
-                                       storage::DataTable *table, int id,
-                                       int &result, bool select_for_update) {
+                                         storage::DataTable *table, int id,
+                                         int &result, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -302,9 +300,9 @@ bool TestingTransactionUtil::ExecuteRead(concurrency::Transaction *transaction,
 
   return true;
 }
-bool TestingTransactionUtil::ExecuteDelete(concurrency::Transaction *transaction,
-                                         storage::DataTable *table, int id,
-                                         bool select_for_update) {
+bool TestingTransactionUtil::ExecuteDelete(
+    concurrency::Transaction *transaction, storage::DataTable *table, int id,
+    bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -328,9 +326,9 @@ bool TestingTransactionUtil::ExecuteDelete(concurrency::Transaction *transaction
 
   return delete_executor.Execute();
 }
-bool TestingTransactionUtil::ExecuteUpdate(concurrency::Transaction *transaction,
-                                         storage::DataTable *table, int id,
-                                         int value, bool select_for_update) {
+bool TestingTransactionUtil::ExecuteUpdate(
+    concurrency::Transaction *transaction, storage::DataTable *table, int id,
+    int value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -340,7 +338,7 @@ bool TestingTransactionUtil::ExecuteUpdate(concurrency::Transaction *transaction
   TargetList target_list;
   DirectMapList direct_map_list;
   target_list.emplace_back(
-      1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan
@@ -367,9 +365,9 @@ bool TestingTransactionUtil::ExecuteUpdate(concurrency::Transaction *transaction
 }
 
 bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
-                                                storage::DataTable *table,
-                                                int old_value, int new_value,
-                                                bool select_for_update) {
+                                                  storage::DataTable *table,
+                                                  int old_value, int new_value,
+                                                  bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -379,7 +377,7 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   TargetList target_list;
   DirectMapList direct_map_list;
   target_list.emplace_back(
-      1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan
@@ -413,9 +411,9 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 }
 
 bool TestingTransactionUtil::ExecuteScan(concurrency::Transaction *transaction,
-                                       std::vector<int> &results,
-                                       storage::DataTable *table, int id,
-                                       bool select_for_update) {
+                                         std::vector<int> &results,
+                                         storage::DataTable *table, int id,
+                                         bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 

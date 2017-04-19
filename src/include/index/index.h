@@ -150,15 +150,16 @@ class IndexMetadata : public Printable {
   // IndexMetadata Data Member Definition
   ///////////////////////////////////////////////////////////////////
 
+  // deprecated, use catalog::IndexCatalog::GetInstance()->GetIndexName()
   std::string name_;
 
-  oid_t index_oid;
-  oid_t table_oid;
-  oid_t database_oid;
+  const oid_t index_oid;
+  const oid_t table_oid;
+  const oid_t database_oid;
 
-  IndexType index_type_;
+  const IndexType index_type_;
 
-  IndexConstraintType index_constraint_type_;
+  const IndexConstraintType index_constraint_type_;
 
   // schema of the indexed base table
   const catalog::Schema *tuple_schema;
@@ -169,7 +170,7 @@ class IndexMetadata : public Printable {
 
  private:
   // The mapping relation between key schema and tuple schema
-  std::vector<oid_t> key_attrs;
+  const std::vector<oid_t> key_attrs;
 
   // The mapping relation between tuple schema and key schema
   // i.e. if the column in tuple is not indexed, then it is set to INVALID_OID
@@ -179,7 +180,7 @@ class IndexMetadata : public Printable {
   std::vector<oid_t> tuple_attrs;
 
   // Whether keys are unique (e.g. primary key)
-  bool unique_keys;
+  const bool unique_keys;
 
   // utility of an index
   double utility_ratio = INVALID_RATIO;

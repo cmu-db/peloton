@@ -32,16 +32,17 @@ class OptimizerTests : public PelotonTest {};
 // TODO: Split the tests into separate test cases.
 TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
   std::unique_ptr<Statement> statement;

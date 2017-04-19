@@ -102,16 +102,16 @@ public class PelotonTest {
   private enum TABLE {A, B, AB}
 
   // To test the database stats colleced
-  private final String SELECT_DB_METRIC = "SELECT * FROM catalog_db.database_metric;";
+  private final String SELECT_DB_METRIC = "SELECT * FROM pg_catalog.database_metric;";
 
   // To test the query stats colleced
-  private final String SELECT_QUERY_METRIC = "SELECT * FROM catalog_db.query_metric;";
+  private final String SELECT_QUERY_METRIC = "SELECT * FROM pg_catalog.query_metric;";
 
   // To test the index stats colleced
-  private final String SELECT_INDEX_METRIC = "SELECT * FROM catalog_db.index_metric;";
+  private final String SELECT_INDEX_METRIC = "SELECT * FROM pg_catalog.index_metric;";
 
   // To test the table stats colleced
-  private final String SELECT_TABLE_METRIC = "SELECT * FROM catalog_db.table_metric;";
+  private final String SELECT_TABLE_METRIC = "SELECT * FROM pg_catalog.table_metric;";
   
   private final String INVALID_TABLE_SQL = "SELECT * FROM INVALID_TABLE;";
 
@@ -642,7 +642,7 @@ public class PelotonTest {
     // Perform Copy
     Statement copy_stmt = conn.createStatement();
     try {
-    	copy_stmt.execute("COPY catalog_db.query_metric TO '" + filePath + "' DELIMITER ','");
+    	copy_stmt.execute("COPY pg_catalog.query_metric TO '" + filePath + "' DELIMITER ','");
  	    ResultSet rs = copy_stmt.getResultSet();
     } catch (SQLException e) {
     	e.printStackTrace();

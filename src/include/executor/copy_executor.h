@@ -13,6 +13,7 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
+#include "catalog/query_metrics_catalog.h"
 
 #include <vector>
 #include "wire/packet_manager.h"
@@ -80,10 +81,14 @@ class CopyExecutor : public AbstractExecutor {
   size_t total_bytes_written = 0;
 
   // The special column ids in query_metric table
-  unsigned int num_param_col_id = INVALID_COL_ID;
-  unsigned int param_type_col_id = INVALID_COL_ID;
-  unsigned int param_format_col_id = INVALID_COL_ID;
-  unsigned int param_val_col_id = INVALID_COL_ID;
+  unsigned int num_param_col_id =
+      catalog::QueryMetricsCatalog::ColumnId::NUM_PARAMS;
+  unsigned int param_type_col_id =
+      catalog::QueryMetricsCatalog::ColumnId::PARAM_TYPES;
+  unsigned int param_format_col_id =
+      catalog::QueryMetricsCatalog::ColumnId::PARAM_FORMATS;
+  unsigned int param_val_col_id =
+      catalog::QueryMetricsCatalog::ColumnId::PARAM_VALUES;
 };
 
 }  // namespace executor

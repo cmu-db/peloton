@@ -34,17 +34,19 @@ class BinderCorrectnessTest : public PelotonTest {};
 
 void SetupTables() {
   LOG_INFO("Creating default database");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   LOG_INFO("Default database created!");
 
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   optimizer::SimpleOptimizer optimizer;
 
+  txn = txn_manager.BeginTransaction();
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
                                  "CREATE TABLE b(B1 int, b2 varchar)"};
-  auto txn = txn_manager.BeginTransaction();
   for (auto& sql : createTableSQLs) {
     LOG_INFO("%s", sql.c_str());
     vector<type::Value> params;
@@ -132,9 +134,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check Order By
   LOG_INFO("Checking order by");
-  tupleExpr = (expression::TupleValueExpression*)selectStmt->order->exprs->at(0);
+  tupleExpr =
+      (expression::TupleValueExpression*)selectStmt->order->exprs->at(0);
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
-  
+
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
   binder.reset(new binder::BindNodeVisitor());
@@ -177,7 +180,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
-  catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 // TODO: add test for Update Statement. Currently UpdateStatement uses char*
@@ -212,7 +218,10 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
-  catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 }  // End test namespace
 }  // End peloton namespace

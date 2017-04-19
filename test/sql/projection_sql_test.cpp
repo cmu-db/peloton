@@ -19,14 +19,16 @@
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
 class ProjectionSQLTests : public PelotonTest {};
 
 TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
@@ -42,7 +44,8 @@ TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT a*5+b, -1+c, 6, a from test", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
   EXPECT_EQ(result[0].second[1], '5');
@@ -52,8 +55,7 @@ TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
   EXPECT_EQ(result[3].second[0], '1');
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

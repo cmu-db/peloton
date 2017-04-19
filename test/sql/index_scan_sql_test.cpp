@@ -18,7 +18,6 @@
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -34,11 +33,15 @@ void CreateAndLoadTable() {
       "INSERT INTO test VALUES (1, 22, 333, 'abcd');");
   TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO test VALUES (2, 33, 111, 'bcda');");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 11, 222, 'bcd');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (3, 11, 222, 'bcd');");
 }
 
 TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -47,10 +50,12 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
   std::string error_message;
   int rows_changed;
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(a);", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 3;", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
   // Check the return value
   // Should be: 22, 33
@@ -58,14 +63,16 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -74,10 +81,12 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
   std::string error_message;
   int rows_changed;
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(b, c);", result,
-                                tuple_descriptor, rows_changed, error_message);
+                                  tuple_descriptor, rows_changed,
+                                  error_message);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT a FROM test WHERE b < 33 AND c > 100 ORDER BY a;", result,
-                                tuple_descriptor, rows_changed, error_message);
+  TestingSQLUtil::ExecuteSQLQuery(
+      "SELECT a FROM test WHERE b < 33 AND c > 100 ORDER BY a;", result,
+      tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: 1, 3
@@ -85,14 +94,16 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 TEST_F(IndexScanSQLTests, SQLTest) {
   LOG_INFO("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -214,9 +225,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       result);
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn =
-      concurrency::TransactionManagerFactory::GetInstance().BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

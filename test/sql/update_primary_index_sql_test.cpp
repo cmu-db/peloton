@@ -18,14 +18,16 @@
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
 
-
 namespace peloton {
 namespace test {
 
 class UpdatePrimaryIndexSQLTests : public PelotonTest {};
 
 TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
@@ -44,44 +46,50 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
   int rows_affected;
 
   // test small int
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
-                                rows_affected, error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[6].second[0], '3');
 
   // Perform primary key update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=2 WHERE c=300", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
 
   // test
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
-                                rows_affected, error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value, it should not be changed
   EXPECT_EQ(result[6].second[0], '3');
 
   // Perform another primary key update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5 WHERE c=300", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
 
   // test
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
-                                rows_affected, error_message);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value, it should not be changed
   EXPECT_EQ(result[6].second[0], '5');
 
   // Perform normal update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET b=2000 WHERE c=200", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
 
   // test update result
   TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=2000", result,
-                                tuple_descriptor, rows_affected, error_message);
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '2');
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
