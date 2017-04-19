@@ -155,9 +155,6 @@ bool UpdateExecutor::DExecute() {
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
 
-    printf("update old location = %d, %d\n", 
-           (int)tile_group->GetTileGroupId(), (int)physical_tuple_id);
-
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
@@ -173,13 +170,8 @@ bool UpdateExecutor::DExecute() {
 
       physical_tuple_id = old_location.offset;
 
-
-      printf("update snapshot location = %d, %d\n", 
-             (int)tile_group->GetTileGroupId(), (int)physical_tuple_id);
-
       auto visibility = transaction_manager.IsVisible(
-          current_txn, tile_group_header, physical_tuple_id);
-      printf("visibility = %d\n", (int)visibility);
+          current_txn, tile_group_header, physical_tuple_id, VisibilityIdType::COMMIT_ID);
       if (visibility != VisibilityType::OK) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);

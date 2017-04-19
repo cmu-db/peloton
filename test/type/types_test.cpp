@@ -623,6 +623,30 @@ TEST_F(TypesTests, VisibilityTypeTest) {
                peloton::Exception);
 }
 
+TEST_F(TypesTests, VisibilityIdTypeTest) {
+  std::vector<VisibilityIdType> list = {
+      VisibilityIdType::INVALID, 
+      VisibilityIdType::INVISIBLE, 
+      VisibilityIdType::DELETED, 
+      VisibilityIdType::OK
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::VisibilityIdTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToVisibilityIdType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToVisibilityIdType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::VisibilityIdTypeToString(static_cast<VisibilityIdType>(-99999)),
+               peloton::Exception);
+}
+
 TEST_F(TypesTests, IsolationLevelTypeTest) {
   std::vector<IsolationLevelType> list = {
       IsolationLevelType::INVALID, 

@@ -121,7 +121,6 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  printf("execute index scan!!!\n");
   LOG_TRACE("Index Scan executor :: 0 child");
 
   if (!done_) {
@@ -256,7 +255,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // if passed evaluation, then perform write.
         if (eval == true) {
           LOG_TRACE("perform read operation");
-          printf("read version: %d, %d\n", (int)tuple_location.block, (int)tuple_location.offset);
           auto res = transaction_manager.PerformRead(
               current_txn, tuple_location, acquire_owner);
           if (!res) {
@@ -499,7 +497,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          printf("read version: %d, %d\n", (int)tuple_location.block, (int)tuple_location.offset);
           auto res = transaction_manager.PerformRead(
               current_txn, tuple_location, acquire_owner);
           if (!res) {

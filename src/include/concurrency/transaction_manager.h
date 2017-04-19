@@ -62,7 +62,8 @@ class TransactionManager {
   VisibilityType IsVisible(
       Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+      const oid_t &tuple_id,
+      const VisibilityIdType type = VisibilityIdType::READ_ID);
 
   // This method test whether the current transaction is the owner of this version.
   virtual bool IsOwner(
