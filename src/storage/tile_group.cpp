@@ -68,8 +68,6 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   return tiles[tile_id]->GetTileId();
 }
 
-bool TileGroup::GetCompressionStatus() const { return compression_status; }
-
 type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   Tile *tile = GetTile(tile_id);
 
@@ -321,7 +319,7 @@ void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
     LOG_TRACE("Compressing Tile %d in Tile Group", i);
-    Tile *old_tile = &*tiles[i];
+    Tile *old_tile = tiles[i].get();
     std::shared_ptr<CompressedTile> new_tile(new CompressedTile(
         backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),
         old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount()));

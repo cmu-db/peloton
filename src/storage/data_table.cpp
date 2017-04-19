@@ -171,10 +171,9 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   bool valid_slot = true;
-  ;
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
-    if ((tuple != nullptr)) {
+    if (tuple != nullptr) {
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
 
