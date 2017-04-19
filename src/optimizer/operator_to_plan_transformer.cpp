@@ -57,7 +57,10 @@ OperatorToPlanTransformer::ConvertOpExpression(
 }
   
 void OperatorToPlanTransformer::Visit(const DummyScan *op) {
-  // DummyScan is
+  // DummyScan is used in case of SELECT without FROM so that enforcer
+  // can enforce a PhysicalProjection on top of DummyScan to generate correct
+  // result. But here, no need to translate DummyScan to any physical plan.
+  output_plan_ = nullptr;
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
