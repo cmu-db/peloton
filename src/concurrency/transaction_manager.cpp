@@ -187,7 +187,8 @@ bool TransactionManager::IsOccupied(
 VisibilityType TransactionManager::IsVisible(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) {
+    const oid_t &tuple_id, 
+    const VisibilityIdType type) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
@@ -195,12 +196,20 @@ VisibilityType TransactionManager::IsVisible(
 
   // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
-  // the tuple has already been committed.
-  bool activated = (current_txn->GetReadId() >= tuple_begin_cid);
-  // the tuple is not visible.
-  bool invalidated = (current_txn->GetReadId() >= tuple_end_cid);
+  
+  cid_t txn_vis_id;
 
-  printf("own = %d, active = %d, invalidate = %d, current txn id = %d\n", (int)own, (int)activated, (int)invalidated, (int)tuple_txn_id);
+  if (type == VisibilityIdType::READ_ID) {
+    txn_vis_id = current_txn->GetReadId();
+  } else {
+    PL_ASSERT(type == VisibilityIdType::COMMIT_ID);
+    txn_vis_id = current_txn->GetCommitId();
+  }
+
+  // the tuple has already been committed.
+  bool activated = (txn_vis_id >= tuple_begin_cid);
+  // the tuple is not visible.
+  bool invalidated = (txn_vis_id >= tuple_end_cid);
 
   if (tuple_txn_id == INVALID_TXN_ID || CidIsInDirtyRange(tuple_begin_cid)) {
     // the tuple is not available.
