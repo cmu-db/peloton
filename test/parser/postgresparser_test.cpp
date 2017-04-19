@@ -734,5 +734,64 @@ TEST_F(PostgresParserTests, DistinctFromTest) {
   delete stmt_list;
 }
 
+
+TEST_F(PostgresParserTests, ReferenceTest) {
+  std::string query = "CREATE TABLE table1 ("
+      "a int, "
+      "b int REFERENCES table2 (bb) ON UPDATE CASCADE,"
+      "c varchar(32) REFERENCES table3 (cc) MATCH FULL ON DELETE SET NULL,"
+      "FOREIGN KEY (d) REFERENCES table4 (dd) MATCH SIMPLE ON UPDATE SET DEFAULT"
+      ");";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check column definition
+  EXPECT_EQ(create_stmt->columns->size(), 4);
+  // Check Second column
+  auto column = create_stmt->columns->at(1);
+  EXPECT_EQ("b", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("bb", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table2", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::CASCADE, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
+
+  // Check Third column
+  column = create_stmt->columns->at(2);
+  EXPECT_EQ("c", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::VARCHAR, column->type);
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("cc", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table3", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::SETNULL, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::FULL, column->foreign_key_match_type);
+
+  // Check Fourth column
+  column = create_stmt->columns->at(3);
+  EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
+  EXPECT_TRUE(column->foreign_key_source != nullptr);
+  EXPECT_TRUE(column->foreign_key_source->size() == 1);
+  EXPECT_EQ("d", std::string(column->foreign_key_source->at(0)));
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("dd", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table4", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::SETDEFAULT, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
+
+  delete stmt_list;
+}
+
 }  // End test namespace
 }  // End peloton namespace

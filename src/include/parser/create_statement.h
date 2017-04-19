@@ -48,6 +48,20 @@ struct ColumnDefinition {
     VARBINARY
   };
 
+  enum FKConstrActionType {
+    NOACTION,
+    RESTRICT,
+    CASCADE,
+    SETNULL,
+    SETDEFAULT
+  };
+
+  enum FKConstrMatchType {
+    SIMPLE,
+    PARTIAL,
+    FULL
+  };
+
   ColumnDefinition(DataType type) : type(type) {}
 
   ColumnDefinition(char* name, DataType type) : name(name), type(type) {}
@@ -67,7 +81,8 @@ struct ColumnDefinition {
       delete foreign_key_sink;
     }
     delete[] name;
-    delete table_info_;
+    if (table_info_ != nullptr)
+      delete table_info_;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {
@@ -144,6 +159,11 @@ struct ColumnDefinition {
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;
   std::vector<char*>* foreign_key_sink = nullptr;
+
+  char* foreign_key_table_name = nullptr;
+  FKConstrActionType foreign_key_delete_action;
+  FKConstrActionType foreign_key_update_action;
+  FKConstrMatchType foreign_key_match_type;
 };
 
 /**

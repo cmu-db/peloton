@@ -735,6 +735,25 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->not_null = true;
       else if (constraint->contype == CONSTR_UNIQUE)
         result->unique = true;
+      else if (constraint->contype == CONSTR_FOREIGN) {
+        result->foreign_key_sink = new std::vector<char*>();
+        result->table_info_ = new TableInfo();
+        // Transform foreign key attributes
+        // Reference table
+        result->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Reference column
+        if (constraint->pk_attrs != nullptr)
+          for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
+               attr_cell = attr_cell->next) {
+            value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+            result->foreign_key_sink->push_back(cstrdup(attr_val->val.str));
+          }
+        // Action type
+        result->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        result->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+      }
     }
   }
 
@@ -770,13 +789,6 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       // Transform Regular Column
       ColumnDefinition* temp =
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
-      temp->table_info_ = new parser::TableInfo();
-      if (relation->relname) {
-        temp->table_info_->table_name = cstrdup(relation->relname);
-      }
-      if (relation->catalogname) {
-        temp->table_info_->database_name = cstrdup(relation->catalogname);
-      };
       result->columns->push_back(temp);
     } else if (node->type == T_Constraint) {
       // Transform Constraints
@@ -806,6 +818,12 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         }
         // Update Reference Table
         col->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Action type
+        col->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        col->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+
         result->columns->push_back(col);
       } else {
         throw NotImplementedException(StringUtil::Format(
@@ -1215,7 +1233,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-//   print_pg_parse_tree(result.tree);
+//  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
