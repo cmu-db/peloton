@@ -26,8 +26,17 @@ TEST_F(LogBufferPoolTests, MyTest) {
   
   logging::LogBufferPool log_buffer_pool(1);
 
-  EXPECT_TRUE(true);
+  size_t thread_id = log_buffer_pool.GetThreadId();
+
+  EXPECT_EQ(thread_id, 1);
+
+  std::unique_ptr<logging::LogBuffer> log_buffer(new logging::LogBuffer(1, 1));
+
+  log_buffer_pool.PutBuffer(std::move(log_buffer));
+
+  size_t slot_count = log_buffer_pool.GetEmptySlotCount();
   
+  EXPECT_EQ(slot_count, log_buffer_pool.GetMaxSlotCount() - 1);
 }
 
 }

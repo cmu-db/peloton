@@ -330,7 +330,7 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PlanNodeType::NESTLOOP:
-      LOG_TRACE("Adding Nested Loop Joing Executor");
+      LOG_TRACE("Adding Nested Loop Join Executor");
       child_executor =
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
