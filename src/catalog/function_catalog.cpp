@@ -19,16 +19,18 @@ namespace peloton {
   namespace catalog {
 
     FunctionCatalog *FunctionCatalog::GetInstance(
-        storage::Database *pg_catalog, type::AbstractPool *pool) {
+        storage::Database *pg_catalog, type::AbstractPool *pool,
+        concurrency::Transaction *txn) {
       static std::unique_ptr<FunctionCatalog> function_catalog(
-          new FunctionCatalog(pg_catalog, pool));
+          new FunctionCatalog(pg_catalog, pool,txn));
 
       return function_catalog.get();
     }
 
     FunctionCatalog::FunctionCatalog(
-        UNUSED_ATTRIBUTE storage::Database *pg_catalog,
-        UNUSED_ATTRIBUTE type::AbstractPool *pool)
+        storage::Database *pg_catalog,
+        UNUSED_ATTRIBUTE type::AbstractPool *pool,
+        UNUSED_ATTRIBUTE concurrency::Transaction *txn)
       : AbstractCatalog(FUNCTION_CATALOG_OID, FUNCTION_CATALOG_NAME,
           InitializeSchema().release(), pg_catalog) {
         // Add secondary index here if necessary

@@ -47,7 +47,8 @@ class FunctionCatalog : public AbstractCatalog {
   // Global Singleton
   static FunctionCatalog *GetInstance(
       storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr);
+      type::AbstractPool *pool = nullptr,
+      concurrency::Transaction *txn = nullptr);
 
  inline oid_t GetNextOid() { return oid_++ | FUNCTION_OID_MASK; }
   //===--------------------------------------------------------------------===//
@@ -82,7 +83,7 @@ class FunctionCatalog : public AbstractCatalog {
   // Will add later
 
  private:
-  FunctionCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  FunctionCatalog(storage::Database *pg_catalog, type::AbstractPool *pool, concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
