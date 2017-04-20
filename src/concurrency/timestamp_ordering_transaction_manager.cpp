@@ -277,7 +277,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //// handle READ_COMMITTED
   //////////////////////////////////////////////////////////
   else if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_COMMITTED) {
-    
     oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
@@ -287,7 +286,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
     // Check if it's select for update before we check the ownership.
     if (acquire_ownership == true) {
-
       // acquire ownership.
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
 
@@ -305,7 +303,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
         current_txn->RecordReadOwn(location);
 
       } 
-
       // if we have already owned the version.
       PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       // Increment table read op stats
@@ -374,7 +371,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
     // Check if it's select for update before we check the ownership 
     // and modify the last reader cid.
     if (acquire_ownership == true) {
-
       // acquire ownership.
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
 
@@ -816,9 +812,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         PL_ASSERT(new_version.IsNull() == false);
 
         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
-        if (cid <= end_commit_id) {
-          printf("cid = %lu, end commit id = %lu\n", cid, end_commit_id);
-        }
         PL_ASSERT(cid > end_commit_id);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();

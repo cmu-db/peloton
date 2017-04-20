@@ -55,9 +55,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T0 commits
@@ -101,9 +101,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T1 commits
@@ -147,9 +147,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T0 aborts
@@ -185,9 +185,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T1 commits
@@ -224,9 +224,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T0 aborts
@@ -263,9 +263,9 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
     // T1 aborts
@@ -316,9 +316,9 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+        TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 reads (0, ?)
     // T0 commits
@@ -361,9 +361,9 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    storage::DataTable *table = 
+        TestingTransactionUtil::CreateTable();
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 reads (0, ?)
     // T0 aborts
@@ -422,10 +422,10 @@ void FuzzyReadTest(const ProtocolType protocol,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = 
+        TestingTransactionUtil::CreateTable();
 
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 obtains a smaller timestamp.
     // T0 reads (0, ?)
     // T1 updates (0, ?) to (0, 1)
@@ -468,10 +468,10 @@ void FuzzyReadTest(const ProtocolType protocol,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = 
+        TestingTransactionUtil::CreateTable();
 
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    TransactionScheduler scheduler(3, table, &txn_manager);
     // T1 obtains a smaller timestamp.
     // T1 reads (0, ?)
     // T0 reads (0, ?)
@@ -538,10 +538,10 @@ void FuzzyReadTest(const ProtocolType protocol,
   }
 
   // {
-  //   std::unique_ptr<storage::DataTable> table(
-  //       TestingTransactionUtil::CreateTable());
+  //   storage::DataTable *table = 
+  //       TestingTransactionUtil::CreateTable();
 
-  //   TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  //   TransactionScheduler scheduler(2, table, &txn_manager);
   //   scheduler.Txn(0).Read(0);
   //   scheduler.Txn(1).Delete(0);
   //   scheduler.Txn(1).Delete(1);
@@ -566,11 +566,11 @@ void FuzzyReadTest(const ProtocolType protocol,
 
 void PhantomTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Insert(5, 0);
     scheduler.Txn(0).Scan(0);
@@ -588,7 +588,7 @@ void PhantomTest() {
   }
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Delete(4);
     scheduler.Txn(0).Scan(0);
@@ -610,12 +610,12 @@ void PhantomTest() {
 // Can't pass this test!
 void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
 
   {
     // Prepare
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler(1, table, &txn_manager);
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
@@ -628,7 +628,7 @@ void WriteSkewTest() {
     // T1 will set all 0 to 1
     // The results are either (0, 0), (1, 0) or (0, 1), (1, 1) in serializable
     // transactions.
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    TransactionScheduler scheduler(3, table, &txn_manager);
 
     scheduler.Txn(0).UpdateByValue(1,
                                    0);  // txn 0 see (1, 1), update it to (1, 0)
@@ -655,10 +655,10 @@ void WriteSkewTest() {
 
 void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
     scheduler.Txn(1).Update(1, 1);
@@ -681,11 +681,11 @@ void ReadSkewTest() {
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TestingTransactionUtil::CreateTable());
+  storage::DataTable *table = 
+      TestingTransactionUtil::CreateTable();
   int current_batch_key = 10000;
   {
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler(1, table, &txn_manager);
     // Prepare
     scheduler.Txn(0).Insert(current_batch_key, 100);
     scheduler.Txn(0).Update(100, 1);
@@ -695,7 +695,7 @@ void SIAnomalyTest1() {
               scheduler.schedules[0].txn_result);
   }
   {
-    TransactionScheduler scheduler(4, table.get(), &txn_manager);
+    TransactionScheduler scheduler(4, table, &txn_manager);
     // Test against anomaly
     scheduler.Txn(1).ReadStore(current_batch_key, 0);
     scheduler.Txn(2).Update(current_batch_key, 100 + 1);
@@ -755,10 +755,10 @@ TEST_F(AnomalyTests, StressTest) {
     
     EXPECT_EQ(IsolationLevelType::SERIALIZABLE, txn_manager.GetIsolationLevel());
 
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable(num_key));
+    storage::DataTable *table = 
+        TestingTransactionUtil::CreateTable(num_key);
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+    TransactionScheduler scheduler(num_txn, table, &txn_manager);
     scheduler.SetConcurrent(true);
     for (int i = 0; i < num_txn; i++) {
       for (int j = 0; j < scale; j++) {
@@ -780,7 +780,7 @@ TEST_F(AnomalyTests, StressTest) {
     scheduler.Run();
 
     // Read all values
-    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler2(1, table, &txn_manager);
     for (int i = 0; i < num_key; i++) {
       scheduler2.Txn(0).Read(i);
     }
