@@ -94,6 +94,8 @@ struct ColumnDefinition {
       delete table_info_;
     if (default_value != nullptr)
       delete default_value;
+    if (check_expression != nullptr)
+      delete check_expression;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {
@@ -166,6 +168,7 @@ struct ColumnDefinition {
   bool primary = false;
   bool unique = false;
   expression::AbstractExpression* default_value = nullptr;
+  expression::AbstractExpression* check_expression = nullptr;
 
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;

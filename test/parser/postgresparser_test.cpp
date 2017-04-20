@@ -739,6 +739,7 @@ TEST_F(PostgresParserTests, ConstraintTest) {
       "a int DEFAULT 1+2,"
       "b int REFERENCES table2 (bb) ON UPDATE CASCADE,"
       "c varchar(32) REFERENCES table3 (cc) MATCH FULL ON DELETE SET NULL,"
+      "d int CHECK (d+1 > 0),"
       "FOREIGN KEY (d) REFERENCES table4 (dd) MATCH SIMPLE ON UPDATE SET DEFAULT"
       ");";
 
@@ -750,7 +751,7 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check column definition
-  EXPECT_EQ(create_stmt->columns->size(), 4);
+  EXPECT_EQ(create_stmt->columns->size(), 5);
 
   // Check First column
   auto column = create_stmt->columns->at(0);
@@ -794,6 +795,27 @@ TEST_F(PostgresParserTests, ConstraintTest) {
 
   // Check Fourth column
   column = create_stmt->columns->at(3);
+  EXPECT_EQ("d", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->check_expression != nullptr);
+  EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN, column->check_expression->GetExpressionType());
+  EXPECT_EQ(2, column->check_expression->GetChildrenSize());
+  auto check_child1 = (expression::OperatorExpression*)column->check_expression->GetChild(0);
+  EXPECT_TRUE(check_child1 != nullptr);
+  EXPECT_EQ(ExpressionType::OPERATOR_PLUS, check_child1->GetExpressionType());
+  EXPECT_EQ(2, check_child1->GetChildrenSize());
+  auto plus_child1 = (expression::TupleValueExpression*)check_child1->GetChild(0);
+  EXPECT_TRUE(plus_child1 != nullptr);
+  EXPECT_EQ("d", plus_child1->GetColumnName());
+  auto plus_child2 = (expression::ConstantValueExpression*)check_child1->GetChild(1);
+  EXPECT_TRUE(plus_child2 != nullptr);
+  EXPECT_TRUE(plus_child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  auto check_child2 = (expression::ConstantValueExpression*)column->check_expression->GetChild(1);
+  EXPECT_TRUE(check_child2 != nullptr);
+  EXPECT_TRUE(check_child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+
+  // Check Fifth column
+  column = create_stmt->columns->at(4);
   EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
   EXPECT_TRUE(column->foreign_key_source != nullptr);
   EXPECT_TRUE(column->foreign_key_source->size() == 1);

@@ -758,6 +758,10 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->default_value =
             AExprTransform(reinterpret_cast<A_Expr*>(constraint->raw_expr));
       }
+      else if (constraint->contype == CONSTR_CHECK) {
+        result->check_expression =
+            AExprTransform(reinterpret_cast<A_Expr*>(constraint->raw_expr));
+      }
     }
   }
 
