@@ -39,7 +39,7 @@ class CheckpointManagerFactory {
     }
   }
 
-  inline static CheckpointingType GetCheckpointingType() { return logging_type_; }
+  inline static CheckpointingType GetCheckpointingType() { return checkpointing_type_; }
 
 private:
   // checkpointing type
