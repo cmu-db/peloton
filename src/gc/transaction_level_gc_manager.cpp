@@ -82,7 +82,9 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const eid_t &epoch_id, const size_t &thread_id) {
+void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, 
+                                                   const eid_t &epoch_id, 
+                                                   const size_t &thread_id) {
   // Add the garbage context to the lock-free queue
   std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, epoch_id));
   unlink_queues_[HashToThread(thread_id)]->Enqueue(gc_context);
@@ -98,7 +100,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-    [this, &garbages, &tuple_counter, expired_eid](const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
+    [this, &garbages, &tuple_counter, expired_eid]
+        (const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
       bool res = garbage_ctx->epoch_id_ < expired_eid;
       if (res == true) {
         DeleteFromIndexes(garbage_ctx);

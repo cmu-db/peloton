@@ -26,14 +26,14 @@ namespace logging {
       if (head_.load() < tail_.load() - 1) {
         if (local_buffer_queue_[head_idx] == false) {
           // Not any buffer allocated now
-          local_buffer_queue_[head_idx].reset(new LogBuffer(worker_id_, current_eid));
+          local_buffer_queue_[head_idx].reset(new LogBuffer(thread_id_, current_eid));
         }
         break;
       }
 
       // sleep a while, and try to get a new buffer
       _mm_pause();
-      LOG_TRACE("Worker %d uses up its buffer", (int) worker_id_);
+      LOG_TRACE("Worker %d uses up its buffer", (int) thread_id_);
     }
 
     head_.fetch_add(1, std::memory_order_relaxed);
@@ -44,7 +44,7 @@ namespace logging {
   // This function is called only by the corresponding logger.
   void LogBufferPool::PutBuffer(std::unique_ptr<LogBuffer> buf) {
     PL_ASSERT(buf.get() != nullptr);
-    PL_ASSERT(buf->GetWorkerId() == worker_id_);
+    PL_ASSERT(buf->GetThreadId() == thread_id_);
 
     size_t tail_idx = tail_ % buffer_queue_size_;
     
