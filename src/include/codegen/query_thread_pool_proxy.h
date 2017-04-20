@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// thread_pool_proxy.h
+// query_thread_pool_proxy.h
 //
-// Identification: src/include/codegen/thread_pool_proxy.h
+// Identification: src/include/codegen/query_thread_pool_proxy.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

@@ -178,7 +178,6 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
         {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
       }};
-  codegen_.CallPrintf("Inner plan func started.\n", {});
 
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
@@ -187,12 +186,10 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   Produce(root);
 
   // Finish the function
-  codegen_.CallPrintf("Inner plan func executed.\n", {});
   inner_function_builder.ReturnAndFinish();
 
   // Get the function
   llvm::Function *inner_func = inner_function_builder.GetFunction();
-  LOG_DEBUG("Finish build inner plan function.");
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
@@ -201,7 +198,6 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         codegen_.VoidType(),
         {
           {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
-  codegen_.CallPrintf("Plan func started.\n", {});
 
   llvm::Value *runtime_state_ptr = codegen_.GetState();
   llvm::Value *thread_id = codegen_.Const64(0);
@@ -216,7 +212,6 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
     codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count});
 
-    codegen_.CallPrintf("Construct MultiThreadContext for thread id: %u, thread count: %u.\n", {thread_id, thread_count});
 
     //NOTE: single-threaded
     codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
@@ -231,10 +226,8 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     loop.LoopEnd(codegen_->CreateICmpULT(thread_id, thread_count), {thread_id});
   }
 
-  codegen_.CallPrintf("Plan func executed.\n", {});
   function_builder.ReturnAndFinish();
 
-  LOG_DEBUG("Finish building plan func.");
   return function_builder.GetFunction();
 }
 

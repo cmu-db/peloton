@@ -17,6 +17,10 @@
 namespace peloton {
 namespace codegen {
 
+//===----------------------------------------------------------------------===//
+// Multi thread context is created per thread, and stored all information that
+// thread needed.
+//===----------------------------------------------------------------------===//
 class MultiThreadContext {
  public:
 
