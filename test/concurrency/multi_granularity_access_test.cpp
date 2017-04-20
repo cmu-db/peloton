@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// select_for_udpate_txn_test.cpp
+// multi_granularity_access_test.cpp
 //
 // Identification: test/concurrency/multi_granularity_access_test.cpp
 //
@@ -14,7 +14,6 @@
 #include "common/harness.h"
 
 namespace peloton {
-
 namespace test {
 
 //===--------------------------------------------------------------------===//
