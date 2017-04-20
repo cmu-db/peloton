@@ -22,7 +22,11 @@ namespace peloton {
 namespace codegen {
 
 /**
- * @brief This class is used to materialize a @c RowBatch::Row into a @c storage::Tuple.
+ * @brief This class is used to materialize a @c RowBatch::Row into a
+ * @c storage::Tuple.
+ *
+ * A @c storage::Tuple is basically a buffer in which all attributes are laid
+ * out linearly.
  */
 class RawTupleRef {
  public:
@@ -30,6 +34,39 @@ class RawTupleRef {
               planner::BindingContext &binding_context) {
   }
 
+  /**
+   * @brief Writes out an attribute into the buffer.
+   *
+   * The @c schema gives us the byte-level location (@c offset) and size
+   * (@c size) of this value in the buffer.
+   *
+   * For any fixed-length value, we store it like this:
+   * @code
+   *         +-------+---------+-------+
+   * Buffer: |  ...  | <value> |  ...  |
+   *         +-------+---------+-------+
+   *                  |         |
+   *                  offset    offset + size
+   * @endcode
+   *
+   * For any var-length value, we store it like this:
+   *
+   * @code
+   *                 |<-- char* -->|
+   *         +-------+-------------+-------+
+   * Buffer: |  ...  |  <address>  |  ...  |
+   *         +-------+-------------+-------+
+   *                        |
+   *          +-------------+
+   *          |
+   *          v
+   *         +----------------+-------------+
+   *         |       len      |  <content>  |
+   *         +-------+----------------------+
+   *         |<-- uint32_t -->|<--- len --->|
+   *
+   * @endcode
+   */
   void Materialize(oid_t column_id) {
     size_t offset = this->schema_->GetOffset(column_id);
 
@@ -50,25 +87,14 @@ class RawTupleRef {
     ptr = this->codegen_->CreateBitCast(ptr, val_type->getPointerTo());
 
     switch (v.GetType()) {
-      case type::Type::TypeId::TINYINT: {
-        this->codegen_->CreateStore(v.GetValue(), ptr);
-        break;
-      }
-      case type::Type::TypeId::SMALLINT: {
-        this->codegen_->CreateStore(v.GetValue(), ptr);
-        break;
-      }
+      case type::Type::TypeId::TINYINT:
+      case type::Type::TypeId::SMALLINT:
       case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER: {
-        break;
-      }
-      case type::Type::TypeId::TIMESTAMP: {
-        break;
-      }
-      case type::Type::TypeId::BIGINT: {
-        break;
-      }
+      case type::Type::TypeId::INTEGER:
+      case type::Type::TypeId::TIMESTAMP:
+      case type::Type::TypeId::BIGINT:
       case type::Type::TypeId::DECIMAL: {
+        this->codegen_->CreateStore(v.GetValue(), ptr);
         break;
       }
       case type::Type::TypeId::VARBINARY: {
