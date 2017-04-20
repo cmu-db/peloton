@@ -754,6 +754,10 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         // Match type
         result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
       }
+      else if (constraint->contype == CONSTR_DEFAULT) {
+        result->default_value =
+            AExprTransform(reinterpret_cast<A_Expr*>(constraint->raw_expr));
+      }
     }
   }
 

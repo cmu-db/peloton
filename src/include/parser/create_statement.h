@@ -15,6 +15,7 @@
 #include "type/types.h"
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace parser {
@@ -83,6 +84,8 @@ struct ColumnDefinition {
     delete[] name;
     if (table_info_ != nullptr)
       delete table_info_;
+    if (default_value != nullptr)
+      delete default_value;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {

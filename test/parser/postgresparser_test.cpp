@@ -735,9 +735,9 @@ TEST_F(PostgresParserTests, DistinctFromTest) {
 }
 
 
-TEST_F(PostgresParserTests, ReferenceTest) {
+TEST_F(PostgresParserTests, ConstraintTest) {
   std::string query = "CREATE TABLE table1 ("
-      "a int, "
+      "a int DEFAULT 1+2,"
       "b int REFERENCES table2 (bb) ON UPDATE CASCADE,"
       "c varchar(32) REFERENCES table3 (cc) MATCH FULL ON DELETE SET NULL,"
       "FOREIGN KEY (d) REFERENCES table4 (dd) MATCH SIMPLE ON UPDATE SET DEFAULT"
@@ -752,8 +752,25 @@ TEST_F(PostgresParserTests, ReferenceTest) {
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check column definition
   EXPECT_EQ(create_stmt->columns->size(), 4);
+
+  // Check First column
+  auto column = create_stmt->columns->at(0);
+  EXPECT_EQ("a", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->default_value != nullptr);
+  auto default_expr = (expression::OperatorExpression*) column->default_value;
+  EXPECT_TRUE(default_expr != nullptr);
+  EXPECT_EQ(ExpressionType::OPERATOR_PLUS, default_expr->GetExpressionType());
+  EXPECT_EQ(2, default_expr->GetChildrenSize());
+  auto child1 = (expression::ConstantValueExpression*)default_expr->GetChild(0);
+  EXPECT_TRUE(child1 != nullptr);
+  auto child2 = (expression::ConstantValueExpression*)default_expr->GetChild(1);
+  EXPECT_TRUE(child2 != nullptr);
+  EXPECT_TRUE(child1->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_TRUE(child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+
   // Check Second column
-  auto column = create_stmt->columns->at(1);
+  column = create_stmt->columns->at(1);
   EXPECT_EQ("b", std::string(column->name));
   EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
   EXPECT_TRUE(column->foreign_key_sink != nullptr);
