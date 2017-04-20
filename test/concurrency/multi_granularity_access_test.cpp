@@ -4,7 +4,7 @@
 //
 // select_for_udpate_txn_test.cpp
 //
-// Identification: test/concurrency/select_for_update_txn_test.cpp
+// Identification: test/concurrency/multi_granularity_access_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,16 +18,16 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// Multi-Granularity Access Tests
 //===--------------------------------------------------------------------===//
 
-class SelectForUpdateTxnTests : public PelotonTest {};
+class MultiGranularityAccessTests : public PelotonTest {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
  ProtocolType::TIMESTAMP_ORDERING
 };
 
-TEST_F(SelectForUpdateTxnTests, SingleTransactionTest) {
+TEST_F(MultiGranularityAccessTests, SingleTransactionTest) {
  for (auto protocol_type : PROTOCOL_TYPES) {
    concurrency::TransactionManagerFactory::Configure(protocol_type);
    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -106,7 +106,7 @@ TEST_F(SelectForUpdateTxnTests, SingleTransactionTest) {
  }
 }
 
-TEST_F(SelectForUpdateTxnTests, MultiTransactionTest) {
+TEST_F(MultiGranularityAccessTests, MultiTransactionTest) {
  for (auto protocol_type : PROTOCOL_TYPES) {
    concurrency::TransactionManagerFactory::Configure(protocol_type);
    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
