@@ -139,6 +139,8 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         m4 \
         doxygen \
         graphviz \
+        llvm3.7 \
+        libedit-devel \
         postgresql93 \
         libpqxx-devel \
         llvm3.7 \
@@ -164,7 +166,3 @@ else
     echo
     exit 1
 fi
-
-
-
-
