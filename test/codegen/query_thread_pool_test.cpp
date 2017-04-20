@@ -25,20 +25,27 @@ namespace test {
 
 class QueryThreadPoolTests : public PelotonTest {};
 
+void thread_func(codegen::RuntimeState *, codegen::MultiThreadContext *) {
+  // Thread blocks for 100 ms.
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  LOG_DEBUG("Thread finish.");
+  return;
+}
+
 TEST_F(QueryThreadPoolTests, BasicTest) {
-  codegen::QueryThreadPool thread_pool(4);
+  codegen::QueryThreadPool *thread_pool = codegen::QueryThreadPool::GetInstance();
 
   codegen::CodeContext code_context;
   codegen::CodeGen codegen(code_context);
 
-  codegen::MultiThreadContext context = codegen::MultiThreadContext::GetInstance(0, 4);
+  codegen::MultiThreadContext *context = new codegen::MultiThreadContext();
+  codegen::MultiThreadContext::InitInstance(context, 0, 4);
 
-  thread_pool.SubmitQueryTask(context, [](__attribute__ ((unused)) codegen::MultiThreadContext context){
-    // Thread blocks for 100 ms.
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    LOG_DEBUG("Thread finish.");
-    return;
-  });
+  codegen::RuntimeState runtime_state;
+
+  thread_pool->SubmitQueryTask(&runtime_state, context, thread_func);
+  thread_pool->SubmitQueryTask(&runtime_state, context, thread_func);
+  thread_pool->SubmitQueryTask(&runtime_state, context, thread_func);
 
   LOG_DEBUG("All threads submitted.");
 }

@@ -167,7 +167,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     }
 
  private:
-  uint32_t num_rows_to_insert = 102400;
+  uint32_t num_rows_to_insert = 10000;
 };
 
 void PrintName(std::string test_name) {
@@ -177,13 +177,13 @@ void PrintName(std::string test_name) {
 
 TEST_F(BenchmarkScanTest, ScanTestWithCompilation) {
   PrintName("SCAN: COMPILATION");
-  auto stats = RunCompiledExperiment(100);
+  auto stats = RunCompiledExperiment();
   stats.PrintStats();
 }
 
 TEST_F(BenchmarkScanTest, ScanTestWithInterpretation) {
   PrintName("SCAN: INTERPRETATION");
-  auto stats = RunInterpretedExperiment(100);
+  auto stats = RunInterpretedExperiment();
   stats.PrintStats();
 }
 
