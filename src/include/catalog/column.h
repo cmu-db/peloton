@@ -16,6 +16,7 @@
 #include "common/macros.h"
 #include "common/printable.h"
 #include "type/type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace catalog {
@@ -42,12 +43,13 @@ class Column : public Printable {
         column_offset(column_offset) {
     SetInlined();
 
+    SetLength(column_length);
     // We should not have an inline value of length 0
     if (is_inlined && column_length == 0) {
+      LOG_DEBUG("column type is %d with name %s", column_type, column_name.c_str());
       PL_ASSERT(false);
     }
 
-    SetLength(column_length);
   }
 
   //===--------------------------------------------------------------------===//

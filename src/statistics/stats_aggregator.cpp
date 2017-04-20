@@ -20,6 +20,8 @@
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/function_catalog.h"
+#include "catalog/catalog_util.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
 

@@ -55,20 +55,21 @@ class FunctionCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   //need to add protransoform, proargtypes, proallargtypes, proargmodes,
   //proargnames, prosrc, proconfig
-  bool InsertFunction(oid_t oid,const std::string &proname,
-                          oid_t pronamespace, oid_t proowner, 
+
+ bool InsertFunction(oid_t oid,const std::string &proname,
+                         oid_t pronamespace,oid_t proowner, 
                           oid_t prolang, float procost,
-                          float prorows, oid_t provariadic, bool proisagg,
-                          bool proiswindow, bool prosecdef, bool proleakproof,
-                          bool proisstrict, bool proretset, char provolatile,
-                          int pronargs, int pronargdefaults, oid prorettype,
+                         float prorows,oid_t provariadic,bool proisagg,
+                         bool proiswindow,bool prosecdef,bool proleakproof,
+                         bool proisstrict,bool proretset,char provolatile,
+                          int pronargs,int pronargdefaults, oid_t prorettype,
                           std::vector<type::Type::TypeId> proargtypes, 
-                          std::vector<tpye::Type::TypeId> proallargtypes,
-                          std::vector<int> proargmodes, 
+                         std::vector<type::Type::TypeId> proallargtypes,
+                         std::vector<int> proargmodes, 
                           std::vector<std::string> proargnames, 
-                          std::vector<type::Type::TypeId> proargdefaults, 
-                          std::vector<string> prosrc_bin, 
-                          std::vector<std::string> proconfig, std::vector<int> aclitem,
+                         std::vector<type::Type::TypeId> proargdefaults, 
+                          std::vector<std::string> prosrc_bin, 
+                         std::vector<std::string> proconfig, std::vector<int> aclitem,
                           type::AbstractPool *pool,
                           concurrency::Transaction *txn);
 
@@ -78,39 +79,14 @@ class FunctionCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  stats::QueryMetric::QueryParamBuf GetParamTypes(
-      const std::string &name, oid_t database_oid,
-      concurrency::Transaction *txn);
-  int64_t GetNumParams(const std::string &name, oid_t database_oid,
-                       concurrency::Transaction *txn);
-  // TODO: add more if needed
-
-  enum ColumnId {
-    NAME = 0,
-    DATABASE_OID = 1,
-    NUM_PARAMS = 2,
-    PARAM_TYPES = 3,
-    PARAM_FORMATS = 4,
-    PARAM_VALUES = 5,
-    READS = 6,
-    UPDATES = 7,
-    DELETES = 8,
-    INSERTS = 9,
-    LATENCY = 10,
-    CPU_TIME = 11,
-    TIME_STAMP = 12,
-    // Add new columns here in creation order
-  };
+  // Will add later
 
  private:
-  QueryMetricsCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  FunctionCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
-  enum IndexId {
-    PRIMARY_KEY = 0,
-    // Add new indexes here in creation order
-  };
+ 
 };
 
 }  // End catalog namespace

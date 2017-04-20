@@ -403,7 +403,7 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
     return StatementType::COPY;
-  } else if (uper_str == "CREATE_FUNC") {
+  } else if (upper_str == "CREATE_FUNC") {
     return StatementType::CREATE_FUNC;
   }  else {
     throw ConversionException(StringUtil::Format(
