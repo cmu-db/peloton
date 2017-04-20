@@ -67,8 +67,8 @@
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "catalog/catalog_defaults.h"
 #include "type/types.h"
-
 #pragma once
 
 namespace peloton {
@@ -111,18 +111,17 @@ enum txn_op_t {
 };
 
 #define TXN_STORED_VALUE -10000
+#define TEST_TABLE_OID (1234 | TABLE_OID_MASK)
 
 class TestingTransactionUtil {
  public:
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable(int num_key = 10,
-                                         std::string table_name = "TEST_TABLE",
-                                         oid_t database_id = INVALID_OID,
-                                         oid_t relation_id = INVALID_OID,
-                                         oid_t index_oid = 1234,
-                                         bool need_primary_index = false);
+  static storage::DataTable *CreateTable(
+      int num_key = 10, std::string table_name = "TEST_TABLE",
+      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = TEST_TABLE_OID,
+      oid_t index_oid = 1234, bool need_primary_index = false);
 
   // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value
@@ -273,8 +272,8 @@ class TransactionThread {
       }
       case TXN_OP_DELETE: {
         LOG_TRACE("Execute Delete");
-        execute_result =
-            TestingTransactionUtil::ExecuteDelete(txn, table, id, is_for_update);
+        execute_result = TestingTransactionUtil::ExecuteDelete(txn, table, id,
+                                                               is_for_update);
         break;
       }
       case TXN_OP_UPDATE: {

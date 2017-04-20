@@ -23,7 +23,6 @@
 namespace peloton {
 namespace gc {
 
-
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block).get();
@@ -37,9 +36,8 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
 
-  PL_MEMSET(
-    tile_group_header->GetReservedFieldRef(location.offset), 0,
-    storage::TileGroupHeader::GetReservedSize());
+  PL_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
+            storage::TileGroupHeader::GetReservedSize());
 
   // Reclaim the varlen pool
   CheckAndReclaimVarlenColumns(tile_group, location.offset);
@@ -114,7 +112,6 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
   );
 
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
-
     std::shared_ptr<GarbageContext> garbage_ctx;
     // if there's no more tuples in the queue, then break.
     if (unlink_queues_[thread_id]->Dequeue(garbage_ctx) == false) {
@@ -126,7 +123,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
       // as the max timestamp of committed transactions is larger than the gc's timestamp,
       // it means that no active transactions can read it.
       // so we can unlink it.
-      // we need to delete all the tuples from the indexes to which it belongs as well.
+      // we need to delete all the tuples from the indexes to which it belongs
+      // as well.
       DeleteFromIndexes(garbage_ctx);
       // Add to the garbage map
       garbages.push_back(garbage_ctx);
@@ -175,13 +173,14 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id, const eid_t &expire
 }
 
 // Multiple GC thread share the same recycle map
-void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> garbage_ctx) {
+void TransactionLevelGCManager::AddToRecycleMap(
+    std::shared_ptr<GarbageContext> garbage_ctx) {
   for (auto &entry : *(garbage_ctx->gc_set_.get())) {
-
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
 
-    // During the resetting, a table may be deconstructed because of the DROP TABLE request
+    // During the resetting, a table may be deconstructed because of the DROP
+    // TABLE request
     if (tile_group == nullptr) {
       return;
     }
@@ -189,16 +188,16 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
     PL_ASSERT(tile_group != nullptr);
 
     storage::DataTable *table =
-      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+        dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
     PL_ASSERT(table != nullptr);
 
     oid_t table_id = table->GetOid();
 
     for (auto &element : entry.second) {
+      // as this transaction has been committed, we should reclaim older
+      // versions.
+      ItemPointer location(entry.first, element.first);
 
-      // as this transaction has been committed, we should reclaim older versions.
-      ItemPointer location(entry.first, element.first); 
-      
       // If the tuple being reset no longer exists, just skip it
       if (ResetTuple(location) == false) {
         continue;
@@ -207,10 +206,8 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
       if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
         recycle_queue_map_[table_id]->Enqueue(location);
       }
-
     }
   }
-
 }
 
 // this function returns a free tuple slot, if one exists
@@ -233,47 +230,50 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
 }
 
 void TransactionLevelGCManager::ClearGarbage(int thread_id) {
-  while(!unlink_queues_[thread_id]->IsEmpty() || !local_unlink_queues_[thread_id].empty()) {
+  while (!unlink_queues_[thread_id]->IsEmpty() ||
+         !local_unlink_queues_[thread_id].empty()) {
     Unlink(thread_id, MAX_CID);
   }
 
-  while(reclaim_maps_[thread_id].size() != 0) {
+  while (reclaim_maps_[thread_id].size() != 0) {
     Reclaim(thread_id, MAX_CID);
   }
 
   return;
 }
 
-void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx) {
-
+void TransactionLevelGCManager::DeleteFromIndexes(
+    const std::shared_ptr<GarbageContext> &garbage_ctx) {
   for (auto entry : *(garbage_ctx->gc_set_.get())) {
     for (auto &element : entry.second) {
       if (element.second == true) {
         // only old versions are stored in the gc set.
         // so we can safely get indirection from the indirection array.
-        auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
-        if (tile_group != nullptr){
+        auto tile_group =
+            catalog::Manager::GetInstance().GetTileGroup(entry.first);
+        if (tile_group != nullptr) {
           auto tile_group_header = catalog::Manager::GetInstance()
                                        .GetTileGroup(entry.first)
                                        ->GetHeader();
-          ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
+          ItemPointer *indirection =
+              tile_group_header->GetIndirection(element.first);
 
           DeleteTupleFromIndexes(indirection);
         }
       }
     }
   }
-
 }
 
 // delete a tuple from all its indexes it belongs to.
-void TransactionLevelGCManager::DeleteTupleFromIndexes(ItemPointer *indirection) {
+void TransactionLevelGCManager::DeleteTupleFromIndexes(
+    ItemPointer *indirection) {
   // do nothing if indirection is null
-  if (indirection == nullptr){
+  if (indirection == nullptr) {
     return;
   }
   LOG_TRACE("Deleting indirection %p from index", indirection);
-  
+
   ItemPointer location = *indirection;
 
   auto &manager = catalog::Manager::GetInstance();
@@ -282,28 +282,27 @@ void TransactionLevelGCManager::DeleteTupleFromIndexes(ItemPointer *indirection)
   PL_ASSERT(tile_group != nullptr);
 
   storage::DataTable *table =
-    dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   PL_ASSERT(table != nullptr);
 
   // construct the expired version.
-  expression::ContainerTuple<storage::TileGroup> expired_tuple(tile_group.get(), location.offset);
+  expression::ContainerTuple<storage::TileGroup> expired_tuple(tile_group.get(),
+                                                               location.offset);
 
   // unlink the version from all the indexes.
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
     auto index = table->GetIndex(idx);
+    if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
 
     // build key.
-    std::unique_ptr<storage::Tuple> key(
-      new storage::Tuple(index_schema, true));
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(&expired_tuple, indexed_columns, index->GetPool());
 
     index->DeleteEntry(key.get(), indirection);
-
   }
 }
-
 
 }  // namespace gc
 }  // namespace peloton

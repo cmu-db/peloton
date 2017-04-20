@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
+#include "concurrency/testing_transaction_util.h"
 
 #include "gc/gc_manager_factory.h"
 
@@ -36,12 +36,11 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
         protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Read(0);
       scheduler.Txn(0).Read(0);
       scheduler.Txn(0).Read(0);
@@ -58,7 +57,7 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
 
     // update, update, update, update, read
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
       scheduler.Txn(0).Update(0, 1);
       scheduler.Txn(0).Update(0, 2);
       scheduler.Txn(0).Update(0, 3);
@@ -72,7 +71,7 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
     // insert, delete inserted, read deleted, insert again, delete again
     // read deleted, insert again, read inserted, update inserted, read updated
     {
-      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      TransactionScheduler scheduler(1, table, &txn_manager);
 
       scheduler.Txn(0).Insert(1000, 0);
       scheduler.Txn(0).Delete(1000);
@@ -99,10 +98,9 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
         protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable());
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Update(0, 100);
       scheduler.Txn(0).Abort();
       scheduler.Txn(1).Read(0);
@@ -112,7 +110,7 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
     }
 
     {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).Insert(100, 0);
       scheduler.Txn(0).Abort();
       scheduler.Txn(1).Read(100);
@@ -136,11 +134,10 @@ TEST_F(MVCCTests, VersionChainTest) {
     const int num_key = 2;  // 256
     srand(15721);
 
-    std::unique_ptr<storage::DataTable> table(
-        TestingTransactionUtil::CreateTable(num_key));
+    storage::DataTable *table = TestingTransactionUtil::CreateTable(num_key);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+    TransactionScheduler scheduler(num_txn, table, &txn_manager);
     scheduler.SetConcurrent(true);
     for (int i = 0; i < num_txn; i++) {
       for (int j = 0; j < scale; j++) {
@@ -160,7 +157,7 @@ TEST_F(MVCCTests, VersionChainTest) {
     scheduler.Run();
 
     // Read all values
-    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    TransactionScheduler scheduler2(1, table, &txn_manager);
     for (int i = 0; i < num_key; i++) {
       scheduler2.Txn(0).Read(i);
     }
