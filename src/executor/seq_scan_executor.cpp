@@ -142,7 +142,7 @@ bool SeqScanExecutor::DExecute() {
       //of the same index.
       index_done_ = true;
     }
-    // Force to use occ txn manager if dirty read is forbidden
+    
     concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
 
