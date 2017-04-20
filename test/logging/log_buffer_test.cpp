@@ -54,7 +54,7 @@ TEST_F(LogBufferTests, LogBufferTest) {
 
   int num2;
 
-  memcpy(&num2, data, sizeof(num));
+  PL_MEMCPY(&num2, data, sizeof(num));
 
   EXPECT_EQ(num2, 99);
 
