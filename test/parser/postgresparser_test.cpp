@@ -734,7 +734,6 @@ TEST_F(PostgresParserTests, DistinctFromTest) {
   delete stmt_list;
 }
 
-
 TEST_F(PostgresParserTests, ConstraintTest) {
   std::string query = "CREATE TABLE table1 ("
       "a int DEFAULT 1+2,"
@@ -806,6 +805,48 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::SETDEFAULT, column->foreign_key_update_action);
   EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_delete_action);
   EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
+
+  delete stmt_list;
+}
+
+
+
+TEST_F(PostgresParserTests, DataTypeTest) {
+  std::string query =
+      "CREATE TABLE table1 ("
+      "a text,"
+      "b varchar(1024),"
+      "c varbinary(32)"
+      ");";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check column definition
+  EXPECT_EQ(create_stmt->columns->size(), 3);
+
+  // Check First column
+  auto column = create_stmt->columns->at(0);
+  EXPECT_EQ("a", std::string(column->name));
+  EXPECT_EQ(type::Type::VARCHAR, column->GetValueType(column->type));
+  EXPECT_EQ(peloton::type::PELOTON_TEXT_MAX_LEN, column->varlen);
+
+
+  // Check Second column
+  column = create_stmt->columns->at(1);
+  EXPECT_EQ("b", std::string(column->name));
+  EXPECT_EQ(type::Type::VARCHAR, column->GetValueType(column->type));
+  EXPECT_EQ(1024, column->varlen);
+
+  // Check Third column
+  column = create_stmt->columns->at(2);
+  EXPECT_EQ("c", std::string(column->name));
+  EXPECT_EQ(type::Type::VARBINARY, column->GetValueType(column->type));
+  EXPECT_EQ(32, column->varlen);
 
   delete stmt_list;
 }

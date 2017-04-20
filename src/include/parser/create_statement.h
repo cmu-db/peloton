@@ -63,9 +63,17 @@ struct ColumnDefinition {
     FULL
   };
 
-  ColumnDefinition(DataType type) : type(type) {}
+  ColumnDefinition(DataType type) : type(type) {
+    // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
+    if (type == TEXT)
+      varlen = type::PELOTON_TEXT_MAX_LEN;
+  }
 
-  ColumnDefinition(char* name, DataType type) : name(name), type(type) {}
+  ColumnDefinition(char* name, DataType type) : name(name), type(type) {
+    // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
+    if (type == TEXT)
+      varlen = type::PELOTON_TEXT_MAX_LEN;
+  }
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
