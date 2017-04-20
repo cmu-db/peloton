@@ -113,7 +113,7 @@
 //   max_replay_file_id_ = file_eids_.size() - 1;
 
 //   // for (auto &entry : file_eids_) {
-//   //   printf("file id = %lu\n", entry);
+//   //   LOG_INFO("file id = %lu\n", entry);
 //   // }
 
 // }
@@ -263,7 +263,7 @@
 //     }
 //     CopySerializeInputBE length_decode((const void *) &length_buf, 4);
 //     int length = length_decode.ReadInt();
-//     // printf("length = %d\n", length);
+//     // LOG_INFO("length = %d\n", length);
 //     // Adjust the buffer
 //     if ((size_t) length > buf_size) {
 //       buffer.reset(new char[(int)(length * 1.2)]);
@@ -295,7 +295,7 @@
 //           return false;
 //         }
 //         current_eid = (size_t) record_decode.ReadLong();
-//         // printf("begin epoch id = %lu\n", current_eid);
+//         // LOG_INFO("begin epoch id = %lu\n", current_eid);
 //         break;
 //       } case LOGRECORD_TYPE_EPOCH_END: {
 //         size_t eid = (size_t) record_decode.ReadLong();
@@ -303,7 +303,7 @@
 //           LOG_ERROR("Mismatched epoch in log record");
 //           return false;
 //         }
-//         // printf("end epoch id = %lu\n", current_eid);
+//         // LOG_INFO("end epoch id = %lu\n", current_eid);
 //         current_eid = INVALID_EID;
 //         break;
 //       } case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
@@ -366,9 +366,9 @@
 //         // FILE *fp = fopen("in_file.txt", "a");
 //         // for (size_t i = 0; i < schema->GetColumnCount(); ++i) {
 //         //   int value = ValuePeeker::PeekAsInteger(tuple->GetValue(i));
-//         //   fprintf(stdout, "%d, ", value);
+//         //   fLOG_INFO(stdout, "%d, ", value);
 //         // }
-//         // fprintf(stdout, "\n");
+//         // fLOG_INFO(stdout, "\n");
 //         // fclose(fp);
 
 //         // Install the record
@@ -395,11 +395,10 @@
 //     }
 
 //     size_t file_eid = file_eids_.at(replay_file_id);
-//     // printf("start replaying file id = %d, file eid = %lu\n", replay_file_id, file_eid);
+//     // LOG_INFO("start replaying file id = %d, file eid = %lu\n", replay_file_id, file_eid);
 //     // Replay a single file
 //     std::string filename = GetLogFileFullPath(file_eid);
 //     FileHandle file_handle;
-//     // std::cout<<"filename = " << filename << std::endl;
 //     bool res = LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle);
 //     if (res == false) {
 //       LOG_ERROR("Cannot open log file %s\n", filename.c_str());
@@ -549,7 +548,7 @@
 //           }
 //           while (file_handle == nullptr) {
 //             current_file_eid = current_file_eid + file_epoch_count;
-//             // printf("create new file with epoch id = %lu, last persist eid = %lu, current eid = %lu\n", current_file_eid, last_persist_eid, worker_current_eid);
+//             // LOG_INFO("create new file with epoch id = %lu, last persist eid = %lu, current eid = %lu\n", current_file_eid, last_persist_eid, worker_current_eid);
 //             FileHandle *new_file_handle = new FileHandle();
 //             file_handles.push_back(std::make_pair(new_file_handle, current_file_eid));
 
