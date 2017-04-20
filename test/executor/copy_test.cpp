@@ -19,7 +19,11 @@
 // #include "executor/copy_executor.h"
 // #include "executor/seq_scan_executor.h"
 // #include "optimizer/simple_optimizer.h"
+<<<<<<< HEAD
 // #include "parser/parser.h"
+=======
+// #include "parser/postgresparser.h"
+>>>>>>> add tests for logging component
 // #include "planner/seq_scan_plan.h"
 // #include "tcop/tcop.h"
 
@@ -37,6 +41,7 @@
 
 // TEST_F(CopyTests, Copying) {
 //   auto catalog = catalog::Catalog::GetInstance();
+<<<<<<< HEAD
 //   catalog->CreateDatabase("emp_db", nullptr);
 //   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -46,6 +51,19 @@
 //   // Create a table without primary key
 //   TestingStatsUtil::CreateTable(false);
 //   auto txn = txn_manager.BeginTransaction();
+=======
+//   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//   auto txn = txn_manager.BeginTransaction();
+//   catalog->CreateDatabase("emp_db", txn);
+//   txn_manager.CommitTransaction(txn);
+
+//   optimizer::SimpleOptimizer optimizer;
+//   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+
+//   // Create a table without primary key
+//   TestingStatsUtil::CreateTable(false);
+//   txn = txn_manager.BeginTransaction();
+>>>>>>> add tests for logging component
 //   std::string short_string = "eeeeeeeeee";
 //   std::string long_string =
 //       short_string + short_string + short_string + short_string + short_string +
@@ -80,7 +98,11 @@
 //     std::vector<type::Value> params;
 //     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
 //     std::vector<StatementResult> result;
+<<<<<<< HEAD
 //     bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+=======
+//     executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+>>>>>>> add tests for logging component
 //         statement->GetPlanTree().get(), params, result, result_format);
 //     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
 //     LOG_TRACE("Statement executed. Result: %s",
@@ -98,7 +120,7 @@
 //   std::unique_ptr<Statement> statement(new Statement("COPY", copy_sql));
 
 //   LOG_INFO("Building parse tree...");
-//   auto& peloton_parser = parser::Parser::GetInstance();
+//   auto& peloton_parser = parser::PostgresParser::GetInstance();
 //   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
 //   LOG_INFO("Building plan tree...");
@@ -126,7 +148,7 @@
 //     status = root_executor->Execute();
 //   }
 
-//   // Check the number of bytes written
+//   // Check the number of bypes written
 //   EXPECT_EQ(copy_executor->GetTotalBytesWritten(), num_bytes_to_write);
 //   txn_manager.CommitTransaction(txn);
 

@@ -24,7 +24,7 @@ class LogBufferTests : public PelotonTest {};
 
 TEST_F(LogBufferTests, InitTest) {
   
-  LogBuffer log_buffer(1, 1);
+  logging::LogBuffer log_buffer(1, 1);
 
   log_buffer.Reset();
 
