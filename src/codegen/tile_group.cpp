@@ -175,9 +175,9 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
       codegen::Value tmp{column.GetType(), val};
       codegen::Value null_val = Type::GetNullValue(codegen, column.GetType());
       is_null = null_val.CompareEq(codegen, tmp).GetValue();
-    }
-    else
+    } else {
       is_null = codegen.ConstBool(false);
+    }
     PL_ASSERT(val != nullptr && is_null != nullptr);
   }
 

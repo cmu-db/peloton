@@ -12,6 +12,8 @@
 
 #include "planner/aggregate_plan.h"
 
+#include "common/logger.h"
+
 namespace peloton {
 namespace planner {
 

@@ -40,7 +40,12 @@ PelotonCodeGenTest::PelotonCodeGenTest()
 }
 
 PelotonCodeGenTest::~PelotonCodeGenTest() {
-  catalog::Catalog::GetInstance()->DropDatabaseWithOid(test_db_id);
+  auto *catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto result = catalog->DropDatabaseWithOid(test_db_id, txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(ResultType::SUCCESS, result);
 }
 
 // Create all the test tables, but don't load any data
