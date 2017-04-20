@@ -152,7 +152,6 @@ bool IndexScanExecutor::DExecute() {
 }
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
-  LOG_TRACE("Exec primary index lookup");
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
