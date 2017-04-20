@@ -30,9 +30,13 @@ private:
 
 public:
   LogBuffer(const size_t backend_id, const size_t eid) : worker_id_(backend_id), eid_(eid), size_(0){
+    data_ = new char[log_buffer_capacity_];
     PL_MEMSET(data_, 0, log_buffer_capacity_);
   }
-  ~LogBuffer() {}
+  ~LogBuffer() {
+    delete[] data_;
+    data_ = nullptr;
+  }
 
   inline void Reset() { size_ = 0; eid_ = INVALID_EID; }
 
@@ -52,7 +56,7 @@ private:
   size_t worker_id_;
   size_t eid_;
   size_t size_;
-  char data_[log_buffer_capacity_];
+  char* data_;
 };
 
 }

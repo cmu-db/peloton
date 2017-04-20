@@ -24,7 +24,7 @@ class LogBufferPoolTests : public PelotonTest {};
 
 TEST_F(LogBufferPoolTests, MyTest) {
   
-  LogBufferPool log_buffer_pool(1);
+  logging::LogBufferPool log_buffer_pool(1);
 
   EXPECT_TRUE(true);
   
