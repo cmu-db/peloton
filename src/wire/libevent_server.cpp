@@ -142,12 +142,6 @@ void LibeventServer::StartServer() {
 
     LOG_INFO("Listening on port %lu", port_);
     event_base_dispatch(base);
-    event_free(evstop);
-    event_free(ev_timeout);
-    event_base_free(base);
-    static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
-    LibeventServer::GetConn(listen_fd)->CloseSocket();
-    LOG_INFO("Server Closed");
   }
 
   // This socket family code is not implemented yet
@@ -157,10 +151,12 @@ void LibeventServer::StartServer() {
 }
 
 void LibeventServer::CloseServer() {
-  LOG_INFO("Begin to stop server");
-  is_closed = true;
-  // event_base_loopbreak(base);
-  // static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+  LOG_INFO("Begin to stop server\n");
+  event_base_loopexit(base, NULL);
+  event_free(evstop);
+  event_base_free(base);
+  static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+  LOG_INFO("Server closed\n");
 }
 
 }
