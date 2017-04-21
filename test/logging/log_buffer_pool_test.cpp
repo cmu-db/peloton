@@ -22,7 +22,7 @@ namespace test {
 
 class LogBufferPoolTests : public PelotonTest {};
 
-TEST_F(LogBufferPoolTests, MyTest) {
+TEST_F(LogBufferPoolTests, PoolTest) {
   
   logging::LogBufferPool log_buffer_pool(1);
 
@@ -32,11 +32,18 @@ TEST_F(LogBufferPoolTests, MyTest) {
 
   std::unique_ptr<logging::LogBuffer> log_buffer(new logging::LogBuffer(1, 1));
 
-  log_buffer_pool.PutBuffer(std::move(log_buffer));
+  log_buffer_pool.GetBuffer(1);
 
   size_t slot_count = log_buffer_pool.GetEmptySlotCount();
   
   EXPECT_EQ(slot_count, log_buffer_pool.GetMaxSlotCount() - 1);
+
+  log_buffer_pool.PutBuffer(std::move(log_buffer));
+
+  slot_count = log_buffer_pool.GetEmptySlotCount();
+  
+  EXPECT_EQ(slot_count, log_buffer_pool.GetMaxSlotCount());
+
 }
 
 }
