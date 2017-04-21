@@ -460,8 +460,9 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
         result = new expression::AggregateExpression(
             agg_fun_type, root->agg_distinct, child);
       } else {
-      throw NotImplementedException(
-        "Aggregation over multiple columns not supported yet...\n");
+        throw NotImplementedException(
+            "Aggregation over multiple columns not supported yet...\n");
+      }
     }
   }
   return result;
