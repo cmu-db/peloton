@@ -42,7 +42,8 @@ class DeleteTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
-  bool delete_wrapper(oid_t tile_group_id, oid_t tuple_id, concurrency::Transaction *txn, storage::DataTable *table);
+  mutable llvm::Value *table_ptr;
+  static bool delete_wrapper(int64_t tile_group_id, int32_t tuple_id, concurrency::Transaction *txn, storage::DataTable *table);
   const planner::DeletePlan &delete_plan_;
   codegen::Table table_;
 
