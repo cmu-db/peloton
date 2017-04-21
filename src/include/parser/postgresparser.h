@@ -84,6 +84,14 @@ class PostgresParser {
     }
   }
 
+  static bool IsAggregateFunction(std::string& fun_name) {
+    if (fun_name == "min" || fun_name == "max" ||
+        fun_name == "count" || fun_name == "avg" ||
+        fun_name == "sum")
+      return true;
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Transform Functions
   //===--------------------------------------------------------------------===//

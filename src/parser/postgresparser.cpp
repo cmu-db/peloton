@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
+#include <include/parser/pg_list.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -277,7 +278,6 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
-// TODO: having clause is not handled yet, depends on AExprTransform
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
                                                              Node* having) {
   if (group == nullptr) {
@@ -405,39 +405,61 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
   return ValueTransform(root->val);
 }
 
-// This function takes in a Postgres FuncCall parsenode and transfers it into
-// a Peloton FunctionExpression object.
-// TODO: support function calls on a single column.
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = nullptr;
-  std::string type_string =
-      (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str;
+  std::string fun_name =
+      StringUtil::Lower(
+          (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str);
 
-  type_string = "AGGREGATE_" + type_string;
-
-  if (root->agg_star) {
-    expression::AbstractExpression* children = new expression::StarExpression();
-    result = new expression::AggregateExpression(
-        StringToExpressionType(type_string), false, children);
-  } else {
-    if (root->args->length < 2) {
-      // auto children_expr_list = TargetTransform(root->args);
-      expression::AbstractExpression* child;
-      auto expr_node = (Node*)root->args->head->data.ptr_value;
+  if (!IsAggregateFunction(fun_name)) {
+    // Normal functions (i.e. built-in functions or UDFs)
+    std::vector<expression::AbstractExpression*> children;
+    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+      auto expr_node = (Node*) cell->data.ptr_value;
       if (expr_node->type == T_A_Expr) {
-        child = AExprTransform((A_Expr*)expr_node);
+        children.push_back(AExprTransform(reinterpret_cast<A_Expr *>(expr_node)));
       } else if (expr_node->type == T_A_Const) {
-        child = ConstTransform((A_Const*)expr_node);
+        children.push_back(ConstTransform(reinterpret_cast<A_Const *>(expr_node)));
       } else if (expr_node->type == T_ColumnRef) {
-        child = ColumnRefTransform((ColumnRef*)expr_node);
-      } else {
-        throw NotImplementedException(
-          "Function within Aggregate is not supported yet\n");
+        children.push_back(ColumnRefTransform(reinterpret_cast<ColumnRef *>(expr_node)));
+      } else if (expr_node->type == T_FuncCall){
+        children.push_back(FuncCallTransform(reinterpret_cast<FuncCall*>(expr_node)));
       }
+      else {
+        std::ostringstream oss;
+        oss<<"Type "<<expr_node->type<<"is not supported in function call";
+        throw NotImplementedException(oss.str());
+      }
+    }
+    result = new expression::FunctionExpression(
+        fun_name.c_str(), children);
+  }
+  else {
+    // Aggregate function
+    auto agg_fun_type = StringToExpressionType("AGGREGATE_" + fun_name);
+    if (root->agg_star) {
+      expression::AbstractExpression *children = new expression::StarExpression();
       result = new expression::AggregateExpression(
-          StringToExpressionType(type_string), root->agg_distinct, child);
+          agg_fun_type, false, children);
     } else {
+      if (root->args->length < 2) {
+        // auto children_expr_list = TargetTransform(root->args);
+        expression::AbstractExpression *child;
+        auto expr_node = (Node *) root->args->head->data.ptr_value;
+        if (expr_node->type == T_A_Expr) {
+          child = AExprTransform((A_Expr *) expr_node);
+        } else if (expr_node->type == T_A_Const) {
+          child = ConstTransform((A_Const *) expr_node);
+        } else if (expr_node->type == T_ColumnRef) {
+          child = ColumnRefTransform((ColumnRef *) expr_node);
+        } else {
+          LOG_ERROR("Function within Aggregate is not supported yet\n");
+          throw NotImplementedException("");
+        }
+        result = new expression::AggregateExpression(
+            agg_fun_type, root->agg_distinct, child);
+      } else {
       throw NotImplementedException(
         "Aggregation over multiple columns not supported yet...\n");
     }

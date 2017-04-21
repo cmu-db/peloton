@@ -16,6 +16,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/postgresparser.h"
@@ -872,6 +873,47 @@ TEST_F(PostgresParserTests, DataTypeTest) {
 
   delete stmt_list;
 }
+
+TEST_F(PostgresParserTests, FuncCallTest) {
+  std::string query = "SELECT add(1,a) FROM TEST WHERE FUN(b) > 2";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto select_stmt = (parser::SelectStatement *) stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+
+  // Check ADD(1,a)
+  auto fun_expr = (expression::FunctionExpression*) (select_stmt->select_list->at(0));
+  EXPECT_TRUE(fun_expr != nullptr);
+  EXPECT_EQ("add", fun_expr->func_name_);
+  EXPECT_EQ(2, fun_expr->GetChildrenSize());
+  auto const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  auto tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(1);
+  EXPECT_TRUE(tv_expr != nullptr);
+  EXPECT_EQ("a", tv_expr->GetColumnName());
+
+  // Check FUN(b) > 2
+  auto op_expr = (expression::OperatorExpression*)select_stmt->where_clause;
+  EXPECT_TRUE(op_expr != nullptr);
+  EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN, op_expr->GetExpressionType());
+  fun_expr = (expression::FunctionExpression*) op_expr->GetChild(0);
+  EXPECT_EQ("fun", fun_expr->func_name_);
+  EXPECT_EQ(1, fun_expr->GetChildrenSize());
+  tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(tv_expr != nullptr);
+  EXPECT_EQ("b", tv_expr->GetColumnName());
+  const_expr = (expression::ConstantValueExpression*) op_expr->GetChild(1);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+
+  delete stmt_list;
+}
+
 
 }  // End test namespace
 }  // End peloton namespace
