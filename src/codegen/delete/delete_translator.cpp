@@ -15,6 +15,8 @@
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "codegen/catalog_proxy.h"
+#include "codegen/data_table_proxy.h"
+#include "codegen/transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -23,6 +25,7 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
+      table_ptr(nullptr),
       delete_plan_(delete_plan),
       table_(*delete_plan_.GetTable()) {
   // Also create the translator for our child.
@@ -65,12 +68,15 @@ void DeleteTranslator::Consume(ConsumerContext &context,
   auto tuple_id = row.GetTID(codegen);
   llvm::Value *txn = compilation_context.GetTransactionPtr();
 
-  auto &table = *delete_plan_.GetTable();
+  if (table_ptr == nullptr) {
+    storage::DataTable *table = delete_plan_.GetTable();
 
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-      {GetCatalogPtr(), codegen.Const32(table.GetDatabaseOid()),
-       codegen.Const32(table.GetOid())});
+    table_ptr = codegen.CallFunc(
+        CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+        {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+         codegen.Const32(table->GetOid())});
+  }
+
   codegen.CallFunc(_DeleteWrapper::GetFunction(codegen),
                    {tile_group_id, tuple_id, txn, table_ptr});
 }
@@ -90,15 +96,17 @@ void DeleteTranslator::Consume(ConsumerContext &context,
 *
 * @return true on success, false otherwise.
 */
-bool DeleteTranslator::delete_wrapper(oid_t tile_group_id, oid_t tuple_id,
+bool DeleteTranslator::delete_wrapper(int64_t tile_group_id, int32_t tuple_id,
                                       concurrency::Transaction *txn,
                                       storage::DataTable *table) {
-  ItemPointer old_location(tile_group_id, tuple_id);
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::shared_ptr<storage::TileGroup> tile_group =
       table->GetTileGroup(tile_group_id);
+  oid_t realTileGroupID = tile_group->GetTileGroupId();
+  ItemPointer old_location(realTileGroupID, tuple_id);
+
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   bool is_owner = transaction_manager.IsOwner(txn, tile_group_header, tuple_id);
@@ -142,7 +150,7 @@ bool DeleteTranslator::delete_wrapper(oid_t tile_group_id, oid_t tuple_id,
         if (!is_owner) {
           // If the ownership is acquire inside this update executor, we release
           // it here
-          transaction_manager.YieldOwnership(txn, tile_group_id, tuple_id);
+          transaction_manager.YieldOwnership(txn, realTileGroupID, tuple_id);
         }
         transaction_manager.SetTransactionResult(txn, ResultType::FAILURE);
         return false;
@@ -162,8 +170,8 @@ bool DeleteTranslator::delete_wrapper(oid_t tile_group_id, oid_t tuple_id,
 
 const std::string &DeleteTranslator::_DeleteWrapper::GetFunctionName() {
   static const std::string deleteWrapperFnName =
-      "_ZN7peloton7codegen16DeleteTranslator14delete_wrapperEjjPNS_"
-      "11concurrency11TransactionEPNS_7storage9DataTableE";
+      "_ZN7peloton7codegen16DeleteTranslator14delete_wrapper"
+      "EliPNS_11concurrency11TransactionEPNS_7storage9DataTableE";
   return deleteWrapperFnName;
 }
 
@@ -176,12 +184,11 @@ llvm::Function *DeleteTranslator::_DeleteWrapper::GetFunction(
   if (llvm_fn != nullptr) {
     return llvm_fn;
   }
-  llvm::FunctionType *int32_type =
-      llvm::FunctionType::get(codegen.Int32Type(), false);
-  llvm::FunctionType *pointer_type =
-      llvm::FunctionType::get(codegen.CharPtrType(), false);
-  std::vector<llvm::Type *> fn_args{int32_type, int32_type, pointer_type,
-                                    pointer_type};
+
+  std::vector<llvm::Type *> fn_args{codegen.Int64Type(),
+                                    codegen.Int32Type(),
+                                    TransactionProxy::GetType(codegen)->getPointerTo(),
+                                    DataTableProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =
       llvm::FunctionType::get(codegen.BoolType(), fn_args, false);
   return codegen.RegisterFunction(fn_name, fn_type);
