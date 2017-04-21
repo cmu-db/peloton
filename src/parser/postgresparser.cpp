@@ -414,6 +414,7 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 
   if (!IsAggregateFunction(fun_name)) {
     // Normal functions (i.e. built-in functions or UDFs)
+    fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))->val.str;
     std::vector<expression::AbstractExpression*> children;
     for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
       auto expr_node = (Node*) cell->data.ptr_value;

@@ -875,7 +875,7 @@ TEST_F(PostgresParserTests, DataTypeTest) {
 }
 
 TEST_F(PostgresParserTests, FuncCallTest) {
-  std::string query = "SELECT add(1,a) FROM TEST WHERE FUN(b) > 2";
+  std::string query = "SELECT add(1,a), chr(99) FROM TEST WHERE FUN(b) > 2";
 
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
@@ -896,6 +896,15 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   auto tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(1);
   EXPECT_TRUE(tv_expr != nullptr);
   EXPECT_EQ("a", tv_expr->GetColumnName());
+
+  // Check chr(2)
+  fun_expr = (expression::FunctionExpression*) (select_stmt->select_list->at(1));
+  EXPECT_TRUE(fun_expr != nullptr);
+  EXPECT_EQ("chr", fun_expr->func_name_);
+  EXPECT_EQ(1, fun_expr->GetChildrenSize());
+  const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(99)));
 
   // Check FUN(b) > 2
   auto op_expr = (expression::OperatorExpression*)select_stmt->where_clause;
