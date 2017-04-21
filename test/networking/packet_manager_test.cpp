@@ -36,7 +36,6 @@ static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
     // peloton::wire::LibeventServer libeventserver;
     
     libeventserver.StartServer();
-    LOG_INFO("Server Closed\n");
     // Teardown
     // Todo: Peloton cannot shut down normally, will try to fix this soon
     // peloton::PelotonInit::Shutdown();
@@ -79,18 +78,19 @@ static void *SimpleQueryTest(void *) {
 
 TEST_F(PacketManagerTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized\n");
-  // pthread_t threads[NUM_THREADS];
+  LOG_INFO("Server initialized");
   peloton::wire::LibeventServer libeventserver;
   std::thread serverThread(LaunchServer, libeventserver);
-
-  sleep(5);
-
+  while (!libeventserver.is_started) {
+    sleep(1);
+  }
   SimpleQueryTest(NULL);
 
-  // pthread_kill(threads[0], SIGHUP);
   libeventserver.CloseServer();
   serverThread.join();
+  LOG_INFO("Thread has joined");
+  peloton::PelotonInit::Shutdown();
+  LOG_INFO("Peloton has shut down\n"); 
 }
 
 }  // End test namespace
