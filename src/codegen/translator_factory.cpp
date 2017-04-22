@@ -20,6 +20,7 @@
 #include "codegen/constant_translator.h"
 #include "codegen/delete/delete_translator.h"
 #include "codegen/insert/insert_tuples_translator.h"
+#include "codegen/insert/insert_scan_translator.h"
 #include "codegen/global_group_by_translator.h"
 #include "codegen/hash_group_by_translator.h"
 #include "codegen/hash_join_translator.h"
@@ -98,7 +99,15 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     }
     case PlanNodeType::INSERT: {
       auto &insert_plan = static_cast<const planner::InsertPlan &>(plan_node);
-      translator = new InsertTuplesTranslator(insert_plan, context, pipeline);
+
+      if (insert_plan.GetChildren().size() == 1) {
+        translator = new InsertScanTranslator(insert_plan, context, pipeline);
+      } else if (insert_plan.GetChildren().size() == 0) {
+        translator = new InsertTuplesTranslator(insert_plan, context, pipeline);
+      } else {
+        throw Exception("Wrong number of children");
+      }
+
       break;
     }
     default: {

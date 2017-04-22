@@ -22,7 +22,19 @@ namespace codegen {
 
 class Varlen {
  public:
-  // Get the length and the pointer to the variable length object
+  /**
+   * @brief Get the length and the pointer to the variable length object.
+   *
+   * SafeGetPtrAndLength(peloton::Varlen **varlen_ptr_ptr) {
+   *   peloton::Varlen *varlen_ptr = *varlen_ptr_ptr;
+   *
+   *   int32_t *len_ptr = &varlen_ptr->len;
+   *   int32_t len = *len_ptr;
+   *   char *data_ptr = &varlen->data;
+   *
+   *   return (len, data_ptr);
+   * }
+   */
   static void SafeGetPtrAndLength(CodeGen &codegen, llvm::Value *varlen_ptr_ptr,
                                   llvm::Value *&data_ptr, llvm::Value *&len) {
     // Load the Varlen** to get a Varlen*
@@ -40,7 +52,20 @@ class Varlen {
         codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr, 0, 1);
   }
 
-  // Get the length and the pointer to the variable length object
+  /**
+   * @brief Get the length and the pointer to the variable length object.
+   *
+   * GetPtrAndLength(peloton::Varlen **varlen_ptr_ptr) {
+   *   char *null_ptr = NULL;
+   *   bool is_null = varlen_ptr_ptr == null_pr;
+   *
+   *   if (is_null) {
+   *     return (0, NULL);
+   *   } else {
+   *     return SafeGetPtrAndLength(varlen_ptr_ptr);
+   *   }
+   * }
+   */
   static void GetPtrAndLength(CodeGen &codegen, llvm::Value *varlen_ptr_ptr,
                               llvm::Value *&data_ptr, llvm::Value *&len,
                               llvm::Value *&is_null) {

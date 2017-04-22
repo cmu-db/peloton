@@ -68,7 +68,12 @@ class InsertScanTranslator : public AbstractInsertTranslator {
   std::string GetName() const override { return "Insert"; }
 
  private:
+  std::unique_ptr<type::AbstractPool> pool_;
+  std::unique_ptr<storage::Tuple> tuple_;
+  char *tuple_data_;
 
+  mutable llvm::Value *tuple_ptr_;
+  mutable llvm::Value *tuple_data_ptr_;
 };
 
 }  // namespace codegen
