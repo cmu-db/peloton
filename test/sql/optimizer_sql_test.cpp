@@ -55,7 +55,10 @@ class OptimizerSQLTests : public PelotonTest {
   /*** Helper functions **/
   void CreateAndLoadTable() {
     // Create database
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
 
     // Create a table first
     TestingSQLUtil::ExecuteSQLQuery(
