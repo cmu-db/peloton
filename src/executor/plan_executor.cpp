@@ -60,12 +60,13 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
+  // Use const std::vector<type::Value> &params to make it more elegant for
+  // network
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+        BuildExecutorContext(params, txn));
+
   if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     LOG_TRACE("Building the executor tree");
-    // Use const std::vector<type::Value> &params to make it more elegant for
-    // network
-    std::unique_ptr<executor::ExecutorContext> executor_context(
-        BuildExecutorContext(params, txn));
 
     // Build the executor tree
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -142,7 +143,8 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     auto query = compiler.Compile(*plan, consumer);
 
     // Execute the query
-    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
+    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()),
+                   nullptr, executor_context.get());
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
