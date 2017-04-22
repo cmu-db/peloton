@@ -74,12 +74,14 @@ TEST_F(InsertTranslatorTest, InsertTuples) {
   ASSERT_EQ(num_tuples, 1);
 }
 
+/**
+ * @brief Insert all tuples in table2 into table1.
+ *
+ * This test uses the interpreted executor, just for comparison.
+ */
 TEST_F(InsertTranslatorTest, InsertScanExecutor) {
   auto table1 = &this->GetTestTable(this->TestTable1Id());
   auto table2 = &this->GetTestTable(this->TestTable2Id());
-
-//  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-//  (void)testing_pool;
 
   this->LoadTestTable(this->TestTable2Id(), 10);
 
@@ -125,12 +127,12 @@ TEST_F(InsertTranslatorTest, InsertScanExecutor) {
   LOG_DEBUG("Table 1 has %zu tuples", table1->GetTupleCount());
 }
 
+/**
+ * @brief Insert all tuples in table2 into table1.
+ */
 TEST_F(InsertTranslatorTest, InsertScanTranslator) {
   auto table1 = &this->GetTestTable(this->TestTable1Id());
   auto table2 = &this->GetTestTable(this->TestTable2Id());
-
-//  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-//  (void)testing_pool;
 
   this->LoadTestTable(this->TestTable2Id(), 10);
 

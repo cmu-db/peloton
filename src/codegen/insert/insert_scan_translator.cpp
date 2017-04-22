@@ -47,20 +47,11 @@ void InsertScanTranslator::Produce() const {
           codegen.Const32(table->GetOid())
       }
   );
-  (void)table_ptr;
 
-  catalog::Schema *schema = table->GetSchema();
-
-  LOG_DEBUG("schema = %p", schema);
-
-  llvm::Value *schema_ptr = codegen.Const64(reinterpret_cast<int64_t>(schema));
-  schema_ptr = codegen->CreateBitOrPointerCast(
-      schema_ptr, SchemaProxy::GetType(codegen)->getPointerTo());
-
-//  llvm::Value *schema_ptr = codegen.CallFunc(
-//      DataTableProxy::_GetSchema::GetFunction(codegen),
-//      { table_ptr }
-//  );
+  llvm::Value *schema_ptr = codegen.CallFunc(
+      DataTableProxy::_GetSchema::GetFunction(codegen),
+      { table_ptr }
+  );
 
   llvm::Value *tuple_ptr = codegen.CallFunc(
       InsertHelpersProxy::_CreateTuple::GetFunction(codegen),
@@ -163,6 +154,9 @@ void InsertScanTranslator::Consume(ConsumerContext &,
   );
 }
 
+/**
+ * @brief Just perform the per-row consume.
+ */
 void InsertScanTranslator::Consume(ConsumerContext &context,
                                    RowBatch &batch) const {
   OperatorTranslator::Consume(context, batch);
