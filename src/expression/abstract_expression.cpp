@@ -64,8 +64,7 @@ hash_t AbstractExpression::Hash() const {
 }
 
 void AbstractExpression::SetValueType(type::Type::TypeId type_id) {
-  if (return_value_type_ == type::Type::INVALID ||
-          return_value_type_ == type::Type::PARAMETER_OFFSET) {
+  if (return_value_type_ == type::Type::PARAMETER_OFFSET) {
     return_value_type_ = type_id;
   }
 }
