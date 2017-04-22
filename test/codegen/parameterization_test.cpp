@@ -53,60 +53,8 @@ class ParameterizationTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
-TEST_F(ParameterizationTest, ScanWithoutParam) {
-  //
-  // SELECT a, b, c FROM table;
-  //
-
-  // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3}};
-
-  // Do binding
-  planner::BindingContext context;
-  scan.PerformBinding(context);
-
-  // Printing consumer
-  codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
-
-  // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
-
-  // Check that we got all the results
-  const auto &results = buffer.GetOutputTuples();
-  EXPECT_EQ(NumRowsInTestTable(), results.size());
-}
-
-TEST_F(ParameterizationTest, ScanWithConstIntParam) {
-  //
-  // SELECT a, b, c FROM table where a >= 20;
-  //
-
-  // Setup the predicate
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
-  auto* a_gt_20 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
-
-  // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_20, {0, 1, 2}};
-
-  // Do binding
-  planner::BindingContext context;
-  scan.PerformBinding(context);
-
-  // We collect the results of the query into an in-memory buffer
-  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-
-  // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
-
-  // Check output results
-  const auto &results = buffer.GetOutputTuples();
-  EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
-}
-
-TEST_F(ParameterizationTest, ScanWithConstVarCharParam) {
+// Tests whether parameterization works for varchar type
+TEST_F(ParameterizationTest, TestConstVarCharParam) {
   //
   // SELECT d FROM table where d != "";
   //
@@ -137,7 +85,9 @@ TEST_F(ParameterizationTest, ScanWithConstVarCharParam) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
-TEST_F(ParameterizationTest, ScanWithMultiConstParams) {
+// Tests whether parameterization works for conjuction with const value exprs
+// (varchar included)
+TEST_F(ParameterizationTest, TestConjunctionWithConstParams) {
   //
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   //
@@ -184,7 +134,8 @@ TEST_F(ParameterizationTest, ScanWithMultiConstParams) {
                                 type::ValueFactory::GetIntegerValue(21)));
 }
 
-TEST_F(ParameterizationTest, ScanWithMultiNonConstParams) {
+// Tests whether parameterization works for conjuction with param value exprs
+TEST_F(ParameterizationTest, TestConjunctionWithNonConstParams) {
   //
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   //

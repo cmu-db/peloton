@@ -35,11 +35,6 @@ class ArithmeticTranslator : public ExpressionTranslator {
   // Produce the value that is the result of codegening the expression
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
-  codegen::Value DeriveTypeValue(CodeGen &codegen, RowBatch::Row &row) const;
-
- private:
-  uint32_t offset_;
-  CompilationContext &ctx_;
 };
 
 }  // namespace codegen

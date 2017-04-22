@@ -27,8 +27,7 @@ class Parameter {
  public:
   enum class ParamType {
     Const = 0,
-    Param = 1,
-    Tuple = 2
+    Param = 1
   };
 
   static Parameter GetConstValParamInstance(type::Value value) {
@@ -40,13 +39,6 @@ class Parameter {
                      type::ValueFactory::GetBooleanValue(false),
                      param_idx};
   }
-
-  static Parameter GetTupleValParamInstance() {
-    return Parameter{ParamType::Tuple,
-                     type::ValueFactory::GetBooleanValue(false),
-                     0};
-  }
-
 
   type::Value GetValue() {
     return value_;
@@ -65,13 +57,14 @@ class Parameter {
             type::Value value, int param_idx)
           : type_(type),
             value_(value), param_idx_(param_idx) {}
+
  private:
   ParamType type_;
 
-  // Field for CVE, trivial for TVE/PVE
+  // Field for CVE, trivial for PVE
   type::Value value_;
 
-  // Field for PVE, trivial for CVE/TVE
+  // Field for PVE, trivial for CVE
   int param_idx_;
 };
 

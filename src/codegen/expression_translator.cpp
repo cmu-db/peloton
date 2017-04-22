@@ -20,11 +20,19 @@ namespace codegen {
 
 ExpressionTranslator::ExpressionTranslator(
     const expression::AbstractExpression &expression, CompilationContext &ctx)
-    : expression_(expression) {
+    : context_(ctx), expression_(expression) {
   for (uint32_t i = 0; i < expression_.GetChildrenSize(); i++) {
-    ctx.Prepare(*expression_.GetChild(i));
+    context_.Prepare(*expression_.GetChild(i));
   }
 }
 
+CodeGen &ExpressionTranslator::GetCodeGen() const {
+  return context_.GetCodeGen();
+}
+
+llvm::Value *ExpressionTranslator::GetValuesPtr() const {
+    const auto ret = context_.GetValuesPtr();
+    return ret;
+}
 }  // namespace codegen
 }  // namespace peloton

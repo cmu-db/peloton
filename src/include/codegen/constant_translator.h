@@ -14,7 +14,6 @@
 
 #include "codegen/expression_translator.h"
 #include "expression/constant_value_expression.h"
-#include "codegen/compilation_context.h"
 
 namespace peloton {
 
@@ -30,7 +29,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class ConstantTranslator : public ExpressionTranslator {
  public:
-  ConstantTranslator(const expression::ConstantValueExpression &exp,
+  ConstantTranslator(const expression::AbstractExpression &exp,
                      CompilationContext &ctx);
 
   // Produce the value that is the result of codegen-ing the expression
@@ -38,9 +37,7 @@ class ConstantTranslator : public ExpressionTranslator {
                              RowBatch::Row &row) const override;
 
  private:
-  type::Type::TypeId typeId_;
   uint32_t offset_;
-  CompilationContext &ctx_;
 };
 
 }  // namespace codegen
