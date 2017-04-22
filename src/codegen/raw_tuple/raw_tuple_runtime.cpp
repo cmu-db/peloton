@@ -25,13 +25,13 @@ void RawTupleRuntime::SetVarLen(uint32_t len, char *data,
     char data[];
   };
 
-//  varlen_t *actual = reinterpret_cast<varlen_t *>(
-//      pool->Allocate(len + sizeof(uint32_t))
-//  );
-
   varlen_t *actual = reinterpret_cast<varlen_t *>(
-      malloc(len + sizeof(uint32_t))
+      pool->Allocate(len + sizeof(uint32_t))
   );
+
+//  varlen_t *actual = reinterpret_cast<varlen_t *>(
+//      malloc(len + sizeof(uint32_t))
+//  );
 
   actual->len = len;
   PL_MEMCPY(actual->data, data, len);

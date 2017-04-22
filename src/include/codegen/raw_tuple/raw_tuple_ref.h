@@ -30,11 +30,14 @@ namespace codegen {
  */
 class RawTupleRef {
  public:
-  RawTupleRef(CodeGen &codegen, RowBatch::Row &row,
+  RawTupleRef(CodeGen &codegen,
+              RowBatch::Row &row,
               const catalog::Schema *schema,
               const std::vector<const planner::AttributeInfo *> &ais,
-              llvm::Value *data)
-  : codegen_(codegen), row_(row), schema_(schema), ais_(ais), data_(data) { }
+              llvm::Value *data,
+              llvm::Value *pool_ptr)
+  : codegen_(codegen), row_(row), schema_(schema), ais_(ais),
+    data_(data), pool_ptr_(pool_ptr) { }
 
   /**
    * @brief Writes out an attribute into the buffer.
@@ -109,10 +112,10 @@ class RawTupleRef {
         this->codegen_.CallFunc(
             RawTupleRuntimeProxy::_SetVarLen::GetFunction(this->codegen_),
             {
-                v.GetLength(),
-                v.GetValue(),
-                this->codegen_->CreateBitCast(ptr, codegen_.CharPtrType()),
-                codegen_.Null(codegen_.CharPtrType()),
+                v.GetLength(),                                              // len
+                v.GetValue(),                                               // value
+                this->codegen_->CreateBitCast(ptr, codegen_.CharPtrType()), // buf
+                this->pool_ptr_                                             // pool
             }
         );
         break;
@@ -164,6 +167,7 @@ class RawTupleRef {
   const catalog::Schema *schema_;
   const std::vector<const planner::AttributeInfo *> &ais_;
   llvm::Value *data_;
+  llvm::Value *pool_ptr_;
 };
 
 }  // namespace codegen

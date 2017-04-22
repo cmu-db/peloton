@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/pool/pool_runtime_proxy.h"
 #include "codegen/transaction_proxy.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/insert/insert_helpers_proxy.h"
@@ -42,9 +43,10 @@ llvm::Function *RawTupleRuntimeProxy::_SetVarLen::GetFunction(
           codegen.Int32Type(),                // len
           codegen.Int8Type()->getPointerTo(), // data
           codegen.Int8Type()->getPointerTo(), // buf
-          codegen.Int8Type()->getPointerTo(), // pool
+          PoolRuntimeProxy::GetType(codegen)->getPointerTo(), // pool
       },
-      false);
+      false
+  );
 
   return codegen.RegisterFunction(fn_name, fn_type);
 

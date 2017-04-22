@@ -119,6 +119,8 @@ TEST_F(InsertTranslatorTest, InsertScanExecutor) {
   EXPECT_TRUE(insert_executor->Init());
   EXPECT_TRUE(insert_executor->Execute());
 
+  txn_manager.CommitTransaction(txn);
+
   LOG_DEBUG("Table 2 has %zu tuples", table2->GetTupleCount());
   LOG_DEBUG("Table 1 has %zu tuples", table1->GetTupleCount());
 }
