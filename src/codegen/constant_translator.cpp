@@ -12,30 +12,43 @@
 
 #include "codegen/constant_translator.h"
 
-#include "expression/constant_value_expression.h"
 #include "type/value_peeker.h"
 #include "codegen/value_peeker_proxy.h"
 #include "codegen/value_proxy.h"
-#include "codegen/parameter.h"
+#include "expression/parameter_value_expression.h"
 
 namespace peloton {
 namespace codegen {
 
 // Constructor
 ConstantTranslator::ConstantTranslator(
-    const expression::ConstantValueExpression &exp, CompilationContext &ctx)
-    : ExpressionTranslator(exp, ctx), ctx_(ctx) {
-  const type::Value &constant =
-    GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-  typeId_ = constant.GetTypeId();
-  offset_ = ctx.StoreParam(Parameter::GetConstValParamInstance(constant));
+    const expression::AbstractExpression &exp, CompilationContext &ctx)
+    : ExpressionTranslator(exp, ctx) {
+  switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_CONSTANT: {
+      const type::Value &constant =
+            GetExpressionAs<expression::ConstantValueExpression>().GetValue();
+      offset_ = ctx.StoreParam(Parameter::GetConstValParamInstance(constant));
+      break;
+    }
+    case ExpressionType::VALUE_PARAMETER: {
+      int param_idx =
+            GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
+      offset_ = ctx.StoreParam(Parameter::GetParamValParamInstance(param_idx));
+      break;
+    }
+    default: {
+      throw Exception{"Illegal instantiation for constant translator. Expression type: " +
+                      ExpressionTypeToString(exp.GetExpressionType())};
+    }
+  }
 }
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
 codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
                                                RowBatch::Row &) const {
   std::vector<llvm::Value *> args =
-          {ctx_.GetValuesPtr(), codegen.Const64(offset_)};
+          {GetValuesPtr(), codegen.Const64(offset_)};
 
   llvm::Value *value = codegen.CallFunc(
           ValueProxy::_GetValue::GetFunction(codegen),
@@ -44,7 +57,11 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
   // Convert the value into an LLVM compile-time constant
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
-  switch (typeId_) {
+  auto type_id = GetValueType();
+  switch (type_id) {
+    case type::Type::TypeId::PARAMETER_OFFSET: {
+      break;
+    }
     case type::Type::TypeId::TINYINT: {
       val = codegen.CallFunc(
               ValuePeekerProxy::_PeekTinyInt::GetFunction(codegen),
@@ -98,10 +115,10 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
     }
     default: {
       throw Exception{"Unknown constant value type " +
-                      TypeIdToString(typeId_)};
+                      TypeIdToString(type_id)};
     }
   }
-  return codegen::Value{typeId_, val, len};
+  return codegen::Value{type_id, val, len};
 }
 
 }  // namespace codegen

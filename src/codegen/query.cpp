@@ -153,7 +153,6 @@ void Query::GetParams(type::Value *values,
   for (uint32_t i = 0; i < params_.size(); i ++) {
     switch (params_[i].GetType()) {
       case Parameter::ParamType::Const:
-      case Parameter::ParamType::Tuple:
         values[i] = params_[i].GetValue();
         break;
       case Parameter::ParamType::Param:

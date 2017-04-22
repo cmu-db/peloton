@@ -15,6 +15,8 @@
 #include "codegen/codegen.h"
 #include "codegen/row_batch.h"
 #include "codegen/value.h"
+#include "expression/abstract_expression.h"
+#include "codegen/compilation_context.h"
 
 namespace peloton {
 namespace codegen {
@@ -45,7 +47,21 @@ class ExpressionTranslator {
     return static_cast<const T &>(expression_);
   }
 
+  type::Type::TypeId GetValueType() const { return expression_.GetValueType(); }
+
+ protected:
+  // Return the compilation context
+  CompilationContext &GetCompilationContext() const { return context_; }
+
+  // Return the code generator
+  CodeGen &GetCodeGen() const;
+
+  llvm::Value *GetValuesPtr() const;
+
  private:
+  // The compilation state context
+  CompilationContext &context_;
+
   // The expression
   const expression::AbstractExpression &expression_;
 };

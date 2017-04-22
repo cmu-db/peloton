@@ -18,7 +18,6 @@
 #include "codegen/comparison_translator.h"
 #include "codegen/conjunction_translator.h"
 #include "codegen/constant_translator.h"
-#include "codegen/parameter_translator.h"
 #include "codegen/delete/delete_translator.h"
 #include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/global_group_by_translator.h"
@@ -120,7 +119,7 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
   switch (exp.GetExpressionType()) {
     case ExpressionType::VALUE_PARAMETER:
     case ExpressionType::VALUE_CONSTANT: {
-      translator = new ParameterTranslator(exp, context);
+      translator = new ConstantTranslator(exp, context);
       break;
     }
     case ExpressionType::VALUE_TUPLE: {

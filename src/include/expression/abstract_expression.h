@@ -62,6 +62,9 @@ class AbstractExpression : public Printable {
    * substituted with a parameter.
    */
   virtual bool HasParameter() const {
+    if (this->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
+      return true;
+    }
     for (auto &child : children_) {
       if (child->HasParameter()) {
         return true;
@@ -101,6 +104,8 @@ class AbstractExpression : public Printable {
       children_.resize(index + 1);
     }
     children_[index].reset(expr);
+
+    SetValueType();
   }
 
   /** accessors */
@@ -184,6 +189,10 @@ class AbstractExpression : public Printable {
     }
   }
 
+ private:
+  void SetValueType(type::Type::TypeId type_id);
+  void SetValueType();
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type,
@@ -199,6 +208,8 @@ class AbstractExpression : public Printable {
     // Sometimes there's no right child. E.g.: OperatorUnaryMinusExpression.
     if (right != nullptr)
       children_.push_back(std::unique_ptr<AbstractExpression>(right));
+
+    SetValueType();
   }
   AbstractExpression(const AbstractExpression &other)
       : ival_(other.ival_),
@@ -210,6 +221,8 @@ class AbstractExpression : public Printable {
     for (auto &child : other.children_) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
+
+    SetValueType();
   }
 
   ExpressionType exp_type_ = ExpressionType::INVALID;

@@ -35,12 +35,6 @@ class ComparisonTranslator : public ExpressionTranslator {
   // Produce the result of performing the comparison of left and right values
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
-
-  codegen::Value DoPrimitiveComp(CodeGen &codegen,
-                                 RowBatch::Row &row) const;
-
-  codegen::Value DoTypeValueComp(CodeGen &codegen,
-                                 RowBatch::Row &row) const;
 };
 
 }  // namespace codegen

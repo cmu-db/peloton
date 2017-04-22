@@ -63,5 +63,80 @@ hash_t AbstractExpression::Hash() const {
   return hash;
 }
 
+void AbstractExpression::SetValueType(type::Type::TypeId type_id) {
+  if (return_value_type_ == type::Type::INVALID ||
+          return_value_type_ == type::Type::PARAMETER_OFFSET) {
+    return_value_type_ = type_id;
+  }
+}
+
+void AbstractExpression::SetValueType() {
+  if (!HasParameter()) {
+    return;
+  }
+  switch (this->GetExpressionType()) {
+    case ExpressionType::VALUE_PARAMETER:
+    case ExpressionType::VALUE_CONSTANT:
+    case ExpressionType::VALUE_TUPLE: {
+      break;
+    }
+    case ExpressionType::COMPARE_EQUAL:
+    case ExpressionType::COMPARE_NOTEQUAL:
+    case ExpressionType::COMPARE_LESSTHAN:
+    case ExpressionType::COMPARE_GREATERTHAN:
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+      return_value_type_ = type::Type::BOOLEAN;
+      if (children_.size() == 2) {
+        auto type_left = children_[0].get()->GetValueType();
+        auto type_right = children_[1].get()->GetValueType();
+        children_[0].get()->SetValueType(type_right);
+        children_[1].get()->SetValueType(type_left);
+      }
+      break;
+    }
+    case ExpressionType::CONJUNCTION_AND:
+    case ExpressionType::CONJUNCTION_OR: {
+      return_value_type_ = type::Type::BOOLEAN;
+      if (children_.size() == 2) {
+        children_[0].get()->SetValueType(type::Type::BOOLEAN);
+        children_[1].get()->SetValueType(type::Type::BOOLEAN);
+      }
+      break;
+    }
+    case ExpressionType::OPERATOR_PLUS:
+    case ExpressionType::OPERATOR_MINUS:
+    case ExpressionType::OPERATOR_MULTIPLY:
+    case ExpressionType::OPERATOR_DIVIDE:
+    case ExpressionType::OPERATOR_MOD: {
+      if (children_.size() == 2) {
+        auto type_left = children_[0].get()->GetValueType();
+        auto type_right = children_[1].get()->GetValueType();
+        children_[0].get()->SetValueType(type_right);
+        children_[1].get()->SetValueType(type_left);
+        return_value_type_ = children_[0].get()->GetValueType();
+      }
+      break;
+    }
+    case ExpressionType::OPERATOR_UNARY_MINUS: {
+      if (return_value_type_ != type::Type::INVALID && children_.size() == 1) {
+        children_[0].get()->SetValueType(return_value_type_);
+      }
+      break;
+    }
+        /*
+        case ExpressionType::OPERATOR_CASE_EXPR: {
+          // TODO: Uncomment me when we have case
+          auto &case_exp = static_cast<const expression::CaseExpression &>(exp);
+          translator = new CaseTranslator(case_exp, context);
+          break;
+        }
+        */
+    default: {
+      throw Exception{"Unexpected expression type: " +
+                      ExpressionTypeToString(GetExpressionType())};
+    }
+  }
+}
 }  // namespace expression
 }  // namespace peloton
