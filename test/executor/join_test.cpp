@@ -79,7 +79,7 @@ std::vector<JoinType> join_types = {JoinType::INNER, JoinType::LEFT,
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                      oid_t join_test_type);
-void ExecuteNestedLoopJoinTest(JoinType join_type);
+void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan = false);
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
                    concurrency::Transaction *current_txn);
@@ -211,12 +211,14 @@ TEST_F(JoinTests, SpeedTest) {
 
   ExecuteJoinTest(PlanNodeType::MERGEJOIN, JoinType::OUTER, SPEED_TEST);
 
-  ExecuteNestedLoopJoinTest(JoinType::OUTER);
+  ExecuteNestedLoopJoinTest(JoinType::OUTER, true);
+  ExecuteNestedLoopJoinTest(JoinType::OUTER, false);
 }
 
 TEST_F(JoinTests, BasicNestedLoopTest) {
   LOG_TRACE("PlanNodeType::NESTLOOP");
-  ExecuteNestedLoopJoinTest(JoinType::INNER);
+  ExecuteNestedLoopJoinTest(JoinType::INNER, true);
+  ExecuteNestedLoopJoinTest(JoinType::INNER, false);
 }
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
@@ -263,7 +265,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   }
 }
 
-void ExecuteNestedLoopJoinTest(JoinType join_type) {
+void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
   //===--------------------------------------------------------------------===//
   // Create Table
   //===--------------------------------------------------------------------===//
@@ -318,20 +320,33 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
 
-  // Create index scan desc
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
-
   expression::AbstractExpression *predicate_scan = nullptr;
   std::vector<oid_t> column_ids({0, 1, 3});  // COL_A, B, D
 
-  // Create plan node.
-  planner::IndexScanPlan left_table_node(left_table.get(), predicate_scan,
-                                         column_ids, index_scan_desc);
+  executor::AbstractExecutor* left_table_scan_executor;
+  planner::AbstractPlan* left_table_node;
+  if (IndexScan) {
+    LOG_INFO("Construct Left Index Scan Node");
+    // Create index scan desc
+    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+        index, key_column_ids, expr_types, values, runtime_keys);
 
-  // executor
-  executor::IndexScanExecutor left_table_scan_executor(&left_table_node,
-                                                       context.get());
+    // Create plan node.
+    left_table_node = new planner::IndexScanPlan(left_table.get(), predicate_scan,
+                                           column_ids, index_scan_desc);
+
+    // executor
+    left_table_scan_executor =
+        new executor::IndexScanExecutor(left_table_node, context.get());
+  }
+  else {
+    LOG_INFO("Construct Left Seq Scan Node");
+    // Create sequential scan plan node
+    left_table_node = new planner::SeqScanPlan(left_table.get(), predicate_scan, column_ids);
+
+    // Executor
+    left_table_scan_executor = new executor::SeqScanExecutor(left_table_node, context.get());
+  }
 
   // Right ATTR 0 =
   auto index_right = right_table->GetIndex(0);
@@ -345,22 +360,38 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
   // values_right.push_back(type::ValueFactory::GetIntegerValue(100).Copy());
   values_right.push_back(type::ValueFactory::GetParameterOffsetValue(0).Copy());
 
-  // Create index scan desc
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
-      index_right, key_column_ids_right, expr_types_right, values_right,
-      runtime_keys_right);
 
   expression::AbstractExpression *predicate_scan_right = nullptr;
   std::vector<oid_t> column_ids_right({0, 1});
 
-  // Create plan node.
-  planner::IndexScanPlan right_table_node(
-      right_table.get(), predicate_scan_right, column_ids_right,
-      index_scan_desc_right);
+  executor::AbstractExecutor* right_table_scan_executor;
+  planner::AbstractPlan* right_table_node;
 
-  // executor
-  executor::IndexScanExecutor right_table_scan_executor(&right_table_node,
-                                                        context.get());
+  if (IndexScan) {
+    LOG_INFO("Construct Right Index Scan Node");
+    // Create index scan desc
+    planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
+        index_right, key_column_ids_right, expr_types_right, values_right,
+        runtime_keys_right);
+
+    // Create plan node.
+    right_table_node = new planner::IndexScanPlan(
+        right_table.get(), predicate_scan_right, column_ids_right,
+        index_scan_desc_right);
+
+    // executor
+    right_table_scan_executor =
+        new executor::IndexScanExecutor(right_table_node, context.get());
+  }
+  else {
+    LOG_INFO("Construct Right Seq Scan Node");
+    // Create sequential scan plan node
+    right_table_node =
+        new planner::SeqScanPlan(right_table.get(), predicate_scan_right, column_ids_right);
+
+    // Executor
+    right_table_scan_executor = new executor::SeqScanExecutor(right_table_node, context.get());
+  }
 
   //===--------------------------------------------------------------------===//
   // Setup join plan nodes and executors and run them
@@ -398,8 +429,8 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
       &nested_loop_join_node, context.get());
 
   // Construct the executor tree
-  nested_loop_join_executor.AddChild(&left_table_scan_executor);
-  nested_loop_join_executor.AddChild(&right_table_scan_executor);
+  nested_loop_join_executor.AddChild(left_table_scan_executor);
+  nested_loop_join_executor.AddChild(right_table_scan_executor);
 
   // Run the nested loop join executor
   EXPECT_TRUE(nested_loop_join_executor.Init());
@@ -420,6 +451,11 @@ void ExecuteNestedLoopJoinTest(JoinType join_type) {
   }
 
   txn_manager.CommitTransaction(txn);
+
+  delete left_table_node;
+  delete right_table_node;
+  delete left_table_scan_executor;
+  delete right_table_scan_executor;
 }
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
