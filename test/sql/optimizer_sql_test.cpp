@@ -315,6 +315,10 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   // Test combining aggregation function with GroupBy
   TestUtil("SELECT MIN(b + c) * SUM(a - 2) FROM test GROUP BY b,c",
            {"1110", "477", "33", "1065"}, false);
+  TestUtil("SELECT MIN(c) + b FROM test GROUP BY b",
+           {"355", "11", "477", "555"}, false);
+  TestUtil("SELECT MIN(b + c) * SUM(a - 2) + b * c FROM test GROUP BY b,c",
+           {"1110", "15129", "33", "8391"}, false);
 
   // Test ORDER BY columns not shown in select list
   TestUtil("SELECT a FROM test GROUP BY a,b ORDER BY a + b",

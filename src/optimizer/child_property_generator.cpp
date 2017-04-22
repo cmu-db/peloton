@@ -254,16 +254,18 @@ void ChildPropertyGenerator::AggregateHelper(const BaseOperatorNode *op) {
         for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(child_col, expr.get());
-          // Expressions like sum(a) + max(b) needs another projection
+          // Expressions like sum(a) + max(b) + c needs another projection
           // on top of aggregation. In this case, aggregation only needs to
-          // provide sum(a) and max(b)
+          // provide sum(a), max(b) and c
           vector<shared_ptr<expression::AggregateExpression>> aggr_exprs;
-          expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr.get());
+          vector<shared_ptr<expression::TupleValueExpression>> tv_exprs;
+          expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, tv_exprs, expr.get());
           if (!expression::ExpressionUtil::IsAggregateExpression(expr.get()) &&
               aggr_exprs.size() > 0) {
-            for (auto &agg_expr : aggr_exprs) {
+            for (auto &agg_expr : aggr_exprs)
               provided_col.insert(agg_expr);
-            }
+            for (auto &tv_expr : tv_exprs)
+              provided_col.insert(tv_expr);
           } else {
             provided_col.insert(expr);
           }
