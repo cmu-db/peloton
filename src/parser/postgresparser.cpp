@@ -428,9 +428,9 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
         children.push_back(FuncCallTransform(reinterpret_cast<FuncCall*>(expr_node)));
       }
       else {
-        std::ostringstream oss;
-        oss<<"Type "<<expr_node->type<<"is not supported in function call";
-        throw NotImplementedException(oss.str());
+        throw NotImplementedException(
+            StringUtil::Format("Type %d is not supported in function call.",
+                               expr_node->type));
       }
     }
     result = new expression::FunctionExpression(
