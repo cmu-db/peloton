@@ -32,14 +32,19 @@ class InsertHelpers {
   /**
    * @brief Perform insertion once we already have a materialized raw tuple.
    */
-  static bool InsertRawTuple(concurrency::TransactionManager *txn_mgr,
-                             concurrency::Transaction *txn,
+  static bool InsertRawTuple(concurrency::Transaction *txn,
                              storage::DataTable *table,
                              const storage::Tuple *tuple);
 
   static void InsertValue(concurrency::Transaction *txn,
                           storage::DataTable *table,
                           type::Value *value);
+
+  static storage::Tuple *CreateTuple(catalog::Schema *schema);
+
+  static char *GetTupleData(storage::Tuple *tuple);
+
+  static void DeleteTuple(storage::Tuple *tuple);
 };
 
 }  // namespace codegen

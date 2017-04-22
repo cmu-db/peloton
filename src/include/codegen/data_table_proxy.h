@@ -37,6 +37,18 @@ class DataTableProxy {
     // DataTable.GetTileGroupCount()
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
+
+  //===--------------------------------------------------------------------===//
+  // The proxy for DataTable::GetSchema()
+  //===--------------------------------------------------------------------===//
+  struct _GetSchema {
+    // Return the symbol for the DataTable.GetSchema() function
+    static const std::string &GetFunctionName();
+
+    // Return the LLVM-typed function definition for
+    // DataTable.GetSchema()
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
 };
 
 }  // namespace codegen

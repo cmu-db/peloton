@@ -31,8 +31,10 @@ namespace codegen {
 class RawTupleRef {
  public:
   RawTupleRef(CodeGen &codegen, RowBatch::Row &row,
-              planner::BindingContext &binding_context) {
-  }
+              const catalog::Schema *schema,
+              const std::vector<const planner::AttributeInfo *> &ais,
+              llvm::Value *data)
+  : codegen_(codegen), row_(row), schema_(schema), ais_(ais), data_(data) { }
 
   /**
    * @brief Writes out an attribute into the buffer.
@@ -70,9 +72,9 @@ class RawTupleRef {
   void Materialize(oid_t column_id) {
     size_t offset = this->schema_->GetOffset(column_id);
 
-    const planner::AttributeInfo *attrib_info = this->binding_context_.Find(column_id);
+    const planner::AttributeInfo *attrib_info = this->ais_.at(column_id);
 
-    codegen::Value v = this->row_.DeriveValue(codegen, attrib_info);
+    codegen::Value v = this->row_.DeriveValue(this->codegen_, attrib_info);
 
     llvm::Value *ptr = this->codegen_->CreateConstInBoundsGEP1_32(
         this->codegen_.ByteType(),
@@ -83,6 +85,8 @@ class RawTupleRef {
     llvm::Type *val_type;
     llvm::Type *len_type;
     Type::GetTypeForMaterialization(this->codegen_, v.GetType(), val_type, len_type);
+
+    LOG_DEBUG("CGen Materialization for %d", column_id);
 
     ptr = this->codegen_->CreateBitCast(ptr, val_type->getPointerTo());
 
@@ -101,60 +105,64 @@ class RawTupleRef {
         break;
       }
       case type::Type::TypeId::VARCHAR: {
+        PL_ASSERT(v.GetLength() != nullptr);
+        this->codegen_.CallFunc(
+            RawTupleRuntimeProxy::_SetVarLen::GetFunction(this->codegen_),
+            {
+                v.GetLength(),
+                v.GetValue(),
+                this->codegen_->CreateBitCast(ptr, codegen_.CharPtrType()),
+                codegen_.Null(codegen_.CharPtrType()),
+            }
+        );
         break;
       }
       default: {
         std::string msg =
             StringUtil::Format("Can't serialize value type '%s' at position %u",
-                               TypeIdToString(val.GetType()).c_str(), i);
+                               TypeIdToString(v.GetType()).c_str(), column_id);
         throw Exception{msg};
       }
     }
   }
 
   // MaterializeTinyInt(char *ptr, int8_t val)
-  void MaterializeTinyInt(llvm::Value *ptr, llvm::Value *val) {
-
-  }
+//  void MaterializeTinyInt(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeSmallInt(char *ptr, int16_t val)
-  void MaterializeSmallInt(llvm::Value *ptr, llvm::Value *val) {
-
-  }
+//  void MaterializeSmallInt(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeInteger(char *ptr, int32_t val)
-  void MaterializeInteger(llvm::Value *ptr, llvm::Value *val) {
-  }
+//  void MaterializeInteger(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeBigInt(char *ptr, int64_t val)
-  void MaterializeBigInt(llvm::Value *ptr, llvm::Value *val) {
-
-  }
+//  void MaterializeBigInt(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeTimestamp(char *ptr, int64_t val)
-  void MaterializeTimestamp(llvm::Value *ptr, llvm::Value *val) {
-
-  }
+//  void MaterializeTimestamp(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeDecimal(char *ptr, double val)
-  void MaterializeDecimal(llvm::Value *ptr, llvm::Value *val) {
-
-  }
+//  void MaterializeDecimal(llvm::Value *ptr, llvm::Value *val) {
+//  }
 
   // MaterializeVarchar(char *ptr, char *str, uint32_t len)
-  void MaterializeVarchar(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
-
-  }
+//  void MaterializeVarchar(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
+//  }
 
   // MaterializeVarbinary(char *ptr, char *str, uint32_t len)
-  void MaterializeVarbinary(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
-
-  }
+//  void MaterializeVarbinary(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
+//  }
 
  private:
   CodeGen &codegen_;
   RowBatch::Row &row_;
-  planner::BindingContext &binding_context_;
+  const catalog::Schema *schema_;
+  const std::vector<const planner::AttributeInfo *> &ais_;
   llvm::Value *data_;
 };
 

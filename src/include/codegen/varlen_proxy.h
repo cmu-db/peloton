@@ -18,6 +18,14 @@
 namespace peloton {
 namespace codegen {
 
+/**
+ * @brief Define a struct in LLVM that looks like this:
+ *
+ * struct peloton::Varlen {
+ *   int32_t len;
+ *   byte    data;
+ * };
+ */
 class VarlenProxy {
  public:
   // Get the LLVM type of a Peloton varchar data field
