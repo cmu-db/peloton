@@ -42,6 +42,23 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   uint64_t parameter_size = codegen.SizeOf(runtime_state_type);
   PL_ASSERT(parameter_size % 8 == 0);
 
+  for (uint32_t i = 0; i < params_.size(); i ++) {
+    type::Value value = params_[i].GetValue();
+    switch (params_[i].GetType()) {
+      case Parameter::ParamType::Const:
+        break;
+      case Parameter::ParamType::Param:
+        PL_ASSERT(exec_context != nullptr);
+        value = exec_context->GetParams().at(
+                params_[i].GetParamIdx());
+        StoreParam(Parameter::GetConstValParamInstance(value), i);
+        break;
+      default: {
+        throw Exception{"Unknown Param Type"};
+      }
+    }
+  }
+
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
   std::unique_ptr<int8_t[]> int_8_params{new int8_t[int_8_type_cnt_]};
@@ -94,58 +111,48 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   uint32_t varchar_cnt = 0;
   for (uint32_t i = 0; i < params_.size(); i ++) {
     type::Value value = params_[i].GetValue();
-    switch (params_[i].GetType()) {
-      case Parameter::ParamType::Const:
-        break;
-      case Parameter::ParamType::Param:
-        PL_ASSERT(exec_context != nullptr);
-        value = exec_context->GetParams().at(
-                params_[i].GetParamIdx());
-        break;
-      default: {
-        throw Exception{"Unknown Param Type"};
-      }
-    }
     switch (value.GetTypeId()) {
       case type::Type::TypeId::TINYINT: {
-          int_8_params[int_8_cnt ++] = type::ValuePeeker::PeekTinyInt(value);
-          break;
+        int_8_params.get()[int_8_cnt ++] = type::ValuePeeker::PeekTinyInt(value);
+        break;
       }
       case type::Type::TypeId::SMALLINT: {
-          int_16_params[int_16_cnt ++] = type::ValuePeeker::PeekSmallInt(value);
-          break;
+        int_16_params.get()[int_16_cnt ++] = type::ValuePeeker::PeekSmallInt(value);
+        break;
       }
       case type::Type::TypeId::INTEGER: {
-          int_32_params[int_32_cnt ++] = type::ValuePeeker::PeekInteger(value);
-          break;
+        int_32_params.get()[int_32_cnt ++] = type::ValuePeeker::PeekInteger(value);
+        break;
       }
       case type::Type::TypeId::BIGINT: {
-          int_64_params[int_64_cnt ++] = type::ValuePeeker::PeekBigInt(value);
-          break;
+        int_64_params.get()[int_64_cnt ++] = type::ValuePeeker::PeekBigInt(value);
+        break;
       }
       case type::Type::TypeId::DECIMAL: {
-          double_params[double_cnt ++] = type::ValuePeeker::PeekDouble(value);
-          break;
+        double_params.get()[double_cnt ++] = type::ValuePeeker::PeekDouble(value);
+        break;
       }
       case type::Type::TypeId::DATE: {
-          int_32_params[int_32_cnt ++] = type::ValuePeeker::PeekDate(value);
-          break;
+        int_32_params.get()[int_32_cnt ++] = type::ValuePeeker::PeekDate(value);
+        break;
       }
       case type::Type::TypeId::TIMESTAMP: {
-          int_64_params[int_64_cnt ++] = type::ValuePeeker::PeekTimestamp(value);
-          break;
+        int_64_params.get()[int_64_cnt ++] = type::ValuePeeker::PeekTimestamp(value);
+        break;
       }
       case type::Type::TypeId::VARCHAR: {
-          std::string str = type::ValuePeeker::PeekVarchar(value);
-          char c_str[str.length() + 1];
-          strcpy(c_str, str.c_str());
-          char_ptr_params[varchar_cnt] = c_str;
-          char_len_params[varchar_cnt ++] = str.length();
-          break;
+        std::string str = type::ValuePeeker::PeekVarchar(value);
+        char c_str[value.GetLength()];
+        memcpy(reinterpret_cast<void *>(c_str),
+               reinterpret_cast<const void *>(str.c_str()),
+               value.GetLength());
+        char_ptr_params.get()[varchar_cnt] = c_str;
+        char_len_params.get()[varchar_cnt ++] = value.GetLength();
+        break;
       }
       default: {
-          throw Exception{"Unknown param value type " +
-                          TypeIdToString(value.GetTypeId())};
+        throw Exception{"Unknown param value type " +
+                        TypeIdToString(value.GetTypeId())};
       }
     }
   }
@@ -230,10 +237,17 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
   return true;
 }
 
-uint32_t Query::StoreParam(Parameter param) {
-  params_.emplace_back(param);
+uint32_t Query::StoreParam(Parameter param, int idx) {
+  if (idx < 0) {
+    params_.emplace_back(param);
+  } else {
+    PL_ASSERT((uint32_t)idx < params_.size());
+    params_[idx] = param;
+  }
   uint32_t offset = 0;
   switch (param.GetValue().GetTypeId()) {
+    case type::Type::BOOLEAN:
+      break;
     case type::Type::TINYINT: {
       offset = int_8_type_cnt_ ++;
       break;

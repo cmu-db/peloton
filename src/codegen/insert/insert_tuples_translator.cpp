@@ -81,14 +81,16 @@ void InsertTuplesTranslator::Produce() const {
                        {catalog_ptr, codegen.Const32(table->GetDatabaseOid()),
                         codegen.Const32(table->GetOid())});
 
-  llvm::Value *value = codegen.CallFunc(
-      ValueProxy::_GetValue::GetFunction(codegen),
-      {context.GetValuesPtr(), codegen.Const64(this->tuples_offset_)}
-  );
+  llvm::Value *char_ptr = codegen.CallFunc(
+          PrimitiveValueProxy::_GetVarcharVal::GetFunction(codegen),
+          {context.GetCharPtrParamPtr(), codegen.Const64(this->tuples_offset_)});
+  llvm::Value *char_len = codegen.CallFunc(
+          PrimitiveValueProxy::_GetVarcharLen::GetFunction(codegen),
+          {context.GetCharLenParamPtr(), codegen.Const64(this->tuples_offset_)});
 
   codegen.CallFunc(
       InsertHelpersProxy::_InsertValue::GetFunction(codegen),
-      {txn_ptr, table_ptr, value}
+      {txn_ptr, table_ptr, char_ptr, char_len}
   );
 
 }
