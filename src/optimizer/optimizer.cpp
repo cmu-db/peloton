@@ -12,27 +12,30 @@
 
 #include <memory>
 
+#include "optimizer/optimizer.h"
+
 #include "catalog/manager.h"
 
+#include "parser/create_statement.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
-#include "optimizer/optimizer.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/properties.h"
 
-#include "parser/sql_statement.h"
 
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/populate_index_plan.h"
+
 #include "binder/bind_node_visitor.h"
 
 using std::vector;
@@ -137,9 +140,34 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
-      unique_ptr<planner::AbstractPlan> create_plan(
-          new planner::CreatePlan((parser::CreateStatement *)tree));
-      ddl_plan = move(create_plan);
+
+      // This is adapted from the simple optimizer
+      auto create_plan =
+          new planner::CreatePlan((parser::CreateStatement*)tree);
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
+      ddl_plan = move(child_CreatePlan);
+
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        auto create_stmt = (parser::CreateStatement*)tree;
+        auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName());
+        std::vector<oid_t> column_ids;
+        auto schema = target_table->GetSchema();
+        for (auto column_name : create_plan->GetIndexAttributes()) {
+          column_ids.push_back(schema->GetColumnID(column_name));
+        }
+        // Create a plan to retrieve data
+        std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
+            new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
+
+        child_SeqScanPlan->AddChild(std::move(ddl_plan));
+        ddl_plan = std::move(child_SeqScanPlan);
+        // Create a plan to add data to index
+        std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
+            new planner::PopulateIndexPlan(target_table, column_ids));
+        child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
+        ddl_plan = std::move(child_PopulateIndexPlan);
+      }
     } break;
     case StatementType::TRANSACTION:
       break;

@@ -67,6 +67,8 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
     EXPECT_EQ(l_group_by.Hash(), r_group_by.Hash());
     EXPECT_TRUE(l_group_by == r_group_by);
   }
+
+  delete having;
 }
 
 } /* namespace test */
