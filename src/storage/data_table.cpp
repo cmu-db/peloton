@@ -18,7 +18,6 @@
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
 #include "common/exception.h"
-#include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
 #include "concurrency/transaction.h"
@@ -380,6 +379,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
+    if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
@@ -443,6 +443,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
   // Since this is NOT protected by a lock, concurrent insert may happen.
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
+    if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
 
@@ -510,6 +511,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
     for (int index_itr = ref_table_index_count - 1; index_itr >= 0;
          --index_itr) {
       auto index = ref_table->GetIndex(index_itr);
+      if (index == nullptr) continue;
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
@@ -784,7 +786,7 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
 
   for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     ret_index = indexes_.Find(index_itr);
-    if (ret_index->GetOid() == index_oid) {
+    if (ret_index != nullptr && ret_index->GetOid() == index_oid) {
       break;
     }
   }
@@ -802,7 +804,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 
   for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     index = indexes_.Find(index_itr);
-    if (index->GetOid() == index_oid) {
+    if (index != nullptr && index->GetOid() == index_oid) {
       break;
     }
   }
@@ -813,7 +815,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_.Update(index_offset, nullptr);
 
   // Drop index column info
-  indexes_columns_.erase(indexes_columns_.begin() + index_offset);
+  indexes_columns_[index_offset].clear();
 }
 
 void DataTable::DropIndexes() {
@@ -824,6 +826,9 @@ void DataTable::DropIndexes() {
   indexes_columns_.clear();
 }
 
+// This is a dangerous function, use GetIndexWithOid() instead. Note
+// that the returned index could be a nullptr once we can drop index
+// with oid (due to a limitation of LockFreeArray).
 std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
   PL_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
@@ -831,6 +836,7 @@ std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
   return ret_index;
 }
 
+//
 std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
   PL_ASSERT(index_offset < GetIndexCount());
 

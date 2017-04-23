@@ -33,16 +33,18 @@ class SimpleOptimizerTests : public PelotonTest {};
 // TODO: Split the tests into separate test cases.
 TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
   LOG_TRACE("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_TRACE("Creating table");
   LOG_TRACE(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "

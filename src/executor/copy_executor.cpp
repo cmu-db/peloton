@@ -21,7 +21,6 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
-#include "logging/logging_util.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>
@@ -50,8 +49,7 @@ bool CopyExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
 
-  bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
-                                                      file_handle_, "w");
+  bool success = InitFileHandle(node.file_path.c_str(), "w");
 
   if (success == false) {
     throw ExecutorException("Failed to create file " + node.file_path +
@@ -65,6 +63,28 @@ bool CopyExecutor::DInit() {
   if (node.deserialize_parameters) {
     InitParamColIds();
   }
+  return true;
+}
+
+
+bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
+  auto file = fopen(name, mode);
+  if (file == NULL) {
+    LOG_ERROR("File is NULL");
+    return false;
+  } else {
+    file_handle_.file = file;
+  }
+
+  // also, get the descriptor
+  auto fd = fileno(file);
+  if (fd == INVALID_FILE_DESCRIPTOR) {
+    LOG_ERROR("checkpoint_file_fd_ is -1");
+    return false;
+  } else {
+    file_handle_.fd = fd;
+  }
+  file_handle_.size = 0;
   return true;
 }
 
@@ -88,32 +108,47 @@ void CopyExecutor::FlushBuffer() {
   buff_ptr = 0;
 }
 
-void CopyExecutor::InitParamColIds() {
 
+void CopyExecutor::FFlushFsync() {
+  // First, flush
+  PL_ASSERT(file_handle_.fd != -1);
+  if (file_handle_.fd == -1) return;
+  int ret = fflush(file_handle_.file);
+  if (ret != 0) {
+    LOG_ERROR("Error occurred in fflush(%s)", strerror(errno));
+  }
+  // Finally, sync
+  ret = fsync(file_handle_.fd);
+  if (ret != 0) {
+    LOG_ERROR("Error occurred in fsync(%s)", strerror(errno));
+  }
+}
+
+void CopyExecutor::InitParamColIds() {
   // If we're going to deserialize prepared statement, get the column ids for
   // the varbinary columns first
-  auto catalog = catalog::Catalog::GetInstance();
-  try {
-    auto query_metric_table =
-        catalog->GetTableWithName(CATALOG_DATABASE_NAME, QUERY_METRIC_NAME);
-    auto schema = query_metric_table->GetSchema();
-    auto &cols = schema->GetColumns();
-    for (unsigned int i = 0; i < cols.size(); i++) {
-      auto col_name = cols[i].column_name.c_str();
-      if (std::strcmp(col_name, QUERY_PARAM_TYPE_COL_NAME) == 0) {
-        param_type_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_PARAM_FORMAT_COL_NAME) == 0) {
-        param_format_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_PARAM_VAL_COL_NAME) == 0) {
-        param_val_col_id = i;
-      } else if (std::strcmp(col_name, QUERY_NUM_PARAM_COL_NAME) == 0) {
-        num_param_col_id = i;
-      }
-    }
-  }
-  catch (Exception &e) {
-    e.PrintStackTrace();
-  }
+  // auto catalog = catalog::Catalog::GetInstance();
+  // try {
+  //   auto query_metric_table =
+  //       catalog->GetTableWithName(CATALOG_DATABASE_NAME, QUERY_METRIC_NAME);
+  //   auto schema = query_metric_table->GetSchema();
+  //   auto &cols = schema->GetColumns();
+  //   for (unsigned int i = 0; i < cols.size(); i++) {
+  //     auto col_name = cols[i].column_name.c_str();
+  //     if (std::strcmp(col_name, QUERY_PARAM_TYPE_COL_NAME) == 0) {
+  //       param_type_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_PARAM_FORMAT_COL_NAME) == 0) {
+  //       param_format_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_PARAM_VAL_COL_NAME) == 0) {
+  //       param_val_col_id = i;
+  //     } else if (std::strcmp(col_name, QUERY_NUM_PARAM_COL_NAME) == 0) {
+  //       num_param_col_id = i;
+  //     }
+  //   }
+  // }
+  // catch (Exception &e) {
+  //   e.PrintStackTrace();
+  // }
 }
 
 void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
@@ -259,7 +294,7 @@ bool CopyExecutor::DExecute() {
   }
   LOG_INFO("Done copying all logical tiles");
   FlushBuffer();
-  logging::LoggingUtil::FFlushFsync(file_handle_);
+  FFlushFsync();
   // Sync and close
   fclose(file_handle_.file);
 

@@ -290,6 +290,7 @@ void TransactionLevelGCManager::DeleteTupleFromIndexes(
   // unlink the version from all the indexes.
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
     auto index = table->GetIndex(idx);
+    if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
 

@@ -15,20 +15,22 @@
 #include "catalog/foreign_key.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
-#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace storage {
 
-Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
+Database::Database(const oid_t database_oid) : database_oid(database_oid) {}
 
 Database::~Database() {
   // Clean up all the tables
   LOG_TRACE("Deleting tables from database");
-  for (auto table : tables) delete table;
+  for (auto table : tables) {
+    if (table != nullptr) delete table;
+  }
 
   LOG_TRACE("Finish deleting tables from database");
 }
@@ -55,12 +57,12 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   for (auto table : tables)
     if (table->GetOid() == table_oid) return table;
   throw CatalogException("Table with oid = " + std::to_string(table_oid) +
-                         " is not found");
+                         "is not found");
   return nullptr;
 }
 
 storage::DataTable *Database::GetTableWithName(
-    const std::string table_name) const {
+    const std::string &table_name) const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
   throw CatalogException("Table '" + table_name + "' does not exist");
@@ -126,6 +128,7 @@ const std::string Database::GetInfo() const {
         os << "Index Count : " << index_count << std::endl;
         for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
           auto index = table->GetIndex(index_itr);
+          if (index == nullptr) continue;
 
           switch (index->GetIndexType()) {
             case IndexConstraintType::PRIMARY_KEY:
@@ -165,8 +168,10 @@ const std::string Database::GetInfo() const {
   return os.str();
 }
 
+// deprecated, use catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
 std::string Database::GetDBName() { return database_name; }
 
+// deprecated, use catalog::DatabaseCatalog::GetInstance()->GetDatabaseName()
 void Database::setDBName(const std::string &database_name) {
   Database::database_name = database_name;
 }

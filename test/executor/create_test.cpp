@@ -30,13 +30,15 @@ namespace test {
 class CreateTests : public PelotonTest {};
 
 TEST_F(CreateTests, CreatingTable) {
-
   // Bootstrap
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   auto name_column =
       catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
@@ -44,15 +46,12 @@ TEST_F(CreateTests, CreatingTable) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
   // Create plans
   planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema),
-                           CreateType::TABLE);
+                           std::move(table_schema), CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());

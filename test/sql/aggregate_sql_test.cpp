@@ -25,7 +25,10 @@ namespace test {
 class AggregateSQLTests : public PelotonTest {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
@@ -70,7 +73,9 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
 }
 
 TEST_F(AggregateSQLTests, MinMaxTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
@@ -195,8 +200,6 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   EXPECT_EQ(result[0].second[18], '4');
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

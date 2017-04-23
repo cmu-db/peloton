@@ -38,7 +38,10 @@ void CreateAndLoadTable() {
 }
 
 TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -60,14 +63,16 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -89,14 +94,16 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 TEST_F(IndexScanSQLTests, SQLTest) {
   LOG_INFO("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -218,9 +225,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       result);
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn =
-      concurrency::TransactionManagerFactory::GetInstance().BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
