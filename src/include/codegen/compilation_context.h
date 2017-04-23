@@ -83,7 +83,13 @@ class CompilationContext {
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
 
-  llvm::Value *GetValuesPtr();
+  llvm::Value *GetInt8ParamPtr();
+  llvm::Value *GetInt16ParamPtr();
+  llvm::Value *GetInt32ParamPtr();
+  llvm::Value *GetInt64ParamPtr();
+  llvm::Value *GetDoubleParamPtr();
+  llvm::Value *GetCharPtrParamPtr();
+  llvm::Value *GetCharLenParamPtr();
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -122,7 +128,13 @@ class CompilationContext {
   // The ID for the catalog and transaction state
   RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
-  RuntimeState::StateID values_state_id_;
+  RuntimeState::StateID int_8_params_state_id_;
+  RuntimeState::StateID int_16_params_state_id_;
+  RuntimeState::StateID int_32_params_state_id_;
+  RuntimeState::StateID int_64_params_state_id_;
+  RuntimeState::StateID double_params_state_id_;
+  RuntimeState::StateID char_ptr_params_state_id_;
+  RuntimeState::StateID char_len_params_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

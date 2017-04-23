@@ -12,8 +12,7 @@
 
 #include "codegen/constant_translator.h"
 
-#include "type/value_peeker.h"
-#include "codegen/value_peeker_proxy.h"
+#include "codegen/primitive_value_proxy.h"
 #include "codegen/value_proxy.h"
 #include "expression/parameter_value_expression.h"
 
@@ -47,70 +46,61 @@ ConstantTranslator::ConstantTranslator(
 // Return an LLVM value for our constant (i.e., a compile-time constant)
 codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
                                                RowBatch::Row &) const {
-  std::vector<llvm::Value *> args =
-          {GetValuesPtr(), codegen.Const64(offset_)};
-
-  llvm::Value *value = codegen.CallFunc(
-          ValueProxy::_GetValue::GetFunction(codegen),
-          args);
 
   // Convert the value into an LLVM compile-time constant
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
   auto type_id = GetValueType();
   switch (type_id) {
-    case type::Type::TypeId::PARAMETER_OFFSET: {
-      break;
-    }
     case type::Type::TypeId::TINYINT: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekTinyInt::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetTinyInt::GetFunction(codegen),
+              {GetInt8ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::SMALLINT: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekSmallInt::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetSmallInt::GetFunction(codegen),
+              {GetInt16ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::INTEGER: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekInteger::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetInteger::GetFunction(codegen),
+              {GetInt32ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::BIGINT: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekBigInt::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetBigInt::GetFunction(codegen),
+              {GetInt64ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DECIMAL: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekDouble::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetDouble::GetFunction(codegen),
+              {GetDoubleParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DATE: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekDate::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetDate::GetFunction(codegen),
+              {GetInt32ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::TIMESTAMP: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekTimestamp::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetTimestamp::GetFunction(codegen),
+              {GetInt64ParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::VARCHAR: {
       val = codegen.CallFunc(
-              ValuePeekerProxy::_PeekVarcharVal::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetVarcharVal::GetFunction(codegen),
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       len = codegen.CallFunc(
-              ValuePeekerProxy::_PeekVarcharLen::GetFunction(codegen),
-              {value});
+              PrimitiveValueProxy::_GetVarcharLen::GetFunction(codegen),
+              {GetCharLenParamPtr(), codegen.Const64(offset_)});
       break;
     }
     default: {

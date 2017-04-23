@@ -36,8 +36,20 @@ CompilationContext::CompilationContext(Query &query,
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
 
-  values_state_id_ = runtime_state.RegisterState(
-          "values", ValueProxy::GetType(codegen_)->getPointerTo());
+  int_8_params_state_id_ = runtime_state.RegisterState(
+          "int8params", codegen_.Int8Type()->getPointerTo());
+  int_16_params_state_id_ = runtime_state.RegisterState(
+          "int16params", codegen_.Int16Type()->getPointerTo());
+  int_32_params_state_id_ = runtime_state.RegisterState(
+          "int32params", codegen_.Int32Type()->getPointerTo());
+  int_64_params_state_id_ = runtime_state.RegisterState(
+          "int64params", codegen_.Int64Type()->getPointerTo());
+  double_params_state_id_ = runtime_state.RegisterState(
+          "doubleparams", codegen_.DoubleType()->getPointerTo());
+  char_ptr_params_state_id_ = runtime_state.RegisterState(
+          "charptrparams", codegen_.CharPtrType()->getPointerTo());
+  char_len_params_state_id_ = runtime_state.RegisterState(
+          "charlenparams", codegen_.Int32Type()->getPointerTo());
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -133,8 +145,32 @@ llvm::Value *CompilationContext::GetTransactionPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, txn_state_id_);
 }
 
-llvm::Value *CompilationContext::GetValuesPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, values_state_id_);
+llvm::Value *CompilationContext::GetInt8ParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, int_8_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetInt16ParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, int_16_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetInt32ParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, int_32_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetInt64ParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, int_64_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetDoubleParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, double_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetCharPtrParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, char_ptr_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetCharLenParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, char_len_params_state_id_);
 };
 
 // Generate code for the init() function of the query
@@ -149,7 +185,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
       init_fn_name,
       codegen_.VoidType(),
       {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
-
+        llvm::Value *GetInt8ParamPtr();
   // Let the consumer initialize
   result_consumer_.InitializeState(*this);
 
