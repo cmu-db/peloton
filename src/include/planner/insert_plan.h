@@ -31,25 +31,44 @@ namespace planner {
 /**
  * There are several different flavors of Insert.
  *
- * - Insert a tile.
- * - Insert
+ * - Insert a tile (from a scan of another table).
+ * - Insert a tile, but with a different schema.
+ * - Insert raw tuples.
  */
 class InsertPlan : public AbstractPlan {
  public:
-  // This constructor takes in neither a project info nor a tuple
-  // It must be used when the input is a logical tile
-  explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1);
+
+  /**
+   * Insert tuples from a scan of another table.
+   * The scan plan will be added as a child later.
+   * @param table             The table to insert into (not scan from).
+   * @param bulk_insert_count The number of tuples to insert (1).
+   */
+  explicit InsertPlan(storage::DataTable *table,
+                      oid_t bulk_insert_count = 1);
 
   // This constructor takes in a project info
   explicit InsertPlan(
       storage::DataTable *table,
       std::unique_ptr<const planner::ProjectInfo> &&project_info,
       oid_t bulk_insert_count = 1);
-  // This constructor takes in a tuple
+
+  /**
+   * Insert one raw tuple into a table.
+   * @param table             The table to insert into.
+   * @param tuple             The tuple to insert.
+   * @param bulk_insert_count The number of tuples to insert (1).
+   */
   explicit InsertPlan(storage::DataTable *table,
                       std::unique_ptr<storage::Tuple> &&tuple,
                       oid_t bulk_insert_count = 1);
-  // This constructor takes in a table name and a tuple
+
+  /**
+   * Insert one raw tuple into a table.
+   * @param table_name        The name of the table to insert into.
+   * @param tuple             The tuple to insert.
+   * @param bulk_insert_count The number of tuples to insert (1).
+   */
   explicit InsertPlan(std::string table_name,
                       std::unique_ptr<storage::Tuple> &&tuple,
                       oid_t bulk_insert_count = 1);

@@ -10,7 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/pool/pool_runtime_proxy.h"
+#include "codegen/raw_tuple/raw_tuple_runtime_proxy.h"
+#include "codegen/insert/insert_helpers_proxy.h"
+#include "codegen/schema/schema_proxy.h"
+#include "codegen/catalog_proxy.h"
+#include "codegen/data_table_proxy.h"
+#include "planner/abstract_scan_plan.h"
+#include "storage/data_table.h"
 #include "codegen/insert/insert_scan_translator.h"
+#include "codegen/raw_tuple/raw_tuple_ref.h"
 
 namespace peloton {
 namespace codegen {
@@ -18,24 +27,139 @@ namespace codegen {
 InsertScanTranslator::InsertScanTranslator(const planner::InsertPlan &insert_plan,
                                            CompilationContext &context,
                                            Pipeline &pipeline)
-    : AbstractInsertTranslator(insert_plan, context, pipeline) {}
+    : AbstractInsertTranslator(insert_plan, context, pipeline) {
+
+  // Also create the translator for our child.
+  context.Prepare(*insert_plan.GetChild(0), pipeline);
+}
 
 void InsertScanTranslator::Produce() const {
-  // @todo Implement this.
+  auto &compilation_context = this->GetCompilationContext();
+
+  auto &codegen = this->GetCodeGen();
+  storage::DataTable *table = this->insert_plan_.GetTable();
+
+  llvm::Value *table_ptr = codegen.CallFunc(
+      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+      {
+          GetCatalogPtr(),
+          codegen.Const32(table->GetDatabaseOid()),
+          codegen.Const32(table->GetOid())
+      }
+  );
+
+  llvm::Value *schema_ptr = codegen.CallFunc(
+      DataTableProxy::_GetSchema::GetFunction(codegen),
+      { table_ptr }
+  );
+
+  llvm::Value *tuple_ptr = codegen.CallFunc(
+      InsertHelpersProxy::_CreateTuple::GetFunction(codegen),
+      { schema_ptr }
+  );
+
+  llvm::Value *tuple_data_ptr = codegen.CallFunc(
+      InsertHelpersProxy::_GetTupleData::GetFunction(codegen),
+      { tuple_ptr }
+  );
+
+  llvm::Value *pool_ptr = codegen.CallFunc(
+      PoolRuntimeProxy::_CreatePool::GetFunction(codegen),
+      { }
+  );
+
+  this->tuple_ptr_ = tuple_ptr;
+  this->tuple_data_ptr_ = tuple_data_ptr;
+  this->pool_ptr_ = pool_ptr;
+
+//  auto &runtime_state = compilation_context.GetRuntimeState();
+//  RuntimeState::StateID tuple_ptr_state_id = runtime_state.RegisterState(
+//      "insert_tuple_ptr",
+//      codegen.Int8Type()->getPointerTo()
+//  );
+//  RuntimeState::StateID tuple_data_ptr_state_id = runtime_state.RegisterState(
+//      "insert_tuple_data_ptr",
+//      codegen.Int8Type()->getPointerTo()
+//  );
+//  runtime_state.LoadStatePtr(codegen, tuple_ptr_state_id);
+//  runtime_state.LoadStatePtr(codegen, tuple_data_ptr_state_id);
+
+  // the child of delete executor will be a scan. call produce function
+  // of the child to produce the scanning result
+  compilation_context.Produce(*insert_plan_.GetChild(0));
+
+  codegen.CallFunc(
+      InsertHelpersProxy::_DeleteTuple::GetFunction(codegen),
+      { this->tuple_ptr_ }
+  );
+
+  codegen.CallFunc(
+      PoolRuntimeProxy::_DeletePool::GetFunction(codegen),
+      { this->pool_ptr_ }
+  );
 }
 
-void InsertScanTranslator::Consume(ConsumerContext &context,
+void InsertScanTranslator::Consume(ConsumerContext &,
                                    RowBatch::Row &row) const {
-  (void)context;
-  (void)row;
-  // @todo Implement this.
+
+  storage::DataTable *table = this->insert_plan_.GetTable();
+  catalog::Schema *schema = table->GetSchema();
+  auto ncolumns = schema->GetColumnCount();
+  auto &codegen = this->GetCodeGen();
+
+  llvm::Value *tile_group_id = row.GetTileGroupID();
+  llvm::Value *tuple_id = row.GetTID(this->GetCodeGen());
+
+  this->GetCodeGen().CallPrintf(
+      "tile_group_id: %d, tuple_id: %d\n",
+      { tile_group_id, tuple_id }
+  );
+
+  // Retrieve all the attribute infos.
+  std::vector<const planner::AttributeInfo *> ais;
+  auto scan = static_cast<const planner::AbstractScan *>(
+      this->insert_plan_.GetChild(0));
+  scan->GetAttributes(ais);
+
+  // Prepare to materialize the tuple.
+  RawTupleRef raw_tuple_ref(
+      codegen, row, schema, ais, this->tuple_data_ptr_, this->pool_ptr_);
+
+  // Materialize each column.
+  for (oid_t i = 0; i != ncolumns; ++i) {
+    raw_tuple_ref.Materialize(i);
+  }
+
+  // Debug: print the mateialized tuple.
+  // TODO: delete this.
+  codegen.CallFunc(
+      RawTupleRuntimeProxy::_DumpTuple::GetFunction(codegen),
+      { this->tuple_ptr_ }
+  );
+
+  // Perform insertion by calling the relevant transaction function.
+  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *txn_ptr = GetCompilationContext().GetTransactionPtr();
+  llvm::Value *table_ptr = codegen.CallFunc(
+          CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+          {
+              catalog_ptr,
+              codegen.Const32(table->GetDatabaseOid()),
+              codegen.Const32(table->GetOid())
+          }
+  );
+  codegen.CallFunc(
+      InsertHelpersProxy::_InsertRawTuple::GetFunction(codegen),
+      { txn_ptr, table_ptr, this->tuple_ptr_ }
+  );
 }
 
+/**
+ * @brief Just perform the per-row consume.
+ */
 void InsertScanTranslator::Consume(ConsumerContext &context,
                                    RowBatch &batch) const {
-  (void)context;
-  (void)batch;
-  // @todo Implement this.
+  OperatorTranslator::Consume(context, batch);
 }
 
 }  // namespace codegen

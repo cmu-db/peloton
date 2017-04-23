@@ -21,7 +21,27 @@ namespace codegen {
 
 class InsertHelpersProxy {
  public:
+  struct _InsertRawTuple {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
   struct _InsertValue {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
+  struct _CreateTuple {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
+  struct _GetTupleData {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
+  struct _DeleteTuple {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };

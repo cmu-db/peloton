@@ -445,5 +445,6 @@ int ExpressionComparator::Compare(const expression::AbstractExpression * A, cons
   }
   return 0;
 }
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

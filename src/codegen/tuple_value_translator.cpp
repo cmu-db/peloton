@@ -13,6 +13,10 @@
 #include "codegen/tuple_value_translator.h"
 
 #include "expression/tuple_value_expression.h"
+#include "codegen/parameter.h"
+#include "codegen/compilation_context.h"
+#include "codegen/value_factory_proxy.h"
+#include "codegen/value_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -21,11 +25,10 @@ namespace codegen {
 TupleValueTranslator::TupleValueTranslator(
     const expression::TupleValueExpression &tve_expr,
     CompilationContext &context)
-    : ExpressionTranslator(tve_expr, context) {
+    : ExpressionTranslator(tve_expr, context), ctx_(context){
   PL_ASSERT(tve_expr.GetAttributeRef() != nullptr);
 }
 
-// Produce the value that is the result of codegening the expression
 codegen::Value TupleValueTranslator::DeriveValue(CodeGen &codegen,
                                                  RowBatch::Row &row) const {
   const auto &tve_expr = GetExpressionAs<expression::TupleValueExpression>();

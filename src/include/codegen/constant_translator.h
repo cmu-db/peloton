@@ -36,6 +36,9 @@ class ConstantTranslator : public ExpressionTranslator {
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
 
+  codegen::Value DeriveTypeValue(CodeGen &codegen,
+                                 RowBatch::Row &row) const;
+
  private:
   uint32_t offset_;
 };
