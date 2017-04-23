@@ -45,18 +45,18 @@ bool InsertHelpers::InsertRawTuple(concurrency::Transaction *txn,
 
 void InsertHelpers::InsertValue(concurrency::Transaction *txn,
                                 storage::DataTable *table,
-                                type::Value *value) {
+                                char *value, size_t num_tuples) {
 
   const storage::Tuple * const *tuples =
-      reinterpret_cast<const storage::Tuple * const *>(value->GetData());
+      reinterpret_cast<const storage::Tuple * const *>(value);
 
-  uint32_t num_tuples = value->GetLength() / sizeof(const storage::Tuple *);
+  num_tuples /= sizeof(const storage::Tuple *);
 
-  LOG_DEBUG("num_tuples = %u", num_tuples);
+  LOG_DEBUG("num_tuples = %zu", num_tuples);
 
   for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
     const storage::Tuple *tuple = tuples[i];
-    LOG_DEBUG("tuple[%u] = %p", i, tuple);
+    LOG_DEBUG("tuple[%zu] = %p", i, tuple);
 
     InsertRawTuple(txn, table, tuple);
   }

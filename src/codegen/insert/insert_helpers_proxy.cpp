@@ -50,7 +50,7 @@ llvm::Function *InsertHelpersProxy::_InsertRawTuple::GetFunction(
 
 const std::string &InsertHelpersProxy::_InsertValue::GetFunctionName() {
   static const std::string kInsertValueFnName =
-      "_ZN7peloton7codegen13InsertHelpers11InsertValueEPNS_11concurrency11TransactionEPNS_7storage9DataTableEPNS_4type5ValueE";
+      "_ZN7peloton7codegen13InsertHelpers11InsertValueEPNS_11concurrency11TransactionEPNS_7storage9DataTableEPcm";
   return kInsertValueFnName;
 }
 
@@ -70,7 +70,7 @@ llvm::Function *InsertHelpersProxy::_InsertValue::GetFunction(
       {
           TransactionProxy::GetType(codegen)->getPointerTo(),
           DataTableProxy::GetType(codegen)->getPointerTo(),
-          ValueProxy::GetType(codegen)->getPointerTo()
+          codegen.CharPtrType(), codegen.Int32Type()
       },
       false);
 

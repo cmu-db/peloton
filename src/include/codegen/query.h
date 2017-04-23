@@ -67,7 +67,7 @@ class Query {
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
-  uint32_t StoreParam(Parameter param);
+  uint32_t StoreParam(Parameter param, int idx = -1);
 
  private:
   friend class QueryCompiler;

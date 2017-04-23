@@ -68,7 +68,7 @@ size_t PrimitiveValueProxy::GetVarcharLen(
 // Get the symbol name for ValuePeeker::PeekTinyInt()
 const std::string &PrimitiveValueProxy::_GetTinyInt::GetFunctionName() {
   static const std::string kOutputTinyIntFnName =
-      "_ZN7peloton7codegen16ValuePeekerProxy11PeekTinyIntEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy10GetTinyIntEPaj";
   return kOutputTinyIntFnName;
 }
 
@@ -95,7 +95,7 @@ llvm::Function *PrimitiveValueProxy::_GetTinyInt::GetFunction(
 
 const std::string &PrimitiveValueProxy::_GetSmallInt::GetFunctionName() {
   static const std::string kOutputSmallIntFnName =
-      "_ZN7peloton7codegen16ValuePeekerProxy12PeekSmallIntEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy11GetSmallIntEPsj";
   return kOutputSmallIntFnName;
 }
 
@@ -122,7 +122,7 @@ llvm::Function *PrimitiveValueProxy::_GetSmallInt::GetFunction(
 
 const std::string &PrimitiveValueProxy::_GetInteger::GetFunctionName() {
   static const std::string kOutputIntegerFnName =
-      "_ZN7peloton7codegen16ValuePeekerProxy11PeekIntegerEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy10GetIntegerEPij";
   return kOutputIntegerFnName;
 }
 
@@ -149,7 +149,7 @@ llvm::Function *PrimitiveValueProxy::_GetInteger::GetFunction(
 
 const std::string &PrimitiveValueProxy::_GetBigInt::GetFunctionName() {
   static const std::string kOutputBigIntFnName =
-      "_ZN7peloton7codegen16ValuePeekerProxy10PeekBigIntEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy9GetBigIntEPlj";
   return kOutputBigIntFnName;
 }
 
@@ -176,7 +176,7 @@ llvm::Function *PrimitiveValueProxy::_GetBigInt::GetFunction(
 
 const std::string &PrimitiveValueProxy::_GetDouble::GetFunctionName() {
   static const std::string kOutputDoubleFnName =
-      "_ZN7peloton7codegen16ValuePeekerProxy10PeekDoubleEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy9GetDoubleEPdj";
   return kOutputDoubleFnName;
 }
 
@@ -206,7 +206,7 @@ const std::string &PrimitiveValueProxy::_GetTimestamp::GetFunctionName() {
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-        "_ZN7peloton7codegen16ValuePeekerProxy13PeekTimestampEPNS_4type5ValueE";
+        "_ZN7peloton7codegen19PrimitiveValueProxy12GetTimestampEPaj";
 #endif
   return kOutputVarcharFnName;
 }
@@ -237,7 +237,7 @@ const std::string &PrimitiveValueProxy::_GetDate::GetFunctionName() {
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-        "_ZN7peloton7codegen16ValuePeekerProxy8PeekDateEPNS_4type5ValueE";
+        "_ZN7peloton7codegen19PrimitiveValueProxy7GetDateEPij";
 #endif
   return kOutputVarcharFnName;
 }
@@ -268,7 +268,7 @@ const std::string &PrimitiveValueProxy::_GetVarcharVal::GetFunctionName() {
 #ifdef __APPLE__
       "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-      "_ZN7peloton7codegen16ValuePeekerProxy14PeekVarcharValEPNS_4type5ValueE";
+      "_ZN7peloton7codegen19PrimitiveValueProxy13GetVarcharValEPPcj";
 #endif
   return kOutputVarcharFnName;
 }
@@ -299,7 +299,7 @@ const std::string &PrimitiveValueProxy::_GetVarcharLen::GetFunctionName() {
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-        "_ZN7peloton7codegen16ValuePeekerProxy14PeekVarcharLenEPNS_4type5ValueE";
+        "_ZN7peloton7codegen19PrimitiveValueProxy13GetVarcharLenEPij";
 #endif
   return kOutputVarcharFnName;
 }

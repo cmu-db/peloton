@@ -167,8 +167,11 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCa
   else {
     LOG_DEBUG("Plan found\n");
 
-    query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
-        new executor::ExecutorContext{txn, *params}).get(): nullptr);
+    std::unique_ptr<executor::ExecutorContext> exec_context{
+            params == nullptr ? nullptr:
+            new executor::ExecutorContext{txn, *params}};
+
+    query->Execute(*txn, consumer_state, nullptr, exec_context.get());
     txn_manager.CommitTransaction(txn);
   }
 

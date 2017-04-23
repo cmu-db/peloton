@@ -38,7 +38,7 @@ class InsertHelpers {
 
   static void InsertValue(concurrency::Transaction *txn,
                           storage::DataTable *table,
-                          type::Value *value);
+                          char *value, size_t num_tuples);
 
   static storage::Tuple *CreateTuple(catalog::Schema *schema);
 
