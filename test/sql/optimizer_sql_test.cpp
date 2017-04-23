@@ -145,6 +145,12 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       "SELECT * from test order by a + c",
       {"2", "11", "0", "1", "22", "333", "3", "33", "444", "4", "0", "555"},
       true);
+
+  // Testing order by * expression
+  TestUtil(
+      "SELECT * from test order by a",
+      {"1", "22", "333", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
+      true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {

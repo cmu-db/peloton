@@ -368,8 +368,19 @@ class ExpressionUtil {
 
  public:
   /**
- * Walks an expression trees and find all AggregationExprs subtrees.
- */
+   * Generate a vector to store expressions in output order
+   */
+  static std::vector<std::shared_ptr<AbstractExpression>>
+  GenerateOrderedOutputExprs(ExprMap& expr_map) {
+    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(expr_map.size());
+    for (auto iter : expr_map)
+      ordered_expr[iter.second] = iter.first;
+    return std::move(ordered_expr);
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
   static void GetAggregateExprs(
       std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
       AbstractExpression *expr) {

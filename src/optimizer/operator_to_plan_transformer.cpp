@@ -35,6 +35,7 @@ using std::shared_ptr;
 using std::move;
 using std::make_tuple;
 using std::make_pair;
+using std::pair;
 
 namespace peloton {
 namespace optimizer {
@@ -142,7 +143,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   for (size_t i = 0; i < col_size; i++) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
-      for (auto iter : child_expr_map) output_exprs.push_back(iter.first);
+      vector<std::shared_ptr<expression::AbstractExpression>> ordered_exprs =
+          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
+      output_exprs.insert(output_exprs.end(), ordered_exprs.begin(), ordered_exprs.end());
     } else {
       output_exprs.push_back(expr);
     }
@@ -213,22 +216,25 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
       requirements_->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
   auto sort_columns_size = sort_prop->GetSortColumnSize();
 
-  // Construct output column offset.
+  vector<shared_ptr<expression::AbstractExpression>> ordered_exprs =
+      move(expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
   vector<oid_t> column_ids;
+
+  // Construct output column offset.
   for (size_t i = 0; i < cols_prop->GetSize(); i++) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
-      // For StarExpr, Output all TupleValuesExpr from operator below
-      for (auto iter : child_expr_map) {
-        if (iter.first->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-          column_ids.push_back(iter.second);
-          (*output_expr_map_)[iter.first] = iter.second;
+      // For StarExpr, Output all expressions from operator below in order
+      for (size_t j = 0; j<ordered_exprs.size(); j++) {
+        auto expr = ordered_exprs[j];
+        if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+          (*output_expr_map_)[expr] = column_ids.size();
+          column_ids.emplace_back(j);
         }
       }
     } else {
-      auto col_offset = child_expr_map[expr];
-      column_ids.push_back(col_offset);
-      (*output_expr_map_)[expr] = col_offset;
+      (*output_expr_map_)[expr] = column_ids.size();
+      column_ids.push_back(child_expr_map[expr]);
     }
   }
 
