@@ -52,6 +52,11 @@ class ConstantValueExpression : public AbstractExpression {
 
   type::Value GetValue() const { return value_; }
 
+  void CastValue(type::Type::TypeId type) {
+    value_ = value_.CastAs(type);
+    return_value_type_ = type;
+  }
+
   bool HasParameter() const override { return false; }
 
   AbstractExpression *Copy() const override {
