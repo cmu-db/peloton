@@ -56,7 +56,13 @@ class ExpressionTranslator {
   // Return the code generator
   CodeGen &GetCodeGen() const;
 
-  llvm::Value *GetValuesPtr() const;
+  llvm::Value *GetInt8ParamPtr() const;
+  llvm::Value *GetInt16ParamPtr() const;
+  llvm::Value *GetInt32ParamPtr() const;
+  llvm::Value *GetInt64ParamPtr() const;
+  llvm::Value *GetDoubleParamPtr() const;
+  llvm::Value *GetCharPtrParamPtr() const;
+  llvm::Value *GetCharLenParamPtr() const;
 
  private:
   // The compilation state context

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// value_peeker_proxy.h
+// primitive_value_proxy.h
 //
-// Identification: src/include/codegen/value_peeker_proxy.h
+// Identification: src/include/codegen/primitive_value_proxy.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -19,75 +19,75 @@
 namespace peloton {
 namespace codegen {
 
-class ValuePeekerProxy {
+class PrimitiveValueProxy {
  public:
-  static int8_t PeekTinyInt(type::Value *value);
+  static int8_t GetTinyInt(int8_t *values, uint32_t offset);
 
-  static int16_t PeekSmallInt(type::Value *value);
+  static int16_t GetSmallInt(int16_t *values, uint32_t offset);
 
-  static int32_t PeekInteger(type::Value *value);
+  static int32_t GetInteger(int32_t *values, uint32_t offset);
 
-  static int64_t PeekBigInt(type::Value *value);
+  static int64_t GetBigInt(int64_t *values, uint32_t offset);
 
-  static double PeekDouble(type::Value *value);
+  static double GetDouble(double *values, uint32_t offset);
 
-  static int32_t PeekDate(type::Value *value);
+  static int32_t GetDate(int32_t *values, uint32_t offset);
 
-  static uint64_t PeekTimestamp(type::Value *value);
+  static uint64_t GetTimestamp(int8_t *values, uint32_t offset);
 
-  static char *PeekVarcharVal(type::Value *value);
+  static char *GetVarcharVal(char **values, uint32_t offset);
 
-  static size_t PeekVarcharLen(type::Value *value);
+  static size_t GetVarcharLen(int32_t *values, uint32_t offset);
 
   // The proxy around ValuePeeker::PeekTinyInt()
-  struct _PeekTinyInt {
+  struct _GetTinyInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekSmallInt()
-  struct _PeekSmallInt {
+  struct _GetSmallInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekInteger()
-  struct _PeekInteger {
+  struct _GetInteger {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekBigInt()
-  struct _PeekBigInt {
+  struct _GetBigInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekDouble()
-  struct _PeekDouble {
+  struct _GetDouble {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekDate()
-  struct _PeekDate {
+  struct _GetDate {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekTimestamp()
-  struct _PeekTimestamp {
+  struct _GetTimestamp {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // The proxy around ValuePeeker::PeekVarchar()
-  struct _PeekVarcharVal {
+  struct _GetVarcharVal {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  struct _PeekVarcharLen {
+  struct _GetVarcharLen {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };

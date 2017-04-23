@@ -17,7 +17,7 @@
 #include "codegen/table.h"
 #include "codegen/parameter.h"
 #include "codegen/value_proxy.h"
-#include "codegen/value_peeker_proxy.h"
+#include "codegen/primitive_value_proxy.h"
 #include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/insert/insert_helpers_proxy.h"
 

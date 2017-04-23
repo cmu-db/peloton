@@ -70,10 +70,6 @@ class Query {
   uint32_t StoreParam(Parameter param);
 
  private:
-  void GetParams(type::Value *values,
-                 executor::ExecutorContext *exec_context);
-
- private:
   friend class QueryCompiler;
 
   // Constructor
@@ -96,6 +92,13 @@ class Query {
   compiled_function_t tear_down_func_;
 
   std::vector<Parameter> params_;
+
+  uint32_t int_8_type_cnt_;
+  uint32_t int_16_type_cnt_;
+  uint32_t int_32_type_cnt_;
+  uint32_t int_64_type_cnt_;
+  uint32_t double_type_cnt_;
+  uint32_t varchar_type_cnt_;
 
  private:
   // This class cannot be copy or move-constructed
