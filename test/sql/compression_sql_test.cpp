@@ -24,7 +24,7 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-	
+
   txn_manager.CommitTransaction(txn);
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
@@ -36,6 +36,7 @@ TEST_F(CompressionTest, BasicInsertionTest) {
     os << "insert into foo values(" << i << ", " << i * 10 << ");";
     TestingSQLUtil::ExecuteSQLQuery(os.str());
   }
+  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "foo");
   EXPECT_EQ(i, 2500);
 
   std::vector<StatementResult> result;
@@ -57,6 +58,7 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   }
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
