@@ -20,8 +20,12 @@ namespace test {
 class CompressionTest : public PelotonTest {};
 
 TEST_F(CompressionTest, BasicInsertionTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
+  
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+	
+  txn_manager.CommitTransaction(txn);
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE foo(id integer, year integer);");
@@ -53,8 +57,6 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   }
 
   // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
