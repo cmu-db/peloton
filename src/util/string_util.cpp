@@ -106,6 +106,13 @@ std::string StringUtil::Upper(const std::string &str) {
   return (copy);
 }
 
+std::string StringUtil::Lower(const std::string &str) {
+  std::string copy(str);
+  std::transform(copy.begin(), copy.end(), copy.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return (copy);
+}
+
 std::string StringUtil::Format(const std::string fmt_str, ...) {
   // Reserve two times as much as the length of the fmt_str
   int final_n, n = ((int)fmt_str.size()) * 2;
