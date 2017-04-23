@@ -85,7 +85,6 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
   for (auto update : *node->updates) {
-    update_col_name_ = update->column;
     update->value->Accept(this);
   }
 
@@ -114,20 +113,7 @@ void BindNodeVisitor::Visit(const parser::DropStatement *) {}
 void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
 void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
-
-void BindNodeVisitor::Visit(expression::ConstantValueExpression *expr) {
-  if (update_col_name_ != nullptr) {
-    std::string dummy_table_name;
-    std::tuple<oid_t, oid_t, oid_t> dummy_col_pos_tuple;
-    std::string col_name(update_col_name_);
-    type::Type::TypeId value_type;
-    if (BinderContext::GetColumnPosTuple(
-        context_, col_name, dummy_col_pos_tuple, dummy_table_name, value_type)) {
-      expr->CastValue(value_type);
-    }
-  }
-}
-
+void BindNodeVisitor::Visit(expression::ConstantValueExpression *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {

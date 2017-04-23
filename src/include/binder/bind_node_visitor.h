@@ -52,10 +52,6 @@ class BindNodeVisitor : public SqlNodeVisitor {
 
  private:
   std::shared_ptr<BinderContext> context_;
-
-  // Store the update column name so that when traverse to the ConstantValueExpressions
-  // necessary type casting can be done.
-  char* update_col_name_ = nullptr;
 };
 
 }  // binder
