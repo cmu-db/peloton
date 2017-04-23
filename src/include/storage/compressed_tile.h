@@ -67,7 +67,14 @@ class CompressedTile : public Tile {
 
   void CompressTile(Tile *tile);
 
+  type::Value GetMaxExponentLength(Tile *tile, oid_t column_id);
+
+  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id, type::Value exponent);
+
+  std::vector<type::Value> GetIntegerColumnValues(Tile *tile, oid_t column_id);
+
   std::vector<type::Value> CompressColumn(Tile *tile, oid_t column_id,
+                                          std::vector<type::Value> column_values,
                                           type::Type::TypeId compression_type);
 
   void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
