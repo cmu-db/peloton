@@ -72,6 +72,10 @@ class SeqScanExecutor : public AbstractScanExecutor {
   // TODO make predicate_ a unique_ptr
   // this is a hack that prevents memory leak
   std::unique_ptr<expression::AbstractExpression> new_predicate_ = nullptr;
+
+  // The original predicate, if it's not nullptr
+  // we need to combine it with the undated predicate 
+  const expression::AbstractExpression *old_predicate_;
 };
 
 }  // namespace executor

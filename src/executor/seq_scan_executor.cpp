@@ -63,6 +63,8 @@ bool SeqScanExecutor::DInit() {
 
   current_tile_group_offset_ = START_OID;
 
+  old_predicate_ = predicate_;
+
   if (target_table_ != nullptr) {
     table_tile_group_count_ = target_table_->GetTileGroupCount();
 
@@ -237,12 +239,21 @@ void SeqScanExecutor::UpdatePredicate(const std::vector<oid_t> &column_ids,
   // convert to the column id in the
   // seq scan executor
   for (auto column_id : column_ids) {
-    predicate_column_ids.push_back(column_ids[column_id]);
+    predicate_column_ids.push_back(column_ids_[column_id]);
   }
 
   expression::AbstractExpression *new_predicate =
       values.size() != 0 ? ColumnsValuesToExpr(predicate_column_ids, values, 0)
                          : nullptr;
+
+  // combine with original predicate
+  if (old_predicate_ != nullptr) {
+    expression::AbstractExpression *lexpr = new_predicate,
+                                   *rexpr = old_predicate_->Copy();
+
+    new_predicate = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, lexpr, rexpr);
+  }
 
   // Currently a hack that prevent memory leak
   // we should eventually make prediate_ a unique_ptr
@@ -265,8 +276,8 @@ expression::AbstractExpression *SeqScanExecutor::ColumnsValuesToExpr(
                                      predicate_column_ids, values, idx + 1);
 
   expression::AbstractExpression *root_expr =
-      new expression::ConjunctionExpression(
-          ExpressionType::CONJUNCTION_AND, lexpr, rexpr);
+      new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
+                                            lexpr, rexpr);
 
   root_expr->DeduceExpressionType();
   return root_expr;
@@ -274,11 +285,10 @@ expression::AbstractExpression *SeqScanExecutor::ColumnsValuesToExpr(
 
 expression::AbstractExpression *SeqScanExecutor::ColumnValueToCmpExpr(
     const oid_t column_id, const type::Value &value) {
-  
   expression::AbstractExpression *lexpr =
       new expression::TupleValueExpression("");
-  reinterpret_cast<expression::TupleValueExpression *>(lexpr)
-      ->SetValueType(target_table_->GetSchema()->GetColumn(column_id).GetType());
+  reinterpret_cast<expression::TupleValueExpression *>(lexpr)->SetValueType(
+      target_table_->GetSchema()->GetColumn(column_id).GetType());
   reinterpret_cast<expression::TupleValueExpression *>(lexpr)
       ->SetValueIdx(column_id);
 
@@ -286,8 +296,8 @@ expression::AbstractExpression *SeqScanExecutor::ColumnValueToCmpExpr(
       new expression::ConstantValueExpression(value);
 
   expression::AbstractExpression *root_expr =
-      new expression::ComparisonExpression(
-          ExpressionType::COMPARE_EQUAL, lexpr, rexpr);
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL, lexpr,
+                                           rexpr);
 
   root_expr->DeduceExpressionType();
   return root_expr;
