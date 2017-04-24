@@ -91,7 +91,6 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
   // TODO: Update columns are not bound because they are char*
   // not TupleValueExpression in update_statement.h
 
-  update_col_name_ = nullptr;
   context_ = nullptr;
 }
 
