@@ -28,6 +28,10 @@ void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadCo
 {
     // RuntimeState local_runtime_state = *runtime_state;
     // MultiThreadContext local_multi_thread_context = *multi_thread_context;
+//    auto *rs = new RuntimeState(*runtime_state);
+//    auto *mtc = new MultiThreadContext(*multi_thread_context);
+//    pool.SubmitTask(target_func, std::move(rs), std::move(mtc));
+
     pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
 }
 

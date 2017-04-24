@@ -179,17 +179,24 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
       }};
 
+  codegen_.CallPrintf("Inner plan start.\n", {});
+
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
 
   // Generate the primary plan logic
   Produce(root);
 
+  codegen_.CallPrintf("Inner plan end.\n", {});
+
   // Finish the function
   inner_function_builder.ReturnAndFinish();
 
   // Get the function
   llvm::Function *inner_func = inner_function_builder.GetFunction();
+
+//  llvm::Type *ptr_type = llvm::PointerType::getUnqual(codegen_.Int8Type());
+//  llvm::Constant *inner_func_ptr = llvm::ConstantExpr::getBitCast(inner_func, ptr_type);
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
@@ -202,6 +209,8 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   llvm::Value *runtime_state_ptr = codegen_.GetState();
   llvm::Value *thread_id = codegen_.Const64(0);
   llvm::Value *thread_count = codegen_.Const64(4);
+
+  codegen_.CallPrintf("Start to submit threads for inner plan.\n", {});
 
   Loop loop{codegen_, codegen_->CreateICmpULT(thread_id, thread_count),
     {
@@ -216,15 +225,17 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     //NOTE: single-threaded
     codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
 
-    // TODO: multi-threaded
-    // UNUSED_ATTRIBUTE auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
-    // TODO: submit task FAIL
-    // codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
+//    auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
+//    codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_, &runtime_state), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
 
     // Move to next thread id in loop.
     thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
     loop.LoopEnd(codegen_->CreateICmpULT(thread_id, thread_count), {thread_id});
   }
+
+  // Barier.
+
+  codegen_.CallPrintf("Finish submitting threads for inner plan.\n", {});
 
   function_builder.ReturnAndFinish();
 
