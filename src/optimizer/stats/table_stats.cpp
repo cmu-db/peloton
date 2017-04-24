@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// table_stats.cpp
+//
+// Identification: src/optimizer/stats/table_stats.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "optimizer/stats/table_stats.h"
 
 #include <memory>

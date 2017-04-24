@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// count_min_sketch.h
+//
+// Identification: src/include/optimizer/stats/count_min_sketch.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "common/logger.h"
@@ -12,6 +24,9 @@
 namespace peloton{
 namespace optimizer{
 
+//===--------------------------------------------------------------------===//
+// Count-min Sketch
+//===--------------------------------------------------------------------===//
 class CountMinSketch {
  public:
 
@@ -25,6 +40,7 @@ class CountMinSketch {
   std::vector<std::vector<SketchElemType>> table;
   std::vector<SketchElemType> row_hash;
 
+  // Constructor with specific sketch size.
   CountMinSketch(int depth, int width, unsigned int seed) :
       depth{depth},
       width{width},
@@ -34,6 +50,7 @@ class CountMinSketch {
     InitTable(depth, width, seed);
   }
 
+  // Constructor with specific error bound.
   CountMinSketch(double eps, double confidence, unsigned int seed) :
       depth{(int) ceil(-log(1 - confidence) / log(2))},
       width{(int) ceil(2 / eps)},
@@ -43,8 +60,6 @@ class CountMinSketch {
     InitTable(depth, width, seed);
   }
 
-  // Have two different method headers for integer and string
-  // in case later we need to change only one of them
   void Add(int64_t item, int count = 1) {
     std::vector<int> bins = getHashBins(item);
     uint64_t former_min = UINT64_MAX;
@@ -84,7 +99,6 @@ class CountMinSketch {
     if (former_min != 0 && latter_min == 0) {
       --size;
     }
-    //LOG_INFO("mins for item %d : [%d, %d]", (int) item, (int) former_min, (int) latter_min);
   }
 
   void Remove(const char* item, unsigned int count = 1) {
@@ -102,7 +116,6 @@ class CountMinSketch {
     if (former_min != 0 && latter_min == 0) {
       --size;
     }
-    //LOG_INFO("mins for item %s : [%d, %d]", item, (int) former_min, (int) latter_min);
   }
 
   uint64_t EstimateItemCount(int64_t item) {
@@ -111,7 +124,7 @@ class CountMinSketch {
       for (int i = 0; i < depth; i++) {
         count = std::min(count, table[i][bins[i]]);
       }
-      // LOG_INFO("Item count is: %d", (int) count);
+      LOG_TRACE("Item count: %" PRIu64, count);
       return count;
   }
 
@@ -121,7 +134,7 @@ class CountMinSketch {
       for (int i = 0; i < depth; i++) {
         count = std::min(count, table[i][bins[i]]);
       }
-      // LOG_INFO("Item count is: %d", (int) count);
+      LOG_TRACE("Item count: %" PRIu64, count);
       return count;
   }
 
@@ -131,7 +144,7 @@ class CountMinSketch {
     table = std::vector<std::vector<SketchElemType>>(depth, std::vector<SketchElemType>(width));
     std::srand(seed);
     for (int i = 0; i < depth; i++) {
-      row_hash.push_back(std::rand()); // change RAND_MAX to define different max value
+      row_hash.push_back(std::rand());
     }
   }
 
@@ -154,12 +167,6 @@ class CountMinSketch {
     }
     return bins;
   }
-
-  void PrintSketch() {
-    LOG_INFO("\n {CountMinSketch} depth[%d] width[%d] eps[%f] confidence[%f] size[%d]",
-             depth, width, eps, confidence, (int) size);
-  }
-
 };
 
 } /* namespace optimizer */

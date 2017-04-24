@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// table_stats.h
+//
+// Identification: src/include/optimizer/stats/table_stats.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <vector>
@@ -35,7 +47,6 @@ private:
   size_t active_tuple_count_;
   size_t column_count_;
 
-  // Not allow copy
   TableStats(const TableStats&);
   void operator=(const TableStats&);
 

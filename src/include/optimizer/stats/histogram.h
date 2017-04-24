@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// histogram.h
+//
+// Identification: src/include/optimizer/stats/histogram.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <algorithm>
@@ -19,21 +31,14 @@
 namespace peloton {
 namespace optimizer {
 
+//===--------------------------------------------------------------------===//
+// Histogram
+//===--------------------------------------------------------------------===//
+
 /*
  * Online histogram implementation based on
  * http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf
- * Specifically Algorithm 1, 3, and 4
- *
- * One problem associated with this appraoch is that
- * int64_t type convert to double might fail, and
- * calculation may overflow...
- *
- * Note: histogram only applys to data that's comparable.
- *
- * TOOD:
- * - move helper functions to private
- * - Add mean, variance,
- * - Add thresholds to keep histogram bound constant
+ * Specifically Algorithm 1, 3, and 4.
  */
 class Histogram {
  public:
@@ -51,7 +56,7 @@ class Histogram {
    *
    * max_bins - maximum number of bins in histogram.
    */
-  Histogram(uint8_t max_bins = 10)
+  Histogram(uint8_t max_bins = 255)
   :
    max_bins{max_bins},
    bins{},
@@ -74,20 +79,17 @@ class Histogram {
      }
    }
 
-   /*
-    * Peloton type adapter
-    */
   void Update(type::Value& value) {
 		// Hack for handling unimplemented GetData()
     double raw_value = atof(value.ToString().c_str());
     Update(raw_value);
   }
 
-   /*
-    * Input: a point b such that p1 < b < pB
-    *
-    * Output: estimated number of points in the interval [-Inf, b]
-    */
+ /*
+  * Input: a point b such that p1 < b < pB
+  *
+  * Output: estimated number of points in the interval [-Inf, b]
+  */
   double Sum(double b) {
     // TODO: should handle those cases correctly
     assert(bins.size() >= 2);
@@ -100,7 +102,6 @@ class Histogram {
       // -1 because we want index to be element less than b
       i = std::abs(i + 1) - 1;
     }
-		// PL_ASSERT(i >= 0 && i < bins.size() - 1);
 
     Bin b_i = bins[i];
     Bin b_i1 = bins[i + 1];

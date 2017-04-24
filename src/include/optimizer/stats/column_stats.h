@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// column_stats.h
+//
+// Identification: src/include/optimizer/stats/column_stats.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <vector>
@@ -8,7 +20,7 @@
 #include "optimizer/stats/count_min_sketch.h"
 #include "optimizer/stats/top_k_elements.h"
 #include "optimizer/stats/histogram.h"
-#include "optimizer/stats/hll.h"
+#include "optimizer/stats/hyperloglog.h"
 
 namespace peloton {
 namespace optimizer {
@@ -48,19 +60,18 @@ public:
   const oid_t table_id_;
   const oid_t column_id_;
   const type::Type::TypeId column_type_;
-  HLL hll_;
+  HyperLogLog hll_;
   Histogram hist_;
   CountMinSketch sketch_;
   TopKElements topk_;
 
   std::function<void(type::Value&)> f_add_value;
 
-  // Not allow copy
   ColumnStats(const ColumnStats&);
   void operator=(const ColumnStats&);
 
-  size_t null_count_ = 0;   // Number of null values
-  size_t total_count_ = 0;  // Total number of values
+  size_t null_count_ = 0;
+  size_t total_count_ = 0;
 
   void CheckColumnType(type::Type::TypeId type);
   uint8_t TuneHLLPrecision(type::Type::TypeId type);
