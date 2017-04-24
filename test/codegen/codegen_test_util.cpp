@@ -159,8 +159,10 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCa
 
     compiled_query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
       new executor::ExecutorContext{txn, *params}).get(): nullptr);
-    codegen::QueryCache::Instance().InsertPlan(std::move(plan), std::move(compiled_query));
+    
     txn_manager.CommitTransaction(txn);
+
+    codegen::QueryCache::Instance().InsertPlan(std::move(plan), std::move(compiled_query));
 
   }
   else {
