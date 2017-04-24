@@ -36,7 +36,7 @@ public:
     return it->second.get();
   }
 
-  void InsertPlan(std::unique_ptr<planner::AbstractPlan>&& key,
+  void InsertPlan(std::unique_ptr<planner::AbstractPlan> key,
                   std::unique_ptr<Query> val) {
 
 
