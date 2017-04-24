@@ -15,6 +15,7 @@
 #include "type/value.h"
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
+#include "catalog/column_stats_catalog.h"
 
 namespace peloton {
 namespace optimizer {
@@ -51,82 +52,10 @@ StatsStorage::~StatsStorage() {
  * CreateStatsCatalog - Create 'stats' table in the catalog database.
  */
 void StatsStorage::CreateStatsCatalog() {
-  auto catalog = catalog::Catalog::GetInstance();
-  auto catalog_db = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  auto catalog_db_oid = catalog_db->GetOid();
-  bool own_schema = true;
-  bool adapt_table = false;
-  bool is_catalog = true;
-
-  // Create table for stats
-  auto stats_schema = InitializeStatsSchema();
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      catalog_db_oid, catalog->GetNextOid(), stats_schema.release(),
-      STATS_TABLE_NAME, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
-      is_catalog));
-  catalog_db->AddTable(table.release(), true);
-}
-
-/**
- * InitializeStatsSchema - Initialize the table schema for 'stats' table.
- */
-std::unique_ptr<catalog::Schema> StatsStorage::InitializeStatsSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
-                                          not_null_constraint_name);
-  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  type::Type::TypeId integer_type = type::Type::INTEGER;
-  oid_t decimal_type_size = type::Type::GetTypeSize(type::Type::DECIMAL);
-  type::Type::TypeId decimal_type = type::Type::DECIMAL;
-  oid_t varchar_type_size = type::Type::GetTypeSize(type::Type::VARCHAR);
-  type::Type::TypeId varchar_type = type::Type::VARCHAR;
-
-  auto database_id_column =
-      catalog::Column(integer_type, integer_type_size, "database_id", true);
-  database_id_column.AddConstraint(not_null_constraint);
-  auto table_id_column =
-      catalog::Column(integer_type, integer_type_size, "table_id", true);
-  table_id_column.AddConstraint(not_null_constraint);
-  auto column_id_column =
-      catalog::Column(integer_type, integer_type_size, "column_id", true);
-  column_id_column.AddConstraint(not_null_constraint);
-
-  auto num_row_column =
-      catalog::Column(integer_type, integer_type_size, "num_row", true);
-  num_row_column.AddConstraint(not_null_constraint);
-  auto cardinality_column =
-      catalog::Column(decimal_type, decimal_type_size, "cardinality", true);
-  cardinality_column.AddConstraint(not_null_constraint);
-  auto frac_null_column =
-      catalog::Column(decimal_type, decimal_type_size, "frac_null", true);
-  frac_null_column.AddConstraint(not_null_constraint);
-
-  auto most_common_vals_column =
-      catalog::Column(varchar_type, varchar_type_size, "most_common_vals");
-
-  auto most_common_freqs_column =
-      catalog::Column(decimal_type, decimal_type_size, "most_common_freqs");
-
-  auto histogram_bounds_column =
-      catalog::Column(varchar_type, varchar_type_size, "histogram_bounds");
-
-  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(
-      {database_id_column, table_id_column, column_id_column, num_row_column,
-       cardinality_column, frac_null_column, most_common_vals_column,
-       most_common_freqs_column, histogram_bounds_column}));
-  return table_schema;
-}
-
-/**
- *  GetStatsTable - Get the pointer to the 'stats' table.
- */
-storage::DataTable *StatsStorage::GetStatsTable() {
-  auto catalog = catalog::Catalog::GetInstance();
-  storage::Database *catalog_db =
-      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  auto stats_table = catalog_db->GetTableWithName(STATS_TABLE_NAME);
-
-  return stats_table;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::ColumnStatsCatalog::GetInstance(txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -142,7 +71,7 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  storage::DataTable *stats_table = GetStatsTable();
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
 
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
@@ -161,12 +90,20 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
         column_stats->GetCommonValueAndFrequency();
     std::vector<double> histogram_bounds = column_stats->GetHistogramBound();
 
-    // Generate and insert the tuple.
-    auto table_tuple = GetColumnStatsTuple(
-        stats_table->GetSchema(), database_id, table_id, column_id, num_row,
-        cardinality, frac_null, most_common_val_freqs, histogram_bounds);
+    std::string most_common_val_str, histogram_bounds_str;
+    double most_common_freq = 0;
+    if (most_common_val_freqs.size() > 0) {
+      most_common_val_str = most_common_val_freqs[0].first.ToString();
+      most_common_freq = most_common_val_freqs[0].second;
+    }
+    if (histogram_bounds.size() > 0) {
+      histogram_bounds_str = ConvertDoubleArrayToString(histogram_bounds);
+    }
 
-    catalog::InsertTuple(stats_table, std::move(table_tuple), txn);
+    column_stats_catalog->InsertColumnStats(
+        database_id, table_id, column_id, num_row, cardinality, frac_null,
+        most_common_val_str, most_common_freq, histogram_bounds_str,
+        pool_.get(), txn);
   }
 
   txn_manager.CommitTransaction(txn);
@@ -293,7 +230,7 @@ void StatsStorage::AddSamplesTable(
   samples_db->AddTable(table, true);
 
   for (auto &tuple : sampled_tuples) {
-    catalog::InsertTuple(table, std::move(tuple), nullptr);
+    //    catalog::InsertTuple(table, std::move(tuple), nullptr);
   }
 }
 

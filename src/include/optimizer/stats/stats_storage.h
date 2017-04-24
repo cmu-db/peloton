@@ -52,8 +52,6 @@ class StatsStorage {
 
   void CreateStatsCatalog();
 
-  std::unique_ptr<catalog::Schema> InitializeStatsSchema();
-
   storage::DataTable *GetStatsTable();
 
   /* Functions for adding, updating and quering stats */
