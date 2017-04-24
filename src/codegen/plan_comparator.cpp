@@ -27,7 +27,7 @@ int PlanComparator::Compare(const planner::AbstractPlan &A, const planner::Abstr
   PlanNodeType nodeTypeA = A.GetPlanNodeType();
   PlanNodeType nodeTypeB = B.GetPlanNodeType();
   if (nodeTypeA != nodeTypeB)
-    return nodeTypeA < nodeTypeB;
+    return (nodeTypeA < nodeTypeB)? -1:1;
   switch (nodeTypeA) {
   case (PlanNodeType::SEQSCAN):
     return CompareSeqScan((planner::SeqScanPlan &) A, (planner::SeqScanPlan &) B);
@@ -54,7 +54,7 @@ int PlanComparator::CompareSeqScan(const planner::SeqScanPlan & A, const planner
   storage::DataTable *database_ptr_A = A.GetTable();
   storage::DataTable *database_ptr_B = B.GetTable();
   if (database_ptr_A != database_ptr_B) {
-    LOG_DEBUG("table not equal");
+    LOG_DEBUG("table not equal A:%p, B:%p", (void *)database_ptr_A, (void *)database_ptr_B);
     return (database_ptr_A < database_ptr_B) ? -1 : 1;
   }
 
@@ -216,6 +216,7 @@ int PlanComparator::CompareHashJoin(const planner::HashJoinPlan & A, const plann
   int schema_comp = CompareSchema(*A.GetSchema(), *B.GetSchema());
   if (schema_comp != 0)
     return schema_comp;
+
   std::vector<const expression::AbstractExpression *> keys_A, keys_B;
   A.GetLeftHashKeys(keys_A);
   B.GetLeftHashKeys(keys_B);
