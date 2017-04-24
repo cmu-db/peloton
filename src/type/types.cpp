@@ -363,6 +363,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::CREATE_FUNC: {
+      return "CREATE_FUNC";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -400,7 +403,9 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
     return StatementType::COPY;
-  } else {
+  } else if (upper_str == "CREATE_FUNC") {
+    return StatementType::CREATE_FUNC;
+  }  else {
     throw ConversionException(StringUtil::Format(
         "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
@@ -479,6 +484,9 @@ std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
     }
     case ExpressionType::COMPARE_IN: {
       return ("COMPARE_IN");
+    }
+    case ExpressionType::COMPARE_DISTINCT_FROM: {
+      return ("COMPARE_DISTINCT_FROM");
     }
     case ExpressionType::CONJUNCTION_AND: {
       return ("CONJUNCTION_AND");
@@ -670,7 +678,7 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=") {
+  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=" || upper_str == "<>") {
     return ExpressionType::COMPARE_NOTEQUAL;
   } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
@@ -686,6 +694,8 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::COMPARE_NOTLIKE;
   } else if (upper_str == "COMPARE_IN") {
     return ExpressionType::COMPARE_IN;
+  } else if (upper_str == "COMPARE_DISTINCT_FROM") {
+    return ExpressionType::COMPARE_DISTINCT_FROM;
   } else if (upper_str == "CONJUNCTION_AND") {
     return ExpressionType::CONJUNCTION_AND;
   } else if (upper_str == "CONJUNCTION_OR") {

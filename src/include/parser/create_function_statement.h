@@ -21,7 +21,6 @@ namespace peloton {
 namespace parser {
 
 struct Parameter {
-
   enum FuncParamMode {
     FUNC_PARAM_IN = 'i',		/* input only */
     FUNC_PARAM_OUT = 'o',		/* output only */
@@ -75,7 +74,9 @@ struct Parameter {
       case BOOLEAN:
         return type::Type::BOOLEAN;
         break;
-        // add other types as necessary 
+      default:
+        return type::Type::INVALID;
+        break;
     }
   }	
 };
@@ -90,13 +91,6 @@ struct FuncParameter : Parameter {
   FuncParameter(std::string name, DataType type):Parameter(type),name(name){};
   virtual ~FuncParameter(){}
 };
-
-//move it to types.h
-enum PLType {
-   PL_PGSQL=0,
-   PL_C=1
-};
-
 
 //might want to change it to char* instead of string
 struct CreateFunctionStatement : public SQLStatement {

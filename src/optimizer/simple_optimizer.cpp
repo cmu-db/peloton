@@ -26,6 +26,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/copy_plan.h"
 #include "planner/create_plan.h"
+#include "planner/create_function_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/hash_join_plan.h"
@@ -40,6 +41,7 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
+#include "catalog/query_metrics_catalog.h"
 
 #include "common/logger.h"
 #include "type/value_factory.h"
@@ -77,6 +79,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
           new planner::DropPlan((parser::DropStatement*)parse_tree2));
       child_plan = std::move(child_DropPlan);
+    } break;
+
+    case StatementType::CREATE_FUNC: {
+      LOG_TRACE("Adding Create function plan...");
+      auto create_func_plan =
+          new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)parse_tree2);
+      std::unique_ptr<planner::AbstractPlan> child_CreateFuncPlan(create_func_plan);
+      child_plan = std::move(child_CreateFuncPlan);
     } break;
 
     case StatementType::CREATE: {
@@ -703,7 +713,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
 
   // If we're copying the query metric table, then we need to handle the
   // deserialization of prepared stmt parameters
-  if (table_name == QUERY_METRIC_NAME) {
+  if (table_name == QUERY_METRICS_CATALOG_NAME) {
     LOG_DEBUG("Copying the query_metric table.");
     deserialize_parameters = true;
   }
@@ -777,16 +787,14 @@ bool SimpleOptimizer::CheckIndexSearchable(
       index_searchable = false;
 
       // Loop through the indexes to find to most proper one (if any)
-      int max_columns = 0;
       int index_index = 0;
       for (auto& column_set : target_table->GetIndexColumns()) {
         int matched_columns = 0;
         for (auto column_id : predicate_column_ids)
           if (column_set.find(column_id) != column_set.end()) matched_columns++;
-        if (matched_columns > max_columns) {
+        if (matched_columns == (int)column_set.size()) {
           index_searchable = true;
           index_id = index_index;
-          max_columns = matched_columns;
         }
         index_index++;
       }
@@ -801,6 +809,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
 
   // Prepares arguments for the index scan plan
   auto index = target_table->GetIndex(index_id);
+  if (index == nullptr) return false;
 
   // Check whether the index is visible
   // This is for the IndexTuner demo
@@ -851,8 +860,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   LOG_TRACE("predicate before remove: %s", predicate->GetInfo().c_str());
   // Remove redundant predicate that index can search
+  auto index = target_table->GetIndex(index_id);
   predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-      predicate, target_table->GetIndex(index_id));
+      predicate, index);
   if (predicate != nullptr) {
     LOG_TRACE("predicate after remove: %s", predicate->GetInfo().c_str());
   } else {
@@ -861,7 +871,6 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   // Create index scan plan
   LOG_TRACE("Creating a index scan plan");
-  auto index = target_table->GetIndex(index_id);
   std::vector<expression::AbstractExpression*> runtime_keys;
 
   // Create index scan desc

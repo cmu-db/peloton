@@ -32,6 +32,7 @@
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
+#include "planner/create_function_plan.h"
 #include "planner/drop_plan.h"
 #include "binder/bind_node_visitor.h"
 

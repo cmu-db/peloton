@@ -16,6 +16,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/postgresparser.h"
@@ -724,6 +725,205 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   delete stmt_list;
 }
 
+
+TEST_F(PostgresParserTests, DistinctFromTest) {
+  std::string query = "SELECT id, value FROM foo WHERE id IS DISTINCT FROM value;";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, ConstraintTest) {
+  std::string query = "CREATE TABLE table1 ("
+      "a int DEFAULT 1+2,"
+      "b int REFERENCES table2 (bb) ON UPDATE CASCADE,"
+      "c varchar(32) REFERENCES table3 (cc) MATCH FULL ON DELETE SET NULL,"
+      "d int CHECK (d+1 > 0),"
+      "FOREIGN KEY (d) REFERENCES table4 (dd) MATCH SIMPLE ON UPDATE SET DEFAULT"
+      ");";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check column definition
+  EXPECT_EQ(create_stmt->columns->size(), 5);
+
+  // Check First column
+  auto column = create_stmt->columns->at(0);
+  EXPECT_EQ("a", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->default_value != nullptr);
+  auto default_expr = (expression::OperatorExpression*) column->default_value;
+  EXPECT_TRUE(default_expr != nullptr);
+  EXPECT_EQ(ExpressionType::OPERATOR_PLUS, default_expr->GetExpressionType());
+  EXPECT_EQ(2, default_expr->GetChildrenSize());
+  auto child1 = (expression::ConstantValueExpression*)default_expr->GetChild(0);
+  EXPECT_TRUE(child1 != nullptr);
+  auto child2 = (expression::ConstantValueExpression*)default_expr->GetChild(1);
+  EXPECT_TRUE(child2 != nullptr);
+  EXPECT_TRUE(child1->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_TRUE(child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+
+  // Check Second column
+  column = create_stmt->columns->at(1);
+  EXPECT_EQ("b", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("bb", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table2", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::CASCADE, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
+
+  // Check Third column
+  column = create_stmt->columns->at(2);
+  EXPECT_EQ("c", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::VARCHAR, column->type);
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("cc", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table3", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::SETNULL, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::FULL, column->foreign_key_match_type);
+
+  // Check Fourth column
+  column = create_stmt->columns->at(3);
+  EXPECT_EQ("d", std::string(column->name));
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
+  EXPECT_TRUE(column->check_expression != nullptr);
+  EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN, column->check_expression->GetExpressionType());
+  EXPECT_EQ(2, column->check_expression->GetChildrenSize());
+  auto check_child1 = (expression::OperatorExpression*)column->check_expression->GetChild(0);
+  EXPECT_TRUE(check_child1 != nullptr);
+  EXPECT_EQ(ExpressionType::OPERATOR_PLUS, check_child1->GetExpressionType());
+  EXPECT_EQ(2, check_child1->GetChildrenSize());
+  auto plus_child1 = (expression::TupleValueExpression*)check_child1->GetChild(0);
+  EXPECT_TRUE(plus_child1 != nullptr);
+  EXPECT_EQ("d", plus_child1->GetColumnName());
+  auto plus_child2 = (expression::ConstantValueExpression*)check_child1->GetChild(1);
+  EXPECT_TRUE(plus_child2 != nullptr);
+  EXPECT_TRUE(plus_child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  auto check_child2 = (expression::ConstantValueExpression*)column->check_expression->GetChild(1);
+  EXPECT_TRUE(check_child2 != nullptr);
+  EXPECT_TRUE(check_child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+
+  // Check Fifth column
+  column = create_stmt->columns->at(4);
+  EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
+  EXPECT_TRUE(column->foreign_key_source != nullptr);
+  EXPECT_TRUE(column->foreign_key_source->size() == 1);
+  EXPECT_EQ("d", std::string(column->foreign_key_source->at(0)));
+  EXPECT_TRUE(column->foreign_key_sink != nullptr);
+  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
+  EXPECT_EQ("dd", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("table4", std::string(column->table_info_->table_name));
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::SETDEFAULT, column->foreign_key_update_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrActionType::NOACTION, column->foreign_key_delete_action);
+  EXPECT_EQ(parser::ColumnDefinition::FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
+
+  delete stmt_list;
+}
+
+
+
+TEST_F(PostgresParserTests, DataTypeTest) {
+  std::string query =
+      "CREATE TABLE table1 ("
+      "a text,"
+      "b varchar(1024),"
+      "c varbinary(32)"
+      ");";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check column definition
+  EXPECT_EQ(create_stmt->columns->size(), 3);
+
+  // Check First column
+  auto column = create_stmt->columns->at(0);
+  EXPECT_EQ("a", std::string(column->name));
+  EXPECT_EQ(type::Type::VARCHAR, column->GetValueType(column->type));
+  EXPECT_EQ(peloton::type::PELOTON_TEXT_MAX_LEN, column->varlen);
+
+
+  // Check Second column
+  column = create_stmt->columns->at(1);
+  EXPECT_EQ("b", std::string(column->name));
+  EXPECT_EQ(type::Type::VARCHAR, column->GetValueType(column->type));
+  EXPECT_EQ(1024, column->varlen);
+
+  // Check Third column
+  column = create_stmt->columns->at(2);
+  EXPECT_EQ("c", std::string(column->name));
+  EXPECT_EQ(type::Type::VARBINARY, column->GetValueType(column->type));
+  EXPECT_EQ(32, column->varlen);
+
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, FuncCallTest) {
+  std::string query = "SELECT add(1,a), chr(99) FROM TEST WHERE FUN(b) > 2";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto select_stmt = (parser::SelectStatement *) stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+
+  // Check ADD(1,a)
+  auto fun_expr = (expression::FunctionExpression*) (select_stmt->select_list->at(0));
+  EXPECT_TRUE(fun_expr != nullptr);
+  EXPECT_EQ("add", fun_expr->func_name_);
+  EXPECT_EQ(2, fun_expr->GetChildrenSize());
+  auto const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  auto tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(1);
+  EXPECT_TRUE(tv_expr != nullptr);
+  EXPECT_EQ("a", tv_expr->GetColumnName());
+
+  // Check chr(2)
+  fun_expr = (expression::FunctionExpression*) (select_stmt->select_list->at(1));
+  EXPECT_TRUE(fun_expr != nullptr);
+  EXPECT_EQ("chr", fun_expr->func_name_);
+  EXPECT_EQ(1, fun_expr->GetChildrenSize());
+  const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(99)));
+
+  // Check FUN(b) > 2
+  auto op_expr = (expression::OperatorExpression*)select_stmt->where_clause;
+  EXPECT_TRUE(op_expr != nullptr);
+  EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN, op_expr->GetExpressionType());
+  fun_expr = (expression::FunctionExpression*) op_expr->GetChild(0);
+  EXPECT_EQ("fun", fun_expr->func_name_);
+  EXPECT_EQ(1, fun_expr->GetChildrenSize());
+  tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(0);
+  EXPECT_TRUE(tv_expr != nullptr);
+  EXPECT_EQ("b", tv_expr->GetColumnName());
+  const_expr = (expression::ConstantValueExpression*) op_expr->GetChild(1);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+
+  delete stmt_list;
+}
+
 TEST_F(PostgresParserTests, CreatePGSQLFuncTest) {
   std::string query = "CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$   BEGIN  RET  j;  END; $$ LANGUAGE plpgsql;";
 
@@ -735,9 +935,13 @@ TEST_F(PostgresParserTests, CreatePGSQLFuncTest) {
 
 TEST_F(PostgresParserTests, CreateCFuncTest) {
   std::string query = "CREATE FUNCTION c_overpaid(integer, integer) RETURNS boolean AS 'DIRECTORY/funcs', 'c_overpaid' LANGUAGE C STRICT;";
+
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+
   delete stmt_list;
 }
 
