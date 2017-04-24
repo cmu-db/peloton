@@ -12,6 +12,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
+#include "optimizer/stats/column_stats.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace catalog {
@@ -65,8 +67,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
   type::Value val_common_val, val_common_freq;
   if (!most_common_vals.empty()) {
     val_common_val = type::ValueFactory::GetVarcharValue(most_common_vals);
-    val_common_freq =
-        type::ValueFactory::GetDecimalValue(most_common_val_freqs);
+    val_common_freq = type::ValueFactory::GetDecimalValue(most_common_freqs);
   } else {
     val_common_val =
         type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
@@ -88,9 +89,9 @@ bool ColumnStatsCatalog::InsertColumnStats(
   tuple->SetValue(ColumnId::NUM_ROW, val_num_row, nullptr);
   tuple->SetValue(ColumnId::CARDINALITY, val_cardinality, nullptr);
   tuple->SetValue(ColumnId::FRAC_NULL, val_frac_null, nullptr);
-  tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool;
+  tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool);
   tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, nullptr);
-  tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool;
+  tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool);
 
   // Insert the tuple into catalog table
   return InsertTuple(std::move(tuple), txn);
@@ -124,7 +125,9 @@ std::unique_ptr<optimizer::ColumnStats> ColumnStatsCatalog::GetColumnStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unique_ptr<optimizer::ColumnStats> column_stats(new ColumnStats());
+  std::unique_ptr<optimizer::ColumnStats> column_stats(
+      new optimizer::ColumnStats(database_id, table_id, column_id,
+                                 type::Type::INTEGER));
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
