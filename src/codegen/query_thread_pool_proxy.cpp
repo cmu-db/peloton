@@ -55,7 +55,7 @@ llvm::Function *QueryThreadPoolProxy::GetGetIntanceFunction(CodeGen &codegen) {
     return codegen.RegisterFunction(fn_name, fn_type);
 }
 
-llvm::Function *QueryThreadPoolProxy::GetSubmitQueryTaskFunction(CodeGen &codegen) {
+llvm::Function *QueryThreadPoolProxy::GetSubmitQueryTaskFunction(CodeGen &codegen, RuntimeState *runtime_state) {
   const std::string& fn_name = "_ZN7peloton7codegen15QueryThreadPool15SubmitQueryTaskEPNS0_12RuntimeStateEPNS0_18MultiThreadContextEPFvS3_S5_E";
 
   // Has the function already been registered?
@@ -67,19 +67,17 @@ llvm::Function *QueryThreadPoolProxy::GetSubmitQueryTaskFunction(CodeGen &codege
   // The function hasn't been registered, let's do it now
   llvm::Type* thread_pool_type = QueryThreadPoolProxy::GetType(codegen);
 
-  // NOTE: to get RuntimeState type
-  RuntimeState rs;
   auto target_func_type = llvm::FunctionType::get(codegen.VoidType(), {
-      rs.FinalizeType(codegen)->getPointerTo(),
+      runtime_state->FinalizeType(codegen)->getPointerTo(),
       MultiThreadContextProxy::GetType(codegen)->getPointerTo()
   }, false);
 
   llvm::FunctionType* fn_type = llvm::FunctionType::get(
     codegen.VoidType(), {
       thread_pool_type->getPointerTo(),
-      rs.FinalizeType(codegen)->getPointerTo(),
+      runtime_state->FinalizeType(codegen)->getPointerTo(),
       MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
-      target_func_type
+      target_func_type->getPointerTo()
     }, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
