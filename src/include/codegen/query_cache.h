@@ -20,33 +20,29 @@ public:
     return instance;
   }
 
-  //Test needed
-  planner::AbstractPlan* GetFirst() {
+  size_t GetSize() {
     LOG_DEBUG("cache size %d", int(cache.size()));
-    return cache.begin()->first.get();
+    return cache.size();
   }
 
   void ClearCache() {
     cache.clear();
   }
 
-  Query* FindPlan(planner::AbstractPlan& key) {
-    auto it = cache.find(key.Copy());
+  Query* FindPlan(std::unique_ptr<planner::AbstractPlan> && key) {
+    auto it = cache.find(key);
     if (it == cache.end())
       return nullptr;
-    return cache.find(key.Copy())->second.get();
+    return it->second.get();
   }
 
-  void InsertPlan(planner::AbstractPlan &key,
+  void InsertPlan(std::unique_ptr<planner::AbstractPlan>&& key,
                   std::unique_ptr<Query> val) {
 
-    int compare = codegen::PlanComparator::Compare(key, * key.Copy().get());
-    LOG_DEBUG("insert compare result: %d\n", compare);
+
     cache.insert(std::pair<std::unique_ptr<planner::AbstractPlan>,
-    std::unique_ptr<Query>>(key.Copy(),std::move(val)));
+      std::unique_ptr<Query>>(std::move(key),std::move(val)));
   }
-
-
 
 private:
   struct ComparePlan {
