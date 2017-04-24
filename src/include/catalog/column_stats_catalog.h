@@ -61,9 +61,9 @@ class ColumnStatsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  optimizer::ColumnStats GetColumnStats(oid_t database_id, oid_t table_id,
-                                        oid_t column_id,
-                                        concurrency::Transaction *txn);
+  std::unique_ptr<optimizer::ColumnStats> GetColumnStats(
+      oid_t database_id, oid_t table_id, oid_t column_id,
+      concurrency::Transaction *txn);
   // TODO: add more if needed
 
   enum ColumnId {

@@ -169,10 +169,17 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
  * GetColumnStatsByID - Query the 'stats' table to get the column stats by IDs.
  * TODO: Implement this function.
  */
-std::unique_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(
-    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
-    UNUSED_ATTRIBUTE oid_t column_id) {
-  return nullptr;
+std::unique_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
+                                                              oid_t table_id,
+                                                              oid_t column_id) {
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<ColumnStats> column_stats =
+      column_stats_catalog->GetColumnStats(database_id, table_id, column_id,
+                                           txn);
+  txn_manager.CommitTransaction(txn);
+  return std::move(column_stats);
 }
 
 /**
@@ -213,25 +220,22 @@ void StatsStorage::AddSamplesTable(
     std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples) {
   auto schema = data_table->GetSchema();
   auto schema_copy = catalog::Schema::CopySchema(schema);
-
+  std::unique_ptr<catalog::Schema> schema_ptr(schema_copy);
   auto catalog = catalog::Catalog::GetInstance();
-  auto samples_db = catalog->GetDatabaseWithName(SAMPLES_DB_NAME);
-  auto samples_db_oid = samples_db->GetOid();
-  bool own_schema = true;
-  bool adapt_table = false;
-  bool is_catalog = true;
-
+  bool is_catalog = false;
   std::string samples_table_name = GenerateSamplesTableName(
       data_table->GetDatabaseOid(), data_table->GetOid());
 
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      samples_db_oid, catalog->GetNextOid(), schema_copy, samples_table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
-  samples_db->AddTable(table, true);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateTable(std::string(SAMPLES_DB_NAME), samples_table_name,
+                       std::move(schema_ptr), txn, is_catalog);
+  txn_manager.CommitTransaction(txn);
 
-  for (auto &tuple : sampled_tuples) {
-    //    catalog::InsertTuple(table, std::move(tuple), nullptr);
-  }
+  (void)sampled_tuples;
+  // for (auto &tuple : sampled_tuples) {
+  //   catalog::InsertTuple(table, std::move(tuple), nullptr);
+  // }
 }
 
 /**

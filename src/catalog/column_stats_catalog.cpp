@@ -109,7 +109,7 @@ bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-optimizer::ColumnStats ColumnStatsCatalog::GetColumnStats(
+std::unique_ptr<optimizer::ColumnStats> ColumnStatsCatalog::GetColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids(
@@ -124,7 +124,7 @@ optimizer::ColumnStats ColumnStatsCatalog::GetColumnStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  optimizer::ColumnStats column_stats;
+  std::unique_ptr<optimizer::ColumnStats> column_stats(new ColumnStats());
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
@@ -135,7 +135,7 @@ optimizer::ColumnStats ColumnStatsCatalog::GetColumnStats(
     }
   }
 
-  return column_stats;
+  return std::move(column_stats);
 }
 
 }  // End catalog namespace
