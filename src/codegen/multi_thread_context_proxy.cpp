@@ -13,6 +13,8 @@
 #include "codegen/codegen.h"
 #include "codegen/multi_thread_context.h"
 #include "codegen/multi_thread_context_proxy.h"
+#include "codegen/barrier.h"
+#include "codegen/barrier_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -36,7 +38,7 @@ llvm::Type *MultiThreadContextProxy::GetType(CodeGen &codegen) {
 }
 
 llvm::Function *MultiThreadContextProxy::InitInstanceFunction(CodeGen &codegen) {
-  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext12InitInstanceEPS1_ll";
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext12InitInstanceEPS1_llPNS0_7BarrierE";
 
   auto *func = codegen.LookupFunction(func_name);
   if (func != nullptr) {
@@ -48,7 +50,8 @@ llvm::Function *MultiThreadContextProxy::InitInstanceFunction(CodeGen &codegen) 
       {
           MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           codegen.Int64Type(),
-          codegen.Int64Type()
+          codegen.Int64Type(),
+          BarrierProxy::GetType(codegen)->getPointerTo()
       },
       false);
   return codegen.RegisterFunction(func_name, fn_type);
@@ -83,6 +86,38 @@ llvm::Function *MultiThreadContextProxy::GetRangeEndFunction(CodeGen &codegen) {
       {
           MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           codegen.Int64Type()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
+}
+
+llvm::Function *MultiThreadContextProxy::GetBarrierWaitFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext11BarrierWaitEv";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
+}
+
+llvm::Function *MultiThreadContextProxy::GetWorkerFinishFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext12WorkerFinishEv";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
       },
       false);
   return codegen.RegisterFunction(func_name, fn_type);

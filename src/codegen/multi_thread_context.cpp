@@ -19,11 +19,12 @@
 namespace peloton {
 namespace codegen {
 
-void MultiThreadContext::InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count)
+void MultiThreadContext::InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count, Barrier *bar)
 {
   assert(thread_id < thread_count);
   ins->SetThreadId(thread_id);
   ins->SetThreadCount(thread_count);
+  ins->SetBarrier(bar);
 }
 
 int64_t MultiThreadContext::GetRangeStart(int64_t tile_group_num)
@@ -42,6 +43,16 @@ int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num)
   int64_t end = std::min(tile_group_num, (thread_id_ + 1) * slice_size);
 
   return end;
+}
+
+void MultiThreadContext::BarrierWait()
+{
+    bar_->BarrierWait();
+}
+
+void MultiThreadContext::WorkerFinish()
+{
+    bar_->WorkerFinish();
 }
 
 }
