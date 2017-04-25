@@ -195,20 +195,20 @@ struct CreateStatement : TableRefStatement {
         columns(nullptr){};
 
   virtual ~CreateStatement() {
-    if (columns) {
+    if (columns != nullptr) {
       for (auto col : *columns) delete col;
       delete columns;
     }
 
-    if (index_attrs) {
+    if (index_attrs != nullptr) {
       for (auto attr : *index_attrs) delete[] (attr);
       delete index_attrs;
     }
 
-    if (index_name) {
+    if (index_name != nullptr) {
       delete[] (index_name);
     }
-    if (database_name) {
+    if (database_name != nullptr) {
       delete[] (database_name);
     }
   }

@@ -32,8 +32,12 @@ struct PrepareStatement : SQLStatement {
       : SQLStatement(StatementType::PREPARE), name(NULL), query(NULL) {}
 
   virtual ~PrepareStatement() {
-    delete query;
-    free(name);
+    if (query != nullptr) {
+      delete query;
+    }
+    if (name != nullptr) {
+      delete[] name;
+    }
   }
 
   /**

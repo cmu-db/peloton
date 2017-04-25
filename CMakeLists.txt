@@ -42,7 +42,7 @@ include(cmake/Dependencies.cmake)
 
 # ---[ C++11 Flags
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
+check_cxx_compiler_flag("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
 
 if(COMPILER_SUPPORTS_CXX1Y)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
@@ -69,7 +69,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND
 endif()
 
 # -- [ Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1 -ggdb")
 
 # ---[ Flags
 if(UNIX OR APPLE)
@@ -78,6 +78,33 @@ endif()
 
 # ---[ Warnings
 peloton_warnings_disable(CMAKE_CXX_FLAGS -Wno-strict-aliasing)
+
+# Turn on sanitizers if necessary.
+if(USE_SANITIZER)
+    if (USE_SANITIZER STREQUAL "Address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak")
+    elseif (USE_SANITIZER STREQUAL "Undefined")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-sanitize=vptr,function -fno-sanitize-recover=all")
+        set(BLACKLIST_FILE "${CMAKE_SOURCE_DIR}/utils/sanitizers/ubsan_blacklist.txt")
+        if (EXISTS "${BLACKLIST_FILE}")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-blacklist=${BLACKLIST_FILE}")
+        endif()
+    elseif (USE_SANITIZER STREQUAL "Thread")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+    elseif (USE_SANITIZER STREQUAL "Address;Undefined" OR
+            USE_SANITIZER STREQUAL "Undefined;Address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined -fno-sanitize=vptr,function -fno-sanitize-recover=all")
+    else()
+        message(FATAL_ERROR "Unsupported value of USE_SANITIZER: ${USE_SANITIZER}")
+    endif()
+    if (USE_SANITIZER MATCHES "(Undefined;)?Address(;Undefined)?")
+        check_cxx_compiler_flag(-fsanitize-address-use-after-scope FSANITIZE_USE_AFTER_SCOPE_FLAG)
+        if (${FSANITIZE_USE_AFTER_SCOPE_FLAG})
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope")
+        endif()
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+endif()
 
 # -- [ Coverage
 option(COVERALLS "Generate coveralls data" OFF)

@@ -103,19 +103,36 @@ struct SelectStatement : SQLStatement {
         is_for_update(false){};
 
   virtual ~SelectStatement() {
-    delete from_table;
+    if (from_table != nullptr) {
+      delete from_table;
+    }
 
-    if (select_list) {
-      for (auto expr : *select_list) delete expr;
+    if (select_list != nullptr) {
+      for (auto expr : *select_list) {
+        delete expr;
+      }
       delete select_list;
     }
 
-    delete where_clause;
-    delete group_by;
+    if (where_clause != nullptr) {
+      delete where_clause;
+    }
 
-    delete union_select;
-    delete order;
-    delete limit;
+    if (group_by != nullptr) {
+      delete group_by;
+    }
+
+    if (union_select != nullptr) {
+      delete union_select;
+    }
+
+    if (order != nullptr) {
+      delete order;
+    }
+
+    if (limit != nullptr) {
+      delete limit;
+    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
