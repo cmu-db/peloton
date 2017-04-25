@@ -26,12 +26,6 @@ QueryThreadPool* QueryThreadPool::GetInstance()
 // we might need unique_ptr here!
 void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*))
 {
-    // RuntimeState local_runtime_state = *runtime_state;
-    // MultiThreadContext local_multi_thread_context = *multi_thread_context;
-//    auto *rs = new RuntimeState(*runtime_state);
-//    auto *mtc = new MultiThreadContext(*multi_thread_context);
-//    pool.SubmitTask(target_func, std::move(rs), std::move(mtc));
-
     pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
 }
 

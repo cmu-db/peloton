@@ -126,6 +126,12 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, tile_group_idx_end),
                  {tile_group_idx});
   }
+
+  // barrier wait
+  codegen.CallPrintf("table: barrier waiting .. \n", {});
+  // codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen),{multi_thread_context});
+  codegen.CallFunc(MultiThreadContextProxy::GetWorkerFinishFunction(codegen),{multi_thread_context});
+  codegen.CallPrintf("table: barrier passed !!! \n", {});
 }
 
 }  // namespace codegen
