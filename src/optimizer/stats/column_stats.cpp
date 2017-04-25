@@ -112,7 +112,7 @@ ColumnStats::GetCommonValueAndFrequency() {
 uint64_t ColumnStats::GetCardinality() { return hll_.EstimateCardinality(); }
 
 std::vector<double> ColumnStats::GetHistogramBound() {
-  return hist_.Uniform(num_bins);
+  return hist_.Uniform();
 }
 
 } /* namespace optimizer */

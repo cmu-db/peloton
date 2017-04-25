@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include "type/value.h"
 #include "type/type.h"
@@ -36,33 +37,25 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 
 /*
- * Online histogram implementation based on
- * http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf
+ * Online histogram implementation based on A Streaming Parallel Decision Tree
+ * Algorithm (http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf)
  * Specifically Algorithm 1, 3, and 4.
  */
 class Histogram {
- public:
-
-  class Bin;
-
-  const uint8_t max_bins;   // For performance it shouldn't be greater than 255
-  std::vector<Bin> bins;
-  double total_count;
-  double minimum;
-  double maximum;
+public:
 
   /*
    * Constructor.
    *
    * max_bins - maximum number of bins in histogram.
    */
-  Histogram(uint8_t max_bins = 255)
+  Histogram(uint8_t max_bins = 100)
   :
-   max_bins{max_bins},
+   max_bins_{max_bins},
    bins{},
-   total_count{0},
-   minimum{DBL_MAX},
-   maximum{DBL_MIN}
+   total_{0},
+   minimum_{DBL_MAX},
+   maximum_{DBL_MIN}
   {}
 
   /*
@@ -71,18 +64,30 @@ class Histogram {
    * Update the histogram that represents the set S U {p},
    * where S is the set represented by h. Keep bin number unchanged.
    */
-   void Update(double p) {
+  void Update(double p) {
      Bin bin{p, 1};
      InsertBin(bin);
-     if (bins.size() > max_bins) {
+     if (bins.size() > max_bins_) {
        MergeTwoBinsWithMinGap();
      }
    }
 
+  /*
+   * Update histogram. It only supports numeric types for now.
+   */
   void Update(type::Value& value) {
-		// Hack for handling unimplemented GetData()
-    double raw_value = atof(value.ToString().c_str());
-    Update(raw_value);
+    if (value.IsNull()) {
+      LOG_TRACE("Histogram update value is null");
+      return;
+    }
+    if (value.CheckInteger() ||
+        value.GetTypeId() == type::Type::DECIMAL ||
+        value.GetTypeId() == type::Type::TIMESTAMP) {
+      double raw_value = value.GetAs<double>();
+      Update(raw_value);
+    } else {
+      LOG_TRACE("Unsupported histogram value type %d", value.GetTypeId());
+    }
   }
 
  /*
@@ -91,120 +96,101 @@ class Histogram {
   * Output: estimated number of points in the interval [-Inf, b]
   */
   double Sum(double b) {
-    // TODO: should handle those cases correctly
-    assert(bins.size() >= 2);
-    assert(b > bins[0].p);
-    assert(b < bins[bins.size()].p);
+    if (bins.size() == 0)
+      return 0.0;
+
+    if (b >= bins.back().p) {
+      return total_;
+    } else if (b < bins.front().p) {
+      return 0.0;
+    }
 
     Bin bin{b, 1};
-    int i = binary_search(bins, 0, bins.size() - 1, bin);
+    int i = BinarySearch(bins, 0, bins.size() - 1, bin);
     if (i < 0) {
       // -1 because we want index to be element less than b
       i = std::abs(i + 1) - 1;
     }
 
-    Bin b_i = bins[i];
-    Bin b_i1 = bins[i + 1];
-    double m_i = b_i.m;
-    double p_i = b_i.p;
-    double m_i1 = b_i1.m;
-    double p_i1 = b_i1.p;
+    double pi, pi1, mi, mi1;
+    std::tie(pi, pi1, mi, mi1) = GetInterval(bins, i);
 
-    double m_b = m_i + (m_i1 - m_i) / (p_i1 - p_i) * (b - p_i);
+    double mb = mi + (mi1 - mi) / (pi1 - pi) * (b - pi);
 
-    double s = ((m_i + m_b) / 2 ) * ((b - p_i) / (p_i1 - p_i));
+    double s = ((mi + mb) / 2.0 ) * ((b - pi) / (pi1 - pi));
 
     for (int j = 0; j < i; j++) {
       s += bins[j].m;
     }
 
-    s = s + m_i / 2;
+    s = s + mi / 2;
 
     return s;
   }
 
  /*
-  * Input: an integer B, corresponding to B_tilde in paper.
-  *
-  * Output: B boundry points with the property that the number of
-  *         points between two consecutive numbers uj, uj+1 and
-  *         the number of data points to the left of u1 and to the
-  *         right of uB is equal to sum of all points / B.
+  * Return max_bins number of boundry points with the property that the
+  * number of points between two consecutive numbers uj, uj+1 and the
+  * number of data points to the left of u1 and to the right of uB is
+  * equal to sum of all points / max_bins.
   */
-  std::vector<double> Uniform(uint8_t B) {
-    assert(B != 0);
+  std::vector<double> Uniform() {
+    PL_ASSERT(max_bins_ > 0);
+
     std::vector<double> res{};
-    if (bins.size() == 0) return res;
-    double gap = total_count / B;
-    int i = 0;
-    double sum_i = 0;
-    double sum_i1 = bins[0].m;
-    if (total_count > 0) {
-      for (uint8_t j = 1; j < B; j++) {
-        double s = j * gap;
-        while (sum_i1 < s) {
-          sum_i  = sum_i1;
-          sum_i1 += bins[i].m;
+    if (bins.size() <= 1 || total_ <= 0) return res;
+
+    uint8_t i = 0;
+    for (uint8_t j = 0; j < max_bins_ - 1; j++) {
+        double s = (j * 1.0 + 1.0) / max_bins_ * total_;
+        while (i < bins.size() - 1 && Sum(bins[i+1].p) < s) {
           i += 1;
         }
-        double u_j;
-				// TODO: Original paper does not cover this case!
-        if (i == 0) {
-          u_j = s;
-        } else {
-          Bin b_i = bins[i - 1];
-          Bin b_i1 = bins[i];
-          double p_i = b_i.p;
-          double p_i1 = b_i1.p;
-          double m_i = b_i.m;
-          double m_i1 = b_i1.m;
+        PL_ASSERT(i < bins.size() - 1);
+        double pi, pi1, mi, mi1;
+        std::tie(pi, pi1, mi, mi1) = GetInterval(bins, i);
 
-          double a, b, c, d, z;
-          d = s - sum_i;
-          a = m_i1 - m_i;
-          b = 2 * m_i;
-          c = -2 * d;
-          if (a == 0) {
-            z = -c / b;
-          } else {
-            z = (-b + std::sqrt(b * b - 4 * a * c)) / (2 * a);
-          }
-          u_j = p_i + (p_i1 - p_i) * z;
-        }
-        res.push_back(u_j);
-      }
+        double d = s - Sum(bins[i].p);
+        double a = mi1 - mi;
+        double b = 2.0 * mi;
+        double c = -2.0 * d;
+        double z = a != 0 ?
+          (-b + std::sqrt(b * b - 4.0 * a * c)) / (2.0 * a) :
+          -c / b;
+        double uj = pi + (pi1 - pi) * z;
+        res.push_back(uj);
     }
-    // PrintUniform(res);
     return res;
   }
 
-  // Utility function to visualize histogram
-  void Print() {
-    LOG_INFO("Histogram: total_count=[%f] num_bins=[%lu]", total_count, bins.size());
-    for (Bin b : bins) {
-      b.Print();
-    }
-  }
+  inline double GetMaxValue() { return maximum_; }
 
-  void PrintUniform(const std::vector<double> &vec) {
-    LOG_INFO("Printing uniform histogram...");
-    for (double x : vec) {
-      LOG_INFO("[%f]", x);
-    }
-  }
+  inline double GetMinValue() { return minimum_; }
+
+  inline uint64_t GetTotalValueCount() { return std::floor(total_); }
+
+  inline uint8_t GetBinSize() { return max_bins_; }
 
  private:
 
+  class Bin;
+
+  const uint8_t max_bins_;
+  std::vector<Bin> bins;
+  double total_;
+  double minimum_;
+  double maximum_;
+
   void InsertBin(Bin &bin) {
-    total_count += bin.m;
-    if (bin.p < minimum) {
-      minimum = bin.p;
+    total_ += bin.m;
+    if (bin.p < minimum_) {
+      minimum_ = bin.p;
     }
-    if (bin.p > maximum) {
-      maximum = bin.p;
+    if (bin.p > maximum_) {
+      maximum_ = bin.p;
     }
 
-    int index = binary_search(bins, 0, bins.size() - 1, bin);
+    int index = BinarySearch(bins, 0, bins.size() - 1, bin);
 
     if (index >= 0) {
       bins[index].m += bin.m;
@@ -214,7 +200,7 @@ class Histogram {
     }
   }
 
-  // Merge n + 1 number of bins to n bins based on update algorithm.
+  /* Merge n + 1 number of bins to n bins based on update algorithm. */
   void MergeTwoBinsWithMinGap() {
     int min_gap_idx = -1;
     double min_gap = DBL_MAX;
@@ -225,18 +211,20 @@ class Histogram {
         min_gap_idx = i;
       }
     }
-		// assert(min_gap_idx >= 0 && min_gap_idx < bins.size());
+		PL_ASSERT(min_gap_idx >= 0 && min_gap_idx < bins.size());
     Bin &prev_bin = bins[min_gap_idx];
     Bin &next_bin = bins[min_gap_idx + 1];
     prev_bin.MergeWith(next_bin);
     bins.erase(bins.begin() + min_gap_idx + 1);
   }
 
-  // A more useful binary search based on Java's Collections.binarySearch
-  // It returns -index - 1 if not found, where index is position for insertion:
-  // the first index with element **greater** than the key.
+  /*
+   * A more useful binary search based on Java's Collections.binarySearch
+   * It returns -index - 1 if not found, where index is position for insertion:
+   * the first index with element **greater** than the key.
+   */
   template <typename T>
-  int binary_search(const std::vector<T> &vec, int start, int end, const T &key) {
+  int BinarySearch(const std::vector<T> &vec, int start, int end, const T &key) {
     if (start > end) {
         return -(start + 1);
     }
@@ -246,18 +234,35 @@ class Histogram {
     if (vec[middle] == key) {
         return middle;
     } else if (vec[middle] > key) {
-        return binary_search(vec, start, middle - 1, key);
+        return BinarySearch(vec, start, middle - 1, key);
     }
-    return binary_search(vec, middle + 1, end, key);
+    return BinarySearch(vec, middle + 1, end, key);
   }
 
- public:
+  inline std::tuple<double, double, double, double> GetInterval(std::vector<Bin> bins, uint8_t i) {
+    PL_ASSERT(i < bins.size() - 1);
+    return std::make_tuple(bins[i].p, bins[i+1].p, bins[i].m, bins[i+1].m);
+  }
 
- /*
-  * Represent a bin of a historgram.
-  */
+  void PrintHistogram() {
+    LOG_INFO("Histogram: total=[%f] num_bins=[%lu]", total_, bins.size());
+    for (Bin b : bins) {
+      b.Print();
+    }
+  }
+
+  void PrintUniform(const std::vector<double> &vec) {
+    LOG_INFO("Printing uniformed histogram bounds...");
+    std::string output{"{"};
+    for (uint8_t i = 0; i < vec.size(); i++) {
+      output += std::to_string(vec[i]);
+      output += (i == vec.size() - 1 ? "}" : ", ");
+    }
+    LOG_INFO("%s", output.c_str());
+  }
+
   class Bin {
-   public:
+  public:
 
     double p;
     double m;
