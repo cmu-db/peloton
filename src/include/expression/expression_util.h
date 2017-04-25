@@ -104,7 +104,7 @@ class ExpressionUtil {
 
   /*
    * This function removes all the terms related to indexed columns within an
-   * expression.
+   * expression. The expression passed in may be modified.
    *
    * NOTE:
    * 1. This should only be called after we check that the predicate is index
@@ -183,7 +183,7 @@ class ExpressionUtil {
         for (size_t i = 0; i < children_size; ++i) {
           if (expression->GetModifiableChild(i) != new_children[i]) {
             LOG_TRACE("Setting new child at idx: %ld", i);
-            expression->SetChild(i, new_children[i]->Copy());
+            expression->SetChild(i, new_children[i]);
           }
         }
       }
