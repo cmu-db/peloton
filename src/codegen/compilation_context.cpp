@@ -20,6 +20,8 @@
 #include "common/timer.h"
 
 #include "codegen/query_thread_pool_proxy.h"
+#include "codegen/barrier.h"
+#include "codegen/barrier_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -162,41 +164,45 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   return function_builder.GetFunction();
 }
 
+// NOTE:
+llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::AbstractPlan &root) {
+    // Create function definition
+    auto &code_context = query_.GetCodeContext();
+    auto &runtime_state = query_.GetRuntimeState();
+
+    auto inner_plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_inner_plan";
+    FunctionBuilder inner_function_builder{
+        code_context,
+        inner_plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
+          {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
+        }};
+
+    codegen_.CallPrintf("Inner plan start.\n", {});
+
+    // Create all local state
+    runtime_state.CreateLocalState(codegen_);
+
+    // Generate the primary plan logic
+    Produce(root);
+
+    codegen_.CallPrintf("Inner plan end.\n", {});
+
+    // Finish the function
+    inner_function_builder.ReturnAndFinish();
+    return inner_function_builder.GetFunction();
+}
+
+
 // Generate the code for the plan() function of the query
 llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
-  // Create function definition
+
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
-
-  auto inner_plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_inner_plan";
-  FunctionBuilder inner_function_builder{
-      code_context,
-      inner_plan_fn_name,
-      codegen_.VoidType(),
-      {
-        {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
-        {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
-      }};
-
-  codegen_.CallPrintf("Inner plan start.\n", {});
-
-  // Create all local state
-  runtime_state.CreateLocalState(codegen_);
-
-  // Generate the primary plan logic
-  Produce(root);
-
-  codegen_.CallPrintf("Inner plan end.\n", {});
-
-  // Finish the function
-  inner_function_builder.ReturnAndFinish();
-
-  // Get the function
-  llvm::Function *inner_func = inner_function_builder.GetFunction();
-
-//  llvm::Type *ptr_type = llvm::PointerType::getUnqual(codegen_.Int8Type());
-//  llvm::Constant *inner_func_ptr = llvm::ConstantExpr::getBitCast(inner_func, ptr_type);
+  llvm::Function *inner_func = GenerateInnerPlanFunction(root);
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
@@ -206,9 +212,20 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
         {
           {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
+  // TODO: dynamically get the number of threads
+  uint64_t n_threads = 2;
+  llvm::Value *barrier_count = codegen_.Const64(n_threads+1);
+
   llvm::Value *runtime_state_ptr = codegen_.GetState();
   llvm::Value *thread_id = codegen_.Const64(0);
-  llvm::Value *thread_count = codegen_.Const64(4);
+  llvm::Value *thread_count = codegen_.Const64(n_threads);
+
+  llvm::Value *barrier = codegen_->CreateAlloca(BarrierProxy::GetType(codegen_));
+
+  // thread pool
+  auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
+
+  codegen_.CallFunc(BarrierProxy::GetInitInstanceFunction(codegen_), {barrier, barrier_count});
 
   codegen_.CallPrintf("Start to submit threads for inner plan.\n", {});
 
@@ -218,22 +235,26 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     }};
   {
     thread_id = loop.GetLoopVar(0);
-    llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
-    codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count});
 
+    llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
+    codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count, barrier});
 
     //NOTE: single-threaded
-    codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
+    // codegen_.CallFunc(inner_func, {runtime_state_ptr, multi_thread_context});
 
-//    auto *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
-//    codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_, &runtime_state), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
+    //NOTE: multi-threaded
+   codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_, &runtime_state), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
 
     // Move to next thread id in loop.
     thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
     loop.LoopEnd(codegen_->CreateICmpULT(thread_id, thread_count), {thread_id});
   }
 
-  // Barier.
+  // TODO: barrier for main thread
+  codegen_.CallPrintf("Main: barrier wait ... \n", {});
+  // codegen_.CallFunc(BarrierProxy::GetBarrierWaitFunction(codegen_),{barrier});
+  codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_),{barrier});
+  codegen_.CallPrintf("Main: barrier pass !!! \n", {});
 
   codegen_.CallPrintf("Finish submitting threads for inner plan.\n", {});
 

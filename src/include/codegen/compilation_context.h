@@ -85,6 +85,9 @@ class CompilationContext {
   // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
 
+  // NOTE: For multi-threaded!!!
+  llvm::Function *GenerateInnerPlanFunction(const planner::AbstractPlan &root);
+
   // Generate the init() function of the query
   llvm::Function *GenerateInitFunction();
 
