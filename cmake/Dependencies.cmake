@@ -39,12 +39,6 @@ endif()
 find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
 
-
-# --[ Valgrind
-find_program(MEMORYCHECK_COMMAND valgrind)
-set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
-set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp")
-
 # --[ PQXX
 find_package(PQXX REQUIRED)
 include_directories(SYSTEM ${PQXX_INCLUDE_DIRECTORIES})

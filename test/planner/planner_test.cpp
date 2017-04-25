@@ -290,8 +290,12 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
   table_ref->table_info_ = new parser::TableInfo();
   table_ref->table_info_->table_name = name;
+
+  auto id_col = new char[strlen("id") + 1], name_col = new char[strlen("name") + 1];
+  strcpy(id_col, "id");
+  strcpy(name_col, "name");
   insert_statement->table_ref_ = table_ref;
-  insert_statement->columns = new std::vector<char *>{strdup("id"), strdup("name")};
+  insert_statement->columns = new std::vector<char *>{id_col, name_col};
 
   // Value val =
   //    type::ValueFactory::GetNullValue();  // The value is not important
