@@ -30,6 +30,8 @@ class MultiThreadContextProxy {
   static llvm::Function *InitInstanceFunction(CodeGen &codegen);
   static llvm::Function *GetRangeStartFunction(CodeGen &codegen);
   static llvm::Function *GetRangeEndFunction(CodeGen &codegen);
+  static llvm::Function *GetBarrierWaitFunction(CodeGen &codegen);
+  static llvm::Function *GetWorkerFinishFunction(CodeGen &codegen);
 };
 
 
