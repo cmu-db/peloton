@@ -42,12 +42,14 @@ struct InsertStatement : SQLStatement {
       delete columns;
     }
 
-    if (insert_values) {
+    if (insert_values != nullptr) {
       for (auto *tuple : *insert_values) {
         for (auto *expr : *tuple) {
           // Why?
 //          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
-            if (expr != nullptr) delete expr;
+            if (expr != nullptr) {
+              delete expr;
+            }
         }
         delete tuple;
       }
