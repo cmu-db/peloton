@@ -26,6 +26,7 @@
 #include "storage/tuple.h"
 #include "storage/tuple_iterator.h"
 #include "storage/compressed_tile.h"
+#include "container/cuckoo_map.h"
 
 namespace peloton {
 namespace storage {
@@ -81,6 +82,10 @@ void CompressedTile::CompressTile(Tile *tile) {
         }
         new_columns[i] = new_column_values;
         break;
+
+      case type::Type::VARCHAR:
+        LOG_DEBUG("dictionary");
+        new_column_values = CompressCharColumn(tile, i);
 
       default:
         LOG_TRACE("Peloton currently does not compress %s",
@@ -206,6 +211,50 @@ std::vector<type::Value> CompressedTile::CompressColumn(
           static_cast<int>(compression_type) + 1);
     }
   }
+  return modified_values;
+}
+
+// compression for varchar
+std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
+                                                            oid_t column_id) {
+  oid_t num_tuples = tile->GetAllocatedTupleCount();
+  auto tile_schema = tile->GetSchema();
+  bool is_inlined = tile_schema->IsInlined(column_id);
+  size_t column_offset = tile_schema->GetOffset(column_id);
+  auto column_type = tile_schema->GetType(column_id);
+  std::vector<type::Value> column_values(num_tuples);
+
+  /* to use this template
+   * src/container/cuckoo_map.cpp
+   * needs to be modified and add this type
+   */
+  CuckooMap<std::string, int> dictionary;
+  //TODO save the decoder somewhere
+  std::vector<std::string> decoder;
+  std::vector<type::Value> modified_values(num_tuples);
+
+  int counter = 0;
+  int new_value = 0;
+  for (oid_t i = 0; i < num_tuples; i++) {
+    std::string word = tile->GetValueFast(i, column_offset, column_type,
+                                          is_inlined).ToString();
+
+    // add a new word to dictionary
+    if (dictionary.Contains(word) == false) {
+     dictionary.Insert(word, counter);
+      decoder.push_back(word);
+      new_value = counter;
+      counter++;
+      LOG_DEBUG("new word: #%d : %s", counter, word.c_str());
+
+    } else {
+		//TODO fetch value from cuckoo
+      new_value = 0;
+    }
+    //TODO modified_values[i] =
+	(void) new_value;
+  }
+
   return modified_values;
 }
 
