@@ -46,8 +46,12 @@ class CopyExecutor : public AbstractExecutor {
   // Initialize the column ids for query parameters
   void InitParamColIds();
 
+  bool InitFileHandle(const char *name, const char *mode);
+
   // Flush the local buffer
   void FlushBuffer();
+
+  void FFlushFsync();
 
   // Copy and escape the content of column to local buffer
   void Copy(const char *data, int len, bool end_of_line);
