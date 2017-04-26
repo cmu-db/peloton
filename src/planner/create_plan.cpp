@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/expression/constant_value_expression.h>
 #include "planner/create_plan.h"
 
 #include "parser/create_statement.h"
@@ -69,6 +70,21 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
         column_constraints.push_back(constraint);
         LOG_DEBUG("Added a unique constraint on column \"%s\"", col->name);
+      }
+
+      // Add the default value
+      if (col->default_value != nullptr) {
+        // Referenced from insert_plan.cpp
+        if (col->default_value->GetExpressionType() != ExpressionType::VALUE_PARAMETER) {
+          expression::ConstantValueExpression *const_expr_elem =
+            dynamic_cast<expression::ConstantValueExpression *>(col->default_value);
+
+          catalog::Constraint constraint(ConstraintType::DEFAULT, "con_default");
+          type::Value v = const_expr_elem->GetValue();
+          constraint.addDefaultValue(v);
+          column_constraints.push_back(constraint);
+          LOG_DEBUG("Added a default constraint on column \"%s\"", col->name);
+        }
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
