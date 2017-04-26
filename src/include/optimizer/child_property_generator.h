@@ -55,6 +55,10 @@ class ChildPropertyGenerator : public OperatorVisitor {
 
  private:
   /***** Helper functions *****/
+  // Since the ChildPropertyGenerator have similar
+  // behaviour for different implementation of the same
+  // logical operator, we apply helper functions to
+  // reduce duplicate code
   void AggregateHelper(const BaseOperatorNode *op);
   void ScanHelper();
 
