@@ -32,13 +32,15 @@ public:
 
   void CollectColumnStats();
 
-  size_t GetActiveTupleCount();
+  inline size_t GetActiveTupleCount() {
+    return active_tuple_count_;
+  }
 
-  size_t GetColumnCount();
+  inline size_t GetColumnCount() {
+    return column_count_;
+  }
 
   ColumnStats* GetColumnStats(oid_t column_id);
-
-  std::vector<ColumnStats*>& GetAllColumnStats();
 
 private:
   storage::DataTable* table_;

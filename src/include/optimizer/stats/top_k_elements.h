@@ -558,7 +558,7 @@ class TopKElements {
   /*
    * Peloton type compatible / adaptor
    */
-  void Add(type::Value& value) {
+  void Add(const type::Value& value) {
     switch (value.GetTypeId()) {
       case type::Type::TINYINT:
         int8_t n_8;
@@ -823,4 +823,3 @@ class TopKElements {
 
 } /* namespace optimizer */
 } /* namespace peloton */
-

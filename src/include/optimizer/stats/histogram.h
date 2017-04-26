@@ -49,7 +49,7 @@ public:
    *
    * max_bins - maximum number of bins in histogram.
    */
-  Histogram(uint8_t max_bins = 100)
+  Histogram(const uint8_t max_bins = 100)
   :
    max_bins_{max_bins},
    bins{},
@@ -73,17 +73,19 @@ public:
    }
 
   /*
-   * Update histogram. It only supports numeric types for now.
+   * Update histogram. It only supports numeric types.
    */
-  void Update(type::Value& value) {
+  void Update(const type::Value& value) {
     if (value.IsNull()) {
       LOG_TRACE("Histogram update value is null");
       return;
     }
     if (value.CheckInteger() ||
-        value.GetTypeId() == type::Type::DECIMAL ||
         value.GetTypeId() == type::Type::TIMESTAMP) {
-      double raw_value = value.GetAs<double>();
+      int raw_value = value.GetAs<int>();
+      Update(raw_value);
+    } else if (value.GetTypeId() == type::Type::DECIMAL) {
+      int raw_value = value.GetAs<double>();
       Update(raw_value);
     } else {
       LOG_TRACE("Unsupported histogram value type %d", value.GetTypeId());
@@ -129,7 +131,7 @@ public:
   }
 
  /*
-  * Return max_bins number of boundry points with the property that the
+  * Return boundry points at most size max_bins with the property that the
   * number of points between two consecutive numbers uj, uj+1 and the
   * number of data points to the left of u1 and to the right of uB is
   * equal to sum of all points / max_bins.
@@ -141,7 +143,7 @@ public:
     if (bins.size() <= 1 || total_ <= 0) return res;
 
     uint8_t i = 0;
-    for (uint8_t j = 0; j < max_bins_ - 1; j++) {
+    for (uint8_t j = 0; j < bins.size() - 1; j++) {
         double s = (j * 1.0 + 1.0) / max_bins_ * total_;
         while (i < bins.size() - 1 && Sum(bins[i+1].p) < s) {
           i += 1;
@@ -169,7 +171,7 @@ public:
 
   inline uint64_t GetTotalValueCount() { return std::floor(total_); }
 
-  inline uint8_t GetBinSize() { return max_bins_; }
+  inline uint8_t GetMaxBinSize() { return max_bins_; }
 
  private:
 
@@ -181,7 +183,7 @@ public:
   double minimum_;
   double maximum_;
 
-  void InsertBin(Bin &bin) {
+  void InsertBin(const Bin& bin) {
     total_ += bin.m;
     if (bin.p < minimum_) {
       minimum_ = bin.p;
@@ -252,7 +254,6 @@ public:
   }
 
   void PrintUniform(const std::vector<double> &vec) {
-    LOG_INFO("Printing uniformed histogram bounds...");
     std::string output{"{"};
     for (uint8_t i = 0; i < vec.size(); i++) {
       output += std::to_string(vec[i]);
@@ -272,7 +273,7 @@ public:
      m{m}
     {}
 
-    void MergeWith(Bin &bin) {
+    void MergeWith(const Bin &bin) {
       double new_m = m + bin.m;
       p = (p * m + bin.p * bin.m) / new_m;
       m = new_m;

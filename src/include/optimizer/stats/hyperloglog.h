@@ -43,7 +43,7 @@ class HyperLogLog {
     delete hll_;
   }
 
-  void Update(type::Value& value) {
+  void Update(const type::Value& value) {
     hll_->Update(Hash(value));
   }
 
@@ -65,7 +65,7 @@ class HyperLogLog {
   libcount::HLL* hll_;
 
   // Compute hash for given value using Murmur3.
-  uint64_t Hash(type::Value& value) {
+  uint64_t Hash(const type::Value& value) {
     uint64_t hash[2];
     if (value.CheckInteger())
     {

@@ -34,8 +34,7 @@ public:
   int hll_precision = 8;
   double cmsketch_eps = 0.1;
   double cmsketch_gamma = 0.01;
-  uint8_t max_bins = 64;
-  uint8_t num_bins = 10;
+  uint8_t max_bins = 100;
   uint8_t top_k = 10;
 
   using ValueFrequencyPair = std::pair<type::Value, double>;
@@ -45,15 +44,25 @@ public:
 
   ~ColumnStats();
 
-  void AddValue(type::Value& value);
+  void AddValue(const type::Value& value);
 
   double GetFracNull();
 
-  std::vector<ValueFrequencyPair> GetCommonValueAndFrequency();
+  inline std::vector<ValueFrequencyPair> GetCommonValueAndFrequency() {
+    return topk_.GetAllOrderedMaxFirst();
+  }
 
-  uint64_t GetCardinality();
+  inline uint64_t GetCardinality() {
+    return hll_.EstimateCardinality();
+  }
 
-  std::vector<double> GetHistogramBound();
+  inline double GetCardinalityError() {
+    return hll_.RelativeError();
+  }
+
+  inline std::vector<double> GetHistogramBound() {
+    return hist_.Uniform();
+  }
 
  private:
   const oid_t database_id_;
@@ -65,19 +74,11 @@ public:
   CountMinSketch sketch_;
   TopKElements topk_;
 
-  std::function<void(type::Value&)> f_add_value;
-
-  ColumnStats(const ColumnStats&);
-  void operator=(const ColumnStats&);
-
   size_t null_count_ = 0;
   size_t total_count_ = 0;
 
-  void CheckColumnType(type::Type::TypeId type);
-  uint8_t TuneHLLPrecision(type::Type::TypeId type);
-  void ComputeTrivialStats(type::Value& value);
-  void ComputeScalarStats(type::Value& value);
-  void ComputeDistinctStats(type::Value& value);
+  ColumnStats(const ColumnStats&);
+  void operator=(const ColumnStats&);
 };
 
 } /* namespace optimizer */

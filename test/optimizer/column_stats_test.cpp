@@ -30,29 +30,27 @@ using namespace optimizer;
 
 class ColumnStatsTests : public PelotonTest {};
 
-using ValueFrequencyPair = std::pair<type::Value, double>;
-
-void PrintCommonValueAndFrequency(
-    std::vector<std::pair<type::Value, double>> valfreq) {
-  for (auto const& p : valfreq) {
-    LOG_INFO("\n [Print k Values] %s, %f", p.first.GetInfo().c_str(), p.second);
-  }
-}
-
+// Basic test with tiny dataset.
 TEST_F(ColumnStatsTests, BasicTest) {
   ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
                        type::Type::TypeId::INTEGER};
+  // Edge case
+  EXPECT_EQ(colstats.GetFracNull(), 0);  // Should also log error
+  EXPECT_EQ(colstats.GetCardinality(), 0);
+  EXPECT_EQ(colstats.GetHistogramBound().size(), 0);
+  EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), 0);
+
   for (int i = 0; i < 10; i++) {
     type::Value v = type::ValueFactory::GetIntegerValue(i);
     colstats.AddValue(v);
   }
   EXPECT_EQ(colstats.GetCardinality(), 10);
   EXPECT_EQ(colstats.GetFracNull(), 0);
-  EXPECT_EQ(colstats.GetHistogramBound().size() + 1, colstats.num_bins);
-  EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), colstats.top_k);
+  EXPECT_GE(colstats.GetHistogramBound().size(), 0);
 }
 
-// Test categorical values
+// Test categorical values. Categorical data refers to data that
+// are not compariable but still hashable.
 TEST_F(ColumnStatsTests, DistinctValueTest) {
   ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
                        type::Type::TypeId::BOOLEAN};
@@ -62,49 +60,48 @@ TEST_F(ColumnStatsTests, DistinctValueTest) {
   }
   EXPECT_EQ(colstats.GetCardinality(), 2);
   EXPECT_EQ(colstats.GetFracNull(), 0);
-  EXPECT_EQ(colstats.GetHistogramBound().size(),
-            0);  // No histogram for categorical data
-  std::vector<ValueFrequencyPair> valfreq =
-      colstats.GetCommonValueAndFrequency();
-  // EXPECT_EQ(valfreq.size(), 2);
-  // PrintCommonValueAndFrequency(colstats.GetCommonValueAndFrequency());
+  EXPECT_EQ(colstats.GetHistogramBound().size(), 0);  // No histogram dist
 }
 
-// All stats collectors should work with trivial case
-TEST_F(ColumnStatsTests, TrivialValueTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID, type::Type::TypeId::ARRAY};
-  EXPECT_EQ(colstats.GetFracNull(), 0);  // Should also log error
-  EXPECT_EQ(colstats.GetCardinality(), 0);
-  EXPECT_EQ(colstats.GetHistogramBound().size(), 0);
-  EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), 0);
-}
-
-TEST_F(ColumnStatsTests, LeftSkewedDistTest) {
+// Test dataset with extreme distribution.
+// More specifically distribution with large amount of data at tail
+// with single continuous value to the left of tail.
+TEST_F(ColumnStatsTests, SkewedDistTest) {
   ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
                        type::Type::TypeId::BIGINT};
-  int big_int = 12345;
-  for (int i = 1; i <= 10; i++) {
+  int big_int = 1234567;
+  int height = 100000;
+  int n = 10;
+  // Build up extreme tail distribution.
+  for (int i = 1; i <= n; i++) {
     type::Value v = type::ValueFactory::GetBigIntValue(i * big_int);
-    for (int j = 0; j < 100000; j++) {
+    for (int j = 0; j < height; j++) {
       colstats.AddValue(v);
     }
   }
   EXPECT_EQ(colstats.GetFracNull(), 0);
   EXPECT_EQ(colstats.GetCardinality(), 10);
-  EXPECT_EQ(colstats.GetHistogramBound().size() + 1, 10);
-  EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), 10);
-  for (int i = big_int + 1; i < 2 * big_int; i++) {
+  EXPECT_GE(colstats.GetHistogramBound().size(), 0);
+  EXPECT_LE(colstats.GetHistogramBound().size(), 255);
+  // Add head distribution
+  for (int i = 0; i < big_int; i++) {
     type::Value v = type::ValueFactory::GetBigIntValue(i);
     colstats.AddValue(v);
   }
   EXPECT_EQ(colstats.GetFracNull(), 0);
-  // HLL tends to underestimate
-  EXPECT_GE(colstats.GetCardinality(), big_int + 100);
-  EXPECT_LE(colstats.GetCardinality(), 3 * big_int - 100);
-  EXPECT_EQ(colstats.GetHistogramBound().size() + 1, 10);
-  EXPECT_EQ(colstats.GetCommonValueAndFrequency().size(), 10);
+  uint64_t cardinality = colstats.GetCardinality();
+  double error = colstats.GetCardinalityError();
+  int buffer = 30000; // extreme case error buffer
+  EXPECT_GE(cardinality, (big_int + 10) * (1 - error) - buffer);
+  EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
+  EXPECT_GE(colstats.GetHistogramBound().size(), 0);
+  // test null
+  type::Value null = type::ValueFactory::GetNullValueByType(type::Type::BIGINT);
+  colstats.AddValue(null);
+  EXPECT_GE(colstats.GetFracNull(), 0);
 }
 
+// Test double values.
 TEST_F(ColumnStatsTests, DecimalTest) {
   ColumnStats colstats{0, 0, 0, type::Type::TypeId::DECIMAL};
   for (int i = 0; i < 1000; i++) {
@@ -116,15 +113,7 @@ TEST_F(ColumnStatsTests, DecimalTest) {
   colstats.AddValue(v1);
   colstats.AddValue(v2);
   EXPECT_EQ(colstats.GetCardinality(), 3);
-  for (int i = 0; i < 100; i++) {
-    type::Value v = type::ValueFactory::GetDecimalValue(5.1525 + i);
-    colstats.AddValue(v);
-    colstats.AddValue(v);
-    colstats.AddValue(v);
-  }
-  std::vector<std::pair<type::Value, double>> valfreq =
-      colstats.GetCommonValueAndFrequency();
-  // EXPECT_EQ(valfreq.size(), 10);
 }
+
 } /* namespace test */
 } /* namespace peloton */

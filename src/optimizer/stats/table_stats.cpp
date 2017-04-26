@@ -64,10 +64,6 @@ void TableStats::InitColumnStats() {
   }
 }
 
-size_t TableStats::GetActiveTupleCount() { return active_tuple_count_; }
-
-size_t TableStats::GetColumnCount() { return column_count_; }
-
 ColumnStats* TableStats::GetColumnStats(oid_t column_id) {
   PL_ASSERT(column_id < column_stats_.size());
   return column_stats_[column_id].get();
