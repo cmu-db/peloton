@@ -15,6 +15,7 @@
 #include "type/types.h"
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace parser {
@@ -48,9 +49,31 @@ struct ColumnDefinition {
     VARBINARY
   };
 
-  ColumnDefinition(DataType type) : type(type) {}
+  enum FKConstrActionType {
+    NOACTION,
+    RESTRICT,
+    CASCADE,
+    SETNULL,
+    SETDEFAULT
+  };
 
-  ColumnDefinition(char* name, DataType type) : name(name), type(type) {}
+  enum FKConstrMatchType {
+    SIMPLE,
+    PARTIAL,
+    FULL
+  };
+
+  ColumnDefinition(DataType type) : type(type) {
+    // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
+    if (type == TEXT)
+      varlen = type::PELOTON_TEXT_MAX_LEN;
+  }
+
+  ColumnDefinition(char* name, DataType type) : name(name), type(type) {
+    // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
+    if (type == TEXT)
+      varlen = type::PELOTON_TEXT_MAX_LEN;
+  }
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
@@ -67,7 +90,12 @@ struct ColumnDefinition {
       delete foreign_key_sink;
     }
     delete[] name;
-    delete table_info_;
+    if (table_info_ != nullptr)
+      delete table_info_;
+    if (default_value != nullptr)
+      delete default_value;
+    if (check_expression != nullptr)
+      delete check_expression;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {
@@ -140,10 +168,16 @@ struct ColumnDefinition {
   bool primary = false;
   bool unique = false;
   expression::AbstractExpression* default_value = nullptr;
+  expression::AbstractExpression* check_expression = nullptr;
 
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;
   std::vector<char*>* foreign_key_sink = nullptr;
+
+  char* foreign_key_table_name = nullptr;
+  FKConstrActionType foreign_key_delete_action;
+  FKConstrActionType foreign_key_update_action;
+  FKConstrMatchType foreign_key_match_type;
 };
 
 /**

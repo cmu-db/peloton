@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
+#include <include/parser/pg_list.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -277,7 +278,6 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
-// TODO: having clause is not handled yet, depends on AExprTransform
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
                                                              Node* having) {
   if (group == nullptr) {
@@ -405,41 +405,65 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
   return ValueTransform(root->val);
 }
 
-// This function takes in a Postgres FuncCall parsenode and transfers it into
-// a Peloton FunctionExpression object.
-// TODO: support function calls on a single column.
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = nullptr;
-  std::string type_string =
-      (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str;
+  std::string fun_name =
+      StringUtil::Lower(
+          (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str);
 
-  type_string = "AGGREGATE_" + type_string;
-
-  if (root->agg_star) {
-    expression::AbstractExpression* children = new expression::StarExpression();
-    result = new expression::AggregateExpression(
-        StringToExpressionType(type_string), false, children);
-  } else {
-    if (root->args->length < 2) {
-      // auto children_expr_list = TargetTransform(root->args);
-      expression::AbstractExpression* child;
-      auto expr_node = (Node*)root->args->head->data.ptr_value;
+  if (!IsAggregateFunction(fun_name)) {
+    // Normal functions (i.e. built-in functions or UDFs)
+    fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))->val.str;
+    std::vector<expression::AbstractExpression*> children;
+    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+      auto expr_node = (Node*) cell->data.ptr_value;
       if (expr_node->type == T_A_Expr) {
-        child = AExprTransform((A_Expr*)expr_node);
+        children.push_back(AExprTransform(reinterpret_cast<A_Expr *>(expr_node)));
       } else if (expr_node->type == T_A_Const) {
-        child = ConstTransform((A_Const*)expr_node);
+        children.push_back(ConstTransform(reinterpret_cast<A_Const *>(expr_node)));
       } else if (expr_node->type == T_ColumnRef) {
-        child = ColumnRefTransform((ColumnRef*)expr_node);
+        children.push_back(ColumnRefTransform(reinterpret_cast<ColumnRef *>(expr_node)));
+      } else if (expr_node->type == T_FuncCall){
+        children.push_back(FuncCallTransform(reinterpret_cast<FuncCall*>(expr_node)));
+      }
+      else {
+        throw NotImplementedException(
+            StringUtil::Format("Type %d is not supported in function call.",
+                               expr_node->type));
+      }
+    }
+    result = new expression::FunctionExpression(
+        fun_name.c_str(), children);
+  }
+  else {
+    // Aggregate function
+    auto agg_fun_type = StringToExpressionType("AGGREGATE_" + fun_name);
+    if (root->agg_star) {
+      expression::AbstractExpression *children = new expression::StarExpression();
+      result = new expression::AggregateExpression(
+          agg_fun_type, false, children);
+    } else {
+      if (root->args->length < 2) {
+        // auto children_expr_list = TargetTransform(root->args);
+        expression::AbstractExpression *child;
+        auto expr_node = (Node *) root->args->head->data.ptr_value;
+        if (expr_node->type == T_A_Expr) {
+          child = AExprTransform((A_Expr *) expr_node);
+        } else if (expr_node->type == T_A_Const) {
+          child = ConstTransform((A_Const *) expr_node);
+        } else if (expr_node->type == T_ColumnRef) {
+          child = ColumnRefTransform((ColumnRef *) expr_node);
+        } else {
+          LOG_ERROR("Function within Aggregate is not supported yet\n");
+          throw NotImplementedException("");
+        }
+        result = new expression::AggregateExpression(
+            agg_fun_type, root->agg_distinct, child);
       } else {
         throw NotImplementedException(
-          "Function within Aggregate is not supported yet\n");
+            "Aggregation over multiple columns not supported yet...\n");
       }
-      result = new expression::AggregateExpression(
-          StringToExpressionType(type_string), root->agg_distinct, child);
-    } else {
-      throw NotImplementedException(
-        "Aggregation over multiple columns not supported yet...\n");
     }
   }
   return result;
@@ -735,6 +759,33 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->not_null = true;
       else if (constraint->contype == CONSTR_UNIQUE)
         result->unique = true;
+      else if (constraint->contype == CONSTR_FOREIGN) {
+        result->foreign_key_sink = new std::vector<char*>();
+        result->table_info_ = new TableInfo();
+        // Transform foreign key attributes
+        // Reference table
+        result->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Reference column
+        if (constraint->pk_attrs != nullptr)
+          for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
+               attr_cell = attr_cell->next) {
+            value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+            result->foreign_key_sink->push_back(cstrdup(attr_val->val.str));
+          }
+        // Action type
+        result->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        result->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+      }
+      else if (constraint->contype == CONSTR_DEFAULT) {
+        result->default_value =
+            AExprTransform(reinterpret_cast<A_Expr*>(constraint->raw_expr));
+      }
+      else if (constraint->contype == CONSTR_CHECK) {
+        result->check_expression =
+            AExprTransform(reinterpret_cast<A_Expr*>(constraint->raw_expr));
+      }
     }
   }
 
@@ -770,13 +821,6 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       // Transform Regular Column
       ColumnDefinition* temp =
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
-      temp->table_info_ = new parser::TableInfo();
-      if (relation->relname) {
-        temp->table_info_->table_name = cstrdup(relation->relname);
-      }
-      if (relation->catalogname) {
-        temp->table_info_->database_name = cstrdup(relation->catalogname);
-      };
       result->columns->push_back(temp);
     } else if (node->type == T_Constraint) {
       // Transform Constraints
@@ -806,6 +850,12 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         }
         // Update Reference Table
         col->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Action type
+        col->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        col->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+
         result->columns->push_back(col);
       } else {
         throw NotImplementedException(StringUtil::Format(
@@ -955,6 +1005,12 @@ PostgresParser::ValueListsTransform(List* root) {
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
       else if (expr->type == T_A_Const)
         cur_result->push_back(ConstTransform((A_Const*)expr));
+      else if (expr->type == T_SetToDefault){
+        // TODO handle default type
+        // add corresponding expression for
+        // default to cur_result
+        cur_result->push_back(nullptr); 
+      }
     }
     result->push_back(cur_result);
   }
@@ -1215,7 +1271,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-//   print_pg_parse_tree(result.tree);
+//  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
