@@ -155,7 +155,10 @@ TEST_F(UpdateTests, UpdatingOld) {
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
-  // Create a table first
+  // ======================
+  //  Create a table first
+  // ======================
+
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER),
@@ -185,7 +188,10 @@ TEST_F(UpdateTests, UpdatingOld) {
   storage::DataTable* table =
       catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table");
 
-  // Inserting a tuple end-to-end
+  // ==============================
+  //  Inserting a tuple end-to-end
+  // ==============================
+
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
@@ -222,7 +228,10 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
-  // Now Updating end-to-end
+  // =========================
+  //  Now Updating end-to-end
+  // =========================
+
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
   LOG_INFO(

@@ -50,7 +50,10 @@ std::string ProjectionTranslator::GetName() const {
   return ret;
 }
 
-void ProjectionTranslator::PrepareProjection(
+/**
+ * @brief Construct the expression translators associated with the projection.
+ */
+/* static */ void ProjectionTranslator::PrepareProjection(
     CompilationContext &context, const planner::ProjectInfo &projection_info) {
   // If the projection is non-trivial, we need to prepare translators for every
   // target expression
@@ -63,7 +66,7 @@ void ProjectionTranslator::PrepareProjection(
   }
 }
 
-void ProjectionTranslator::AddNonTrivialAttributes(
+/* static */ void ProjectionTranslator::AddNonTrivialAttributes(
     RowBatch &row_batch, const planner::ProjectInfo &projection_info,
     std::vector<RowBatch::ExpressionAccess> &accessors) {
   // If the projection is non-trivial, we need to add attribute accessors for
