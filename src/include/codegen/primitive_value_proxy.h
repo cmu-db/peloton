@@ -21,19 +21,19 @@ namespace codegen {
 
 class PrimitiveValueProxy {
  public:
-  static int8_t GetTinyInt(int8_t *values, uint32_t offset);
+  static int8_t GetTinyInt(char **values, uint32_t offset);
 
-  static int16_t GetSmallInt(int16_t *values, uint32_t offset);
+  static int16_t GetSmallInt(char **values, uint32_t offset);
 
-  static int32_t GetInteger(int32_t *values, uint32_t offset);
+  static int32_t GetInteger(char **values, uint32_t offset);
 
-  static int64_t GetBigInt(int64_t *values, uint32_t offset);
+  static int64_t GetBigInt(char **values, uint32_t offset);
 
-  static double GetDouble(double *values, uint32_t offset);
+  static double GetDouble(char **values, uint32_t offset);
 
-  static int32_t GetDate(int32_t *values, uint32_t offset);
+  static int32_t GetDate(char **values, uint32_t offset);
 
-  static uint64_t GetTimestamp(int8_t *values, uint32_t offset);
+  static uint64_t GetTimestamp(char **values, uint32_t offset);
 
   static char *GetVarcharVal(char **values, uint32_t offset);
 

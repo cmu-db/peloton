@@ -122,7 +122,6 @@ TEST_F(ParameterizationTest, TestNonConstVarCharParam) {
 }
 
 // Tests whether parameterization works for conjuction with const value exprs
-// (varchar included)
 TEST_F(ParameterizationTest, TestConjunctionWithConstParams) {
   //
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
@@ -173,7 +172,7 @@ TEST_F(ParameterizationTest, TestConjunctionWithConstParams) {
 // Tests whether parameterization works for conjuction with param value exprs
 TEST_F(ParameterizationTest, TestConjunctionWithNonConstParams) {
   //
-  // SELECT a, b, c FROM table where a >= 20 and b = 21;
+  // SELECT a, b, c FROM table where a >= 20 and d != "";
   //
 
   // 1) Construct the components of the predicate
