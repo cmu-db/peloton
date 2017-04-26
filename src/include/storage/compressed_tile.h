@@ -112,6 +112,10 @@ class CompressedTile : public Tile {
     compressed_column_map[column_id] = std::make_pair(type_id, base_value);
   }
 
+  inline void SetExponentMapValue(oid_t column_id, type::Value exponent) {
+    exponent_column_map[column_id] = exponent;
+  }
+
   inline type::Value GetBaseValue(oid_t column_id) {
     if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
       return compressed_column_map[column_id].second;
@@ -130,6 +134,9 @@ class CompressedTile : public Tile {
                                           type::Value compressed_value) {
     if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
       type::Value base_value = GetBaseValue(column_id);
+      if (base_value.GetTypeId() == type::Type::DECIMAL) {
+        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId()).Divide(exponent_column_map[column_id]));
+      }
       return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
     }
 
@@ -158,6 +165,8 @@ class CompressedTile : public Tile {
 
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
       compressed_column_map;
+  std::map<oid_t, type::Value> exponent_column_map;
+
 };
 }
 }

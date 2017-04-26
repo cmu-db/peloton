@@ -89,7 +89,28 @@ void CompressedTile::CompressTile(Tile *tile) {
         max_exponent_count = GetMaxExponentLength(tile,i);
         column_values = ConvertDecimalColumn(tile, i, max_exponent_count);
         new_column_values = CompressColumn(tile, i , column_values, type::Type::TINYINT);
-        break;
+        if (new_column_values.size() !=0) {
+          compressed_columns_count += 1;
+          type::Value old_value = tile->GetValue(0, i);
+          type::Value new_value = new_column_values[0];
+
+          type::Value base_value = GetBaseValue(old_value, new_value.CastAs(tile_schema->GetType(i)).Divide(max_exponent_count));
+          type::Type::TypeId type_id = GetCompressedType(new_value);
+          LOG_INFO("Old Value : %s and New Value : %s\n", old_value.ToString().c_str(), new_value.ToString().c_str());
+          LOG_INFO("Base Value : %s\n", base_value.ToString().c_str());
+          LOG_INFO("Compressed %s to %s",
+                    peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
+                    peloton::TypeIdToString(type_id).c_str());
+
+          SetCompressedMapValue(i, type_id, base_value);
+          SetExponentMapValue(i, max_exponent_count);
+
+          } else {
+            LOG_INFO("Unable to compress %s ",
+                    peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
+          }
+          new_columns[i] = new_column_values;
+          break;
     default:
         LOG_TRACE("Peloton currently does not compress %s",
                   peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
