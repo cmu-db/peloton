@@ -36,16 +36,6 @@ CompilationContext::CompilationContext(Query &query,
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
 
-  int_8_params_state_id_ = runtime_state.RegisterState(
-          "int8params", codegen_.Int8Type()->getPointerTo());
-  int_16_params_state_id_ = runtime_state.RegisterState(
-          "int16params", codegen_.Int16Type()->getPointerTo());
-  int_32_params_state_id_ = runtime_state.RegisterState(
-          "int32params", codegen_.Int32Type()->getPointerTo());
-  int_64_params_state_id_ = runtime_state.RegisterState(
-          "int64params", codegen_.Int64Type()->getPointerTo());
-  double_params_state_id_ = runtime_state.RegisterState(
-          "doubleparams", codegen_.DoubleType()->getPointerTo());
   char_ptr_params_state_id_ = runtime_state.RegisterState(
           "charptrparams", codegen_.CharPtrType()->getPointerTo());
   char_len_params_state_id_ = runtime_state.RegisterState(
@@ -144,26 +134,6 @@ llvm::Value *CompilationContext::GetCatalogPtr() {
 llvm::Value *CompilationContext::GetTransactionPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, txn_state_id_);
 }
-
-llvm::Value *CompilationContext::GetInt8ParamPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, int_8_params_state_id_);
-};
-
-llvm::Value *CompilationContext::GetInt16ParamPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, int_16_params_state_id_);
-};
-
-llvm::Value *CompilationContext::GetInt32ParamPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, int_32_params_state_id_);
-};
-
-llvm::Value *CompilationContext::GetInt64ParamPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, int_64_params_state_id_);
-};
-
-llvm::Value *CompilationContext::GetDoubleParamPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, double_params_state_id_);
-};
 
 llvm::Value *CompilationContext::GetCharPtrParamPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, char_ptr_params_state_id_);

@@ -17,38 +17,38 @@ namespace peloton {
 namespace codegen {
 
 int8_t PrimitiveValueProxy::GetTinyInt(
-        int8_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<int8_t *>(values[offset]);
 }
 
 int16_t PrimitiveValueProxy::GetSmallInt(
-        int16_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<int16_t *>(values[offset]);
 }
 
 int32_t PrimitiveValueProxy::GetInteger(
-        int32_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<int32_t *>(values[offset]);
 }
 
 int64_t PrimitiveValueProxy::GetBigInt(
-        int64_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<int64_t *>(values[offset]);
 }
 
 double PrimitiveValueProxy::GetDouble(
-        double *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<double *>(values[offset]);
 }
 
 int32_t PrimitiveValueProxy::GetDate(
-        int32_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<int32_t *>(values[offset]);
 }
 
 uint64_t PrimitiveValueProxy::GetTimestamp(
-        int8_t *values, uint32_t offset) {
-  return values[offset];
+        char **values, uint32_t offset) {
+  return *reinterpret_cast<uint64_t *>(values[offset]);
 }
 
 char *PrimitiveValueProxy::GetVarcharVal(
@@ -65,11 +65,11 @@ size_t PrimitiveValueProxy::GetVarcharLen(
 // GET TINYINT
 //===----------------------------------------------------------------------===//
 
-// Get the symbol name for ValuePeeker::PeekTinyInt()
+// Get the symbol name for PrimitiveValueProxy::GetTinyInt()
 const std::string &PrimitiveValueProxy::_GetTinyInt::GetFunctionName() {
-  static const std::string kOutputTinyIntFnName =
-      "_ZN7peloton7codegen19PrimitiveValueProxy10GetTinyIntEPaj";
-  return kOutputTinyIntFnName;
+  static const std::string kGetTinyIntFnName =
+      "_ZN7peloton7codegen19PrimitiveValueProxy10GetTinyIntEPPcj";
+  return kGetTinyIntFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetTinyInt::GetFunction(
@@ -84,19 +84,19 @@ llvm::Function *PrimitiveValueProxy::_GetTinyInt::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int8Type(),
-      {codegen.Int8Type()->getPointerTo(), codegen.Int64Type()},
+      {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK SMALLINT
+// GET SMALLINT
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetSmallInt::GetFunctionName() {
-  static const std::string kOutputSmallIntFnName =
-      "_ZN7peloton7codegen19PrimitiveValueProxy11GetSmallIntEPsj";
-  return kOutputSmallIntFnName;
+  static const std::string kGetSmallIntFnName =
+      "_ZN7peloton7codegen19PrimitiveValueProxy11GetSmallIntEPPcj";
+  return kGetSmallIntFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetSmallInt::GetFunction(
@@ -111,19 +111,19 @@ llvm::Function *PrimitiveValueProxy::_GetSmallInt::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int16Type(),
-      {codegen.Int16Type()->getPointerTo(), codegen.Int64Type()},
+      {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK INTEGER
+// GET INTEGER
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetInteger::GetFunctionName() {
-  static const std::string kOutputIntegerFnName =
-      "_ZN7peloton7codegen19PrimitiveValueProxy10GetIntegerEPij";
-  return kOutputIntegerFnName;
+  static const std::string kGetIntegerFnName =
+      "_ZN7peloton7codegen19PrimitiveValueProxy10GetIntegerEPPcj";
+  return kGetIntegerFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetInteger::GetFunction(
@@ -138,19 +138,19 @@ llvm::Function *PrimitiveValueProxy::_GetInteger::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int32Type(),
-      {codegen.Int32Type()->getPointerTo(), codegen.Int64Type()},
+      {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK BIGINT
+// GET BIGINT
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetBigInt::GetFunctionName() {
-  static const std::string kOutputBigIntFnName =
-      "_ZN7peloton7codegen19PrimitiveValueProxy9GetBigIntEPlj";
-  return kOutputBigIntFnName;
+  static const std::string kGetBigIntFnName =
+      "_ZN7peloton7codegen19PrimitiveValueProxy9GetBigIntEPPcj";
+  return kGetBigIntFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetBigInt::GetFunction(
@@ -165,19 +165,19 @@ llvm::Function *PrimitiveValueProxy::_GetBigInt::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
       codegen.Int64Type(),
-      {codegen.Int64Type()->getPointerTo(), codegen.Int64Type()},
+      {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK DOUBLE
+// GET DOUBLE
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetDouble::GetFunctionName() {
-  static const std::string kOutputDoubleFnName =
-      "_ZN7peloton7codegen19PrimitiveValueProxy9GetDoubleEPdj";
-  return kOutputDoubleFnName;
+  static const std::string kGetDoubleFnName =
+      "_ZN7peloton7codegen19PrimitiveValueProxy9GetDoubleEPPcj";
+  return kGetDoubleFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetDouble::GetFunction(
@@ -192,7 +192,7 @@ llvm::Function *PrimitiveValueProxy::_GetDouble::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
       codegen.DoubleType(),
-      {codegen.DoubleType()->getPointerTo(), codegen.Int64Type()},
+      {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
@@ -202,13 +202,13 @@ llvm::Function *PrimitiveValueProxy::_GetDouble::GetFunction(
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetTimestamp::GetFunctionName() {
-  static const std::string kOutputVarcharFnName =
+  static const std::string kGetTimestampFnName =
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-        "_ZN7peloton7codegen19PrimitiveValueProxy12GetTimestampEPaj";
+        "_ZN7peloton7codegen19PrimitiveValueProxy12GetTimestampEPPcj";
 #endif
-  return kOutputVarcharFnName;
+  return kGetTimestampFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetTimestamp::GetFunction(
@@ -223,23 +223,23 @@ llvm::Function *PrimitiveValueProxy::_GetTimestamp::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
           codegen.Int64Type(),
-          {codegen.Int64Type()->getPointerTo(), codegen.Int64Type()},
+          {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
           false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK DATE
+// GET DATE
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetDate::GetFunctionName() {
-  static const std::string kOutputVarcharFnName =
+  static const std::string kGetDateFnName =
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-        "_ZN7peloton7codegen19PrimitiveValueProxy7GetDateEPij";
+        "_ZN7peloton7codegen19PrimitiveValueProxy7GetDateEPPcj";
 #endif
-  return kOutputVarcharFnName;
+  return kGetDateFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetDate::GetFunction(
@@ -254,23 +254,23 @@ llvm::Function *PrimitiveValueProxy::_GetDate::GetFunction(
 
   auto *fn_type = llvm::FunctionType::get(
           codegen.Int32Type(),
-          {codegen.Int32Type()->getPointerTo(), codegen.Int64Type()},
+          {codegen.CharPtrType()->getPointerTo(), codegen.Int64Type()},
           false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK VARCHAR VAL
+// GET VARCHAR VAL
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetVarcharVal::GetFunctionName() {
-  static const std::string kOutputVarcharFnName =
+  static const std::string kGetVarcharValFnName =
 #ifdef __APPLE__
       "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
       "_ZN7peloton7codegen19PrimitiveValueProxy13GetVarcharValEPPcj";
 #endif
-  return kOutputVarcharFnName;
+  return kGetVarcharValFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetVarcharVal::GetFunction(
@@ -291,17 +291,17 @@ llvm::Function *PrimitiveValueProxy::_GetVarcharVal::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// PEEK VARCHAR LEN
+// GET VARCHAR LEN
 //===----------------------------------------------------------------------===//
 
 const std::string &PrimitiveValueProxy::_GetVarcharLen::GetFunctionName() {
-  static const std::string kOutputVarcharFnName =
+  static const std::string kGetVarcharLenFnName =
 #ifdef __APPLE__
         "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
         "_ZN7peloton7codegen19PrimitiveValueProxy13GetVarcharLenEPij";
 #endif
-  return kOutputVarcharFnName;
+  return kGetVarcharLenFnName;
 }
 
 llvm::Function *PrimitiveValueProxy::_GetVarcharLen::GetFunction(

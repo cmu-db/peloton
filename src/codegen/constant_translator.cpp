@@ -55,43 +55,43 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
     case type::Type::TypeId::TINYINT: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetTinyInt::GetFunction(codegen),
-              {GetInt8ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::SMALLINT: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetSmallInt::GetFunction(codegen),
-              {GetInt16ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::INTEGER: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetInteger::GetFunction(codegen),
-              {GetInt32ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::BIGINT: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetBigInt::GetFunction(codegen),
-              {GetInt64ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DECIMAL: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetDouble::GetFunction(codegen),
-              {GetDoubleParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DATE: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetDate::GetFunction(codegen),
-              {GetInt32ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::TIMESTAMP: {
       val = codegen.CallFunc(
               PrimitiveValueProxy::_GetTimestamp::GetFunction(codegen),
-              {GetInt64ParamPtr(), codegen.Const64(offset_)});
+              {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::VARCHAR: {

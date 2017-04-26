@@ -75,6 +75,13 @@ class Query {
   // Constructor
   Query(const planner::AbstractPlan &query_plan);
 
+  // Function for finalize parameters (for parameterization)
+  void PrepareParams(executor::ExecutorContext *exec_context);
+  // Function for loading serialized parameters into runtime state
+  void LoadParams(std::vector<std::unique_ptr<char[]>> &params,
+                  char **char_ptr_params,
+                  int32_t *char_len_params);
+
  private:
   // The query plan
   const planner::AbstractPlan &query_plan_;
@@ -92,13 +99,6 @@ class Query {
   compiled_function_t tear_down_func_;
 
   std::vector<Parameter> params_;
-
-  uint32_t int_8_type_cnt_;
-  uint32_t int_16_type_cnt_;
-  uint32_t int_32_type_cnt_;
-  uint32_t int_64_type_cnt_;
-  uint32_t double_type_cnt_;
-  uint32_t varchar_type_cnt_;
 
  private:
   // This class cannot be copy or move-constructed
