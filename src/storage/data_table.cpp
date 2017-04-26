@@ -413,7 +413,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
           auto sink_table = catalog->GetTableWithOid(GetDatabaseOid(), sink_table_oid);
           */
 
-
           break;
         }
         case ConstraintType::EXCLUSION: {
