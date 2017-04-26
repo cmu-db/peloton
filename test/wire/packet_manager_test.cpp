@@ -168,7 +168,7 @@ TEST_F(PacketManagerTests, RollbackTest) {
   int port = 15721;
   peloton::wire::LibeventServer libeventserver;
   std::thread serverThread(LaunchServer, libeventserver,port);
-  while (!libeventserver.is_started) {
+  while (!libeventserver.GetIsStarted()) {
     sleep(1);
   }
 
@@ -195,7 +195,7 @@ TEST_F(PacketManagerTests, SimpleQueryTest) {
 
   int port = 15721;
   std::thread serverThread(LaunchServer, libeventserver,port);
-  while (!libeventserver.is_started) {
+  while (!libeventserver.GetIsStarted()) {
     sleep(1);
   }
 
@@ -215,7 +215,7 @@ TEST_F(PacketManagerTests, PrepareStatementTest) {
   peloton::wire::LibeventServer libeventserver;
   int port = 15721;
   std::thread serverThread(LaunchServer, libeventserver,port);
-  while (!libeventserver.is_started) {
+  while (!libeventserver.GetIsStarted()) {
     sleep(1);
   }
 
