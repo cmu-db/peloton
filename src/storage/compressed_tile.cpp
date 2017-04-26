@@ -160,6 +160,11 @@ void CompressedTile::CompressTile(Tile *tile) {
       }
     }
 
+    for (oid_t i = 0; i < column_count; i++)
+    {
+      column_offset_map[schema.GetOffset(i)] = i;
+    }
+
     is_compressed = true;
   }
 }
@@ -250,7 +255,7 @@ type::Value CompressedTile::GetValueFast(const oid_t tuple_offset,
     return deserializedValue;
   }
 
-  oid_t column_id = GetColumnFromOffsest(column_offset);
+  oid_t column_id = GetColumnFromOffset(column_offset);
 
   PL_ASSERT(column_id < column_count);
 
@@ -277,7 +282,7 @@ void CompressedTile::SetValueFast(const type::Value &value,
                                   const size_t column_offset,
                                   const bool is_inlined,
                                   const size_t column_length) {
-  oid_t column_id = GetColumnFromOffsest(column_offset);
+  oid_t column_id = GetColumnFromOffset(column_offset);
 
   PL_ASSERT(column_id < column_count);
 
