@@ -634,8 +634,10 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
+    throw ConstraintException("FOREIGN KEY constraint violated : " +
+                               std::string(tuple->GetInfo()));
     return INVALID_ITEMPOINTER;
   }
 
@@ -836,8 +838,9 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple,
+                                           concurrency::Transaction *current_txn
+                                           UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -871,8 +874,33 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
           return false;
+        } else {
+          LOG_DEBUG("Location pointer size: %lu", location_ptrs.size());
+          auto &transaction_manager = 
+                          concurrency::TransactionManagerFactory::GetInstance();
+          auto &manager = catalog::Manager::GetInstance();
+          bool acquire_owner = true;
+          for (auto location_ptr : location_ptrs) {
+              auto tile_group = manager.GetTileGroup(location_ptr->block);
+              auto tile_group_header = tile_group.get()->GetHeader();
+              auto visibility = transaction_manager.IsVisible(
+                         current_txn, tile_group_header, location_ptr->offset);
+              if (visibility == VisibilityType::OK) {
+                LOG_DEBUG("performing read: %u, %u", location_ptr->block,
+                  location_ptr->offset);
+                bool res = transaction_manager.PerformRead(
+                                    current_txn, *location_ptr, acquire_owner);
+                if (!res) {
+                  LOG_DEBUG("read failed of location: %u, %u",
+                    location_ptr->block, location_ptr->offset);
+                    return false;
+                }
+              } else {
+                LOG_DEBUG("Location not visible.");
+                return false;
+              }
+          }
         }
-
         break;
       }
     }
