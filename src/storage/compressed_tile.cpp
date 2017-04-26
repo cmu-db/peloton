@@ -283,10 +283,14 @@ std::vector<type::Value> CompressedTile::CompressColumn(
       }
       break;
     } catch (Exception &e) {
-      if (column_type == (compression_type + 1)) {
+      if (type::Type::GetTypeSize(column_type) == type::Type::GetTypeSize(static_cast<type::Type::TypeId>(
+          static_cast<int>(compression_type) + 1))) {
+
         modified_values.resize(0);
         break;
+
       }
+      
       compression_type = static_cast<type::Type::TypeId>(
           static_cast<int>(compression_type) + 1);
     }
