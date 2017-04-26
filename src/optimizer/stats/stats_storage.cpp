@@ -44,8 +44,10 @@ StatsStorage::StatsStorage() {
  * in the future.
  */
 StatsStorage::~StatsStorage() {
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(SAMPLES_DB_NAME,
-                                                        nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(SAMPLES_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -67,20 +69,21 @@ void StatsStorage::CreateStatsCatalog() {
  */
 void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
                                          TableStats *table_stats) {
+  LOG_DEBUG("Add or update tables stats");
   // All tuples are inserted in a single txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
-
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
+  LOG_DEBUG("Database ID: %u, Table ID: %u", database_id, table_id);
   size_t num_row = table_stats->GetActiveTupleCount();
 
   oid_t column_count = table_stats->GetColumnCount();
   for (oid_t column_id = 0; column_id < column_count; column_id++) {
+    LOG_DEBUG("Add column stats for column %u", column_id);
     ColumnStats *column_stats = table_stats->GetColumnStats(column_id);
-    (void)column_stats;
     double cardinality = column_stats->GetCardinality();
     double frac_null = column_stats->GetFracNull();
     // Currently, we only store the most common value and its frequency in stats
@@ -208,7 +211,10 @@ void StatsStorage::CollectStatsForAllTables() {
  * CreateSamplesDatabase - Create a database for storing samples tables.
  */
 void StatsStorage::CreateSamplesDatabase() {
-  catalog::Catalog::GetInstance()->CreateDatabase(SAMPLES_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(SAMPLES_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -230,12 +236,31 @@ void StatsStorage::AddSamplesTable(
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateTable(std::string(SAMPLES_DB_NAME), samples_table_name,
                        std::move(schema_ptr), txn, is_catalog);
-  txn_manager.CommitTransaction(txn);
 
-  (void)sampled_tuples;
-  // for (auto &tuple : sampled_tuples) {
-  //   catalog::InsertTuple(table, std::move(tuple), nullptr);
-  // }
+  auto samples_table = catalog->GetTableWithName(std::string(SAMPLES_DB_NAME),
+                                                 samples_table_name, txn);
+
+  for (auto &tuple : sampled_tuples) {
+    InsertSampleTuple(samples_table, std::move(tuple), txn);
+  }
+  txn_manager.CommitTransaction(txn);
+}
+
+bool StatsStorage::InsertSampleTuple(storage::DataTable *samples_table,
+                                     std::unique_ptr<storage::Tuple> tuple,
+                                     concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    return false;
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  planner::InsertPlan node(samples_table, std::move(tuple));
+  executor::InsertExecutor executor(&node, context.get());
+  executor.Init();
+  bool status = executor.Execute();
+
+  return status;
 }
 
 /**

@@ -52,8 +52,6 @@ class StatsStorage {
 
   void CreateStatsCatalog();
 
-  storage::DataTable *GetStatsTable();
-
   /* Functions for adding, updating and quering stats */
 
   void AddOrUpdateTableStats(storage::DataTable *table,
@@ -70,6 +68,10 @@ class StatsStorage {
   void AddSamplesTable(
       storage::DataTable *data_table,
       std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
+
+  bool InsertSampleTuple(storage::DataTable *samples_table,
+                         std::unique_ptr<storage::Tuple> tuple,
+                         concurrency::Transaction *txn);
 
   void GetTupleSamples(oid_t database_id, oid_t table_id,
                        std::vector<storage::Tuple> &tuple_samples);

@@ -213,7 +213,7 @@ public:
         min_gap_idx = i;
       }
     }
-		PL_ASSERT(min_gap_idx >= 0 && min_gap_idx < bins.size());
+//		PL_ASSERT(min_gap_idx >= 0 && min_gap_idx < bins.size());
     Bin &prev_bin = bins[min_gap_idx];
     Bin &next_bin = bins[min_gap_idx + 1];
     prev_bin.MergeWith(next_bin);

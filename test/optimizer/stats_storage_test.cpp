@@ -12,6 +12,9 @@
 
 #include "common/harness.h"
 
+#define private public
+#define protected public
+
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/tuple_sampler.h"
 
@@ -20,6 +23,7 @@
 #include "storage/tile.h"
 #include "catalog/schema.h"
 #include "catalog/catalog.h"
+#include "catalog/column_stats_catalog.h"
 #include "executor/testing_executor_util.h"
 #include "concurrency/transaction_manager_factory.h"
 
@@ -33,17 +37,6 @@ namespace test {
 using namespace optimizer;
 
 class StatsStorageTests : public PelotonTest {};
-
-TEST_F(StatsStorageTests, StatsTableTest) {
-  StatsStorage *stats_storage = StatsStorage::GetInstance();
-  storage::DataTable *stats_table = stats_storage->GetStatsTable();
-  EXPECT_EQ(stats_table->GetName(), STATS_TABLE_NAME);
-  EXPECT_EQ(stats_table->GetTupleCount(), 0);
-
-  catalog::Schema *schema = stats_table->GetSchema();
-  EXPECT_TRUE(schema != nullptr);
-  EXPECT_EQ(schema->GetColumnCount(), 9);
-}
 
 TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   const int tuple_count = 100;
@@ -59,11 +52,15 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   std::unique_ptr<optimizer::TableStats> table_stats(
       new TableStats(data_table.get()));
   table_stats->CollectColumnStats();
+  LOG_DEBUG("Finish collect column stats");
 
+  auto catalog = catalog::Catalog::GetInstance();
+  (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
   stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
 
-  storage::DataTable *stats_table = stats_storage->GetStatsTable();
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  storage::DataTable *stats_table = column_stats_catalog->catalog_table_;
   EXPECT_EQ(stats_table->GetTupleCount(), 4);
 
   auto tile_group = stats_table->GetTileGroup(0);
@@ -84,6 +81,8 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
 
 TEST_F(StatsStorageTests, SamplesDBTest) {
   catalog::Catalog *catalog = catalog::Catalog::GetInstance();
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+  (void)stats_storage;
   storage::Database *samples_db = catalog->GetDatabaseWithName(SAMPLES_DB_NAME);
   EXPECT_TRUE(samples_db != nullptr);
   EXPECT_EQ(samples_db->GetDBName(), SAMPLES_DB_NAME);
