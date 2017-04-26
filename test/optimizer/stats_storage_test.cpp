@@ -38,13 +38,14 @@ using namespace optimizer;
 
 class StatsStorageTests : public PelotonTest {};
 
-TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
+TEST_F(StatsStorageTests, InsertAndGetStatsTest) {
   const int tuple_count = 100;
+  const int tuple_per_tilegroup = 100;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_count, false));
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);
@@ -69,16 +70,52 @@ TEST_F(StatsStorageTests, AddOrUpdateStatsTest) {
   auto tile_schemas = tile_group->GetTileSchemas();
   const catalog::Schema &schema = tile_schemas[0];
 
-  storage::Tuple tile_tuple0(&schema, tile->GetTupleLocation(0));
-  LOG_DEBUG("Tuple Info: %s", tile_tuple0.GetInfo().c_str());
-  storage::Tuple tile_tuple1(&schema, tile->GetTupleLocation(1));
-  LOG_DEBUG("Tuple Info: %s", tile_tuple1.GetInfo().c_str());
-  storage::Tuple tile_tuple2(&schema, tile->GetTupleLocation(2));
-  LOG_DEBUG("Tuple Info: %s", tile_tuple2.GetInfo().c_str());
-  storage::Tuple tile_tuple3(&schema, tile->GetTupleLocation(3));
-  LOG_DEBUG("Tuple Info: %s", tile_tuple3.GetInfo().c_str());
-}
+  for (int column_id = 0; column_id < 4; ++column_id) {
+    // Print out all four column stats.
+    storage::Tuple tile_tuple(&schema, tile->GetTupleLocation(column_id));
+    LOG_DEBUG("Tuple Info: %s", tile_tuple.GetInfo().c_str());
 
+    // Get column stats using the GetColumnStatsByID function and compare the
+    // results.
+    auto column_stats = stats_storage->GetColumnStatsByID(
+        data_table->GetDatabaseOid(), data_table->GetOid(), column_id);
+    for (auto value : *(column_stats.get())) {
+      LOG_DEBUG("Value: %s", value.GetInfo().c_str());
+    }
+  }
+}
+/*
+TEST_F(StatsStorageTests, GetColumnStatsTest) {
+  const int tuple_count = 100;
+  const int tuple_per_tilegroup = 100;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<storage::DataTable> data_table(
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
+  txn_manager.CommitTransaction(txn);
+
+  std::unique_ptr<optimizer::TableStats> table_stats(
+      new TableStats(data_table.get()));
+  table_stats->CollectColumnStats();
+  LOG_DEBUG("Finish collect column stats");
+
+  auto catalog = catalog::Catalog::GetInstance();
+  (void)catalog;
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+  stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
+
+  auto column_stats =
+stats_storage->GetColumnStatsByID(data_table->GetDatabaseOid(),
+                                                        data_table->GetOid(),
+                                                        0);
+  for(auto value : *(column_stats.get())) {
+    LOG_DEBUG("Value: %s", value.GetInfo().c_str());
+  }
+}
+*/
 TEST_F(StatsStorageTests, SamplesDBTest) {
   catalog::Catalog *catalog = catalog::Catalog::GetInstance();
   StatsStorage *stats_storage = StatsStorage::GetInstance();

@@ -66,7 +66,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::unique_ptr<optimizer::ColumnStats> GetColumnStats(
+  std::unique_ptr<std::vector<type::Value>> GetColumnStats(
       oid_t database_id, oid_t table_id, oid_t column_id,
       concurrency::Transaction *txn);
   // TODO: add more if needed

@@ -69,7 +69,6 @@ void StatsStorage::CreateStatsCatalog() {
  */
 void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
                                          TableStats *table_stats) {
-  LOG_DEBUG("Add or update tables stats");
   // All tuples are inserted in a single txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -77,12 +76,10 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
-  LOG_DEBUG("Database ID: %u, Table ID: %u", database_id, table_id);
   size_t num_row = table_stats->GetActiveTupleCount();
 
   oid_t column_count = table_stats->GetColumnCount();
   for (oid_t column_id = 0; column_id < column_count; column_id++) {
-    LOG_DEBUG("Add column stats for column %u", column_id);
     ColumnStats *column_stats = table_stats->GetColumnStats(column_id);
     double cardinality = column_stats->GetCardinality();
     double frac_null = column_stats->GetFracNull();
@@ -172,15 +169,13 @@ std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
  * GetColumnStatsByID - Query the 'stats' table to get the column stats by IDs.
  * TODO: Implement this function.
  */
-std::unique_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
-                                                              oid_t table_id,
-                                                              oid_t column_id) {
+std::unique_ptr<std::vector<type::Value>> StatsStorage::GetColumnStatsByID(
+    oid_t database_id, oid_t table_id, oid_t column_id) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<ColumnStats> column_stats =
-      column_stats_catalog->GetColumnStats(database_id, table_id, column_id,
-                                           txn);
+  auto column_stats = column_stats_catalog->GetColumnStats(
+      database_id, table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
   return std::move(column_stats);
 }

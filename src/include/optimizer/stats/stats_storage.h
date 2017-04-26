@@ -57,9 +57,8 @@ class StatsStorage {
   void AddOrUpdateTableStats(storage::DataTable *table,
                              TableStats *table_stats);
 
-  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
-                                                  oid_t table_id,
-                                                  oid_t column_id);
+  std::unique_ptr<std::vector<type::Value>> GetColumnStatsByID(
+      oid_t database_id, oid_t table_id, oid_t column_id);
 
   /* Functions for managing tuple samples */
 

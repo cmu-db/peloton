@@ -110,11 +110,13 @@ bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::unique_ptr<optimizer::ColumnStats> ColumnStatsCatalog::GetColumnStats(
+std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids(
-      {ColumnId::NUM_ROW, ColumnId::CARDINALITY, ColumnId::FRAC_NULL});
+      {ColumnId::NUM_ROW, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
+       ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
+       ColumnId::HISTOGRAM_BOUNDS});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -125,18 +127,36 @@ std::unique_ptr<optimizer::ColumnStats> ColumnStatsCatalog::GetColumnStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unique_ptr<optimizer::ColumnStats> column_stats(
-      new optimizer::ColumnStats(database_id, table_id, column_id,
-                                 type::Type::INTEGER));
+  type::Value num_row, cardinality, frac_null, most_common_val,
+      most_common_freq, hist_bounds;
+
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      auto num_row = (*result_tiles)[0]->GetValue(0, 0);
-      auto cardinality = (*result_tiles)[0]->GetValue(0, 1);
-      auto frac_null = (*result_tiles)[0]->GetValue(0, 2);
+    auto tile = (*result_tiles)[0].get();
+    LOG_DEBUG("Tuple count: %lu", tile->GetTupleCount());
+    PL_ASSERT(tile->GetTupleCount() <= 1);
+    if (tile->GetTupleCount() != 0) {
+      num_row = tile->GetValue(0, 0);
+      cardinality = tile->GetValue(0, 1);
+      frac_null = tile->GetValue(0, 2);
+      most_common_val = tile->GetValue(0, 3);
+      most_common_freq = tile->GetValue(0, 4);
+      hist_bounds = tile->GetValue(0, 5);
+    } else {
+      return nullptr;
     }
+  } else {
+    return nullptr;
   }
+
+  std::unique_ptr<std::vector<type::Value>> column_stats(
+      new std::vector<type::Value>());
+  column_stats->push_back(num_row);
+  column_stats->push_back(cardinality);
+  column_stats->push_back(frac_null);
+  column_stats->push_back(most_common_val);
+  column_stats->push_back(most_common_freq);
+  column_stats->push_back(hist_bounds);
 
   return std::move(column_stats);
 }
