@@ -77,6 +77,8 @@ class CompressedTile : public Tile {
                                           std::vector<type::Value> column_values,
                                           type::Type::TypeId compression_type);
 
+  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id );
+
   void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
   type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
