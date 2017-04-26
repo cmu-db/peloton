@@ -83,7 +83,9 @@ TEST_F(UpdateTranslatorTest, ToConstUpdate) {
           {
               0,
               planner::DerivedAttribute{
+                  // I haven't figured out what this should be
                   planner::AttributeInfo{},
+
                   expression::ExpressionUtil::ConstantValueFactory(
                       type::ValueFactory::GetIntegerValue(1)
                   )

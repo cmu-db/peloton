@@ -25,11 +25,21 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
 }
 
 void UpdateTranslator::Produce() const {
-  throw new NotImplementedException("UpdateTranslator not implemented");
+  auto &compilation_context = this->GetCompilationContext();
+  compilation_context.Produce(*this->update_plan_.GetChild(0));
 }
 
 void UpdateTranslator::Consume(ConsumerContext &context,
                                RowBatch::Row &row) const {
+  // The transformation.
+  auto *project_info = this->update_plan_.GetProjectInfo();
+  auto &codegen = this->GetCodeGen();
+
+  (void)context;
+  (void)row;
+  (void)project_info;
+  (void)codegen;
+
   throw new NotImplementedException("UpdateTranslator not implemented");
 }
 
