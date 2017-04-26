@@ -257,13 +257,15 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       column_id++;
 
       // Create index on unique single column
-      std::string col_name = column.GetName();
-      std::vector<std::string> index_attr = {col_name};
-      std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-      CreateIndex(database_name, table_name, index_attr, index_name,
-                  true, IndexType::BWTREE, txn);
-      LOG_DEBUG("Added a UNIQUE index on %s in %s.",
-                col_name.c_str(), table_name.c_str());
+      if (column.is_unique_) {
+        std::string col_name = column.GetName();
+        std::vector<std::string> index_attr = {col_name};
+        std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
+        CreateIndex(database_name, table_name, index_attr, index_name,
+                    true, IndexType::BWTREE, txn);
+        LOG_DEBUG("Added a UNIQUE index on %s in %s.",
+                  col_name.c_str(), table_name.c_str());
+      }
     }
 
     CreatePrimaryIndex(database_oid, table_oid, txn);
