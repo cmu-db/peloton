@@ -129,15 +129,17 @@ class CompressedTile : public Tile {
     return type::Value();
   }
 
-  oid_t GetColumnFromOffsest(const size_t column_offset) {
-    oid_t i;
+  oid_t GetColumnFromOffset(const size_t column_offset) {
+    /*oid_t i;
     PL_ASSERT(column_offset < schema.GetLength());
     for (i = 0; i < column_count; i++) {
       if (schema.GetOffset(i) == column_offset) {
         break;
       }
     }
-    return i;
+    return i;*/
+
+    return column_offset_map[column_offset];
   }
 
  protected:
@@ -148,6 +150,8 @@ class CompressedTile : public Tile {
   bool is_compressed;
   oid_t compressed_columns_count;
   int tuple_count;
+
+  std::map<size_t, oid_t> column_offset_map;
 
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
       compressed_column_map;
