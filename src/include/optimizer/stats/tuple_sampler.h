@@ -1,14 +1,14 @@
 //===----------------------------------------------------------------------===//
-////
-////                         Peloton
-////
-//// tuple_sampler.h
-////
-//// Identification: src/include/optimizer/tuple_sampler.h
-////
-//// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-////
-////===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_sampler.h
+//
+// Identification: src/include/optimizer/tuple_sampler.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

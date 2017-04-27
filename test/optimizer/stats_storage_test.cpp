@@ -16,7 +16,6 @@
 #define protected public
 
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/tuple_sampler.h"
 
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -106,7 +105,7 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
   auto catalog = catalog::Catalog::GetInstance();
   (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
+  stats_storage->InsertOrUpdateTableStats(data_table.get(), table_stats.get());
 
   VerifyAndPrintColumnStats(data_table.get(), 4);
 }
@@ -126,7 +125,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   double most_common_freqs = 3;
   std::string histogram_bounds = "1,5,7";
 
-  stats_storage->AddOrUpdateColumnStats(
+  stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds);
 
@@ -181,10 +180,10 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   double most_common_freqs_1 = 6;
   std::string histogram_bounds_1 = "2,10,14";
 
-  stats_storage->AddOrUpdateColumnStats(
+  stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row_0, cardinality_0, frac_null_0,
       most_common_vals_0, most_common_freqs_0, histogram_bounds_0);
-  stats_storage->AddOrUpdateColumnStats(
+  stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row_1, cardinality_1, frac_null_1,
       most_common_vals_1, most_common_freqs_1, histogram_bounds_1);
 
@@ -233,49 +232,6 @@ TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table.get(), 4);
-}
-
-TEST_F(StatsStorageTests, SamplesDBTest) {
-  catalog::Catalog *catalog = catalog::Catalog::GetInstance();
-  StatsStorage *stats_storage = StatsStorage::GetInstance();
-  (void)stats_storage;
-  storage::Database *samples_db = catalog->GetDatabaseWithName(SAMPLES_DB_NAME);
-  EXPECT_TRUE(samples_db != nullptr);
-  EXPECT_EQ(samples_db->GetDBName(), SAMPLES_DB_NAME);
-  EXPECT_EQ(samples_db->GetTableCount(), 0);
-}
-
-TEST_F(StatsStorageTests, AddSamplesTableTest) {
-  const int tuple_count = 100;
-
-  // Create a table
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
-                                     false, true, txn);
-  txn_manager.CommitTransaction(txn);
-
-  // Acquire samples
-  TupleSampler sampler(data_table.get());
-  size_t sampled_count = sampler.AcquireSampleTuples(10);
-  std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples =
-      sampler.GetSampledTuples();
-
-  // Add samples into database
-  catalog::Catalog *catalog = catalog::Catalog::GetInstance();
-  StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->AddSamplesTable(data_table.get(), sampled_tuples);
-
-  // Check the sampled tuples
-  std::string samples_table_name = stats_storage->GenerateSamplesTableName(
-      data_table->GetDatabaseOid(), data_table->GetOid());
-  storage::Database *samples_db = catalog->GetDatabaseWithName(SAMPLES_DB_NAME);
-  storage::DataTable *samples_table =
-      samples_db->GetTableWithName(samples_table_name);
-  EXPECT_TRUE(samples_table != nullptr);
-  EXPECT_EQ(samples_table->GetTupleCount(), sampled_count);
 }
 
 } /* namespace test */
