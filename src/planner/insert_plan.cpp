@@ -62,7 +62,7 @@ InsertPlan::InsertPlan(
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
         auto values = (*insert_values)[tuple_idx];
-        PL_ASSERT(values->size() == table_schema->GetColumnCount());
+        PL_ASSERT(values->size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;

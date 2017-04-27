@@ -55,6 +55,7 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(
         new LibeventWorkerThread(thread_id)));
+    // LOG_INFO("The thread %d is %p", thread_id, threads[thread_id].get());
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
@@ -162,5 +163,6 @@ void LibeventMasterThread::CloseConnection() {
     }
   }
 }
+  
 }
 }

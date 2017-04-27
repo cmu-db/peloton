@@ -60,6 +60,9 @@ static const int8_t PELOTON_BOOLEAN_NULL = SCHAR_MIN;
 
 static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 
+// Use to make TEXT type as the alias of VARCHAR(TEXT_MAX_LENGTH)
+static const uint32_t PELOTON_TEXT_MAX_LEN= 1000000000;
+
 // Objects (i.e., VARCHAR) with length prefix of -1 are NULL
 #define OBJECTLENGTH_NULL -1
 

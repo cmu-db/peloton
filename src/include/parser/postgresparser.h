@@ -53,6 +53,10 @@ class PostgresParser {
       const std::string& query_string);
 
  private:
+  //===--------------------------------------------------------------------===//
+  // Helper Functions
+  //===--------------------------------------------------------------------===//
+
   // helper for c_str copy
   static char* cstrdup(const char* c_str) {
     char* new_str = new char[strlen(c_str) + 1];
@@ -60,7 +64,39 @@ class PostgresParser {
     return new_str;
   }
 
-  // tansform helper for internal parse tree
+  static ColumnDefinition::FKConstrActionType CharToActionType(char &type) {
+    switch (type) {
+      case 'a':return ColumnDefinition::FKConstrActionType::NOACTION;
+      case 'r':return ColumnDefinition::FKConstrActionType::RESTRICT;
+      case 'c':return ColumnDefinition::FKConstrActionType::CASCADE;
+      case 'n':return ColumnDefinition::FKConstrActionType::SETNULL;
+      case 'd':return ColumnDefinition::FKConstrActionType::SETDEFAULT;
+      default:return ColumnDefinition::FKConstrActionType::NOACTION;
+    }
+  }
+
+  static ColumnDefinition::FKConstrMatchType CharToMatchType(char &type) {
+    switch (type) {
+      case 'f':return ColumnDefinition::FKConstrMatchType::FULL;
+      case 'p':return ColumnDefinition::FKConstrMatchType::PARTIAL;
+      case 's':return ColumnDefinition::FKConstrMatchType::SIMPLE;
+      default:return ColumnDefinition::FKConstrMatchType::SIMPLE;
+    }
+  }
+
+  static bool IsAggregateFunction(std::string& fun_name) {
+    if (fun_name == "min" || fun_name == "max" ||
+        fun_name == "count" || fun_name == "avg" ||
+        fun_name == "sum")
+      return true;
+    return false;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Transform Functions
+  //===--------------------------------------------------------------------===//
+
+  // transform helper for internal parse tree
   static parser::SQLStatementList*
     PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt);
 
