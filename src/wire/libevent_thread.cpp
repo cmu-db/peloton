@@ -59,10 +59,10 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
-  // TODO wait for all threads to be up before exit from Init()
-  // TODO replace sleep with future/promises
+
+  // Wait for all threads ready to work
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
-    while (!threads[thread_id].get()->is_started) {
+    while (!threads[thread_id].get()->GetThreadIsStarted()) {
       sleep(1);
     }
   }
@@ -73,25 +73,17 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
  */
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
-  worker_thread->is_closed = false;
-  if (worker_thread->sock_fd != -1) {
-    event_free(LibeventServer::GetConn(worker_thread->sock_fd)->event);
+  // Set worker thread's close flag to false to indicate loop has exited
+  worker_thread->SetThreadIsClosed(false);
+
+  // Free events and event base
+  if (worker_thread->GetThreadSockFd() != -1) {
+    event_free(
+        LibeventServer::GetConn(worker_thread->GetThreadSockFd())->event);
   }
   event_free(worker_thread->new_conn_event_);
   event_free(worker_thread->ev_timeout);
   event_base_free(worker_thread->GetEventBase());
-}
-
-void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                           UNUSED_ATTRIBUTE short what, void *arg) {
-  LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
-  if (!thread->is_started) {
-    thread->is_started = true;
-  }
-  if (thread->is_closed) {
-    event_base_loopexit(thread->GetEventBase(), NULL);
-    LOG_INFO("Thread %d exit base loop", thread->GetThreadID());
-  }
 }
 
 /*
@@ -113,10 +105,11 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
-  struct timeval two_seconds = {2, 0};
+  // Check thread's start/close flag every one second
+  struct timeval one_seconds = {1, 0};
   ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
-                         ThreadStatus_Callback, this);
-  event_add(ev_timeout, &two_seconds);
+                         ThreadControl_Callback, this);
+  event_add(ev_timeout, &one_seconds);
 
   if (event_add(new_conn_event_, 0) == -1) {
     LOG_ERROR("Can't monitor libevent notify pipe\n");
@@ -152,18 +145,24 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
+/*
+ * Exit event base loop running in all worker threads
+ */
 void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->is_closed = true;
+    threads[thread_id].get()->SetThreadIsClosed(true);
   }
 
+  // When a thread exit loop, the is_closed flag will be set to false
+  // Wait for all threads exit loops
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (threads[thread_id].get()->is_closed) {
+    while (threads[thread_id].get()->GetThreadIsClosed()) {
       sleep(1);
     }
   }
 }
+  
 }
 }

@@ -65,8 +65,8 @@ class PacketManager {
   // Check existence of statement in cache by name
   // Return true if exists
   bool ExistCachedStatement(std::string statement_name) {
-	auto statement_cache_itr = statement_cache_.find(statement_name);
-	return statement_cache_itr != statement_cache_.end();
+    auto statement_cache_itr = statement_cache_.find(statement_name);
+    return statement_cache_itr != statement_cache_.end();
   }
 
   //===--------------------------------------------------------------------===//

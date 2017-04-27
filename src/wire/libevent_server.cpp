@@ -54,41 +54,26 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
   }
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
-  thread->sock_fd = connfd;
-}
-
-/**
- * Stop signal handling
- */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
-  struct event_base *base = (event_base *)arg;
-  LOG_INFO("stop");
-  event_base_loopexit(base, NULL);
-}
-
-void Status_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
-  LibeventServer *server = (LibeventServer *)arg;
-  if (server->is_started == false) {
-    server->is_started = true;
-  }
-  if (server->is_closed == true) {
-    event_base_loopexit(server->base, NULL);
-  }
+  thread->SetThreadSockFd(connfd);
 }
 
 LibeventServer::LibeventServer() {
-  base = event_base_new();
+  base_ = event_base_new();
 
   // Create our event base
-  if (!base) {
+  if (!base_) {
     throw ConnectionException("Couldn't open event base");
   }
 
   // Add hang up signal event
-  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
-  evsignal_add(evstop, NULL);
+  ev_stop_ = evsignal_new(base_, SIGHUP, Signal_Callback, base_);
+  evsignal_add(ev_stop_, NULL);
+
+  // Add timeout event to check server's start/close flag every one second
+  struct timeval one_seconds = {1, 0};
+  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
+                          ServerControl_Callback, this);
+  event_add(ev_timeout_, &one_seconds);
 
   struct timeval two_seconds = {2, 0};
   ev_timeout =
@@ -96,8 +81,8 @@ LibeventServer::LibeventServer() {
   event_add(ev_timeout, &two_seconds);
 
   // a master thread is responsible for coordinating worker threads.
-  master_thread =
-      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
+  master_thread_ =
+      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -116,7 +101,6 @@ LibeventServer::LibeventServer() {
 }
 
 void LibeventServer::StartServer() {
-  LOG_INFO("Begin to start server\n");
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -146,16 +130,21 @@ void LibeventServer::StartServer() {
     }
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
-                                  master_thread.get(), CONN_LISTENING);
+                                  master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %lu", port_);
-    event_base_dispatch(base);
+
+    event_base_dispatch(base_);
     LibeventServer::GetConn(listen_fd)->CloseSocket();
+
+    // Free events and event base
     event_free(LibeventServer::GetConn(listen_fd)->event);
-    event_free(evstop);
-    event_free(ev_timeout);
-    event_base_free(base);
-    static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+    event_free(ev_stop_);
+    event_free(ev_timeout_);
+    event_base_free(base_);
+    static_cast<LibeventMasterThread *>(master_thread_.get())
+        ->CloseConnection();
+
     LOG_INFO("Server Closed");
   }
 
@@ -167,16 +156,13 @@ void LibeventServer::StartServer() {
 
 void LibeventServer::CloseServer() {
   LOG_INFO("Begin to stop server");
-  is_closed = true;
+  this->SetIsClosed(true);
 }
 
 /**
  * Change port to new_port
  */
-void LibeventServer::SetPort(int new_port){
-  LOG_INFO("Change port to %d",new_port);
-  port_ = new_port;
-}
+void LibeventServer::SetPort(int new_port) { port_ = new_port; }
 
 }
 }

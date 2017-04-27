@@ -49,6 +49,11 @@ class LibeventThread {
   const int thread_id_;
   struct event_base *libevent_base_;
 
+ private:
+  bool is_started = false;
+  bool is_closed = false;
+  int sock_fd = -1;
+
  public:
   bool is_started = false;
   bool is_closed = false;
@@ -68,6 +73,19 @@ class LibeventThread {
 
   // TODO implement destructor
   inline ~LibeventThread() {}
+
+  // Getter and setter for flags
+  bool GetThreadIsStarted() { return is_started; }
+
+  void SetThreadIsStarted(bool is_started) { this->is_started = is_started; }
+
+  bool GetThreadIsClosed() { return is_closed; }
+
+  void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
+
+  int GetThreadSockFd() { return sock_fd; }
+
+  void SetThreadSockFd(int fd) { this->sock_fd = fd; }
 };
 
 class LibeventWorkerThread : public LibeventThread {
@@ -75,7 +93,9 @@ class LibeventWorkerThread : public LibeventThread {
   // New connection event
   struct event *new_conn_event_;
 
+  // Timeout event
   struct event *ev_timeout;
+
   // Notify new connection pipe(send end)
   int new_conn_send_fd;
 
