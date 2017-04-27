@@ -57,27 +57,6 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
-/**
- * Stop signal handling
- */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
-  struct event_base *base = (event_base *)arg;
-  LOG_INFO("stop");
-  event_base_loopexit(base, NULL);
-}
-
-void Status_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
-  LibeventServer *server = (LibeventServer *)arg;
-  if (server->GetIsStarted() == false) {
-    server->SetIsStarted(true);
-  }
-  if (server->GetIsClosed() == true) {
-    event_base_loopexit(server->GetEventBase(), NULL);
-  }
-}
-
 LibeventServer::LibeventServer() {
   base_ = event_base_new();
 
@@ -90,10 +69,11 @@ LibeventServer::LibeventServer() {
   ev_stop_ = evsignal_new(base_, SIGHUP, Signal_Callback, base_);
   evsignal_add(ev_stop_, NULL);
 
-  struct timeval two_seconds = {2, 0};
-  ev_timeout_ =
-      event_new(base_, -1, EV_TIMEOUT | EV_PERSIST, Status_Callback, this);
-  event_add(ev_timeout_, &two_seconds);
+  // Add timeout event to check server's start/close flag every one second
+  struct timeval one_seconds = {1, 0};
+  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
+                          ServerControl_Callback, this);
+  event_add(ev_timeout_, &one_seconds);
 
   // a master thread is responsible for coordinating worker threads.
   master_thread_ =
@@ -156,8 +136,9 @@ void LibeventServer::StartServer() {
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);
-    static_cast<LibeventMasterThread *>(master_thread_.get())->CloseConnection();
-    
+    static_cast<LibeventMasterThread *>(master_thread_.get())
+        ->CloseConnection();
+
     LOG_INFO("Server Closed");
   }
 
@@ -175,10 +156,6 @@ void LibeventServer::CloseServer() {
 /**
  * Change port to new_port
  */
-void LibeventServer::SetPort(int new_port){
-  LOG_INFO("Change port to %d",new_port);
-  port_ = new_port;
-}
-
+void LibeventServer::SetPort(int new_port) { port_ = new_port; }
 }
 }

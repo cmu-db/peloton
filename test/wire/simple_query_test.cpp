@@ -27,8 +27,10 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
+static void *LaunchServer(peloton::wire::LibeventServer libeventserver,
+                          int port) {
   try {
+    libeventserver.SetPort(port);
     libeventserver.StartServer();
   } catch (peloton::ConnectionException exception) {
     LOG_INFO("[LaunchServer] exception in thread");
@@ -41,10 +43,10 @@ static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
  */
 void *SimpleQueryTest(void *) {
   try {
-    pqxx::connection C(
-        "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
+    pqxx::connection C(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=postgres sslmode=disable", port));
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
-    pqxx::work W(C);
+    pqxx::work txn1(C);
 
     peloton::wire::LibeventSocket *conn =
         peloton::wire::LibeventServer::GetConn(
@@ -53,23 +55,22 @@ void *SimpleQueryTest(void *) {
     EXPECT_EQ(conn->pkt_manager.is_started, true);
     EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
-    W.exec("DROP TABLE IF EXISTS employee;");
-    W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.commit();
-    
-    pqxx::work W1(C);
-    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+    txn1.exec("DROP TABLE IF EXISTS employee;");
+    txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
+    txn1.commit();
 
-    pqxx::result R = W1.exec("SELECT name FROM employee where id=1;");
-    W1.commit();
+    pqxx::work txn2(C);
+    txn2.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    txn2.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    txn2.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+
+    pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
+    txn2.commit();
 
     EXPECT_EQ(R.size(), 1);
-    LOG_INFO("[SimpleQueryTest] Found %lu employees", R.size());
-    W.commit();
   } catch (const std::exception &e) {
-    LOG_INFO("[SimpleQueryTest] Exception occurred");
+    LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
+    EXPECT_TRUE(false);
   }
 
   LOG_INFO("[SimpleQueryTest] Client has closed");
@@ -98,12 +99,12 @@ void *RollbackTest(int port) {
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
     W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    
+
     W.abort();
 
     W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
     W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
-    
+
     W.commit();
 
 
@@ -160,7 +161,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::wire::LibeventServer libeventserver;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, libeventserver,port);
+  std::thread serverThread(LaunchServer, libeventserver, port);
   while (!libeventserver.GetIsStarted()) {
     sleep(1);
   }
@@ -178,7 +179,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 // * Open 2 servers in threads concurrently
 // * Both conduct simple query job
 // */
-//TEST_F(PacketManagerTests, ScalabilityTest) {
+// TEST_F(PacketManagerTests, ScalabilityTest) {
 //  peloton::PelotonInit::Initialize();
 //
 //  /* launch 2 libevent servers in different port */
