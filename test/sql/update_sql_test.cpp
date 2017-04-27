@@ -68,14 +68,14 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   LOG_INFO("Tuple Updated!");
 
   // Check the return value
-  EXPECT_EQ(rows_affected, 1);
+  EXPECT_EQ(1, rows_affected);
 
   // Check value of column b after updating
   TestingSQLUtil::ExecuteSQLQuery("SELECT b from test", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[0].second[0], '2');
+  EXPECT_EQ('2', result[0].second[0]);
 
   // Another update a tuple into table
   LOG_INFO("Another update a tuple...");
@@ -88,14 +88,14 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   LOG_INFO("Tuple Updated Again!");
 
   // Check the return value
-  EXPECT_EQ(rows_affected, 1);
+  EXPECT_EQ(1, rows_affected);
 
   // Check value of column b after updating
   TestingSQLUtil::ExecuteSQLQuery("SELECT b from test", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[0].second[0], '2');
+  EXPECT_EQ('2', result[0].second[0]);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

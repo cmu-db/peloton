@@ -17,6 +17,7 @@
 
 namespace peloton {
 namespace expression {
+
 type::Value TupleValueExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {

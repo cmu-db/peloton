@@ -31,13 +31,14 @@ class Expression;
 
 namespace planner {
 
+/**
+ * @brief The @c DELETE physical plan.
+ *
+ *
+ */
 class DeletePlan : public AbstractPlan {
  public:
   DeletePlan() = delete;
-  DeletePlan(const DeletePlan &) = delete;
-  DeletePlan &operator=(const DeletePlan &) = delete;
-  DeletePlan(DeletePlan &&) = delete;
-  DeletePlan &operator=(DeletePlan &&) = delete;
 
   ~DeletePlan() {
     if (expr_ != nullptr) {
@@ -80,6 +81,9 @@ class DeletePlan : public AbstractPlan {
 
   /** @brief Truncate table. */
   bool truncate = false;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(DeletePlan);
 };
 
 }  // namespace planner
