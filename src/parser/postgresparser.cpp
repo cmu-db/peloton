@@ -292,6 +292,7 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
       result->columns->push_back(ExprTransform(temp));
     }
     catch(NotImplementedException e) {
+      delete result;
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in group by expr:\n%s", e.what()));
     }
@@ -303,6 +304,7 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
       result->having = ExprTransform(having);
     }
     catch(NotImplementedException e) {
+      delete result;
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in having expr:\n%s", e.what()));
     }
@@ -508,7 +510,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   return result;
 }
 
-expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
+expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
@@ -583,6 +585,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     right_expr = ExprTransform(root->rexpr);
   }
   catch(NotImplementedException e) {
+    delete left_expr;
     throw NotImplementedException(
         StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
   }
@@ -1194,7 +1197,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-  print_pg_parse_tree(result.tree);
+//  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
