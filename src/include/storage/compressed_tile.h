@@ -21,6 +21,7 @@
 #include "type/abstract_pool.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
+#include "type/value_factory.h"
 #include "storage/tile.h"
 
 namespace peloton {
@@ -69,15 +70,16 @@ class CompressedTile : public Tile {
 
   type::Value GetMaxExponentLength(Tile *tile, oid_t column_id);
 
-  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id, type::Value exponent);
+  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id,
+                                                type::Value exponent);
 
   std::vector<type::Value> GetIntegerColumnValues(Tile *tile, oid_t column_id);
 
-  std::vector<type::Value> CompressColumn(Tile *tile, oid_t column_id,
-                                          std::vector<type::Value> column_values,
-                                          type::Type::TypeId compression_type);
+  std::vector<type::Value> CompressColumn(
+      Tile *tile, oid_t column_id, std::vector<type::Value> column_values,
+      type::Type::TypeId compression_type);
 
-  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id );
+  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id);
 
   void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
@@ -118,6 +120,12 @@ class CompressedTile : public Tile {
     exponent_column_map[column_id] = exponent;
   }
 
+  // this is for dictionary
+  inline void SetDecoderMapValue(oid_t column_id,
+                                 std::vector<type::Value> decoder) {
+    decoder_map[column_id] = decoder;
+  }
+
   inline type::Value GetBaseValue(oid_t column_id) {
     if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
       return compressed_column_map[column_id].second;
@@ -137,7 +145,17 @@ class CompressedTile : public Tile {
     if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
       type::Value base_value = GetBaseValue(column_id);
       if (base_value.GetTypeId() == type::Type::DECIMAL) {
-        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId()).Divide(exponent_column_map[column_id]));
+        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId())
+                                  .Divide(exponent_column_map[column_id]));
+      }
+      if (base_value.GetTypeId() == type::Type::VARCHAR) {
+        int vv = (int32_t)compressed_value.GetAs<int8_t>();
+        LOG_INFO("encoded value: %d", vv);
+        type::Value v;
+        v = decoder_map[column_id].at(vv);
+        LOG_INFO("%s", v.ToString().c_str());
+
+        return v;
       }
       return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
     }
@@ -168,7 +186,7 @@ class CompressedTile : public Tile {
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
       compressed_column_map;
   std::map<oid_t, type::Value> exponent_column_map;
-
+  std::map<oid_t, std::vector<type::Value>> decoder_map;
 };
 }
 }
