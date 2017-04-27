@@ -190,6 +190,13 @@ llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::Abs
 
     codegen_.CallPrintf("Inner plan end.\n", {});
 
+    // barrier wait
+    llvm::Value *multi_thread_context = codegen_.GetArgument(1);
+    codegen_.CallPrintf("innerplan: barrier waiting .. \n", {});
+    // codegen_.CallFunc(MultiThreadContextProxy::GetWorkerFinishFunction(codegen_),{multi_thread_context});
+    codegen_.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen_),{multi_thread_context});
+    codegen_.CallPrintf("innerplan: barrier passed !!! \n", {});
+
     // Finish the function
     inner_function_builder.ReturnAndFinish();
     return inner_function_builder.GetFunction();
@@ -213,7 +220,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
           {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
   // TODO: dynamically get the number of threads
-  uint64_t n_threads = 2;
+  uint64_t n_threads = 4;
   llvm::Value *barrier_count = codegen_.Const64(n_threads+1);
 
   llvm::Value *runtime_state_ptr = codegen_.GetState();
@@ -252,8 +259,8 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
   // TODO: barrier for main thread
   codegen_.CallPrintf("Main: barrier wait ... \n", {});
-  // codegen_.CallFunc(BarrierProxy::GetBarrierWaitFunction(codegen_),{barrier});
-  codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_),{barrier});
+  codegen_.CallFunc(BarrierProxy::GetBarrierWaitFunction(codegen_),{barrier});
+  // codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_),{barrier});
   codegen_.CallPrintf("Main: barrier pass !!! \n", {});
 
   codegen_.CallPrintf("Finish submitting threads for inner plan.\n", {});
