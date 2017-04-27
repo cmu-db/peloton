@@ -57,13 +57,15 @@ void *SimpleQueryTest(int port) {
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
-
     W.commit();
     
-    pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
+    pqxx::work W1(C);
+    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+
+    pqxx::result R = W1.exec("SELECT name FROM employee where id=1;");
+    W1.commit();
 
     EXPECT_EQ(R.size(), 1);
     LOG_INFO("[SimpleQueryTest] Found %lu employees", R.size());
@@ -94,15 +96,18 @@ void *PrepareStatementTest(int port) {
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+    W.commit();
+    
+    pqxx::work W1(C);
+    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
 
     // test prepare statement
-    C.prepare("searchstmt","SELECT name FROM employee WHERE id=1;");
+    C.prepare("searchstmt","SELECT name FROM employee WHERE id=$1;");
     // invocation as in variable binding
-    pqxx::result R = W.prepared("searchstmt").exec();
-    W.commit();
+    pqxx::result R = W1.prepared("searchstmt")(1).exec();
+    W1.commit();
 
     // test prepared statement already in statement cache
     // LOG_INFO("[Prepare statement cache] %d",conn->pkt_manager.ExistCachedStatement("searchstmt"));
@@ -121,6 +126,7 @@ void *PrepareStatementTest(int port) {
  * rollback test
  * YINGJUN: rewrite wanted.
  */
+/*
 void *RollbackTest(int port) {
   try {
     pqxx::connection C(StringUtil::Format(
@@ -161,7 +167,9 @@ void *RollbackTest(int port) {
   LOG_INFO("[RollbackTest] Client has closed");
   return NULL;
 }
+*/
 
+/*
 TEST_F(PacketManagerTests, RollbackTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
@@ -180,6 +188,7 @@ TEST_F(PacketManagerTests, RollbackTest) {
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
+*/
 
 /**
  * Use std::thread to initiate peloton server and pqxx client in separate
@@ -187,7 +196,6 @@ TEST_F(PacketManagerTests, RollbackTest) {
  * Simple query test to guarantee both sides run correctly
  * Callback method to close server after client finishes
  */
-
 TEST_F(PacketManagerTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
@@ -204,7 +212,6 @@ TEST_F(PacketManagerTests, SimpleQueryTest) {
 
   libeventserver.CloseServer();
   serverThread.join();
-  LOG_INFO("Thread has joined");
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
@@ -223,7 +230,6 @@ TEST_F(PacketManagerTests, PrepareStatementTest) {
 
   libeventserver.CloseServer();
   serverThread.join();
-  LOG_INFO("Thread has joined");
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }

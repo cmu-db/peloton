@@ -116,7 +116,6 @@ LibeventServer::LibeventServer() {
 }
 
 void LibeventServer::StartServer() {
-  LOG_INFO("Begin to start server\n");
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));

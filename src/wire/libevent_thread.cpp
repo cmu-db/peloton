@@ -90,7 +90,6 @@ void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   }
   if (thread->GetThreadIsClosed()) {
     event_base_loopexit(thread->GetEventBase(), NULL);
-    LOG_INFO("Thread %d exit base loop", thread->GetThreadID());
   }
 }
 
