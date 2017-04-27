@@ -3,15 +3,15 @@ dist: trusty
 
 matrix:
     include:
-        #- compiler: gcc
-          #addons:
-          #    apt:
-          #      sources:
-          #          - ubuntu-toolchain-r-test
-          #          - boost-latest
-          #      packages:
-          #          - g++-4.9
-          #env: CXX=g++-4.9
+        - compiler: gcc
+          addons:
+              apt:
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
+                packages:
+                    - g++-4.9
+          env: CXX=g++-4.9
         - compiler: gcc
           addons:
               apt:
