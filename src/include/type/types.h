@@ -1120,7 +1120,12 @@ class AbstractExpression;
  * @brief Generic specification of a projection target:
  *        < DEST_column_id , expression >
  */
-typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
+
+namespace planner {
+struct DerivedAttribute;
+}
+
+typedef std::pair<oid_t, const planner::DerivedAttribute> Target;
 
 typedef std::vector<Target> TargetList;
 

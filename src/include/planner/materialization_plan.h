@@ -27,11 +27,6 @@ namespace planner {
 
 class MaterializationPlan : public AbstractPlan {
  public:
-  MaterializationPlan(const MaterializationPlan &) = delete;
-  MaterializationPlan &operator=(const MaterializationPlan &) = delete;
-  MaterializationPlan(MaterializationPlan &&) = delete;
-  MaterializationPlan &operator=(MaterializationPlan &&) = delete;
-
   MaterializationPlan(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
                       std::shared_ptr<const catalog::Schema> &schema,
                       bool physify_flag)
@@ -77,6 +72,9 @@ class MaterializationPlan : public AbstractPlan {
    * logical tile
    */
   bool physify_flag_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(MaterializationPlan);
 };
 
 }  // namespace planner

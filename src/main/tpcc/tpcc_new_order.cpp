@@ -142,18 +142,18 @@ bool RunNewOrder(const size_t &thread_id){
   item_key_column_ids.push_back(0); // I_ID
   item_expr_types.push_back(
     ExpressionType::COMPARE_EQUAL);
-  
+
   auto item_pkey_index = item_table->GetIndexWithOid(
     item_table_pkey_index_oid);
-  
+
   std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
-  
+
   for (auto item_id : i_ids) {
-    
+
     LOG_TRACE("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = %d", item_id);
-    
+
     std::vector<type::Value > item_key_values;
-    
+
     item_key_values.push_back(type::ValueFactory::GetIntegerValue(item_id).Copy());
 
     planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
@@ -184,7 +184,7 @@ bool RunNewOrder(const size_t &thread_id){
 
 
   LOG_TRACE("getWarehouseTaxRate: SELECT W_TAX FROM WAREHOUSE WHERE W_ID = %d", warehouse_id);
-  
+
   std::vector<oid_t> warehouse_key_column_ids;
   std::vector<ExpressionType> warehouse_expr_types;
   warehouse_key_column_ids.push_back(0); // W_ID
@@ -232,14 +232,14 @@ bool RunNewOrder(const size_t &thread_id){
 
   std::vector<oid_t> district_key_column_ids;
   std::vector<ExpressionType> district_expr_types;
-  
+
   district_key_column_ids.push_back(0); // D_ID
   district_key_column_ids.push_back(1); // D_W_ID
   district_expr_types.push_back(
       ExpressionType::COMPARE_EQUAL);
   district_expr_types.push_back(
       ExpressionType::COMPARE_EQUAL);
-  
+
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
 
@@ -277,7 +277,7 @@ bool RunNewOrder(const size_t &thread_id){
   UNUSED_ATTRIBUTE auto d_next_o_id = gd_lists_values[0][1];
 
   LOG_TRACE("d_tax: %s, d_next_o_id: %s", d_tax.GetInfo().c_str(), d_next_o_id.GetInfo().c_str());
-  
+
 
   LOG_TRACE("getCustomer: SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = %d AND C_D_ID = %d AND C_ID = %d", warehouse_id, district_id, customer_id);
 
@@ -299,7 +299,7 @@ bool RunNewOrder(const size_t &thread_id){
   customer_key_values.push_back(type::ValueFactory::GetIntegerValue(customer_id).Copy());
   customer_key_values.push_back(type::ValueFactory::GetIntegerValue(district_id).Copy());
   customer_key_values.push_back(type::ValueFactory::GetIntegerValue(warehouse_id).Copy());
-  
+
   auto customer_pkey_index = customer_table->GetIndexWithOid(
       customer_table_pkey_index_oid);
 
@@ -367,9 +367,10 @@ bool RunNewOrder(const size_t &thread_id){
                                    std::pair<oid_t, oid_t>(0, col_itr));
   }
   type::Value  district_update_val = type::ValueFactory::GetIntegerValue(district_update_value).Copy();
-  
-  district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
+
+  planner::DerivedAttribute attribute;
+  attribute.expr = expression::ExpressionUtil::ConstantValueFactory(district_update_val);
+  district_target_list.emplace_back(10, attribute);
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
       new planner::ProjectInfo(std::move(district_target_list),
@@ -388,7 +389,7 @@ bool RunNewOrder(const size_t &thread_id){
     return false;
   }
 
-  LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)"); 
+  LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)");
 
 
   std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
@@ -422,7 +423,7 @@ bool RunNewOrder(const size_t &thread_id){
   } else {
     LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
   }
-  
+
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
 
@@ -458,9 +459,9 @@ bool RunNewOrder(const size_t &thread_id){
 
   auto stock_pkey_index = stock_table->GetIndexWithOid(
       stock_table_pkey_index_oid);
-  
+
   // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
-  std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; 
+  std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16};
 
   std::vector<oid_t> stock_update_column_ids = {2, 13, 14, 15}; // S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT
 
@@ -468,11 +469,11 @@ bool RunNewOrder(const size_t &thread_id){
     int item_id = i_ids.at(i);
     int ol_w_id = ol_w_ids.at(i);
     int ol_qty = ol_qtys.at(i);
-    
+
     LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = %d AND S_W_ID = %d", item_id, ol_w_id);
-    
+
     std::vector<type::Value > stock_key_values;
-    
+
     stock_key_values.push_back(type::ValueFactory::GetIntegerValue(item_id).Copy());
     stock_key_values.push_back(type::ValueFactory::GetIntegerValue(ol_w_id).Copy());
 
@@ -481,7 +482,7 @@ bool RunNewOrder(const size_t &thread_id){
         stock_key_values, runtime_keys);
 
     std::vector<type::Value > stock_update_key_values;
-    
+
     stock_update_key_values.push_back(type::ValueFactory::GetIntegerValue(item_id).Copy());
     stock_update_key_values.push_back(type::ValueFactory::GetIntegerValue(ol_w_id).Copy());
 
@@ -536,7 +537,7 @@ bool RunNewOrder(const size_t &thread_id){
     planner::IndexScanPlan stock_update_index_scan_node(stock_table, nullptr,
                                                         stock_update_column_ids,
                                                         stock_update_index_scan_desc);
-    
+
     executor::IndexScanExecutor stock_update_index_scan_executor(&stock_update_index_scan_node, context.get());
 
     TargetList stock_target_list;
@@ -549,14 +550,27 @@ bool RunNewOrder(const size_t &thread_id){
                                      std::pair<oid_t, oid_t>(0, col_itr));
       }
     }
-    stock_target_list.emplace_back(
-        2, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_quantity)));
-    stock_target_list.emplace_back(
-        13, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_ytd)));
-    stock_target_list.emplace_back(
-        14, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_order_cnt)));
-    stock_target_list.emplace_back(
-        15, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_remote_cnt)));
+    planner::DerivedAttribute s_quantity_attr;
+    s_quantity_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_quantity));
+
+    planner::DerivedAttribute s_ytd_attr;
+    s_ytd_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_ytd));
+
+    planner::DerivedAttribute s_order_cnt_attr;
+    s_order_cnt_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_order_cnt));
+
+    planner::DerivedAttribute s_remote_cnt_attr;
+    s_remote_cnt_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_remote_cnt));
+
+
+    stock_target_list.emplace_back(2, s_quantity_attr);
+    stock_target_list.emplace_back(13, s_ytd_attr);
+    stock_target_list.emplace_back(14, s_order_cnt_attr);
+    stock_target_list.emplace_back(15, s_remote_cnt_attr);
 
     std::unique_ptr<const planner::ProjectInfo> stock_project_info(
         new planner::ProjectInfo(std::move(stock_target_list),
@@ -582,7 +596,7 @@ bool RunNewOrder(const size_t &thread_id){
     // brand_generic = 'B'
     // else:
     // brand_generic = 'G'
-        
+
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
@@ -628,7 +642,7 @@ bool RunNewOrder(const size_t &thread_id){
     // transaction passed commitment.
     LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
     return true;
-    
+
   } else {
     // transaction failed commitment.
     PL_ASSERT(result == ResultType::ABORTED ||
