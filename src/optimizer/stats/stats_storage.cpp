@@ -69,11 +69,7 @@ void StatsStorage::CreateStatsCatalog() {
  */
 void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
                                          TableStats *table_stats) {
-  // All tuples are inserted in a single txn
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   size_t num_row = table_stats->GetActiveTupleCount();
@@ -100,69 +96,27 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
       histogram_bounds_str = ConvertDoubleArrayToString(histogram_bounds);
     }
 
-    column_stats_catalog->InsertColumnStats(
-        database_id, table_id, column_id, num_row, cardinality, frac_null,
-        most_common_val_str, most_common_freq, histogram_bounds_str,
-        pool_.get(), txn);
+    AddOrUpdateColumnStats(database_id, table_id, column_id, num_row,
+                           cardinality, frac_null, most_common_val_str,
+                           most_common_freq, histogram_bounds_str);
   }
-
-  txn_manager.CommitTransaction(txn);
 }
 
-/**
- * GetColumnStatsTuple - Generate a column stats tuple.
- */
-std::unique_ptr<storage::Tuple> StatsStorage::GetColumnStatsTuple(
-    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
-    oid_t column_id, int num_row, double cardinality, double frac_null,
-    std::vector<ValueFrequencyPair> &most_common_val_freqs,
-    std::vector<double> &histogram_bounds) {
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-  auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
-  auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
-  auto val_column_id = type::ValueFactory::GetIntegerValue(column_id);
-  auto val_num_row = type::ValueFactory::GetIntegerValue(num_row);
-  auto val_cardinality = type::ValueFactory::GetDecimalValue(cardinality);
-  auto val_frac_null = type::ValueFactory::GetDecimalValue(frac_null);
-
-  // Currently, only store the most common value and its frequency because
-  // Peloton doesn't suppport ARRAY type now.
-  // TODO: store the array of most common values and freqs when Peloton supports
-  // ARRAY type.
-  type::Value val_common_val, val_common_freq;
-  if (most_common_val_freqs.size() > 0) {
-    val_common_val = type::ValueFactory::GetVarcharValue(
-        most_common_val_freqs[0].first.ToString());
-    val_common_freq =
-        type::ValueFactory::GetDecimalValue(most_common_val_freqs[0].second);
-  } else {
-    val_common_val =
-        type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-    val_common_freq =
-        type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
-  }
-  // Since Peloton doesn't support ARRAY type, we temporarily convert the
-  // double array to a string by concatening them with ",". Then we can store
-  // the histogram bounds array as VARCHAR in the datatable.
-  type::Value val_hist_bounds;
-  if (histogram_bounds.size() > 0) {
-    val_hist_bounds = type::ValueFactory::GetVarcharValue(
-        ConvertDoubleArrayToString(histogram_bounds));
-  } else {
-    val_hist_bounds =
-        type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-  }
-
-  tuple->SetValue(0, val_db_id, nullptr);
-  tuple->SetValue(1, val_table_id, nullptr);
-  tuple->SetValue(2, val_column_id, nullptr);
-  tuple->SetValue(3, val_num_row, nullptr);
-  tuple->SetValue(4, val_cardinality, nullptr);
-  tuple->SetValue(5, val_frac_null, nullptr);
-  tuple->SetValue(6, val_common_val, pool_.get());
-  tuple->SetValue(7, val_common_freq, nullptr);
-  tuple->SetValue(8, val_hist_bounds, pool_.get());
-  return std::move(tuple);
+void StatsStorage::AddOrUpdateColumnStats(oid_t database_id, oid_t table_id,
+                                          oid_t column_id, int num_row,
+                                          double cardinality, double frac_null,
+                                          std::string most_common_vals,
+                                          double most_common_freqs,
+                                          std::string histogram_bounds) {
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  column_stats_catalog->DeleteColumnStats(database_id, table_id, column_id,
+                                          txn);
+  column_stats_catalog->InsertColumnStats(
+      database_id, table_id, column_id, num_row, cardinality, frac_null,
+      most_common_vals, most_common_freqs, histogram_bounds, pool_.get(), txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 /**

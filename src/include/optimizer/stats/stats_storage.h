@@ -34,7 +34,6 @@ class Schema;
 
 namespace optimizer {
 
-#define STATS_TABLE_NAME "stats"
 #define SAMPLES_DB_NAME "samples_db"
 
 using ValueFrequencyPair = std::pair<type::Value, double>;
@@ -56,6 +55,12 @@ class StatsStorage {
 
   void AddOrUpdateTableStats(storage::DataTable *table,
                              TableStats *table_stats);
+
+  void AddOrUpdateColumnStats(oid_t database_id, oid_t table_id,
+                              oid_t column_id, int num_row, double cardinality,
+                              double frac_null, std::string most_common_vals,
+                              double most_common_freqs,
+                              std::string histogram_bounds);
 
   std::unique_ptr<std::vector<type::Value>> GetColumnStatsByID(
       oid_t database_id, oid_t table_id, oid_t column_id);
@@ -88,12 +93,6 @@ class StatsStorage {
 
  private:
   std::unique_ptr<type::AbstractPool> pool_;
-
-  std::unique_ptr<storage::Tuple> GetColumnStatsTuple(
-      const catalog::Schema *schema, oid_t database_id, oid_t table_id,
-      oid_t column_id, int num_row, double cardinality, double frac_null,
-      std::vector<ValueFrequencyPair> &most_common_val_freqs,
-      std::vector<double> &histogram_bounds);
 
   std::string ConvertDoubleArrayToString(std::vector<double> &double_array) {
     std::stringstream ss;
