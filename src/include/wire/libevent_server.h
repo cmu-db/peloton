@@ -239,6 +239,9 @@ struct LibeventServer {
   bool is_started = false;
   bool is_closed = false;
   struct event_base *base;  // libevent event_base
+  static int recent_connfd;  
+
+ public:
   LibeventServer();
   static LibeventSocket *GetConn(const int &connfd);
   static void CreateNewConn(const int &connfd, short ev_flags,
