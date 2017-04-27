@@ -53,14 +53,15 @@ class StatsStorage {
 
   /* Functions for adding, updating and quering stats */
 
-  void AddOrUpdateTableStats(storage::DataTable *table,
-                             TableStats *table_stats);
+  void AddOrUpdateTableStats(storage::DataTable *table, TableStats *table_stats,
+                             concurrency::Transaction *txn = nullptr);
 
   void AddOrUpdateColumnStats(oid_t database_id, oid_t table_id,
                               oid_t column_id, int num_row, double cardinality,
                               double frac_null, std::string most_common_vals,
                               double most_common_freqs,
-                              std::string histogram_bounds);
+                              std::string histogram_bounds,
+                              concurrency::Transaction *txn = nullptr);
 
   std::unique_ptr<std::vector<type::Value>> GetColumnStatsByID(
       oid_t database_id, oid_t table_id, oid_t column_id);
@@ -89,7 +90,13 @@ class StatsStorage {
 
   /* Functions for triggerring stats collection */
 
-  void CollectStatsForAllTables();
+  ResultType AnalyzeStatsForAllTables();
+
+  ResultType AnalyzeStatsForTable(storage::DataTable *table,
+                                  concurrency::Transaction *txn = nullptr);
+
+  // void AnalayzeStatsForColumns(std::string database_name, std::string
+  // table_name, std::vector<std::string> column_names);
 
  private:
   std::unique_ptr<type::AbstractPool> pool_;

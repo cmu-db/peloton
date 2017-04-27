@@ -12,10 +12,10 @@
 
 #include "optimizer/stats/stats_storage.h"
 #include "catalog/catalog.h"
+#include "catalog/column_stats_catalog.h"
 #include "type/value.h"
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
-#include "catalog/column_stats_catalog.h"
 
 namespace peloton {
 namespace optimizer {
@@ -68,7 +68,8 @@ void StatsStorage::CreateStatsCatalog() {
  * TODO: Implement stats UPDATE if the column stats already exists.
  */
 void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
-                                         TableStats *table_stats) {
+                                         TableStats *table_stats,
+                                         concurrency::Transaction *txn) {
   // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
@@ -98,7 +99,7 @@ void StatsStorage::AddOrUpdateTableStats(storage::DataTable *table,
 
     AddOrUpdateColumnStats(database_id, table_id, column_id, num_row,
                            cardinality, frac_null, most_common_val_str,
-                           most_common_freq, histogram_bounds_str);
+                           most_common_freq, histogram_bounds_str, txn);
   }
 }
 
@@ -107,16 +108,25 @@ void StatsStorage::AddOrUpdateColumnStats(oid_t database_id, oid_t table_id,
                                           double cardinality, double frac_null,
                                           std::string most_common_vals,
                                           double most_common_freqs,
-                                          std::string histogram_bounds) {
+                                          std::string histogram_bounds,
+                                          concurrency::Transaction *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+
+  bool single_statement_txn = false;
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
   column_stats_catalog->DeleteColumnStats(database_id, table_id, column_id,
                                           txn);
   column_stats_catalog->InsertColumnStats(
       database_id, table_id, column_id, num_row, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds, pool_.get(), txn);
-  txn_manager.CommitTransaction(txn);
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
 }
 
 /**
@@ -139,7 +149,7 @@ std::unique_ptr<std::vector<type::Value>> StatsStorage::GetColumnStatsByID(
  * datatables
  * to collect their stats and store them in the 'stats' table.
  */
-void StatsStorage::CollectStatsForAllTables() {
+ResultType StatsStorage::AnalyzeStatsForAllTables() {
   auto catalog = catalog::Catalog::GetInstance();
 
   oid_t database_count = catalog->GetDatabaseCount();
@@ -154,7 +164,28 @@ void StatsStorage::CollectStatsForAllTables() {
       AddOrUpdateTableStats(table, table_stats.get());
     }
   }
+  return ResultType::SUCCESS;
 }
+
+ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
+                                              concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to analyze the table stats: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
+  }
+  std::unique_ptr<TableStats> table_stats(new TableStats(table));
+  table_stats->CollectColumnStats();
+  AddOrUpdateTableStats(table, table_stats.get(), txn);
+  return ResultType::SUCCESS;
+}
+
+// void StatsStorage::AnalayzeStatsForColumns(
+//               UNUSED_ATTRIBUTE std::string database_name,
+//               UNUSED_ATTRIBUTE std::string table_name,
+//               UNUSED_ATTRIBUTE std::vector<std::string> column_names) {
+
+// }
 
 /**
  * CreateSamplesDatabase - Create a database for storing samples tables.

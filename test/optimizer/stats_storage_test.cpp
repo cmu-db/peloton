@@ -38,7 +38,7 @@ using namespace optimizer;
 
 class StatsStorageTests : public PelotonTest {};
 
-TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
+std::unique_ptr<storage::DataTable> InitializeTestTable() {
   const int tuple_count = 100;
   const int tuple_per_tilegroup = 100;
 
@@ -49,31 +49,40 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
   TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);
+  return std::move(data_table);
+}
 
-  std::unique_ptr<optimizer::TableStats> table_stats(
-      new TableStats(data_table.get()));
-  table_stats->CollectColumnStats();
-  LOG_DEBUG("Finish collect column stats");
-
-  auto catalog = catalog::Catalog::GetInstance();
-  (void)catalog;
+/**
+ * VerifyAndPrintColumnStats - Verify whether the stats of the test table are
+ *correctly stored in catalog
+ * and print them out.
+ *
+ * The column stats are retrieved by calling the
+ *StatsStorage::GetColumnStatsByID function.
+ * TODO:
+ * 1. Verify the number of tuples in column_stats_catalog.
+ * 2. Compare the column stats values with the ground truth.
+ */
+void VerifyAndPrintColumnStats(storage::DataTable *data_table,
+                               int expect_tuple_count) {
+  // Check the tuple count in the 'pg_column_stats' catalog.
+  // auto column_stats_catalog =
+  // catalog::ColumnStatsCatalog::GetInstance(nullptr);
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
 
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
-  storage::DataTable *stats_table = column_stats_catalog->catalog_table_;
-  EXPECT_EQ(stats_table->GetTupleCount(), 4);
+  // Verify both the internal data and the stats got by interface.
+  // storage::DataTable *stats_table = column_stats_catalog->catalog_table_;
+  // EXPECT_EQ(stats_table->GetTupleCount(), expect_tuple_count);
 
-  auto tile_group = stats_table->GetTileGroup(0);
+  // auto tile_group = stats_table->GetTileGroup(0);
+  // auto tile = tile_group->GetTile(0);
+  // auto tile_schemas = tile_group->GetTileSchemas();
+  // const catalog::Schema &schema = tile_schemas[0];
 
-  auto tile = tile_group->GetTile(0);
-  auto tile_schemas = tile_group->GetTileSchemas();
-  const catalog::Schema &schema = tile_schemas[0];
-
-  for (int column_id = 0; column_id < 4; ++column_id) {
-    // Print out all four column stats.
-    storage::Tuple tile_tuple(&schema, tile->GetTupleLocation(column_id));
-    LOG_DEBUG("Tuple Info: %s", tile_tuple.GetInfo().c_str());
+  // Print out all four column stats.
+  for (int column_id = 0; column_id < expect_tuple_count; ++column_id) {
+    // storage::Tuple tile_tuple(&schema, tile->GetTupleLocation(column_id));
+    // LOG_DEBUG("Tuple Info: %s", tile_tuple.GetInfo().c_str());
 
     // Get column stats using the GetColumnStatsByID function and compare the
     // results.
@@ -83,6 +92,23 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
       LOG_DEBUG("Value: %s", value.GetInfo().c_str());
     }
   }
+}
+
+TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
+  auto data_table = InitializeTestTable();
+
+  // Collect stats.
+  std::unique_ptr<optimizer::TableStats> table_stats(
+      new TableStats(data_table.get()));
+  table_stats->CollectColumnStats();
+
+  // Insert stats.
+  auto catalog = catalog::Catalog::GetInstance();
+  (void)catalog;
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+  stats_storage->AddOrUpdateTableStats(data_table.get(), table_stats.get());
+
+  VerifyAndPrintColumnStats(data_table.get(), 4);
 }
 
 TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
@@ -185,9 +211,29 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
       type::ValueFactory::GetVarcharValue(histogram_bounds_1)));
 }
 
-// TEST_F(StatsStorageTests, CollectStatsForAllTablesTest) {
+// TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
 
 // }
+
+TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
+  auto data_table = InitializeTestTable();
+
+  // Analyze table.
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+
+  // Must pass in the transaction.
+  ResultType result = stats_storage->AnalyzeStatsForTable(data_table.get());
+  EXPECT_TRUE(result == ResultType::FAILURE);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  result = stats_storage->AnalyzeStatsForTable(data_table.get(), txn);
+  EXPECT_TRUE(result == ResultType::SUCCESS);
+  txn_manager.CommitTransaction(txn);
+
+  // Check the correctness of the stats.
+  VerifyAndPrintColumnStats(data_table.get(), 4);
+}
 
 TEST_F(StatsStorageTests, SamplesDBTest) {
   catalog::Catalog *catalog = catalog::Catalog::GetInstance();
