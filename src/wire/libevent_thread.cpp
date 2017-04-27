@@ -41,6 +41,7 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
       num_threads_(num_threads),
       next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
+  threads.clear();
 
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
