@@ -62,7 +62,7 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   // TODO wait for all threads to be up before exit from Init()
   // TODO replace sleep with future/promises
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
-    while (!threads[thread_id].get()->is_started) {
+    if (!threads[thread_id].get()->is_started) {
       sleep(1);
     }
   }
@@ -74,16 +74,10 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   worker_thread->is_closed = false;
-  if (worker_thread->sock_fd != -1) {
-    event_free(LibeventServer::GetConn(worker_thread->sock_fd)->event);
-  }
-  event_free(worker_thread->new_conn_event_);
-  event_free(worker_thread->ev_timeout);
-  event_base_free(worker_thread->GetEventBase());
 }
 
 void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                           UNUSED_ATTRIBUTE short what, void *arg) {
+                     UNUSED_ATTRIBUTE short what, void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
   if (!thread->is_started) {
     thread->is_started = true;
@@ -113,9 +107,9 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
-  struct timeval two_seconds = {2, 0};
-  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
-                         ThreadStatus_Callback, this);
+  struct event *ev_timeout;
+  struct timeval two_seconds = {2,0};
+  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT|EV_PERSIST, ThreadStatus_Callback, this);
   event_add(ev_timeout, &two_seconds);
 
   if (event_add(new_conn_event_, 0) == -1) {
@@ -156,8 +150,13 @@ void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    event_base_loopexit(threads[thread_id].get()->GetEventBase(), NULL);
-    LOG_INFO("Exit thread %d event base loop\n", thread_id);
+    threads[thread_id].get()->is_closed = true;
+  }
+
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
+    if (threads[thread_id].get()->is_closed) {
+      sleep(1);
+    }
   }
 }
 }
