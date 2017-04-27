@@ -104,6 +104,11 @@ class StringUtil {
   static std::string Upper(const std::string &str);
 
   /**
+ * Convert a string to its uppercase form
+ */
+  static std::string Lower(const std::string &str);
+
+  /**
    * Format a string using printf semantics
    * http://stackoverflow.com/a/8098080
    */

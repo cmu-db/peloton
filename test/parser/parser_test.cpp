@@ -109,7 +109,7 @@ TEST_F(ParserTests, BasicTest) {
   queries.push_back("EXECUTE prep;");
 
   queries.push_back(
-      "COPY catalog_db.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+      "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
 
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -385,7 +385,7 @@ TEST_F(ParserTests, IndexTest) {
 TEST_F(ParserTests, CopyTest) {
   std::vector<std::string> queries;
   std::string file_path = "/home/user/output.csv";
-  queries.push_back("COPY catalog_db.query_metric TO '" + file_path +
+  queries.push_back("COPY pg_catalog.query_metric TO '" + file_path +
                     "' DELIMITER ',';");
 
   // Parsing

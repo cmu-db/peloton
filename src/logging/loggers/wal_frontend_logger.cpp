@@ -75,7 +75,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
     : peloton_log_directory(log_dir) {
   LOG_TRACE("Instantiating wal_fel with log directory: %s", log_dir.c_str());
-  
+
   // allocate pool
   recovery_pool = new type::EphemeralPool();
 
@@ -351,8 +351,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-          recovery_txn_table[tuple_record->GetTransactionId()]
-              .push_back(tuple_record);
+          recovery_txn_table[tuple_record->GetTransactionId()].push_back(
+              tuple_record);
           break;
         case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Do nothing if we hit the delimiter, because the delimiters help
@@ -452,8 +452,7 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
         for (auto column_id : column_ids) {
           type::Value val = cur_tuple.GetValue(column_id);
-          tuple->SetValue(column_id, val,
-                          recovery_pool);
+          tuple->SetValue(column_id, val, recovery_pool);
         }
 
         ItemPointer location(tile_group_id, tuple_id);
@@ -467,7 +466,8 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
 
 void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
                                                 storage::DataTable *table,
-                                                ItemPointer target_location UNUSED_ATTRIBUTE) {
+                                                ItemPointer target_location
+                                                    UNUSED_ATTRIBUTE) {
   PL_ASSERT(tuple);
   PL_ASSERT(table);
   auto index_count = table->GetIndexCount();
@@ -476,6 +476,7 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = table->GetIndex(index_itr);
+    if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
@@ -679,7 +680,7 @@ void WriteAheadFrontendLogger::UpdateTuple(TupleRecord *record) {
 LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   char buffer;
   bool is_truncated = false;
-  int ret;
+  int ret = 0;
 
   if (cur_file_handle.file == nullptr || cur_file_handle.fd == -1)
     return LOGRECORD_TYPE_INVALID;
