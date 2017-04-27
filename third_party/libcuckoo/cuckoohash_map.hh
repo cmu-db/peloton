@@ -662,7 +662,7 @@ private:
         const cuckoohash_map* map;
         std::array<size_t, N> i;
 
-        BucketContainer() : map(nullptr) {}
+        BucketContainer() : map(nullptr), i{} {}
 
         template <typename... Args>
         BucketContainer(const cuckoohash_map* _map, Args&&... inds)
