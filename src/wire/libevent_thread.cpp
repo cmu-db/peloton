@@ -59,10 +59,10 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
-  // TODO wait for all threads to be up before exit from Init()
+
   // TODO replace sleep with future/promises
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
-    while (!threads[thread_id].get()->is_started) {
+    while (!threads[thread_id].get()->GetThreadIsStarted()) {
       sleep(1);
     }
   }
@@ -73,9 +73,9 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
  */
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
-  worker_thread->is_closed = false;
-  if (worker_thread->sock_fd != -1) {
-    event_free(LibeventServer::GetConn(worker_thread->sock_fd)->event);
+  worker_thread->SetThreadIsClosed(false);
+  if (worker_thread->GetThreadSockFd() != -1) {
+    event_free(LibeventServer::GetConn(worker_thread->GetThreadSockFd())->event);
   }
   event_free(worker_thread->new_conn_event_);
   event_free(worker_thread->ev_timeout);
@@ -85,10 +85,10 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
 void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
                            UNUSED_ATTRIBUTE short what, void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
-  if (!thread->is_started) {
-    thread->is_started = true;
+  if (!thread->GetThreadIsStarted()) {
+    thread->SetThreadIsStarted(true);
   }
-  if (thread->is_closed) {
+  if (thread->GetThreadIsClosed()) {
     event_base_loopexit(thread->GetEventBase(), NULL);
     LOG_INFO("Thread %d exit base loop", thread->GetThreadID());
   }
@@ -156,11 +156,11 @@ void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->is_closed = true;
+    threads[thread_id].get()->SetThreadIsClosed(true);
   }
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (threads[thread_id].get()->is_closed) {
+    while (threads[thread_id].get()->GetThreadIsClosed()) {
       sleep(1);
     }
   }
