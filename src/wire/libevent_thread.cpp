@@ -55,12 +55,11 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(
         new LibeventWorkerThread(thread_id)));
-    // LOG_INFO("The thread %d is %p", thread_id, threads[thread_id].get());
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
 
-  // TODO replace sleep with future/promises
+  // Wait for all threads ready to work
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
     while (!threads[thread_id].get()->GetThreadIsStarted()) {
       sleep(1);
@@ -74,6 +73,7 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
 void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   worker_thread->SetThreadIsClosed(false);
+  // Free events and event base
   if (worker_thread->GetThreadSockFd() != -1) {
     event_free(LibeventServer::GetConn(worker_thread->GetThreadSockFd())->event);
   }
@@ -151,6 +151,9 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
+/*
+ * Exit event base loop running in all worker threads
+ */
 void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
@@ -158,6 +161,8 @@ void LibeventMasterThread::CloseConnection() {
     threads[thread_id].get()->SetThreadIsClosed(true);
   }
 
+  // When a thread exit loop, the is_closed flag will be set to false
+  // Wait for all threads exit loops
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
     while (threads[thread_id].get()->GetThreadIsClosed()) {
       sleep(1);
