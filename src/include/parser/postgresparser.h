@@ -118,6 +118,9 @@ class PostgresParser {
   // transform helper for select targets
   static std::vector<expression::AbstractExpression*>* TargetTransform(List* root);
 
+  // transform helper for all expr nodes
+  static expression::AbstractExpression* ExprTransform(Node* root);
+
   // transform helper for A_Expr nodes
   static expression::AbstractExpression* AExprTransform(A_Expr* root);
 
