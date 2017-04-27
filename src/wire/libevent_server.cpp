@@ -97,8 +97,7 @@ LibeventServer::LibeventServer() {
   event_add(ev_timeout, &two_seconds);
 
   // a master thread is responsible for coordinating worker threads.
-  master_thread =
-      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
+  master_thread = std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -151,13 +150,6 @@ void LibeventServer::StartServer() {
 
     LOG_INFO("Listening on port %lu", port_);
     event_base_dispatch(base);
-    LibeventServer::GetConn(listen_fd)->CloseSocket();
-    event_free(LibeventServer::GetConn(listen_fd)->event);
-    event_free(evstop);
-    event_free(ev_timeout);
-    event_base_free(base);
-    static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
-    LOG_INFO("Server Closed");
   }
 
   // This socket family code is not implemented yet
@@ -167,16 +159,12 @@ void LibeventServer::StartServer() {
 }
 
 void LibeventServer::CloseServer() {
-  LOG_INFO("Begin to stop server");
-  is_closed = true;
-}
-
-/**
- * Change port to new_port
- */
-void LibeventServer::SetPort(int new_port){
-  LOG_INFO("Change port to %d",new_port);
-  port_ = new_port;
+  LOG_INFO("Begin to stop server\n");
+  event_base_loopexit(base, NULL);
+  event_free(evstop);
+  event_base_free(base);
+  static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+  LOG_INFO("Server closed\n");
 }
 
 }
