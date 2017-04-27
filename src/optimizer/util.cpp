@@ -140,14 +140,6 @@ void GetPredicateColumns(
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
 
-      // Potential memory leak in line 664:
-      // 24 bytes in 1 blocks are definitely lost in loss record 1 of 3
-      // malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-      // peloton::do_allocation(unsigned long, bool) (allocator.cpp:27)
-      // operator new(unsigned long) (allocator.cpp:40)
-      // peloton::type::IntegerValue::Copy() const (numeric_value.cpp:1288)
-      // peloton::expression::ConstantValueExpression::GetValue() const
-      // (constant_value_expression.h:40)
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableChild(1))->GetValue());
