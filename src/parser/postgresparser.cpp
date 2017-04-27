@@ -971,6 +971,20 @@ parser::CopyStatement* PostgresParser::CopyTransform(CopyStmt* root) {
   return res;
 }
 
+// Analyze statment is parsed with vacuum statment.
+parser::AnalyzeStatement* PostgresParser::VacuumTransform(VacuumStmt* root) {
+  if (root->options != VACOPT_ANALYZE) {
+    LOG_TRACE("Vacuum not supported.");
+    return nullptr;
+  }
+  auto res = new AnalyzeStatement();
+  if (root->relation != NULL) { //TOOD: check NULL vs nullptr
+    res->analyze_table = RangeVarTransform(root->relation);
+  }
+  res->analyze_columns = ColumnNameTransform(root->va_cols);
+  return res;
+}
+
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   if (root == nullptr) return nullptr;
 
@@ -1009,7 +1023,7 @@ PostgresParser::ValueListsTransform(List* root) {
         // TODO handle default type
         // add corresponding expression for
         // default to cur_result
-        cur_result->push_back(nullptr); 
+        cur_result->push_back(nullptr);
       }
     }
     result->push_back(cur_result);
@@ -1178,6 +1192,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_CreatedbStmt:
       result = CreateDbTransform((CreatedbStmt*)stmt);
       break;
+    case T_VacuumStmt:
+      result = VacuumTransform((VacuumStmt*)stmt);
+      break;
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Statement of type %d not supported yet...\n", stmt->type));
@@ -1288,7 +1305,7 @@ PostgresParser& PostgresParser::GetInstance() {
   static PostgresParser parser;
   return parser;
 }
-  
+
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
