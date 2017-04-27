@@ -152,13 +152,8 @@ void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->is_closed = true;
-  }
-
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    if (threads[thread_id].get()->is_closed) {
-      sleep(1);
-    }
+    event_base_loopexit(threads[thread_id].get()->GetEventBase(), NULL);
+    LOG_INFO("Exit thread %d event base loop\n", thread_id);
   }
 }
 }
