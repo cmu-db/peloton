@@ -69,7 +69,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND
 endif()
 
 # -- [ Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1 -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 
 # ---[ Flags
 if(UNIX OR APPLE)
