@@ -307,15 +307,15 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
     return;
   }
 
+  if (queries.size() == 1 && queries.at(0).empty()) {
+    SendEmptyQueryResponse();
+    SendReadyForQuery(txn_state_);
+    return;
+  }
+
   for (auto query : queries) {
     // iterate till before the empty string after the last ';'
     if (!query.empty()) {
-      // if (query.empty()) {
-      //  SendEmptyQueryResponse();
-      //  SendReadyForQuery(NetworkTransactionStateType::IDLE);
-      //  return;
-      //}
-
       std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
@@ -341,7 +341,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
       // TODO: should change to query_type
       CompleteCommand(query, rows_affected);
-    } else {
+    } else if (query != queries.back()) {
       SendEmptyQueryResponse();
       SendReadyForQuery(NetworkTransactionStateType::IDLE);
       return;
@@ -655,7 +655,7 @@ size_t PacketManager::ReadParamValue(
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
             std::make_pair(type::Type::VARCHAR, param_str);
-        if (PostgresValueTypeToPelotonValueType(
+        if ((unsigned int)param_idx >= param_types.size() || PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
             type::Type::VARCHAR) {
           param_values[param_idx] =
