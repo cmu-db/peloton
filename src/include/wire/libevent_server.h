@@ -79,6 +79,17 @@ void WorkerHandleNewConn(evutil_socket_t local_fd, short ev_flags, void *arg);
 /* Used by a worker to execute the main event loop for a connection */
 void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 
+/* Used to handle signals */
+void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                     UNUSED_ATTRIBUTE short what, void *arg);
+
+/* Used to control server start and close */
+void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                            UNUSED_ATTRIBUTE short what, void *arg);
+
+/* Used to control thread event loop's begin and exit */
+void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                            UNUSED_ATTRIBUTE short what, void *arg);
 /* Helpers */
 
 /* Runs the state machine for the protocol. Invoked by event handler callback */
@@ -225,11 +236,11 @@ struct LibeventServer {
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
 
-  uint64_t port_;            // port number
-  size_t max_connections_;   // maximum number of connections
-  struct event *ev_stop_;    // libevent stop event
-  struct event *ev_timeout_; // libevent timeout event
-  std::shared_ptr<LibeventThread> master_thread_; 
+  uint64_t port_;             // port number
+  size_t max_connections_;    // maximum number of connections
+  struct event *ev_stop_;     // libevent stop event
+  struct event *ev_timeout_;  // libevent timeout event
+  std::shared_ptr<LibeventThread> master_thread_;
   struct event_base *base_;  // libevent event_base
 
   // Flags for controlling server start/close status
@@ -248,32 +259,21 @@ struct LibeventServer {
                             LibeventThread *thread, ConnState init_state);
 
   void StartServer();
-  
+
   void CloseServer();
 
   void SetPort(int new_port);
 
   // Getter and setter for flags
-  bool GetIsStarted(){
-	  return is_started_;
-  }
+  bool GetIsStarted() { return is_started_; }
 
-  void SetIsStarted(bool is_started){
-	  this->is_started_ = is_started;
-  }
+  void SetIsStarted(bool is_started) { this->is_started_ = is_started; }
 
-  bool GetIsClosed(){
-	  return is_closed_;
-  }
+  bool GetIsClosed() { return is_closed_; }
 
-  void SetIsClosed(bool is_closed){
-	  this->is_closed_ = is_closed;
-  }
+  void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
 
-  event_base* GetEventBase(){
-	  return base;
-  }
-
+  event_base *GetEventBase() { return base_; }
 
  private:
   /* Maintain a global list of connections.

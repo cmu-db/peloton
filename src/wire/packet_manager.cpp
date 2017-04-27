@@ -655,9 +655,10 @@ size_t PacketManager::ReadParamValue(
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
             std::make_pair(type::Type::VARCHAR, param_str);
-        if ((unsigned int)param_idx >= param_types.size() || PostgresValueTypeToPelotonValueType(
+        if ((unsigned int)param_idx >= param_types.size() ||
+            PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
-            type::Type::VARCHAR) {
+                type::Type::VARCHAR) {
           param_values[param_idx] =
               type::ValueFactory::GetVarcharValue(param_str);
         } else {
@@ -770,7 +771,8 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id) {
+void PacketManager::ExecExecuteMessage(InputPacket *pkt,
+                                       const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
@@ -816,8 +818,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id)
 
   auto status = traffic_cop_->ExecuteStatement(
       statement, param_values, unnamed, param_stat, result_format_, results,
-      rows_affected, error_message,
-      thread_id);
+      rows_affected, error_message, thread_id);
 
   switch (status) {
     case ResultType::FAILURE:
