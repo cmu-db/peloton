@@ -30,3 +30,13 @@
 3. Thread pool
    * [Init.h](https://github.com/tq5124/peloton-1/blob/codegen/src/include/common/init.h#L19) has a global thread pool, which is initialized [here](https://github.com/tq5124/peloton-1/blob/codegen/src/common/init.cpp#L41) and destroyed [here](https://github.com/tq5124/peloton-1/blob/codegen/src/common/init.cpp#L91)
    * Usage example: [TransactionLevelGCManager](https://github.com/tq5124/peloton-1/blob/codegen/src/include/gc/transaction_level_gc_manager.h#L85) and [LibeventMasterThread](https://github.com/tq5124/peloton-1/blob/codegen/src/wire/libevent_thread.cpp#L60)
+   
+4. Buffering consumer
+   * [compilation_context.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/compilation_context.cpp#L45): register runtime state in the constructor
+   * [buffering_consumer.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/buffering_consumer.cpp#L92): register a runtime vector on stack to hold a single tuple
+   * [table_scan_translator.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/table_scan_translator.cpp#L138): scan translator processes row batch and consumes
+   * [consumer_context.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/consumer_context.cpp#L32): if we reach the end of the pipeline, call consume on query result consumer
+   * [query_result_consumer.h](https://github.com/tq5124/peloton-1/blob/multi/src/include/codegen/query_result_consumer.h.h#L39): iterate rows in this row batch and consume each row
+   * [buffering_consumer.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/buffering_consumer.cpp#L103): put things into the runtime tuple vector!
+   * [values_runtime.cpp](https://github.com/tq5124/peloton-1/blob/multi/src/codegen/values_runtime.cpp): how attributes are put in the tuple vector
+  
