@@ -119,10 +119,14 @@ void CompressedTile::CompressTile(Tile *tile) {
       case type::Type::VARCHAR:
         LOG_INFO("dictionary");
         new_column_values = CompressCharColumn(tile, i);
-        new_columns[i] = new_column_values;
-        SetCompressedMapValue(i, type::Type::SMALLINT,
-                              type::ValueFactory::GetVarcharValue(""));
-        compressed_columns_count += 1;
+        if (new_column_values.size() == 0) {
+          LOG_INFO("So an empty vector returned");
+        } else {
+          new_columns[i] = new_column_values;
+          SetCompressedMapValue(i, type::Type::SMALLINT,
+                                type::ValueFactory::GetVarcharValue(""));
+          compressed_columns_count += 1;
+        }
         break;
       default:
         LOG_INFO("Unable to compress %s ",
@@ -352,6 +356,13 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   }
   LOG_INFO("number of tuples: %d", num_tuples);
   LOG_INFO("number of uniq words: %d", counter);
+  if ((oid_t)counter == num_tuples) {
+    // TODO
+    // no duplicate
+    LOG_INFO("All words are unique");
+    modified_values.clear();
+    return modified_values;
+  }
 
   for (oid_t i = 0; i < num_tuples; i++) {
     // TODO determine value type according to number of uniq words
