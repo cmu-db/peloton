@@ -370,9 +370,11 @@ bool RunPayment(const size_t &thread_id){
   // Update the 9th column
   type::Value  warehouse_new_balance_value = type::ValueFactory::GetDecimalValue(warehouse_new_balance).Copy();
 
-  warehouse_target_list.emplace_back(
-    8, expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value)
-  );
+  planner::DerivedAttribute warehouse_bal;
+  warehouse_bal.expr =
+      expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value);
+  warehouse_bal.attribute_info.type = warehouse_bal.expr->GetValueType();
+  warehouse_target_list.emplace_back(8, warehouse_bal);
 
   std::unique_ptr<const planner::ProjectInfo> warehouse_project_info(
     new planner::ProjectInfo(std::move(warehouse_target_list),
@@ -428,10 +430,12 @@ bool RunPayment(const size_t &thread_id){
   }
   // Update the 10th column
   type::Value  district_new_balance_value = type::ValueFactory::GetDecimalValue(district_new_balance).Copy();
-  
-  district_target_list.emplace_back(
-    9, expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value)
-  );
+
+  planner::DerivedAttribute district_bal;
+  district_bal.expr =
+      expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value);
+  district_bal.attribute_info.type = district_bal.expr->GetValueType();
+  district_target_list.emplace_back( 9, district_bal);
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
     new planner::ProjectInfo(std::move(district_target_list),
@@ -516,10 +520,27 @@ bool RunPayment(const size_t &thread_id){
     type::Value customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
     type::Value customer_new_data_value = type::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
 
-    customer_bc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
-    customer_bc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value));
-    customer_bc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value));
-    customer_bc_target_list.emplace_back(20, expression::ExpressionUtil::ConstantValueFactory(customer_new_data_value));
+    planner::DerivedAttribute c_new_bal;
+    planner::DerivedAttribute c_new_ytd;
+    planner::DerivedAttribute c_new_paycnt;
+    planner::DerivedAttribute c_new_data;
+
+    c_new_bal.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value);
+    c_new_bal.attribute_info.type = c_new_bal.expr->GetValueType();
+
+    c_new_ytd.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value);
+    c_new_ytd.attribute_info.type = c_new_ytd.expr->GetValueType();
+
+    c_new_paycnt.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value);
+    c_new_paycnt.attribute_info.type = c_new_paycnt.expr->GetValueType();
+
+    c_new_data.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_data_value);
+    c_new_data.attribute_info.type = c_new_data.expr->GetValueType();
+
+    customer_bc_target_list.emplace_back(16, c_new_bal);
+    customer_bc_target_list.emplace_back(17, c_new_ytd);
+    customer_bc_target_list.emplace_back(18, c_new_paycnt);
+    customer_bc_target_list.emplace_back(20, c_new_data);
 
     std::unique_ptr<const planner::ProjectInfo> customer_bc_project_info(
       new planner::ProjectInfo(
@@ -586,9 +607,22 @@ bool RunPayment(const size_t &thread_id){
     type::Value  customer_new_ytd_value = type::ValueFactory::GetDecimalValue(customer_ytd_payment).Copy();
     type::Value  customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
 
-    customer_gc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
-    customer_gc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value));
-    customer_gc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value));
+    planner::DerivedAttribute c_new_bal;
+    planner::DerivedAttribute c_new_ytd;
+    planner::DerivedAttribute c_new_paycnt;
+
+    c_new_bal.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value);
+    c_new_bal.attribute_info.type = c_new_bal.expr->GetValueType();
+
+    c_new_ytd.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value);
+    c_new_ytd.attribute_info.type = c_new_ytd.expr->GetValueType();
+
+    c_new_paycnt.expr = expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value);
+    c_new_paycnt.attribute_info.type = c_new_paycnt.expr->GetValueType();
+
+    customer_gc_target_list.emplace_back(16, c_new_bal);
+    customer_gc_target_list.emplace_back(17, c_new_ytd);
+    customer_gc_target_list.emplace_back(18, c_new_paycnt);
 
     std::unique_ptr<const planner::ProjectInfo> customer_gc_project_info(
       new planner::ProjectInfo(

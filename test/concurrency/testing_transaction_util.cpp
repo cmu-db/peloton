@@ -211,7 +211,10 @@ TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     type::Value value = (tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    target_list.emplace_back(col_id, expression);
+    planner::DerivedAttribute attribute;
+    attribute.expr = expression;
+    attribute.attribute_info.type = expression->GetValueType();
+    target_list.emplace_back(col_id, attribute);
   }
 
   return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
@@ -337,8 +340,12 @@ bool TestingTransactionUtil::ExecuteUpdate(
   // ProjectInfo
   TargetList target_list;
   DirectMapList direct_map_list;
-  target_list.emplace_back(
-     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+  auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
+  planner::DerivedAttribute attribute;
+  attribute.expr = expr;
+  attribute.attribute_info.type = expr->GetValueType();
+  target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan
@@ -376,8 +383,12 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   // ProjectInfo
   TargetList target_list;
   DirectMapList direct_map_list;
-  target_list.emplace_back(
-     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+  auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
+  planner::DerivedAttribute attribute;
+  attribute.expr = expr;
+  attribute.attribute_info.type = expr->GetValueType();
+  target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan

@@ -46,6 +46,10 @@ class ValueFactory {
     return Value(Type::BIGINT, value);
   }
 
+  static inline Value GetDateValue(uint32_t value) {
+    return Value(Type::DATE, static_cast<int32_t>(value));
+  }
+
   static inline Value GetTimestampValue(int64_t value) {
     return Value(Type::TIMESTAMP, value);
   }
@@ -70,8 +74,15 @@ class ValueFactory {
   static inline Value GetVarcharValue(
       const char *value, bool manage_data,
       UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
-    return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value) + 1,
-                 manage_data);
+    uint32_t len =
+        static_cast<uint32_t>(value == nullptr ? 0u : strlen(value) + 1);
+    return GetVarcharValue(value, len, manage_data);
+  }
+
+  static inline Value GetVarcharValue(
+      const char *value, uint32_t len, bool manage_data,
+      UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
+    return Value(Type::VARCHAR, value, len, manage_data);
   }
 
   static inline Value GetVarcharValue(

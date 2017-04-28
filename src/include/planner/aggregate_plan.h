@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <numeric>
+
 #include "type/types.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
@@ -26,20 +28,21 @@ namespace planner {
 
 class AggregatePlan : public AbstractPlan {
  public:
-  AggregatePlan() = delete;
-  AggregatePlan(const AggregatePlan &) = delete;
-  AggregatePlan &operator=(const AggregatePlan &) = delete;
-  AggregatePlan(AggregatePlan &&) = delete;
-
   class AggTerm {
    public:
     ExpressionType aggtype;
     const expression::AbstractExpression *expression;
     bool distinct;
+    // The attribute information and ID for this aggregate
+    AttributeInfo agg_ai;
 
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
             bool distinct = false)
         : aggtype(et), expression(expr), distinct(distinct) {}
+
+    type::Type::TypeId GetValueType() const { return agg_ai.type; }
+
+    bool IsNullable() const { return agg_ai.nullable; }
 
     AggTerm Copy() const {
       return AggTerm(aggtype, expression->Copy(), distinct);
@@ -60,8 +63,25 @@ class AggregatePlan : public AbstractPlan {
         output_schema_(output_schema),
         agg_strategy_(aggregate_strategy) {}
 
+  ~AggregatePlan() {
+    for (auto term : unique_agg_terms_) {
+      delete term.expression;
+    }
+  }
+
+  // Bindings
+  void PerformBinding(BindingContext &binding_context) override;
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
   const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;
+  }
+
+  const std::vector<const AttributeInfo *> &GetGroupbyAIs() const {
+    return groupby_ais_;
   }
 
   const expression::AbstractExpression *GetPredicate() const {
@@ -86,14 +106,9 @@ class AggregatePlan : public AbstractPlan {
     return PlanNodeType::AGGREGATE_V2;
   }
 
-  ~AggregatePlan() {
-    for (auto term : unique_agg_terms_) {
-      delete term.expression;
-    }
-  }
-
-  void SetColumnIds(const std::vector<oid_t> &column_ids) {
-    column_ids_ = column_ids;
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns.resize(GetOutputSchema()->GetColumnCount());
+    std::iota(columns.begin(), columns.end(), 0);
   }
 
   const std::string GetInfo() const { return "AggregatePlan"; }
@@ -130,6 +145,7 @@ class AggregatePlan : public AbstractPlan {
 
   /* Group-by Keys */
   const std::vector<oid_t> groupby_col_ids_;
+  std::vector<const AttributeInfo *> groupby_ais_;
 
   /* Output schema */
   std::shared_ptr<const catalog::Schema> output_schema_;
@@ -139,6 +155,10 @@ class AggregatePlan : public AbstractPlan {
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(AggregatePlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton
