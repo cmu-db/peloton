@@ -143,6 +143,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           new planner::CreatePlan((parser::CreateStatement *)tree));
       ddl_plan = move(create_plan);
     } break;
+
+    case StatementType::CREATE_FUNC: {
+      LOG_TRACE("Adding Create function plan...");
+      unique_ptr<planner::AbstractPlan> create_func_plan(
+          new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)tree));
+      ddl_plan = move(create_func_plan);
+    } break;
+
     default:
       is_ddl_stmt = false;
   }
