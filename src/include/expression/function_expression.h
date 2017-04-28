@@ -52,7 +52,7 @@ class FunctionExpression : public AbstractExpression {
       const std::vector<type::Type::TypeId>& arg_types, bool is_udf) {
     func_ptr_ = func_ptr;
     return_value_type_ = val_type;
-    is_udf_ = is_udf_;
+    is_udf_ = is_udf;
     CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
@@ -61,9 +61,8 @@ class FunctionExpression : public AbstractExpression {
       type::Type::TypeId val_type,
       const std::vector<type::Type::TypeId>& arg_types, bool is_udf) {
     func_string_ = func_string;
-    func_ptr_ = func_ptr;
     return_value_type_ = val_type;
-    is_udf_ = is_udf_;
+    is_udf_ = is_udf;
     CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
@@ -76,13 +75,14 @@ class FunctionExpression : public AbstractExpression {
     for (auto& child : children_) {
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
+    type::Value ret;
 
     if(is_udf_) {
       //Logic for UDF
       // You have all the fields which you need populated
     }
     else {
-      type::Value ret = func_ptr_(child_values);
+      ret = func_ptr_(child_values);
     }
     
     // if this is false we should throw an exception
