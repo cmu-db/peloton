@@ -40,6 +40,20 @@
 namespace peloton {
 namespace catalog {
 
+// information about functions (for FunctionExpression)
+struct UDFFunctionData {
+  // name of the function
+  std::string func_name_;
+  // type of input arguments
+  std::vector<type::Type::TypeId> argument_types_;
+  // funtion's return type
+  type::Type::TypeId return_type_;
+  // UDF function query string
+  std::string func_string_;
+  // Indicates whether the function is present in the UDF catalog
+  bool funcf_is_present_;
+};
+
 class FunctionCatalog : public AbstractCatalog {
  public:
   ~FunctionCatalog();
@@ -76,6 +90,8 @@ class FunctionCatalog : public AbstractCatalog {
 
   bool DeleteFunction(oid_t oid, const std::string &name,
                      concurrency::Transaction *txn);
+
+  const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
