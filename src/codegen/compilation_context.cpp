@@ -180,7 +180,13 @@ llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::Abs
           {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
         }};
 
-    codegen_.CallPrintf("Inner plan start.\n", {});
+    llvm::Value *multi_thread_context = codegen_.GetArgument(1);
+
+    llvm::Value *thread_id = codegen_.CallFunc(
+        MultiThreadContextProxy::GetThreadIdFunction(codegen_),
+        {multi_thread_context});
+
+    codegen_.CallPrintf("#%d, Inner plan start.\n", {thread_id});
 
     // Create all local state
     runtime_state.CreateLocalState(codegen_);
@@ -188,14 +194,14 @@ llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::Abs
     // Generate the primary plan logic
     Produce(root);
 
-    codegen_.CallPrintf("Inner plan end.\n", {});
+    codegen_.CallPrintf("#%d, Inner plan end.\n", {thread_id});
 
     // barrier wait
-    llvm::Value *multi_thread_context = codegen_.GetArgument(1);
-    codegen_.CallPrintf("innerplan: barrier waiting .. \n", {});
+
+    codegen_.CallPrintf("#%d, innerplan: barrier waiting .. \n", {thread_id});
     // codegen_.CallFunc(MultiThreadContextProxy::GetWorkerFinishFunction(codegen_),{multi_thread_context});
     codegen_.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen_),{multi_thread_context});
-    codegen_.CallPrintf("innerplan: barrier passed !!! \n", {});
+    codegen_.CallPrintf("#%d, innerplan: barrier passed !!! \n", {thread_id});
 
     // Finish the function
     inner_function_builder.ReturnAndFinish();

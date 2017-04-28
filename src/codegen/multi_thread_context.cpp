@@ -45,14 +45,13 @@ int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num)
   return end;
 }
 
+int64_t MultiThreadContext::GetThreadId() {
+  return thread_id_;
+}
+
 void MultiThreadContext::BarrierWait()
 {
     bar_->BarrierWait();
-}
-
-void MultiThreadContext::WorkerFinish()
-{
-    bar_->WorkerFinish();
 }
 
 }
