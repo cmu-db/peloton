@@ -75,8 +75,11 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
-  codegen.CallPrintf("Table.cpp, try to calculate tile groups.\n", {});
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
+  llvm::Value *thread_id = codegen.CallFunc(
+      MultiThreadContextProxy::GetThreadIdFunction(codegen),
+      {multi_thread_context});
+
   llvm::Value *tile_group_idx = codegen.CallFunc(
     MultiThreadContextProxy::GetRangeStartFunction(codegen),
     {
@@ -93,7 +96,7 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   // llvm::Value *tile_group_idx = codegen.Const64(0);
   // llvm::Value *tile_group_idx_end = num_tile_groups;
 
-  codegen.CallPrintf("Table.cpp, this thread produces tiles group from %lu to %lu.\n", {tile_group_idx, tile_group_idx_end});
+  codegen.CallPrintf("#%d, Table.cpp, this thread produces tiles group from %lu to %lu.\n", {thread_id, tile_group_idx, tile_group_idx_end});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,
