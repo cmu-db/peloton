@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "catalog/catalog.h"
+#include "catalog/function_catalog.h"
 #include "catalog/schema.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
@@ -423,7 +424,7 @@ class ExpressionUtil {
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
-                                                 func_data.argument_types_);
+                                                 func_data.argument_types_, false);
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
       auto const_expr = (expression::ConstantValueExpression *)expr;
       const_expr->expr_name_ = const_expr->GetValue().ToString();
@@ -568,8 +569,10 @@ class ExpressionUtil {
       catch (Exception &e) { 
         auto func_catalog = catalog::FunctionCatalog::GetInstance();
 
-        func_catalog::UDfFunctionData &func_data = 
+        //Do something similar to GetFunction, but populate the struct
+        const catalog::UDFFunctionData &func_data = 
           func_catalog->GetFunction(func_expr->func_name_);
+          
         // Set func_data->func_name to "" if such a function does not exist
 
         if(func_data.func_is_present_) {

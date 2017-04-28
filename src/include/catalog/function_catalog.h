@@ -51,7 +51,7 @@ struct UDFFunctionData {
   // UDF function query string
   std::string func_string_;
   // Indicates whether the function is present in the UDF catalog
-  bool funcf_is_present_;
+  bool func_is_present_;
 };
 
 class FunctionCatalog : public AbstractCatalog {
@@ -91,7 +91,7 @@ class FunctionCatalog : public AbstractCatalog {
   bool DeleteFunction(oid_t oid, const std::string &name,
                      concurrency::Transaction *txn);
 
-  const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name);
+  const UDFFunctionData GetFunction(const std::string &name);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
