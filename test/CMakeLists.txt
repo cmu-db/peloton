@@ -92,8 +92,8 @@ foreach(test_src ${test_srcs} )
 	)   
 	
 	# add test
-    add_test(${test_name} ${CMAKE_BINARY_DIR}/test/${test_name} --gtest_color=yes
-            --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
+  add_test(${test_name} ${CMAKE_BINARY_DIR}/test/${test_name} --gtest_color=yes
+           --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
 	
 endforeach(test_src ${test_srcs})
 
@@ -130,7 +130,7 @@ foreach(perf_src ${perf_srcs} )
 	)   
 	
 	# add test
-	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name}
-        --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
+	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name} --gtest_color=yes
+           --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
 	
 endforeach(perf_src ${perf_srcs})
