@@ -557,11 +557,31 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData &func_data =
+      try {
+        const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+        func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
-                                                 func_data.argument_types_);
+                                                 func_data.argument_types_, false); 
+      }
+      // If not found in map, try in pg_proc (UDF catalog)
+      catch (Exception &e) { 
+        auto func_catalog = catalog::FunctionCatalog::GetInstance();
+
+        func_catalog::UDfFunctionData &func_data = 
+          func_catalog->GetFunction(func_expr->func_name_);
+        // Set func_data->func_name to "" if such a function does not exist
+
+        if(func_data.func_is_present_) {
+          func_expr->SetFunctionExpressionParameters(func_data.func_string_,
+                                                 func_data.return_type_,
+                                                 func_data.argument_types_, true);
+        }
+        else {
+          throw; // Rethrows the exception since function was not found
+        }
+      }
+      
     }
     // make sure the return types for expressions are set correctly
     // this is useful in operator expressions
