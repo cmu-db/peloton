@@ -49,9 +49,21 @@ class FunctionExpression : public AbstractExpression {
   void SetFunctionExpressionParameters(
       type::Value (*func_ptr)(const std::vector<type::Value>&),
       type::Type::TypeId val_type,
-      const std::vector<type::Type::TypeId>& arg_types) {
+      const std::vector<type::Type::TypeId>& arg_types, bool is_udf) {
     func_ptr_ = func_ptr;
     return_value_type_ = val_type;
+    is_udf_ = is_udf_;
+    CheckChildrenTypes(arg_types, children_, func_name_);
+  }
+
+  void SetFunctionExpressionParameters(
+      std::string func_string,
+      type::Type::TypeId val_type,
+      const std::vector<type::Type::TypeId>& arg_types, bool is_udf) {
+    func_string_ = func_string;
+    func_ptr_ = func_ptr;
+    return_value_type_ = val_type;
+    is_udf_ = is_udf_;
     CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
@@ -64,7 +76,15 @@ class FunctionExpression : public AbstractExpression {
     for (auto& child : children_) {
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
-    type::Value ret = func_ptr_(child_values);
+
+    if(is_udf_) {
+      //Logic for UDF
+      // You have all the fields which you need populated
+    }
+    else {
+      type::Value ret = func_ptr_(child_values);
+    }
+    
     // if this is false we should throw an exception
     // TODO: maybe checking this every time is not neccesary? but it prevents
     // crashing
@@ -79,6 +99,11 @@ class FunctionExpression : public AbstractExpression {
   AbstractExpression* Copy() const { return new FunctionExpression(*this); }
 
   std::string func_name_;
+
+  // For UDFs
+  std::string func_string_;
+  bool is_udf_;
+
 
   virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 
