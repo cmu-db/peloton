@@ -27,13 +27,21 @@ struct ExecuteStatement : SQLStatement {
       : SQLStatement(StatementType::EXECUTE), name(NULL), parameters(NULL) {}
 
   virtual ~ExecuteStatement() {
-    free (name);
-
-    if (parameters) {
-      for (auto expr : *parameters) delete expr;
+    if (name != nullptr) {
+      delete[] name;
     }
 
-    delete parameters;
+    if (parameters) {
+      for (auto expr : *parameters) {
+        if (expr != nullptr) {
+          delete expr;
+        }
+      }
+    }
+
+    if (parameters != nullptr) {
+      delete parameters;
+    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
