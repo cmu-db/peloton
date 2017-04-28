@@ -34,10 +34,6 @@ namespace planner {
 class UpdatePlan : public AbstractPlan {
  public:
   UpdatePlan() = delete;
-  UpdatePlan(const UpdatePlan &) = delete;
-  UpdatePlan &operator=(const UpdatePlan &) = delete;
-  UpdatePlan(UpdatePlan &&) = delete;
-  UpdatePlan &operator=(UpdatePlan &&) = delete;
 
   explicit UpdatePlan(storage::DataTable *table,
                       std::unique_ptr<const planner::ProjectInfo> project_info);
@@ -101,6 +97,9 @@ class UpdatePlan : public AbstractPlan {
 
   // Whether update primary key
   bool update_primary_key_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(UpdatePlan);
 };
 
 }  // namespace planner

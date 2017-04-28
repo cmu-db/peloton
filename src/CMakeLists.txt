@@ -67,6 +67,10 @@ file(GLOB_RECURSE sdbench_srcs ${PROJECT_SOURCE_DIR}/src/main/sdbench/*.cpp)
 add_executable(sdbench EXCLUDE_FROM_ALL ${sdbench_srcs})
 target_link_libraries(sdbench peloton)
 
+# --[ tpch
+file(GLOB_RECURSE tpch_srcs ${PROJECT_SOURCE_DIR}/src/main/tpch/*.cpp)
+add_executable(tpch EXCLUDE_FROM_ALL ${tpch_srcs})
+target_link_libraries(tpch peloton)
 
 # --[ logger
 file(GLOB_RECURSE logger_srcs ${PROJECT_SOURCE_DIR}/src/main/logger/*.cpp)
@@ -81,7 +85,7 @@ target_link_libraries(logger peloton)
 # --[ link to jemalloc
 set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
-set(EXE_LIST peloton-bin ycsb tpcc sdbench logger)
+set(EXE_LIST peloton-bin ycsb tpcc sdbench logger tpch)
 foreach(exe_name ${EXE_LIST})
     target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
     set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})

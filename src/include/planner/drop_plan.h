@@ -26,13 +26,10 @@ class Schema;
 }
 
 namespace planner {
+
 class DropPlan : public AbstractPlan {
  public:
   DropPlan() = delete;
-  DropPlan(const DropPlan &) = delete;
-  DropPlan &operator=(const DropPlan &) = delete;
-  DropPlan(DropPlan &&) = delete;
-  DropPlan &operator=(DropPlan &&) = delete;
 
   explicit DropPlan(storage::DataTable *table);
 
@@ -61,6 +58,10 @@ class DropPlan : public AbstractPlan {
   storage::DataTable *target_table_ = nullptr;
   std::string table_name;
   bool missing;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(DropPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

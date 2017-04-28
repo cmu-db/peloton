@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <numeric>
 
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
@@ -27,13 +28,15 @@ namespace planner {
 
 class ProjectionPlan : public AbstractPlan {
  public:
-  ProjectionPlan(const ProjectionPlan &) = delete;
-  ProjectionPlan &operator=(const ProjectionPlan &) = delete;
-  ProjectionPlan(ProjectionPlan &&) = delete;
-  ProjectionPlan &operator=(ProjectionPlan &&) = delete;
-
   ProjectionPlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
                  const std::shared_ptr<const catalog::Schema> &schema);
+
+  // Rebind
+  void PerformBinding(BindingContext &context) override;
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
   inline const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -47,18 +50,19 @@ class ProjectionPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Projection"; }
 
-  void SetColumnIds(const std::vector<oid_t> &column_ids) {
-    column_ids_ = column_ids;
-  }
-
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
+
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
+    columns.resize(schema_->GetColumnCount());
+    std::iota(columns.begin(), columns.end(), 0);
+  }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(schema_.get()));
     ProjectionPlan *new_plan =
         new ProjectionPlan(project_info_->Copy(), schema_copy);
-    new_plan->SetColumnIds(column_ids_);
+    new_plan->column_ids_ = column_ids_;
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
@@ -71,6 +75,9 @@ class ProjectionPlan : public AbstractPlan {
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(ProjectionPlan);
 };
 
 }  // namespace planner

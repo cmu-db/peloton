@@ -353,9 +353,11 @@ bool RunDelivery(const size_t &thread_id){
     }
     type::Value orders_update_val = type::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
 
-    orders_target_list.emplace_back(
-      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(orders_update_val)
-    );
+    planner::DerivedAttribute carrier_id;
+    carrier_id.expr =
+        expression::ExpressionUtil::ConstantValueFactory(orders_update_val);
+    carrier_id.attribute_info.type = carrier_id.expr->GetValueType();
+    orders_target_list.emplace_back(COL_IDX_O_CARRIER_ID, carrier_id);
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
       new planner::ProjectInfo(std::move(orders_target_list),
@@ -410,9 +412,11 @@ bool RunDelivery(const size_t &thread_id){
     }
     type::Value order_line_update_val = type::ValueFactory::GetTimestampValue(0).Copy();
 
-    order_line_target_list.emplace_back(
-      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(order_line_update_val)
-    );
+    planner::DerivedAttribute delivery_id;
+    delivery_id.expr =
+        expression::ExpressionUtil::ConstantValueFactory(order_line_update_val);
+    delivery_id.attribute_info.type = delivery_id.expr->GetValueType();
+    order_line_target_list.emplace_back(COL_IDX_OL_DELIVERY_D, delivery_id);
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
      new planner::ProjectInfo(std::move(order_line_target_list),
@@ -482,8 +486,10 @@ bool RunDelivery(const size_t &thread_id){
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
       ExpressionType::OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
 
-    customer_target_list.emplace_back(
-      COL_IDX_C_BALANCE, plus_operator_expr);
+    planner::DerivedAttribute c_balance;
+    c_balance.expr = plus_operator_expr;
+    c_balance.attribute_info.type = c_balance.expr->GetValueType();
+    customer_target_list.emplace_back(COL_IDX_C_BALANCE, c_balance);
 
 
     std::unique_ptr<const planner::ProjectInfo> customer_project_info(

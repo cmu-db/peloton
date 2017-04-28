@@ -93,9 +93,14 @@ void UpdateTuple(storage::DataTable *table,
 
   TargetList target_list;
   DirectMapList direct_map_list;
-  target_list.emplace_back(
-      2, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+  planner::DerivedAttribute attribute;
+  attribute.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
+  attribute.attribute_info.type = attribute.expr->GetValueType();
+  target_list.emplace_back(2, attribute);
+
   LOG_TRACE("%u", target_list.at(0).first);
+
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
