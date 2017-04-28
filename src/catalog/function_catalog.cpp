@@ -151,6 +151,11 @@ namespace peloton {
       return function_catalog_schema;
     }
 
+ const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name) {
+  // Write logic to populate the fields of UDFFunctionData
+  return UDFFunctionData{NULL, NULL, NULL, NULL, NULL};
+}
+
  ResultType  FunctionCatalog::InsertFunction(const std::string &proname,
                           UNUSED_ATTRIBUTE oid_t pronamespace, UNUSED_ATTRIBUTE oid_t proowner, 
                           oid_t prolang, UNUSED_ATTRIBUTE float procost,
