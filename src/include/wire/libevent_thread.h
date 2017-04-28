@@ -85,10 +85,11 @@ class LibeventThread {
 };
 
 class LibeventWorkerThread : public LibeventThread {
- public:
+ private:
   // New connection event
   struct event *new_conn_event_;
 
+ public:
   // Timeout event
   struct event *ev_timeout;
 
@@ -103,6 +104,13 @@ class LibeventWorkerThread : public LibeventThread {
 
  public:
   LibeventWorkerThread(const int thread_id);
+
+  // Getters and setters
+  event *GetNewConnEvent() { return this->new_conn_event_; }
+
+  void SetNewConnEvent(event *new_conn_event_) {
+    this->new_conn_event_ = new_conn_event_;
+  }
 };
 
 // a master thread contains multiple worker threads.
