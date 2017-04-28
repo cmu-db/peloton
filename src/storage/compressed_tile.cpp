@@ -32,6 +32,7 @@
 namespace peloton {
 namespace storage {
 
+#define TINYMAX 127
 bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
@@ -115,15 +116,15 @@ void CompressedTile::CompressTile(Tile *tile) {
         new_columns[i] = new_column_values;
         break;
       // try dictionary
-      // TODO
       case type::Type::VARCHAR:
         LOG_INFO("dictionary");
         new_column_values = CompressCharColumn(tile, i);
         if (new_column_values.size() == 0) {
-          LOG_INFO("So an empty vector returned");
+          LOG_INFO("No deduplicate is needed");
         } else {
           new_columns[i] = new_column_values;
-          SetCompressedMapValue(i, type::Type::SMALLINT,
+          type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
+          SetCompressedMapValue(i, type_id,
                                 type::ValueFactory::GetVarcharValue(""));
           compressed_columns_count += 1;
         }
@@ -310,7 +311,6 @@ std::vector<type::Value> CompressedTile::CompressColumn(
 // compression for varchar
 std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
                                                             oid_t column_id) {
-  // TODO
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -339,10 +339,9 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
         tile->GetValueFast(i, column_offset, column_type, is_inlined);
     std::string word = val.ToString();
 
-    // add a new word to dictionary
     if (dictionary.contains(word) == false) {
+      // add a new word to dictionary
       dictionary.insert(word, counter);
-      // decoder.push_back(val);
       decoder.push_back(type::ValueFactory::GetVarcharValue(word));
       LOG_TRACE("new word: #%d : %s", counter,
                 decoder.at(counter).ToString().c_str());
@@ -357,19 +356,28 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   LOG_INFO("number of tuples: %d", num_tuples);
   LOG_INFO("number of uniq words: %d", counter);
   if ((oid_t)counter == num_tuples) {
-    // TODO
     // no duplicate
     LOG_INFO("All words are unique");
     modified_values.clear();
     return modified_values;
   }
 
-  for (oid_t i = 0; i < num_tuples; i++) {
-    // TODO determine value type according to number of uniq words
-    // try samll int
-    modified_values[i] = type::ValueFactory::GetSmallIntValue(modified_raw[i]);
-  }
+  // determine value type according to number of uniq words
+  if (counter <= TINYMAX + 1) {
+    LOG_INFO("store as tiny int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // tiny int
+      modified_values[i] = type::ValueFactory::GetTinyIntValue(modified_raw[i]);
+    }
 
+  } else {
+    LOG_INFO("store as small int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // samll int
+      modified_values[i] =
+          type::ValueFactory::GetSmallIntValue(modified_raw[i]);
+    }
+  }
   SetDecoderMapValue(column_id, decoder);
   return modified_values;
 }
