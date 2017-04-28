@@ -84,6 +84,15 @@ class ColumnStatsCatalog : public AbstractCatalog {
     // Add new columns here in creation order
   };
 
+  enum ColumnStatsOffset {
+    NUM_ROW_OFF = 0,
+    CARDINALITY_OFF = 1,
+    FRAC_NULL_OFF = 2,
+    COMMON_VALS_OFF = 3,
+    COMMON_FREQS_OFF = 4,
+    HIST_BOUNDS_OFF = 5,
+  };
+
  private:
   ColumnStatsCatalog(concurrency::Transaction *txn);
 

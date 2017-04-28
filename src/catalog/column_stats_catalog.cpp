@@ -136,12 +136,12 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
     LOG_DEBUG("Tuple count: %lu", tile->GetTupleCount());
     PL_ASSERT(tile->GetTupleCount() <= 1);
     if (tile->GetTupleCount() != 0) {
-      num_row = tile->GetValue(0, 0);
-      cardinality = tile->GetValue(0, 1);
-      frac_null = tile->GetValue(0, 2);
-      most_common_val = tile->GetValue(0, 3);
-      most_common_freq = tile->GetValue(0, 4);
-      hist_bounds = tile->GetValue(0, 5);
+      num_row = tile->GetValue(0, ColumnStatsOffset::NUM_ROW_OFF);
+      cardinality = tile->GetValue(0, ColumnStatsOffset::CARDINALITY_OFF);
+      frac_null = tile->GetValue(0, ColumnStatsOffset::FRAC_NULL_OFF);
+      most_common_val = tile->GetValue(0, ColumnStatsOffset::COMMON_VALS_OFF);
+      most_common_freq = tile->GetValue(0, ColumnStatsOffset::COMMON_FREQS_OFF);
+      hist_bounds = tile->GetValue(0, ColumnStatsOffset::HIST_BOUNDS_OFF);
     } else {
       return nullptr;
     }
