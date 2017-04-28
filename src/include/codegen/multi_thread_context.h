@@ -31,9 +31,19 @@ class MultiThreadContext {
 
   int64_t GetRangeEnd(int64_t tile_group_num);
 
+  int64_t GetThreadId();
+
   void BarrierWait();
 
-  void WorkerFinish();
+  ~MultiThreadContext()
+  {
+      bar_ = nullptr;
+  }
+
+ private:
+
+  MultiThreadContext(int64_t thread_id, int64_t thread_count, Barrier *bar)
+     : thread_id_(thread_id), thread_count_(thread_count), bar_(bar) {}
 
   void SetThreadId(int64_t thread_id)
   {
@@ -49,16 +59,6 @@ class MultiThreadContext {
   {
       bar_ = bar;
   }
-
-  ~MultiThreadContext()
-  {
-      bar_ = nullptr;
-  }
-
- private:
-
-  MultiThreadContext(int64_t thread_id, int64_t thread_count, Barrier *bar)
-     : thread_id_(thread_id), thread_count_(thread_count), bar_(bar) {}
 
   int64_t thread_id_;
   int64_t thread_count_;
