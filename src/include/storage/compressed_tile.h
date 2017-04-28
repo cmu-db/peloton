@@ -149,11 +149,9 @@ class CompressedTile : public Tile {
                                   .Divide(exponent_column_map[column_id]));
       }
       if (base_value.GetTypeId() == type::Type::VARCHAR) {
-        int vv = (int32_t)compressed_value.GetAs<int8_t>();
-        LOG_INFO("encoded value: %d", vv);
+        int vv = (int32_t)compressed_value.GetAs<int16_t>();
         type::Value v;
         v = decoder_map[column_id].at(vv);
-        LOG_INFO("%s", v.ToString().c_str());
 
         return v;
       }

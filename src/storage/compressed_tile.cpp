@@ -120,7 +120,7 @@ void CompressedTile::CompressTile(Tile *tile) {
         LOG_INFO("dictionary");
         new_column_values = CompressCharColumn(tile, i);
         new_columns[i] = new_column_values;
-        SetCompressedMapValue(i, type::Type::TINYINT,
+        SetCompressedMapValue(i, type::Type::SMALLINT,
                               type::ValueFactory::GetVarcharValue(""));
         compressed_columns_count += 1;
         break;
@@ -314,16 +314,19 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   auto column_type = tile_schema->GetType(column_id);
   std::vector<type::Value> column_values(num_tuples);
 
-  /* to use peleton's cuckoo  template
-   * src/container/cuckoo_map.cpp
-   * needs to be modified and add  type
-   */
-
   // use 3rd party
   cuckoohash_map<std::string, int> dictionary;
 
   std::vector<type::Value> decoder;
   std::vector<type::Value> modified_values(num_tuples);
+
+  /* put data here first.
+   * since we do not know how many uniq words at the beginning
+   * first store them as int
+   * decide exact Value type later
+   */
+
+  std::vector<int> modified_raw(num_tuples);
 
   int counter = 0;
   int new_value = 0;
@@ -337,7 +340,7 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
       dictionary.insert(word, counter);
       // decoder.push_back(val);
       decoder.push_back(type::ValueFactory::GetVarcharValue(word));
-      LOG_DEBUG("new word: #%d : %s", counter,
+      LOG_TRACE("new word: #%d : %s", counter,
                 decoder.at(counter).ToString().c_str());
       new_value = counter;
       counter++;
@@ -345,8 +348,15 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
     } else {
       new_value = dictionary.find(word);
     }
-    //  try tiny first
-    modified_values[i] = type::ValueFactory::GetTinyIntValue(new_value);
+    modified_raw[i] = new_value;
+  }
+  LOG_INFO("number of tuples: %d", num_tuples);
+  LOG_INFO("number of uniq words: %d", counter);
+
+  for (oid_t i = 0; i < num_tuples; i++) {
+    // TODO determine value type according to number of uniq words
+    // try samll int
+    modified_values[i] = type::ValueFactory::GetSmallIntValue(modified_raw[i]);
   }
 
   SetDecoderMapValue(column_id, decoder);
