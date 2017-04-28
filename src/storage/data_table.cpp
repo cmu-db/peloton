@@ -500,8 +500,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
-  if (tuple && check_constraint && CheckConstraints(tuple) == false)
-    return INVALID_ITEMPOINTER;
+  //TODO: delete this section
+  if (!check_constraint)
+    LOG_DEBUG("This line should never be executed.");
+  //if (tuple && check_constraint && CheckConstraints(tuple) == false)
+  //  return INVALID_ITEMPOINTER;
+
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -608,6 +612,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     index_entry_ptr = &temp_ptr;
   }
 
+  //Check NOT NULL and DEFAULT constraints
+  CheckConstraints(tuple);
+
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
@@ -622,7 +629,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     IncreaseTupleCount(1);
     return location;
   }
-  // Index checks and updates
+  // Index checks and updates (checks PRIMARY KEY and UNIQUE constraints)
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
 
@@ -715,6 +722,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   // Since this is NOT protected by a lock, concurrent insert may happen.
   bool res = true;
+  std::string failure_type = "";
   int success_count = 0;
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
@@ -726,11 +734,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case IndexConstraintType::PRIMARY_KEY:
+      case IndexConstraintType::PRIMARY_KEY: {
+        failure_type = "PRIMARY";
+        res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
+      } break;
       case IndexConstraintType::UNIQUE: {
         // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
+        failure_type = "UNIQUE";
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       } break;
 
@@ -746,6 +758,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       // the pointer has a chance to be dereferenced by readers and it cannot be
       // deleted
       *index_entry_ptr = nullptr;
+      LOG_TRACE("Index constraint of type %s violated", failure_type.c_str());
+      throw ConstraintException("Constraint of type " + failure_type +
+          " violated.");
       return false;
     } else {
       success_count += 1;
