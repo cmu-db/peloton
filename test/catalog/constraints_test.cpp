@@ -781,10 +781,9 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
-  oid_t table_B_id = table_b->GetTableOid();
   catalog::ForeignKey *foreign_key =
-      new catalog::ForeignKey(table_B_id, {"b"}, {0}, {"a"},
-                              {0}, 'r', 'c', "foreign_constraint1");
+      new catalog::ForeignKey(table_b_name, {"b"}, {"a"},
+                              'r', 'c', "foreign_constraint1");
   table_a->AddForeignKey(foreign_key);
 
   // Test1: insert a tuple with column that satisfies the constraint
@@ -857,6 +856,32 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
   EXPECT_TRUE(hasException);
 
   // Test 4: concurrent insertion into source, deletion from sink
+  txn = txn_manager.BeginTransaction();
+  optimizer::SimpleOptimizer optimizer;
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  std::vector<type::Value> params;
+  std::vector<StatementResult> result;
+  std::vector<int> result_format = std::move(std::vector<int>(0, 0));
+  std::string error_message = "Create Error";
+  std::string nm = "create_query";
+  std::string create_tabB = "CREATE TABLE tabB (a INTEGER PRIMARY KEY, b INTEGER);";
+  std::string create_tabA = "CREATE TABLE tabA (b INTEGER REFERENCES tabB (a), c INTEGER);";
+  auto statement = traffic_cop.PrepareStatement(nm, create_tabB, error_message);
+  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                   params, result, result_format);
+  statement = traffic_cop.PrepareStatement(nm, create_tabA, error_message);
+  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                   params, result, result_format);
+  txn_manager.CommitTransaction(txn);
+  auto tab_a = catalog->GetTableWithName(db_name, "tabA");
+  //auto tab_b = catalog->GetTableWithName(db_name, "tabB");
+  catalog::ForeignKey *fk =
+      new catalog::ForeignKey("tabB", {"b"}, {"a"},
+                              'r', 'c', "foreign_constraint2");
+  tab_a->AddForeignKey(fk);
+
+  //txn_manager.CommitTransaction(txn);
+
   txn1 = txn_manager.BeginTransaction();
   txn2 = txn_manager.BeginTransaction();
   hasException = false;
@@ -877,27 +902,22 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
     // Delete sink tuple
     txn1 = txn_manager.BeginTransaction();
     //ConstraintsTestsUtil::ExecuteTruncate(txn1, table_b);
-    /*
-    optimizer::SimpleOptimizer optimizer;
-    auto& traffic_cop = tcop::TrafficCop::GetInstance();
-    LOG_INFO("Deleting with query: DELETE FROM %s", table_b_name.c_str());
-    auto& peloton_parser = parser::PostgresParser::GetInstance();
-    auto delete_stmt =
-        peloton_parser.BuildParseTree("DELETE FROM " + db_name + "." + table_b_name + ";");
-    std::shared_ptr<Statement> statement;
-    std::vector<type::Value> params;
-    std::vector<StatementResult> result;
+
+    
+    //std::shared_ptr<Statement> statement;
+    //std::vector<type::Value> params;
+    //std::vector<StatementResult> result;
+    //std::vector<int> result_format = std::move(std::vector<int>(0, 0));
     //statement.reset(new Statement("DELETE", "DELETE FROM " + db_name + "." + table_b_name + ";"));
     //statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
-    std::string error_message = "Error";
-    std::string nm = "truncate_query";
-    std::string q = "DELETE FROM " + db_name + "." + table_b_name + ";";
+    //std::string error_message = "Error";
+    //std::string nm = "truncate_query";
+    std::string q = "DELETE FROM tabB;";
     statement = traffic_cop.PrepareStatement(nm, q, error_message);
-    std::vector<int> result_format = std::move(std::vector<int>(0, 0));
+    
     traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                                 params, result, result_format);
     
-    */
     txn_manager.CommitTransaction(txn1);
 
     // Commit source tuple

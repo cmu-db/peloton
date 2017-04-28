@@ -16,6 +16,7 @@
 #include "storage/data_table.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
+#include "catalog/foreign_key.h"
 
 namespace peloton {
 namespace planner {
@@ -45,9 +46,29 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // TODO: Currently, the parser will parse the foreign key constraint and
       // put it into a ColumnDefinition. Later when we implement constraint
       // we may need to change this. Just skip foreign key constraint for now
-      if (col->type == parser::ColumnDefinition::FOREIGN)
+      if (col->type == parser::ColumnDefinition::FOREIGN) {
+        // Extract source and sink column names
+        auto foreign_key_source = new std::vector<std::string>();
+        for (auto key : *(col->foreign_key_source)) {
+          foreign_key_source->push_back(key);
+        }
+        auto foreign_key_sink = new std::vector<std::string>();
+        for (auto key : *(col->foreign_key_sink)) {
+          foreign_key_sink->push_back(key);
+        }
+
+        std::string sink_table_name = strdup(col->table_info_->table_name);
+        std::string fk_name = strdup("fk_name");
+
+        //TODO: replace latter three parameters
+        auto fk = new catalog::ForeignKey(sink_table_name,
+            *foreign_key_sink, *foreign_key_source, 't', 't', fk_name);
+        target_table_->AddForeignKey(fk);
+        LOG_DEBUG("Added a foreign key constraint toward sink table %s", 
+            sink_table_name.c_str());
         continue;
-        
+      }
+  
       type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);

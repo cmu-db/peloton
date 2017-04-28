@@ -842,10 +842,10 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple,
                                            concurrency::Transaction *current_txn
                                            UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
-    oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Catalog::GetInstance()->GetTableWithOid(
-            database_oid, sink_table_id);
+    std::string sink_table_name = foreign_key->GetSinkTableName();
+    storage::Database *database = 
+        catalog::Catalog::GetInstance()->GetDatabaseWithOid(database_oid);
+    storage::DataTable *ref_table = database->GetTableWithName(sink_table_name);
 
     int ref_table_index_count = ref_table->GetIndexCount();
 
@@ -857,7 +857,12 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple,
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
+        
+        std::vector<std::string> key_names = foreign_key->GetFKColumnNames();
+        std::vector<oid_t> key_attrs;
+        for (std::string col_name : key_names) {
+          key_attrs.push_back(schema->GetColumnID(col_name));
+        }
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
