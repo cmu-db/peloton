@@ -75,6 +75,13 @@ class ThreadPool {
     dedicated_threads_[thread_id].reset(new std::thread(std::thread(func, params...)));
   }
 
+  void JoinAndResetDedicatedTasks() {
+    for (size_t i = 0; i < current_thread_count_; ++i) {
+      dedicated_threads_[(current_thread_count_ - 1 - i)]->join();
+    }
+    current_thread_count_ = ATOMIC_VAR_INIT(0);
+  }
+
  private:
   ThreadPool(const ThreadPool &);
   ThreadPool &operator=(const ThreadPool &);
