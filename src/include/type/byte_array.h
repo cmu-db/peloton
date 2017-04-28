@@ -90,7 +90,7 @@ class GenericArray {
   void resetAndExpand(int newLength) {
     PL_ASSERT(newLength >= 0);
     //data_ = boost::shared_array<T>(new T[newLength]);
-    data_ = std::shared_ptr<T>(new T[newLength]);
+    data_ = std::shared_ptr<T>(new T[newLength], std::default_delete<T[]>{});
     PL_MEMSET(data_.get(), 0, newLength * sizeof(T));
     length_ = newLength;
   };
@@ -100,7 +100,7 @@ class GenericArray {
     PL_ASSERT(newLength >= 0);
     PL_ASSERT(newLength > length_);
     //boost::shared_array<T> newData(new T[newLength]);
-    std::shared_ptr<T> newData(new T[newLength]);
+    std::shared_ptr<T> newData(new T[newLength], std::default_delete<T[]>{});
     PL_MEMSET(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
     PL_MEMCPY(newData.get(), data_.get(), length_ * sizeof(T));
     data_ = newData;
