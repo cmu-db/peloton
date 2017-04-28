@@ -66,7 +66,11 @@ class TableRefStatement : public SQLStatement {
  public:
   TableRefStatement(StatementType type) : SQLStatement(type) {}
 
-  virtual ~TableRefStatement() { delete table_info_; }
+  virtual ~TableRefStatement() {
+    if (table_info_ != nullptr) {
+      delete table_info_;
+    }
+  }
 
   virtual inline std::string GetTableName() const { return table_info_->table_name; }
 

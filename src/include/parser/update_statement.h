@@ -62,14 +62,22 @@ struct UpdateStatement : SQLStatement {
         where(NULL) {}
 
   virtual ~UpdateStatement() {
-    delete table;
-
-    if (updates) {
-      for (auto clause : *updates) delete clause;
+    if (table != nullptr) {
+      delete table;
     }
 
-    delete updates;
-    if (where != NULL) delete where;
+    if (updates != nullptr) {
+      for (auto clause : *updates) {
+        if (clause != nullptr) {
+          delete clause;
+        }
+      }
+      delete updates;
+    }
+
+    if (where != nullptr) {
+      delete where;
+    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
