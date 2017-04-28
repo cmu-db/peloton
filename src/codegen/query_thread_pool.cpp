@@ -17,16 +17,23 @@ namespace codegen {
 
 QueryThreadPool* QueryThreadPool::GetInstance()
 {
-    int thread_count = std::thread::hardware_concurrency() + 3;
-    static std::unique_ptr<QueryThreadPool> global_query_thread_pool(new QueryThreadPool(thread_count));
+    static std::unique_ptr<QueryThreadPool> global_query_thread_pool(new QueryThreadPool());
     return global_query_thread_pool.get();
+}
+
+uint64_t QueryThreadPool::GetThreadCount() {
+  return std::thread::hardware_concurrency() + 3;
 }
 
 // TODO: runtime_state and multi_thread_context could be invalid after task being submitted!
 // we might need unique_ptr here!
 void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*))
 {
-    pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
+    pool.SubmitDedicatedTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
+}
+
+void QueryThreadPool::JoinAll() {
+  pool.JoinAndResetDedicatedTasks();
 }
 
 }

@@ -24,18 +24,17 @@ class QueryThreadPool {
  public:
 
   static QueryThreadPool *GetInstance();
+  static uint64_t GetThreadCount();
 
-  ~QueryThreadPool() {
-    pool.Shutdown();
+  QueryThreadPool() {
+    pool.Initialize(0, GetThreadCount());
   }
 
   void SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*));
 
- private:
+  void JoinAll();
 
-  QueryThreadPool(size_t thread_nums) {
-    pool.Initialize(thread_nums, 0);
-  }
+ private:
 
   ThreadPool pool;
 };
