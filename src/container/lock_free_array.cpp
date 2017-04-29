@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "codegen/buffering_consumer.h"
 #include "container/lock_free_array.h"
 #include "common/logger.h"
 #include "common/macros.h"
@@ -152,5 +153,7 @@ template class LockFreeArray<std::shared_ptr<storage::Database>>;
 template class LockFreeArray<std::shared_ptr<storage::IndirectionArray>>;
 
 template class LockFreeArray<oid_t>;
+
+template class LockFreeArray<codegen::WrappedTuple>;
 
 }  // End peloton namespace
