@@ -14,6 +14,8 @@
 #include <boost/algorithm/string.hpp>
 #include <cstdio>
 #include <unordered_map>
+#include <include/wire/libevent_server.h>
+#include <include/task/worker_pool.h>
 
 #include "common/cache.h"
 #include "common/macros.h"
@@ -291,6 +293,19 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
       txn_state_ == NetworkTransactionStateType::IDLE)
     return false;
   return true;
+}
+
+// Execute the Simple Query Protocol with a worker thread
+void PacketManager::ExecQueryMessageAsync(void* conn_ptr){
+  LOG_DEBUG("Exec Execute Message Async starting");
+  wire::LibeventSocket * conn = (wire::LibeventSocket *)conn_ptr;
+  InputPacket *pkt = &conn->rpkt;
+  PacketManager *pkt_mgr = &conn->pkt_manager;
+  pkt_mgr->ExecQueryMessage(pkt, (size_t)conn->thread_id);
+  conn->worker_executing = false;
+  // tell the networking thread it can write
+  event_active(conn->event, EV_WRITE, 1);
+  LOG_DEBUG("Exec Execute Message Async done, activating the event");
 }
 
 // The Simple Query Protocol
@@ -769,6 +784,19 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   return true;
 }
 
+// Execute the exec message in a worker thread
+void PacketManager::ExecExecuteMessageAsync(void* conn_ptr){
+  LOG_DEBUG("Exec Execute Message Async starting");
+  wire::LibeventSocket * conn = (wire::LibeventSocket *)conn_ptr;
+  InputPacket *pkt = &conn->rpkt;
+  PacketManager *pkt_mgr = &conn->pkt_manager;
+  pkt_mgr->ExecExecuteMessage(pkt, (size_t)conn->thread_id);
+  conn->worker_executing = false;
+  // tell the networking thread it can write
+  event_active(conn->event, EV_WRITE, 0);
+  LOG_DEBUG("Exec Execute Message Async done, activating the event");
+}
+
 void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
@@ -881,16 +909,20 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
+bool PacketManager::ProcessPacket(LibeventSocket * conn) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
+  // get packet and connection thread id
+  InputPacket *pkt = &(conn->rpkt);
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
   // we see a SYNC
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      ExecQueryMessage(pkt, thread_id);
       force_flush = true;
+      //submit to task queue
+      conn->worker_executing = true;
+      task::WorkerPool::GetInstance().SubmitTask(ExecQueryMessageAsync, conn);
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
@@ -906,7 +938,9 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
     } break;
     case NetworkMessageType::EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
-      ExecExecuteMessage(pkt, thread_id);
+      // submit to task queue
+      conn->worker_executing = true;
+      task::WorkerPool::GetInstance().SubmitTask(ExecExecuteMessageAsync, conn);
     } break;
     case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");

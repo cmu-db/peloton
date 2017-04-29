@@ -26,7 +26,7 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
   this->state = init_state;
 
   this->thread_id = thread->GetThreadID();
-
+  this->worker_executing = false;
   // clear out packet
   rpkt.Reset();
   if (event == nullptr) {
