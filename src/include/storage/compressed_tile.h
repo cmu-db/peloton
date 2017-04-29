@@ -96,6 +96,8 @@ class CompressedTile : public Tile {
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
+  type::Value GetUncompressedVarcharValue(oid_t column_id,
+                                          type::Value compressed_value);
   //===--------------------------------------------------------------------===//
   // Utility Functions
   //===--------------------------------------------------------------------===//
@@ -144,16 +146,7 @@ class CompressedTile : public Tile {
                                   .Divide(exponent_column_map[column_id]));
       }
       if (base_value.GetTypeId() == type::Type::VARCHAR) {
-        int vv;
-        if (compressed_value.GetTypeId() == type::Type::TINYINT)
-          vv = (int32_t)compressed_value.GetAs<int8_t>();
-        else
-          vv = (int32_t)compressed_value.GetAs<int16_t>();
-
-        type::Value v;
-        v = decoder_map[column_id].at(vv);
-
-        return v;
+        return GetUncompressedVarcharValue(column_id, compressed_value);
       }
       return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
     }
