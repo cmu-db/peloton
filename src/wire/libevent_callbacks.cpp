@@ -28,7 +28,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
 
   // pipe fds should match
-  PL_ASSERT(new_conn_recv_fd == thread->new_conn_receive_fd);
+  PL_ASSERT(new_conn_recv_fd == thread->GetNewConnReceiveFd());
 
   // read the operation that needs to be performed
   if (read(new_conn_recv_fd, m_buf, 1) != 1) {

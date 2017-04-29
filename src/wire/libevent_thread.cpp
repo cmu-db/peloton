@@ -81,7 +81,7 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
         LibeventServer::GetConn(worker_thread->GetThreadSockFd())->event);
   }
   event_free(worker_thread->GetNewConnEvent());
-  event_free(worker_thread->ev_timeout);
+  event_free(worker_thread->GetTimeoutEvent());
   event_base_free(worker_thread->GetEventBase());
 }
 
@@ -97,18 +97,18 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
     exit(1);
   }
   // send_fd is used by the master thread, received_fd used by worker thread
-  new_conn_receive_fd = fds[0];
-  new_conn_send_fd = fds[1];
+  SetNewConnReceiveFd(fds[0]);
+  SetNewConnSendFd(fds[1]);
 
   // Listen for notifications from the master thread
-  SetNewConnEvent(event_new(libevent_base_, new_conn_receive_fd,
+  SetNewConnEvent(event_new(libevent_base_, GetNewConnReceiveFd(),
                             EV_READ | EV_PERSIST, WorkerHandleNewConn, this));
 
   // Check thread's start/close flag every one second
   struct timeval one_seconds = {1, 0};
-  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
-                         ThreadControl_Callback, this);
-  event_add(ev_timeout, &one_seconds);
+  SetTimeoutEvent(event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
+                            ThreadControl_Callback, this));
+  event_add(GetTimeoutEvent(), &one_seconds);
 
   if (event_add(GetNewConnEvent(), 0) == -1) {
     LOG_ERROR("Can't monitor libevent notify pipe\n");
@@ -139,7 +139,7 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
       new NewConnQueueItem(new_conn_fd, event_flags, CONN_READ));
   worker_thread->new_conn_queue.Enqueue(item);
 
-  if (write(worker_thread->new_conn_send_fd, buf, 1) != 1) {
+  if (write(worker_thread->GetNewConnSendFd(), buf, 1) != 1) {
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
