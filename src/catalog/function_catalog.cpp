@@ -182,7 +182,7 @@ namespace peloton {
       function_info.return_type_ = (*result_tiles)[0]
                       ->GetValue(0, 1)
                       .GetAs<int>();  // After projection left 1 colum
-n
+
       auto arg_types = (*result_tiles)[0]
                       ->GetValue(0, 2)
                       .GetAs<string>();  // After projection left 1 column
