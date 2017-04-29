@@ -79,6 +79,7 @@ class FunctionExpression : public AbstractExpression {
 
     if(is_udf_) {
       //Logic for UDF
+      //@@Haoran This is where you can plus in your code
       // You have all the fields which you need populated
     }
     else {
