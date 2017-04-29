@@ -97,18 +97,18 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
     exit(1);
   }
   // send_fd is used by the master thread, received_fd used by worker thread
-  SetNewConnReceiveFd(fds[0]);
-  SetNewConnSendFd(fds[1]);
+  new_conn_receive_fd_ = fds[0];
+  new_conn_send_fd_ = fds[1];
 
   // Listen for notifications from the master thread
-  SetNewConnEvent(event_new(libevent_base_, GetNewConnReceiveFd(),
-                            EV_READ | EV_PERSIST, WorkerHandleNewConn, this));
+  new_conn_event_ = event_new(libevent_base_, GetNewConnReceiveFd(),
+                              EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
   // Check thread's start/close flag every one second
   struct timeval one_seconds = {1, 0};
 
-  SetTimeoutEvent(event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
-                            ControlCallback::ThreadControl_Callback, this));
+  ev_timeout_ = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
+                          ControlCallback::ThreadControl_Callback, this);
   event_add(GetTimeoutEvent(), &one_seconds);
 
   if (event_add(GetNewConnEvent(), 0) == -1) {
