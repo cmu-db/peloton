@@ -69,6 +69,9 @@ TEST_F(CompressionDictionaryTest, BasicTest) {
   int rows_affected;
   std::ostringstream os;
 
+  storage::DataTable *foo_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
+  foo_table->CompressTable();
   // os << "select * from foo;";
   os << "select id,year  from foo;";
 
@@ -111,6 +114,10 @@ TEST_F(CompressionDictionaryTest, UniqTest) {
   TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "foo");
   EXPECT_EQ(i, 2500);
 
+  storage::DataTable *foo_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
+  foo_table->CompressTable();
+
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
@@ -141,16 +148,13 @@ TEST_F(CompressionDictionaryTest, UniqTest) {
 }
 
 TEST_F(CompressionDictionaryTest, SizeTest) {
-  for (int j = 0; j < 2; j++) {
+  int uniqs[] = {128, 129, 255, 600};
+  for (int j = 0; j < 4; j++) {
     // the number of unique  var may vary
 
     // 1 ~ 128 : tiny
     // 128~more  small int
-    int uniq;
-    if (j == 0)
-      uniq = 128;
-    else
-      uniq = 129;
+    int uniq = uniqs[j];
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -170,6 +174,11 @@ TEST_F(CompressionDictionaryTest, SizeTest) {
     }
     TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "foo");
     EXPECT_EQ(i, 2500);
+
+    storage::DataTable *foo_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                          "foo");
+    foo_table->CompressTable();
 
     std::vector<StatementResult> result;
     std::vector<FieldInfo> tuple_descriptor;
