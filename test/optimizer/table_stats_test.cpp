@@ -66,6 +66,7 @@ TEST_F(TableStatsTests, SingleColumnTableTest) {
   stats.CollectColumnStats();
 
   EXPECT_EQ(stats.GetColumnCount(), 1);
+  EXPECT_EQ(stats.GetActiveTupleCount(), nrow);
 
   auto column_stats = stats.GetColumnStats(0);
   EXPECT_EQ(column_stats->GetFracNull(), 0);
@@ -111,6 +112,7 @@ TEST_F(TableStatsTests, MultiColumnTableTest) {
   stats.CollectColumnStats();
 
   EXPECT_EQ(stats.GetColumnCount(), 4);
+  EXPECT_EQ(stats.GetActiveTupleCount(), nrow);
 
   // Varchar stats
   ColumnStats* b_stats = stats.GetColumnStats(1);

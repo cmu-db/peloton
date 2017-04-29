@@ -34,17 +34,27 @@ TableStats::~TableStats() {}
 void TableStats::CollectColumnStats() {
   schema_ = table_->GetSchema();
   column_count_ = schema_->GetColumnCount();
+
+  // Ignore empty table
+  if (column_count_ == 0) {
+    return;
+  }
+
   InitColumnStats();
 
   size_t tile_group_count = table_->GetTileGroupCount();
+  // Collect stats for all tile groups.
   for (size_t offset = 0; offset < tile_group_count; offset++) {
     std::shared_ptr<storage::TileGroup> tile_group =
         table_->GetTileGroup(offset);
     storage::TileGroupHeader* tile_group_header = tile_group->GetHeader();
     oid_t tuple_count = tile_group->GetAllocatedTupleCount();
+    active_tuple_count_ += tile_group_header->GetActiveTupleCount();
+    // Collect stats for all tuples in the tile group.
     for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
       txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
       if (tuple_txn_id != INVALID_TXN_ID) {
+        // Collect stats for all columns.
         for (oid_t column_id = 0; column_id < column_count_; column_id++) {
           type::Value value = tile_group->GetValue(tuple_id, column_id);
           column_stats_[column_id]->AddValue(value);
