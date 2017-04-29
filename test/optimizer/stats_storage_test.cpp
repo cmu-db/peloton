@@ -51,6 +51,24 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
   return std::move(data_table);
 }
 
+storage::DataTable *CreateTestDBAndTable() {
+  const std::string test_db_name = "test_db";
+  auto database = TestingExecutorUtil::InitializeDatabase(test_db_name);
+
+  const int tuple_count = 100;
+  const int tuple_per_tilegroup = 100;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  storage::DataTable *data_table =
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false);
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
+                                     true, txn);
+  database->AddTable(data_table);
+  txn_manager.CommitTransaction(txn);
+  return data_table;
+}
+
 /**
  * VerifyAndPrintColumnStats - Verify whether the stats of the test table are
  *correctly stored in catalog
@@ -133,7 +151,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
 
   // Check the result
-  EXPECT_TRUE(column_stats_ptr != nullptr);
+  EXPECT_NE(column_stats_ptr, nullptr);
   std::vector<type::Value> column_stats = *(column_stats_ptr.get());
   for (auto value : *(column_stats_ptr.get())) {
     LOG_DEBUG("Value: %s", value.GetInfo().c_str());
@@ -154,7 +172,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   // Should return nullptr
   auto column_stats_ptr2 =
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id + 1);
-  EXPECT_TRUE(column_stats_ptr2 == nullptr);
+  EXPECT_EQ(column_stats_ptr2, nullptr);
 }
 
 TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
@@ -191,7 +209,7 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
 
   // Check the result
-  EXPECT_TRUE(column_stats_ptr != nullptr);
+  EXPECT_NE(column_stats_ptr, nullptr);
   std::vector<type::Value> column_stats = *(column_stats_ptr.get());
   for (auto value : *(column_stats_ptr.get())) {
     LOG_DEBUG("Value: %s", value.GetInfo().c_str());
@@ -222,16 +240,36 @@ TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
 
   // Must pass in the transaction.
   ResultType result = stats_storage->AnalyzeStatsForTable(data_table.get());
-  EXPECT_TRUE(result == ResultType::FAILURE);
+  EXPECT_EQ(result, ResultType::FAILURE);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   result = stats_storage->AnalyzeStatsForTable(data_table.get(), txn);
-  EXPECT_TRUE(result == ResultType::SUCCESS);
+  EXPECT_EQ(result, ResultType::SUCCESS);
   txn_manager.CommitTransaction(txn);
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table.get(), 4);
+}
+
+// TODO: Add more tables.
+TEST_F(StatsStorageTests, AnalyzeStatsForAllTables) {
+  auto data_table = CreateTestDBAndTable();
+
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+
+  // Must pass in the transaction.
+  ResultType result = stats_storage->AnalyzeStatsForAllTables();
+  EXPECT_EQ(result, ResultType::FAILURE);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  result = stats_storage->AnalyzeStatsForAllTables(txn);
+  EXPECT_EQ(result, ResultType::SUCCESS);
+  txn_manager.CommitTransaction(txn);
+
+  // Check the correctness of the stats.
+  VerifyAndPrintColumnStats(data_table, 4);
 }
 
 } /* namespace test */

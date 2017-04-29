@@ -44,22 +44,24 @@ class StatsStorage {
 
   /* Functions for adding, updating and quering stats */
 
-  void InsertOrUpdateTableStats(storage::DataTable *table, TableStats *table_stats,
-                             concurrency::Transaction *txn = nullptr);
+  void InsertOrUpdateTableStats(storage::DataTable *table,
+                                TableStats *table_stats,
+                                concurrency::Transaction *txn = nullptr);
 
   void InsertOrUpdateColumnStats(oid_t database_id, oid_t table_id,
-                              oid_t column_id, int num_row, double cardinality,
-                              double frac_null, std::string most_common_vals,
-                              double most_common_freqs,
-                              std::string histogram_bounds,
-                              concurrency::Transaction *txn = nullptr);
+                                 oid_t column_id, int num_row,
+                                 double cardinality, double frac_null,
+                                 std::string most_common_vals,
+                                 double most_common_freqs,
+                                 std::string histogram_bounds,
+                                 concurrency::Transaction *txn = nullptr);
 
   std::unique_ptr<std::vector<type::Value>> GetColumnStatsByID(
       oid_t database_id, oid_t table_id, oid_t column_id);
 
   /* Functions for triggerring stats collection */
 
-  ResultType AnalyzeStatsForAllTables();
+  ResultType AnalyzeStatsForAllTables(concurrency::Transaction *txn = nullptr);
 
   ResultType AnalyzeStatsForTable(storage::DataTable *table,
                                   concurrency::Transaction *txn = nullptr);

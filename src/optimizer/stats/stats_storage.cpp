@@ -50,8 +50,8 @@ void StatsStorage::CreateStatsCatalog() {
  * stats tuples into the 'stats' table in the catalog database.
  */
 void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
-                                         TableStats *table_stats,
-                                         concurrency::Transaction *txn) {
+                                            TableStats *table_stats,
+                                            concurrency::Transaction *txn) {
   // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
@@ -79,23 +79,22 @@ void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
       histogram_bounds_str = ConvertDoubleArrayToString(histogram_bounds);
     }
 
-    LOG_DEBUG(
-        "InsertOrUpdateColumnStats: num_row: %lu, cardinality: %lf, frac_null: "
-        "%lf",
-        num_row, cardinality, frac_null);
+    // LOG_DEBUG(
+    //     "InsertOrUpdateColumnStats: num_row: %lu, cardinality: %lf,
+    //     frac_null: "
+    //     "%lf",
+    //     num_row, cardinality, frac_null);
     InsertOrUpdateColumnStats(database_id, table_id, column_id, num_row,
-                           cardinality, frac_null, most_common_val_str,
-                           most_common_freq, histogram_bounds_str, txn);
+                              cardinality, frac_null, most_common_val_str,
+                              most_common_freq, histogram_bounds_str, txn);
   }
 }
 
-void StatsStorage::InsertOrUpdateColumnStats(oid_t database_id, oid_t table_id,
-                                          oid_t column_id, int num_row,
-                                          double cardinality, double frac_null,
-                                          std::string most_common_vals,
-                                          double most_common_freqs,
-                                          std::string histogram_bounds,
-                                          concurrency::Transaction *txn) {
+void StatsStorage::InsertOrUpdateColumnStats(
+    oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
+    double cardinality, double frac_null, std::string most_common_vals,
+    double most_common_freqs, std::string histogram_bounds,
+    concurrency::Transaction *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -134,19 +133,30 @@ std::unique_ptr<std::vector<type::Value>> StatsStorage::GetColumnStatsByID(
  * datatables
  * to collect their stats and store them in the 'stats' table.
  */
-ResultType StatsStorage::AnalyzeStatsForAllTables() {
+ResultType StatsStorage::AnalyzeStatsForAllTables(
+    concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to analyze all tables' stats: %s");
+    return ResultType::FAILURE;
+  }
+
   auto catalog = catalog::Catalog::GetInstance();
 
   oid_t database_count = catalog->GetDatabaseCount();
+  LOG_DEBUG("Database count: %u", database_count);
   for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
     auto database =
         catalog::Catalog::GetInstance()->GetDatabaseWithOffset(db_offset);
+    if (database->GetDBName().compare(CATALOG_DATABASE_NAME) == 0) {
+      continue;
+    }
     oid_t table_count = database->GetTableCount();
     for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
       auto table = database->GetTable(table_offset);
+      LOG_DEBUG("analyzing table: %s", table->GetName().c_str());
       std::unique_ptr<TableStats> table_stats(new TableStats(table));
       table_stats->CollectColumnStats();
-      InsertOrUpdateTableStats(table, table_stats.get());
+      InsertOrUpdateTableStats(table, table_stats.get(), txn);
     }
   }
   return ResultType::SUCCESS;
