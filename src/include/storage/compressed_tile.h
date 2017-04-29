@@ -69,15 +69,16 @@ class CompressedTile : public Tile {
 
   type::Value GetMaxExponentLength(Tile *tile, oid_t column_id);
 
-  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id, type::Value exponent);
+  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id,
+                                                type::Value exponent);
 
   std::vector<type::Value> GetIntegerColumnValues(Tile *tile, oid_t column_id);
 
-  std::vector<type::Value> CompressColumn(Tile *tile, oid_t column_id,
-                                          std::vector<type::Value> column_values,
-                                          type::Type::TypeId compression_type);
+  std::vector<type::Value> CompressColumn(
+      Tile *tile, oid_t column_id, std::vector<type::Value> column_values,
+      type::Value &base_value, type::Type::TypeId &compression_type);
 
-  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id );
+  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id);
 
   void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
@@ -99,11 +100,6 @@ class CompressedTile : public Tile {
   //===--------------------------------------------------------------------===//
 
   inline bool IsCompressed() { return is_compressed; }
-
-  inline type::Value GetBaseValue(type::Value old_value,
-                                  type::Value new_value) {
-    return old_value.Subtract(new_value).CastAs(old_value.GetTypeId());
-  }
 
   inline type::Type::TypeId GetCompressedType(type::Value new_value) {
     return new_value.GetTypeId();
@@ -137,7 +133,8 @@ class CompressedTile : public Tile {
     if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
       type::Value base_value = GetBaseValue(column_id);
       if (base_value.GetTypeId() == type::Type::DECIMAL) {
-        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId()).Divide(exponent_column_map[column_id]));
+        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId())
+                                  .Divide(exponent_column_map[column_id]));
       }
       return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
     }
@@ -146,15 +143,6 @@ class CompressedTile : public Tile {
   }
 
   oid_t GetColumnFromOffset(const size_t column_offset) {
-    /*oid_t i;
-    PL_ASSERT(column_offset < schema.GetLength());
-    for (i = 0; i < column_count; i++) {
-      if (schema.GetOffset(i) == column_offset) {
-        break;
-      }
-    }
-    return i;*/
-
     return column_offset_map[column_offset];
   }
 
@@ -172,7 +160,6 @@ class CompressedTile : public Tile {
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
       compressed_column_map;
   std::map<oid_t, type::Value> exponent_column_map;
-
 };
 }
 }

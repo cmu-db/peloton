@@ -61,7 +61,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
-    tuples_per_tilegroup_ = 1000;
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -213,7 +212,6 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
-    //tile_group->CompressTiles();
     AddDefaultTileGroup(active_tile_group_id);
   }
 
@@ -1024,6 +1022,19 @@ storage::TileGroup *DataTable::TransformTileGroup(
   catalog_manager.AddTileGroup(tile_group_id, new_tile_group);
 
   return new_tile_group.get();
+}
+
+void DataTable::CompressTable() {
+  oid_t tilegroups_size = tile_groups_.GetSize();
+  for (oid_t i = 0; i < tilegroups_size; i++) {
+    storage::TileGroup *tile_group =
+        GetTileGroupById(tile_groups_.Find(i)).get();
+
+    if (!(tile_group->GetCompressionStatus())) {
+      LOG_TRACE("Compressing TileGroup %u", tile_groups_.Find(i));
+      tile_group->CompressTiles();
+    }
+  }
 }
 
 void DataTable::RecordLayoutSample(const brain::Sample &sample) {
