@@ -43,11 +43,6 @@ class MergeJoinPlan : public AbstractJoinPlan {
     bool reversed_;
   };
 
-  MergeJoinPlan(const MergeJoinPlan &) = delete;
-  MergeJoinPlan &operator=(const MergeJoinPlan &) = delete;
-  MergeJoinPlan(MergeJoinPlan &&) = delete;
-  MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
-
   MergeJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
@@ -58,6 +53,15 @@ class MergeJoinPlan : public AbstractJoinPlan {
                          proj_schema),
         join_clauses_(std::move(join_clauses)) {
     // Nothing to see here...
+  }
+
+  void HandleSubplanBinding(bool from_left,
+                            const BindingContext &input) override {
+    for (auto &join_clause : *GetJoinClauses()) {
+      auto &exp = from_left ? join_clause.left_ : join_clause.right_;
+      const_cast<expression::AbstractExpression *>(exp.get())
+          ->PerformBinding({&input});
+    }
   }
 
   inline PlanNodeType GetPlanNodeType() const {
@@ -90,6 +94,9 @@ class MergeJoinPlan : public AbstractJoinPlan {
 
  private:
   std::vector<JoinClause> join_clauses_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(MergeJoinPlan);
 };
 
 }  // namespace planner
