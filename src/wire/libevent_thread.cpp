@@ -106,8 +106,8 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
 
   // Check thread's start/close flag every one second
   struct timeval one_seconds = {1, 0};
-  SetTimeoutEvent(event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
-                            ThreadControl_Callback, this));
+
+  SetTimeoutEvent(event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,ControlCallback::ThreadControl_Callback, this));
   event_add(GetTimeoutEvent(), &one_seconds);
 
   if (event_add(GetNewConnEvent(), 0) == -1) {
