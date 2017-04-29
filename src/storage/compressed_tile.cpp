@@ -19,6 +19,7 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
@@ -31,6 +32,7 @@
 namespace peloton {
 namespace storage {
 
+#define TINYMAX 127
 bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
@@ -69,7 +71,6 @@ void CompressedTile::CompressTile(Tile *tile) {
         column_values = GetIntegerColumnValues(tile, i);
         new_column_values = CompressColumn(tile, i, column_values, base_value,
                                            compression_type);
-
         if (new_column_values.size() != 0) {
           compressed_columns_count += 1;
 
@@ -92,6 +93,7 @@ void CompressedTile::CompressTile(Tile *tile) {
                                            compression_type);
         base_value =
             base_value.CastAs(type::Type::DECIMAL).Divide(max_exponent_count);
+
         if (new_column_values.size() != 0) {
           compressed_columns_count += 1;
 
@@ -107,9 +109,22 @@ void CompressedTile::CompressTile(Tile *tile) {
         }
         new_columns[i] = new_column_values;
         break;
+      case type::Type::VARCHAR:
+        LOG_INFO("dictionary");
+        new_column_values = CompressCharColumn(tile, i);
+        if (new_column_values.size() == 0) {
+          LOG_INFO("No deduplicate is needed");
+        } else {
+          new_columns[i] = new_column_values;
+          type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
+          SetCompressedMapValue(i, type_id,
+                                type::ValueFactory::GetVarcharValue(""));
+          compressed_columns_count += 1;
+        }
+        break;
       default:
-        LOG_TRACE("Unable to compress %s ",
-                  peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
+        LOG_INFO("Unable to compress %s ",
+                 peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
     }
   }
 
@@ -134,6 +149,7 @@ void CompressedTile::CompressTile(Tile *tile) {
                                column_name, column_is_inlined);
         columns.push_back(column);
       }
+      LOG_INFO("column:%d", i);
     }
 
     auto &storage_manager = storage::StorageManager::GetInstance();
@@ -306,37 +322,69 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   auto column_type = tile_schema->GetType(column_id);
   std::vector<type::Value> column_values(num_tuples);
 
-  /* to use this template
-   * src/container/cuckoo_map.cpp
-   * needs to be modified and add this type
-   */
-  CuckooMap<std::string, int> dictionary;
-  // TODO save the decoder somewhere
-  std::vector<std::string> decoder;
+  // use 3rd party
+  cuckoohash_map<std::string, int> dictionary;
+
+  std::vector<type::Value> decoder;
+
   std::vector<type::Value> modified_values(num_tuples);
+
+  /* put data here first.
+   * since we do not know how many uniq words at the beginning
+   * first store them as int
+   * decide exact Value type later
+   */
+
+  std::vector<int> modified_raw(num_tuples);
 
   int counter = 0;
   int new_value = 0;
   for (oid_t i = 0; i < num_tuples; i++) {
-    std::string word = tile->GetValueFast(i, column_offset, column_type,
-                                          is_inlined).ToString();
+    type::Value val =
+        tile->GetValueFast(i, column_offset, column_type, is_inlined);
+    std::string word = val.ToString();
 
-    // add a new word to dictionary
-    if (dictionary.Contains(word) == false) {
-      dictionary.Insert(word, counter);
-      decoder.push_back(word);
+    if (dictionary.contains(word) == false) {
+      // add a new word to dictionary
+      dictionary.insert(word, counter);
+      decoder.push_back(type::ValueFactory::GetVarcharValue(word));
+      LOG_TRACE("new word: #%d : %s", counter,
+                decoder.at(counter).ToString().c_str());
       new_value = counter;
       counter++;
-      LOG_DEBUG("new word: #%d : %s", counter, word.c_str());
 
     } else {
-      // TODO fetch value from cuckoo
-      new_value = 0;
+
+      new_value = dictionary.find(word);
     }
-    // TODO modified_values[i] =
-    (void)new_value;
+    modified_raw[i] = new_value;
+  }
+  LOG_INFO("number of tuples: %d", num_tuples);
+  LOG_INFO("number of uniq words: %d", counter);
+  if ((oid_t)counter == num_tuples) {
+    // no duplicate
+    LOG_INFO("All words are unique");
+    modified_values.clear();
+    return modified_values;
   }
 
+  // determine value type according to number of uniq words
+  if (counter <= TINYMAX + 1) {
+    LOG_INFO("store as tiny int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // tiny int
+      modified_values[i] = type::ValueFactory::GetTinyIntValue(modified_raw[i]);
+    }
+
+  } else {
+    LOG_INFO("store as small int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // samll int
+      modified_values[i] =
+          type::ValueFactory::GetSmallIntValue(modified_raw[i]);
+    }
+  }
+  SetDecoderMapValue(column_id, decoder);
   return modified_values;
 }
 
