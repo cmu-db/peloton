@@ -89,16 +89,16 @@ class LibeventWorkerThread : public LibeventThread {
   // New connection event
   struct event *new_conn_event_;
 
- public:
   // Timeout event
-  struct event *ev_timeout;
+  struct event *ev_timeout_;
 
   // Notify new connection pipe(send end)
-  int new_conn_send_fd;
+  int new_conn_send_fd_;
 
   // Notify new connection pipe(receive end)
-  int new_conn_receive_fd;
+  int new_conn_receive_fd_;
 
+ public:
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
@@ -111,6 +111,18 @@ class LibeventWorkerThread : public LibeventThread {
   void SetNewConnEvent(event *new_conn_event_) {
     this->new_conn_event_ = new_conn_event_;
   }
+
+  event *GetTimeoutEvent() { return this->ev_timeout_; }
+
+  void SetTimeoutEvent(event *ev_timeout_) { this->ev_timeout_ = ev_timeout_; }
+
+  int GetNewConnSendFd() { return this->new_conn_send_fd_; }
+
+  void SetNewConnSendFd(int fd) { this->new_conn_send_fd_ = fd; }
+
+  int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
+
+  void SetNewConnReceiveFd(int fd) { this->new_conn_receive_fd_ = fd; }
 };
 
 // a master thread contains multiple worker threads.
