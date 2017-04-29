@@ -373,6 +373,10 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
           type::ValueFactory::GetSmallIntValue(modified_raw[i]);
     }
   }
+  size_t dictionary_cap = decoder.capacity();
+  LOG_TRACE("dictionary capacity: %zu", dictionary_cap);
+  // if use log trace, dictionary_size will not be used
+  (void)dictionary_cap;
   SetDecoderMapValue(column_id, decoder);
   return modified_values;
 }
