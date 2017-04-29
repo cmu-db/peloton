@@ -169,7 +169,7 @@ namespace peloton {
   values.push_back(type::ValueFactory::GetVarcharValue(name,nullptr).Copy());
  
   UDFFunctionData function_info;
-  function_info.funcf_is_present_ = false;
+  function_info.func_is_present_ = false;
 
   auto result_tiles = GetResultWithIndexScan(column_ids, index_offset, values, txn);
   
@@ -197,7 +197,7 @@ n
                       ->GetValue(0, 3)
                       .GetAs<string>();  // After projection left 1 column
 
-      function_info.funcf_is_present_ = true;
+      function_info.func_is_present_ = true;
     }
   }
   
