@@ -14,6 +14,9 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
 #include "common/macros.h"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/foreach.hpp>
 
 namespace peloton {
   namespace catalog {
@@ -33,7 +36,12 @@ namespace peloton {
         UNUSED_ATTRIBUTE concurrency::Transaction *txn)
       : AbstractCatalog(FUNCTION_CATALOG_OID, FUNCTION_CATALOG_NAME,
           InitializeSchema().release(), pg_catalog) {
-        // Add secondary index here if necessary
+     
+      //index created so we can query on name   
+     Catalog::GetInstance()->CreateIndex(
+      CATALOG_DATABASE_NAME, FUNCTION_CATALOG_NAME,
+      {"function_name"}, FUNCTION_CATALOG_NAME "_skey0",
+      false, IndexType::BWTREE, txn);
       }
 
     FunctionCatalog::~FunctionCatalog() {}
@@ -151,9 +159,49 @@ namespace peloton {
       return function_catalog_schema;
     }
 
- const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name) {
+ const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name,
+                                   concurrency::Transaction *txn) {
   // Write logic to populate the fields of UDFFunctionData
-  return UDFFunctionData{NULL, NULL, NULL, NULL, NULL};
+
+  std::vector<oid_t> column_ids({1,16,17,22});
+  oid_t index_offset = 1;
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetVarcharValue(name,nullptr).Copy());
+ 
+  UDFFunctionData function_info;
+  function_info.funcf_is_present_ = false;
+
+  auto result_tiles = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  
+   if (result_tiles->size() != 0) {
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      function_info.func_name_ = (*result_tiles)[0]
+                      ->GetValue(0, 0)
+                      .GetAs<oid_t>();  // After projection left 1 column
+
+      function_info.return_type_ = (*result_tiles)[0]
+                      ->GetValue(0, 1)
+                      .GetAs<int>();  // After projection left 1 colum
+n
+      auto arg_types = (*result_tiles)[0]
+                      ->GetValue(0, 2)
+                      .GetAs<string>();  // After projection left 1 column
+      std::vector<std::string> arg_types_split;
+
+      boost::split(arg_types_split,arg_types, boost::is_any_of(" "));
+
+      for(auto e : arg_types_split)
+        function_info.argument_types_.push_back(std::stoi(e));
+      
+      function_info.func_string_ = (*result_tiles)[0]
+                      ->GetValue(0, 3)
+                      .GetAs<string>();  // After projection left 1 column
+
+      function_info.funcf_is_present_ = true;
+    }
+  }
+  
+  return function_info;
 }
 
  ResultType  FunctionCatalog::InsertFunction(const std::string &proname,
@@ -265,7 +313,37 @@ namespace peloton {
         return ResultType::FAILURE;
 }
 
-   
+oid_t FunctionCatalog::GetFunctionOid(const std::string &function_name,
+    oid_t database_oid,
+    concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0});  // table_oid
+  oid_t index_offset = 1;              // Index of name
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(function_name, nullptr).Copy());
+
+ // auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  auto result_tiles =
+    GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  oid_t function_oid = INVALID_OID;
+  PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is unique
+  if (result_tiles->size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      function_oid = (*result_tiles)[0]
+        ->GetValue(0, 0)
+        .GetAs<oid_t>();  // After projection left 1 column
+    }
+  }
+
+  return function_oid;
+}
+
+    
+
+ 
 
   }  // End catalog namespace
 }  // End peloton namespace
