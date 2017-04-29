@@ -110,10 +110,10 @@ void CompressedTile::CompressTile(Tile *tile) {
         new_columns[i] = new_column_values;
         break;
       case type::Type::VARCHAR:
-        LOG_INFO("dictionary");
+        LOG_TRACE("dictionary");
         new_column_values = CompressCharColumn(tile, i);
         if (new_column_values.size() == 0) {
-          LOG_INFO("No deduplicate is needed");
+          LOG_TRACE("No deduplicate is needed");
         } else {
           new_columns[i] = new_column_values;
           type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
@@ -123,7 +123,7 @@ void CompressedTile::CompressTile(Tile *tile) {
         }
         break;
       default:
-        LOG_INFO("Unable to compress %s ",
+        LOG_TRACE("Unable to compress %s ",
                  peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
     }
   }
@@ -149,7 +149,7 @@ void CompressedTile::CompressTile(Tile *tile) {
                                column_name, column_is_inlined);
         columns.push_back(column);
       }
-      LOG_INFO("column:%d", i);
+      LOG_TRACE("column:%d", i);
     }
 
     auto &storage_manager = storage::StorageManager::GetInstance();
@@ -359,25 +359,25 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
     }
     modified_raw[i] = new_value;
   }
-  LOG_INFO("number of tuples: %d", num_tuples);
-  LOG_INFO("number of uniq words: %d", counter);
+
+  LOG_TRACE("number of uniq words: %d", counter);
   if ((oid_t)counter == num_tuples) {
     // no duplicate
-    LOG_INFO("All words are unique");
+    LOG_TRACE("All words are unique");
     modified_values.clear();
     return modified_values;
   }
 
   // determine value type according to number of uniq words
   if (counter <= TINYMAX + 1) {
-    LOG_INFO("store as tiny int");
+    LOG_TRACE("store as tiny int");
     for (oid_t i = 0; i < num_tuples; i++) {
       // tiny int
       modified_values[i] = type::ValueFactory::GetTinyIntValue(modified_raw[i]);
     }
 
   } else {
-    LOG_INFO("store as small int");
+    LOG_TRACE("store as small int");
     for (oid_t i = 0; i < num_tuples; i++) {
       // samll int
       modified_values[i] =
