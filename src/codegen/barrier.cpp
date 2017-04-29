@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// barrier.cpp
+//
+// Identification: src/codegen/barrier.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "codegen/barrier.h"
 
 #include "common/logger.h"

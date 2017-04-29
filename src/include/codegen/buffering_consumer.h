@@ -16,8 +16,11 @@
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
+#include "container/lock_free_array.h"
 
 #include <vector>
+
+#define TUPLE_BUFFER_INIT_CAPACITY 16
 
 namespace peloton {
 
@@ -34,6 +37,7 @@ class WrappedTuple
     : public expression::ContainerTuple<std::vector<type::Value>> {
  public:
   // Basic Constructor
+  WrappedTuple();
   WrappedTuple(type::Value *vals, uint32_t num_vals);
 
   // Copy Constructor
@@ -41,6 +45,10 @@ class WrappedTuple
 
   // Assignment
   WrappedTuple &operator=(const WrappedTuple &o);
+
+  // Compare
+  bool operator==(const WrappedTuple &o);
+  bool operator!=(const WrappedTuple &o);
 
   // The tuple
   std::vector<type::Value> tuple_;
@@ -52,7 +60,7 @@ class WrappedTuple
 class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
-    std::vector<WrappedTuple> *output;
+    LockFreeArray<WrappedTuple> *output;
   };
 
   // Constructor
@@ -84,14 +92,15 @@ class BufferingConsumer : public QueryResultConsumer {
 
   BufferingState *GetState() { return &state; }
 
-  const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
+  const std::vector<WrappedTuple> &GetOutputTuples();
 
  private:
   // The attributes we want to output
   std::vector<const planner::AttributeInfo *> output_ais_;
 
   // Buffered output tuples
-  std::vector<WrappedTuple> tuples_;
+  LockFreeArray<WrappedTuple> tuples_;
+  std::vector<WrappedTuple> tuples_vector_;
 
   // Running buffering state
   BufferingState state;

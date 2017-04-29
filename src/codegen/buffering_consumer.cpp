@@ -15,6 +15,7 @@
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
 #include "common/logger.h"
+#include "container/lock_free_array.h"
 #include "planner/binding_context.h"
 
 namespace peloton {
@@ -25,6 +26,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 
 // Basic Constructor
+WrappedTuple::WrappedTuple() : ContainerTuple(&tuple_), tuple_() {}
 WrappedTuple::WrappedTuple(type::Value *vals, uint32_t num_vals)
     : ContainerTuple(&tuple_), tuple_(vals, vals + num_vals) {}
 
@@ -36,6 +38,14 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
   expression::ContainerTuple<std::vector<type::Value>>::operator=(o);
   tuple_ = o.tuple_;
   return *this;
+}
+
+bool WrappedTuple::operator==(const WrappedTuple &o) {
+  return this->EqualsNoSchemaCheck(o);
+}
+
+bool WrappedTuple::operator!=(const WrappedTuple &o) {
+  return !this->EqualsNoSchemaCheck(o);
 }
 
 //===----------------------------------------------------------------------===//
@@ -55,7 +65,7 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 void BufferingConsumer::BufferTuple(char *state, type::Value *vals,
                                     uint32_t num_vals) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(vals, num_vals);
+  buffer_state->output->Append(WrappedTuple(vals, num_vals));
 }
 
 // Get a proxy to BufferingConsumer::BufferTuple(...)
@@ -171,6 +181,25 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                      tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
   codegen.CallFunc(_BufferTupleProxy::GetFunction(codegen), args);
+}
+
+const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() {
+  size_t result_size = tuples_.GetSize();
+//  std::vector<WrappedTuple> result(result_size);
+//
+//  for (size_t i = 0; i < result_size; ++i) {
+//    result.push_back(tuples_.Find(i));
+//  }
+//
+//  std::cout << result.size() << std::endl;
+//  return std::move(result);
+
+  // TODO(tq5124): why above does not work?
+  tuples_vector_.reserve(result_size);
+  for (size_t i = 0; i < result_size; ++i) {
+    tuples_vector_.push_back(tuples_.Find(i));
+  }
+  return tuples_vector_;
 }
 
 }  // namespace test

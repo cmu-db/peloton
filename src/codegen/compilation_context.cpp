@@ -268,7 +268,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
   codegen_.CallPrintf("Waiting for threads to join.\n", {});
   codegen_.CallFunc(QueryThreadPoolProxy::GetJoinAllFunction(codegen_), {query_thread_pool});
-  codegen_.CallPrintf("Finish submitting threads for inner plan.\n", {});
+  codegen_.CallPrintf("All threads of inner plan func join.\n", {});
 
   function_builder.ReturnAndFinish();
 
