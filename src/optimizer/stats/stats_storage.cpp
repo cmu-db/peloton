@@ -128,7 +128,6 @@ std::unique_ptr<ColumnStatsSet> StatsStorage::GetColumnStatsByID(
               database_id, table_id, column_id);
     return nullptr;
   }
-
   int num_row = (*column_stats)[0].GetAs<int>();
   double cardinality = (*column_stats)[1].GetAs<double>();
   double frac_null = (*column_stats)[2].GetAs<double>();
@@ -143,6 +142,7 @@ std::unique_ptr<ColumnStatsSet> StatsStorage::GetColumnStatsByID(
   }
   char *hist_bounds_ptr = (*column_stats)[5].GetAs<char *>();
   if (hist_bounds_ptr != nullptr) {
+    LOG_TRACE("histgram bounds: %s", hist_bounds_ptr);
     histogram_bounds = ConvertStringToDoubleArray(std::string(hist_bounds_ptr));
   }
   std::unique_ptr<ColumnStatsSet> column_stats_set(
