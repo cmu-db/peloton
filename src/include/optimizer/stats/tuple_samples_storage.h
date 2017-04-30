@@ -18,6 +18,8 @@
 #include "type/types.h"
 #include "type/value_factory.h"
 
+#define SAMPLE_COUNT_PER_TABLE 100
+
 namespace peloton {
 
 namespace storage {
@@ -27,6 +29,10 @@ class Tuple;
 
 namespace concurrency {
 class Transaction;
+}
+
+namespace executor {
+class LogicalTile;
 }
 
 namespace optimizer {
@@ -48,12 +54,23 @@ class TupleSamplesStorage {
       storage::DataTable *data_table,
       std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
 
+  ResultType DeleteSamplesTable(oid_t database_id, oid_t table_id,
+                                concurrency::Transaction *txn = nullptr);
+
   bool InsertSampleTuple(storage::DataTable *samples_table,
                          std::unique_ptr<storage::Tuple> tuple,
                          concurrency::Transaction *txn);
 
-  void GetTupleSamples(oid_t database_id, oid_t table_id,
-                       std::vector<storage::Tuple> &tuple_samples);
+  ResultType CollectSamplesForTable(storage::DataTable *data_table,
+                                    concurrency::Transaction *txn = nullptr);
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetTuplesWithSeqScan(storage::DataTable *data_table,
+                       std::vector<oid_t> column_offsets,
+                       concurrency::Transaction *txn);
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetTupleSamples(oid_t database_id, oid_t table_id);
 
   void GetColumnSamples(oid_t database_id, oid_t table_id, oid_t column_id,
                         std::vector<type::Value> &column_samples);
