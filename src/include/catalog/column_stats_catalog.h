@@ -56,7 +56,8 @@ class ColumnStatsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
                          int num_row, double cardinality, double frac_null,
-                         std::string most_common_vals, double most_common_freqs,
+                         std::string most_common_vals,
+                         std::string most_common_freqs,
                          std::string histogram_bounds, type::AbstractPool *pool,
                          concurrency::Transaction *txn);
   bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
