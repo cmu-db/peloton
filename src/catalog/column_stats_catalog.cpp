@@ -37,7 +37,7 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::Transaction *txn)
                       "cardinality    DECIMAL NOT NULL, "
                       "frac_null      DECIMAL NOT NULL, "
                       "most_common_vals  VARCHAR, "
-                      "most_common_freqs DECIMAL, "
+                      "most_common_freqs VARCHAR, "
                       "histogram_bounds  VARCHAR);",
                       txn) {
   // Add secondary index here if necessary
@@ -52,7 +52,7 @@ ColumnStatsCatalog::~ColumnStatsCatalog() {}
 bool ColumnStatsCatalog::InsertColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
     double cardinality, double frac_null, std::string most_common_vals,
-    double most_common_freqs, std::string histogram_bounds,
+    std::string most_common_freqs, std::string histogram_bounds,
     type::AbstractPool *pool, concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -67,7 +67,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
   type::Value val_common_val, val_common_freq;
   if (!most_common_vals.empty()) {
     val_common_val = type::ValueFactory::GetVarcharValue(most_common_vals);
-    val_common_freq = type::ValueFactory::GetDecimalValue(most_common_freqs);
+    val_common_freq = type::ValueFactory::GetVarcharValue(most_common_freqs);
   } else {
     val_common_val =
         type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
@@ -90,7 +90,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
   tuple->SetValue(ColumnId::CARDINALITY, val_cardinality, nullptr);
   tuple->SetValue(ColumnId::FRAC_NULL, val_frac_null, nullptr);
   tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool);
-  tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, nullptr);
+  tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, pool);
   tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool);
 
   // Insert the tuple into catalog table
@@ -127,8 +127,8 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  type::Value num_row, cardinality, frac_null, most_common_val,
-      most_common_freq, hist_bounds;
+  type::Value num_row, cardinality, frac_null, most_common_vals,
+      most_common_freqs, hist_bounds;
 
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
@@ -139,8 +139,9 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       num_row = tile->GetValue(0, ColumnStatsOffset::NUM_ROW_OFF);
       cardinality = tile->GetValue(0, ColumnStatsOffset::CARDINALITY_OFF);
       frac_null = tile->GetValue(0, ColumnStatsOffset::FRAC_NULL_OFF);
-      most_common_val = tile->GetValue(0, ColumnStatsOffset::COMMON_VALS_OFF);
-      most_common_freq = tile->GetValue(0, ColumnStatsOffset::COMMON_FREQS_OFF);
+      most_common_vals = tile->GetValue(0, ColumnStatsOffset::COMMON_VALS_OFF);
+      most_common_freqs =
+          tile->GetValue(0, ColumnStatsOffset::COMMON_FREQS_OFF);
       hist_bounds = tile->GetValue(0, ColumnStatsOffset::HIST_BOUNDS_OFF);
     } else {
       return nullptr;
@@ -154,8 +155,8 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   column_stats->push_back(num_row);
   column_stats->push_back(cardinality);
   column_stats->push_back(frac_null);
-  column_stats->push_back(most_common_val);
-  column_stats->push_back(most_common_freq);
+  column_stats->push_back(most_common_vals);
+  column_stats->push_back(most_common_freqs);
   column_stats->push_back(hist_bounds);
 
   return std::move(column_stats);

@@ -51,6 +51,24 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
   return std::move(data_table);
 }
 
+storage::DataTable *CreateTestDBAndTable() {
+  const std::string test_db_name = "test_db";
+  auto database = TestingExecutorUtil::InitializeDatabase(test_db_name);
+
+  const int tuple_count = 100;
+  const int tuple_per_tilegroup = 100;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  storage::DataTable *data_table =
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false);
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
+                                     true, txn);
+  database->AddTable(data_table);
+  txn_manager.CommitTransaction(txn);
+  return data_table;
+}
+
 /**
  * VerifyAndPrintColumnStats - Verify whether the stats of the test table are
  *correctly stored in catalog
@@ -80,16 +98,20 @@ void VerifyAndPrintColumnStats(storage::DataTable *data_table,
 
   // Print out all four column stats.
   for (int column_id = 0; column_id < expect_tuple_count; ++column_id) {
-    // storage::Tuple tile_tuple(&schema, tile->GetTupleLocation(column_id));
-    // LOG_DEBUG("Tuple Info: %s", tile_tuple.GetInfo().c_str());
-
-    // Get column stats using the GetColumnStatsByID function and compare the
-    // results.
     auto column_stats = stats_storage->GetColumnStatsByID(
         data_table->GetDatabaseOid(), data_table->GetOid(), column_id);
-    for (auto value : *(column_stats.get())) {
-      LOG_DEBUG("Value: %s", value.GetInfo().c_str());
-    }
+    LOG_DEBUG("num_row: %lu", column_stats->num_row);
+    LOG_DEBUG("cardinality: %lf", column_stats->cardinality);
+    LOG_DEBUG("frac_null: %lf", column_stats->frac_null);
+    auto most_common_vals = column_stats->most_common_vals;
+    auto most_common_freqs = column_stats->most_common_freqs;
+    auto hist_bounds = column_stats->histogram_bounds;
+    // for(size_t i = 0; i < most_common_vals.size(); ++i) {
+    //   LOG_DEBUG("(%lf, %lf)", most_common_vals[i], most_common_freqs[i]);
+    // }
+    // for(size_t i = 0; i < hist_bounds.size(); ++i) {
+    //   LOG_DEBUG("[%lf]", hist_bounds[i]);
+    // }
   }
 }
 
@@ -122,7 +144,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   double cardinality = 8;
   double frac_null = 0.56;
   std::string most_common_vals = "12";
-  double most_common_freqs = 3;
+  std::string most_common_freqs = "3";
   std::string histogram_bounds = "1,5,7";
 
   stats_storage->InsertOrUpdateColumnStats(
@@ -133,28 +155,16 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
 
   // Check the result
-  EXPECT_TRUE(column_stats_ptr != nullptr);
-  std::vector<type::Value> column_stats = *(column_stats_ptr.get());
-  for (auto value : *(column_stats_ptr.get())) {
-    LOG_DEBUG("Value: %s", value.GetInfo().c_str());
-  }
-  EXPECT_TRUE(column_stats[0].CompareEquals(
-      type::ValueFactory::GetIntegerValue(num_row)));
-  EXPECT_TRUE(column_stats[1].CompareEquals(
-      type::ValueFactory::GetDecimalValue(cardinality)));
-  EXPECT_TRUE(column_stats[2].CompareEquals(
-      type::ValueFactory::GetDecimalValue(frac_null)));
-  EXPECT_TRUE(column_stats[3].CompareEquals(
-      type::ValueFactory::GetVarcharValue(most_common_vals)));
-  EXPECT_TRUE(column_stats[4].CompareEquals(
-      type::ValueFactory::GetDecimalValue(most_common_freqs)));
-  EXPECT_TRUE(column_stats[5].CompareEquals(
-      type::ValueFactory::GetVarcharValue(histogram_bounds)));
+  EXPECT_NE(column_stats_ptr, nullptr);
+
+  EXPECT_EQ(column_stats_ptr->num_row, num_row);
+  EXPECT_EQ(column_stats_ptr->cardinality, cardinality);
+  EXPECT_EQ(column_stats_ptr->frac_null, frac_null);
 
   // Should return nullptr
   auto column_stats_ptr2 =
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id + 1);
-  EXPECT_TRUE(column_stats_ptr2 == nullptr);
+  EXPECT_EQ(column_stats_ptr2, nullptr);
 }
 
 TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
@@ -170,14 +180,14 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   double cardinality_0 = 8;
   double frac_null_0 = 0.56;
   std::string most_common_vals_0 = "12";
-  double most_common_freqs_0 = 3;
+  std::string most_common_freqs_0 = "3";
   std::string histogram_bounds_0 = "1,5,7";
 
   int num_row_1 = 20;
   double cardinality_1 = 16;
   double frac_null_1 = 1.56;
   std::string most_common_vals_1 = "24";
-  double most_common_freqs_1 = 6;
+  std::string most_common_freqs_1 = "6";
   std::string histogram_bounds_1 = "2,10,14";
 
   stats_storage->InsertOrUpdateColumnStats(
@@ -191,23 +201,11 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
 
   // Check the result
-  EXPECT_TRUE(column_stats_ptr != nullptr);
-  std::vector<type::Value> column_stats = *(column_stats_ptr.get());
-  for (auto value : *(column_stats_ptr.get())) {
-    LOG_DEBUG("Value: %s", value.GetInfo().c_str());
-  }
-  EXPECT_TRUE(column_stats[0].CompareEquals(
-      type::ValueFactory::GetIntegerValue(num_row_1)));
-  EXPECT_TRUE(column_stats[1].CompareEquals(
-      type::ValueFactory::GetDecimalValue(cardinality_1)));
-  EXPECT_TRUE(column_stats[2].CompareEquals(
-      type::ValueFactory::GetDecimalValue(frac_null_1)));
-  EXPECT_TRUE(column_stats[3].CompareEquals(
-      type::ValueFactory::GetVarcharValue(most_common_vals_1)));
-  EXPECT_TRUE(column_stats[4].CompareEquals(
-      type::ValueFactory::GetDecimalValue(most_common_freqs_1)));
-  EXPECT_TRUE(column_stats[5].CompareEquals(
-      type::ValueFactory::GetVarcharValue(histogram_bounds_1)));
+  EXPECT_NE(column_stats_ptr, nullptr);
+
+  EXPECT_EQ(column_stats_ptr->num_row, num_row_1);
+  EXPECT_EQ(column_stats_ptr->cardinality, cardinality_1);
+  EXPECT_EQ(column_stats_ptr->frac_null, frac_null_1);
 }
 
 // TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
@@ -222,16 +220,36 @@ TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
 
   // Must pass in the transaction.
   ResultType result = stats_storage->AnalyzeStatsForTable(data_table.get());
-  EXPECT_TRUE(result == ResultType::FAILURE);
+  EXPECT_EQ(result, ResultType::FAILURE);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   result = stats_storage->AnalyzeStatsForTable(data_table.get(), txn);
-  EXPECT_TRUE(result == ResultType::SUCCESS);
+  EXPECT_EQ(result, ResultType::SUCCESS);
   txn_manager.CommitTransaction(txn);
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table.get(), 4);
+}
+
+// TODO: Add more tables.
+TEST_F(StatsStorageTests, AnalyzeStatsForAllTables) {
+  auto data_table = CreateTestDBAndTable();
+
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+
+  // Must pass in the transaction.
+  ResultType result = stats_storage->AnalyzeStatsForAllTables();
+  EXPECT_EQ(result, ResultType::FAILURE);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  result = stats_storage->AnalyzeStatsForAllTables(txn);
+  EXPECT_EQ(result, ResultType::SUCCESS);
+  txn_manager.CommitTransaction(txn);
+
+  // Check the correctness of the stats.
+  VerifyAndPrintColumnStats(data_table, 4);
 }
 
 } /* namespace test */
