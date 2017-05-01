@@ -195,6 +195,7 @@ const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() {
 
   // TODO(tq5124): why above does not work?
   tuples_vector_.reserve(result_size);
+  tuples_vector_.clear();
   for (size_t i = 0; i < result_size; ++i) {
     tuples_vector_.push_back(tuples_.Find(i));
   }
