@@ -40,7 +40,12 @@ int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num)
 {
   // thread_count_ must be less than tile_group_num
   int64_t slice_size = tile_group_num / std::min(thread_count_, tile_group_num);
-  int64_t end = std::min(tile_group_num, (thread_id_ + 1) * slice_size);
+  int64_t end;
+  if (thread_id_ == thread_count_ - 1) {
+    end = tile_group_num;
+  } else {
+    end = std::min(tile_group_num, (thread_id_ + 1) * slice_size);
+  }
 
   return end;
 }

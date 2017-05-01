@@ -96,7 +96,7 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   // llvm::Value *tile_group_idx = codegen.Const64(0);
   // llvm::Value *tile_group_idx_end = num_tile_groups;
 
-  codegen.CallPrintf("#%d, Table.cpp, this thread produces tiles group from %lu to %lu.\n", {thread_id, tile_group_idx, tile_group_idx_end});
+  codegen.CallPrintf("#%d, Table.cpp, this thread produces tiles group from [%lu to %lu), %lu in all.\n", {thread_id, tile_group_idx, tile_group_idx_end, num_tile_groups});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,
