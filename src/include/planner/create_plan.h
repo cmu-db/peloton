@@ -31,10 +31,6 @@ namespace planner {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  CreatePlan(const CreatePlan &) = delete;
-  CreatePlan &operator=(const CreatePlan &) = delete;
-  CreatePlan(CreatePlan &&) = delete;
-  CreatePlan &operator=(CreatePlan &&) = delete;
   ~CreatePlan() {
     if (trigger_when) {
       delete trigger_when;
@@ -124,7 +120,7 @@ class CreatePlan : public AbstractPlan {
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when;
+  expression::AbstractExpression* trigger_when = nullptr;
   int16_t trigger_type; // information about row, timing, events, access by pg_trigger
 
  private:

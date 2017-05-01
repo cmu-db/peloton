@@ -79,7 +79,9 @@ TEST_F(CreateTests, CreatingTable) {
 
 TEST_F(CreateTests, CreatingTrigger) {
   // Bootstrap
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
   auto id_column = catalog::Column(type::Type::INTEGER,
@@ -92,8 +94,6 @@ TEST_F(CreateTests, CreatingTrigger) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -129,12 +129,6 @@ TEST_F(CreateTests, CreatingTrigger) {
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
-
-  // Create executer
-  executor::CreateExecutor createTriggerExecutor(&plan, context.get());
-
-  createTriggerExecutor.Init();
-  createTriggerExecutor.Execute();
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -183,6 +177,16 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_FALSE(TRIGGER_FOR_DELETE(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(trigger_type));
 
+  // Execute the create trigger
+  txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context2(
+    new executor::ExecutorContext(txn));
+  executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
+  createTriggerExecutor.Init();
+  createTriggerExecutor.Execute();
+  txn_manager.CommitTransaction(txn);
+
+  // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                         "accounts");
