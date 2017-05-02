@@ -46,6 +46,9 @@ class CreateExecutor : public AbstractExecutor {
  private:
   ExecutorContext *context_;
 
+  // Abstract Pool to hold strings
+  std::unique_ptr<type::AbstractPool> pool_;
+
 };
 
 }  // namespace executor

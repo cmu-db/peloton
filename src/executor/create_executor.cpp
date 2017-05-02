@@ -97,11 +97,31 @@ bool CreateExecutor::DExecute() {
 
     commands::Trigger newTrigger(node);
 
-    // new approach: add trigger to the data_table instance directly
-    storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name);
-    target_table->AddTrigger(newTrigger);
+    // // new approach: add trigger to the data_table instance directly
+    // storage::DataTable *target_table =
+    //     catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+    //                                                       table_name);
+    // target_table->AddTrigger(newTrigger);
+
+
+    // durable trigger: insert the information of this trigger in the trigger catalog table
+    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
+    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
+    catalog::TriggerCatalog::GetInstance()->InsertTrigger(trigger_name, database_oid, table_oid, 
+                    static_cast<peloton::commands::EnumTriggerType>(newTrigger.GetTriggerType()), newTrigger.GetFireCondition(),
+                    newTrigger.GetFireFunction(), newTrigger.GetFireFunctionArgs(),
+                    time_stamp, pool_.get(), current_txn);
+
+
+    // debug:
+    auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+                              static_cast<peloton::commands::EnumTriggerType>(newTrigger.GetTriggerType()), current_txn);
+    if (trigger_list == nullptr) {
+      LOG_INFO("nullptr");
+    }
 
     // if (current_txn->GetResult() == ResultType::SUCCESS) {
     //   LOG_TRACE("Creating trigger succeeded!");
