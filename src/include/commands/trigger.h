@@ -14,6 +14,7 @@
 #pragma once
 
 #include "vector"
+#include "boost/algorithm/string/join.hpp"
 #include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
 #include "common/logger.h"
@@ -43,10 +44,16 @@ class Trigger {
   inline std::string GetTriggerName() { return trigger_name; }
   storage::Tuple* ExecCallTriggerFunc(storage::Tuple *new_tuple);
 
-  // TODO:
-  inline std::string GetFireCondition() { return "fire_condition"; }
-  inline std::string GetFireFunction() {return "fire_function";}
-  inline std::string GetFireFunctionArgs() {return "function_arguments";}
+  inline std::string GetFuncname() {
+    return boost::algorithm::join(trigger_funcname, ",");
+  }
+
+  inline std::string GetArgs() {
+    return boost::algorithm::join(trigger_args, ",");
+  }
+
+  //TODO
+  inline std::string GetWhen() {return "function_arguments";}
 
  private:
   std::string trigger_name;
