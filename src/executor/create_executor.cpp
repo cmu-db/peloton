@@ -125,6 +125,8 @@ bool CreateExecutor::DExecute() {
       LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     }
 
+    LOG_INFO("trigger type=%d", newTrigger.GetTriggerType());
+
     // if (current_txn->GetResult() == ResultType::SUCCESS) {
     //   LOG_TRACE("Creating trigger succeeded!");
     // } else if (current_txn->GetResult() == ResultType::FAILURE) {

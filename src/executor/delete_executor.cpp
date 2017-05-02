@@ -25,6 +25,10 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/trigger_catalog.h"
+#include "commands/trigger.h"
+#include "catalog/table_catalog.h"
+#include "parser/pg_trigger.h"
 
 namespace peloton {
 namespace executor {
@@ -121,6 +125,27 @@ bool DeleteExecutor::DExecute() {
 
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
+
+    // check whether there are per-row-before-delete triggers on this table using trigger catalog
+    oid_t database_oid = target_table_->GetDatabaseOid();
+    LOG_INFO("database_oid = %d", database_oid);
+    LOG_INFO("table name=%s", target_table_->GetName().c_str());
+    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table_->GetName(), database_oid, current_txn);
+    LOG_INFO("table_oid = %d", table_oid);
+    commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+                            static_cast<peloton::commands::EnumTriggerType>(TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_DELETE), current_txn);
+    LOG_INFO("reach here safely");
+    if (trigger_list == nullptr) {
+      LOG_INFO("nullptr");
+    } else {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->GetTriggerListSize() > 0) {
+        LOG_INFO("this table has trigger per-row-before-delete triggers!!!!");
+
+        // TODO: check whether fire condition is met!
+      }
+    }
+
     if (is_owner == true && is_written == true) {
       // if the transaction is the owner of the tuple, then directly update in place.
       LOG_TRACE("The current transaction is the owner of the tuple");
