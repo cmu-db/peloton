@@ -93,6 +93,8 @@ class FunctionCatalog : public AbstractCatalog {
 
   const UDFFunctionData GetFunction(const std::string &name,concurrency::Transaction *txn );
 
+  oid_t GetFunctionOid(const std::string &name, concurrency::Transaction *txn);
+
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
