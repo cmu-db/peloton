@@ -15,7 +15,9 @@
 #include "codegen/compilation_context.h"
 #include "codegen/operator_translator.h"
 #include "codegen/pipeline.h"
+#include "codegen/runtime_state.h"
 #include "planner/update_plan.h"
+#include "codegen/table.h"
 
 namespace peloton {
 namespace codegen {
@@ -48,6 +50,17 @@ class UpdateTranslator : public OperatorTranslator {
   /** @brief The update plan. */
   const planner::UpdatePlan &update_plan_;
 
+  TargetList target_list_;
+  DirectMapList direct_list_;
+  std::unique_ptr<Target[]> target_array;
+  std::unique_ptr<DirectMap[]> direct_array;
+  storage::DataTable *target_table_;
+  bool update_primary_key_;
+  RuntimeState::StateID target_val_vec_id_;
+  RuntimeState::StateID col_id_vec_id_;
+
+  // The code-generating table instance
+  codegen::Table table_;
 };  // class UpdateTranslator
 
 }  // namespace codegen
