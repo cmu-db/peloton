@@ -140,7 +140,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCache(
-  std::unique_ptr<planner::AbstractPlan> plan, codegen::QueryResultConsumer &consumer,
+  const std::shared_ptr<planner::AbstractPlan> &plan, codegen::QueryResultConsumer &consumer,
   char *consumer_state, std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
