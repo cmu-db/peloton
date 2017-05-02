@@ -29,11 +29,7 @@ uint64_t QueryThreadPool::GetThreadCount() {
 // we might need unique_ptr here!
 void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*))
 {
-    pool.SubmitDedicatedTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
-}
-
-void QueryThreadPool::JoinAll() {
-  pool.JoinAndResetDedicatedTasks();
+  pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
 }
 
 }
