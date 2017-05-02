@@ -181,21 +181,21 @@ namespace peloton {
 
       function_info.return_type_ = (*result_tiles)[0]
                       ->GetValue(0, 1)
-                      .GetAs<int>();  // After projection left 1 colum
+                      .GetAs<type::Type::TypeId>();  // After projection left 1 colum
 
       auto arg_types = (*result_tiles)[0]
                       ->GetValue(0, 2)
-                      .GetAs<string>();  // After projection left 1 column
+                      .GetAs<std::string>();  // After projection left 1 column
       std::vector<std::string> arg_types_split;
 
       boost::split(arg_types_split,arg_types, boost::is_any_of(" "));
 
       for(auto e : arg_types_split)
-        function_info.argument_types_.push_back(std::stoi(e));
+        function_info.argument_types_.push_back(static_cast<type::Type::TypeId>(std::stoi(e)));
       
       function_info.func_string_ = (*result_tiles)[0]
                       ->GetValue(0, 3)
-                      .GetAs<string>();  // After projection left 1 column
+                      .GetAs<std::string>();  // After projection left 1 column
 
       function_info.func_is_present_ = true;
     }
@@ -314,7 +314,6 @@ namespace peloton {
 }
 
 oid_t FunctionCatalog::GetFunctionOid(const std::string &function_name,
-    oid_t database_oid,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_oid
   oid_t index_offset = 1;              // Index of name
