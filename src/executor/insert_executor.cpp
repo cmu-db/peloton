@@ -164,8 +164,12 @@ bool InsertExecutor::DExecute() {
         tuple = node.GetTuple(insert_itr);
       }
 
-      // check whether there are per-row-before-insert triggers on this table
+      // DEPRECATED! do not get trigger list from target table member variable;
+      // instead, get it from the trigger catalog table
       commands::TriggerList* trigger_list = target_table->GetTriggerList();
+
+      // check whether there are per-row-before-insert triggers on this table
+
       auto new_tuple = tuple;
       if (trigger_list == nullptr) {
         LOG_INFO("target table doesn't have trigger list");

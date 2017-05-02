@@ -121,6 +121,8 @@ bool CreateExecutor::DExecute() {
                               static_cast<peloton::commands::EnumTriggerType>(newTrigger.GetTriggerType()), current_txn);
     if (trigger_list == nullptr) {
       LOG_INFO("nullptr");
+    } else {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     }
 
     // if (current_txn->GetResult() == ResultType::SUCCESS) {

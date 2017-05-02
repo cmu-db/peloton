@@ -24,6 +24,14 @@ Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
   trigger_when = plan.GetTriggerWhen();
   trigger_type = plan.GetTriggerType();
 }
+
+// TODO:
+Trigger::Trigger(std::string name, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition) {
+  trigger_name = name;
+  // to be continue...
+
+}
+
 /*
  * Add a trigger to the trigger list and update the summary
  */

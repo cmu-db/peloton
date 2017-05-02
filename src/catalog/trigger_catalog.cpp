@@ -102,7 +102,7 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
   LOG_INFO("size of the result tiles = %lu", result_tiles->size());
 
   // create the trigger list
-  commands::TriggerList newTriggerList;
+  commands::TriggerList* newTriggerList = new commands::TriggerList();
   for (unsigned int i = 0; i < result_tiles->size(); i++) {
     size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
     for (size_t j = 0; j < tuple_count; j++) {
@@ -112,6 +112,11 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
       LOG_INFO("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
 
       // create a new trigger instance
+      commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
+                                   (*result_tiles)[i]->GetValue(j, 2).ToString(),
+                                   (*result_tiles)[i]->GetValue(j, 3).ToString(),
+                                   (*result_tiles)[i]->GetValue(j, 1).ToString());
+      newTriggerList->AddTrigger(newTrigger);
 
     }
   }
@@ -127,7 +132,7 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
   //   }
   // }
 
-  return nullptr;
+  return newTriggerList;
 }
 
 // stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
