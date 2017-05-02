@@ -24,6 +24,11 @@ class TransactionRuntimeProxy {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
+  // The proxy around TransactionRuntime::PerformVectorizedRead()
+  struct _PerformUpdate {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
 };
 
 }  // namepsace codegen

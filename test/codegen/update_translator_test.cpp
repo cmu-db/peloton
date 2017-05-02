@@ -110,6 +110,17 @@ TEST_F(UpdateTranslatorTest, ToConstUpdate) {
 
   update_plan->AddChild(std::move(scan_plan));
 
+  // Do binding
+  planner::BindingContext context;
+  update_plan->PerformBinding(context);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(*update_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+
+/*
   // ==============
   //  Execute plan
   // ==============
@@ -142,7 +153,7 @@ TEST_F(UpdateTranslatorTest, ToConstUpdate) {
   while (update_executor->Execute()) {}
 
   txn_manager.CommitTransaction(txn);
-
+*/
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_INFO("%s", table->GetInfo().c_str());
 }

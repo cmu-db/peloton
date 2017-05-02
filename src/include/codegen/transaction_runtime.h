@@ -14,6 +14,13 @@
 
 #include <cstdint>
 
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/container_tuple.h"
+#include "catalog/manager.h"
+#include "executor/executor_context.h"
+#include "storage/tuple.h"
+
 namespace peloton {
 
 namespace concurrency {
@@ -38,6 +45,21 @@ class TransactionRuntime {
                                         storage::TileGroup &tile_group,
                                         uint32_t tid_start, uint32_t tid_end,
                                         uint32_t *selection_vector);
+
+  // Perform an update operation for the designated tuple in the given tile group
+  // with given ID in the context of the given transaction
+  static bool PerformUpdate(concurrency::Transaction &txn,
+                                    storage::DataTable *target_table_,
+                                    storage::TileGroup &tile_group,
+                                    uint32_t physical_tuple_id,
+                                    uint32_t *col_ids,
+                                    type::Value *target_vals,
+                                    bool update_primary_key,
+                                    Target *target_list,
+                                    uint32_t target_list_size,
+                                    DirectMap *direct_list,
+                                    uint32_t direct_list_size,
+                                    executor::ExecutorContext *executor_context_);
 
   // Add other stuff for Insert/Update/Delete
 

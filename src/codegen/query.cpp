@@ -40,6 +40,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
 
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
+  // Allocate space for storing runtime params (for parameterization)
   std::unique_ptr<char *[]> char_ptr_params{new char*[params_.size()]};
   std::unique_ptr<int32_t[]> char_len_params{new int32_t[params_.size()]};
 
@@ -55,6 +56,9 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
     catalog::Catalog *catalog;
     char **char_ptr_params;
     int32_t *char_len_params;
+    Target *update_target_list;
+    DirectMap *update_direct_list;
+    executor::ExecutorContext *exec_context;
     char *consumer_arg;
     char rest[0];
   } PACKED;
@@ -65,6 +69,9 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   func_args->catalog = catalog::Catalog::GetInstance();
   func_args->char_ptr_params = char_ptr_params.get();
   func_args->char_len_params = char_len_params.get();
+  func_args->update_target_list = update_target_list_.data();
+  func_args->update_direct_list = update_direct_list_.data();
+  func_args->exec_context = exec_context;
   func_args->consumer_arg = consumer_arg;
 
   // dynamic storage for serializing parameters (for parameterization)
@@ -233,9 +240,7 @@ void Query::LoadParams(std::vector<std::unique_ptr<char[]>> &params,
       case type::Type::TypeId::VARCHAR: {
         std::string str = type::ValuePeeker::PeekVarchar(value);
         params.emplace_back(std::unique_ptr<char[]>{new char[value.GetLength()]});
-        memcpy(reinterpret_cast<void *>(params[i].get()),
-               reinterpret_cast<const void *>(str.c_str()),
-               value.GetLength());
+        PL_MEMCPY(params[i].get(), str.c_str(), value.GetLength());
         char_ptr_params[i] = params[i].get();
         char_len_params[i] = value.GetLength();
         break;

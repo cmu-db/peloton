@@ -17,6 +17,7 @@
 #include "codegen/parameter.h"
 #include "type/value.h"
 #include "executor/executor_context.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 
@@ -69,6 +70,20 @@ class Query {
 
   uint32_t StoreParam(Parameter param, int idx = -1);
 
+  void StoreTargetList(TargetList &target_list) {
+    update_direct_list_.clear();
+    for (uint32_t i = 0; i < target_list.size(); i ++) {
+      update_target_list_.emplace_back(target_list[i]);
+    }
+  }
+
+  void StoreDirectList(DirectMapList &direct_list) {
+    update_direct_list_.clear();
+    for (uint32_t i = 0; i < direct_list.size(); i ++) {
+      update_direct_list_.emplace_back(direct_list[i]);
+    }
+  }
+
  private:
   friend class QueryCompiler;
 
@@ -99,6 +114,8 @@ class Query {
   compiled_function_t tear_down_func_;
 
   std::vector<Parameter> params_;
+  TargetList update_target_list_;
+  DirectMapList update_direct_list_;
 
  private:
   // This class cannot be copy or move-constructed

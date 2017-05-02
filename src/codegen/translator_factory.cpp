@@ -19,6 +19,7 @@
 #include "codegen/conjunction_translator.h"
 #include "codegen/constant_translator.h"
 #include "codegen/delete/delete_translator.h"
+#include "codegen/update/update_translator.h"
 #include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/insert/insert_scan_translator.h"
 #include "codegen/global_group_by_translator.h"
@@ -88,6 +89,12 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::ORDERBY: {
       auto &order_by = static_cast<const planner::OrderByPlan &>(plan_node);
       translator = new OrderByTranslator(order_by, context, pipeline);
+      break;
+    }
+    case PlanNodeType::UPDATE: {
+      auto &update_plan = const_cast<planner::UpdatePlan &>(
+              static_cast<const planner::UpdatePlan &>(plan_node));
+      translator = new UpdateTranslator(update_plan, context, pipeline);
       break;
     }
     case PlanNodeType::DELETE: {
