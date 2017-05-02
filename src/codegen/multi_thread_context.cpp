@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <iostream>
 
+#include "codegen/barrier.h"
 #include "codegen/codegen.h"
 #include "codegen/multi_thread_context.h"
 
@@ -54,9 +55,8 @@ int64_t MultiThreadContext::GetThreadId() {
   return thread_id_;
 }
 
-void MultiThreadContext::BarrierWait()
-{
-    bar_->BarrierWait();
+Barrier *MultiThreadContext::GetBarrier() {
+  return bar_;
 }
 
 }

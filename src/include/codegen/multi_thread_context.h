@@ -33,7 +33,7 @@ class MultiThreadContext {
 
   int64_t GetThreadId();
 
-  void BarrierWait();
+  Barrier *GetBarrier();
 
   ~MultiThreadContext()
   {
