@@ -23,6 +23,8 @@
 #include "storage/tuple_iterator.h"
 #include "commands/trigger.h"
 #include "storage/tuple.h"
+#include "catalog/catalog.h"
+#include "catalog/trigger_catalog.h"
 
 namespace peloton {
 namespace executor {
@@ -168,7 +170,15 @@ bool InsertExecutor::DExecute() {
       // instead, get it from the trigger catalog table
       commands::TriggerList* trigger_list = target_table->GetTriggerList();
 
-      // check whether there are per-row-before-insert triggers on this table
+      // // check whether there are per-row-before-insert triggers on this table using trigger catalog
+      // oid_t database_oid = target_table->GetDatabaseOid();
+      // LOG_INFO("database_oid = %d", database_oid);
+      // LOG_INFO("table name=%s", target_table->GetName().c_str());
+      // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
+      // LOG_INFO("table_oid = %d", table_oid);
+      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+      //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
+      // LOG_INFO("reach here safely");
 
       auto new_tuple = tuple;
       if (trigger_list == nullptr) {
@@ -214,6 +224,28 @@ bool InsertExecutor::DExecute() {
                 target_table->GetTupleCount());
 
       executor_context_->num_processed += 1;  // insert one
+
+
+      // // debug code below
+      // oid_t database_oid = target_table->GetDatabaseOid();
+      // LOG_INFO("database_oid = %d", database_oid);
+      // LOG_INFO("table name=%s", target_table->GetName().c_str());
+      // if (catalog::TriggerCatalog::GetInstance() == nullptr) {
+      //   LOG_INFO("trigger catalog is null");
+      // } else {
+      //   LOG_INFO("trigger catalog is not null!");
+      // }
+      // if (catalog::TableCatalog::GetInstance() == nullptr) {
+      //   LOG_INFO("table catalog is null!!!");
+      // } else {
+      //   LOG_INFO("table catalog is not null");
+      // }
+      // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
+      // LOG_INFO("table_oid = %d", table_oid);
+      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+      //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
+      // LOG_INFO("reach here safely");
+
     }
 
     done_ = true;
