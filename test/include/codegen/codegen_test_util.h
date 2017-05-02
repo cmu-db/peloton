@@ -125,5 +125,58 @@ class CountingConsumer : public codegen::QueryResultConsumer {
   codegen::RuntimeState::StateID counter_state_id_;
 };
 
+struct Stats {
+  codegen::QueryCompiler::CompileStats compile_stats{0.0, 0.0, 0.0};
+  codegen::Query::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
+  double num_samples = 0.0;
+  int32_t tuple_result_size = -1;
+
+  void Merge(codegen::QueryCompiler::CompileStats &o_compile_stats,
+             codegen::Query::RuntimeStats &o_runtime_stats,
+             int32_t o_tuple_result_size) {
+    compile_stats.ir_gen_ms += o_compile_stats.ir_gen_ms;
+    compile_stats.jit_ms += o_compile_stats.jit_ms;
+    compile_stats.setup_ms += o_compile_stats.setup_ms;
+
+    runtime_stats.init_ms += o_runtime_stats.init_ms;
+    runtime_stats.plan_ms += o_runtime_stats.plan_ms;
+    runtime_stats.tear_down_ms += o_runtime_stats.tear_down_ms;
+
+    if (tuple_result_size < 0) {
+      tuple_result_size = o_tuple_result_size;
+    } else if (tuple_result_size != o_tuple_result_size) {
+      throw Exception{"ERROR: tuple result size should not"
+        " vary for the same test!"};
+    }
+
+    num_samples++;
+  }
+
+  void Finalize() {
+    compile_stats.ir_gen_ms /= num_samples;
+    compile_stats.jit_ms /= num_samples;
+    compile_stats.setup_ms /= num_samples;
+
+    runtime_stats.init_ms /= num_samples;
+    runtime_stats.plan_ms /= num_samples;
+    runtime_stats.tear_down_ms /= num_samples;
+  }
+
+  void PrintStats() {
+    fprintf(
+        stderr,
+        "Setup time: %.2f ms, IR Gen time: %.2f ms, Compile time: %.2f ms\n",
+        compile_stats.setup_ms, compile_stats.ir_gen_ms, compile_stats.jit_ms);
+    fprintf(stderr,
+            "Initialization time: %.2f ms, execution time: %.2f ms, Tear down "
+            "time: %.2f ms\n",
+            runtime_stats.init_ms, runtime_stats.plan_ms,
+            runtime_stats.tear_down_ms);
+    fprintf(stderr,
+            "Tuple result size: %d\n",
+            tuple_result_size);
+  }
+};
+
 }  // namespace test
 }  // namespace peloton

@@ -279,6 +279,12 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
 
   const auto &join_plan = GetJoinPlan();
 
+  // TODO: barrier to merge hash tables.
+  // 1. Register local hash tables to multi thread context
+  // 2. Barrier wait
+  // 3. Only thread0 create a global hash table in multi thread context, and merge all local hash tables.
+  // 4. Barrier wait
+
   // Check the join type
   if (join_plan.GetJoinType() == JoinType::INNER) {
     // For inner joins, find all join partners
