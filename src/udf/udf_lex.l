@@ -5,6 +5,8 @@
   #include "udf_gram.tab.h"
 %}
 
+%option noyyunput
+
 %%
 
 [ \t] ;
