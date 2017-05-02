@@ -18,6 +18,7 @@
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include "expression/date_functions.h"
@@ -137,6 +138,8 @@ void Catalog::Bootstrap() {
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
+
+  TriggerCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
 }

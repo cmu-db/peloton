@@ -42,6 +42,11 @@ class Trigger {
   inline std::string GetTriggerName() { return trigger_name; }
   storage::Tuple* ExecCallTriggerFunc(storage::Tuple *new_tuple);
 
+  // TODO:
+  inline std::string GetFireCondition() { return "fire_condition"; }
+  inline std::string GetFireFunction() {return "fire_function";}
+  inline std::string GetFireFunctionArgs() {return "function_arguments";}
+
  private:
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
