@@ -78,51 +78,6 @@ void *SimpleQueryTest(void *) {
 }
 
 /**
- * named prepare statement without parameters
- * TODO: add prepare's parameters when parser team fix the bug
- */
-
-void *PrepareStatementTest(int port) {
-  try {
-    pqxx::connection C(StringUtil::Format(
-            "host=127.0.0.1 port=%d user=postgres sslmode=disable",port));
-    LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
-    pqxx::work W(C);
-    
-    peloton::wire::LibeventSocket *conn =
-        peloton::wire::LibeventServer::GetConn(
-            peloton::wire::LibeventServer::recent_connfd);
-
-    // create table and insert some data
-    W.exec("DROP TABLE IF EXISTS employee;");
-    W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.commit();
-    
-    pqxx::work W1(C);
-    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
-
-    // test prepare statement
-    C.prepare("searchstmt","SELECT name FROM employee WHERE id=$1;");
-    // invocation as in variable binding
-    pqxx::result R = W1.prepared("searchstmt")(1).exec();
-    W1.commit();
-
-    // test prepared statement already in statement cache
-    // LOG_INFO("[Prepare statement cache] %d",conn->pkt_manager.ExistCachedStatement("searchstmt"));
-    EXPECT_TRUE(conn->pkt_manager.ExistCachedStatement("searchstmt"));
-
-    LOG_INFO("Prepare statement search result:%lu",R.size());
-  } catch (const std::exception &e) {
-    LOG_INFO("[PrepareStatementTest] Exception occurred");
-  }
-
-  LOG_INFO("[PrepareStatementTest] Client has closed");
-  return NULL;
-}
-
-/**
  * rollback test
  * YINGJUN: rewrite wanted.
  */
@@ -200,7 +155,7 @@ TEST_F(PacketManagerTests, RollbackTest) {
  * Simple query test to guarantee both sides run correctly
  * Callback method to close server after client finishes
  */
-TEST_F(PacketManagerTests, SimpleQueryTest) {
+TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::wire::LibeventServer libeventserver;
@@ -217,24 +172,6 @@ TEST_F(PacketManagerTests, SimpleQueryTest) {
   serverThread.join();
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
-}
-
-TEST_F(PacketManagerTests, PrepareStatementTest) {
-  peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
-  int port = 15721;
-  std::thread serverThread(LaunchServer, libeventserver,port);
-  while (!libeventserver.GetIsStarted()) {
-    sleep(1);
-  }
-
-  PrepareStatementTest(port);
-
-  libeventserver.CloseServer();
-  serverThread.join();
-  peloton::PelotonInit::Shutdown();
-  LOG_INFO("Peloton has shut down\n");
 }
 
 ///**
