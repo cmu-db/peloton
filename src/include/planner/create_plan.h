@@ -83,7 +83,12 @@ class CreatePlan : public AbstractPlan {
 
   // Remeber to release the pointer
   expression::AbstractExpression *GetTriggerWhen() const {
-    return trigger_when->Copy();
+    if (trigger_when) {
+      return trigger_when->Copy();
+    }
+    else {
+      return nullptr;
+    }
   }
 
   int16_t GetTriggerType() const { return trigger_type; }
