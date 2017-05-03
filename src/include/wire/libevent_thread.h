@@ -108,11 +108,21 @@ class LibeventWorkerThread : public LibeventThread {
   // Getters and setters
   event *GetNewConnEvent() { return this->new_conn_event_; }
 
+  void SetNewConnEvent(event *new_conn_event_) {
+    this->new_conn_event_ = new_conn_event_;
+  }
+
   event *GetTimeoutEvent() { return this->ev_timeout_; }
+
+  void SetTimeoutEvent(event *ev_timeout_) { this->ev_timeout_ = ev_timeout_; }
 
   int GetNewConnSendFd() { return this->new_conn_send_fd_; }
 
+  void SetNewConnSendFd(int fd) { this->new_conn_send_fd_ = fd; }
+
   int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
+
+  void SetNewConnReceiveFd(int fd) { this->new_conn_receive_fd_ = fd; }
 };
 
 // a master thread contains multiple worker threads.
