@@ -20,6 +20,7 @@
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
 #include "expression/comparison_expression.h"
+#include "expression/case_expression.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "storage/tuple.h"
@@ -295,6 +296,138 @@ TEST_F(ExpressionTests, SimpleCase) {
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
+  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  expected = type::ValueFactory::GetIntegerValue(3);
+  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+
+  delete case_expression;
+  delete schema;
+  delete tuple;
+}
+TEST_F(ExpressionTests, SimpleCaseCopyTest) {
+
+  // CASE WHEN i=1 THEN 2 ELSE 3 END
+  // EXPRESSION
+  auto tup_val_exp = new expression::TupleValueExpression(type::Type::INTEGER,
+      0, 0);
+  auto const_val_exp_1 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(1));
+  auto const_val_exp_2 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto const_val_exp_3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(3));
+
+  auto *when_cond =
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+          tup_val_exp, const_val_exp_1);
+
+  std::vector<expression::CaseExpression::WhenClause> clauses;
+  clauses.push_back(expression::CaseExpression::WhenClause(
+      expression::CaseExpression::AbsExprPtr(when_cond),
+      expression::CaseExpression::AbsExprPtr(const_val_exp_2)));
+
+  expression::CaseExpression *o_case_expression =
+      new expression::CaseExpression(
+          type::Type::INTEGER, nullptr, clauses,
+          expression::CaseExpression::AbsExprPtr(const_val_exp_3));
+
+  expression::CaseExpression *case_expression =
+      dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy());
+
+  // TUPLE
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
+                          "i1", true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
+                          "i2", true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  // Test with A = 1, should get 2
+  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
+  type::Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  type::Value expected = type::ValueFactory::GetIntegerValue(2);
+  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+
+  // Test with A = 2, should get 3
+  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
+  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  expected = type::ValueFactory::GetIntegerValue(3);
+  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+
+  delete case_expression;
+  delete o_case_expression;
+  delete schema;
+  delete tuple;
+}
+
+TEST_F(ExpressionTests, SimpleCaseWithDefault) {
+
+  // CASE i WHEN 1 THEN 2 ELSE 3 END
+
+  // EXPRESSION
+  auto tup_val_exp = new expression::TupleValueExpression(type::Type::INTEGER,
+      0, 0);
+  auto const_val_exp_1 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(1));
+  auto const_val_exp_2 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto const_val_exp_3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(3));
+
+  std::vector<expression::CaseExpression::WhenClause> clauses;
+  clauses.push_back(expression::CaseExpression::WhenClause(
+      expression::CaseExpression::AbsExprPtr(const_val_exp_1),
+      expression::CaseExpression::AbsExprPtr(const_val_exp_2)));
+
+  expression::CaseExpression *case_expression = new expression::CaseExpression(
+      type::Type::INTEGER,
+      expression::CaseExpression::AbsExprPtr(tup_val_exp),
+      clauses,
+      expression::CaseExpression::AbsExprPtr(const_val_exp_3));
+
+  // TUPLE
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
+                          "i1", true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
+                          "i2", true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  // Test with A = 1, should get 2
+  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
+  type::Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  type::Value expected = type::ValueFactory::GetIntegerValue(2);
+  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+
+  // Test with A = 2, should get 3
+  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
+  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
+  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  expected = type::ValueFactory::GetIntegerValue(3);
+  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+
+  delete case_expression;
+  delete schema;
+  delete tuple;
+}
 
 }  // namespace test
 }  // namespace peloton
