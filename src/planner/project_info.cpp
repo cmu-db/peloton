@@ -130,6 +130,8 @@ void ProjectInfo::PerformRebinding(
     oid_t dest_col_id = target.first;
 
     PL_ASSERT(target.second.expr != nullptr);
+
+    LOG_DEBUG("Binding target-list expressions ...");
     auto *expr = const_cast<expression::AbstractExpression *>(target.second.expr);
     expr->PerformBinding(input_contexts);
 
