@@ -64,14 +64,6 @@ void *PrepareStatementTest(int port) {
     txn2.exec("INSERT INTO employee VALUES (1, 'Han LI');");
     txn2.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
     txn2.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
-    W.exec("DROP TABLE IF EXISTS employee;");
-    W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.commit();
-    
-    pqxx::work W1(C);
-    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
 
     // test prepare statement
     C.prepare("searchstmt", "SELECT name FROM employee WHERE id=$1;");
