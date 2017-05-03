@@ -58,7 +58,7 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
 }
 
 LibeventServer::LibeventServer() {
-  base_ = event_base_new();
+  base = event_base_new();
 
   // Create our event base
   if (!base_) {
@@ -76,8 +76,7 @@ LibeventServer::LibeventServer() {
   event_add(ev_timeout_, &one_seconds);
 
   // a master thread is responsible for coordinating worker threads.
-  master_thread_ =
-      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
+  master_thread = std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -96,6 +95,7 @@ LibeventServer::LibeventServer() {
 }
 
 void LibeventServer::StartServer() {
+  LOG_INFO("Begin to start server\n");
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -128,18 +128,7 @@ void LibeventServer::StartServer() {
                                   master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %lu", port_);
-    event_base_dispatch(base_);
-    LibeventServer::GetConn(listen_fd)->CloseSocket();
-
-    // Free events and event base
-    event_free(LibeventServer::GetConn(listen_fd)->event);
-    event_free(ev_stop_);
-    event_free(ev_timeout_);
-    event_base_free(base_);
-    static_cast<LibeventMasterThread *>(master_thread_.get())
-        ->CloseConnection();
-
-    LOG_INFO("Server Closed");
+    event_base_dispatch(base);
   }
 
   // This socket family code is not implemented yet
@@ -149,13 +138,13 @@ void LibeventServer::StartServer() {
 }
 
 void LibeventServer::CloseServer() {
-  LOG_INFO("Begin to stop server");
-  this->SetIsClosed(true);
+  LOG_INFO("Begin to stop server\n");
+  event_base_loopexit(base, NULL);
+  event_free(evstop);
+  event_base_free(base);
+  static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+  LOG_INFO("Server closed\n");
 }
 
-/**
- * Change port to new_port
- */
-void LibeventServer::SetPort(int new_port) { port_ = new_port; }
 }
 }

@@ -236,20 +236,14 @@ struct LibeventServer {
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
 
-  uint64_t port_;             // port number
-  size_t max_connections_;    // maximum number of connections
-  struct event *ev_stop_;     // libevent stop event
-  struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<LibeventThread> master_thread_;
-  struct event_base *base_;  // libevent event_base
-
-  // Flags for controlling server start/close status
-  bool is_started_ = false;
-  bool is_closed_ = false;
-
- public:
-  static int recent_connfd;
-
+  uint64_t port_;           // port number
+  size_t max_connections_;  // maximum number of connections
+  struct event_base *base;  // libevent event_base
+  struct event *evstop;     // libevent stop event
+  std::shared_ptr<LibeventThread> master_thread;
+  // std::shared_ptr<LibeventThread> master_thread(
+  //    new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
+  
  public:
   LibeventServer();
 
@@ -257,6 +251,8 @@ struct LibeventServer {
 
   static void CreateNewConn(const int &connfd, short ev_flags,
                             LibeventThread *thread, ConnState init_state);
+  void StartServer();
+  void CloseServer();
 
   void StartServer();
 

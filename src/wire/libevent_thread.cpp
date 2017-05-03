@@ -144,22 +144,12 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
-/*
- * Exit event base loop running in all worker threads
- */
 void LibeventMasterThread::CloseConnection() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->SetThreadIsClosed(true);
-  }
-
-  // When a thread exit loop, the is_closed flag will be set to false
-  // Wait for all threads exit loops
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (threads[thread_id].get()->GetThreadIsClosed()) {
-      sleep(1);
-    }
+    event_base_loopexit(threads[thread_id].get()->GetEventBase(), NULL);
+    LOG_INFO("Exit thread %d event base loop\n", thread_id);
   }
 }
 }
