@@ -92,6 +92,7 @@
  */
 
 #include <stdio.h>
+#include <string>
 #include <include/udf/udf.h>
 #include <include/udf/udf_helper.h>
 
@@ -301,7 +302,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 
 static UDF_SQL_Expr *make_return_stmt(const char *);
-void yyerror(char *);
+void yyerror(std::string);
 
 
 #if (! defined yyoverflow \
@@ -1638,8 +1639,8 @@ make_return_stmt(const char *func_body)
 	return (UDF_SQL_Expr *) expr;
 }
 
-void yyerror(char *s) {
-  fprintf(stderr, "xxxx%sxxxx\n", s);
+void yyerror(std::string s) {
+  fprintf(stderr, "xxxx%sxxxx\n", s.c_str());
 }
 
 }
