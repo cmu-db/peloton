@@ -209,6 +209,8 @@ TEST_F(CreateTests, CreatingTrigger) {
   if (stmt_list) {
     delete stmt_list;
   }
+
+  // TODO: test for creating a trigger without "when"
 }
 
 }  // End test namespace
