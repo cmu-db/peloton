@@ -79,7 +79,7 @@ void Status_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
 }
 
 LibeventServer::LibeventServer() {
-  base = event_base_new();
+  base_ = event_base_new();
 
   // Create our event base
   if (!base_) {
@@ -90,29 +90,14 @@ LibeventServer::LibeventServer() {
   ev_stop_ = evsignal_new(base_, SIGHUP, Signal_Callback, base_);
   evsignal_add(ev_stop_, NULL);
 
-  // Add timeout event to check server's start/close flag every one second
-  struct timeval one_seconds = {1, 0};
-  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
-                          ServerControl_Callback, this);
-  event_add(ev_timeout_, &one_seconds);
-
   struct timeval two_seconds = {2, 0};
-  ev_timeout =
-      event_new(base, -1, EV_TIMEOUT | EV_PERSIST, Status_Callback, this);
-  event_add(ev_timeout, &two_seconds);
-
-  struct timeval two_seconds = {2,0};
-  ev_timeout = event_new(base, -1, EV_TIMEOUT|EV_PERSIST, Status_Callback, this);
-  event_add(ev_timeout, &two_seconds);
-
-  struct timeval two_seconds = {2, 0};
-  ev_timeout =
-      event_new(base, -1, EV_TIMEOUT | EV_PERSIST, Status_Callback, this);
-  event_add(ev_timeout, &two_seconds);
+  ev_timeout_ =
+      event_new(base_, -1, EV_TIMEOUT | EV_PERSIST, Status_Callback, this);
+  event_add(ev_timeout_, &two_seconds);
 
   // a master thread is responsible for coordinating worker threads.
-  master_thread =
-      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
+  master_thread_ =
+      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -163,13 +148,16 @@ void LibeventServer::StartServer() {
                                   master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %lu", port_);
-    event_base_dispatch(base);
+    event_base_dispatch(base_);
     LibeventServer::GetConn(listen_fd)->CloseSocket();
+
+    // Free events and event base
     event_free(LibeventServer::GetConn(listen_fd)->event);
-    event_free(evstop);
-    event_free(ev_timeout);
-    event_base_free(base);
-    static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+    event_free(ev_stop_);
+    event_free(ev_timeout_);
+    event_base_free(base_);
+    static_cast<LibeventMasterThread *>(master_thread_.get())->CloseConnection();
+    
     LOG_INFO("Server Closed");
   }
 
