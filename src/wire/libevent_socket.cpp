@@ -484,6 +484,7 @@ void LibeventSocket::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
   event_del(event);
+  // event_free(event);
 
   TransitState(CONN_CLOSED);
   Reset();
