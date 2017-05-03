@@ -39,7 +39,7 @@ static void *LaunchServer(peloton::wire::LibeventServer libeventserver) {
 /**
  * Simple select query test
  */
-static void *SimpleQueryTest(void *) {
+void *SimpleQueryTest(void *) {
   try {
     pqxx::connection C(
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
@@ -77,7 +77,7 @@ static void *SimpleQueryTest(void *) {
  * TODO: add prepare's parameters when parser team fix the bug
  */
 
-static void *PrepareStatementTest(void *) {
+void *PrepareStatementTest(void *) {
   try {
     pqxx::connection C(
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
@@ -116,8 +116,9 @@ static void *PrepareStatementTest(void *) {
 
 /**
  * rollback test
+ * YINGJUN: rewrite wanted.
  */
-static void *RollbackTest(void *) {
+void *RollbackTest(void *) {
   try {
     pqxx::connection C(
         "host=127.0.0.1 port=15721 user=postgres sslmode=disable");
@@ -133,17 +134,23 @@ static void *RollbackTest(void *) {
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    w.abort();
+    W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    
+    W.abort();
 
-    // W.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    // W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    // W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
-
-    pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
-
-    EXPECT_EQ(R.size(), 1);
-    LOG_INFO("[RollbackTest] Found %lu employees", R.size());
+    W.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    W.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+    
     W.commit();
+
+
+    // pqxx::result R = W.exec("SELECT name FROM employee where id=1;");
+
+    // EXPECT_EQ(R.size(), 1);
+
+    // LOG_INFO("[RollbackTest] Found %lu employees", R.size());
+    // W.commit();
+
   } catch (const std::exception &e) {
     LOG_INFO("[RollbackTest] Exception occurred");
   }
