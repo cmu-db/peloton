@@ -55,17 +55,17 @@ void *SimpleQueryTest(void *) {
     EXPECT_EQ(conn->pkt_manager.is_started, true);
     EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
-    W.exec("DROP TABLE IF EXISTS employee;");
-    W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    W.commit();
-    
-    pqxx::work W1(C);
-    W1.exec("INSERT INTO employee VALUES (1, 'Han LI');");
-    W1.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
-    W1.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+    txn1.exec("DROP TABLE IF EXISTS employee;");
+    txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
+    txn1.commit();
 
-    pqxx::result R = W1.exec("SELECT name FROM employee where id=1;");
-    W1.commit();
+    pqxx::work txn2(C);
+    txn2.exec("INSERT INTO employee VALUES (1, 'Han LI');");
+    txn2.exec("INSERT INTO employee VALUES (2, 'Shaokun ZOU');");
+    txn2.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
+
+    pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
+    txn2.commit();
 
     EXPECT_EQ(R.size(), 1);
   } catch (const std::exception &e) {

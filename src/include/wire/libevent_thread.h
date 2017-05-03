@@ -71,30 +71,17 @@ class LibeventThread {
   inline ~LibeventThread() {}
 
   // Getter and setter for flags
-  bool GetThreadIsStarted() {
-	  return is_started;
-  }
+  bool GetThreadIsStarted() { return is_started; }
 
-  void SetThreadIsStarted(bool is_started) {
-	  this->is_started = is_started;
-  }
+  void SetThreadIsStarted(bool is_started) { this->is_started = is_started; }
 
-  bool GetThreadIsClosed() {
-	  return is_closed;
-  }
+  bool GetThreadIsClosed() { return is_closed; }
 
-  void SetThreadIsClosed(bool is_closed) {
-	  this->is_closed = is_closed;
-  }
+  void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
 
-  int GetThreadSockFd(){
-	  return sock_fd;
-  }
+  int GetThreadSockFd() { return sock_fd; }
 
-  void SetThreadSockFd(int fd){
-	  this->sock_fd = fd;
-  }
-
+  void SetThreadSockFd(int fd) { this->sock_fd = fd; }
 };
 
 class LibeventWorkerThread : public LibeventThread {

@@ -655,7 +655,8 @@ size_t PacketManager::ReadParamValue(
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
             std::make_pair(type::Type::VARCHAR, param_str);
-        if ((unsigned int)param_idx >= param_types.size() || PostgresValueTypeToPelotonValueType(
+        if ((unsigned int)param_idx >= param_types.size() ||
+            PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
                 type::Type::VARCHAR) {
           param_values[param_idx] =
