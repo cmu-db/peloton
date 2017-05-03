@@ -179,5 +179,14 @@ void LibeventServer::CloseServer() {
   // static_cast<LibeventMasterThread
   // *>(master_thread.get())->CloseConnection();
 }
+
+/**
+ * Change port to new_port
+ */
+void LibeventServer::SetPort(int new_port){
+	LOG_INFO("Change port to %d",new_port);
+	port_ = new_port;
+}
+
 }
 }

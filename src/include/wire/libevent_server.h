@@ -262,22 +262,7 @@ struct LibeventServer {
   void StartServer();
   void CloseServer();
 
-  void StartServer();
-
-  void CloseServer();
-
   void SetPort(int new_port);
-
-  // Getter and setter for flags
-  bool GetIsStarted() { return is_started_; }
-
-  void SetIsStarted(bool is_started) { this->is_started_ = is_started; }
-
-  bool GetIsClosed() { return is_closed_; }
-
-  void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
-
-  event_base *GetEventBase() { return base_; }
 
  private:
   /* Maintain a global list of connections.
