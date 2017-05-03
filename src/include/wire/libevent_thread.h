@@ -86,9 +86,7 @@ class LibeventWorkerThread : public LibeventThread {
   // New connection event
   struct event *new_conn_event_;
 
-  // Timeout event
   struct event *ev_timeout;
-
   // Notify new connection pipe(send end)
   int new_conn_send_fd;
 
