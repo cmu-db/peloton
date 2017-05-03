@@ -239,16 +239,12 @@ struct LibeventServer {
 
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
-  struct event *evstop;  // libevent stop event
-  struct event *ev_timeout;
-  std::shared_ptr<LibeventThread> master_thread;
-
- public:
-  bool is_started = false;
-  bool is_closed = false;
   struct event_base *base;  // libevent event_base
-  static int recent_connfd;
-
+  struct event *evstop;     // libevent stop event
+  std::shared_ptr<LibeventThread> master_thread;
+  // std::shared_ptr<LibeventThread> master_thread(
+  //    new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
+  
  public:
   LibeventServer();
 
@@ -258,8 +254,6 @@ struct LibeventServer {
                             LibeventThread *thread, ConnState init_state);
   void StartServer();
   void CloseServer();
-
-  void SetPort(int new_port);
 
  private:
   /* Maintain a global list of connections.
