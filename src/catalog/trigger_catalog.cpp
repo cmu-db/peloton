@@ -44,13 +44,18 @@ TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
       CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
       {"database_oid", "table_oid", "trigger_type"}, TRIGGER_CATALOG_NAME "_skey0",
       false, IndexType::BWTREE, txn);
+
+  Catalog::GetInstance()->CreateIndex(
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
+      {"database_oid", "table_oid"}, TRIGGER_CATALOG_NAME "_skey1",
+      false, IndexType::BWTREE, txn);
 }
 
 TriggerCatalog::~TriggerCatalog() {}
 
 bool TriggerCatalog::InsertTrigger(
     std::string trigger_name, oid_t database_oid, oid_t table_oid,
-    commands::EnumTriggerType trigger_type,
+    int16_t trigger_type,
     std::string fire_condition, //TODO: this actually should be expression
     std::string function_name,
     std::string function_arguments,
@@ -85,7 +90,7 @@ bool TriggerCatalog::InsertTrigger(
 
 commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
                                           oid_t table_oid,
-                                          commands::EnumTriggerType trigger_type,
+                                          int16_t trigger_type,
                                           concurrency::Transaction *txn) {
   LOG_INFO("get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
@@ -123,6 +128,55 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
                                      (*result_tiles)[i]->GetValue(j, 2).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 1).ToString());
+        newTriggerList->AddTrigger(newTrigger);
+
+      }
+    }
+  }
+
+  return newTriggerList;
+}
+
+commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
+                                          oid_t table_oid,
+                                          concurrency::Transaction *txn) {
+  LOG_INFO("get triggers for table %d", table_oid);
+  // select trigger_name, fire condition, function_name, function_args
+  std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_NAME, ColumnId::FUNCTION_ARGS});
+  oid_t index_offset = IndexId::DATABASE_TABLE_KEY_1; // multi-column (database_oid, table_oid) bwtree index
+  std::vector<type::Value> values;
+  // where database_oid = args.database_oid and table_oid = args.table_oid and trigger_type = args.trigger_type
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  // the result is a vector of executor::LogicalTile
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  // carefull! the result tile could be null!
+  if (result_tiles == nullptr) {
+    LOG_INFO("no trigger on table %d", table_oid);
+  } else {
+    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+  }
+
+  // create the trigger list
+  commands::TriggerList* newTriggerList = new commands::TriggerList();
+  if (result_tiles != nullptr) {
+    for (unsigned int i = 0; i < result_tiles->size(); i++) {
+      size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
+      for (size_t j = 0; j < tuple_count; j++) {
+        LOG_INFO("trigger_name is %s", (*result_tiles)[i]->GetValue(j, 0).ToString().c_str());
+        LOG_INFO("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
+        LOG_INFO("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
+        LOG_INFO("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 4).ToString().c_str());
+        LOG_INFO("trigger_type is %d", (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>());
+
+        // create a new trigger instance
+        commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
+                                     (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>(),
+                                     (*result_tiles)[i]->GetValue(j, 3).ToString(),
+                                     (*result_tiles)[i]->GetValue(j, 4).ToString(),
+                                     (*result_tiles)[i]->GetValue(j, 2).ToString());
         newTriggerList->AddTrigger(newTrigger);
 
       }

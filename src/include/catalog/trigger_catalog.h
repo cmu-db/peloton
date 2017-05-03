@@ -50,7 +50,7 @@ class TriggerCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertTrigger(std::string trigger_name, oid_t database_oid, oid_t table_oid,
-                          commands::EnumTriggerType trigger_type,
+                          int16_t trigger_type,
                           std::string fire_condition, //TODO: this actually should be expression
                           std::string function_name,
                           std::string function_arguments,
@@ -66,8 +66,14 @@ class TriggerCatalog : public AbstractCatalog {
   // of the same type
   //===--------------------------------------------------------------------===//
   commands::TriggerList* GetTriggers(
-      oid_t database_oid, oid_t table_oid, commands::EnumTriggerType trigger_type,
+      oid_t database_oid, oid_t table_oid, int16_t trigger_type,
       concurrency::Transaction *txn);
+
+  //===--------------------------------------------------------------------===//
+  // get all types of triggers for a specific table
+  //===--------------------------------------------------------------------===//
+  commands::TriggerList* GetTriggers(
+      oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
 
 
   enum ColumnId {
@@ -88,6 +94,7 @@ class TriggerCatalog : public AbstractCatalog {
   enum IndexId {
     SECONDARY_KEY_0 = 0,
     // Add new indexes here in creation order
+    DATABASE_TABLE_KEY_1 = 1,
   };
 
 };
