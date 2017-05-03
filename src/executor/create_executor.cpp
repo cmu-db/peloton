@@ -117,20 +117,24 @@ bool CreateExecutor::DExecute() {
                     time_stamp, pool_.get(), current_txn);
     LOG_INFO("2");
     // ask target table to update its trigger list variable
+    storage::DataTable *target_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name);
+    target_table->UpdateTriggerListFromCatalog(current_txn);
 
 
 
-    // debug:
-    auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
-                              newTrigger.GetTriggerType(), current_txn);
-    if (trigger_list == nullptr) {
-      LOG_INFO("nullptr");
-    } else {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-    }
+    // // debug:
+    // auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+    //                           newTrigger.GetTriggerType(), current_txn);
+    // if (trigger_list == nullptr) {
+    //   LOG_INFO("nullptr");
+    // } else {
+    //   LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    // }
 
-    LOG_INFO("trigger type=%d", newTrigger.GetTriggerType());
-    LOG_INFO("3");
+    // LOG_INFO("trigger type=%d", newTrigger.GetTriggerType());
+    // LOG_INFO("3");
 
     // if (current_txn->GetResult() == ResultType::SUCCESS) {
     //   LOG_TRACE("Creating trigger succeeded!");
