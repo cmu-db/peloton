@@ -26,8 +26,8 @@ namespace wire {
 
 int LibeventServer::recent_connfd = -1;
 
-std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
-LibeventServer::GetGlobalSocketList() {
+std::unordered_map<int, std::unique_ptr<LibeventSocket>>
+    &LibeventServer::GetGlobalSocketList() {
   // mapping from socket id to socket object.
   static std::unordered_map<int, std::unique_ptr<LibeventSocket>>
       global_socket_list;
