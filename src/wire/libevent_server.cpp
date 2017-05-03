@@ -57,6 +57,17 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
+void Status_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                     UNUSED_ATTRIBUTE short what, void *arg) {
+  LibeventServer *server = (LibeventServer *)arg;
+  if (server->is_started == false) {
+    server->is_started = true;
+  }
+  if (server->is_closed == true) {
+    event_base_loopexit(server->base, NULL);
+  }
+}
+
 LibeventServer::LibeventServer() {
   base = event_base_new();
 
@@ -74,6 +85,11 @@ LibeventServer::LibeventServer() {
   ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
                           ServerControl_Callback, this);
   event_add(ev_timeout_, &one_seconds);
+
+  struct event *ev_tout;
+  struct timeval two_seconds = {2,0};
+  ev_tout = event_new(base, -1, EV_TIMEOUT|EV_PERSIST, Status_Callback, this);
+  event_add(ev_tout, &two_seconds);
 
   // a master thread is responsible for coordinating worker threads.
   master_thread = std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base);
@@ -129,6 +145,10 @@ void LibeventServer::StartServer() {
 
     LOG_INFO("Listening on port %lu", port_);
     event_base_dispatch(base);
+    event_free(evstop);
+    event_base_free(base);
+    static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
+    LOG_INFO("Server Closed");
   }
 
   // This socket family code is not implemented yet
@@ -138,12 +158,10 @@ void LibeventServer::StartServer() {
 }
 
 void LibeventServer::CloseServer() {
-  LOG_INFO("Begin to stop server\n");
-  event_base_loopexit(base, NULL);
-  event_free(evstop);
-  event_base_free(base);
-  static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
-  LOG_INFO("Server closed\n");
+  LOG_INFO("Begin to stop server");
+  is_closed = true;
+  // event_base_loopbreak(base);
+  // static_cast<LibeventMasterThread *>(master_thread.get())->CloseConnection();
 }
 
 }
