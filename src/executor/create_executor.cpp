@@ -112,8 +112,8 @@ bool CreateExecutor::DExecute() {
                         time_since_epoch).count();
     LOG_INFO("1");
     catalog::TriggerCatalog::GetInstance()->InsertTrigger(trigger_name, database_oid, table_oid, 
-                    newTrigger.GetTriggerType(), newTrigger.GetFireCondition(),
-                    newTrigger.GetFireFunction(), newTrigger.GetFireFunctionArgs(),
+                    newTrigger.GetTriggerType(), newTrigger.GetWhen(),
+                    newTrigger.GetFuncname(), newTrigger.GetArgs(),
                     time_stamp, pool_.get(), current_txn);
     LOG_INFO("2");
     // ask target table to update its trigger list variable
