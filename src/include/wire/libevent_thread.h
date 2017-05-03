@@ -48,6 +48,7 @@ class LibeventThread {
   // The connection thread id
   const int thread_id_;
   struct event_base *libevent_base_;
+
  public:
   bool is_started = false;
   bool is_closed = false;
