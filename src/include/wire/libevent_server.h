@@ -239,13 +239,16 @@ struct LibeventServer {
 
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
-  struct event_base *base;  // libevent event_base
+  //struct event_base *base;  // libevent event_base
   struct event *evstop;     // libevent stop event
   std::shared_ptr<LibeventThread> master_thread;
   // std::shared_ptr<LibeventThread> master_thread(
   //    new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
   
  public:
+  bool is_started = false;
+  bool is_closed = false;
+  struct event_base *base;  // libevent event_base
   LibeventServer();
 
   static LibeventSocket *GetConn(const int &connfd);
