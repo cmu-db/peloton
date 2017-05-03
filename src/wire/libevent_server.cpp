@@ -66,13 +66,14 @@ LibeventServer::LibeventServer() {
   }
 
   // Add hang up signal event
-  ev_stop_ = evsignal_new(base_, SIGHUP, Signal_Callback, base_);
+  ev_stop_ =
+      evsignal_new(base_, SIGHUP, ControlCallback::Signal_Callback, base_);
   evsignal_add(ev_stop_, NULL);
 
   // Add timeout event to check server's start/close flag every one second
   struct timeval one_seconds = {1, 0};
   ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
-                          ServerControl_Callback, this);
+                          ControlCallback::ServerControl_Callback, this);
   event_add(ev_timeout_, &one_seconds);
 
   // a master thread is responsible for coordinating worker threads.

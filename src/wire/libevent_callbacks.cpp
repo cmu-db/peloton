@@ -216,15 +216,16 @@ void StateMachine(LibeventSocket *conn) {
 /**
  * Stop signal handling
  */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
+void ControlCallback::Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                      UNUSED_ATTRIBUTE short what, void *arg) {
   struct event_base *base = (event_base *)arg;
   LOG_INFO("stop");
   event_base_loopexit(base, NULL);
 }
 
-void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                            UNUSED_ATTRIBUTE short what, void *arg) {
+void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                             UNUSED_ATTRIBUTE short what,
+                                             void *arg) {
   LibeventServer *server = (LibeventServer *)arg;
   if (server->GetIsStarted() == false) {
     server->SetIsStarted(true);
@@ -234,8 +235,9 @@ void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   }
 }
 
-void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                            UNUSED_ATTRIBUTE short what, void *arg) {
+void ControlCallback::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                             UNUSED_ATTRIBUTE short what,
+                                             void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
   if (!thread->GetThreadIsStarted()) {
     thread->SetThreadIsStarted(true);

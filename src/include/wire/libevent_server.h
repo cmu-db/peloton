@@ -79,17 +79,6 @@ void WorkerHandleNewConn(evutil_socket_t local_fd, short ev_flags, void *arg);
 /* Used by a worker to execute the main event loop for a connection */
 void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 
-/* Used to handle signals */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg);
-
-/* Used to control server start and close */
-void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                            UNUSED_ATTRIBUTE short what, void *arg);
-
-/* Used to control thread event loop's begin and exit */
-void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                            UNUSED_ATTRIBUTE short what, void *arg);
 /* Helpers */
 
 /* Runs the state machine for the protocol. Invoked by event handler callback */
@@ -281,6 +270,24 @@ struct LibeventServer {
    */
   static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
   GetGlobalSocketList();
+};
+
+/*
+ * ControlCallback - Some callback helper functions
+ */
+class ControlCallback {
+ public:
+  /* Used to handle signals */
+  static void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                              UNUSED_ATTRIBUTE short what, void *arg);
+
+  /* Used to control server start and close */
+  static void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                     UNUSED_ATTRIBUTE short what, void *arg);
+
+  /* Used to control thread event loop's begin and exit */
+  static void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                     UNUSED_ATTRIBUTE short what, void *arg);
 };
 }
 }
