@@ -85,6 +85,11 @@ llvm::Value *CompactStorage::StoreValues(
   std::vector<llvm::Value *> vals(numitems), lengths(numitems), nulls(numitems);
   for (uint32_t i = 0; i < numitems; i++) {
     to_store[i].ValuesForMaterialization(vals[i], lengths[i], nulls[i]);
+
+    // Giant hack while we fix-up nulls
+    if (nulls[i] == nullptr) {
+      nulls[i] = codegen::Value::SetNullValue(codegen, to_store[i]);
+    }
   }
 
   // Cast the area pointer to our construct type, removing taking care of offset
