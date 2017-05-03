@@ -208,45 +208,6 @@ bool DataTable::MultiCheckNotNulls(const storage::Tuple *tuple,
   return true;
 }
 
-/*
-bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
-                         std::pair<ExpressionType, type::Value> exp) const {
-  type::Value cur = tuple->GetValue(column_idx);
-  switch (exp.first) {
-    case ExpressionType::COMPARE_EQUAL: {
-      if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
-      break;
-    }
-    case ExpressionType::COMPARE_NOTEQUAL: {
-      if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
-      break;
-    }
-    case ExpressionType::COMPARE_LESSTHAN: {
-      if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
-        return false;
-      break;
-    }
-    case ExpressionType::COMPARE_GREATERTHAN: {
-      if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE) return false;
-      break;
-    }
-    case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
-      if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
-      break;
-    }
-    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
-      if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
-      break;
-    }
-    default: {
-      // TODO: throw an exception
-      LOG_ERROR("Operator NOT SUPPORTED");
-      return false;
-    }
-  }
-  return true;
-} */
-
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
