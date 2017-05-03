@@ -49,11 +49,12 @@ class LibeventThread {
   const int thread_id_;
   struct event_base *libevent_base_;
 
- public:
+ private:
   bool is_started = false;
   bool is_closed = false;
   int sock_fd = -1;
 
+ public:
   LibeventThread(const int thread_id, struct event_base *libevent_base)
       : thread_id_(thread_id), libevent_base_(libevent_base) {
     if (libevent_base_ == nullptr) {
@@ -70,17 +71,30 @@ class LibeventThread {
   inline ~LibeventThread() {}
 
   // Getter and setter for flags
-  bool GetThreadIsStarted() { return is_started; }
+  bool GetThreadIsStarted() {
+	  return is_started;
+  }
 
-  void SetThreadIsStarted(bool is_started) { this->is_started = is_started; }
+  void SetThreadIsStarted(bool is_started) {
+	  this->is_started = is_started;
+  }
 
-  bool GetThreadIsClosed() { return is_closed; }
+  bool GetThreadIsClosed() {
+	  return is_closed;
+  }
 
-  void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
+  void SetThreadIsClosed(bool is_closed) {
+	  this->is_closed = is_closed;
+  }
 
-  int GetThreadSockFd() { return sock_fd; }
+  int GetThreadSockFd(){
+	  return sock_fd;
+  }
 
-  void SetThreadSockFd(int fd) { this->sock_fd = fd; }
+  void SetThreadSockFd(int fd){
+	  this->sock_fd = fd;
+  }
+
 };
 
 class LibeventWorkerThread : public LibeventThread {

@@ -189,7 +189,6 @@ class LibeventSocket {
     Init(event_flags, thread, init_state);
   }
 
-  inline ~LibeventSocket() {}
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
@@ -243,10 +242,12 @@ struct LibeventServer {
   struct event *ev_timeout;
   std::shared_ptr<LibeventThread> master_thread;
 
- public:
+  // Flags for controlling server start/close status
   bool is_started = false;
   bool is_closed = false;
   struct event_base *base;  // libevent event_base
+
+ public:
   static int recent_connfd;
 
  public:
@@ -260,6 +261,28 @@ struct LibeventServer {
   void CloseServer();
 
   void SetPort(int new_port);
+
+  // Getter and setter for flags
+  bool GetIsStarted(){
+	  return is_started;
+  }
+
+  void SetIsStarted(bool is_started){
+	  this->is_started = is_started;
+  }
+
+  bool GetIsClosed(){
+	  return is_closed;
+  }
+
+  void SetIsClosed(bool is_closed){
+	  this->is_closed = is_closed;
+  }
+
+  event_base* GetEventBase(){
+	  return base;
+  }
+
 
  private:
   /* Maintain a global list of connections.

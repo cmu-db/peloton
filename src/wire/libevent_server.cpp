@@ -54,8 +54,7 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
   }
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
-  thread->sock_fd = connfd;
-  LOG_INFO("Thread's fd is %d", thread->sock_fd);
+  thread->SetThreadSockFd(connfd);
 }
 
 /**
@@ -71,11 +70,11 @@ void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
 void Status_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
                      UNUSED_ATTRIBUTE short what, void *arg) {
   LibeventServer *server = (LibeventServer *)arg;
-  if (server->is_started == false) {
-    server->is_started = true;
+  if (server->GetIsStarted() == false) {
+    server->SetIsStarted(true);
   }
-  if (server->is_closed == true) {
-    event_base_loopexit(server->base, NULL);
+  if (server->GetIsClosed() == true) {
+    event_base_loopexit(server->GetEventBase(), NULL);
   }
 }
 
@@ -183,7 +182,7 @@ void LibeventServer::StartServer() {
 
 void LibeventServer::CloseServer() {
   LOG_INFO("Begin to stop server");
-  is_closed = true;
+  this->SetIsClosed(true);
 }
 
 /**
