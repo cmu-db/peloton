@@ -307,15 +307,15 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
     return;
   }
 
-  if (queries.size() == 1 && queries.at(0).empty()) {
-    SendEmptyQueryResponse();
-    SendReadyForQuery(txn_state_);
-    return;
-  }
-
   for (auto query : queries) {
     // iterate till before the empty string after the last ';'
     if (!query.empty()) {
+      // if (query.empty()) {
+      //  SendEmptyQueryResponse();
+      //  SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      //  return;
+      //}
+
       std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
@@ -341,7 +341,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
       // TODO: should change to query_type
       CompleteCommand(query, rows_affected);
-    } else if (query != queries.back()) {
+    } else {
       SendEmptyQueryResponse();
       SendReadyForQuery(NetworkTransactionStateType::IDLE);
       return;
