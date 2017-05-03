@@ -156,6 +156,8 @@ class DataTable : public AbstractTable {
 
   commands::TriggerList* GetTriggerList();
 
+  void UpdateTriggerListFromCatalog(concurrency::Transaction *txn);
+
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -392,7 +394,7 @@ class DataTable : public AbstractTable {
   static oid_t invalid_tile_group_id;
 
   // trigger list
-  commands::TriggerList trigger_list;
+  commands::TriggerList* trigger_list;
 };
 
 }  // End storage namespace

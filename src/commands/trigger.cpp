@@ -31,6 +31,17 @@ Trigger::Trigger(std::string name, UNUSED_ATTRIBUTE std::string function_name, U
   // to be continue...
 
 }
+Trigger::Trigger(std::string name, int16_t type, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition) {
+  trigger_name = name;
+  // to be continue...
+  if (type == (TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_DELETE)) {
+    trigger_type = BEFORE_DELETE_ROW;
+  } else {
+    // probabily not a good way to construct trigger_type
+    // TODO:
+  }
+
+}
 
 /*
  * Add a trigger to the trigger list and update the summary
