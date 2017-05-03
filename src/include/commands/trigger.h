@@ -31,7 +31,12 @@ class Trigger {
     trigger_funcname = that.trigger_funcname;
     trigger_args = that.trigger_args;
     trigger_columns = that.trigger_columns;
-    trigger_when = that.trigger_when->Copy();
+    // trigger_when = that.trigger_when->Copy();
+    if (that.trigger_when) {
+      trigger_when = that.trigger_when->Copy();
+    } else {
+      trigger_when = nullptr;
+    }
     trigger_type = that.trigger_type;
   }
   ~Trigger() {
@@ -84,6 +89,7 @@ typedef enum TriggerType {
 
 class TriggerList {
  public:
+  TriggerList() {/*do nothing*/}
   inline bool HasTriggerType(EnumTriggerType type) const {
     return types_summary[type];
   }

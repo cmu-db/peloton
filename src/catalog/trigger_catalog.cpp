@@ -122,18 +122,25 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
         LOG_INFO("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 1).ToString().c_str());
         LOG_INFO("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
         LOG_INFO("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
-
+        LOG_INFO("reach here safely");
         // create a new trigger instance
         commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 2).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 1).ToString());
-        newTriggerList->AddTrigger(newTrigger);
+        commands::TriggerList tmpTriggerList;
+        tmpTriggerList.AddTrigger(newTrigger);
 
+        LOG_INFO("reach here safely 2");
+        if (newTriggerList == nullptr) {
+          LOG_INFO("newTriggerList is null....");
+        }
+        newTriggerList->AddTrigger(newTrigger);
+        LOG_INFO("reach here safely 3");
       }
     }
   }
-
+  LOG_INFO("reach here safely 4");
   return newTriggerList;
 }
 
@@ -177,6 +184,13 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 4).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 2).ToString());
+
+        commands::TriggerList tmpTriggerList;
+        LOG_INFO("tmp trigger list size = %d", tmpTriggerList.GetTriggerListSize());
+        LOG_INFO("new trigger list size = %d", newTriggerList->GetTriggerListSize());
+        LOG_INFO("new trigger name = %s", newTrigger.GetTriggerName().c_str());
+        LOG_INFO("new trigger type = %d", newTrigger.GetTriggerType());
+
         newTriggerList->AddTrigger(newTrigger);
 
       }
