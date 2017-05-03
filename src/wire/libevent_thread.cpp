@@ -41,7 +41,6 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
       num_threads_(num_threads),
       next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
-  threads.clear();
 
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
@@ -80,7 +79,7 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
 }
 
 void ThreadStatus_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
+                           UNUSED_ATTRIBUTE short what, void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
   if (!thread->is_started) {
     thread->is_started = true;
@@ -110,8 +109,9 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
-  struct timeval two_seconds = {2,0};
-  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT|EV_PERSIST, ThreadStatus_Callback, this);
+  struct timeval two_seconds = {2, 0};
+  ev_timeout = event_new(libevent_base_, -1, EV_TIMEOUT | EV_PERSIST,
+                         ThreadStatus_Callback, this);
   event_add(ev_timeout, &two_seconds);
 
   if (event_add(new_conn_event_, 0) == -1) {
