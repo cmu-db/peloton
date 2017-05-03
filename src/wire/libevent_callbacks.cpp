@@ -223,7 +223,8 @@ void ControlCallback::Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   event_base_loopexit(base, NULL);
 }
 
-void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
+                                                 fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
   LibeventServer *server = (LibeventServer *)arg;
@@ -235,7 +236,8 @@ void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd
   }
 }
 
-void ControlCallback::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+void ControlCallback::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
+                                                 fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
