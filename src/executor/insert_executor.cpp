@@ -80,8 +80,6 @@ bool InsertExecutor::DExecute() {
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    // LOG_DEBUG("Insert executor :: 1 child ");
-
     if (!children_[0]->Execute()) {
       return false;
     }
@@ -130,8 +128,6 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    // LOG_DEBUG("Insert executor :: 0 child ");
-
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
@@ -180,9 +176,7 @@ bool InsertExecutor::DExecute() {
       // LOG_INFO("reach here safely");
 
       auto new_tuple = tuple;
-      if (trigger_list == nullptr) {
-        // LOG_INFO("target table doesn't have trigger list");
-      } else {
+      if (trigger_list != nullptr) {
         LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
 
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
