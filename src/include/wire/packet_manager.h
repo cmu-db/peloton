@@ -62,6 +62,13 @@ class PacketManager {
   // Ugh... this should not be here but we have no choice...
   void ReplanPreparedStatement(Statement* statement);
 
+  // Check existence of statement in cache by name
+  // Return true if exists
+  bool ExistCachedStatement(std::string statement_name) {
+    auto statement_cache_itr = statement_cache_.find(statement_name);
+    return statement_cache_itr != statement_cache_.end();
+  }
+
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//

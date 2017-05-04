@@ -159,7 +159,6 @@ class LibeventSocket {
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:
-
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
@@ -226,20 +225,69 @@ struct LibeventServer {
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
 
-  uint64_t port_;           // port number
-  size_t max_connections_;  // maximum number of connections
-  
+  uint64_t port_;             // port number
+  size_t max_connections_;    // maximum number of connections
+  struct event *ev_stop_;     // libevent stop event
+  struct event *ev_timeout_;  // libevent timeout event
+  std::shared_ptr<LibeventThread> master_thread_;
+  struct event_base *base_;  // libevent event_base
+
+  // Flags for controlling server start/close status
+  bool is_started_ = false;
+  bool is_closed_ = false;
+
+ public:
+  static int recent_connfd;
+
  public:
   LibeventServer();
+
   static LibeventSocket *GetConn(const int &connfd);
+
   static void CreateNewConn(const int &connfd, short ev_flags,
                             LibeventThread *thread, ConnState init_state);
+
+  void StartServer();
+
+  void CloseServer();
+
+  void SetPort(int new_port);
+
+  // Getter and setter for flags
+  bool GetIsStarted() { return is_started_; }
+
+  void SetIsStarted(bool is_started) { this->is_started_ = is_started; }
+
+  bool GetIsClosed() { return is_closed_; }
+
+  void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
+
+  event_base *GetEventBase() { return base_; }
 
  private:
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
+  GetGlobalSocketList();
+};
+
+/*
+ * ControlCallback - Some callback helper functions
+ */
+class ControlCallback {
+ public:
+  /* Used to handle signals */
+  static void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                              UNUSED_ATTRIBUTE short what, void *arg);
+
+  /* Used to control server start and close */
+  static void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                     UNUSED_ATTRIBUTE short what, void *arg);
+
+  /* Used to control thread event loop's begin and exit */
+  static void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                     UNUSED_ATTRIBUTE short what, void *arg);
 };
 }
 }
