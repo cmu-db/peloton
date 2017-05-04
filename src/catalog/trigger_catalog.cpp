@@ -66,6 +66,9 @@ bool TriggerCatalog::InsertTrigger(
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
+
+  LOG_INFO("type of trigger inserted:%d", trigger_type);
+
   auto val0 = type::ValueFactory::GetVarcharValue(trigger_name, pool);
   auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(table_oid);
@@ -88,11 +91,12 @@ bool TriggerCatalog::InsertTrigger(
   return InsertTuple(std::move(tuple), txn);
 }
 
-commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
+commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t database_oid,
                                           oid_t table_oid,
                                           int16_t trigger_type,
                                           concurrency::Transaction *txn) {
   LOG_INFO("get triggers for table %d", table_oid);
+  LOG_INFO("want type %d", trigger_type);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_NAME, ColumnId::FUNCTION_ARGS});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
@@ -125,6 +129,7 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
         LOG_INFO("reach here safely");
         // create a new trigger instance
         commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
+                                     trigger_type,
                                      (*result_tiles)[i]->GetValue(j, 2).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 1).ToString());

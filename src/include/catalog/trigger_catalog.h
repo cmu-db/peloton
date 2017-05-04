@@ -65,7 +65,7 @@ class TriggerCatalog : public AbstractCatalog {
   // get triggers for a specific table; one table may have multiple triggers
   // of the same type
   //===--------------------------------------------------------------------===//
-  commands::TriggerList* GetTriggers(
+  commands::TriggerList* GetTriggersByType(
       oid_t database_oid, oid_t table_oid, int16_t trigger_type,
       concurrency::Transaction *txn);
 

@@ -80,7 +80,7 @@ bool InsertExecutor::DExecute() {
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_DEBUG("Insert executor :: 1 child ");
+    // LOG_DEBUG("Insert executor :: 1 child ");
 
     if (!children_[0]->Execute()) {
       return false;
@@ -131,7 +131,7 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    LOG_DEBUG("Insert executor :: 0 child ");
+    // LOG_DEBUG("Insert executor :: 0 child ");
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
@@ -176,13 +176,13 @@ bool InsertExecutor::DExecute() {
       // LOG_INFO("table name=%s", target_table->GetName().c_str());
       // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
       // LOG_INFO("table_oid = %d", table_oid);
-      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
       //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
       // LOG_INFO("reach here safely");
 
       auto new_tuple = tuple;
       if (trigger_list == nullptr) {
-        LOG_INFO("target table doesn't have trigger list");
+        // LOG_INFO("target table doesn't have trigger list");
       } else {
         LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
 
@@ -242,7 +242,7 @@ bool InsertExecutor::DExecute() {
       // }
       // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
       // LOG_INFO("table_oid = %d", table_oid);
-      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
       //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
       // LOG_INFO("reach here safely");
 
