@@ -178,6 +178,7 @@ class LibeventSocket {
     Init(event_flags, thread, init_state);
   }
 
+  inline ~LibeventSocket() {}
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
@@ -246,6 +247,10 @@ struct LibeventServer {
 
   static void CreateNewConn(const int &connfd, short ev_flags,
                             LibeventThread *thread, ConnState init_state);
+  void StartServer();
+  void CloseServer();
+
+  void SetPort(int new_port);
 
   void StartServer();
 

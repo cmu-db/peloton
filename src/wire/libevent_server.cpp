@@ -76,6 +76,11 @@ LibeventServer::LibeventServer() {
                           ControlCallback::ServerControl_Callback, this);
   event_add(ev_timeout_, &one_seconds);
 
+  struct timeval two_seconds = {2, 0};
+  ev_timeout =
+      event_new(base, -1, EV_TIMEOUT | EV_PERSIST, Status_Callback, this);
+  event_add(ev_timeout, &two_seconds);
+
   // a master thread is responsible for coordinating worker threads.
   master_thread_ =
       std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
@@ -129,6 +134,7 @@ void LibeventServer::StartServer() {
                                   master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %lu", port_);
+
     event_base_dispatch(base_);
     LibeventServer::GetConn(listen_fd)->CloseSocket();
 
@@ -158,5 +164,6 @@ void LibeventServer::CloseServer() {
  * Change port to new_port
  */
 void LibeventServer::SetPort(int new_port) { port_ = new_port; }
+
 }
 }
