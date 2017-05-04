@@ -273,53 +273,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
 
-  // plan type
-  EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
-  // trigger name
-  EXPECT_EQ("check_update", plan.GetTriggerName());
-  // table name
-  EXPECT_EQ("accounts", plan.GetTableName());
-  // funcname
-  std::vector<std::string> func_name = plan.GetTriggerFuncName();
-  EXPECT_EQ(1, func_name.size());
-  EXPECT_EQ("check_account_update", func_name[0]);
-  // args
-  EXPECT_EQ(0, plan.GetTriggerArgs().size());
-  // columns
-  std::vector<std::string> columns = plan.GetTriggerColumns();
-  EXPECT_EQ(1, columns.size());
-  EXPECT_EQ("balance", columns[0]);
-  // when
-  auto when = plan.GetTriggerWhen();
-  EXPECT_NE(nullptr, when);
-  EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
-  EXPECT_EQ(2, when->GetChildrenSize());
-  auto left = when->GetChild(0);
-  auto right = when->GetChild(1);
-  EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
-  EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
-                       ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           left)->GetColumnName());
-  EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
-  EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
-                       ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           right)->GetColumnName());
-  // type (level, timing, event)
-  auto trigger_type = plan.GetTriggerType();
-  // level
-  EXPECT_TRUE(TRIGGER_FOR_ROW(trigger_type));
-  // timing
-  EXPECT_TRUE(TRIGGER_FOR_BEFORE(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_AFTER(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_INSTEAD(trigger_type));
-  // event
-  EXPECT_TRUE(TRIGGER_FOR_UPDATE(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_INSERT(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_DELETE(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(trigger_type));
-
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
@@ -327,8 +280,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  // txn_manager.CommitTransaction(txn);
-
 
   // check whether the trigger catalog table contains this new trigger
   oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(DEFAULT_DB_NAME, txn);
@@ -345,10 +296,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  if (when) {
-    delete when;
-  }
 
   if (stmt_list) {
     delete stmt_list;
