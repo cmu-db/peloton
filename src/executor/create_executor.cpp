@@ -125,7 +125,7 @@ bool CreateExecutor::DExecute() {
 
 
     // // debug:
-    // auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+    // auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
     //                           newTrigger.GetTriggerType(), current_txn);
     // if (trigger_list == nullptr) {
     //   LOG_INFO("nullptr");

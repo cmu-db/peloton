@@ -132,7 +132,7 @@ bool DeleteExecutor::DExecute() {
     LOG_INFO("table name=%s", target_table_->GetName().c_str());
     oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table_->GetName(), database_oid, current_txn);
     LOG_INFO("table_oid = %d", table_oid);
-    commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, 
+    commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
                             static_cast<peloton::commands::EnumTriggerType>(TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_DELETE), current_txn);
     LOG_INFO("reach here safely");
     if (trigger_list == nullptr) {
