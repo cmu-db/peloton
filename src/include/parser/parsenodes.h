@@ -76,6 +76,12 @@ typedef struct A_Expr {
   int location;     /* token location, or -1 if unknown */
 } A_Expr;
 
+typedef struct ListExpr {
+    NodeTag type;
+    List *elements;
+    int location;
+} ListExpr;
+
 typedef struct JoinExpr {
   NodeTag type;
   JoinType jointype; /* type of join */

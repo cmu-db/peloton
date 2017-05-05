@@ -270,12 +270,11 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
 // a Peloton tuple value expression.
 expression::AbstractExpression* PostgresParser::ParamRefTransform(
     ParamRef* root) {
-  //  LOG_INFO("Parameter number: %d", root->number);
+   LOG_ERROR("Parameter number: %d", root->number);
   expression::AbstractExpression* res =
       new expression::ParameterValueExpression(root->number - 1);
   return res;
 }
-
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
@@ -357,23 +356,27 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
 expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   expression::AbstractExpression* result = nullptr;
   switch (val.type) {
-    case T_Integer:
+    case T_Integer: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetIntegerValue((int32_t)val.val.ival));
+              type::ValueFactory::GetIntegerValue((int32_t) val.val.ival));
       break;
-    case T_String:
+    }
+    case T_String: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
+              type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
       break;
-    case T_Float:
+    }
+    case T_Float: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetDecimalValue(
-              std::stod(std::string(val.val.str))));
+              type::ValueFactory::GetDecimalValue(
+                      std::stod(std::string(val.val.str))));
       break;
-    case T_Null:
+    }
+    case T_Null: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+              type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
       break;
+    }
     default:
       throw NotImplementedException(StringUtil::Format(
           "Value type %d not supported yet...\n", val.type));
@@ -384,6 +387,7 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
 // This function takes in a Posgres A_Const parsenode and transfers it into
 // a Peloton constant value expression.
 expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
+      LOG_ERROR("    type: %d", (root->val.type));
   return ValueTransform(root->val);
 }
 
@@ -595,6 +599,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
 
 
   int type_id = static_cast<int>(target_type);
+      LOG_ERROR("type_id %d.... \n", type_id);
   if (type_id <= 4) {
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
@@ -606,6 +611,9 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     delete right_expr;
     throw NotImplementedException(StringUtil::Format(
         "A_Expr Transform for type %d is not implemented yet...\n", type_id));
+  }
+  else if (type_id == 19) {
+    result = nullptr;
   }
   return result;
 }
@@ -1154,6 +1162,7 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
   return result;
 }
 
+
 std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
     List* root) {
   auto result = new std::vector<parser::UpdateClause*>();
@@ -1187,6 +1196,8 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
 // Call postgres's parser and start transforming it into Peloton's parse tree
 parser::SQLStatementList* PostgresParser::ParseSQLString(
     const char* text) {
+      LOG_ERROR("---text: %s", text);
+
   auto ctx = pg_query_parse_init();
   auto result = pg_query_parse(text);
   if (result.error) {
@@ -1205,13 +1216,20 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
   pg_query_free_parse_result(result);
+      transform_result->GetInfo();
   return transform_result;
 }
 
-parser::SQLStatementList* PostgresParser::ParseSQLString(
-    const std::string& sql) {
-  return ParseSQLString(sql.c_str());
-}
+    parser::SQLStatementList* PostgresParser::ParseSQLString(
+            const std::string& sql) {
+      std::string str = (std::string&) sql;
+      std::cout << str << std::endl;
+      size_t start_pos = str.find(" in ");
+      if (start_pos != std::string::npos) {
+        str.replace(start_pos, 3, "=");
+      }
+      return ParseSQLString(str.c_str());
+    }
 
 PostgresParser& PostgresParser::GetInstance() {
   static PostgresParser parser;
@@ -1220,6 +1238,7 @@ PostgresParser& PostgresParser::GetInstance() {
   
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
+
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
   LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());

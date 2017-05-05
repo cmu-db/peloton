@@ -647,6 +647,7 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string& str) {
 
 ExpressionType StringToExpressionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
+  std::cout<<upper_str<<std::endl;
   if (upper_str == "INVALID") {
     return ExpressionType::INVALID;
   } else if (upper_str == "OPERATOR_PLUS" || upper_str == "+") {
@@ -672,6 +673,7 @@ ExpressionType StringToExpressionType(const std::string& str) {
   } else if (upper_str == "OPERATOR_UNARY_MINUS") {
     return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
+    LOG_ERROR("COMPARE_EQUAL OR =....\n ");
     return ExpressionType::COMPARE_EQUAL;
   } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=" || upper_str == "<>") {
     return ExpressionType::COMPARE_NOTEQUAL;
@@ -687,7 +689,8 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::COMPARE_LIKE;
   } else if (upper_str == "COMPARE_NOTLIKE" || upper_str == "!~~") {
     return ExpressionType::COMPARE_NOTLIKE;
-  } else if (upper_str == "COMPARE_IN") {
+  } else if (upper_str == "COMPARE_IN" || upper_str == "IN") {
+    LOG_ERROR("COMPARE_IN OR IN....\n ");
     return ExpressionType::COMPARE_IN;
   } else if (upper_str == "COMPARE_DISTINCT_FROM") {
     return ExpressionType::COMPARE_DISTINCT_FROM;
