@@ -96,6 +96,8 @@ class CompressedTile : public Tile {
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
+  type::Value GetUncompressedVarcharValue(oid_t column_id,
+                                          type::Value compressed_value);
   //===--------------------------------------------------------------------===//
   // Utility Functions
   //===--------------------------------------------------------------------===//
@@ -142,6 +144,9 @@ class CompressedTile : public Tile {
       if (base_value.GetTypeId() == type::Type::DECIMAL) {
         return base_value.Add(compressed_value.CastAs(base_value.GetTypeId())
                                   .Divide(exponent_column_map[column_id]));
+      }
+      if (base_value.GetTypeId() == type::Type::VARCHAR) {
+        return GetUncompressedVarcharValue(column_id, compressed_value);
       }
       return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
     }

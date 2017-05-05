@@ -32,7 +32,6 @@
 namespace peloton {
 namespace storage {
 
-#define TINYMAX 127
 bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
@@ -341,12 +340,30 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
       counter++;
 
     } else {
-      // TODO fetch value from cuckoo
-      new_value = 0;
+      new_value = dictionary.find(word);
     }
     // TODO modified_values[i] =
     (void)new_value;
   }
+
+
+  LOG_TRACE("number of uniq words: %d", counter);
+  if ((oid_t)counter == num_tuples) {
+    // no duplicate
+    LOG_TRACE("All words are unique");
+    modified_values.clear();
+    return modified_values;
+  }
+
+  // determine value type according to number of uniq words
+  if (counter <=
+      (int32_t)type::Type::GetMaxValue(type::Type::TINYINT).GetAs<int8_t>() +
+          1) {
+    LOG_TRACE("store as tiny int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // tiny int
+      modified_values[i] = type::ValueFactory::GetTinyIntValue(modified_raw[i]);
+    }
 
   } else {
     LOG_TRACE("store as small int");
@@ -441,6 +458,19 @@ void CompressedTile::SetValueFast(const type::Value &value,
 
   Tile::SetValueFast(value, tuple_offset, column_offset, is_inlined,
                      column_length);
+}
+type::Value CompressedTile::GetUncompressedVarcharValue(
+    oid_t column_id, type::Value compressed_value) {
+  int offset;
+  if (compressed_value.GetTypeId() == type::Type::TINYINT)
+    offset = (int32_t)compressed_value.GetAs<int8_t>();
+  else
+    offset = (int32_t)compressed_value.GetAs<int16_t>();
+
+  type::Value value;
+  value = decoder_map[column_id].at(offset);
+
+  return value;
 }
 }
 }
