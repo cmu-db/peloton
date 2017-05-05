@@ -32,6 +32,7 @@
 namespace peloton {
 namespace storage {
 
+#define TINYMAX 127
 bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
@@ -301,7 +302,6 @@ std::vector<type::Value> CompressedTile::CompressColumn(
 // compression for varchar
 std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
                                                             oid_t column_id) {
-  // TODO
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -348,6 +348,14 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
     (void)new_value;
   }
 
+  } else {
+    LOG_INFO("store as small int");
+    for (oid_t i = 0; i < num_tuples; i++) {
+      // samll int
+      modified_values[i] =
+          type::ValueFactory::GetSmallIntValue(modified_raw[i]);
+    }
+  }
   SetDecoderMapValue(column_id, decoder);
   return modified_values;
 }
