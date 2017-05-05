@@ -82,19 +82,5 @@ llvm::Function *QueryThreadPoolProxy::GetSubmitQueryTaskFunction(CodeGen &codege
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
-llvm::Function *QueryThreadPoolProxy::GetThreadCountFunction(CodeGen &codegen) {
-  const std::string& fn_name = "_ZN7peloton7codegen15QueryThreadPool14GetThreadCountEv";
-
-  // Has the function already been registered?
-  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
-  if (llvm_fn != nullptr) {
-      return llvm_fn;
-  }
-
-  // The function hasn't been registered, let's do it now
-  llvm::FunctionType* fn_type = llvm::FunctionType::get(codegen.Int64Type(), {}, false);
-  return codegen.RegisterFunction(fn_name, fn_type);
-}
-
 }  // namespace codegen
 }  // namespace peloton
