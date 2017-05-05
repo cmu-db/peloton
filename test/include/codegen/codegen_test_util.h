@@ -126,8 +126,15 @@ class CountingConsumer : public codegen::QueryResultConsumer {
 };
 
 struct Stats {
-  codegen::QueryCompiler::CompileStats compile_stats{0.0, 0.0, 0.0};
-  codegen::Query::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
+
+  // NOTE: for g++ > 4.8
+  // codegen::QueryCompiler::CompileStats compile_stats{0.0, 0.0, 0.0};
+  // codegen::Query::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
+
+  // NOTE: for g++ 4.8
+  codegen::QueryCompiler::CompileStats compile_stats;
+  codegen::Query::RuntimeStats runtime_stats;
+
   double num_samples = 0.0;
   int32_t tuple_result_size = -1;
 
