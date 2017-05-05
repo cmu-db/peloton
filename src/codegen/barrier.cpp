@@ -23,11 +23,6 @@ void Barrier::InitInstance(Barrier *ins, uint64_t n_workers)
     ins->SetWorkerCount(n_workers);
 }
 
-void Barrier::BarrierWait()
-{
-    bar_->wait();
-}
-
 void Barrier::MasterWait()
 {
     while(n_workers_ > 0);

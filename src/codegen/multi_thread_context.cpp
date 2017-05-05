@@ -55,8 +55,8 @@ int64_t MultiThreadContext::GetThreadId() {
   return thread_id_;
 }
 
-Barrier *MultiThreadContext::GetBarrier() {
-  return bar_;
+bool MultiThreadContext::BarrierWait() {
+  return bar_->BarrierWait();
 }
 
 void MultiThreadContext::NotifyMaster() {

@@ -39,22 +39,6 @@ llvm::Function *BarrierProxy::GetInitInstanceFunction(CodeGen &codegen) {
   return codegen.RegisterFunction(func_name, fn_type);
 }
 
-llvm::Function *BarrierProxy::GetBarrierWaitFunction(CodeGen &codegen) {
-  static const std::string func_name = "_ZN7peloton7codegen7Barrier11BarrierWaitEv";
-  auto *func = codegen.LookupFunction(func_name);
-  if (func != nullptr) {
-    return func;
-  }
-  // Not cached, create the type
-  auto *fn_type = llvm::FunctionType::get(
-      codegen.VoidType(),
-      {
-          BarrierProxy::GetType(codegen)->getPointerTo()
-      },
-      false);
-  return codegen.RegisterFunction(func_name, fn_type);
-}
-
 llvm::Function *BarrierProxy::GetMasterWaitFunction(CodeGen &codegen) {
   static const std::string func_name = "_ZN7peloton7codegen7Barrier10MasterWaitEv";
   auto *func = codegen.LookupFunction(func_name);

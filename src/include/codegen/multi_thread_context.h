@@ -33,9 +33,9 @@ class MultiThreadContext {
 
   int64_t GetThreadId();
 
-  void NotifyMaster();
+  bool BarrierWait();
 
-  Barrier *GetBarrier();
+  void NotifyMaster();
 
   ~MultiThreadContext()
   {
