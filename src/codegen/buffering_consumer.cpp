@@ -184,16 +184,6 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
 
 const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() {
   size_t result_size = tuples_.GetSize();
-//  std::vector<WrappedTuple> result(result_size);
-//
-//  for (size_t i = 0; i < result_size; ++i) {
-//    result.push_back(tuples_.Find(i));
-//  }
-//
-//  std::cout << result.size() << std::endl;
-//  return std::move(result);
-
-  // TODO(tq5124): why above does not work?
   tuples_vector_.reserve(result_size);
   tuples_vector_.clear();
   for (size_t i = 0; i < result_size; ++i) {
