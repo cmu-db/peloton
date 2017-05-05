@@ -349,7 +349,7 @@ void InnerJoinToInnerNLJoin::Transform(
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerNLJoin::make(inner_join->condition));
+      PhysicalInnerNLJoin::make(inner_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -392,7 +392,7 @@ void LeftJoinToLeftNLJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalLeftNLJoin::make(left_join->condition));
+      PhysicalLeftNLJoin::make(left_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -434,7 +434,7 @@ void RightJoinToRightNLJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalRightNLJoin::make(right_join->condition));
+      PhysicalRightNLJoin::make(right_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -476,7 +476,7 @@ void OuterJoinToOuterNLJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalOuterNLJoin::make(outer_join->condition));
+      PhysicalOuterNLJoin::make(outer_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -522,7 +522,7 @@ void InnerJoinToInnerHashJoin::Transform(
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerHashJoin::make(inner_join->condition));
+      PhysicalInnerHashJoin::make(inner_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
 
@@ -564,7 +564,7 @@ void LeftJoinToLeftHashJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalLeftHashJoin::make(left_join->condition));
+      PhysicalLeftHashJoin::make(left_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -606,7 +606,7 @@ void RightJoinToRightHashJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalRightHashJoin::make(right_join->condition));
+      PhysicalRightHashJoin::make(right_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -648,7 +648,7 @@ void OuterJoinToOuterHashJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalOuterHashJoin::make(outer_join->condition));
+      PhysicalOuterHashJoin::make(outer_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 

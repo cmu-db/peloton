@@ -260,72 +260,72 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalInnerNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // LeftNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalLeftNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // RightNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalRightNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightNLJoin *join = new PhysicalRightNLJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalOuterNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalInnerHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // LeftHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalLeftHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // RightHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalRightHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightHashJoin *join = new PhysicalRightHashJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make(expression::AbstractExpression *condition) {
+Operator PhysicalOuterHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin();
-  join->condition = condition;
+  join->join_predicate = join_predicate;
   return Operator(join);
 }
 
