@@ -252,7 +252,8 @@ class PhysicalFilter : public OperatorNode<PhysicalFilter> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -260,7 +261,8 @@ class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalLeftNLJoin : public OperatorNode<PhysicalLeftNLJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -268,7 +270,8 @@ class PhysicalLeftNLJoin : public OperatorNode<PhysicalLeftNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalRightNLJoin : public OperatorNode<PhysicalRightNLJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -276,7 +279,8 @@ class PhysicalRightNLJoin : public OperatorNode<PhysicalRightNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -284,7 +288,8 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -292,7 +297,8 @@ class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalLeftHashJoin : public OperatorNode<PhysicalLeftHashJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -300,7 +306,8 @@ class PhysicalLeftHashJoin : public OperatorNode<PhysicalLeftHashJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//
@@ -308,7 +315,8 @@ class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
  public:
-  static Operator make();
+  expression::AbstractExpression *condition;
+  static Operator make(expression::AbstractExpression *condition);
 };
 
 //===--------------------------------------------------------------------===//

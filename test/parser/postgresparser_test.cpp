@@ -246,6 +246,9 @@ TEST_F(PostgresParserTests, JoinTest) {
       "SELECT * FROM foo FULL OUTER JOIN bar ON foo.id=bar.id AND foo.val > "
       "bar.val;");
 
+  queries.push_back(
+      "SELECT * FROM foo JOIN bar ON foo.id=bar.id JOIN baz ON foo.id2=baz.id2;");
+
   auto parser = parser::PostgresParser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -258,6 +261,19 @@ TEST_F(PostgresParserTests, JoinTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    // Test for multiple table join
+    if (ii == 5) {
+      auto select_stmt = 
+          reinterpret_cast<parser::SelectStatement *>(stmt_list->statements[0]);
+      auto join_table = select_stmt->from_table;
+      EXPECT_TRUE(join_table->type == TableReferenceType::JOIN);
+      auto l_join = join_table->join->left;
+      auto r_table = join_table->join->right;
+      EXPECT_TRUE(l_join->type == TableReferenceType::JOIN);
+      EXPECT_TRUE(r_table->type == TableReferenceType::NAME);
+      LOG_INFO("condition 0 : %s", join_table->join->condition->GetInfo().c_str());
+      LOG_INFO("condition 0 : %s", l_join->join->condition->GetInfo().c_str());
+    }
     delete stmt_list;
   }
 }

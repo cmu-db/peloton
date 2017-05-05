@@ -255,64 +255,72 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make() {
-  PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin;
+Operator PhysicalInnerNLJoin::make(expression::AbstractExpression *condition) {
+  PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // LeftNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make() {
-  PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin;
+Operator PhysicalLeftNLJoin::make(expression::AbstractExpression *condition) {
+  PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // RightNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make() {
-  PhysicalRightNLJoin *join = new PhysicalRightNLJoin;
+Operator PhysicalRightNLJoin::make(expression::AbstractExpression *condition) {
+  PhysicalRightNLJoin *join = new PhysicalRightNLJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make() {
-  PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin;
+Operator PhysicalOuterNLJoin::make(expression::AbstractExpression *condition) {
+  PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make() {
-  PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin;
+Operator PhysicalInnerHashJoin::make(expression::AbstractExpression *condition) {
+  PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // LeftHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make() {
-  PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin;
+Operator PhysicalLeftHashJoin::make(expression::AbstractExpression *condition) {
+  PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // RightHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make() {
-  PhysicalRightHashJoin *join = new PhysicalRightHashJoin;
+Operator PhysicalRightHashJoin::make(expression::AbstractExpression *condition) {
+  PhysicalRightHashJoin *join = new PhysicalRightHashJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make() {
-  PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin;
+Operator PhysicalOuterHashJoin::make(expression::AbstractExpression *condition) {
+  PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin();
+  join->condition = condition;
   return Operator(join);
 }
 
