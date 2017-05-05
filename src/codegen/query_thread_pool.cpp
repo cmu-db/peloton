@@ -22,11 +22,9 @@ QueryThreadPool* QueryThreadPool::GetInstance()
 }
 
 uint64_t QueryThreadPool::GetThreadCount() {
-  return std::thread::hardware_concurrency() + 3;
+  return std::thread::hardware_concurrency();
 }
 
-// TODO: runtime_state and multi_thread_context could be invalid after task being submitted!
-// we might need unique_ptr here!
 void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*))
 {
   pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));
