@@ -26,7 +26,10 @@ public:
 
     void BarrierWait();
 
-    void WorkerFinish();
+    void WorkerFinish()
+    {
+        --n_workers_;
+    }
 
     void MasterWait();
 
