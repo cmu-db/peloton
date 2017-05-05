@@ -923,6 +923,16 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   delete stmt_list;
 }
 
+TEST_F(PostgresParserTests, CaseTest) {
+  std::string query = "SELECT id, case when id=100 then 1 else 0 end from tbl;";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+
+  delete stmt_list;
+}
+
 
 }  // End test namespace
 }  // End peloton namespace

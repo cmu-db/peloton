@@ -52,7 +52,8 @@ void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
 void ValuesRuntime::OutputVarchar(char *values, uint32_t idx, char *str,
                                   uint32_t len) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  vals[idx] = type::ValueFactory::GetVarcharValue(str, len, false);
+  // Peloton type system counts the null character at the end, so we plus 1
+  vals[idx] = type::ValueFactory::GetVarcharValue(str, len+1, false);
 }
 
 void ValuesRuntime::OutputVarbinary(char *values, uint32_t idx, char *ptr,

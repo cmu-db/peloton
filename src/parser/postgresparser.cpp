@@ -17,6 +17,7 @@
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -276,6 +277,46 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
   return res;
 }
 
+// This function takes in the Case Expression of a Postgres SelectStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::CaseExprTransform(
+    CaseExpr* root) {
+
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  // Transform the CASE argument
+  auto arg_expr = ExprTransform(root->arg);
+
+  // Transform the WHEN conditions
+  auto *clauses = new std::vector<expression::CaseExpression::WhenClause>;
+  for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+
+    CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
+
+    // When condition
+    auto when_expr = ExprTransform(w->expr);;
+
+    // Result
+    auto result_expr = ExprTransform(w->result);
+
+    // Build When Clause and add it to the list
+    clauses->push_back(expression::CaseExpression::WhenClause(
+        expression::CaseExpression::AbsExprPtr(when_expr),
+        expression::CaseExpression::AbsExprPtr(result_expr)));
+  }
+
+  // Transform the default result
+  auto defresult_expr = ExprTransform(root->defresult);
+
+  // Build Case Expression
+  return new expression::CaseExpression(
+      clauses->at(0).second.get()->GetValueType(),
+      expression::CaseExpression::AbsExprPtr(arg_expr),
+      *clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+}
+
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
@@ -510,7 +551,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   return result;
 }
 
-expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
+expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {

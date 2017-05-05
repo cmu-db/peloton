@@ -64,7 +64,8 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
     }
     case type::Type::TypeId::VARCHAR: {
       std::string str = type::ValuePeeker::PeekVarchar(constant);
-      val = codegen.ConstString(str);
+      // val should be a pointer type to be used in comparisions inside a PHI
+      val = codegen.ConstStringPtr(str);
       len = codegen.Const32(str.length());
       break;
     }

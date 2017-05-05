@@ -14,6 +14,7 @@
 #include "codegen/case_translator.h"
 #include "codegen/compilation_context.h"
 #include "codegen/if.h"
+#include "codegen/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -46,12 +47,12 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
   const auto &expr = GetExpressionAs<expression::CaseExpression>();
 
   // Handle all the When Cluases
+  codegen::Value ret;
   for (uint32_t i = 0; i < expr.GetWhenClauseSize(); i++) {
     codegen::Value cond = row.DeriveValue(codegen, *expr.GetWhenClauseCond(i));
     If when{codegen, cond.GetValue(), "case" + std::to_string(i)};
     {
-      codegen::Value ret = row.DeriveValue(codegen,
-                                           *expr.GetWhenClauseResult(i));
+      ret = row.DeriveValue(codegen, *expr.GetWhenClauseResult(i));
       branch_vals.emplace_back(ret, codegen->GetInsertBlock());
     }
     when.EndIf(merge_bb);
@@ -60,11 +61,11 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
   codegen->CreateBr(merge_bb);
 
   // Compute the default clause
-  if (expr.GetDefault() != nullptr) {
-    codegen::Value
-        default_ret = row.DeriveValue(codegen, *expr.GetDefault());
-    branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
-  }
+  // default_ret will have the same type as one of the ret's from above
+  codegen::Value default_ret = expr.GetDefault() != nullptr ?
+      row.DeriveValue(codegen, *expr.GetDefault()) :
+      Type::GetNullValue(codegen, ret.GetType());
+  branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
 
   // Push the merging block to the end and build the PHI on this merging block
   auto *func = codegen->GetInsertBlock()->getParent();

@@ -94,7 +94,8 @@ class CaseExpression : public AbstractExpression {
       clause.first->PerformBinding(binding_contexts);
       clause.second->PerformBinding(binding_contexts);
     }
-    dfltexpr_->PerformBinding(binding_contexts);
+    if (dfltexpr_ != nullptr)
+      dfltexpr_->PerformBinding(binding_contexts);
   }
 
  private:
