@@ -21,10 +21,6 @@ QueryThreadPool* QueryThreadPool::GetInstance()
     return global_query_thread_pool.get();
 }
 
-uint64_t QueryThreadPool::GetThreadCount() {
-  return std::thread::hardware_concurrency();
-}
-
 void QueryThreadPool::SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*))
 {
   pool.SubmitTask(target_func, std::move(runtime_state), std::move(multi_thread_context));

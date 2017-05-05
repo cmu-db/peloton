@@ -24,9 +24,14 @@ class QueryThreadPool {
  public:
 
   static QueryThreadPool *GetInstance();
-  static uint64_t GetThreadCount();
 
-  QueryThreadPool() {
+  static uint64_t GetThreadCount()
+  {
+      return std::thread::hardware_concurrency();
+  }
+
+  QueryThreadPool()
+  {
     pool.Initialize(GetThreadCount(), 0);
   }
 
