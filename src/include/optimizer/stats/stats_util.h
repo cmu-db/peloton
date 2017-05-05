@@ -21,6 +21,7 @@ namespace peloton {
 namespace optimizer {
 
 // Convert numeric peloton value type to primitive value.
+// Return 0 if value is not numeric.
 double PelotonValueToNumericValue(const type::Value& value) {
   double raw_value = 0;
   if (value.IsNull()) {
