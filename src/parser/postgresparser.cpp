@@ -287,7 +287,7 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   }
 
   // Transform the CASE argument
-  auto arg_expr = ExprTransform(root->arg);
+  auto arg_expr = ExprTransform(reinterpret_cast<Node*>(root->arg));
 
   // Transform the WHEN conditions
   auto *clauses = new std::vector<expression::CaseExpression::WhenClause>;
@@ -296,10 +296,10 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
     CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
 
     // When condition
-    auto when_expr = ExprTransform(w->expr);;
+    auto when_expr = ExprTransform(reinterpret_cast<Node*>(w->expr));;
 
     // Result
-    auto result_expr = ExprTransform(w->result);
+    auto result_expr = ExprTransform(reinterpret_cast<Node*>(w->result));
 
     // Build When Clause and add it to the list
     clauses->push_back(expression::CaseExpression::WhenClause(
@@ -308,7 +308,7 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   }
 
   // Transform the default result
-  auto defresult_expr = ExprTransform(root->defresult);
+  auto defresult_expr = ExprTransform(reinterpret_cast<Node*>(root->defresult));
 
   // Build Case Expression
   return new expression::CaseExpression(
@@ -487,7 +487,6 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-// TODO: Add support for CaseExpr.
 std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
     List* root) {
   std::vector<expression::AbstractExpression*>* result =
@@ -552,6 +551,11 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
 }
 
 expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
+
+  if (node == nullptr) {
+    return nullptr;
+  }
+
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
@@ -578,6 +582,10 @@ expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
       expr = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
       break;
     }
+    case T_CaseExpr: {
+      expr = CaseExprTransform(reinterpret_cast<CaseExpr*>(node));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -585,7 +593,6 @@ expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
   }
   return expr;
 }
-
 
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
@@ -628,7 +635,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   catch(NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
   }
 
 
