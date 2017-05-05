@@ -71,15 +71,17 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       }
     }
     case PlanNodeType::INSERT: {
-      const planner::InsertPlan &insert_plan =
-          static_cast<const planner::InsertPlan &>(plan);
-      if (insert_plan.GetChildren().size() != 0) {
-        return false;
-      }
-      if (insert_plan.GetProjectInfo() != nullptr) {
-        return false;
-      }
-      break;
+      return false;
+// Temporarily turn off.
+//      const planner::InsertPlan &insert_plan =
+//          static_cast<const planner::InsertPlan &>(plan);
+//      if (insert_plan.GetChildren().size() != 0) {
+//        return false;
+//      }
+//      if (insert_plan.GetProjectInfo() != nullptr) {
+//        return false;
+//      }
+//      break;
     }
     default: { return false; }
   }
