@@ -121,5 +121,21 @@ llvm::Function *MultiThreadContextProxy::GetGetBarrierFunction(CodeGen &codegen)
   return codegen.RegisterFunction(func_name, fn_type);
 }
 
+llvm::Function *MultiThreadContextProxy::GetNotifyMasterFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext12NotifyMasterEv";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
+}
+
 } // codegen
 } // namespace peloton
