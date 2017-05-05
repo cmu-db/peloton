@@ -53,8 +53,8 @@ void CompressedTile::CompressTile(Tile *tile) {
   auto tile_schema = tile->GetSchema();
 
   for (oid_t i = 0; i < column_count; i++) {
-    LOG_INFO("Compressing Column %s",
-             tile_schema->GetColumn(i).GetName().c_str());
+    LOG_TRACE("Compressing Column %s",
+              tile_schema->GetColumn(i).GetName().c_str());
     switch (tile_schema->GetType(i)) {
       case type::Type::SMALLINT:
       case type::Type::INTEGER:
@@ -69,22 +69,22 @@ void CompressedTile::CompressTile(Tile *tile) {
           type::Value base_value = GetBaseValue(old_value, new_value);
           type::Type::TypeId type_id = GetCompressedType(new_value);
 
-          LOG_INFO("Compressed %s to %s",
-                   peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
-                   peloton::TypeIdToString(type_id).c_str());
+          LOG_TRACE("Compressed %s to %s",
+                    peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
+                    peloton::TypeIdToString(type_id).c_str());
 
           SetCompressedMapValue(i, type_id, base_value);
 
         } else {
-          LOG_INFO("Unable to compress %s ",
-                   peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
+          LOG_TRACE("Unable to compress %s ",
+                    peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
         }
         new_columns[i] = new_column_values;
         break;
 
       default:
-        LOG_INFO("Peloton currently does not compress %s",
-                 peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
+        LOG_TRACE("Peloton currently does not compress %s",
+                  peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
         new_column_values.resize(0);
         new_columns[i] = new_column_values;
         break;
@@ -116,7 +116,7 @@ void CompressedTile::CompressTile(Tile *tile) {
 
     auto &storage_manager = storage::StorageManager::GetInstance();
 
-    LOG_INFO("Size of the tile before compression: %zu", tile_size);
+    LOG_TRACE("Size of the tile before compression: %zu", tile_size);
 
     // Reclaim data from old schema
     storage_manager.Release(backend_type, data);
@@ -126,7 +126,7 @@ void CompressedTile::CompressTile(Tile *tile) {
     tuple_length = schema.GetLength();
     tile_size = num_tuple_slots * tuple_length;
 
-    LOG_INFO("Size of the tile after compression: %zu", tile_size);
+    LOG_TRACE("Size of the tile after compression: %zu", tile_size);
 
     data = reinterpret_cast<char *>(
         storage_manager.Allocate(backend_type, tile_size));
@@ -199,7 +199,7 @@ std::vector<type::Value> CompressedTile::CompressColumn(
             actual_values[k].Subtract(median).CastAs(compression_type);
       }
 
-      LOG_INFO("Base value selected = %s", median.ToString().c_str());
+      LOG_TRACE("Base value selected = %s", median.ToString().c_str());
       break;
     } catch (Exception &e) {
       if (column_type == (compression_type + 1)) {
@@ -215,7 +215,7 @@ std::vector<type::Value> CompressedTile::CompressColumn(
 
 void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   if (IsCompressed()) {
-    LOG_INFO("Peloton does not support insert into compressed tiles.");
+    LOG_TRACE("Peloton does not support insert into compressed tiles.");
     PL_ASSERT(false);
   } else {
     Tile::InsertTuple(tuple_offset, tuple);
@@ -270,7 +270,7 @@ void CompressedTile::SetValue(const type::Value &value,
                               const oid_t tuple_offset, const oid_t column_id) {
   if (IsCompressed()) {
     if (GetCompressedType(column_id) != type::Type::INVALID) {
-      LOG_INFO("Peloton does not support SetValue on a Compressed Class");
+      LOG_TRACE("Peloton does not support SetValue on a Compressed Class");
       PL_ASSERT(false);
     }
   }
@@ -289,7 +289,7 @@ void CompressedTile::SetValueFast(const type::Value &value,
 
   if (IsCompressed()) {
     if (GetCompressedType(column_id) != type::Type::INVALID) {
-      LOG_INFO("Peloton does not support");
+      LOG_TRACE("Peloton does not support");
       PL_ASSERT(false);
     }
   }

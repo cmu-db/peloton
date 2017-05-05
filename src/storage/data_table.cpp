@@ -129,7 +129,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_INFO(
+      LOG_TRACE(
           "%u th attribute in the tuple was NULL. It is non-nullable "
           "attribute.",
           column_itr);
@@ -143,7 +143,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
-    LOG_INFO("Not NULL constraint violated");
+    LOG_TRACE("Not NULL constraint violated");
     throw ConstraintException("Not NULL constraint violated : " +
                               std::string(tuple->GetInfo()));
     return false;
@@ -168,18 +168,27 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  // Avoid inserting into recycled slot. Needs to be Modified!!!
-  /*auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  bool valid_slot = true;
+  ;
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
-    if (tuple != nullptr) {
+    if ((tuple != nullptr)) {
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
-      tile_group->CopyTuple(tuple, free_item_pointer.offset);
+
+      if (tile_group->GetCompressionStatus() == true) {
+        valid_slot = false;
+      } else {
+        tile_group->CopyTuple(tuple, free_item_pointer.offset);
+      }
     }
-    return free_item_pointer;
-  }*/
+
+    if (valid_slot) {
+      return free_item_pointer;
+    }
+  }
   //====================================================
 
   size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
@@ -220,7 +229,7 @@ ItemPointer DataTable::InsertEmptyVersion() {
   // First, claim a slot
   ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
-    LOG_INFO("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
@@ -232,11 +241,11 @@ ItemPointer DataTable::AcquireVersion() {
   // First, claim a slot
   ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
-    LOG_INFO("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %u, %u", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseTupleCount(1);
   return location;
@@ -249,7 +258,7 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
-    LOG_INFO("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return false;
   }
   return true;
@@ -269,11 +278,11 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
-    LOG_INFO("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %u, %u", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   auto index_count = GetIndexCount();
   if (index_count == 0) {
@@ -283,13 +292,13 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   }
   // Index checks and updates
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
-    LOG_INFO("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_INFO("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -306,11 +315,11 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
-    LOG_INFO("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %u, %u", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   UNUSED_ATTRIBUTE auto index_count = GetIndexCount();
   PL_ASSERT(index_count == 0);
@@ -402,7 +411,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     } else {
       success_count += 1;
     }
-    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   return true;
@@ -472,7 +481,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
         index->InsertEntry(key.get(), index_entry_ptr);
         break;
     }
-    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
   return res;
 }
@@ -507,7 +516,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
+        LOG_TRACE("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
@@ -517,7 +526,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_INFO("check key: %s", key->GetInfo().c_str());
+        LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
@@ -628,7 +637,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   tile_group_id = tile_group->GetTileGroupId();
 
-  LOG_INFO("Added a tile group ");
+  LOG_TRACE("Added a tile group ");
   tile_groups_.Append(tile_group_id);
 
   // add tile group metadata in locator
@@ -644,7 +653,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   tile_group_count_++;
 
-  LOG_INFO("Recording tile group : %u ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 
   return tile_group_id;
 }
@@ -671,7 +680,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   if (tile_groups_exists == false) {
     tile_groups_.Append(tile_group_id);
 
-    LOG_INFO("Added a tile group ");
+    LOG_TRACE("Added a tile group ");
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -682,7 +691,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
     tile_group_count_++;
 
-    LOG_INFO("Recording tile group : %u ", tile_group_id);
+    LOG_TRACE("Recording tile group : %u ", tile_group_id);
   }
 }
 
@@ -705,7 +714,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
   tile_group_count_++;
 
-  LOG_INFO("Recording tile group : %u ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
@@ -993,7 +1002,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
     return nullptr;
   }
 
-  LOG_INFO("Transforming tile group : %u", tile_group_offset);
+  LOG_TRACE("Transforming tile group : %u", tile_group_offset);
 
   // Get the schema for the new transformed tile group
   auto new_schema =

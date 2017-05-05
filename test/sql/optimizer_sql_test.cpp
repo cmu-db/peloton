@@ -206,6 +206,7 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::SEQSCAN);
 
+
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
@@ -443,6 +444,7 @@ TEST_F(OptimizerSQLTests, UpdateSqlTest) {
       optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor,
       rows_changed, error_message);
   EXPECT_EQ("23", TestingSQLUtil::GetResultValueAsString(result, 0));
+
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

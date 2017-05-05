@@ -26,7 +26,6 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto tile_group = manager.GetTileGroup(location.block).get();
 
   auto tile_group_header = tile_group->GetHeader();
-
   // Reset the header
   tile_group_header->SetTransactionId(location.offset, INVALID_TXN_ID);
   tile_group_header->SetBeginCommitId(location.offset, MAX_CID);

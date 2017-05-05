@@ -200,6 +200,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
+
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
   // get database oid from pg_database
@@ -332,7 +333,6 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
       LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
                 pkey_index->GetName().c_str(), table->GetName().c_str());
-
       return ResultType::SUCCESS;
     } catch (CatalogException &e) {
       LOG_TRACE(
@@ -415,6 +415,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
               index_name.c_str());
     return ResultType::FAILURE;
   }
+
 
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
@@ -563,6 +564,7 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
   return ResultType::SUCCESS;
 }
 
+
 /*@brief   Drop table
 * 1. drop all the indexes on actual table, and drop index records in pg_index
 * 2. drop all the columns records in pg_attribute
@@ -580,6 +582,7 @@ ResultType Catalog::DropTable(const std::string &database_name,
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to drop table: %s", table_name.c_str());
     return ResultType::FAILURE;
+
   }
 
   // Checking if statement is valid
@@ -587,6 +590,7 @@ ResultType Catalog::DropTable(const std::string &database_name,
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
   if (database_oid == INVALID_OID) {
     LOG_TRACE("Cannot find database  %s!", database_name.c_str());
+
     return ResultType::FAILURE;
   }
 
@@ -599,6 +603,7 @@ ResultType Catalog::DropTable(const std::string &database_name,
   ResultType result = DropTable(database_oid, table_oid, txn);
 
   return result;
+
 }
 
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
@@ -609,6 +614,7 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   }
 
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
+
 
   try {
     auto database = GetDatabaseWithOid(database_oid);

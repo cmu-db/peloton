@@ -34,7 +34,7 @@ std::mt19937 rng(rd());
 
 // Create a uniform random number
 int TestingSQLUtil::GetRandomInteger(const int lower_bound,
-                                   const int upper_bound) {
+                                     const int upper_bound) {
   std::uniform_int_distribution<> dist(lower_bound, upper_bound);
 
   int sample = dist(rng);
@@ -45,7 +45,7 @@ int TestingSQLUtil::GetRandomInteger(const int lower_bound,
 // Note: In order to see the content from the command line, you have to
 // turn-on LOG_TRACE.
 void TestingSQLUtil::ShowTable(std::string database_name,
-                             std::string table_name) {
+                               std::string table_name) {
   ExecuteSQLQuery("SELECT * FROM " + database_name + "." + table_name);
 }
 
@@ -85,14 +85,14 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     LOG_INFO("Statement executed. Result: %s",
              ResultTypeToString(status.m_result).c_str());
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return ResultType::FAILURE;
   }
 }
 
-std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
+std::shared_ptr<planner::AbstractPlan>
+TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -102,8 +102,8 @@ std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer
   return optimizer->BuildPelotonPlanTree(parsed_stmt);
 }
 
-ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
-                                         std::vector<StatementResult> &result) {
+ResultType TestingSQLUtil::ExecuteSQLQuery(
+    const std::string query, std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
