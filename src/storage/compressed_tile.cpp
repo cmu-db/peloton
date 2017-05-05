@@ -85,9 +85,8 @@ void CompressedTile::CompressTile(Tile *tile) {
         new_columns[i] = new_column_values;
         break;
     case type::Type::DECIMAL:
-        LOG_INFO("Peloton now compresses %s",
-                  peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
         max_exponent_count = GetMaxExponentLength(tile,i);
+        LOG_INFO("Exponent Count : %s", max_exponent_count.ToString().c_str());
         column_values = ConvertDecimalColumn(tile, i, max_exponent_count);
         new_column_values = CompressColumn(tile, i , column_values, type::Type::TINYINT);
         if (new_column_values.size() !=0) {
@@ -97,8 +96,7 @@ void CompressedTile::CompressTile(Tile *tile) {
 
           type::Value base_value = GetBaseValue(old_value, new_value.CastAs(tile_schema->GetType(i)).Divide(max_exponent_count));
           type::Type::TypeId type_id = GetCompressedType(new_value);
-          LOG_INFO("Old Value : %s and New Value : %s\n", old_value.ToString().c_str(), new_value.ToString().c_str());
-          LOG_INFO("Base Value : %s\n", base_value.ToString().c_str());
+          LOG_INFO("Base Value : %s", base_value.ToString().c_str());
           LOG_INFO("Compressed %s to %s",
                     peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
                     peloton::TypeIdToString(type_id).c_str());
@@ -112,12 +110,9 @@ void CompressedTile::CompressTile(Tile *tile) {
           }
           new_columns[i] = new_column_values;
           break;
-    default:
-        LOG_TRACE("Peloton currently does not compress %s",
-                  peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
-        new_column_values.resize(0);
-        new_columns[i] = new_column_values;
-        break;
+      default:
+        LOG_INFO("Unable to compress %s ",
+                    peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
     }
   }
 
@@ -200,7 +195,6 @@ void CompressedTile::CompressTile(Tile *tile) {
 }
 
 std::vector<type::Value> CompressedTile::ConvertDecimalColumn(Tile *tile, oid_t column_id, type::Value exponent) {
-  LOG_INFO("Called");
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -211,9 +205,7 @@ std::vector<type::Value> CompressedTile::ConvertDecimalColumn(Tile *tile, oid_t 
 
   for (oid_t i = 0; i < num_tuples; i++) {
     decimal_value = tile->GetValueFast(i, column_offset, column_type, is_inlined);
-    LOG_INFO("Old Decimal Value = %s", decimal_value.ToString().c_str());
     values[i] = decimal_value.Multiply(exponent);
-    LOG_INFO("New Integer Value = %s", values[i].ToString().c_str());
   }
   return values;
 }
@@ -236,7 +228,6 @@ std::vector<type::Value> CompressedTile::GetIntegerColumnValues(Tile *tile, oid_
 }
 
 type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
-  LOG_INFO("Called");
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -248,20 +239,20 @@ type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
   
   type::Value current_max = type::ValueFactory::GetBigIntValue(1);
 
-  LOG_INFO("Current Max Value = %s", current_max.ToString().c_str());
+
 
   for (oid_t i = 0; i < num_tuples; i++) {
     decimal_value = tile->GetValueFast(i, column_offset, column_type, is_inlined);
-    LOG_INFO("Decimal Value = %s", decimal_value.ToString().c_str());
+
     type::Value new_value = decimal_value.Multiply(current_max);
-    LOG_INFO("New Value = %s", new_value.ToString().c_str());
+
     while (new_value.CompareNotEquals(new_value.CastAs(type::Type::BIGINT))) {
       current_max = current_max.Multiply(increment);
       new_value = new_value.Multiply(current_max);
-      LOG_INFO("New Maximum Value = %s", current_max.ToString().c_str());
+
     }
   }
-  LOG_INFO("Final Maximum Value = %s", current_max.ToString().c_str());
+
   return current_max;
 }
 
@@ -275,7 +266,6 @@ std::vector<type::Value> CompressedTile::CompressColumn(
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   auto column_type = tile_schema->GetType(column_id);
-  LOG_INFO("Old Value Type : %d", column_type);
   std::vector<type::Value> actual_values(column_values);
 
   std::sort(column_values.begin(), column_values.end(), CompareLessThanBool);
@@ -291,8 +281,6 @@ std::vector<type::Value> CompressedTile::CompressColumn(
         modified_values[k] =
             actual_values[k].Subtract(median).CastAs(compression_type);
       }
-
-      LOG_INFO("Base value selected = %s", median.ToString().c_str());
       break;
     } catch (Exception &e) {
       if (column_type == (compression_type + 1)) {
@@ -303,7 +291,6 @@ std::vector<type::Value> CompressedTile::CompressColumn(
           static_cast<int>(compression_type) + 1);
     }
   }
-  LOG_INFO("New Value Type : %d", compression_type);
   return modified_values;
 }
 
