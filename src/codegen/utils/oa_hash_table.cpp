@@ -244,6 +244,9 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
   return StoreToKeyValueList(&entry->kv_list);
 }
 
+//===----------------------------------------------------------------------===//
+// Merge another hash table into this hash table.
+//===----------------------------------------------------------------------===//
 void OAHashTable::Merge(OAHashTable *another) {
   // Loop through all hash entries of another oa hash table
   for (OAHashTable::Iterator iter = another->begin(); iter != another->end(); ++iter) {

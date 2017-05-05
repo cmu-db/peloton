@@ -178,6 +178,42 @@ llvm::Function *OAHashTableProxy::_StoreTuple::GetFunction(CodeGen &codegen) {
 }
 
 //===----------------------------------------------------------------------===//
+// MERGE PROXY
+//===----------------------------------------------------------------------===//
+
+const std::string &OAHashTableProxy::_Merge::GetFunctionName() {
+  static const std::string kStoreTupleFnName =
+#ifdef __APPLE__
+      "_ZN7peloton7codegen5utils11OAHashTable5MergeEPS2_";
+#else
+      "_ZN7peloton7codegen5utils11OAHashTable5MergeEPS2_";
+#endif
+  return kStoreTupleFnName;
+}
+
+llvm::Function *OAHashTableProxy::_Merge::GetFunction(CodeGen &codegen) {
+  const std::string fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+
+  // Setup the function arguments
+  std::vector<llvm::Type *> arg_types = {
+      OAHashTableProxy::GetType(codegen)->getPointerTo(),
+      OAHashTableProxy::GetType(codegen)->getPointerTo()};
+
+  // Now create the prototype and register it
+  auto *fn_type =
+      llvm::FunctionType::get(codegen.VoidType(), arg_types, false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
 // HASH ENTRY
 //===----------------------------------------------------------------------===//
 
