@@ -28,11 +28,6 @@ void Barrier::BarrierWait()
     bar_->wait();
 }
 
-void Barrier::WorkerFinish()
-{
-    --n_workers_;
-}
-
 void Barrier::MasterWait()
 {
     while(n_workers_ > 0);

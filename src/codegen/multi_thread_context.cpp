@@ -59,5 +59,9 @@ Barrier *MultiThreadContext::GetBarrier() {
   return bar_;
 }
 
+void MultiThreadContext::NotifyMaster() {
+    bar_->WorkerFinish();
+}
+
 }
 }
