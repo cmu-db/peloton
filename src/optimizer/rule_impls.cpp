@@ -497,7 +497,6 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   // Make three node types for pattern matching
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
 
   // Initialize a pattern for optimizer to match
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
@@ -505,7 +504,6 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   // Add node - we match join relation R and S as well as the predicate exp
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
 
   return;
 }
@@ -514,7 +512,8 @@ bool InnerJoinToInnerHashJoin::Check(
     std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   // TODO(abpoms): Figure out how to determine if the join condition is hashable
-  return false;
+  // If join column != empty then hashable
+  return true;
 }
 
 void InnerJoinToInnerHashJoin::Transform(
@@ -525,12 +524,11 @@ void InnerJoinToInnerHashJoin::Transform(
   auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalInnerHashJoin::make(inner_join->condition));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
+  PL_ASSERT(children.size() == 2);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
 
   transformed.push_back(result_plan);
 

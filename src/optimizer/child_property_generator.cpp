@@ -31,6 +31,7 @@ vector<pair<PropertySet, vector<PropertySet>>>
 ChildPropertyGenerator::GetProperties(shared_ptr<GroupExpression> gexpr,
                                       PropertySet requirements) {
   requirements_ = requirements;
+  child_group_ids_ = gexpr->GetChildGroupIDs();
   output_.clear();
 
   gexpr->Op().Accept(this);
@@ -73,7 +74,7 @@ void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalRightNLJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterNLJoin *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){ JoinHelper(); };
 void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
@@ -303,5 +304,19 @@ void ChildPropertyGenerator::AggregateHelper(const BaseOperatorNode *op) {
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
+
+void ChildPropertyGenerator::JoinHelper() {
+  
+  vector<PropertySet> child_input_propertys;
+  PropertySet child_input_property_set;
+  PropertySet provided_property;
+  PL_ASSERT(child_group_ids_.size() == 2);
+  
+ 
+  // TODO derive child properties for join
+  child_input_propertys.push_back(child_input_property_set);
+  child_input_propertys.push_back(child_input_property_set);
+  output_.push_back(make_pair(provided_property, child_input_propertys));
+}
 } /* namespace optimizer */
 } /* namespace peloton */

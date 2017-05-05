@@ -61,10 +61,15 @@ class ChildPropertyGenerator : public OperatorVisitor {
   // reduce duplicate code
   void AggregateHelper(const BaseOperatorNode *op);
   void ScanHelper();
+  void JoinHelper();
 
  private:
   ColumnManager &manager_;
   PropertySet requirements_;
+  // Each child group contains the base table in that group
+  // when deriving column properties for join,
+  // we need to assign column to the correct child
+  std::vector<GroupID> child_group_ids_;
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
 };
 

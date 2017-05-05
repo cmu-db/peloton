@@ -55,7 +55,7 @@ class OptimizerSQLTests : public PelotonTest {
   /*** Helper functions **/
   void CreateAndLoadTable() {
     // Create database
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
@@ -69,6 +69,16 @@ class OptimizerSQLTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+
+    // Create a table for join
+    TestingSQLUtil::ExecuteSQLQuery(
+        "CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
+
+    // Insert tuples into table
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 11, 000);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 22, 444);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 333);");
   }
 
   // If the query has OrderBy, the result is deterministic. Specify ordered to
@@ -127,7 +137,8 @@ class OptimizerSQLTests : public PelotonTest {
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Testing select star expression
   TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
-                                  "444", "4", "0", "555"}, false);
+                                  "444", "4", "0", "555"},
+           false);
 
   // Testing predicate
   TestUtil("SELECT c, b from test where a=1", {"333", "22"}, false);
@@ -147,10 +158,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       true);
 
   // Testing order by * expression
-  TestUtil(
-      "SELECT * from test order by a",
-      {"1", "22", "333", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
-      true);
+  TestUtil("SELECT * from test order by a", {"1", "22", "333", "2", "11", "0",
+                                             "3", "33", "444", "4", "0", "555"},
+           true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
@@ -379,8 +389,8 @@ TEST_F(OptimizerSQLTests, SelectDistinctTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (6, 22, 333);");
 
   // Test distinct and group by complex expression
-//  TestUtil("SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c",
-//           {"11", "355", "444", "477", "555"}, true);
+  //  TestUtil("SELECT DISTINCT b + c FROM test GROUP BY b + c ORDER BY b + c",
+  //           {"11", "355", "444", "477", "555"}, true);
 }
 
 TEST_F(OptimizerSQLTests, SelectConstantTest) {
@@ -397,8 +407,14 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
 
   // Test combination of constant and column
   TestUtil("SELECT 1, 3 * 7, a from test",
-           {"1", "21", "1", "1", "21", "2", "1", "21", "3", "1", "21", "4"}, true);
+           {"1", "21", "1", "1", "21", "2", "1", "21", "3", "1", "21", "4"},
+           true);
+}
 
+TEST_F(OptimizerSQLTests, JoinTest) {
+  // Simple 2 table join
+  // TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
+  //          {"1", "1", "1", "1", "3", "3", "4", "4"}, false);
 }
 
 }  // namespace test

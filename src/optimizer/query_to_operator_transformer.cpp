@@ -150,7 +150,6 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   }
   // Join
   else if (node->join != nullptr) {
-    throw NotImplementedException("Not support joins");
     node->join->Accept(this);
   }
   // Multiple tables
