@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
+#include <include/parser/pg_list.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -277,7 +278,6 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
-// TODO: having clause is not handled yet, depends on AExprTransform
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
                                                              Node* having) {
   if (group == nullptr) {
@@ -288,36 +288,25 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
   result->columns = new std::vector<expression::AbstractExpression*>();
   for (auto cell = group->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
-    switch (temp->type) {
-      case T_ColumnRef:
-        result->columns->push_back(ColumnRefTransform((ColumnRef*)temp));
-        break;
-      case T_A_Expr:
-        result->columns->push_back(AExprTransform((A_Expr*)temp));
-        break;
-      default: {
-        throw NotImplementedException(StringUtil::Format(
-          "Group By type %d not supported...", temp->type));
-      }
+    try {
+      result->columns->push_back(ExprTransform(temp));
+    }
+    catch(NotImplementedException e) {
+      delete result;
+      throw NotImplementedException(
+          StringUtil::Format("Exception thrown in group by expr:\n%s", e.what()));
     }
   }
 
   // having clauses not implemented yet, depends on AExprTransform
   if (having != nullptr) {
-    switch (having->type) {
-      case T_A_Expr: {
-        result->having = AExprTransform(reinterpret_cast<A_Expr*>(having));
-        break;
-      }
-      case T_BoolExpr: {
-        result->having = BoolExprTransform(reinterpret_cast<BoolExpr*>(having));
-        break;
-      }
-      default: {
-        delete result;
-        throw NotImplementedException(StringUtil::Format(
-          "HAVING of type %d not supported yet...", having->type));
-      }
+    try {
+      result->having = ExprTransform(having);
+    }
+    catch(NotImplementedException e) {
+      delete result;
+      throw NotImplementedException(
+          StringUtil::Format("Exception thrown in having expr:\n%s", e.what()));
     }
   }
   return result;
@@ -345,22 +334,15 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
       if (sort->sortby_dir == SORTBY_ASC || sort->sortby_dir == SORTBY_DEFAULT)
         types->push_back(parser::kOrderAsc);
       if (sort->sortby_dir == SORTBY_DESC) types->push_back(parser::kOrderDesc);
-      switch (target->type) {
-        case T_ColumnRef:
-          exprs->push_back(
-              ColumnRefTransform(reinterpret_cast<ColumnRef*>(target)));
-          break;
-        case T_FuncCall:
-          exprs->push_back(
-              FuncCallTransform(reinterpret_cast<FuncCall*>(target)));
-          break;
-        case T_A_Expr:
-          exprs->push_back(AExprTransform(reinterpret_cast<A_Expr*>(target)));
-          break;
-        default:
-          throw NotImplementedException(StringUtil::Format(
-          "SortBy type %d not supported...", target->type));
+      expression::AbstractExpression* expr = nullptr;
+      try {
+        expr = ExprTransform(target);
       }
+      catch(NotImplementedException e) {
+        throw NotImplementedException(
+            StringUtil::Format("Exception thrown in order by expr:\n%s", e.what()));
+      }
+      exprs->push_back(expr);
     } else {
       throw NotImplementedException(StringUtil::Format(
           "ORDER BY list member type %d\n", temp->type));
@@ -405,41 +387,57 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
   return ValueTransform(root->val);
 }
 
-// This function takes in a Postgres FuncCall parsenode and transfers it into
-// a Peloton FunctionExpression object.
-// TODO: support function calls on a single column.
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = nullptr;
-  std::string type_string =
-      (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str;
+  std::string fun_name =
+      StringUtil::Lower(
+          (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str);
 
-  type_string = "AGGREGATE_" + type_string;
-
-  if (root->agg_star) {
-    expression::AbstractExpression* children = new expression::StarExpression();
-    result = new expression::AggregateExpression(
-        StringToExpressionType(type_string), false, children);
-  } else {
-    if (root->args->length < 2) {
-      // auto children_expr_list = TargetTransform(root->args);
-      expression::AbstractExpression* child;
-      auto expr_node = (Node*)root->args->head->data.ptr_value;
-      if (expr_node->type == T_A_Expr) {
-        child = AExprTransform((A_Expr*)expr_node);
-      } else if (expr_node->type == T_A_Const) {
-        child = ConstTransform((A_Const*)expr_node);
-      } else if (expr_node->type == T_ColumnRef) {
-        child = ColumnRefTransform((ColumnRef*)expr_node);
+  if (!IsAggregateFunction(fun_name)) {
+    // Normal functions (i.e. built-in functions or UDFs)
+    fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))->val.str;
+    std::vector<expression::AbstractExpression*> children;
+    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+      auto expr_node = (Node*) cell->data.ptr_value;
+      expression::AbstractExpression* child_expr = nullptr;
+      try {
+        child_expr = ExprTransform(expr_node);
+      }
+      catch(NotImplementedException e) {
+        throw NotImplementedException(
+            StringUtil::Format("Exception thrown in function expr:\n%s", e.what()));
+      }
+      children.push_back(child_expr);
+    }
+    result = new expression::FunctionExpression(
+        fun_name.c_str(), children);
+  }
+  else {
+    // Aggregate function
+    auto agg_fun_type = StringToExpressionType("AGGREGATE_" + fun_name);
+    if (root->agg_star) {
+      expression::AbstractExpression *children = new expression::StarExpression();
+      result = new expression::AggregateExpression(
+          agg_fun_type, false, children);
+    } else {
+      if (root->args->length < 2) {
+        // auto children_expr_list = TargetTransform(root->args);
+        expression::AbstractExpression *child;
+        auto expr_node = (Node *) root->args->head->data.ptr_value;
+        try {
+          child = ExprTransform(expr_node);
+        }
+        catch(NotImplementedException e) {
+          throw NotImplementedException(
+              StringUtil::Format("Exception thrown in aggregation function:\n%s", e.what()));
+        }
+        result = new expression::AggregateExpression(
+            agg_fun_type, root->agg_distinct, child);
       } else {
         throw NotImplementedException(
-          "Function within Aggregate is not supported yet\n");
+            "Aggregation over multiple columns not supported yet...\n");
       }
-      result = new expression::AggregateExpression(
-          StringToExpressionType(type_string), root->agg_distinct, child);
-    } else {
-      throw NotImplementedException(
-        "Aggregation over multiple columns not supported yet...\n");
     }
   }
   return result;
@@ -455,28 +453,13 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
       new std::vector<expression::AbstractExpression*>();
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
-    expression::AbstractExpression* expr;
-    switch (target->val->type) {
-      case T_ColumnRef: {
-        expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val));
-        break;
-      }
-      case T_A_Const: {
-        expr = ConstTransform(reinterpret_cast<A_Const*>(target->val));
-        break;
-      }
-      case T_FuncCall: {
-        expr = FuncCallTransform(reinterpret_cast<FuncCall*>(target->val));
-        break;
-      }
-      case T_A_Expr: {
-        expr = AExprTransform(reinterpret_cast<A_Expr*>(target->val));
-        break;
-      }
-      default: {
-        throw NotImplementedException(StringUtil::Format(
-          "Target type %d not suported yet...\n", target->val->type));
-      }
+    expression::AbstractExpression* expr = nullptr;
+    try {
+      expr = ExprTransform(target->val);
+    }
+    catch(NotImplementedException e) {
+      throw NotImplementedException(
+          StringUtil::Format("Exception thrown in target val:\n%s", e.what()));
     }
     if (target->name != nullptr) expr->alias = target->name;
     result->push_back(expr);
@@ -492,26 +475,12 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   expression::AbstractExpression* next = nullptr;
   for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
-    switch (node->type) {
-      case T_BoolExpr: {
-        next = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
-        break;
-      }
-      case T_A_Expr: {
-        next = AExprTransform(reinterpret_cast<A_Expr*>(node));
-        break;
-      }
-      case T_ColumnRef: {
-        next = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
-        break;
-      }
-      case T_ParamRef:
-        next = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
-        break;
-      default: {
-        throw NotImplementedException(StringUtil::Format(
-          "BoolExpr arg type %d not suported yet...\n", node->type));
-      }
+    try {
+      next = ExprTransform(node);
+    }
+    catch(NotImplementedException e) {
+      throw NotImplementedException(
+          StringUtil::Format("Exception thrown in boolean expr:\n%s", e.what()));
     }
     switch (root->boolop) {
       case AND_EXPR: {
@@ -541,6 +510,42 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   return result;
 }
 
+expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
+  expression::AbstractExpression* expr = nullptr;
+  switch (node->type) {
+    case T_ColumnRef: {
+      expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
+      break;
+    }
+    case T_A_Const: {
+      expr = ConstTransform(reinterpret_cast<A_Const*>(node));
+      break;
+    }
+    case T_A_Expr: {
+      expr = AExprTransform(reinterpret_cast<A_Expr*>(node));
+      break;
+    }
+    case T_ParamRef: {
+      expr = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
+      break;
+    }
+    case T_FuncCall: {
+      expr = FuncCallTransform(reinterpret_cast<FuncCall*>(node));
+      break;
+    }
+    case T_BoolExpr: {
+      expr = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
+      break;
+    }
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+          "Expr of type %d not supported yet...\n", node->type));
+    }
+  }
+  return expr;
+}
+
+
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
 // TODO: the whole function, needs a function that transforms strings
@@ -565,62 +570,26 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     throw NotImplementedException(StringUtil::Format(
           "COMPARE type %s not supported yet...\n", name));
   }
+
   expression::AbstractExpression* left_expr = nullptr;
-  switch (root->lexpr->type) {
-    case T_ColumnRef: {
-      left_expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(root->lexpr));
-      break;
-    }
-    case T_A_Const: {
-      left_expr = ConstTransform(reinterpret_cast<A_Const*>(root->lexpr));
-      break;
-    }
-    case T_A_Expr: {
-      left_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->lexpr));
-      break;
-    }
-    case T_ParamRef: {
-      left_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->lexpr));
-      break;
-    }
-    case T_FuncCall: {
-      left_expr = FuncCallTransform(reinterpret_cast<FuncCall*>(root->lexpr));
-      break;
-    }
-    default: {
-      throw NotImplementedException(StringUtil::Format(
-        "Left expr of type %d not supported yet...\n", root->lexpr->type));
-    }
-  }
   expression::AbstractExpression* right_expr = nullptr;
-  switch (root->rexpr->type) {
-    case T_ColumnRef: {
-      right_expr =
-          ColumnRefTransform(reinterpret_cast<ColumnRef*>(root->rexpr));
-      break;
-    }
-    case T_A_Const: {
-      right_expr = ConstTransform(reinterpret_cast<A_Const*>(root->rexpr));
-      break;
-    }
-    case T_A_Expr: {
-      right_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->rexpr));
-      break;
-    }
-    case T_ParamRef: {
-      right_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->rexpr));
-      break;
-    }
-    case T_FuncCall: {
-      right_expr = FuncCallTransform(reinterpret_cast<FuncCall*>(root->rexpr));
-      break;
-    }
-    default: {
-      delete left_expr;
-      throw NotImplementedException(StringUtil::Format(
-        "Right expr of type %d not supported yet...\n", root->rexpr->type));
-    }
+
+  try {
+    left_expr = ExprTransform(root->lexpr);
   }
+  catch(NotImplementedException e) {
+    throw NotImplementedException(
+        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+  }
+  try {
+    right_expr = ExprTransform(root->rexpr);
+  }
+  catch(NotImplementedException e) {
+    delete left_expr;
+    throw NotImplementedException(
+        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+  }
+
 
   int type_id = static_cast<int>(target_type);
   if (type_id <= 4) {
@@ -645,19 +614,13 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
     return nullptr;
   }
   expression::AbstractExpression* result = nullptr;
-  switch (root->type) {
-    case T_A_Expr: {
-      result = AExprTransform(reinterpret_cast<A_Expr*>(root));
-      break;
-    }
-    case T_BoolExpr: {
-      result = BoolExprTransform(reinterpret_cast<BoolExpr*>(root));
-      break;
-    }
-    default: {
-      throw NotImplementedException(StringUtil::Format(
-        "WHERE of type %d not supported yet...", root->type));
-    }
+
+  try {
+    result = ExprTransform(root);
+  }
+  catch(NotImplementedException e) {
+    throw NotImplementedException(
+        StringUtil::Format("Exception thrown in WHERE:\n%s", e.what()));
   }
   return result;
 }
@@ -735,6 +698,43 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->not_null = true;
       else if (constraint->contype == CONSTR_UNIQUE)
         result->unique = true;
+      else if (constraint->contype == CONSTR_FOREIGN) {
+        result->foreign_key_sink = new std::vector<char*>();
+        result->table_info_ = new TableInfo();
+        // Transform foreign key attributes
+        // Reference table
+        result->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Reference column
+        if (constraint->pk_attrs != nullptr)
+          for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
+               attr_cell = attr_cell->next) {
+            value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+            result->foreign_key_sink->push_back(cstrdup(attr_val->val.str));
+          }
+        // Action type
+        result->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        result->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+      }
+      else if (constraint->contype == CONSTR_DEFAULT) {
+        try {
+          result->default_value = ExprTransform(constraint->raw_expr);
+        }
+        catch (NotImplementedException e) {
+          throw NotImplementedException(
+              StringUtil::Format("Exception thrown in default expr:\n%s", e.what()));
+        }
+      }
+      else if (constraint->contype == CONSTR_CHECK) {
+        try {
+          result->check_expression = ExprTransform(constraint->raw_expr);
+        }
+        catch(NotImplementedException e) {
+          throw NotImplementedException(
+              StringUtil::Format("Exception thrown in check expr:\n%s", e.what()));
+        }
+      }
     }
   }
 
@@ -770,13 +770,6 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       // Transform Regular Column
       ColumnDefinition* temp =
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
-      temp->table_info_ = new parser::TableInfo();
-      if (relation->relname) {
-        temp->table_info_->table_name = cstrdup(relation->relname);
-      }
-      if (relation->catalogname) {
-        temp->table_info_->database_name = cstrdup(relation->catalogname);
-      };
       result->columns->push_back(temp);
     } else if (node->type == T_Constraint) {
       // Transform Constraints
@@ -806,6 +799,12 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         }
         // Update Reference Table
         col->table_info_->table_name = cstrdup(constraint->pktable->relname);
+        // Action type
+        col->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
+        col->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        // Match type
+        col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+
         result->columns->push_back(col);
       } else {
         throw NotImplementedException(StringUtil::Format(
@@ -955,6 +954,12 @@ PostgresParser::ValueListsTransform(List* root) {
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
       else if (expr->type == T_A_Const)
         cur_result->push_back(ConstTransform((A_Const*)expr));
+      else if (expr->type == T_SetToDefault){
+        // TODO handle default type
+        // add corresponding expression for
+        // default to cur_result
+        cur_result->push_back(nullptr); 
+      }
     }
     result->push_back(cur_result);
   }
@@ -1153,35 +1158,12 @@ std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
     auto update_clause = new UpdateClause();
     ResTarget* target = (ResTarget*)(cell->data.ptr_value);
     update_clause->column = cstrdup(target->name);
-    switch (target->val->type) {
-      case T_ColumnRef: {
-        update_clause->value =
-            ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val));
-        break;
-      }
-      case T_A_Const: {
-        update_clause->value =
-            ConstTransform(reinterpret_cast<A_Const*>(target->val));
-        break;
-      }
-      case T_FuncCall: {
-        update_clause->value =
-            FuncCallTransform(reinterpret_cast<FuncCall*>(target->val));
-        break;
-      }
-      case T_A_Expr: {
-        update_clause->value =
-            AExprTransform(reinterpret_cast<A_Expr*>(target->val));
-        break;
-      }
-      case T_ParamRef:
-        update_clause->value =
-            ParamRefTransform(reinterpret_cast<ParamRef*>(target->val));
-        break;
-      default: {
-        throw NotImplementedException(StringUtil::Format(
-          "Target type %d not suported yet...\n", target->val->type));
-      }
+    try {
+      update_clause->value = ExprTransform(target->val);
+    }
+    catch(NotImplementedException e) {
+      throw NotImplementedException(
+          StringUtil::Format("Exception thrown in update expr:\n%s", e.what()));
     }
     result->push_back(update_clause);
   }
@@ -1215,7 +1197,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-//   print_pg_parse_tree(result.tree);
+//  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);

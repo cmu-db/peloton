@@ -33,10 +33,11 @@ void PrintConfiguration(){
   LOG_INFO("%30s", "//===----------------- CONNECTIONS ---------------------===//");
   LOG_INFO(" ");
 
-  LOG_INFO("%30s: %10lu","Port", FLAGS_port);
-  LOG_INFO("%30s: %10s","Socket Family", FLAGS_socket_family.c_str());
-  LOG_INFO("%30s: %10lu","Statistics", FLAGS_stats_mode);
-  LOG_INFO("%30s: %10lu","Max Connections", FLAGS_max_connections);
+  LOG_INFO("%30s: %10lu", "Port", FLAGS_port);
+  LOG_INFO("%30s: %10s",  "Socket Family", FLAGS_socket_family.c_str());
+  LOG_INFO("%30s: %10lu", "Statistics", FLAGS_stats_mode);
+  LOG_INFO("%30s: %10lu", "Max Connections", FLAGS_max_connections);
+  LOG_INFO("%30s: %10s",  "Code-generation", FLAGS_codegen ? "on" : "off");
 
   LOG_INFO(" ");
   LOG_INFO("%30s", "//===---------------------------------------------------===//");
@@ -105,6 +106,14 @@ DEFINE_bool(index_tuner,
 DEFINE_bool(layout_tuner,
             false,
             "Enable layout tuner (default: false)");
+
+//===----------------------------------------------------------------------===//
+//
+//===----------------------------------------------------------------------===//
+
+DEFINE_bool(codegen,
+            true,
+            "Enable code-generation for query execution (default: true)");
 
 // Layout mode
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;

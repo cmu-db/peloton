@@ -15,8 +15,9 @@
 #include <string>
 
 #include "common/printable.h"
+#include "planner/attribute_info.h"
 #include "type/types.h"
-#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 
@@ -28,6 +29,10 @@ enum class ExpressionType;
 
 namespace executor {
 class ExecutorContext;
+}
+
+namespace planner {
+class BindingContext;
 }
 
 namespace type {
@@ -69,6 +74,19 @@ class AbstractExpression : public Printable {
     return false;
   }
 
+  bool IsNullable() const {
+    // An expression produces a nullable value iff at least one of its input
+    // attributes is null ... I think
+    std::unordered_set<const planner::AttributeInfo *> used_attributes;
+    GetUsedAttributes(used_attributes);
+    for (const auto *ai : used_attributes) {
+      if (ai->nullable) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   const AbstractExpression *GetChild(int index) const {
     return GetModifiableChild(index);
   }
@@ -95,13 +113,41 @@ class AbstractExpression : public Printable {
 
   inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
+  // Attribute binding
+  virtual void PerformBinding(
+      const std::vector<const planner::BindingContext *> &binding_contexts) {
+    // Most expressions don't need attribute binding, except for those
+    // that actually reference table attributes (i.e., TVE)
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      children_[i]->PerformBinding(binding_contexts);
+    }
+  }
+
+  // Is this expression computable using SIMD instructions?
+  virtual bool IsSIMDable() const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      if (!children_[i]->IsSIMDable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Get all the attributes this expression uses
+  virtual void GetUsedAttributes(
+      std::unordered_set<const planner::AttributeInfo *> &attributes) const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      children_[i]->GetUsedAttributes(attributes);
+    }
+  }
+
   virtual void DeduceExpressionType() {}
-  
+
   // Walks the expressoin trees and generate the correct expression name
   virtual void DeduceExpressionName();
 
   const std::string GetInfo() const;
-    
+
   virtual bool Equals(AbstractExpression *expr) const;
 
   virtual hash_t Hash() const;
@@ -122,7 +168,7 @@ class AbstractExpression : public Printable {
 
   // virtual bool DeserializeFrom(SerializeInput &input) const {
 
-  virtual int SerializeSize() { return 0; }
+  virtual int SerializeSize() const { return 0; }
 
   const char *GetExpressionName() const { return expr_name_.c_str(); }
 
@@ -195,5 +241,5 @@ class ExprHasher {
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

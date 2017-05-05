@@ -47,6 +47,7 @@ set(TESTING_UTIL_TXN        ${PROJECT_SOURCE_DIR}/test/concurrency/testing_trans
 set(TESTING_UTIL_STATS      ${PROJECT_SOURCE_DIR}/test/statistics/testing_stats_util.cpp)
 set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp)
 set(TESTING_UTIL_INDEX      ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
+set(TESTING_UTIL_CODEGEN    ${PROJECT_SOURCE_DIR}/test/codegen/codegen_test_util.cpp)
 
 add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
             ${TESTING_UTIL_EXECUTOR}
@@ -56,29 +57,13 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
             ${TESTING_UTIL_STATS}
             ${TESTING_UTIL_INDEX}
             ${TESTING_UTIL_SQL}
+            ${TESTING_UTIL_CODEGEN}
 )
 
 # --[ Add "make check" target
 
 set(CTEST_FLAGS "")
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
-
-##################################################################################
-
-# --[ Memcheck
-
-find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
-
-# Note you can add '--gen-suppressions=all' to MEMORYCHECK_COMMAND_OPTIONS
-# if you want valgrind to print out the syntax to use to suppress a particular
-# memory leak
-set(MEMORYCHECK_COMMAND_OPTIONS
-    --trace-children=yes
-    --leak-check=full
-    --track-origins=yes
-    --soname-synonyms=somalloc=*jemalloc*
-    --error-exitcode=1)
-set(MEMORYCHECK_SUPPRESSIONS_FILE ${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp)
 
 ##################################################################################
 
@@ -109,9 +94,8 @@ foreach(test_src ${test_srcs} )
 	)   
 	
 	# add test
-    add_test(${test_name} ${MEMORYCHECK_COMMAND} ${MEMORYCHECK_COMMAND_OPTIONS}
-        --suppressions=${MEMORYCHECK_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${test_name}
-        --gtest_output=xml:${CMAKE_BINARY_DIR}/test/unit_${test_name}.xml)
+  add_test(${test_name} ${CMAKE_BINARY_DIR}/test/${test_name} --gtest_color=yes
+           --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
 	
 endforeach(test_src ${test_srcs})
 
@@ -148,7 +132,7 @@ foreach(perf_src ${perf_srcs} )
 	)   
 	
 	# add test
-	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name}
-        --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
+	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name} --gtest_color=yes
+           --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
 	
 endforeach(perf_src ${perf_srcs})

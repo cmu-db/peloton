@@ -33,15 +33,20 @@ struct CopyStatement : SQLStatement {
         delimiter(','){};
 
   virtual ~CopyStatement() {
-    delete file_path;
-    delete cpy_table;
-  }
+    if (file_path != nullptr) {
+      delete[] file_path;
+    }
 
-  TableRef* cpy_table;
+    if (cpy_table != nullptr) {
+      delete cpy_table;
+    }
+  }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
+
+  TableRef* cpy_table;
 
   CopyType type;
 

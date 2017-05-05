@@ -419,6 +419,8 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
+      LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
+      LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);

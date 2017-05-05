@@ -43,7 +43,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
   LOG_TRACE("Creating an Update Plan");
 
   if (project_info_ != nullptr) {
-    for (auto target : project_info_->GetTargetList()) {
+    for (const auto target : project_info_->GetTargetList()) {
       auto col_id = target.first;
       update_primary_key_ =
           target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
@@ -79,10 +79,15 @@ void UpdatePlan::BuildInitialUpdatePlan(
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     column_ids.push_back(col_id);
-    auto update_expr = update->value->Copy();
+    auto *update_expr = update->value->Copy();
     expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
                                                     update_expr);
-    tlist.emplace_back(col_id, update_expr);
+
+    planner::DerivedAttribute attribute;
+    attribute.expr = update_expr;
+    attribute.attribute_info.type = update_expr->GetValueType();
+    attribute.attribute_info.name = update->column;
+    tlist.emplace_back(col_id, attribute);
   }
 
   auto &schema_columns = schema->GetColumns();

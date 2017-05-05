@@ -25,16 +25,13 @@ namespace planner {
  */
 class HashPlan : public AbstractPlan {
  public:
-  HashPlan(const HashPlan &) = delete;
-  HashPlan &operator=(const HashPlan &) = delete;
-  HashPlan(const HashPlan &&) = delete;
-  HashPlan &operator=(const HashPlan &&) = delete;
-
   typedef const expression::AbstractExpression HashKeyType;
   typedef std::unique_ptr<HashKeyType> HashKeyPtrType;
 
   HashPlan(std::vector<HashKeyPtrType> &hashkeys)
       : hash_keys_(std::move(hashkeys)) {}
+
+  void PerformBinding(BindingContext &binding_context) override;
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASH; }
 
@@ -54,6 +51,10 @@ class HashPlan : public AbstractPlan {
 
  private:
   std::vector<HashKeyPtrType> hash_keys_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(HashPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

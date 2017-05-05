@@ -29,12 +29,6 @@ class InsertStatement;
 namespace planner {
 class InsertPlan : public AbstractPlan {
  public:
-  InsertPlan() = delete;
-  InsertPlan(const InsertPlan &) = delete;
-  InsertPlan &operator=(const InsertPlan &) = delete;
-  InsertPlan(InsertPlan &&) = delete;
-  InsertPlan &operator=(InsertPlan &&) = delete;
-
   // This constructor takes in neither a project info nor a tuple
   // It must be used when the input is a logical tile
   explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1);
@@ -110,6 +104,9 @@ class InsertPlan : public AbstractPlan {
 
   // pool for variable length types
   std::unique_ptr<type::AbstractPool> pool_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(InsertPlan);
 };
 
 }  // namespace planner

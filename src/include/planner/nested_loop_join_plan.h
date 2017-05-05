@@ -24,11 +24,6 @@ class ProjectInfo;
 
 class NestedLoopJoinPlan : public AbstractJoinPlan {
  public:
-  NestedLoopJoinPlan(const NestedLoopJoinPlan &) = delete;
-  NestedLoopJoinPlan &operator=(const NestedLoopJoinPlan &) = delete;
-  NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
-  NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
-
   NestedLoopJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
@@ -44,9 +39,11 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       std::vector<oid_t> &join_column_ids_left,
       std::vector<oid_t> &join_column_ids_right);
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PlanNodeType::NESTLOOP;
-  }
+  // Nested loops don't need to perform any attribute binding
+  void HandleSubplanBinding(UNUSED_ATTRIBUTE bool,
+                            UNUSED_ATTRIBUTE const BindingContext &) override {}
+
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::NESTLOOP; }
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }
 
@@ -85,6 +82,9 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   // physical column id and pass this physical column id to SetTupleColumnValue
   // to update the corresponding column in the index predicate
   std::vector<oid_t> join_column_ids_right_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(NestedLoopJoinPlan);
 };
 
 }  // namespace planner
