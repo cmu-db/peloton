@@ -136,7 +136,7 @@ void CompressedTile::CompressTile(Tile *tile) {
                                column_name, column_is_inlined);
         columns.push_back(column);
       }
-      LOG_INFO("column:%d", i);
+      LOG_TRACE("column:%d", i);
     }
 
     auto &storage_manager = storage::StorageManager::GetInstance();
@@ -349,7 +349,7 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   }
 
   } else {
-    LOG_INFO("store as small int");
+    LOG_TRACE("store as small int");
     for (oid_t i = 0; i < num_tuples; i++) {
       // samll int
       modified_values[i] =
