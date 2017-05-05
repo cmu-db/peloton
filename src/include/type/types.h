@@ -1154,15 +1154,14 @@ class ExprHasher;
 class ExprEqualCmp;
 }
 
+// Augment abstract expression with a table alias set
 struct MultiTableExpression {
   MultiTableExpression(
       expression::AbstractExpression* i_expr,
       std::unordered_set<std::string>& i_set)
-      : expr(i_expr) {
-    table_alias_set = std::make_shared<std::unordered_set<std::string>>(i_set);
-  }
-  const expression::AbstractExpression* expr;
-  std::shared_ptr<std::unordered_set<std::string>> table_alias_set;
+      : expr(i_expr), table_alias_set(i_set) {}
+  expression::AbstractExpression* expr;
+  std::unordered_set<std::string> table_alias_set;
 };
 
 typedef std::vector<expression::AbstractExpression*> SingleTablePredicates;

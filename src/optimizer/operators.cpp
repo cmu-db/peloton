@@ -70,7 +70,8 @@ Operator LogicalFilter::make() {
 //===--------------------------------------------------------------------===//
 Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->condition = condition;
+  join->join_predicate = 
+      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
   return Operator(join);
 }
 
@@ -79,7 +80,8 @@ Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
-  join->condition = condition;
+  join->join_predicate = 
+      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
   return Operator(join);
 }
 
@@ -88,7 +90,8 @@ Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
-  join->condition = condition;
+  join->join_predicate = 
+      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
   return Operator(join);
 }
 
@@ -97,7 +100,8 @@ Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
-  join->condition = condition;
+  join->join_predicate = 
+      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
   return Operator(join);
 }
 
@@ -106,7 +110,8 @@ Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
-  join->condition = condition;
+  join->join_predicate = 
+      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
   return Operator(join);
 }
 

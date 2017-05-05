@@ -77,7 +77,7 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
   static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression *condition;
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//
@@ -87,7 +87,7 @@ class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
  public:
   static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression *condition;
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//
@@ -97,7 +97,7 @@ class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
  public:
   static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression *condition;
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//
@@ -107,7 +107,7 @@ class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
  public:
   static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression *condition;
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//
@@ -117,7 +117,7 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
  public:
   static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression *condition;
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//

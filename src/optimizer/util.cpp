@@ -195,31 +195,65 @@ void GetPredicateColumns(
 void ExtractPredicates(expression::AbstractExpression* expr,
                        SingleTablePredicates& where_predicates,
                        MultiTablePredicates& join_predicates) {
-  // Traverse down the expression tree along conjunction
-  if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
-    for (size_t i=0; i<expr->GetChildrenSize(); i++) {
-      ExtractPredicates(expr->GetModifiableChild(i), where_predicates, join_predicates);
-    }
-    return;
+  // Split expression
+  std::vector<expression::AbstractExpression*> predicates;
+  SplitPredicates(expr, predicates);
+
+  for (auto predicate : predicates) {
+    std::unordered_set<std::string> table_alias_set;
+    expression::ExpressionUtil::GenerateTableAliasSet(predicate, table_alias_set);
+    if (table_alias_set.size() > 1)
+      join_predicates.push_back(MultiTableExpression(predicate, table_alias_set));
+    else
+      where_predicates.push_back(expr);
   }
-
-  // Leaf expression of the conjunction tree
-  std::unordered_set<std::string> table_alias_set;
-  expression::ExpressionUtil::GenerateTableAliasSet(expr, table_alias_set);
-  if (table_alias_set.size() > 1)
-    join_predicates.push_back(MultiTableExpression(expr, table_alias_set));
-  else
-    where_predicates.push_back(expr);
-  return;
-
 }
 
 /**
- * Combine a vector of expressions with AND
+ * Construct a qualified join predicate (contains a subset of alias in the table_alias_set)
+ * and remove the multitable expressions in the original join_predicates
+ */
+expression::AbstractExpression* ConstructJoinPredicate(
+    std::unordered_set<std::string>& table_alias_set,
+    MultiTablePredicates& join_predicates) {
+  std::vector<expression::AbstractExpression*> qualified_exprs;
+  MultiTablePredicates remove_predicates;
+  for (auto predicate : join_predicates) {
+    if (IsSubset(table_alias_set, predicate.table_alias_set)) {
+      qualified_exprs.push_back(predicate.expr);
+      remove_predicates.push_back(predicate);
+    }
+  }
+  join_predicates.erase(remove_predicates.begin(),remove_predicates.end());
+  return CombinePredicates(qualified_exprs);
+}
+
+/**
+ * Split conjunction expression tree into a vector of expressions with AND
+ */
+void SplitPredicates(
+    expression::AbstractExpression* expr,
+    std::vector<expression::AbstractExpression*>& predicates) {
+  // Traverse down the expression tree along conjunction
+  if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+    for (size_t i=0; i<expr->GetChildrenSize(); i++) {
+      SplitPredicates(expr->GetModifiableChild(i), predicates);
+    }
+    return;
+  }
+  predicates.push_back(expr);
+}
+
+/**
+ * Combine a vector of expressions with AND (deep copy each expr)
  */
 expression::AbstractExpression* CombinePredicates(std::vector<expression::AbstractExpression*> predicates) {
+  if (predicates.empty())
+    return nullptr;
+
   if (predicates.size() == 1)
     return predicates[0]->Copy();
+
   auto conjunction = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND,
       predicates[0]->Copy(), predicates[1]->Copy());

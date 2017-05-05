@@ -180,7 +180,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
-  QueryToOperatorTransformer converter(column_manager_);
+  QueryToOperatorTransformer converter;
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;

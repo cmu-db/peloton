@@ -33,10 +33,6 @@ using std::shared_ptr;
 
 namespace peloton {
 namespace optimizer {
-
-QueryToOperatorTransformer::QueryToOperatorTransformer(ColumnManager &manager)
-    : manager_(manager) {}
-
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr = nullptr;
@@ -113,37 +109,50 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
   // Get left operator
   node->left->Accept(this);
   auto left_expr = output_expr;
+  auto left_table_alias_set = table_alias_set_;
+  table_alias_set_.clear();
 
   // Get right operator
   node->right->Accept(this);
   auto right_expr = output_expr;
+  util::SetUnion(table_alias_set_, left_table_alias_set);
 
   // Construct join operator
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
+      if (node->condition != nullptr) {
+        // Add join condition into join predicates
+        std::unordered_set<std::string> join_condition_table_alias_set;
+        expression::ExpressionUtil::GenerateTableAliasSet(
+            node->condition, join_condition_table_alias_set);
+        join_predicates_.push_back(
+            MultiTableExpression(node->condition, join_condition_table_alias_set));
+      }
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(node->condition));
+          LogicalInnerJoin::make(
+              util::ConstructJoinPredicate(table_alias_set_, join_predicates_)
+                  ->Copy()));
       break;
     }
     case JoinType::OUTER: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalOuterJoin::make(node->condition));
+          LogicalOuterJoin::make(node->condition->Copy()));
       break;
     }
     case JoinType::LEFT: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalLeftJoin::make(node->condition));
+          LogicalLeftJoin::make(node->condition->Copy()));
       break;
     }
     case JoinType::RIGHT: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalRightJoin::make(node->condition));
+          LogicalRightJoin::make(node->condition->Copy()));
       break;
     }
     case JoinType::SEMI: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalSemiJoin::make(node->condition));
+          LogicalSemiJoin::make(node->condition->Copy()));
       break;
     }
     default:
@@ -167,22 +176,24 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   }
   // Multiple tables
   else if (node->list != nullptr && node->list->size() > 1) {
-    throw NotImplementedException("Not support joins");
-    std::shared_ptr<OperatorExpression> join_expr = nullptr;
-    std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
+    node->list->at(0)->Accept(this);
+    auto left_expr = output_expr;
+    node->list->at(1)->Accept(this);
+    auto right_expr = output_expr;
 
-    // Construct join sequences with Cartesian products
-    for (parser::TableRef *table : *(node->list)) {
-      if (join_expr == nullptr) {
-        join_expr =
-            std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-      } else {
-        next_join_expr =
-            std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-        next_join_expr->PushChild(join_expr);
-        join_expr = next_join_expr;
-      }
-      table->Accept(this);
+    auto join_expr = std::make_shared<OperatorExpression>(
+        LogicalInnerJoin::make(
+            util::ConstructJoinPredicate(table_alias_set_, join_predicates_)->Copy()));
+    join_expr->PushChild(left_expr);
+    join_expr->PushChild(right_expr);
+
+    for (size_t i=2; i<node->list->size(); i++) {
+      node->list->at(i)->Accept(this);
+      auto old_join_expr = join_expr;
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(
+              util::ConstructJoinPredicate(table_alias_set_, join_predicates_)->Copy()));
+      join_expr->PushChild(old_join_expr);
       join_expr->PushChild(output_expr);
     }
     output_expr = join_expr;
@@ -194,6 +205,8 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
             node->GetDatabaseName(), node->GetTableName());
+    // Update table alias map
+    table_alias_set_.insert(StringUtil::Lower(std::string(node->GetTableAlias())));
     // Construct logical operator
     auto get_expr = std::make_shared<OperatorExpression>(
         LogicalGet::make(target_table, node->GetTableAlias()));
