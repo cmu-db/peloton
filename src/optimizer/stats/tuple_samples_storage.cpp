@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/stats/tuple_samples_storage.h"
+#include "optimizer/stats/tuple_sampler.h"
 #include "catalog/catalog.h"
 #include "storage/data_table.h"
 
@@ -72,6 +73,36 @@ void TupleSamplesStorage::AddSamplesTable(
   txn_manager.CommitTransaction(txn);
 }
 
+ResultType TupleSamplesStorage::DeleteSamplesTable(
+    oid_t database_id, oid_t table_id, concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  auto catalog = catalog::Catalog::GetInstance();
+  std::string samples_table_name =
+      GenerateSamplesTableName(database_id, table_id);
+  auto result = catalog->DropTable(SAMPLES_DB_NAME, samples_table_name, txn);
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  std::string result_str;
+  if (result == ResultType::SUCCESS) {
+    result_str = "success";
+  } else {
+    result_str = "false";
+  }
+
+  LOG_DEBUG("Drop table %s, result: %s", samples_table_name.c_str(),
+            result_str.c_str());
+  return result;
+}
+
 bool TupleSamplesStorage::InsertSampleTuple(
     storage::DataTable *samples_table, std::unique_ptr<storage::Tuple> tuple,
     concurrency::Transaction *txn) {
@@ -89,22 +120,102 @@ bool TupleSamplesStorage::InsertSampleTuple(
   return status;
 }
 
+ResultType TupleSamplesStorage::CollectSamplesForTable(
+    storage::DataTable *data_table, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to collect samples for table: %s",
+              table_name.c_str());
+    return ResultType::FAILURE;
+  }
+  TupleSampler tuple_sampler(data_table);
+  tuple_sampler.AcquireSampleTuples(SAMPLE_COUNT_PER_TABLE);
+  DeleteSamplesTable(data_table->GetDatabaseOid(), data_table->GetOid());
+  AddSamplesTable(data_table, tuple_sampler.GetSampledTuples());
+  return ResultType::SUCCESS;
+}
+
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+TupleSamplesStorage::GetTuplesWithSeqScan(storage::DataTable *data_table,
+                                          std::vector<oid_t> column_offsets,
+                                          concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to perform the sequential scan");
+    return nullptr;
+  }
+
+  // Sequential scan
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  planner::SeqScanPlan seq_scan_node(data_table, nullptr, column_offsets);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  // Execute
+  seq_scan_executor.Init();
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
+
+  while (seq_scan_executor.Execute()) {
+    result_tiles->push_back(
+        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
+  }
+
+  return std::move(result_tiles);
+}
+
 /**
  * GetTupleSamples - Query tuple samples by db_id and table_id.
- * TODO: Implement this function.
  */
-void TupleSamplesStorage::GetTupleSamples(
-    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
-    UNUSED_ATTRIBUTE std::vector<storage::Tuple> &tuple_samples) {}
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
+  auto catalog = catalog::Catalog::GetInstance();
+  std::string samples_table_name =
+      GenerateSamplesTableName(database_id, table_id);
+  auto data_table =
+      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name);
+
+  auto col_count = data_table->GetSchema()->GetColumnCount();
+  std::vector<oid_t> column_ids;
+  for (size_t col_id = 0; col_id < col_count; ++col_id) {
+    column_ids.push_back(col_id);
+  }
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);
+  txn_manager.CommitTransaction(txn);
+
+  return std::move(result_tiles);
+}
 
 /**
  * GetColumnSamples - Query column samples by db_id, table_id and column_id.
- * TODO: Implement this function.
  */
 void TupleSamplesStorage::GetColumnSamples(
-    UNUSED_ATTRIBUTE oid_t database_id, UNUSED_ATTRIBUTE oid_t table_id,
-    UNUSED_ATTRIBUTE oid_t column_id,
-    UNUSED_ATTRIBUTE std::vector<type::Value> &column_samples) {}
+    oid_t database_id, oid_t table_id, oid_t column_id,
+    std::vector<type::Value> &column_samples) {
+  auto catalog = catalog::Catalog::GetInstance();
+  std::string samples_table_name =
+      GenerateSamplesTableName(database_id, table_id);
+  auto data_table =
+      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::vector<oid_t> column_ids({column_id});
+  auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Result tiles count: %lu", result_tiles->size());
+  if (result_tiles->size() != 0) {
+    auto tile = (*result_tiles)[0].get();
+    LOG_DEBUG("Tuple count: %lu", tile->GetTupleCount());
+
+    for (size_t tuple_id = 0; tuple_id < tile->GetTupleCount(); ++tuple_id) {
+      column_samples.push_back(tile->GetValue(tuple_id, 0));
+    }
+  }
+}
 
 } /* namespace optimizer */
 } /* namespace peloton */

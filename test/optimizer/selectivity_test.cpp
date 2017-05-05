@@ -16,11 +16,14 @@
 
 #include "common/logger.h"
 #include "optimizer/stats/selectivity.h"
+#include "optimizer/stats/tuple_samples_storage.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
+#include "catalog/column_catalog.h"
+#include "executor/testing_executor_util.h"
 
 #define private public
 
@@ -96,6 +99,41 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(SelectivityTests, LikeSelectivityTest) {
+  const int tuple_count = 1000;
+  const int tuple_per_tilegroup = 100;
+
+  // Create a table
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<storage::DataTable> data_table(
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Collect samples and add samples.
+  txn = txn_manager.BeginTransaction();
+  TupleSamplesStorage *tuple_samples_storage =
+      TupleSamplesStorage::GetInstance();
+  tuple_samples_storage->CollectSamplesForTable(data_table.get(), txn);
+  txn_manager.CommitTransaction(txn);
+
+  oid_t db_id = data_table->GetDatabaseOid();
+  oid_t table_id = data_table->GetOid();
+
+  double like_than_sel_0 = Selectivity::GetLikeSelectivity(db_id, table_id, 0, "a");
+  double like_than_sel_1 = Selectivity::GetLikeSelectivity(db_id, table_id, 1, "a");
+  double like_than_sel_2 = Selectivity::GetLikeSelectivity(db_id, table_id, 2, "a");
+  double like_than_sel_3 = Selectivity::GetLikeSelectivity(db_id, table_id, 3, "a");
+  (void) like_than_sel_3;
+
+  EXPECT_EQ(like_than_sel_0, 0);
+  EXPECT_EQ(like_than_sel_1, 0);
+  EXPECT_EQ(like_than_sel_2, 0);
+
 }
 } /* namespace test */
 } /* namespace peloton */

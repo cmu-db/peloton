@@ -22,6 +22,10 @@
 #include "storage/data_table.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/stats_util.h"
+#include "optimizer/stats/tuple_samples_storage.h"
+#include "catalog/column_catalog.h"
+#include "catalog/catalog.h"
+
 
 namespace peloton {
 namespace optimizer {
@@ -92,12 +96,50 @@ public:
     return 0;
   }
 
-  static double GetLikeSelectivity() {
+  // Selectivity for '~~'(LIKE) expression. The column type must be VARCHAR.
+  static double GetLikeSelectivity(oid_t database_id, oid_t table_id,
+                                       oid_t column_id, UNUSED_ATTRIBUTE const std::string &pattern, bool check_type = true) {
+    if(check_type) {
+      auto column_catalog = catalog::ColumnCatalog::GetInstance();
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      auto txn = txn_manager.BeginTransaction();
+      type::Type::TypeId column_type = column_catalog->GetColumnType(table_id, column_id, txn);
+      txn_manager.CommitTransaction(txn);
+
+      if(column_type != type::Type::TypeId::VARCHAR) {
+        return 0;
+      }
+    }
+
+    std::vector<type::Value> column_samples;
+    // auto catalog = catalog::Catalog::GetInstance();
+    // auto data_table = catalog->GetTableWithOid(database_id, table_id);
+    auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    tuple_storage->GetColumnSamples(database_id, table_id, column_id, column_samples);
+    txn_manager.CommitTransaction(txn);
+
+    for (size_t i = 0; i < column_samples.size(); i++) {
+      LOG_DEBUG("Value: %s", column_samples[i].GetInfo().c_str());
+    }
+
     return 0;
   }
 
-  static double GetNotLikeSelectivity() {
-    return 0;
+  static double GetNotLikeSelectivity(oid_t database_id, oid_t table_id,
+                                       oid_t column_id, const std::string &pattern) {
+    auto column_catalog = catalog::ColumnCatalog::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    type::Type::TypeId column_type = column_catalog->GetColumnType(table_id, column_id, txn);
+    txn_manager.CommitTransaction(txn);
+
+    if(column_type != type::Type::TypeId::VARCHAR) {
+      return 0;
+    }
+
+    return 1 - GetLikeSelectivity(database_id, table_id, column_id, pattern, false);
   }
 };
 
