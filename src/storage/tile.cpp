@@ -29,7 +29,6 @@
 namespace peloton {
 namespace storage {
 
-
 Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
            const catalog::Schema &tuple_schema, TileGroup *tile_group,
            int tuple_count)
@@ -49,7 +48,6 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
       column_header(NULL),
       column_header_size(INVALID_OID),
       tile_group_header(tile_header) {
-
   PL_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
@@ -118,8 +116,7 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
-  return type::Value::DeserializeFrom(field_location, column_type,
-                                        is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
 }
 
 /*
@@ -128,17 +125,16 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
  */
 // column offset is the actual offset of the column within the tuple slot
 type::Value Tile::GetValueFast(const oid_t tuple_offset,
-                                 const size_t column_offset,
-                                 const type::Type::TypeId column_type,
-                                 const bool is_inlined) {
+                               const size_t column_offset,
+                               const type::Type::TypeId column_type,
+                               const bool is_inlined) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_offset < schema.GetLength());
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
-  return type::Value::DeserializeFrom(field_location, column_type,
-                                        is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
 }
 
 /**
@@ -159,7 +155,6 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
   PL_ASSERT(pool != nullptr);
   value.SerializeTo(field_location, is_inlined, pool);
 }
-
 
 /*
  * Faster way to set value
@@ -206,8 +201,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
            tuple_itr++) {
-        type::Value val =
-            (new_tile->GetValue(tuple_itr, uninlined_col_offset));
+        type::Value val = (new_tile->GetValue(tuple_itr, uninlined_col_offset));
         new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
     }
@@ -215,7 +209,6 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 
   return new_tile;
 }
-
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -246,9 +239,7 @@ const std::string Tile::GetInfo() const {
   return os.str();
 }
 
-void Tile::CompressTile(Tile *tile) {
-  (void) tile;
-}
+void Tile::CompressTile(Tile *tile) { (void)tile; }
 
 //===--------------------------------------------------------------------===//
 // Serialization/Deserialization
@@ -517,7 +508,6 @@ bool Tile::operator==(const Tile &other) const {
 bool Tile::operator!=(const Tile &other) const { return !(*this == other); }
 
 TupleIterator Tile::GetIterator() { return TupleIterator(this); }
-
 
 // TileStats* Tile::GetTileStats() {
 //	return NULL;

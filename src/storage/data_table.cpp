@@ -61,7 +61,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
-        tuples_per_tilegroup_ = 10;
+  tuples_per_tilegroup_ = 10;
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -169,7 +169,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  //Avoid inserting into recycled slot. Needs to be Modified!!!
+  // Avoid inserting into recycled slot. Needs to be Modified!!!
   /*auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
@@ -299,7 +299,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
-
 
   return location;
 }

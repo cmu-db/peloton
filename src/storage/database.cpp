@@ -61,6 +61,8 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   }
 
   // Table now found
+  for (auto table : tables)
+    if (table->GetOid() == table_oid) return table;
   throw CatalogException("Table with oid = " + std::to_string(table_oid) +
                          " is not found");
   return nullptr;

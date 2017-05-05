@@ -68,9 +68,7 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   return tiles[tile_id]->GetTileId();
 }
 
-bool TileGroup::GetCompressionStatus() const {
-  return compression_status;
-}
+bool TileGroup::GetCompressionStatus() const { return compression_status; }
 
 type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   Tile *tile = GetTile(tile_id);
@@ -102,7 +100,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+           tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -137,7 +135,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+           tuple_slot_id, num_tuple_slots);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
@@ -185,7 +183,7 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   }
 
   LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+           tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -285,7 +283,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   if (status == false) return INVALID_OID;
 
   LOG_INFO("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+           tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -322,17 +320,15 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   for (oid_t i = 0; i < num_tiles; i++) {
-    LOG_INFO ("Compressing Tile %d in Tile Group",i);
+    LOG_INFO("Compressing Tile %d in Tile Group", i);
     CompressedTile *new_tile;
     Tile *old_tile = &*tiles[i];
-    new_tile = new CompressedTile(backend_type, 
-                                  old_tile->GetHeader(), 
-                                  *(old_tile->GetSchema()), 
-                                  old_tile->GetTileGroup(), 
-                                  old_tile->GetAllocatedTupleCount());
+    new_tile = new CompressedTile(
+        backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),
+        old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount());
     new_tile->CompressTile(old_tile);
     if (new_tile->IsCompressed()) {
-      tiles[i] = std::shared_ptr<Tile> (new_tile);
+      tiles[i] = std::shared_ptr<Tile>(new_tile);
       compression_status = true;
     }
   }
@@ -357,14 +353,12 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
-                         oid_t column_id) {
+void TileGroup::SetValue(type::Value &value, oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
@@ -414,8 +408,10 @@ const std::string TileGroup::GetInfo() const {
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
-      os << std::endl << (*tile);
-      os << std::endl << "Compression Status: " << tile->IsCompressed() << std::endl;
+      os << std::endl
+         << (*tile);
+      os << std::endl
+         << "Compression Status: " << tile->IsCompressed() << std::endl;
     }
   }
 

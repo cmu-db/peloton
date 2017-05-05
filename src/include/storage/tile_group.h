@@ -52,7 +52,7 @@ class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
 class RollbackSegment;
-//class CompressedTile;
+// class CompressedTile;
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 

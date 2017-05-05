@@ -38,8 +38,8 @@ class MaskedTuple : public AbstractTuple {
       : tuple_(rhs), mask_(mask) {}
 
   ~MaskedTuple() {
-      // We don't want to delete the AbstractTuple that we're pointing to
-      // We don't own it. That's not on us!
+    // We don't want to delete the AbstractTuple that we're pointing to
+    // We don't own it. That's not on us!
   }
 
   inline void SetMask(const std::vector<oid_t> &mask) {
