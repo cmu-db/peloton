@@ -904,13 +904,15 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
       "EXECUTE PROCEDURE check_account_update();";
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
-  if (stmt_list->is_valid == false) {
+  if (!stmt_list->is_valid) {
     LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
               stmt_list->error_line, stmt_list->error_col);
   }
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  // create type
+  EXPECT_EQ(parser::CreateStatement::CreateType::kTrigger, create_trigger_stmt->type);
   // trigger name
   EXPECT_EQ("check_update", std::string(create_trigger_stmt->trigger_name));
   // table name
@@ -955,6 +957,28 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_FALSE(TRIGGER_FOR_DELETE(create_trigger_stmt->trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(create_trigger_stmt->trigger_type));
 
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, DropTriggerTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query =
+    "DROP TRIGGER if_dist_exists ON films;";
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (!stmt_list->is_valid) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  EXPECT_EQ(StatementType::DROP, stmt_list->GetStatement(0)->GetType());
+  auto drop_trigger_stmt =
+    static_cast<parser::DropStatement *>(stmt_list->GetStatement(0));
+  // drop type
+  EXPECT_EQ(parser::DropStatement::EntityType::kTrigger, drop_trigger_stmt->type);
+  // trigger name
+  EXPECT_EQ("if_dist_exists", std::string(drop_trigger_stmt->trigger_name));
+  // table name
+  EXPECT_EQ("films", std::string(drop_trigger_stmt->table_name));
   delete stmt_list;
 }
 

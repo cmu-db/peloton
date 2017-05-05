@@ -1047,6 +1047,21 @@ parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt* root) {
 }
 
 parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
+  switch (root->removeType) {
+    case ObjectType::OBJECT_TABLE:
+      return DropTableTransform(root);
+      break;
+    case ObjectType::OBJECT_TRIGGER:
+      return DropTriggerTransform(root);
+      break;
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+        "Drop of ObjectType %d not supported yet...\n", root->removeType));
+    }
+  }
+}
+
+parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     res->missing = root->missing_ok;
@@ -1054,10 +1069,19 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
     auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
     LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
     table_info->table_name = cstrdup(
-        reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
+      reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
   }
+  return res;
+}
+
+parser::DropStatement* PostgresParser::DropTriggerTransform(DropStmt* root) {
+  auto res = new DropStatement(DropStatement::EntityType::kTrigger);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List*>(cell->data.ptr_value);
+  res->table_name = cstrdup(reinterpret_cast<value*>(list->head->data.ptr_value)->val.str);
+  res->trigger_name = cstrdup(reinterpret_cast<value*>(list->head->next->data.ptr_value)->val.str);
   return res;
 }
 

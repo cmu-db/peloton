@@ -30,7 +30,8 @@ class DropStatement : public TableRefStatement {
     kSchema,
     kIndex,
     kView,
-    kPreparedStatement
+    kPreparedStatement,
+    kTrigger
   };
 
   DropStatement(EntityType type)
@@ -59,6 +60,10 @@ class DropStatement : public TableRefStatement {
   char* index_name = nullptr;
   char* prep_stmt = nullptr;
   bool missing;
+
+  // drop trigger
+  char* table_name = nullptr;
+  char* trigger_name = nullptr;
 };
 
 }  // namespace parser
