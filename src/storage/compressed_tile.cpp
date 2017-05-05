@@ -308,7 +308,7 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   size_t column_offset = tile_schema->GetOffset(column_id);
   auto column_type = tile_schema->GetType(column_id);
   std::vector<type::Value> column_values(num_tuples);
-
+    
   /* to use peleton's cuckoo  template
    * src/container/cuckoo_map.cpp
    * needs to be modified and add  type
@@ -317,6 +317,14 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   // TODO save the decoder somewhere
   std::vector<std::string> decoder;
   std::vector<type::Value> modified_values(num_tuples);
+
+  /* put data here first.
+   * since we do not know how many uniq words at the beginning
+   * first store them as int
+   * decide exact Value type later
+   */
+
+  std::vector<int> modified_raw(num_tuples);
 
   int counter = 0;
   int new_value = 0;

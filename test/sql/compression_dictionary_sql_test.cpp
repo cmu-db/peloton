@@ -18,9 +18,9 @@
 namespace peloton {
 namespace test {
 
-class CompressionTest : public PelotonTest {};
+class CompressionDictionaryTest : public PelotonTest {};
 
-TEST_F(CompressionTest, BasicInsertionTest) {
+TEST_F(CompressionDictionaryTest, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -34,7 +34,6 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   int j = 0;
   std::string word = "";
 
-  LOG_INFO("F");
   for (i = 0; i < 2500; i++) {
     switch (j) {
       case 0:
@@ -76,14 +75,6 @@ TEST_F(CompressionTest, BasicInsertionTest) {
   // os << "select word from foo;";
   TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
                                   rows_affected, error_message);
-  // for (i = 0; i < 100; i++) {
-  //   std::string resultStr(
-  //       TestingSQLUtil::GetResultValueAsString(result, (2 * i)) + "\t" +
-  //       TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-  //   std::string expectedStr(std::to_string(i) + "\t" + std::to_string(i *
-  //   10));
-  //   EXPECT_EQ(resultStr, expectedStr);
-  // }
 
   std::ostringstream os2;
   os2 << "select word from foo;";
@@ -91,6 +82,109 @@ TEST_F(CompressionTest, BasicInsertionTest) {
                                   rows_affected, error_message);
   for (i = 0; i < 10; i++) {
     LOG_INFO("%s", TestingSQLUtil::GetResultValueAsString(result, i).c_str());
+  }
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(CompressionDictionaryTest, UniqTest) {
+  // every varchar is different in this case
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  txn_manager.CommitTransaction(txn);
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE foo(id integer, year integer, word VARCHAR(20) );");
+  int i;
+
+  for (i = 0; i < 2500; i++) {
+    std::ostringstream os;
+    os << "insert into foo values(" << i << ", " << i * 10 << ", '"
+       << std::to_string(2500 - i) << "' );";
+    TestingSQLUtil::ExecuteSQLQuery(os.str());
+  }
+  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "foo");
+  EXPECT_EQ(i, 2500);
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+  std::ostringstream os;
+
+  // os << "select * from foo;";
+  os << "select id,year  from foo;";
+
+  // os << "select word from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+
+  std::ostringstream os2;
+  os2 << "select word from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(os2.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+
+  for (i = 0; i < 2500; i++) {
+    std::string resultStr(TestingSQLUtil::GetResultValueAsString(result, i));
+    std::string expectedStr(std::to_string(2500 - i));
+    EXPECT_EQ(resultStr, expectedStr);
+  }
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(CompressionDictionaryTest, SizeTest) {
+  // the number of unique  var may vary
+
+  int uniq = 7;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  txn_manager.CommitTransaction(txn);
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE foo(id integer, year integer, word VARCHAR(20) );");
+  int i;
+
+  for (i = 0; i < 2500; i++) {
+    std::ostringstream os;
+    os << "insert into foo values(" << i << ", " << i * 10 << ", '"
+       << std::to_string((2500 - i) % uniq) << "' );";
+    TestingSQLUtil::ExecuteSQLQuery(os.str());
+  }
+  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "foo");
+  EXPECT_EQ(i, 2500);
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+  std::ostringstream os;
+
+  // os << "select * from foo;";
+  os << "select id,year  from foo;";
+
+  // os << "select word from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+
+  std::ostringstream os2;
+  os2 << "select word from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(os2.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  for (i = 0; i < 2500; i++) {
+    std::string resultStr(TestingSQLUtil::GetResultValueAsString(result, i));
+    std::string expectedStr(std::to_string((2500 - i) % uniq));
+    EXPECT_EQ(resultStr, expectedStr);
   }
 
   // free the database just created
