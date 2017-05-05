@@ -259,9 +259,9 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   }
 
   // TODO: barrier for main thread
-  codegen_.CallPrintf("Main: barrier wait. \n", {});
+  codegen_.CallPrintf("Main: waiting for all workers to finish ... \n", {});
   codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_),{barrier});
-  codegen_.CallPrintf("Main: barrier pass. \n", {});
+  codegen_.CallPrintf("Main: workers finished!! \n", {});
 
   function_builder.ReturnAndFinish();
 
