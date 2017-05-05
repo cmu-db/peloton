@@ -320,7 +320,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
       int rows_affected;
+      std::string query_type;
 
+      std::stringstream stream(query);
+      stream >> query_type;
       // execute the query using tcop
       auto status = traffic_cop_->ExecuteStatement(
           query, result, tuple_descriptor, rows_affected, error_message,
@@ -340,7 +343,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
       // TODO: should change to query_type
-      CompleteCommand(query, rows_affected);
+      CompleteCommand(query_type, rows_affected);
     } else if (query != queries.back()) {
       SendEmptyQueryResponse();
       SendReadyForQuery(NetworkTransactionStateType::IDLE);
