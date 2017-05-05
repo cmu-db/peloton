@@ -244,6 +244,16 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
   return StoreToKeyValueList(&entry->kv_list);
 }
 
+void OAHashTable::Merge(OAHashTable *another) {
+  // Loop through all hash entries of another oa hash table
+  for (OAHashTable::Iterator iter = another->begin(); iter != another->end(); ++iter) {
+    const char *key = iter.Key();
+    const char *value = iter.Value();
+    this->Insert(iter.curr_->hash, key, value);
+  }
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // Initialize all slots in the given entry to FREE state.
 //

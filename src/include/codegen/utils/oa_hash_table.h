@@ -120,6 +120,9 @@ class OAHashTable {
   // with the same key as that which is to be inserted.
   char *StoreTuple(HashEntry *entry, uint64_t hash);
 
+  // Merge another OAHashTable into this.
+  void Merge(OAHashTable *other);
+
   // Clean up any resources this hash-table has.
   void Destroy();
 
