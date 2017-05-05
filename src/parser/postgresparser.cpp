@@ -599,9 +599,8 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
 
 
   int type_id = static_cast<int>(target_type);
-      LOG_ERROR("type_id %d.... \n", type_id);
+
   if (type_id <= 4) {
-    LOG_ERROR("OPERATION IS %s", name);
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
 
@@ -1285,10 +1284,10 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
       std::cout << str << std::endl;
       // "=" and "in" have very similar effect
       // replace "in" as "=" for easy parsing
-      size_t start_pos = str.find(" in ");
-      if (start_pos != std::string::npos) {
-        str.replace(start_pos, 3, "=");
-      }
+     size_t start_pos = str.find(" in ");
+     if (start_pos != std::string::npos) {
+       str.replace(start_pos, 3, "=");
+     }
       return ParseSQLString(str.c_str());
     }
 
