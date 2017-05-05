@@ -26,13 +26,16 @@
 namespace peloton {
 namespace test {
 
-//===--------------------------------------------------------------------===//
-// Compression Tests
-//===--------------------------------------------------------------------===//
-
-
-
 class CompressionTests : public PelotonTest {};
+
+/*
+The following test inserts 5500 tuples in the datatable. Since a 1000 tuples
+are inserted in each tile_group, there will be 5 compressed tiles and 1
+uncompressed tile. After insertion of all the tuples, we call the Compress Table
+function.
+We then calculate the new size of the table. This should be less than the
+original size of the table.
+*/
 
 TEST_F(CompressionTests, SizeTest) {
   std::unique_ptr<storage::DataTable> data_table_test_table;
