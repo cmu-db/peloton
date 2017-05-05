@@ -537,6 +537,11 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       expr = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
       break;
     }
+    case T_NullTest: {
+      result = new expression::ConstantValueExpression(
+          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -554,8 +559,6 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   if (root == nullptr) {
     return nullptr;
   }
-
-  LOG_TRACE("A_Expr type: %d\n", root->type);
 
   UNUSED_ATTRIBUTE expression::AbstractExpression* result = nullptr;
   UNUSED_ATTRIBUTE ExpressionType target_type;

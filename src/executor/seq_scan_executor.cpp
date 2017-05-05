@@ -184,7 +184,15 @@ bool SeqScanExecutor::DExecute() {
             auto eval =
                 predicate_->Evaluate(&tuple, nullptr, executor_context_);
             LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());
-            if (eval.IsTrue()) {
+            if (eval.GetTypeId() != Type::BOOLEAN) {
+              position_list.push_back(tuple_id);
+              auto res = transaction_manager.PerformRead(current_txn, location,
+                                                         acquire_owner);
+              if (!res) {
+                transaction_manager.SetTransactionResult(current_txn,
+                                                         ResultType::FAILURE);
+                return res;
+            } else if (eval.IsTrue()) {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(current_txn, location,
                                                          acquire_owner);
