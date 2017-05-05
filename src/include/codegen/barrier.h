@@ -24,7 +24,10 @@ class Barrier
 public:
     static void InitInstance(Barrier *ins, uint64_t n_workers);
 
-    void BarrierWait();
+    bool BarrierWait()
+    {
+        return bar_->wait();
+    }
 
     void WorkerFinish()
     {
