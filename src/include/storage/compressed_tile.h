@@ -21,6 +21,7 @@
 #include "type/abstract_pool.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
+#include "type/value_factory.h"
 #include "storage/tile.h"
 
 namespace peloton {
@@ -112,6 +113,12 @@ class CompressedTile : public Tile {
 
   inline void SetExponentMapValue(oid_t column_id, type::Value exponent) {
     exponent_column_map[column_id] = exponent;
+  }
+
+  // this is for dictionary
+  inline void SetDecoderMapValue(oid_t column_id,
+                                 std::vector<type::Value> decoder) {
+    decoder_map[column_id] = decoder;
   }
 
   inline type::Value GetBaseValue(oid_t column_id) {

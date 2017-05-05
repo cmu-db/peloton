@@ -19,6 +19,7 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
@@ -98,7 +99,6 @@ void CompressedTile::CompressTile(Tile *tile) {
           LOG_TRACE("Compressed %s to %s",
                     peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
                     peloton::TypeIdToString(type_id).c_str());
-
           SetCompressedMapValue(i, type_id, base_value);
           SetExponentMapValue(i, max_exponent_count);
 
@@ -135,6 +135,7 @@ void CompressedTile::CompressTile(Tile *tile) {
                                column_name, column_is_inlined);
         columns.push_back(column);
       }
+      LOG_INFO("column:%d", i);
     }
 
     auto &storage_manager = storage::StorageManager::GetInstance();
@@ -300,6 +301,7 @@ std::vector<type::Value> CompressedTile::CompressColumn(
 // compression for varchar
 std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
                                                             oid_t column_id) {
+  // TODO
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -307,9 +309,9 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   auto column_type = tile_schema->GetType(column_id);
   std::vector<type::Value> column_values(num_tuples);
 
-  /* to use this template
+  /* to use peleton's cuckoo  template
    * src/container/cuckoo_map.cpp
-   * needs to be modified and add this type
+   * needs to be modified and add  type
    */
   CuckooMap<std::string, int> dictionary;
   // TODO save the decoder somewhere
@@ -319,8 +321,9 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   int counter = 0;
   int new_value = 0;
   for (oid_t i = 0; i < num_tuples; i++) {
-    std::string word = tile->GetValueFast(i, column_offset, column_type,
-                                          is_inlined).ToString();
+    type::Value val =
+        tile->GetValueFast(i, column_offset, column_type, is_inlined);
+    std::string word = val.ToString();
 
     // add a new word to dictionary
     if (dictionary.Contains(word) == false) {
@@ -328,7 +331,6 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
       decoder.push_back(word);
       new_value = counter;
       counter++;
-      LOG_DEBUG("new word: #%d : %s", counter, word.c_str());
 
     } else {
       // TODO fetch value from cuckoo
@@ -338,6 +340,7 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
     (void)new_value;
   }
 
+  SetDecoderMapValue(column_id, decoder);
   return modified_values;
 }
 
