@@ -70,7 +70,6 @@ void CompressedTile::CompressTile(Tile *tile) {
         column_values = GetIntegerColumnValues(tile, i);
         new_column_values = CompressColumn(tile, i, column_values, base_value,
                                            compression_type);
-
         if (new_column_values.size() != 0) {
           compressed_columns_count += 1;
 
@@ -93,13 +92,14 @@ void CompressedTile::CompressTile(Tile *tile) {
                                            compression_type);
         base_value =
             base_value.CastAs(type::Type::DECIMAL).Divide(max_exponent_count);
+
         if (new_column_values.size() != 0) {
           compressed_columns_count += 1;
 
           LOG_TRACE("Compressed %s to %s",
                     peloton::TypeIdToString(tile_schema->GetType(i)).c_str(),
-                    peloton::TypeIdToString(type_id).c_str());
-          SetCompressedMapValue(i, type_id, base_value);
+                    peloton::TypeIdToString(compression_type).c_str());
+          SetCompressedMapValue(i, compression_type, base_value);
           SetExponentMapValue(i, max_exponent_count);
 
         } else {
@@ -107,6 +107,19 @@ void CompressedTile::CompressTile(Tile *tile) {
                     peloton::TypeIdToString(tile_schema->GetType(i)).c_str());
         }
         new_columns[i] = new_column_values;
+        break;
+      case type::Type::VARCHAR:
+        LOG_TRACE("dictionary");
+        new_column_values = CompressCharColumn(tile, i);
+        if (new_column_values.size() == 0) {
+          LOG_TRACE("No deduplicate is needed");
+        } else {
+          new_columns[i] = new_column_values;
+          type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
+          SetCompressedMapValue(i, type_id,
+                                type::ValueFactory::GetVarcharValue(""));
+          compressed_columns_count += 1;
+        }
         break;
       default:
         LOG_TRACE("Unable to compress %s ",
@@ -307,14 +320,12 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   size_t column_offset = tile_schema->GetOffset(column_id);
   auto column_type = tile_schema->GetType(column_id);
   std::vector<type::Value> column_values(num_tuples);
-    
-  /* to use peleton's cuckoo  template
-   * src/container/cuckoo_map.cpp
-   * needs to be modified and add  type
-   */
-  CuckooMap<std::string, int> dictionary;
-  // TODO save the decoder somewhere
-  std::vector<std::string> decoder;
+
+  // use 3rd party
+  cuckoohash_map<std::string, int> dictionary;
+
+  std::vector<type::Value> decoder;
+
   std::vector<type::Value> modified_values(num_tuples);
 
   /* put data here first.
@@ -332,20 +343,20 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
         tile->GetValueFast(i, column_offset, column_type, is_inlined);
     std::string word = val.ToString();
 
-    // add a new word to dictionary
-    if (dictionary.Contains(word) == false) {
-      dictionary.Insert(word, counter);
-      decoder.push_back(word);
+    if (dictionary.contains(word) == false) {
+      // add a new word to dictionary
+      dictionary.insert(word, counter);
+      decoder.push_back(type::ValueFactory::GetVarcharValue(word));
+      LOG_TRACE("new word: #%d : %s", counter,
+                decoder.at(counter).ToString().c_str());
       new_value = counter;
       counter++;
 
     } else {
       new_value = dictionary.find(word);
     }
-    // TODO modified_values[i] =
-    (void)new_value;
+    modified_raw[i] = new_value;
   }
-
 
   LOG_TRACE("number of uniq words: %d", counter);
   if ((oid_t)counter == num_tuples) {

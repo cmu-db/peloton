@@ -172,6 +172,7 @@ class CompressedTile : public Tile {
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
       compressed_column_map;
   std::map<oid_t, type::Value> exponent_column_map;
+  std::map<oid_t, std::vector<type::Value>> decoder_map;
 };
 }
 }

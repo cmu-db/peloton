@@ -35,15 +35,13 @@ TEST_F(CompressionTest, IntegerTest) {
       "CREATE TABLE foo(id integer, year integer);");
   int i;
 
-  for (i = 0; i < 1000000; i++) {
+  for (i = 0; i < 2500; i++) {
     std::ostringstream os;
     os << "insert into foo values(" << (i / 10) << ", " << i * 10 << ");";
     TestingSQLUtil::ExecuteSQLQuery(os.str());
   }
-  EXPECT_EQ(i, 1000000);
-}
+  EXPECT_EQ(i, 2500);
 
-TEST_F(CompressionTest, BasicSelectionTest) {
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
