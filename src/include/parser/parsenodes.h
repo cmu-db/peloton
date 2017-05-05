@@ -67,6 +67,7 @@ typedef enum A_Expr_Kind {
   AEXPR_PAREN            /* nameless dummy node for parentheses */
 } A_Expr_Kind;
 
+
 typedef struct A_Expr {
   NodeTag type;
   A_Expr_Kind kind; /* see above */
@@ -75,6 +76,31 @@ typedef struct A_Expr {
   Node *rexpr;      /* right argument, or NULL if none */
   int location;     /* token location, or -1 if unknown */
 } A_Expr;
+
+/* ----------------
+ * NullTest
+ *
+ * NullTest represents the operation of testing a value for NULLness.
+ * The appropriate test is performed and returned as a boolean Datum.
+ *
+ * NOTE: the semantics of this for rowtype inputs are noticeably different
+ * from the scalar case.  We provide an "argisrow" flag to reflect that.
+ * ----------------
+ */
+
+typedef enum NullTestType
+{
+  IS_NULL, IS_NOT_NULL
+} NullTestType;
+
+typedef struct NullTest
+{
+  Expr		xpr;
+  Expr	   *arg;			/* input expression */
+  NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
+  bool		argisrow;		/* T if input is of a composite type */
+  int			location;		/* token location, or -1 if unknown */
+} NullTest;
 
 typedef struct ListExpr {
     NodeTag type;

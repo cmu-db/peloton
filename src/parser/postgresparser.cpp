@@ -601,8 +601,10 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   int type_id = static_cast<int>(target_type);
       LOG_ERROR("type_id %d.... \n", type_id);
   if (type_id <= 4) {
+    LOG_ERROR("OPERATION IS %s", name);
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
+
   } else if (((10 <= type_id) && (type_id <= 17)) || (type_id == 20)) {
     result = new expression::ComparisonExpression(target_type, left_expr,
                                                   right_expr);
@@ -614,6 +616,62 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   }
   else if (type_id == 19) {
     result = nullptr;
+  }
+  return result;
+}
+
+// This function takes in a Postgres NullTest primnode and transfers
+// it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::NullTestTransform(NullTest* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  UNUSED_ATTRIBUTE expression::AbstractExpression* result = nullptr;
+  UNUSED_ATTRIBUTE ExpressionType target_type = ExpressionType::OPERATOR_IS_NULL;
+  NullTestType nulltesttype = root->nulltesttype;
+  int type_id = static_cast<int>(target_type);
+
+
+  expression::AbstractExpression* arg_expr = nullptr;
+  expression::AbstractExpression* right_expr = nullptr;
+  switch (root->arg->type) {
+    case T_ColumnRef: {
+      arg_expr =
+          ColumnRefTransform(reinterpret_cast<ColumnRef*>(root->arg));
+      break;
+    }
+    case T_A_Const: {
+
+      arg_expr = ConstTransform(reinterpret_cast<A_Const*>(root->arg));
+      break;
+    }
+    case T_A_Expr: {
+
+      arg_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->arg));
+      break;
+    }
+    case T_ParamRef: {
+
+      arg_expr = ParamRefTransform(reinterpret_cast<ParamRef *>(root->arg));
+      break;
+    }
+    case T_List: {  // 656
+
+      arg_expr = ConstTransform(reinterpret_cast<A_Const*>(root->arg));
+
+      break;
+    }
+    default: {
+      LOG_ERROR("Arg expr of type %d not supported yet...\n",
+                root->arg->type);
+    }
+  }
+  right_expr = new expression::ConstantValueExpression(
+     type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+  if (type_id == 9) {
+    result = new expression::OperatorExpression(
+        target_type, StringToTypeId("BOOLEAN"), nulltesttype, arg_expr, right_expr);
   }
   return result;
 }
@@ -1211,6 +1269,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
+
 //  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);

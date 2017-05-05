@@ -127,6 +127,9 @@ class PostgresParser {
   // transform helper for BoolExpr nodes
   static expression::AbstractExpression* BoolExprTransform(BoolExpr* root);
 
+  // transform helper for NullTest nodes
+  static expression::AbstractExpression* NullTestTransform(NullTest* root);
+
   // transform helper for where clauses
   static expression::AbstractExpression* WhereTransform(Node* root);
 
