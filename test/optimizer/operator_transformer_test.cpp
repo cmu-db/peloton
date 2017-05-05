@@ -6,6 +6,7 @@
 #include "parser/sql_statement.h"
 #include "optimizer/operators.h"
 #include "optimizer/query_to_operator_transformer.h"
+#include "optimizer/operator_expression.h"
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 
@@ -51,8 +52,9 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest){
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
   QueryToOperatorTransformer transformer;
-  auto expr = transformer.ConvertToOpExpression(parsed_stmt->GetStatement(0));
-
+  auto op_expr = transformer.ConvertToOpExpression(parsed_stmt->GetStatement(0));
+  auto op = op_expr->Op();
+  EXPECT_EQ(op.type(), OpType::InnerJoin);
 }
 
 } /* namespace test */

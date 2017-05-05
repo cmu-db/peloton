@@ -202,10 +202,11 @@ void ExtractPredicates(expression::AbstractExpression* expr,
   for (auto predicate : predicates) {
     std::unordered_set<std::string> table_alias_set;
     expression::ExpressionUtil::GenerateTableAliasSet(predicate, table_alias_set);
+    // Deep copy expression to avoid memory leak
     if (table_alias_set.size() > 1)
-      join_predicates.push_back(MultiTableExpression(predicate, table_alias_set));
+      join_predicates.push_back(MultiTableExpression(predicate->Copy(), table_alias_set));
     else
-      where_predicates.push_back(expr);
+      where_predicates.push_back(expr->Copy());
   }
 }
 
@@ -252,15 +253,15 @@ expression::AbstractExpression* CombinePredicates(std::vector<expression::Abstra
     return nullptr;
 
   if (predicates.size() == 1)
-    return predicates[0]->Copy();
+    return predicates[0];
 
   auto conjunction = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND,
-      predicates[0]->Copy(), predicates[1]->Copy());
+      predicates[0], predicates[1]);
   for (size_t i=2; i<predicates.size(); i++) {
     conjunction = new expression::ConjunctionExpression(
         ExpressionType::CONJUNCTION_AND,
-        conjunction, predicates[i]->Copy());
+        conjunction, predicates[i]);
   }
   return conjunction;
 }

@@ -54,6 +54,10 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
       ((parser::SelectStatement *)op)
           ->UpdateWhereClause(util::CombinePredicates(where_predicates));
     }
+    else {
+      for (auto expr : where_predicates)
+        delete expr;
+    }
   }
 
   if (op->from_table != nullptr) {
@@ -127,7 +131,7 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
         expression::ExpressionUtil::GenerateTableAliasSet(
             node->condition, join_condition_table_alias_set);
         join_predicates_.push_back(
-            MultiTableExpression(node->condition, join_condition_table_alias_set));
+            MultiTableExpression(node->condition->Copy(), join_condition_table_alias_set));
       }
       join_expr = std::make_shared<OperatorExpression>(
           LogicalInnerJoin::make(
@@ -183,7 +187,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
 
     auto join_expr = std::make_shared<OperatorExpression>(
         LogicalInnerJoin::make(
-            util::ConstructJoinPredicate(table_alias_set_, join_predicates_)->Copy()));
+            util::ConstructJoinPredicate(table_alias_set_, join_predicates_)));
     join_expr->PushChild(left_expr);
     join_expr->PushChild(right_expr);
 
@@ -192,7 +196,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
       auto old_join_expr = join_expr;
       join_expr = std::make_shared<OperatorExpression>(
           LogicalInnerJoin::make(
-              util::ConstructJoinPredicate(table_alias_set_, join_predicates_)->Copy()));
+              util::ConstructJoinPredicate(table_alias_set_, join_predicates_)));
       join_expr->PushChild(old_join_expr);
       join_expr->PushChild(output_expr);
     }
