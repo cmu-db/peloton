@@ -738,7 +738,7 @@ TEST_F(PostgresParserTests, DistinctFromTest) {
 TEST_F(PostgresParserTests, ConstraintTest) {
   std::string query = "CREATE TABLE table1 ("
       "a int DEFAULT 1+2,"
-      "b int REFERENCES table2 (bb) ON UPDATE CASCADE,"
+      "b int DEFAULT 1 REFERENCES table2 (bb) ON UPDATE CASCADE,"
       "c varchar(32) REFERENCES table3 (cc) MATCH FULL ON DELETE SET NULL,"
       "d int CHECK (d+1 > 0),"
       "FOREIGN KEY (d) REFERENCES table4 (dd) MATCH SIMPLE ON UPDATE SET DEFAULT"
