@@ -38,11 +38,11 @@ namespace peloton {
           InitializeSchema().release(), pg_catalog) {
      
       //index created so we can query on name   
-     Catalog::GetInstance()->CreateIndex(
+  /*   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, FUNCTION_CATALOG_NAME,
       {"function_name"}, FUNCTION_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
-      }
+      false, IndexType::BWTREE, txn); */
+      } 
 
     FunctionCatalog::~FunctionCatalog() {}
 

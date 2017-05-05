@@ -92,6 +92,11 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
 
+  CreateIndex(CATALOG_DATABASE_OID, FUNCTION_CATALOG_OID,
+              std::vector<std::string>({"function_name"}),
+              FUNCTION_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              IndexConstraintType::DEFAULT, false, txn, true);
+
   // actual index already added in column_catalog, index_catalog constructor
   // the reason we treat those two catalog tables differently is that indexes
   // needs to be built before insert tuples into table

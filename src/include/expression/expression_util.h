@@ -419,6 +419,7 @@ class ExpressionUtil {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
       try {
+
         const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
         LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
@@ -430,6 +431,7 @@ class ExpressionUtil {
       // If not found in map, try in pg_proc (UDF catalog)
       catch (Exception &e) { 
 
+        LOG_INFO("Function is probably a UDF");
         /* 
         Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
         Since, we need Transaction ID to query from the catalog.
@@ -580,6 +582,8 @@ class ExpressionUtil {
       }
       // If not found in map, try in pg_proc (UDF catalog)
       catch (Exception &e) { 
+
+        LOG_INFO("Function is a UDF, maybe");
 
         /* 
         Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
