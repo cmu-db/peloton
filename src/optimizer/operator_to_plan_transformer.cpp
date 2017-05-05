@@ -147,6 +147,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
           move(expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
       output_exprs.insert(output_exprs.end(), ordered_exprs.begin(), ordered_exprs.end());
     } else {
+      expression::ExpressionUtil::ConvertAggExprToTvExpr(expr.get(), child_expr_map);
       output_exprs.push_back(expr);
     }
   }

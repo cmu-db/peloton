@@ -12,7 +12,6 @@
 
 #include "codegen/translator_factory.h"
 
-#include "codegen/aggregation_translator.h"
 #include "codegen/arithmetic_translator.h"
 #include "codegen/case_translator.h"
 #include "codegen/comparison_translator.h"
@@ -156,17 +155,6 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       break;
     }
     */
-    case ExpressionType::AGGREGATE_AVG:
-    case ExpressionType::AGGREGATE_COUNT:
-    case ExpressionType::AGGREGATE_SUM:
-    case ExpressionType::AGGREGATE_MIN:
-    case ExpressionType::AGGREGATE_MAX:
-    case ExpressionType::AGGREGATE_COUNT_STAR: {
-      auto &agg_exp =
-          static_cast<const expression::AggregateExpression &>(exp);
-      translator = new AggregationTranslator(agg_exp, context);
-      break;
-    }
     default: {
       throw Exception{"We don't have a translator for expression type: " +
                       ExpressionTypeToString(exp.GetExpressionType())};

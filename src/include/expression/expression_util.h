@@ -368,6 +368,28 @@ class ExpressionUtil {
 
  public:
   /**
+   * Convert all aggregate expression in the child expression tree
+   * to tuple value expression with corresponding column offset
+   * of the input child tuple. This is used for handling projection
+   * on aggregate function (e.g. SELECT sum(a)+max(b) FROM ... GROUP BY ...)
+   */
+  static void ConvertAggExprToTvExpr(
+      AbstractExpression* expr, ExprMap &child_expr_map) {
+    for (size_t i=0; i<expr->GetChildrenSize(); i++) {
+      auto child_expr = expr->GetModifiableChild(i);
+      if (IsAggregateExpression(child_expr->GetExpressionType())) {
+        EvaluateExpression(child_expr_map, child_expr);
+        std::shared_ptr<AbstractExpression> probe_expr(
+            std::shared_ptr<AbstractExpression>{}, child_expr);
+        expr->SetChild(
+            i, new TupleValueExpression(child_expr->GetValueType(), 0, child_expr_map[probe_expr]));
+      } else
+        ConvertAggExprToTvExpr(child_expr, child_expr_map);
+    }
+  }
+
+
+  /**
    * Generate a vector to store expressions in output order
    */
   static std::vector<std::shared_ptr<AbstractExpression>>
