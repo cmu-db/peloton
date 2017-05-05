@@ -203,6 +203,12 @@ class PostgresParser {
   // transform helper for drop statement
   static parser::DropStatement* DropTransform(DropStmt* root);
 
+  // transform helper for drop table statement
+  static parser::DropStatement* DropTableTransform(DropStmt* root);
+
+  // transform helper for drop trigger statement
+  static parser::DropStatement* DropTriggerTransform(DropStmt* root);
+
   // transform helper for truncate statement
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
 
