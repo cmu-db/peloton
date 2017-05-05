@@ -317,6 +317,13 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 
 void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
+  oid_t next_tuple_slot = tile_group_header->GetCurrentNextTupleSlot();
+
+  if (next_tuple_slot < num_tuple_slots) {
+    LOG_TRACE("TileGroup is currently not full. Skipping compression.");
+    return;
+  }
+
   for (oid_t i = 0; i < num_tiles; i++) {
     LOG_TRACE("Compressing Tile %d in Tile Group", i);
     Tile *old_tile = tiles[i].get();
