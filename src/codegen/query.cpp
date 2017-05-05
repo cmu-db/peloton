@@ -238,9 +238,9 @@ void Query::LoadParams(std::vector<std::unique_ptr<char[]>> &params,
         break;
       }
       case type::Type::TypeId::VARCHAR: {
-        std::string str = type::ValuePeeker::PeekVarchar(value);
+        const char *str = type::ValuePeeker::PeekVarchar(value);
         params.emplace_back(std::unique_ptr<char[]>{new char[value.GetLength()]});
-        PL_MEMCPY(params[i].get(), str.c_str(), value.GetLength());
+        PL_MEMCPY(params[i].get(), str, value.GetLength());
         char_ptr_params[i] = params[i].get();
         char_len_params[i] = value.GetLength();
         break;
