@@ -83,7 +83,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
           type::Value v = const_expr_elem->GetValue();
           constraint.addDefaultValue(v);
           column_constraints.push_back(constraint);
-          LOG_DEBUG("Added a default constraint on column \"%s\"", col->name);
+          LOG_DEBUG("Added a default constraint %s on column \"%s\"", v.ToString().c_str(),col->name);
         }
       }
 
