@@ -279,12 +279,14 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
           break;
         }
         case ConstraintType::DEFAULT: {
+          // Should not be handled here
+          // Handled in higher hierarchy
+          /*
           if (tuple->IsNull(column_itr)) {
             auto default_value = schema->GetDefaultValue(column_itr);
             storage::Tuple* t = const_cast<storage::Tuple*>(tuple);
             t->SetValue(column_itr, *default_value);
-          }
-
+          } */
           break;
         }
         case ConstraintType::PRIMARY: {
