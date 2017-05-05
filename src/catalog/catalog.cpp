@@ -286,6 +286,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
 
+
   try {
     auto database = GetDatabaseWithOid(database_oid);
     try {
@@ -303,7 +304,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
         if (column.IsPrimary()) {
           key_attrs.push_back(column_idx);
         }
-        column_idx++;
+          column_idx++;
       }
 
       if (key_attrs.empty()) return ResultType::FAILURE;
@@ -399,7 +400,6 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   ResultType success =
       CreateIndex(database_oid, table_oid, index_attr, index_name, index_type,
                   index_constraint, unique_keys, txn);
-
   return success;
 }
 
@@ -501,6 +501,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
 
+
 /*
 * only for test purposes
 */
@@ -529,6 +530,7 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
               (int)database_oid);
     return ResultType::FAILURE;
   }
+
 
   // Drop actual tables in the database
   auto table_oids =
@@ -584,6 +586,7 @@ ResultType Catalog::DropTable(const std::string &database_name,
     return ResultType::FAILURE;
 
   }
+
 
   // Checking if statement is valid
   oid_t database_oid =
@@ -649,6 +652,7 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
     LOG_TRACE("Do not have transaction to drop index: %d", (int)index_oid);
     return ResultType::FAILURE;
   }
+
 
   // find table_oid by looking up pg_index using index_oid
   // txn is nullptr, one sentence Transaction
@@ -721,7 +725,6 @@ storage::Database *Catalog::GetDatabaseWithName(
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
-
   return GetDatabaseWithOid(database_oid);
 }
 
@@ -851,6 +854,7 @@ storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
   auto database = databases_.at(database_offset);
   return database;
 }
+
 
 //===--------------------------------------------------------------------===//
 // FUNCTION
