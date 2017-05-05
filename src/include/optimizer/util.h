@@ -49,6 +49,13 @@ bool CheckIndexSearchable(storage::DataTable *target_table,
                                  std::vector<ExpressionType> &expr_types,
                                  std::vector<type::Value> &values,
                                  oid_t &index_id);
+
+void ExtractPredicates(expression::AbstractExpression* expr,
+                       SingleTablePredicates& where_predicates,
+                       MultiTablePredicates& join_predicates);
+
+expression::AbstractExpression* CombinePredicates(std::vector<expression::AbstractExpression*> predicates);
+
 } /* namespace util */
 } /* namespace optimizer */
 } /* namespace peloton */

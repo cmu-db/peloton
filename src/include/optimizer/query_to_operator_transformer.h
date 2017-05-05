@@ -55,6 +55,8 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   ColumnManager &manager_;
 
   std::shared_ptr<OperatorExpression> output_expr;
+  MultiTablePredicates join_predicates_;
+
   // For expr nodes
   type::Type::TypeId output_type;
   int output_size;

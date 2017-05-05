@@ -16,6 +16,7 @@
 #include "type/value_factory.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/constant_value_expression.h"
+#include "expression/expression_util.h"
 #include "catalog/schema.h"
 
 namespace peloton {
@@ -186,6 +187,50 @@ void GetPredicateColumns(
                         expr_types, values, index_searchable);
   }
 }
+
+
+/**
+ * Extract single table precates and multi-table predicates from the expr
+ */
+void ExtractPredicates(expression::AbstractExpression* expr,
+                       SingleTablePredicates& where_predicates,
+                       MultiTablePredicates& join_predicates) {
+  // Traverse down the expression tree along conjunction
+  if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+    for (size_t i=0; i<expr->GetChildrenSize(); i++) {
+      ExtractPredicates(expr->GetModifiableChild(i), where_predicates, join_predicates);
+    }
+    return;
+  }
+
+  // Leaf expression of the conjunction tree
+  std::unordered_set<std::string> table_alias_set;
+  expression::ExpressionUtil::GenerateTableAliasSet(expr, table_alias_set);
+  if (table_alias_set.size() > 1)
+    join_predicates.push_back(MultiTableExpression(expr, table_alias_set));
+  else
+    where_predicates.push_back(expr);
+  return;
+
+}
+
+/**
+ * Combine a vector of expressions with AND
+ */
+expression::AbstractExpression* CombinePredicates(std::vector<expression::AbstractExpression*> predicates) {
+  if (predicates.size() == 1)
+    return predicates[0]->Copy();
+  auto conjunction = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND,
+      predicates[0]->Copy(), predicates[1]->Copy());
+  for (size_t i=2; i<predicates.size(); i++) {
+    conjunction = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND,
+        conjunction, predicates[i]->Copy());
+  }
+  return conjunction;
+}
+
 
 } /* namespace util */
 } /* namespace optimizer */

@@ -367,6 +367,20 @@ class ExpressionUtil {
   //    }
 
  public:
+   /**
+   * Generate a set of table alias included in an expression
+   */
+  static void GenerateTableAliasSet(
+      const AbstractExpression* expr,
+      std::unordered_set<std::string>& table_alias_set) {
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      table_alias_set.insert(reinterpret_cast<const TupleValueExpression*>(expr)->GetTableName());
+      return;
+    }
+    for (size_t i=0; i<expr->GetChildrenSize(); i++)
+      GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
+  }
+
   /**
    * Convert all aggregate expression in the child expression tree
    * to tuple value expression with corresponding column offset

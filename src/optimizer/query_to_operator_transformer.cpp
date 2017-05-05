@@ -47,6 +47,19 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
 
+  if (op->where_clause != nullptr) {
+    SingleTablePredicates where_predicates;
+    util::ExtractPredicates(op->where_clause, where_predicates, join_predicates_);
+
+    // Remove join predicates in the where clause
+    if (!join_predicates_.empty()) {
+      // Discard the const qualifier to update the where clause.
+      // The select statement can only be updated in this way. This is a hack.
+      ((parser::SelectStatement *)op)
+          ->UpdateWhereClause(util::CombinePredicates(where_predicates));
+    }
+  }
+
   if (op->from_table != nullptr) {
     // SELECT with FROM
     op->from_table->Accept(this);

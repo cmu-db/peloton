@@ -1154,6 +1154,20 @@ class ExprHasher;
 class ExprEqualCmp;
 }
 
+struct MultiTableExpression {
+  MultiTableExpression(
+      expression::AbstractExpression* i_expr,
+      std::unordered_set<std::string>& i_set)
+      : expr(i_expr) {
+    table_alias_set = std::make_shared<std::unordered_set<std::string>>(i_set);
+  }
+  const expression::AbstractExpression* expr;
+  std::shared_ptr<std::unordered_set<std::string>> table_alias_set;
+};
+
+typedef std::vector<expression::AbstractExpression*> SingleTablePredicates;
+typedef std::vector<MultiTableExpression> MultiTablePredicates;
+
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
                            unsigned, expression::ExprHasher,
