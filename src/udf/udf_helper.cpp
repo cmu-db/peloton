@@ -3,10 +3,9 @@
 namespace peloton {
 namespace udf {
 
-void UDF_SQL_Expr::Execute() {
-}
-
-void UDF_Stmt::Execute() {
+int UDF_SQL_Expr::Execute(std::vector<arg_value>) {
+  // TODO: The place to call the executor for udf in Peloton
+  return -1;
 }
 
 }
