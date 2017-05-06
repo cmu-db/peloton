@@ -21,6 +21,18 @@ namespace test {
 
 class CompressionTest : public PelotonTest {};
 
+/*
+The following test inserts 2500 tuples in the datatable. Since a 1000 tuples
+are inserted in each tile_group, there will be 1 compressed tiles and 1
+uncompressed tile. After insertion of all the tuples, we call the Compress
+Table function.
+
+Each tuple inserted is of the form (i/10, i*10), where i belongs to [0,2500)
+
+We then perform a sequential scan on the table and retrieve the uncompressed
+values. Each uncompressed value, should be equal to the origina value.
+*/
+
 TEST_F(CompressionTest, IntegerTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -73,6 +85,23 @@ TEST_F(CompressionTest, IntegerTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
+
+/*
+In the same way as the test above, we now insert decimals in the second column.
+
+Each tuple inserted is of the form (i, (i+5)/10), where i belongs to [0,2500)
+When inserting decimals, we ensure the precision is always 2 digits. This
+prevents lossy compression of floats.
+
+We then perform a sequential scan on the table and retrieve the uncompressed
+values. Each uncompressed value, should be equal to the original value.
+
+Note that as opposed to the previous test, we dont do a string comparison, but
+convert the values from string to floats and then do a compare. This used
+because in string compare : 80.000000 and 80 may fail even though they represent
+the same value.
+
+*/
 
 TEST_F(CompressionTest, DecimalTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

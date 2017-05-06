@@ -26,15 +26,19 @@
 namespace peloton {
 namespace test {
 
-//===--------------------------------------------------------------------===//
-// Compression Tests
-//===--------------------------------------------------------------------===//
-
-std::unique_ptr<storage::DataTable> data_table_test_table;
-
 class CompressionTests : public PelotonTest {};
 
+/*
+The following test inserts 5500 tuples in the datatable. Since a 1000 tuples
+are inserted in each tile_group, there will be 5 compressed tiles and 1
+uncompressed tile. After insertion of all the tuples, we call the Compress Table
+function.
+We then calculate the new size of the table. This should be less than the
+original size of the table.
+*/
+
 TEST_F(CompressionTests, SizeTest) {
+  std::unique_ptr<storage::DataTable> data_table_test_table;
   const int tuples_per_tile_group = 1000;
   const int total_tuples = 5500;
   UNUSED_ATTRIBUTE oid_t tuple_size = 24;
@@ -75,14 +79,11 @@ TEST_F(CompressionTests, SizeTest) {
     }
   }
 
-  std::cout << "Tuples Per Tile Group: " << tuples_per_tile_group << "\n";
-  std::cout << "Number of Tile Groups: " << num_tile_groups << "\n";
-  std::cout << "Tuples size in bytes: " << tuple_size << "\n";
-  std::cout << "Uncompressed_Size in bytes: " << uncompressed_size << "\n";
-  std::cout << "Compressed_Size in bytes: " << compressed_size << "\n";
-
-  auto data_table_pointer = data_table_test_table.release();
-  delete data_table_pointer;
+  LOG_INFO("Tuples Per Tile Group: %d", (int)tuples_per_tile_group);
+  LOG_INFO("Number of Tile Groups: %d", (int)num_tile_groups);
+  LOG_INFO("Tuples size in bytes: %d", (int)tuple_size);
+  LOG_INFO("Uncompressed_Size in bytes: %d", (int)uncompressed_size);
+  LOG_INFO("Compressed_Size in bytes: %d", (int)compressed_size);
 
   EXPECT_LE(compressed_size, uncompressed_size);
 }
