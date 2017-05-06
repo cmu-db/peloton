@@ -290,7 +290,7 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   auto arg_expr = ExprTransform(reinterpret_cast<Node*>(root->arg));
 
   // Transform the WHEN conditions
-  auto *clauses = new std::vector<expression::CaseExpression::WhenClause>;
+  std::vector<expression::CaseExpression::WhenClause> clauses;
   for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
 
     CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
@@ -302,7 +302,7 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
     auto result_expr = ExprTransform(reinterpret_cast<Node*>(w->result));
 
     // Build When Clause and add it to the list
-    clauses->push_back(expression::CaseExpression::WhenClause(
+    clauses.push_back(expression::CaseExpression::WhenClause(
         expression::CaseExpression::AbsExprPtr(when_expr),
         expression::CaseExpression::AbsExprPtr(result_expr)));
   }
@@ -312,9 +312,9 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
 
   // Build Case Expression
   return new expression::CaseExpression(
-      clauses->at(0).second.get()->GetValueType(),
+      clauses.at(0).second.get()->GetValueType(),
       expression::CaseExpression::AbsExprPtr(arg_expr),
-      *clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+      clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
 }
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt

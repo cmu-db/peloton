@@ -59,8 +59,8 @@ TEST_F(CaseSQLTests, Simple) {
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case when a=1 then 2 else 0 end from test", 
       result, tuple_descriptor, rows_changed, error_message);
+
   // Check the return value
-  // Should be: 333, 22
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -98,8 +98,8 @@ TEST_F(CaseSQLTests, SimpleWithArg) {
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case a when 1 then 2 when 2 then 3 else 100 end from test", 
       result, tuple_descriptor, rows_changed, error_message);
+
   // Check the return value
-  // Should be: 333, 22
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -137,8 +137,8 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case a when 1 then '2' when 2 then '3' else '100' end "
       "from test", result, tuple_descriptor, rows_changed, error_message);
+
   // Check the return value
-  // Should be: 333, 22
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -177,8 +177,8 @@ TEST_F(CaseSQLTests, SimpleMultipleWhen) {
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case when a=1 then 2 when a=2 then 3 else 0 end from test",
       result, tuple_descriptor, rows_changed, error_message);
+
   // Check the return value
-  // Should be: 333, 22
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -217,8 +217,8 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElse) {
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case when a=1 then 2 when a=2 then 3 end from test",
       result, tuple_descriptor, rows_changed, error_message);
+
   // Check the return value
-  // Should be: 333, 22
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
