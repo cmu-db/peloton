@@ -387,30 +387,30 @@ class ExpressionUtil {
    * of the input child tuple. This is used for handling projection
    * on aggregate function (e.g. SELECT sum(a)+max(b) FROM ... GROUP BY ...)
    */
-  static void ConvertAggExprToTvExpr(
-      AbstractExpression* expr, ExprMap &child_expr_map) {
-    for (size_t i=0; i<expr->GetChildrenSize(); i++) {
+  static void ConvertAggExprToTvExpr(AbstractExpression *expr,
+                                     ExprMap &child_expr_map) {
+    for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
       if (IsAggregateExpression(child_expr->GetExpressionType())) {
         EvaluateExpression(child_expr_map, child_expr);
         std::shared_ptr<AbstractExpression> probe_expr(
             std::shared_ptr<AbstractExpression>{}, child_expr);
-        expr->SetChild(
-            i, new TupleValueExpression(child_expr->GetValueType(), 0, child_expr_map[probe_expr]));
+        expr->SetChild(i,
+                       new TupleValueExpression(child_expr->GetValueType(), 0,
+                                                child_expr_map[probe_expr]));
       } else
         ConvertAggExprToTvExpr(child_expr, child_expr_map);
     }
   }
 
-
   /**
    * Generate a vector to store expressions in output order
    */
   static std::vector<std::shared_ptr<AbstractExpression>>
-  GenerateOrderedOutputExprs(ExprMap& expr_map) {
-    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(expr_map.size());
-    for (auto iter : expr_map)
-      ordered_expr[iter.second] = iter.first;
+  GenerateOrderedOutputExprs(ExprMap &expr_map) {
+    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(
+        expr_map.size());
+    for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
     return std::move(ordered_expr);
   }
 
@@ -425,7 +425,8 @@ class ExpressionUtil {
   }
 
   /**
-   * Walks an expression trees and find all AggregationExprs and TupleValueExprs subtrees.
+   * Walks an expression trees and find all AggregationExprs and TupleValueExprs
+   * subtrees.
    */
   static void GetAggregateExprs(
       std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
@@ -506,7 +507,8 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
-      LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
+      LOG_INFO("Function %s found in the catalog",
+               func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
@@ -516,6 +518,74 @@ class ExpressionUtil {
     // Decude the expression type for Non-TupleValueExpressions
     if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
       expr->DeduceExpressionType();
+  }
+
+  /**
+   * Extract join columns id from expr
+   * For example, expr = (expr_1) AND (expr_2) AND (expr_3)
+   * we only extract expr_i that have the format (l_table.a = r_table.b)
+   * i.e. expr that is equality check for tuple columns from both of
+   * the underlying tables
+   *
+   * return true if the expr can be removed
+   * remove set to true if we want to return a newly created expr with
+   * join columns removed from expr
+   */
+
+  static expression::AbstractExpression *ExtractJoinColumns(
+      std::vector<oid_t> &l_column_ids, std::vector<oid_t> &r_column_ids,
+      const expression::AbstractExpression *expr, bool remove = false) {
+    if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+      auto left_expr = ExtractJoinColumns(l_column_ids, r_column_ids,
+                                          expr->GetChild(0), remove);
+
+      auto right_expr = ExtractJoinColumns(l_column_ids, r_column_ids,
+                                           expr->GetChild(1), remove);
+
+      expression::AbstractExpression *root = nullptr;
+      if (remove) {
+        if (left_expr == nullptr || right_expr == nullptr) {
+          // Remove the CONJUNCTION_AND if left child or right child (or both)
+          // is removed
+          if (left_expr != nullptr) root = left_expr;
+          if (right_expr != nullptr) root = right_expr;
+        } else
+          root = ConjunctionFactory(ExpressionType::CONJUNCTION_AND, left_expr,
+                                    right_expr);
+      }
+
+      return root;
+    } else if (expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      // If left tuple and right tuple are from different child
+      // then add to join column
+      auto l_expr = expr->GetChild(0);
+      auto r_expr = expr->GetChild(1);
+      if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto l_tuple_idx =
+            reinterpret_cast<const expression::TupleValueExpression *>(l_expr)
+                ->GetTupleId();
+        auto r_tuple_idx =
+            reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
+                ->GetTupleId();
+        
+        // If it can be removed then return nullptr
+        if (l_tuple_idx != r_tuple_idx) {
+          auto l_value_idx =
+              reinterpret_cast<const expression::TupleValueExpression *>(l_expr)
+                  ->GetColumnId();
+          auto r_value_idx =
+              reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
+                  ->GetColumnId();
+
+          l_column_ids.push_back(l_tuple_idx == 0 ? l_value_idx : r_value_idx);
+          r_column_ids.push_back(l_tuple_idx == 0 ? r_value_idx : l_value_idx);
+          return nullptr;
+        }
+      }
+    }
+
+    return remove ? expr->Copy() : nullptr;
   }
 
   /*
