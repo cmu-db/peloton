@@ -145,6 +145,23 @@ TEST_F(TopKElementsTests, WrapperTest) {
   }
   top_k_elements.PrintAllOrderedMaxFirst();
 }
+
+TEST_F(TopKElementsTests, UniformTest) {
+  CountMinSketch sketch(0.01, 0.1, 0);
+
+  const int k = 5;
+  TopKElements top_k_elements(sketch, k);
+
+  for (int i = 0; i < 1000; i++) {
+    type::Value v1 = type::ValueFactory::GetDecimalValue(7.12 + i);
+    top_k_elements.Add(v1);
+  }
+  EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), 5);
+
+  top_k_elements.PrintAllOrderedMaxFirst();
+}
+
 }
 }
+
 

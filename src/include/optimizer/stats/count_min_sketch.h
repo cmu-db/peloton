@@ -34,8 +34,10 @@ class CountMinSketch {
 
   const int depth;
   const int width;
+  // eps: error range 0.01 < ep < 1
   const double eps;
-  const double confidence;
+  // gamma: probability of error (the smaller the better) 0 < gamma < 1
+  const double gamma;
   uint64_t size;
   std::vector<std::vector<SketchElemType>> table;
   std::vector<SketchElemType> row_hash;
@@ -44,18 +46,18 @@ class CountMinSketch {
   CountMinSketch(int depth, int width, unsigned int seed) :
       depth{depth},
       width{width},
-      eps{2.0 / width},
-      confidence{1 - 1 / pow(2, depth)},
+      eps{exp(1) / width},
+      gamma{exp(-depth)},
       size{0} {
     InitTable(depth, width, seed);
   }
 
   // Constructor with specific error bound.
-  CountMinSketch(double eps, double confidence, unsigned int seed) :
-      depth{(int) ceil(-log(1 - confidence) / log(2))},
-      width{(int) ceil(2 / eps)},
+  CountMinSketch(double eps, double gamma, unsigned int seed) :
+      depth{(int) ceil(log(1 / gamma))},
+      width{(int) ceil(exp(1) / eps)},
       eps{eps},
-      confidence{confidence},
+      gamma{gamma},
       size{0} {
     InitTable(depth, width, seed);
   }
@@ -171,3 +173,4 @@ class CountMinSketch {
 
 } /* namespace optimizer */
 } /* namespace peloton */
+
