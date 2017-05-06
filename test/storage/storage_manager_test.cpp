@@ -10,49 +10,49 @@
 //
 //===----------------------------------------------------------------------===//
 
-// #include "common/harness.h"
+#include "common/harness.h"
 
-// #include "storage/storage_manager.h"
+#include "storage/storage_manager.h"
 
-// namespace peloton {
-// namespace test {
+namespace peloton {
+namespace test {
 
-// //===--------------------------------------------------------------------===//
-// // Storage Manager Test
-// //===--------------------------------------------------------------------===//
+//===--------------------------------------------------------------------===//
+// Storage Manager Test
+//===--------------------------------------------------------------------===//
 
-// class StorageManagerTests : public PelotonTest {};
+class StorageManagerTests : public PelotonTest {};
 
-// /**
-//  * Test basic functionality
-//  *
-//  */
-// TEST_F(StorageManagerTests, BasicTest) {
-//   peloton::storage::StorageManager storage_manager;
+/**
+ * Test basic functionality
+ *
+ */
+TEST_F(StorageManagerTests, BasicTest) {
+  peloton::storage::StorageManager storage_manager;
 
-//   std::vector<BackendType> backend_types = {BackendType::MM};
+  std::vector<BackendType> backend_types = {BackendType::MM};
 
-//   size_t length = 256;
-//   size_t rounds = 100;
+  size_t length = 256;
+  size_t rounds = 100;
 
-//   for (auto backend_type : backend_types) {
-//     LOG_INFO("Backend :: %s", BackendTypeToString(backend_type).c_str());
+  for (auto backend_type : backend_types) {
+    LOG_INFO("Backend :: %s", BackendTypeToString(backend_type).c_str());
 
-//     for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
-//       // Allocate
-//       auto location = storage_manager.Allocate(backend_type, length);
+    for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
+      // Allocate
+      auto location = storage_manager.Allocate(backend_type, length);
 
-//       // Fill it up
-//       PL_MEMSET(location, '-', length);
+      // Fill it up
+      PL_MEMSET(location, '-', length);
 
-//       // Sync
-//       storage_manager.Sync(backend_type, location, length);
+      // Sync
+      storage_manager.Sync(backend_type, location, length);
 
-//       // Release
-//       storage_manager.Release(backend_type, location);
-//     }
-//   }
-// }
+      // Release
+      storage_manager.Release(backend_type, location);
+    }
+  }
+}
 
-// }  // End test namespace
-// }  // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

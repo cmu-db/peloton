@@ -16,7 +16,7 @@
 
 #include "common/logger.h"
 #include "common/timer.h"
-#include "common/macros.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -42,7 +42,10 @@ void Sorter::Init(ComparisonFunction func, uint32_t tuple_size) {
   tuple_size_ = tuple_size;
   cmp_func_ = func;
 
-  buffer_start_ = reinterpret_cast<char *>(malloc(kInitialBufferSize));
+  auto &storage_manager = storage::StorageManager::GetInstance();
+
+  buffer_start_ = reinterpret_cast<char *>(
+      storage_manager.Allocate(BackendType::MM, kInitialBufferSize));
   buffer_pos_ = buffer_start_;
   buffer_end_ = buffer_start_ + kInitialBufferSize;
 
@@ -87,7 +90,8 @@ void Sorter::Sort() {
 // Release any memory we allocated from the storage manager.
 void Sorter::Destroy() {
   if (buffer_start_ != nullptr) {
-    free(buffer_start_);
+    auto &storage_manager = storage::StorageManager::GetInstance();
+    storage_manager.Release(BackendType::MM, buffer_start_);
   }
   buffer_start_ = buffer_pos_ = buffer_end_ = nullptr;
 }
@@ -111,7 +115,10 @@ void Sorter::Resize() {
   LOG_DEBUG("Resizing sorter from %lu bytes to %lu bytes ...", curr_alloc_size,
             next_alloc_size);
 
-  char *new_buffer_start = reinterpret_cast<char *>(malloc(next_alloc_size));
+  auto &storage_manager = storage::StorageManager::GetInstance();
+
+  char *new_buffer_start = reinterpret_cast<char *>(
+      storage_manager.Allocate(BackendType::MM, next_alloc_size));
 
   // Now copy the previous buffer into the new area. Note that we only need
   // to copy over the USED space into the new space.
@@ -124,7 +131,7 @@ void Sorter::Resize() {
   buffer_end_ = buffer_start_ + next_alloc_size;
 
   // Release old buffer
-  free(old_buffer_start);
+  storage_manager.Release(BackendType::MM, old_buffer_start);
 }
 
 //===----------------------------------------------------------------------===//
