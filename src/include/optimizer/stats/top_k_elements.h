@@ -57,12 +57,15 @@ class TopKElements {
      * NON_TYPE: no type / not initialized
      * INT_TYPE: integer
      * STR_TYPE: string
+     * DEC_TYPE: decimal
+     *
+     * store decimal values as strings here but maintaining the type info
      */
-    enum class ElemType { NON_TYPE, INT_TYPE, STR_TYPE };
+    enum class ElemType { NON_TYPE, INT_TYPE, STR_TYPE, DEC_TYPE };
 
     ElemType item_type;
     int64_t int_item;
-    std::string str_item;
+    std::string str_item;  // encodes both string and decimal
 
     /*
      * Constructors
@@ -73,11 +76,13 @@ class TopKElements {
     ApproxTopEntryElem(int64_t intItem)
         : item_type{ElemType::INT_TYPE}, int_item{intItem}, str_item{""} {}
 
-    ApproxTopEntryElem(const char * strItem)
-        : item_type{ElemType::STR_TYPE}, int_item{-1}, str_item{strItem} {}
+    ApproxTopEntryElem(const char* strItem,
+                       ApproxTopEntryElem::ElemType type = ElemType::STR_TYPE)
+        : item_type{type}, int_item{-1}, str_item{strItem} {}
 
-    ApproxTopEntryElem(std::string strItem)
-        : item_type{ElemType::STR_TYPE}, int_item{-1}, str_item{strItem} {}
+    ApproxTopEntryElem(std::string strItem,
+                       ApproxTopEntryElem::ElemType type = ElemType::STR_TYPE)
+        : item_type{type}, int_item{-1}, str_item{strItem} {}
 
     /*
      * Overriding operator ==
@@ -87,6 +92,7 @@ class TopKElements {
         switch (item_type) {
           case ElemType::INT_TYPE:
             return int_item == other.int_item;
+          case ElemType::DEC_TYPE:
           case ElemType::STR_TYPE:
             if (str_item.compare(other.str_item) == 0) {
               return true;
@@ -313,6 +319,10 @@ class TopKElements {
             val =
                 type::ValueFactory::GetVarcharValue(t.approx_top_elem.str_item);
             break;
+          case ApproxTopEntryElem::ElemType::DEC_TYPE:
+            val = type::ValueFactory::GetDecimalValue(
+                std::stod(t.approx_top_elem.str_item));
+            break;
           default:
             break;
         }
@@ -350,6 +360,10 @@ class TopKElements {
             case ApproxTopEntryElem::ElemType::STR_TYPE:
               val = type::ValueFactory::GetVarcharValue(
                   t.approx_top_elem.str_item);
+              break;
+            case ApproxTopEntryElem::ElemType::DEC_TYPE:
+              val = type::ValueFactory::GetDecimalValue(
+                  std::stod(t.approx_top_elem.str_item));
               break;
             default:
               break;
@@ -533,24 +547,28 @@ class TopKElements {
     AddFreqItem(e);
   }
 
-  void Add(const char* item, int count = 1) {
+  void Add(const char* item, int count = 1,
+           ApproxTopEntryElem::ElemType type =
+               ApproxTopEntryElem::ElemType::STR_TYPE) {
     // Increment the count for this item in the Count-Min sketch
     cmsketch.Add(item, count);
 
     // Estimate the frequency of this item using the sketch
     // Add it to the queue
-    ApproxTopEntryElem elem{std::string(item)};
+    ApproxTopEntryElem elem{std::string(item), type};
     ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item));
     AddFreqItem(e);
   }
 
-  void Add(std::string item, int count = 1) {
+  void Add(std::string item, int count = 1,
+           ApproxTopEntryElem::ElemType type =
+               ApproxTopEntryElem::ElemType::STR_TYPE) {
     // Increment the count for this item in the Count-Min sketch
     cmsketch.Add(item.c_str(), count);
 
     // Estimate the frequency of this item using the sketch
     // Add it to the queue
-    ApproxTopEntryElem elem{item};
+    ApproxTopEntryElem elem{item, type};
     ApproxTopEntry e(elem, cmsketch.EstimateItemCount(item.c_str()));
     AddFreqItem(e);
   }
@@ -563,32 +581,37 @@ class TopKElements {
       case type::Type::TINYINT:
         int8_t n_8;
         n_8 = value.GetAs<int8_t>();
-        Add((int64_t) n_8, 1);
+        Add((int64_t)n_8, 1);
         break;
       case type::Type::SMALLINT:
         int32_t n_16;
         n_16 = value.GetAs<int16_t>();
-        Add((int64_t) n_16, 1);
+        Add((int64_t)n_16, 1);
         break;
       case type::Type::INTEGER:
       case type::Type::PARAMETER_OFFSET:
       case type::Type::TIMESTAMP:
         int32_t n_32;
         n_32 = value.GetAs<int32_t>();
-        Add((int64_t) n_32, 1);
+        Add((int64_t)n_32, 1);
         break;
       case type::Type::BIGINT:
         int64_t n_64;
         n_64 = value.GetAs<int64_t>();
         Add(n_64, 1);
         break;
-      case type::Type::DECIMAL:
-      case type::Type::VARCHAR:
-      default:
-        // valgrind reports error on value.ToString().c_str();
-        std::string s0 = value.ToString();
-        Add(s0, 1);
+      case type::Type::DECIMAL: {
+        std::string sd = value.ToString();
+        Add(sd, 1, ApproxTopEntryElem::ElemType::DEC_TYPE);
         break;
+      }
+      case type::Type::VARCHAR:
+      default: {
+        // valgrind reports error on value.ToString().c_str();
+        std::string sv = value.ToString();
+        Add(sv, 1);
+        break;
+      }
     }
   }
 

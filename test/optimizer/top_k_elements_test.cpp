@@ -120,7 +120,7 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
 }
 
 TEST_F(TopKElementsTests, WrapperTest) {
-  CountMinSketch sketch(10, 20, 0);
+  CountMinSketch sketch(0.01, 0.1, 0);
 
   const int k = 5;
   TopKElements top_k_elements(sketch, k);
@@ -160,8 +160,5 @@ TEST_F(TopKElementsTests, UniformTest) {
 
   top_k_elements.PrintAllOrderedMaxFirst();
 }
-
 }
 }
-
-
