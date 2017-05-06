@@ -275,7 +275,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   LOG_INFO("================================================");
   LOG_INFO("============Starting to insert records==========");
 
-  std::string q1 = "INSERT INTO test_table VALUES (1, 10, NULL);";
+  std::string q1 = "INSERT INTO test_table VALUES (1, 10, DEFAULT);";
 
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("INSERT", q1));

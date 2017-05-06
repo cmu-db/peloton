@@ -223,6 +223,9 @@ struct CreateStatement : TableRefStatement {
   std::vector<ColumnDefinition*>* columns;
   std::vector<char*>* index_attrs = nullptr;
 
+  // TODO: Put all multi-column constraints here
+  
+
   IndexType index_type;
 
   char* index_name = nullptr;
