@@ -36,12 +36,12 @@ class OperatorTransformerTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery(
         "CREATE TABLE test2(a2 INT PRIMARY KEY, b2 INT, c2 INT);");
   }
-  std::shared_ptr<OperatorExpression> GetOpExpression(
-      std::string query, parser::SelectStatement* stmt) {
+  std::shared_ptr<OperatorExpression> TransformToOpExpression(
+      std::string query, std::unique_ptr<parser::SQLStatementList>& stmt_list) {
     // Parse query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto parsed_stmt = peloton_parser.BuildParseTree(query);
-    stmt = reinterpret_cast<parser::SelectStatement*>(parsed_stmt->GetStatement(0));
+    stmt_list = std::move(peloton_parser.BuildParseTree(query));
+    auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
 
     // Bind query
     binder::BindNodeVisitor binder;
@@ -51,19 +51,21 @@ class OperatorTransformerTests : public PelotonTest {
     return std::move(transformer.ConvertToOpExpression(stmt));
   }
 
-  void CheckJoinPredicate(expression::AbstractExpression* join_predicate,
+  void CheckPredicate(expression::AbstractExpression* predicate,
                 std::string table_names,
-                std::string true_join_predicates) {
+                std::string true_predicates) {
     // Parse true predicates
     auto peloton_parser = parser::PostgresParser::GetInstance();
     auto ref_query = StringUtil::Format(
-        "SELECT %s FROM %s", true_join_predicates.c_str(), table_names.c_str());
+        "SELECT %s FROM %s", true_predicates.c_str(), table_names.c_str());
     auto parsed_stmt = peloton_parser.BuildParseTree(ref_query);
     auto ref_stmt = parsed_stmt->GetStatement(0);
     binder::BindNodeVisitor binder;
     binder.BindNameToNode(ref_stmt);
     auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
-    EXPECT_TRUE(join_predicate->Equals(ref_expr));
+    LOG_INFO("Expected: %s", true_predicates.c_str());
+    LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
+    EXPECT_TRUE(predicate->Equals(ref_expr));
   }
 
   virtual void TearDown() override {
@@ -78,24 +80,55 @@ class OperatorTransformerTests : public PelotonTest {
   }
 };
 
-TEST_F(OperatorTransformerTests, JoinTransformationTest){
-  parser::SelectStatement* stmt = nullptr;
+TEST_F(OperatorTransformerTests, JoinTransformationTest) {
+  std::unique_ptr<parser::SQLStatementList> stmt_list;
 
   // Test table list
-  auto op_expr = GetOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt);
+  auto op_expr = TransformToOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt_list);
+  // Check Where
+  auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  EXPECT_EQ(stmt->where_clause, nullptr);
+  // Check Join Predicates
   auto op = op_expr->Op().As<LogicalInnerJoin>();
-  CheckJoinPredicate(op->join_predicate.get(), "test, test2", "test.a = test2.a2");
+  CheckPredicate(op->join_predicate.get(), "test, test2", "test.a = test2.a2");
+
 
   // Test WHERE combined with JOIN ON
-  op_expr = GetOpExpression(
-      "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2", stmt);
+  op_expr = TransformToOpExpression(
+      "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2", stmt_list);
+  // Check Where
+  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
-  EXPECT_TRUE(op!= nullptr);
-  CheckJoinPredicate(op->join_predicate.get(),
-                     "test, test2", "test.a = test2.a2 AND test.b = test2.b2");
+  // Check Join Predicates
+  EXPECT_TRUE(op != nullptr);
+  CheckPredicate(op->join_predicate.get(),
+                 "test, test2", "test.a = test2.a2 AND test.b = test2.b2");
+
+  // Test remaining expression in WHERE
+  op_expr = TransformToOpExpression(
+      "SELECT * FROM test as A, test as B, test as C "
+          "WHERE (A.a = B.b OR B.b = C.c) AND A.c = B.b AND A.b = 1 AND B.c + 1 = 10", stmt_list);
+  op = op_expr->Op().As<LogicalInnerJoin>();
+  // Check Where
+  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  EXPECT_NE(stmt->where_clause, nullptr);
+  CheckPredicate(stmt->where_clause,
+                 "test as A, test as B, test as C", "A.b = 1 AND B.c + 1 = 10");
+  EXPECT_TRUE(op != nullptr);
+  // Check Join Predicates
+  CheckPredicate(op->join_predicate.get(),
+                 "test as A, test as B, test as C", "A.a = B.b OR B.b = C.c");
+  auto childern = op_expr->Children();
+  auto left_op = childern[0]->Op().As<LogicalInnerJoin>();
+  EXPECT_TRUE(left_op != nullptr);
+  CheckPredicate(left_op->join_predicate.get(),
+                 "test as A, test as B, test as C", "A.c = B.b");
+
+
 
   // Test multi-way JOIN with WHERE
-  op_expr = GetOpExpression(
+  op_expr = TransformToOpExpression(
       "SELECT * FROM "
           "test as A "
           "JOIN "
@@ -104,19 +137,22 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest){
           "JOIN "
           "test as C "
           "  ON A.a = C.a "
-          "WHERE B.c = C.c", stmt);
-  EXPECT_EQ(stmt, nullptr);
+          "WHERE B.c = C.c", stmt_list);
+  // Check Where
+  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
-  EXPECT_TRUE(op!= nullptr);
-  CheckJoinPredicate(op->join_predicate.get(),
-                     "test as A, test as B, test as C",
-                     "B.c = C.c AND A.a = C.a");
-  auto childern = op_expr->Children();
-  auto left_op = childern[0]->Op().As<LogicalInnerJoin>();
-  EXPECT_TRUE(left_op!= nullptr);
-  CheckJoinPredicate(left_op->join_predicate.get(),
-                     "test as A, test as B, test as C",
-                     "A.b = B.b");
+  // Check Join Predicates
+  EXPECT_TRUE(op != nullptr);
+  CheckPredicate(op->join_predicate.get(),
+                 "test as A, test as B, test as C",
+                 "B.c = C.c AND A.a = C.a");
+  childern = op_expr->Children();
+  left_op = childern[0]->Op().As<LogicalInnerJoin>();
+  EXPECT_TRUE(left_op != nullptr);
+  CheckPredicate(left_op->join_predicate.get(),
+                 "test as A, test as B, test as C",
+                 "A.b = B.b");
 }
 
 } /* namespace test */

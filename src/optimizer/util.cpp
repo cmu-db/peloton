@@ -208,7 +208,7 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     if (table_alias_set.size() > 1)
       join_predicates.emplace_back(MultiTableExpression(predicate->Copy(), table_alias_set));
     else
-      where_predicates.emplace_back(expr->Copy());
+      where_predicates.emplace_back(predicate->Copy());
   }
 }
 
