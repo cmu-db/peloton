@@ -62,7 +62,7 @@ class Memo {
   Group* GetGroupByID(GroupID id);
 
  private:
-  GroupID AddNewGroup();
+  GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
   std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
       group_expressions_;

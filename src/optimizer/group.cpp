@@ -18,7 +18,8 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id) : id_(id) {
+Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
+    : id_(id), table_aliases_(std::move(table_aliases)) {
   has_explored_ = false;
   has_implemented_ = false;
 }

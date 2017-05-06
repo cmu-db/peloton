@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/memo.h"
-
 #include "optimizer/operators.h"
 
 #include <cassert>
@@ -55,7 +54,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     // create a new group if none specified
     GroupID group_id;
     if (target_group == UNDEFINED_GROUP) {
-      group_id = AddNewGroup();
+      group_id = AddNewGroup(gexpr);
     } else {
       group_id = target_group;
     }
@@ -69,9 +68,24 @@ const std::vector<Group> &Memo::Groups() const { return groups_; }
 
 Group *Memo::GetGroupByID(GroupID id) { return &(groups_[id]); }
 
-GroupID Memo::AddNewGroup() {
+GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
-  groups_.emplace_back(new_group_id);
+  // Find out the table alias that this group represents
+  std::unordered_set<std::string> table_aliases;
+  if (gexpr->Op().type() == OpType::Get) {
+    // For base group, the table alias can get directly from logical get
+    const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
+    table_aliases.insert(logical_get->table_alias);
+  } else {
+    // For other groups, need to aggregate the table alias from children
+    for (auto child_group_id : gexpr->GetChildGroupIDs()) {
+      Group *child_group = GetGroupByID(child_group_id);
+      for (auto &table_alias : child_group->GetTableAliases()) {
+        table_aliases.insert(table_alias);
+      }
+    }
+  }
+  groups_.emplace_back(new_group_id, std::move(table_aliases));
   return new_group_id;
 }
 
