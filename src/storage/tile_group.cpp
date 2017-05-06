@@ -315,6 +315,9 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
+// Compress all the tiles in the TileGroup only if the TileGroup is full.
+// If any tile is successfully compressed, set the compression status to true.
+// A Compressed tile is immutable.
 void TileGroup::CompressTiles() {
   oid_t num_tiles = tiles.size();
   oid_t next_tuple_slot = tile_group_header->GetCurrentNextTupleSlot();

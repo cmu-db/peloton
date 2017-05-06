@@ -45,7 +45,7 @@ class Tile;
 /**
  * Represents a CompressedTile.
  *
- * CompressedTiles are only instantiated via TileGroup. 
+ * CompressedTiles are only instantiated via TileGroup.
  * TileGroup compresses existing tile on a per Tile basis.
  *
  * NOTE: MVCC is implemented on the shared TileGroupHeader.
@@ -139,7 +139,7 @@ class CompressedTile : public Tile {
   }
 
   type::Value GetUncompressedValue(oid_t column_id,
-                                          type::Value compressed_value);
+                                   type::Value compressed_value);
 
   oid_t GetColumnFromOffset(const size_t column_offset) {
     return column_offset_map[column_offset];

@@ -96,10 +96,9 @@ values. Each uncompressed value, should be equal to the original value.
 
 Note that as opposed to the previous test, we dont do a string comparison, but
 convert the values from string to floats and then do a compare. This used
-because in string compare : 80.000000 and 80 may fail even though they represent the same value.
+because in string compare : 80.000000 and 80 may fail even though they represent
+the same value.
 */
-
-
 
 TEST_F(CompressionTest, DecimalTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

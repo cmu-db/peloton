@@ -1024,6 +1024,9 @@ storage::TileGroup *DataTable::TransformTileGroup(
   return new_tile_group.get();
 }
 
+// Compress all the TileGroups of the DataTable.
+// Currently called manually.
+// TODO: Call it while restructuring TileGroups
 void DataTable::CompressTable() {
   oid_t tilegroups_size = tile_groups_.GetSize();
   for (oid_t i = 0; i < tilegroups_size; i++) {

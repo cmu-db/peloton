@@ -203,4 +203,3 @@ TEST_F(CompressionDictionaryTest, SizeTest) {
 }
 }
 }
-

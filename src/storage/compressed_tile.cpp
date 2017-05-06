@@ -36,7 +36,7 @@ bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
 
-//Constructor: Call base constructor and set is_compressed to false.
+// Constructor: Call base constructor and set is_compressed to false.
 CompressedTile::CompressedTile(BackendType backend_type,
                                TileGroupHeader *tile_header,
                                const catalog::Schema &tuple_schema,
@@ -47,6 +47,19 @@ CompressedTile::CompressedTile(BackendType backend_type,
 }
 
 CompressedTile::~CompressedTile() {}
+
+// CompressTile
+// @brief: This function identifies the columns that can be compressed and
+//         determines the smallest compression type that can be used.
+//         The compression scheme for each type:
+//           1. INTEGER Types other than TINYINT - Find the median and store
+//              it as the base_value, store all the remaining values in types
+//              of smaller sizes.
+//           2. DECIMAL - Same as INTEGER Types, additionally store the
+//              maximum exponent.
+//           3. VARCHAR - Deduplicate the VARCHAR columns using a Cuckoo Hash.
+//        For each compressed column, store the metadata for retrieving the
+//        original values.
 
 void CompressedTile::CompressTile(Tile *tile) {
   auto allocated_tuple_count = tile->GetAllocatedTupleCount();
@@ -170,6 +183,7 @@ void CompressedTile::CompressTile(Tile *tile) {
         storage_manager.Allocate(backend_type, tile_size));
 
     PL_ASSERT(data != NULL);
+
     // zero out the data
     PL_MEMSET(data, 0, tile_size);
 
@@ -207,10 +221,10 @@ void CompressedTile::CompressTile(Tile *tile) {
 }
 
 /*
-ConvertDecimalColumn()
+ConvertDecimalColumn
 
-@brief : Returns the decimal column as a vector of integer values, by  
-         multiplying each of the decimal values in a column with the value of 
+@brief : Returns the decimal column as a vector of integer values, by
+         multiplying each of the decimal values in a column with the value of
          the exponent returned by the GetMaxExponentLength() function
 */
 
@@ -233,7 +247,7 @@ std::vector<type::Value> CompressedTile::ConvertDecimalColumn(
 }
 
 /*
-GetIntegerColumnValues()
+GetIntegerColumnValues
 
 @brief : Returns the integer column values of the column as a vector
 */
@@ -258,7 +272,7 @@ std::vector<type::Value> CompressedTile::GetIntegerColumnValues(
 /*
 GetMaxExponentLength()
 
-@brief : Returns the exponent needed to convert the entire decimal column to 
+@brief : Returns the exponent needed to convert the entire decimal column to
          an integer column.
 */
 
@@ -292,10 +306,12 @@ type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
 /*
 CompressColumn()
 
-@brief : The following function is used to compress all columns of a datatable 
-         except VARCHAR. It sorts the column and sets the median value as the base value for the delta encoding. The remainig values are stored as offsets from this base value.
+@brief : The following function is used to compress all columns of a datatable
+         except VARCHAR. It sorts the column and sets the median value as the
+base value for the delta encoding. The remainig values are stored as offsets
+from this base value.
 
-@return :The modified values of the column i.e. the offsets of the values of 
+@return :The modified values of the column i.e. the offsets of the values of
          the columns in a vector.
 */
 
@@ -427,7 +443,8 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
 /*
 InsertTuple()
 
-@brief : The following function prevents insertion of tuples in compressed tiles.
+@brief : The following function prevents insertion of tuples in compressed
+tiles.
 */
 
 void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
@@ -442,7 +459,8 @@ void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
 /*
 GetValue()
 
-@brief : The following function checks if the tile is compressed. If yes, return the uncompressed value, else return the deserializedValue.
+@brief : The following function checks if the tile is compressed. If yes, return
+the uncompressed value, else return the deserializedValue.
 
 @return : Actual Value(uncompressed) of the tuple at tuple offset.
 */
@@ -547,29 +565,24 @@ type::Value CompressedTile::GetUncompressedVarcharValue(
   return value;
 }
 
-
 type::Value CompressedTile::GetUncompressedValue(oid_t column_id,
-                                          type::Value compressed_value) {
+                                                 type::Value compressed_value) {
+  if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
+    type::Value base_value = compressed_column_map[column_id].second;
 
-    if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
-      type::Value base_value = compressed_column_map[column_id].second;
-
-      if (base_value.GetTypeId() == type::Type::VARCHAR) {
-        return GetUncompressedVarcharValue(column_id, compressed_value);
-      }
-
-
-      if(base_value.GetTypeId() == type::Type::DECIMAL) {
-        compressed_value = compressed_value.CastAs(type::Type::DECIMAL)
-            .Divide(exponent_column_map[column_id]);
-      }
-
-      return base_value.Add(compressed_value);
+    if (base_value.GetTypeId() == type::Type::VARCHAR) {
+      return GetUncompressedVarcharValue(column_id, compressed_value);
     }
 
-    return type::Value();
+    if (base_value.GetTypeId() == type::Type::DECIMAL) {
+      compressed_value = compressed_value.CastAs(type::Type::DECIMAL)
+                             .Divide(exponent_column_map[column_id]);
+    }
+
+    return base_value.Add(compressed_value);
   }
 
+  return type::Value();
 }
 }
-
+}
