@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// table_stats_test.cpp
+// table_stats_collector_test.cpp
 //
-// Identification: test/optimizer/table_stats_test.cpp
+// Identification: test/optimizer/table_stats_collector_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,8 +15,8 @@
 #include <memory>
 
 #include "common/logger.h"
-#include "optimizer/stats/table_stats.h"
-#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats_collector.h"
+#include "optimizer/stats/column_stats_collector.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
 #include "catalog/catalog.h"
@@ -34,18 +34,18 @@ namespace test {
 
 using namespace optimizer;
 
-class TableStatsTests : public PelotonTest {};
+class TableStatsCollectorTests : public PelotonTest {};
 
-TEST_F(TableStatsTests, BasicTests) {
+TEST_F(TableStatsCollectorTests, BasicTests) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable());
-  TableStats table_stats{data_table.get()};
-  table_stats.CollectColumnStats();
-  EXPECT_EQ(table_stats.GetActiveTupleCount(), 0);
-  EXPECT_EQ(table_stats.GetColumnCount(), 4);
+  TableStatsCollector table_stats_collector{data_table.get()};
+  table_stats_collector.CollectColumnStats();
+  EXPECT_EQ(table_stats_collector.GetActiveTupleCount(), 0);
+  EXPECT_EQ(table_stats_collector.GetColumnCount(), 4);
 }
 
-TEST_F(TableStatsTests, SingleColumnTableTest) {
+TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -62,19 +62,19 @@ TEST_F(TableStatsTests, SingleColumnTableTest) {
   }
 
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test");
-  TableStats stats{table};
+  TableStatsCollector stats{table};
   stats.CollectColumnStats();
 
   EXPECT_EQ(stats.GetColumnCount(), 1);
   EXPECT_EQ(stats.GetActiveTupleCount(), nrow);
 
-  auto column_stats = stats.GetColumnStats(0);
-  EXPECT_EQ(column_stats->GetFracNull(), 0);
-  uint64_t cardinality = column_stats->GetCardinality();
-  double cardinality_error = column_stats->GetCardinalityError();
+  auto column_stats_collector = stats.GetColumnStats(0);
+  EXPECT_EQ(column_stats_collector->GetFracNull(), 0);
+  uint64_t cardinality = column_stats_collector->GetCardinality();
+  double cardinality_error = column_stats_collector->GetCardinalityError();
   EXPECT_GE(cardinality, nrow * (1 - cardinality_error));
   EXPECT_LE(cardinality, nrow * (1 + cardinality_error));
-  std::vector<double> bounds = column_stats->GetHistogramBound();
+  std::vector<double> bounds = column_stats_collector->GetHistogramBound();
   EXPECT_GE(bounds.size(), 1);
 
   // Free the database
@@ -85,7 +85,7 @@ TEST_F(TableStatsTests, SingleColumnTableTest) {
 
 // Table with four columns with types Integer, Varchar, Decimal and Timestamp
 // BOOLEAN insertion seems not supported.
-TEST_F(TableStatsTests, MultiColumnTableTest) {
+TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -108,26 +108,26 @@ TEST_F(TableStatsTests, MultiColumnTableTest) {
   }
 
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test");
-  TableStats stats{table};
+  TableStatsCollector stats{table};
   stats.CollectColumnStats();
 
   EXPECT_EQ(stats.GetColumnCount(), 4);
   EXPECT_EQ(stats.GetActiveTupleCount(), nrow);
 
   // Varchar stats
-  ColumnStats* b_stats = stats.GetColumnStats(1);
+  ColumnStatsCollector* b_stats = stats.GetColumnStats(1);
   EXPECT_EQ(b_stats->GetFracNull(), 0);
   EXPECT_EQ(b_stats->GetCardinality(), 2);
   EXPECT_EQ((b_stats->GetHistogramBound()).size(), 0); // varchar has no histogram dist
 
   // Double stats
-  ColumnStats* c_stats = stats.GetColumnStats(2);
+  ColumnStatsCollector* c_stats = stats.GetColumnStats(2);
   EXPECT_EQ(c_stats->GetFracNull(), 0);
   EXPECT_EQ(c_stats->GetCardinality(), 1);
   EXPECT_EQ(c_stats->GetHistogramBound().size() + 1, 1);
 
   // Timestamp stats
-  ColumnStats* d_stats = stats.GetColumnStats(3);
+  ColumnStatsCollector* d_stats = stats.GetColumnStats(3);
   EXPECT_EQ(d_stats->GetFracNull(), 0);
   EXPECT_EQ(d_stats->GetCardinality(), 2);
   EXPECT_EQ(d_stats->GetHistogramBound().size() + 1, 2);

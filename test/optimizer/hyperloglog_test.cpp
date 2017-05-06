@@ -17,7 +17,7 @@
 #include "optimizer/stats/hyperloglog.h"
 
 #include "common/logger.h"
-#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/column_stats_collector.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"

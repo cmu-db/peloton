@@ -16,7 +16,7 @@
 #define protected public
 
 #include "optimizer/stats/stats_storage.h"
-
+#include "optimizer/stats/column_stats.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/tile.h"
@@ -119,15 +119,15 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
   auto data_table = InitializeTestTable();
 
   // Collect stats.
-  std::unique_ptr<optimizer::TableStats> table_stats(
-      new TableStats(data_table.get()));
-  table_stats->CollectColumnStats();
+  std::unique_ptr<optimizer::TableStatsCollector> table_stats_collector(
+      new TableStatsCollector(data_table.get()));
+  table_stats_collector->CollectColumnStats();
 
   // Insert stats.
   auto catalog = catalog::Catalog::GetInstance();
   (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->InsertOrUpdateTableStats(data_table.get(), table_stats.get());
+  stats_storage->InsertOrUpdateTableStats(data_table.get(), table_stats_collector.get());
 
   VerifyAndPrintColumnStats(data_table.get(), 4);
 }

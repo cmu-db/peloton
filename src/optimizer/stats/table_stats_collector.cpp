@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// table_stats.cpp
+// table_stats_collector.cpp
 //
-// Identification: src/optimizer/stats/table_stats.cpp
+// Identification: src/optimizer/stats/table_stats_collector.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/stats/table_stats.h"
+#include "optimizer/stats/table_stats_collector.h"
 
 #include <memory>
 
@@ -23,15 +23,15 @@
 namespace peloton {
 namespace optimizer {
 
-TableStats::TableStats(storage::DataTable* table)
+TableStatsCollector::TableStatsCollector(storage::DataTable* table)
     : table_(table),
-      column_stats_{},
+      column_stats_collectors_{},
       active_tuple_count_{0},
       column_count_{0} {}
 
-TableStats::~TableStats() {}
+TableStatsCollector::~TableStatsCollector() {}
 
-void TableStats::CollectColumnStats() {
+void TableStatsCollector::CollectColumnStats() {
   schema_ = table_->GetSchema();
   column_count_ = schema_->GetColumnCount();
 
@@ -40,7 +40,7 @@ void TableStats::CollectColumnStats() {
     return;
   }
 
-  InitColumnStats();
+  InitColumnStatsCollectors();
 
   size_t tile_group_count = table_->GetTileGroupCount();
   // Collect stats for all tile groups.
@@ -57,26 +57,26 @@ void TableStats::CollectColumnStats() {
         // Collect stats for all columns.
         for (oid_t column_id = 0; column_id < column_count_; column_id++) {
           type::Value value = tile_group->GetValue(tuple_id, column_id);
-          column_stats_[column_id]->AddValue(value);
+          column_stats_collectors_[column_id]->AddValue(value);
         } /* column */
       }
     } /* tuple */
   }   /* tile group */
 }
 
-void TableStats::InitColumnStats() {
+void TableStatsCollector::InitColumnStatsCollectors() {
   oid_t database_id = table_->GetDatabaseOid();
   oid_t table_id = table_->GetOid();
   for (oid_t column_id = 0; column_id < column_count_; column_id++) {
-    std::unique_ptr<ColumnStats> colstats(new ColumnStats(
+    std::unique_ptr<ColumnStatsCollector> colstats(new ColumnStatsCollector(
         database_id, table_id, column_id, schema_->GetType(column_id)));
-    column_stats_.push_back(std::move(colstats));
+    column_stats_collectors_.push_back(std::move(colstats));
   }
 }
 
-ColumnStats* TableStats::GetColumnStats(oid_t column_id) {
-  PL_ASSERT(column_id < column_stats_.size());
-  return column_stats_[column_id].get();
+ColumnStatsCollector* TableStatsCollector::GetColumnStats(oid_t column_id) {
+  PL_ASSERT(column_id < column_stats_collectors_.size());
+  return column_stats_collectors_[column_id].get();
 }
 
 }  // namespace optimizer

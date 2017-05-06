@@ -12,7 +12,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
-#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/column_stats_collector.h"
 #include "type/type.h"
 
 namespace peloton {

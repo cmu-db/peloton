@@ -22,6 +22,7 @@
 #include "storage/data_table.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/stats_util.h"
+#include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/tuple_samples_storage.h"
 #include "catalog/column_catalog.h"
 #include "catalog/catalog.h"

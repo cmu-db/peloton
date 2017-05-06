@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "optimizer/stats/table_stats.h"
-#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats_collector.h"
+#include "optimizer/stats/column_stats_collector.h"
 
 #include <sstream>
 
@@ -31,7 +31,7 @@ namespace optimizer {
 
 using ValueFrequencyPair = std::pair<type::Value, double>;
 
-class ColumnStatsSet;
+class ColumnStats;
 
 class StatsStorage {
  public:
@@ -47,7 +47,7 @@ class StatsStorage {
   /* Functions for adding, updating and quering stats */
 
   void InsertOrUpdateTableStats(storage::DataTable *table,
-                                TableStats *table_stats,
+                                TableStatsCollector *table_stats_collector,
                                 concurrency::Transaction *txn = nullptr);
 
   void InsertOrUpdateColumnStats(oid_t database_id, oid_t table_id,
@@ -58,7 +58,7 @@ class StatsStorage {
                                  std::string histogram_bounds,
                                  concurrency::Transaction *txn = nullptr);
 
-  std::unique_ptr<ColumnStatsSet> GetColumnStatsByID(oid_t database_id,
+  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
                                                      oid_t table_id,
                                                      oid_t column_id);
 
@@ -105,6 +105,7 @@ class StatsStorage {
     return double_array;
   }
 
+
   std::pair<std::string, std::string> ConvertValueFreqArrayToStrings(
       std::vector<ValueFrequencyPair> &val_freqs) {
     size_t array_size = val_freqs.size();
@@ -129,25 +130,5 @@ class StatsStorage {
   }
 };
 
-class ColumnStatsSet {
- public:
-  ColumnStatsSet(size_t num_row, double cardinality, double frac_null,
-                 std::vector<double> most_common_vals,
-                 std::vector<double> most_common_freqs,
-                 std::vector<double> histogram_bounds)
-      : num_row(num_row),
-        cardinality(cardinality),
-        frac_null(frac_null),
-        most_common_vals(most_common_vals),
-        most_common_freqs(most_common_freqs),
-        histogram_bounds(histogram_bounds) {}
-
-  size_t num_row;
-  double cardinality;
-  double frac_null;
-  std::vector<double> most_common_vals;
-  std::vector<double> most_common_freqs;
-  std::vector<double> histogram_bounds;
-};
 }
 }
