@@ -542,8 +542,7 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       break;
     }
     case T_NullTest: {
-      result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+      expr = NullTestTransform(reinterpret_cast<NullTest*>(node));
       break;
     }
     default: {
@@ -612,9 +611,6 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     delete right_expr;
     throw NotImplementedException(StringUtil::Format(
         "A_Expr Transform for type %d is not implemented yet...\n", type_id));
-  }
-  else if (type_id == 19) {
-    result = nullptr;
   }
   return result;
 }
