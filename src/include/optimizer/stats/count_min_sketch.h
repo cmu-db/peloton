@@ -14,6 +14,7 @@
 
 #include "common/logger.h"
 #include "murmur3/MurmurHash3.h"
+#include "farmhash/farmhash.h"
 
 #include <cmath>
 #include <vector>
