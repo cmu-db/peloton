@@ -36,18 +36,19 @@ class OperatorTransformerTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery(
         "CREATE TABLE test2(a2 INT PRIMARY KEY, b2 INT, c2 INT);");
   }
-  std::shared_ptr<OperatorExpression> GetOpExpression(std::string query) {
+  std::shared_ptr<OperatorExpression> GetOpExpression(
+      std::string query, parser::SelectStatement* stmt) {
     // Parse query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto parsed_stmt = peloton_parser.BuildParseTree(query);
-    auto select_stmt = parsed_stmt->GetStatement(0);
+    stmt = reinterpret_cast<parser::SelectStatement*>(parsed_stmt->GetStatement(0));
 
     // Bind query
     binder::BindNodeVisitor binder;
-    binder.BindNameToNode(select_stmt);
+    binder.BindNameToNode(stmt);
 
     QueryToOperatorTransformer transformer;
-    return std::move(transformer.ConvertToOpExpression(select_stmt));
+    return std::move(transformer.ConvertToOpExpression(stmt));
   }
 
   void CheckJoinPredicate(expression::AbstractExpression* join_predicate,
@@ -78,20 +79,20 @@ class OperatorTransformerTests : public PelotonTest {
 };
 
 TEST_F(OperatorTransformerTests, JoinTransformationTest){
-  std::string tables = "test, test2";
+  parser::SelectStatement* stmt = nullptr;
 
   // Test table list
-  auto op_expr = GetOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2");
+  auto op_expr = GetOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt);
   auto op = op_expr->Op().As<LogicalInnerJoin>();
-  CheckJoinPredicate(op->join_predicate.get(), tables, "test.a = test2.a2");
+  CheckJoinPredicate(op->join_predicate.get(), "test, test2", "test.a = test2.a2");
 
   // Test WHERE combined with JOIN ON
   op_expr = GetOpExpression(
-      "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2");
+      "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2", stmt);
   op = op_expr->Op().As<LogicalInnerJoin>();
   EXPECT_TRUE(op!= nullptr);
   CheckJoinPredicate(op->join_predicate.get(),
-                     tables, "test.a = test2.a2 AND test.b = test2.b2");
+                     "test, test2", "test.a = test2.a2 AND test.b = test2.b2");
 
   // Test multi-way JOIN with WHERE
   op_expr = GetOpExpression(
@@ -103,7 +104,8 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest){
           "JOIN "
           "test as C "
           "  ON A.a = C.a "
-          "WHERE B.c = C.c");
+          "WHERE B.c = C.c", stmt);
+  EXPECT_EQ(stmt, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
   EXPECT_TRUE(op!= nullptr);
   CheckJoinPredicate(op->join_predicate.get(),
