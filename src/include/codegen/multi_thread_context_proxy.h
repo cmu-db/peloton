@@ -33,6 +33,7 @@ class MultiThreadContextProxy {
   static llvm::Function *GetThreadIdFunction(CodeGen &codegen);
   static llvm::Function *GetNotifyMasterFunction(CodeGen &codegen);
   static llvm::Function *GetBarrierWaitFunction(CodeGen &codegen);
+  static llvm::Function *GetAddLocalHashTableFunction(CodeGen &codegen);
 };
 
 

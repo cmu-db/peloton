@@ -286,12 +286,15 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
   // 2. Barrier wait
   // 3. Only thread0 create a global hash table in multi thread context, and merge all local hash tables.
   // 4. Barrier wait
-  // auto &codegen = GetCodeGen();
   // llvm::Value *multi_thread_context = codegen.GetArgument(1);
   // codegen.CallPrintf("Hash:barrier wait \n", {});
   // codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
   // codegen.CallPrintf("Hash:barrier pass \n", {});
 
+  // multithreaded
+  // auto &codegen = GetCodeGen();
+  // llvm::Value *multi_thread_context = codegen.GetArgument(1);
+  // codegen.CallFunc(MultiThreadContextProxy::GetAddLocalHashTableFunction(codegen), {multi_thread_context, LoadStatePtr(hash_table_id_)});
 
   // Check the join type
   if (join_plan.GetJoinType() == JoinType::INNER) {
