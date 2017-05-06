@@ -443,13 +443,13 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       false);
 
   // 3 table join
-  // TestUtil(
-  //     "SELECT test.a, test.b, test1.b, test2.c FROM test2 "
-  //     "JOIN test ON test.b = test2.b "
-  //     "JOIN test1 ON test2.c = test1.c",
-  //     {"1", "22", "0", "11", "2", "11", "333", "22", "2", "11", "333", "0", 
-  //      "4", "0", "0", "11"}, 
-  //     false);
+  TestUtil(
+      "SELECT test.a, test.b, test1.b, test2.c FROM test2 "
+      "JOIN test ON test.b = test2.b "
+      "JOIN test1 ON test2.c = test1.c",
+      {"1", "22", "0", "11", "2", "11", "333", "22", "2", "11", "333", "0", 
+       "4", "0", "0", "11"}, 
+      false);
 }
 
 }  // namespace test

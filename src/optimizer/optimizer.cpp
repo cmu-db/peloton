@@ -91,7 +91,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Run binder
   auto bind_node_visitor = make_shared<binder::BindNodeVisitor>();
   bind_node_visitor->BindNameToNode(parse_tree);
-
+  
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);
   GroupID root_id = gexpr->GetGroupID();
@@ -114,7 +114,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   // Reset memo after finishing the optimization
   Reset();
-
+  
   //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
   return move(best_plan);
 }
