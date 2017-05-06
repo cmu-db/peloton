@@ -206,6 +206,14 @@ void CompressedTile::CompressTile(Tile *tile) {
   }
 }
 
+/*
+ConvertDecimalColumn()
+
+@brief : Returns the decimal column as a vector of integer values, by  
+         multiplying each of the decimal values in a column with the value of 
+         the exponent returned by the GetMaxExponentLength() function
+*/
+
 std::vector<type::Value> CompressedTile::ConvertDecimalColumn(
     Tile *tile, oid_t column_id, type::Value exponent) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
@@ -224,6 +232,12 @@ std::vector<type::Value> CompressedTile::ConvertDecimalColumn(
   return values;
 }
 
+/*
+GetIntegerColumnValues()
+
+@brief : Returns the integer column values of the column as a vector
+*/
+
 std::vector<type::Value> CompressedTile::GetIntegerColumnValues(
     Tile *tile, oid_t column_id) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
@@ -240,6 +254,13 @@ std::vector<type::Value> CompressedTile::GetIntegerColumnValues(
   }
   return column_values;
 }
+
+/*
+GetMaxExponentLength()
+
+@brief : Returns the exponent needed to convert the entire decimal column to 
+         an integer column.
+*/
 
 type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
@@ -267,6 +288,16 @@ type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
 
   return current_max;
 }
+
+/*
+CompressColumn()
+
+@brief : The following function is used to compress all columns of a datatable 
+         except VARCHAR. It sorts the column and sets the median value as the base value for the delta encoding. The remainig values are stored as offsets from this base value.
+
+@return :The modified values of the column i.e. the offsets of the values of 
+         the columns in a vector.
+*/
 
 std::vector<type::Value> CompressedTile::CompressColumn(
     Tile *tile, oid_t column_id, std::vector<type::Value> column_values,
@@ -393,6 +424,12 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   return modified_values;
 }
 
+/*
+InsertTuple()
+
+@brief : The following function prevents insertion of tuples in compressed tiles.
+*/
+
 void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   if (IsCompressed()) {
     LOG_TRACE("Peloton does not support insert into compressed tiles.");
@@ -401,6 +438,14 @@ void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
     Tile::InsertTuple(tuple_offset, tuple);
   }
 }
+
+/*
+GetValue()
+
+@brief : The following function checks if the tile is compressed. If yes, return the uncompressed value, else return the deserializedValue.
+
+@return : Actual Value(uncompressed) of the tuple at tuple offset.
+*/
 
 type::Value CompressedTile::GetValue(const oid_t tuple_offset,
                                      const oid_t column_id) {
@@ -423,6 +468,14 @@ type::Value CompressedTile::GetValue(const oid_t tuple_offset,
   return original;
 }
 
+/*
+GetValueFast()
+
+@brief : Faster way to get value by amortizing schema lookups.
+
+@return :  Actual Value(uncompressed) of the tuple at tuple offset.
+*/
+
 type::Value CompressedTile::GetValueFast(const oid_t tuple_offset,
                                          const size_t column_offset,
                                          const type::Type::TypeId column_type,
@@ -444,6 +497,10 @@ type::Value CompressedTile::GetValueFast(const oid_t tuple_offset,
 
   return deserializedValue;
 }
+
+/*
+NOTE: We don't allow setting values in compressed tiles.
+*/
 
 void CompressedTile::SetValue(const type::Value &value,
                               const oid_t tuple_offset, const oid_t column_id) {
