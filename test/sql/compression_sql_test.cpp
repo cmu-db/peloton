@@ -39,8 +39,7 @@ TEST_F(CompressionTest, IntegerTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
-  // Create a table first
-
+  // Create a t
   txn = txn_manager.BeginTransaction();
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -79,8 +78,7 @@ TEST_F(CompressionTest, IntegerTest) {
                             std::to_string(i * 10));
     EXPECT_EQ(resultStr, expectedStr);
   }
-  // free the database just created
-  // auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -98,10 +96,10 @@ values. Each uncompressed value, should be equal to the original value.
 
 Note that as opposed to the previous test, we dont do a string comparison, but
 convert the values from string to floats and then do a compare. This used
-because in string compare : 80.000000 and 80 may fail even though they represent
-the same value.
-
+because in string compare : 80.000000 and 80 may fail even though they represent the same value.
 */
+
+
 
 TEST_F(CompressionTest, DecimalTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
