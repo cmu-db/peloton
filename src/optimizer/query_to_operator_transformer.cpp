@@ -130,7 +130,7 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
         std::unordered_set<std::string> join_condition_table_alias_set;
         expression::ExpressionUtil::GenerateTableAliasSet(
             node->condition, join_condition_table_alias_set);
-        join_predicates_.push_back(
+        join_predicates_.emplace_back(
             MultiTableExpression(node->condition->Copy(), join_condition_table_alias_set));
       }
       join_expr = std::make_shared<OperatorExpression>(

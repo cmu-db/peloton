@@ -1160,6 +1160,8 @@ struct MultiTableExpression {
       expression::AbstractExpression* i_expr,
       std::unordered_set<std::string>& i_set)
       : expr(i_expr), table_alias_set(i_set) {}
+  MultiTableExpression(const MultiTableExpression& mt_expr)
+      : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
   expression::AbstractExpression* expr;
   std::unordered_set<std::string> table_alias_set;
 };

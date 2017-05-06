@@ -19,6 +19,8 @@
 #include "expression/expression_util.h"
 #include "catalog/schema.h"
 
+#include <vector>
+
 namespace peloton {
 namespace optimizer {
 namespace util {
@@ -204,9 +206,9 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     expression::ExpressionUtil::GenerateTableAliasSet(predicate, table_alias_set);
     // Deep copy expression to avoid memory leak
     if (table_alias_set.size() > 1)
-      join_predicates.push_back(MultiTableExpression(predicate->Copy(), table_alias_set));
+      join_predicates.emplace_back(MultiTableExpression(predicate->Copy(), table_alias_set));
     else
-      where_predicates.push_back(expr->Copy());
+      where_predicates.emplace_back(expr->Copy());
   }
 }
 
@@ -218,14 +220,14 @@ expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
     MultiTablePredicates& join_predicates) {
   std::vector<expression::AbstractExpression*> qualified_exprs;
-  MultiTablePredicates remove_predicates;
+  MultiTablePredicates new_join_predicates;
   for (auto predicate : join_predicates) {
-    if (IsSubset(table_alias_set, predicate.table_alias_set)) {
-      qualified_exprs.push_back(predicate.expr);
-      remove_predicates.push_back(predicate);
-    }
+    if (IsSubset(table_alias_set, predicate.table_alias_set))
+      qualified_exprs.emplace_back(predicate.expr);
+    else
+      new_join_predicates.emplace_back(predicate);
   }
-  join_predicates.erase(remove_predicates.begin(),remove_predicates.end());
+  join_predicates = std::move(new_join_predicates);
   return CombinePredicates(qualified_exprs);
 }
 
