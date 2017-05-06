@@ -63,5 +63,9 @@ void MultiThreadContext::NotifyMaster() {
     bar_->WorkerFinish();
 }
 
+void MultiThreadContext::AddLocalHashTable(utils::OAHashTable *hash_table) {
+    bar_->AddLocalHashTable(thread_id_, hash_table);
+}
+
 }
 }

@@ -37,6 +37,8 @@ class MultiThreadContext {
 
   void NotifyMaster();
 
+  void AddLocalHashTable(utils::OAHashTable *hash_table);
+
   ~MultiThreadContext()
   {
       bar_ = nullptr;
