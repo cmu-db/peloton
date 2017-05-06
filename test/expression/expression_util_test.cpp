@@ -101,7 +101,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   auto expr12 = expression::ExpressionUtil::ComparisonFactory(
       ExpressionType::COMPARE_EQUAL, expr10, expr11);
 
-  std::vector<oid_t> l_column_ids, r_column_ids;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> l_column_ids,
+      r_column_ids;
   // Table1.a = Table2.b -> nullptr
   auto ret_expr1 = expression::ExpressionUtil::ExtractJoinColumns(
       l_column_ids, r_column_ids, expr3, true);
@@ -123,8 +124,10 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
             ret_expr2->GetChild(1)->GetExpressionType());
 
   EXPECT_EQ(1, l_column_ids.size());
-  EXPECT_EQ(1, l_column_ids[0]);
-  EXPECT_EQ(0, r_column_ids[0]);
+  EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
+        l_column_ids[0].get())->GetColumnId());
+  EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
+        r_column_ids[0].get())->GetColumnId());
 
   // Table1.a = Table2.b
   auto expr14 =
@@ -147,10 +150,15 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
       l_column_ids, r_column_ids, expr18, true);
 
   EXPECT_EQ(2, l_column_ids.size());
-  EXPECT_EQ(1, l_column_ids[0]);
-  EXPECT_EQ(0, l_column_ids[1]);
-  EXPECT_EQ(0, r_column_ids[0]);
-  EXPECT_EQ(1, r_column_ids[1]);
+  EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
+        l_column_ids[0].get())->GetColumnId());
+  EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
+        r_column_ids[0].get())->GetColumnId());
+  EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
+        l_column_ids[1].get())->GetColumnId());
+  EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
+        r_column_ids[1].get())->GetColumnId());
+
   EXPECT_EQ(ExpressionType::COMPARE_EQUAL, ret_expr3->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,
             ret_expr3->GetChild(0)->GetExpressionType());
@@ -162,7 +170,6 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   delete ret_expr3;
   delete expr18;
   delete expr13;
-
 }
 }  // namespace test
 }  // namespace peloton

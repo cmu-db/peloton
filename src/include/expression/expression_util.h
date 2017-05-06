@@ -367,17 +367,18 @@ class ExpressionUtil {
   //    }
 
  public:
-   /**
-   * Generate a set of table alias included in an expression
-   */
+  /**
+  * Generate a set of table alias included in an expression
+  */
   static void GenerateTableAliasSet(
-      const AbstractExpression* expr,
-      std::unordered_set<std::string>& table_alias_set) {
+      const AbstractExpression *expr,
+      std::unordered_set<std::string> &table_alias_set) {
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      table_alias_set.insert(reinterpret_cast<const TupleValueExpression*>(expr)->GetTableName());
+      table_alias_set.insert(
+          reinterpret_cast<const TupleValueExpression *>(expr)->GetTableName());
       return;
     }
-    for (size_t i=0; i<expr->GetChildrenSize(); i++)
+    for (size_t i = 0; i < expr->GetChildrenSize(); i++)
       GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
   }
 
@@ -392,7 +393,7 @@ class ExpressionUtil {
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
       if (IsAggregateExpression(child_expr->GetExpressionType())) {
-        EvaluateExpression(child_expr_map, child_expr);
+        EvaluateExpression({child_expr_map}, child_expr);
         std::shared_ptr<AbstractExpression> probe_expr(
             std::shared_ptr<AbstractExpression>{}, child_expr);
         expr->SetChild(i,
@@ -479,12 +480,12 @@ class ExpressionUtil {
    * Plz notice: this function should only be used in the optimizer.
    * The following version TransformExpression will eventually be depracated
    */
-  static void EvaluateExpression(const ExprMap &expr_map,
+  static void EvaluateExpression(const std::vector<ExprMap> &expr_maps,
                                  AbstractExpression *expr) {
     // To evaluate the return type, we need a bottom up approach.
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
-      EvaluateExpression(expr_map, expr->GetModifiableChild(i));
+      EvaluateExpression(expr_maps, expr->GetModifiableChild(i));
 
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // Point to the correct column returned in the logical tuple underneath
@@ -493,12 +494,20 @@ class ExpressionUtil {
       auto tup_expr = (TupleValueExpression *)expr;
       std::shared_ptr<AbstractExpression> probe_expr(
           std::shared_ptr<AbstractExpression>{}, tup_expr);
-      auto iter = expr_map.find(probe_expr);
-      if (iter != expr_map.end()) tup_expr->SetValueIdx(iter->second);
+      size_t tuple_idx = 0;
+      for (auto &expr_map : expr_maps) {
+        auto iter = expr_map.find(probe_expr);
+        if (iter != expr_map.end()) {
+          tup_expr->SetValueIdx(iter->second, tuple_idx);
+          break;
+        }
+        ++tuple_idx;
+      }
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
       auto aggr_expr = (AggregateExpression *)expr;
       std::shared_ptr<AbstractExpression> probe_expr(
           std::shared_ptr<AbstractExpression>{}, aggr_expr);
+      auto &expr_map = expr_maps[0];
       auto iter = expr_map.find(probe_expr);
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
@@ -527,19 +536,21 @@ class ExpressionUtil {
    * i.e. expr that is equality check for tuple columns from both of
    * the underlying tables
    *
-   * return true if the expr can be removed
    * remove set to true if we want to return a newly created expr with
    * join columns removed from expr
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<oid_t> &l_column_ids, std::vector<oid_t> &r_column_ids,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          r_column_exprs,
       const expression::AbstractExpression *expr, bool remove = false) {
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
-      auto left_expr = ExtractJoinColumns(l_column_ids, r_column_ids,
+      auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
                                           expr->GetChild(0), remove);
 
-      auto right_expr = ExtractJoinColumns(l_column_ids, r_column_ids,
+      auto right_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
                                            expr->GetChild(1), remove);
 
       expression::AbstractExpression *root = nullptr;
@@ -556,10 +567,12 @@ class ExpressionUtil {
 
       return root;
     } else if (expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      // TODO support arbitary comarison when executor add support
       // If left tuple and right tuple are from different child
       // then add to join column
       auto l_expr = expr->GetChild(0);
       auto r_expr = expr->GetChild(1);
+      // TODO support arbitary expression
       if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
           r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         auto l_tuple_idx =
@@ -568,7 +581,7 @@ class ExpressionUtil {
         auto r_tuple_idx =
             reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
                 ->GetTupleId();
-        
+
         // If it can be removed then return nullptr
         if (l_tuple_idx != r_tuple_idx) {
           auto l_value_idx =
@@ -577,9 +590,17 @@ class ExpressionUtil {
           auto r_value_idx =
               reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
                   ->GetColumnId();
-
-          l_column_ids.push_back(l_tuple_idx == 0 ? l_value_idx : r_value_idx);
-          r_column_ids.push_back(l_tuple_idx == 0 ? r_value_idx : l_value_idx);
+          if (l_tuple_idx == 0) {
+            l_column_exprs.emplace_back(new expression::TupleValueExpression(
+                l_expr->GetValueType(), 0, l_value_idx));
+            r_column_exprs.emplace_back(new expression::TupleValueExpression(
+                r_expr->GetValueType(), 0, r_value_idx));
+          } else {
+            l_column_exprs.emplace_back(new expression::TupleValueExpression(
+                l_expr->GetValueType(), 0, r_value_idx));
+            r_column_exprs.emplace_back(new expression::TupleValueExpression(
+                r_expr->GetValueType(), 0, l_value_idx));
+          }
           return nullptr;
         }
       }

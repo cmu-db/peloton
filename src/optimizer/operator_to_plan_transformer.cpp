@@ -144,10 +144,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       vector<std::shared_ptr<expression::AbstractExpression>> ordered_exprs =
-          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
-      output_exprs.insert(output_exprs.end(), ordered_exprs.begin(), ordered_exprs.end());
+          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              child_expr_map));
+      output_exprs.insert(output_exprs.end(), ordered_exprs.begin(),
+                          ordered_exprs.end());
     } else {
-      expression::ExpressionUtil::ConvertAggExprToTvExpr(expr.get(), child_expr_map);
+      expression::ExpressionUtil::ConvertAggExprToTvExpr(expr.get(),
+                                                         child_expr_map);
       output_exprs.push_back(expr);
     }
   }
@@ -166,7 +169,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
-      expression::ExpressionUtil::EvaluateExpression(child_expr_map,
+      expression::ExpressionUtil::EvaluateExpression({child_expr_map},
                                                      expr.get());
       planner::DerivedAttribute attribute;
       attribute.expr = expr->Copy();
@@ -217,8 +220,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
       requirements_->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
   auto sort_columns_size = sort_prop->GetSortColumnSize();
 
-  vector<shared_ptr<expression::AbstractExpression>> ordered_exprs =
-      move(expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
+  vector<shared_ptr<expression::AbstractExpression>> ordered_exprs = move(
+      expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
   vector<oid_t> column_ids;
 
   // Construct output column offset.
@@ -226,7 +229,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       // For StarExpr, Output all expressions from operator below in order
-      for (size_t j = 0; j<ordered_exprs.size(); j++) {
+      for (size_t j = 0; j < ordered_exprs.size(); j++) {
         auto expr = ordered_exprs[j];
         if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
           (*output_expr_map_)[expr] = column_ids.size();
@@ -335,7 +338,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalRightNLJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterNLJoin *) {}
 
-void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *op) {
+  output_plan_ =
+      move(GenerateHashJoinPlan((op->join_predicate).get(), JoinType::INNER));
+}
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 
@@ -381,7 +387,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
     if (update_col_ids.find(col_id) != update_col_ids.end())
       throw SyntaxException("Multiple assignments to same column " + column);
     update_col_ids.insert(col_id);
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map,
+    expression::ExpressionUtil::EvaluateExpression({table_expr_map},
                                                    update->value);
     planner::DerivedAttribute attribute;
     attribute.expr = update->value->Copy();
@@ -460,7 +466,7 @@ OperatorToPlanTransformer::GeneratePredicateForScan(
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, table);
     predicate = predicate_prop->GetPredicate()->Copy();
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
+    expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
   }
   return predicate;
 }
@@ -484,7 +490,8 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
   auto expr_len = prop_col->GetSize();
   for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
     auto expr = prop_col->GetColumn(col_pos);
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, expr.get());
+    expression::ExpressionUtil::EvaluateExpression({child_expr_map},
+                                                   expr.get());
 
     if (expression::ExpressionUtil::IsAggregateExpression(
             expr->GetExpressionType())) {
@@ -524,7 +531,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
   // Handle having clause
   expression::AbstractExpression *having_predicate = nullptr;
   if (having != nullptr) {
-    expression::ExpressionUtil::EvaluateExpression(child_expr_map, having);
+    expression::ExpressionUtil::EvaluateExpression({child_expr_map}, having);
     having_predicate = having->Copy();
   }
 
@@ -539,6 +546,80 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
       output_table_schema, agg_type));
   agg_plan->AddChild(move(children_plans_[0]));
   return move(agg_plan);
+}
+
+unique_ptr<planner::HashJoinPlan>
+OperatorToPlanTransformer::GenerateHashJoinPlan(
+    expression::AbstractExpression *join_predicate, JoinType join_type) {
+  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+
+  PL_ASSERT(children_expr_map_.size() == 2);
+  auto &l_child_map = children_expr_map_[0];
+  auto &r_child_map = children_expr_map_[1];
+  // expressions to evaluate
+  TargetList tl = TargetList();
+  // columns which can be returned directly
+  DirectMapList dml = DirectMapList();
+  // schema of the projections output
+  vector<catalog::Column> columns;
+  size_t col_size = cols_prop->GetSize();
+  for (size_t curr_col_offset = 0; curr_col_offset < col_size;
+       ++curr_col_offset) {
+    auto expr = cols_prop->GetColumn(curr_col_offset);
+    auto expr_type = expr->GetExpressionType();
+    if (expr_type == ExpressionType::VALUE_TUPLE) {
+      // For TupleValueExpr, we can just do a direct mapping.
+      if (l_child_map.count(expr))
+        dml.emplace_back(curr_col_offset, make_pair(0, l_child_map[expr]));
+      else
+        dml.emplace_back(curr_col_offset, make_pair(1, r_child_map[expr]));
+    } else {
+      // For more complex expression, we need to do evaluation in Executor
+      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                     expr.get());
+      planner::DerivedAttribute attribute;
+      attribute.expr = expr->Copy();
+      attribute.attribute_info.type = attribute.expr->GetValueType();
+      tl.emplace_back(curr_col_offset, attribute);
+    }
+    (*output_expr_map_)[expr] = curr_col_offset;
+    columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->GetExpressionName()));
+  }
+
+  // build the projection plan node and insert above the join
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+  shared_ptr<const catalog::Schema> schema_ptr(new catalog::Schema(columns));
+
+  // Extract join columns
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, join_predicate);
+  vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys, right_hash_keys;
+
+  unique_ptr<const expression::AbstractExpression> remaining_predicate{
+      expression::ExpressionUtil::ExtractJoinColumns(
+          left_hash_keys, right_hash_keys, join_predicate, true)};
+
+  PL_ASSERT(left_hash_keys.size() == right_hash_keys.size());
+  PL_ASSERT(left_hash_keys.size() != 0);
+
+  // Hash keys for hash plan is
+  // a copy of right hash key
+  vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
+  for (auto &expr : right_hash_keys) hash_keys.emplace_back(expr->Copy());
+
+  unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+  hash_plan->AddChild(move(children_plans_[1]));
+
+  unique_ptr<planner::HashJoinPlan> hash_join_plan(new planner::HashJoinPlan(
+      join_type, move(remaining_predicate), move(proj_info), schema_ptr,
+      left_hash_keys, right_hash_keys));
+
+  hash_join_plan->AddChild(move(children_plans_[0]));
+  hash_join_plan->AddChild(move(hash_plan));
+  return move(hash_join_plan);
 }
 
 void OperatorToPlanTransformer::VisitOpExpression(
