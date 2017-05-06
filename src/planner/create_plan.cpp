@@ -83,7 +83,20 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
           type::Value v = const_expr_elem->GetValue();
           constraint.addDefaultValue(v);
           column_constraints.push_back(constraint);
-          LOG_DEBUG("Added a default constraint %s on column \"%s\"", v.ToString().c_str(),col->name);
+          LOG_DEBUG("Added a default constraint %s on column \"%s\"", v.ToString().c_str(), col->name);
+        }
+      }
+
+      // Check expression constraint
+      // Currently only supports simple boolean forms like (a > 0)
+      if (col->check_expression != nullptr) {
+        // TODO: more expression types need to be supported
+        if (col->check_expression->GetValueType() == type::Type::TypeId::BOOLEAN) {
+          catalog::Constraint constraint(ConstraintType::CHECK, "con_check");
+          type::Value tmp_value = type::ValueFactory::GetIntegerValue(100);
+          constraint.AddCheck(std::move(col->check_expression->GetExpressionType()), std::move(tmp_value));
+          column_constraints.push_back(constraint);
+          LOG_DEBUG("Added a check constraint on column \"%s\"", col->name);
         }
       }
 
