@@ -472,8 +472,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     LOG_TRACE("Index constraint violated");
 
     // Don't throw exception here !!!
-    // throw ConstraintException("UNIQUE constraint violated : " +
-    //                           std::string(tuple->GetInfo()));
+    throw ConstraintException("UNIQUE constraint violated : " +
+                              std::string(tuple->GetInfo()));
 
     return INVALID_ITEMPOINTER;
   }
