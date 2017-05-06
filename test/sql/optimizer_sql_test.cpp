@@ -75,10 +75,10 @@ class OptimizerSQLTests : public PelotonTest {
         "CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
 
     // Insert tuples into table
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 11, 000);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 22, 444);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 333);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (1, 22, 333);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (2, 11, 000);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (3, 22, 444);");
+    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (4, 00, 333);");
   }
 
   // If the query has OrderBy, the result is deterministic. Specify ordered to
@@ -413,8 +413,8 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
 
 TEST_F(OptimizerSQLTests, JoinTest) {
   // Simple 2 table join
-  // TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
-  //          {"1", "1", "1", "1", "3", "3", "4", "4"}, false);
+  TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
+            {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
 }
 
 }  // namespace test

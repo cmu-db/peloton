@@ -69,7 +69,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
   vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
-
   // Add Scan Predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
@@ -568,6 +567,8 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
        ++curr_col_offset) {
     auto expr = cols_prop->GetColumn(curr_col_offset);
     auto expr_type = expr->GetExpressionType();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   expr.get());
     if (expr_type == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, we can just do a direct mapping.
       if (l_child_map.count(expr))
@@ -576,8 +577,7 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
         dml.emplace_back(curr_col_offset, make_pair(1, r_child_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                     expr.get());
+      
       planner::DerivedAttribute attribute;
       attribute.expr = expr->Copy();
       attribute.attribute_info.type = attribute.expr->GetValueType();
