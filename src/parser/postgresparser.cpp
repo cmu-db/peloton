@@ -545,6 +545,9 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       expr = NullTestTransform(reinterpret_cast<NullTest*>(node));
       break;
     }
+    case T_List:{
+      expr = InListTransform(reinterpret_cast<ListExpr*>(node));
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -553,6 +556,13 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   return expr;
 }
 
+expression::AbstractExpression* PostgresParser::InListTransform(ListExpr* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+  expression::AbstractExpression* result = nullptr;
+  return result;
+}
 
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
@@ -593,7 +603,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   catch(NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
   }
 
 
@@ -658,7 +668,7 @@ expression::AbstractExpression* PostgresParser::NullTestTransform(NullTest* root
       break;
     }
     default: {
-      LOG_ERROR("Arg expr of type %d not supported yet...\n",
+      LOG_DEBUG("Arg expr of type %d not supported yet...\n",
                 root->arg->type);
     }
   }
@@ -1280,10 +1290,10 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
       std::cout << str << std::endl;
       // "=" and "in" have very similar effect
       // replace "in" as "=" for easy parsing
-     size_t start_pos = str.find(" in ");
-     if (start_pos != std::string::npos) {
-       str.replace(start_pos, 3, "=");
-     }
+//     size_t start_pos = str.find(" in ");
+//     if (start_pos != std::string::npos) {
+//       str.replace(start_pos, 3, "=");
+//     }
       return ParseSQLString(str.c_str());
     }
 
