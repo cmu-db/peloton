@@ -1,15 +1,17 @@
-#include<tuple>
-#include<vector>
-#include<string>
+#include <tuple>
+#include <vector>
+#include <string>
+#include <memory>
+
+#include <include/udf/udf_gram.tab.h>
+#include <include/udf/udf_helper.h>
+#include <include/udf/udf.h>
 
 namespace peloton {
 namespace udf {
 
 class UDFHandle {
  public:
-  using arg_type=int;
-  using arg_value=int;
-  using arg_tuple=std::tuple<std::string, arg_type>;
 
   // TODO: add argument list & return type
 
@@ -30,6 +32,7 @@ class UDFHandle {
   std::vector<arg_type> args_type_{};
   std::vector<arg_value> args_value_;
   arg_type ret_type_;
+  std::unique_ptr<UDF_Stmt> stmt_;
 };
 
 }  // namespace udf
