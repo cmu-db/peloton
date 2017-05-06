@@ -169,7 +169,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
-      expression::ExpressionUtil::EvaluateExpression({child_expr_map},
+      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                      expr.get());
       planner::DerivedAttribute attribute;
       attribute.expr = expr->Copy();
@@ -490,7 +490,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
   auto expr_len = prop_col->GetSize();
   for (size_t col_pos = 0; col_pos < expr_len; col_pos++) {
     auto expr = prop_col->GetColumn(col_pos);
-    expression::ExpressionUtil::EvaluateExpression({child_expr_map},
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                    expr.get());
 
     if (expression::ExpressionUtil::IsAggregateExpression(
@@ -531,7 +531,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
   // Handle having clause
   expression::AbstractExpression *having_predicate = nullptr;
   if (having != nullptr) {
-    expression::ExpressionUtil::EvaluateExpression({child_expr_map}, having);
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, having);
     having_predicate = having->Copy();
   }
 
