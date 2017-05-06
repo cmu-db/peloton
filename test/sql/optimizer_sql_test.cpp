@@ -69,16 +69,6 @@ class OptimizerSQLTests : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
     TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-
-    // Create a table for join
-    TestingSQLUtil::ExecuteSQLQuery(
-        "CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
-
-    // Insert tuples into table
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (1, 22, 333);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (2, 11, 000);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (3, 22, 444);");
-    TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (4, 00, 333);");
   }
 
   // If the query has OrderBy, the result is deterministic. Specify ordered to
@@ -412,9 +402,54 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
 }
 
 TEST_F(OptimizerSQLTests, JoinTest) {
+  // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+
+  // Create another table for join
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (1, 22, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (2, 11, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (3, 22, 444);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test1 VALUES (4, 00, 333);");
+
+  // Create another table for join
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (1, 22, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 22, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
+
   // Simple 2 table join
   TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
-            {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
+           {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
+
+  // Where clause to join
+  TestUtil("SELECT test.a, test1.a FROM test, test1 WHERE test.a = test1.a",
+           {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
+
+  TestUtil(
+      "SELECT test.a, test.b, test1.b, test1.c FROM test, test1 WHERE test.b = "
+      "test1.b",
+      {"1", "22", "22", "333", "1", "22", "22", "444", "2", "11", "11", "0",
+       "4", "0", "0", "333"},
+      false);
+
+  // 3 table join
+  // TestUtil(
+  //     "SELECT test.a, test.b, test1.b, test2.c FROM test2 "
+  //     "JOIN test ON test.b = test2.b "
+  //     "JOIN test1 ON test2.c = test1.c",
+  //     {"1", "22", "0", "11", "2", "11", "333", "22", "2", "11", "333", "0", 
+  //      "4", "0", "0", "11"}, 
+  //     false);
 }
 
 }  // namespace test
