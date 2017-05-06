@@ -36,6 +36,7 @@ bool CompareLessThanBool(type::Value left, type::Value right) {
   return left.CompareLessThan(right);
 }
 
+//Constructor: Call base constructor and set is_compressed to false.
 CompressedTile::CompressedTile(BackendType backend_type,
                                TileGroupHeader *tile_header,
                                const catalog::Schema &tuple_schema,
@@ -474,6 +475,7 @@ void CompressedTile::SetValueFast(const type::Value &value,
   Tile::SetValueFast(value, tuple_offset, column_offset, is_inlined,
                      column_length);
 }
+
 type::Value CompressedTile::GetUncompressedVarcharValue(
     oid_t column_id, type::Value compressed_value) {
   int offset;
@@ -487,6 +489,30 @@ type::Value CompressedTile::GetUncompressedVarcharValue(
 
   return value;
 }
+
+
+type::Value CompressedTile::GetUncompressedValue(oid_t column_id,
+                                          type::Value compressed_value) {
+
+    if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
+      type::Value base_value = compressed_column_map[column_id].second;
+
+      if (base_value.GetTypeId() == type::Type::VARCHAR) {
+        return GetUncompressedVarcharValue(column_id, compressed_value);
+      }
+
+
+      if(base_value.GetTypeId() == type::Type::DECIMAL) {
+        compressed_value = compressed_value.CastAs(type::Type::DECIMAL)
+            .Divide(exponent_column_map[column_id]);
+      }
+
+      return base_value.Add(compressed_value);
+    }
+
+    return type::Value();
+  }
+
 }
 }
 

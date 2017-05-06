@@ -45,7 +45,8 @@ class Tile;
 /**
  * Represents a CompressedTile.
  *
- * Tiles are only instantiated via TileGroup.
+ * CompressedTiles are only instantiated via TileGroup. 
+ * TileGroup compresses existing tile on a per Tile basis.
  *
  * NOTE: MVCC is implemented on the shared TileGroupHeader.
  */
@@ -137,22 +138,8 @@ class CompressedTile : public Tile {
     return type::Type::INVALID;
   }
 
-  inline type::Value GetUncompressedValue(oid_t column_id,
-                                          type::Value compressed_value) {
-    if (compressed_column_map.find(column_id) != compressed_column_map.end()) {
-      type::Value base_value = GetBaseValue(column_id);
-      if (base_value.GetTypeId() == type::Type::DECIMAL) {
-        return base_value.Add(compressed_value.CastAs(base_value.GetTypeId())
-                                  .Divide(exponent_column_map[column_id]));
-      }
-      if (base_value.GetTypeId() == type::Type::VARCHAR) {
-        return GetUncompressedVarcharValue(column_id, compressed_value);
-      }
-      return base_value.Add(compressed_value).CastAs(base_value.GetTypeId());
-    }
-
-    return type::Value();
-  }
+  type::Value GetUncompressedValue(oid_t column_id,
+                                          type::Value compressed_value);
 
   oid_t GetColumnFromOffset(const size_t column_offset) {
     return column_offset_map[column_offset];
