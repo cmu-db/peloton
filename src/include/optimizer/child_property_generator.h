@@ -18,6 +18,7 @@ namespace peloton {
 
 namespace optimizer {
 class ColumnManager;
+class Memo;
 }
 
 namespace optimizer {
@@ -28,7 +29,8 @@ class ChildPropertyGenerator : public OperatorVisitor {
   ChildPropertyGenerator(ColumnManager &manager) : manager_(manager) {}
 
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
-      std::shared_ptr<GroupExpression> gexpr, PropertySet requirements);
+      std::shared_ptr<GroupExpression> gexpr, PropertySet requirements,
+      Memo *memo);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -61,7 +63,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   // reduce duplicate code
   void AggregateHelper(const BaseOperatorNode *op);
   void ScanHelper();
-  void JoinHelper();
+  void JoinHelper(const BaseOperatorNode *op);
 
  private:
   ColumnManager &manager_;
@@ -69,7 +71,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   // Each child group contains the base table in that group
   // when deriving column properties for join,
   // we need to assign column to the correct child
-  std::vector<GroupID> child_group_ids_;
+  std::vector<Group *> child_groups_;
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
 };
 

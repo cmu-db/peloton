@@ -28,7 +28,6 @@
 #include "optimizer/rule_impls.h"
 #include "optimizer/properties.h"
 
-
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -143,12 +142,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
       // This is adapted from the simple optimizer
       auto create_plan =
-          new planner::CreatePlan((parser::CreateStatement*)tree);
+          new planner::CreatePlan((parser::CreateStatement *)tree);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
-        auto create_stmt = (parser::CreateStatement*)tree;
+        auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName());
         std::vector<oid_t> column_ids;
@@ -223,8 +222,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    auto child_plan = ChooseBestPlan(
-        child_groups[i], required_input_props[i], &child_expr_map);
+    auto child_plan = ChooseBestPlan(child_groups[i], required_input_props[i],
+                                     &child_expr_map);
     if (child_plan) {
       children_plans.push_back(move(child_plan));
       children_expr_map.push_back(move(child_expr_map));
@@ -429,7 +428,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
 vector<pair<PropertySet, vector<PropertySet>>> Optimizer::DeriveChildProperties(
     shared_ptr<GroupExpression> gexpr, PropertySet requirements) {
   ChildPropertyGenerator converter(column_manager_);
-  return move(converter.GetProperties(gexpr, requirements));
+  return move(converter.GetProperties(gexpr, requirements, &memo_));
 }
 
 void Optimizer::DeriveCostAndStats(
