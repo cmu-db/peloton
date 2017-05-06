@@ -32,7 +32,7 @@ class ColumnStats {
 public:
   /* Default parameters for probabilistic stats collector */
   int hll_precision = 8;
-  double cmsketch_eps = 0.1;
+  double cmsketch_eps = 0.01;
   double cmsketch_gamma = 0.01;
   uint8_t max_bins = 100;
   uint8_t top_k = 10;
@@ -83,3 +83,4 @@ public:
 
 } /* namespace optimizer */
 } /* namespace peloton */
+

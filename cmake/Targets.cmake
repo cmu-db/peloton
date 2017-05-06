@@ -83,7 +83,7 @@ function(peloton_pickup_peloton_sources root)
   file(GLOB_RECURSE murmur_srcs ${root}/third_party/murmur3/*.cpp)
 
   # farmhash
-  file(GLOB_RECURSE murmur_srcs ${root}/third_party/farmhash/*.cc)
+  file(GLOB_RECURSE farmhash_srcs ${root}/third_party/farmhash/*.cc)
 
   # libcount
   file(GLOB_RECURSE libcount_srcs ${root}/third_party/libcount/*.cc)
