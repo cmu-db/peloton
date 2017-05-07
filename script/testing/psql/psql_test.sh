@@ -53,7 +53,7 @@ cd $PELOTON_DIR/build
 # start peloton
 bin/peloton -port $PELOTON_PORT > /dev/null &
 PELOTON_PID=$!
-sleep 3
+sleep 5
 
 # run psql
 
