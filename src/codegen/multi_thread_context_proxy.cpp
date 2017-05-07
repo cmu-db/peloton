@@ -130,7 +130,7 @@ llvm::Function *MultiThreadContextProxy::GetBarrierWaitFunction(CodeGen &codegen
   }
   // Not cached, create the type
   auto *fn_type = llvm::FunctionType::get(
-      codegen.VoidType(),
+      codegen.BoolType(),
       {
           MultiThreadContextProxy::GetType(codegen)->getPointerTo()
       },
@@ -150,6 +150,23 @@ llvm::Function *MultiThreadContextProxy::GetAddLocalHashTableFunction(CodeGen &c
       {
           MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
           OAHashTableProxy::GetType(codegen)->getPointerTo()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
+}
+
+llvm::Function *MultiThreadContextProxy::GetGetLocalHashTableFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext17GetLocalHashTableEi";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      OAHashTableProxy::GetType(codegen)->getPointerTo(),
+      {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
+          codegen.Int32Type()
       },
       false);
   return codegen.RegisterFunction(func_name, fn_type);

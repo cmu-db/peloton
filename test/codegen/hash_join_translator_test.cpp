@@ -48,7 +48,7 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
  public:
   HashJoinTranslatorTest() : PelotonCodeGenTest() {
     // Load the test table
-    uint32_t num_rows = 10;
+    uint32_t num_rows = 100;
     LoadTestTable(LeftTableId(), 2 * num_rows);
     LoadTestTable(RightTableId(), 8 * num_rows);
   }

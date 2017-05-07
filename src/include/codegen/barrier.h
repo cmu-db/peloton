@@ -58,11 +58,16 @@ public:
         n_workers_ = n_workers;
     }
 
-    void AddLocalHashTable(UNUSED_ATTRIBUTE int64_t thread_id, UNUSED_ATTRIBUTE utils::OAHashTable *hash_table)
+    void AddLocalHashTable(int64_t thread_id, utils::OAHashTable *hash_table)
     {
         LOG_DEBUG("Adding: vector size: %ld, thread id: %ld", n_local_hts_, long(thread_id));
         local_hash_tables_[int(thread_id)] = hash_table;
         LOG_DEBUG("Done: vector size: %ld, thread id: %ld", n_local_hts_, long(thread_id));
+    }
+
+    utils::OAHashTable* GetLocalHashTable(int32_t idx)
+    {
+        return local_hash_tables_[idx];
     }
 
     void AllocateVector(uint64_t n_local_hts)
