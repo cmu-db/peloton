@@ -91,7 +91,7 @@ class FunctionCatalog : public AbstractCatalog {
   bool DeleteFunction(oid_t oid, const std::string &name,
                      concurrency::Transaction *txn);
 
-  const UDFFunctionData GetFunction(const std::string &name,concurrency::Transaction *txn );
+  UDFFunctionData GetFunction(const std::string &name,concurrency::Transaction *txn );
 
   oid_t GetFunctionOid(const std::string &name, concurrency::Transaction *txn);
 

@@ -15,11 +15,13 @@
 namespace peloton {
 namespace optimizer {
 
+// Forward Declaration
 class PropertyColumns;
 class PropertyProjection;
 class PropertySort;
 class PropertyPredicate;
 class PropertyDistinct;
+class PropertyLimit;
 
 //===--------------------------------------------------------------------===//
 // Property Visitor
@@ -31,10 +33,10 @@ class PropertyVisitor {
   virtual ~PropertyVisitor(){};
 
   virtual void Visit(const PropertyColumns *) = 0;
-  virtual void Visit(const PropertyProjection *) = 0;
   virtual void Visit(const PropertySort *) = 0;
   virtual void Visit(const PropertyPredicate *) = 0;
   virtual void Visit(const PropertyDistinct *) = 0;
+  virtual void Visit(const PropertyLimit *) = 0;
 };
 
 } /* namespace optimizer */

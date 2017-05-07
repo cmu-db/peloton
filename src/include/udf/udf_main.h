@@ -16,10 +16,10 @@ class UDFHandle {
   // TODO: add argument list & return type
 
   // Return false if validation fails
-  bool compile();
+  bool Compile();
 
   // Return the executed value
-  int execute(std::vector<arg_value>);
+  arg_value Execute(std::vector<arg_value>);
 
   UDFHandle(std::string func, std::vector<std::string> args_name,
       std::vector<arg_type> args_type, arg_type ret_type)

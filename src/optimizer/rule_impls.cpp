@@ -12,6 +12,7 @@
 
 #include "optimizer/rule_impls.h"
 #include "optimizer/operators.h"
+#include "storage/data_table.h"
 
 #include <memory>
 
@@ -52,25 +53,81 @@ void InnerJoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// GetToScan
-GetToScan::GetToScan() {
+/// GetToDummyScan
+GetToDummyScan::GetToDummyScan() {
   physical = true;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToScan::Check(std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
+bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table == nullptr;
 }
 
-void GetToScan::Transform(
+void GetToDummyScan::Transform(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(DummyScan::make());
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// GetToSeqScan
+GetToSeqScan::GetToSeqScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table != nullptr;
+}
+
+void GetToSeqScan::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));
+      std::make_shared<OperatorExpression>(PhysicalSeqScan::make(get->table));
+
+  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
+      input->Children();
+  PL_ASSERT(children.size() == 0);
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// GetToIndexScan
+GetToIndexScan::GetToIndexScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+  // If there is a index for the table, return true,
+  // else return false
+  bool index_exist = false;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  if (get != nullptr && get->table != nullptr && !get->table->GetIndexColumns().empty())
+    index_exist = true;
+  return index_exist;
+}
+
+void GetToIndexScan::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalGet *get = input->Op().As<LogicalGet>();
+
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalIndexScan::make(get->table, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -106,32 +163,6 @@ void LogicalFilterToPhysical::Transform(
   result->PushChild(children[0]);
   result->PushChild(children[1]);
 
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// LogicalLimitToPhysical
-LogicalLimitToPhysical::LogicalLimitToPhysical() {
-  physical = true;
-  match_pattern = std::make_shared<Pattern>(OpType::Limit);
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(child);
-}
-
-bool LogicalLimitToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
-}
-
-void LogicalLimitToPhysical::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalLimit *limit = input->Op().As<LogicalLimit>();
-  auto result = std::make_shared<OperatorExpression>(
-      PhysicalLimit::make(limit->limit, limit->offset));
-  PL_ASSERT(input->Children().size() == 1);
-  result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
 

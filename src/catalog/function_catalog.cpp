@@ -159,7 +159,7 @@ namespace peloton {
       return function_catalog_schema;
     }
 
- const UDFFunctionData FunctionCatalog::GetFunction(const std::string &name,
+ UDFFunctionData FunctionCatalog::GetFunction(const std::string &name,
                                    concurrency::Transaction *txn) {
   // Write logic to populate the fields of UDFFunctionData
 

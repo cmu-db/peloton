@@ -50,9 +50,13 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
                                 const planner::AbstractPlan *parent) {
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
-    case PlanNodeType::PROJECTION:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::AGGREGATE_V2: {
+      break;
+    }
+    case PlanNodeType::PROJECTION: {
+      if(plan.GetChildren().size() == 0)
+        return false;
       break;
     }
     case PlanNodeType::HASHJOIN: {

@@ -551,13 +551,16 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
-        auto predicate =
+        auto original_predicate_cpy = deleteStmt->expr->Copy();
+        auto tailered_predicate =
             expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-                deleteStmt->expr, target_table->GetIndex(index_id));
+                original_predicate_cpy, target_table->GetIndex(index_id));
+        if (tailered_predicate != original_predicate_cpy)
+          delete original_predicate_cpy;
 
         // Create delete plan
         std::unique_ptr<planner::DeletePlan> child_DeletePlan(
-            new planner::DeletePlan(target_table, predicate));
+            new planner::DeletePlan(target_table, tailered_predicate));
 
         // Create index scan plan
         std::vector<oid_t> columns;
@@ -566,9 +569,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         planner::IndexScanPlan::IndexScanDesc index_scan_desc(
             index, key_column_ids, expr_types, values, runtime_keys);
         LOG_TRACE("Creating a index scan plan");
+
         std::unique_ptr<planner::IndexScanPlan> index_scan_node(
-            new planner::IndexScanPlan(target_table,
-                                       child_DeletePlan->GetPredicate(),
+            new planner::IndexScanPlan(target_table, tailered_predicate,
                                        columns, index_scan_desc, true));
         LOG_TRACE("Index scan plan created");
 
@@ -661,14 +664,25 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         // the where clause in the update statement and then copy is back. This
         // will be gone after we refactor the UpdatePlan to the correct way.
         auto old_predicate = updateStmt->where;
-        updateStmt->where =
+
+        // Get predicate that removes all the index columns
+        auto original_predicate_cpy = updateStmt->where->Copy();
+        auto tailered_predicate =
             expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-                updateStmt->where, target_table->GetIndex(index_id));
+                original_predicate_cpy, target_table->GetIndex(index_id));
+        if (tailered_predicate != original_predicate_cpy)
+          delete original_predicate_cpy;
+
+        updateStmt->where = tailered_predicate;
 
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
                                     values, index_id));
+        // Within UpatePlan, it will copy the predicate. This is ugly since now
+        // some plans copy the predicate and some don't. We need to unify them
+        // someday
+        delete tailered_predicate;
         updateStmt->where = old_predicate;
 
         child_plan = std::move(child_UpdatePlan);
@@ -864,13 +878,12 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   LOG_TRACE("predicate before remove: %s", predicate->GetInfo().c_str());
   // Remove redundant predicate that index can search
   auto index = target_table->GetIndex(index_id);
-  predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-      predicate, index);
-  if (predicate != nullptr) {
-    LOG_TRACE("predicate after remove: %s", predicate->GetInfo().c_str());
-  } else {
-    LOG_TRACE("predicate after remove: null");
-  }
+  auto original_predicate_cpy = predicate->Copy();
+  auto tailered_predicate =
+      expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+          original_predicate_cpy, index);
+  if (tailered_predicate != original_predicate_cpy)
+    delete original_predicate_cpy;
 
   // Create index scan plan
   LOG_TRACE("Creating a index scan plan");
@@ -881,8 +894,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       index, key_column_ids, expr_types, values, runtime_keys);
 
   // Create plan node.
-  std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
-      target_table, predicate, column_ids, index_scan_desc, for_update));
+  std::unique_ptr<planner::IndexScanPlan> node(
+      new planner::IndexScanPlan(target_table, tailered_predicate, column_ids,
+                                 index_scan_desc, for_update));
   LOG_TRACE("Index scan plan created");
 
   return std::move(node);
@@ -1059,6 +1073,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto tailored_predicate =
       expression::ExpressionUtil::RemoveTermsWithIndexedColumns(predicate8,
                                                                 index);
+  if (tailored_predicate != predicate8) delete predicate8;
 
   // Create the index scan plan for ORDER_LINE
   std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(

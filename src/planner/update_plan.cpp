@@ -163,8 +163,9 @@ UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree,
       index, key_column_ids, expr_types, values, runtime_keys);
   // Create plan node.
   LOG_TRACE("Creating a index scan plan");
+  auto predicate_cpy = where_ == nullptr ? nullptr : where_->Copy();
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
-      new planner::IndexScanPlan(target_table_, where_, column_ids,
+      new planner::IndexScanPlan(target_table_, predicate_cpy, column_ids,
                                  index_scan_desc, true));
   LOG_TRACE("Index scan plan created");
   AddChild(std::move(index_scan_node));

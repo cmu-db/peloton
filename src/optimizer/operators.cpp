@@ -13,6 +13,7 @@
 #include "optimizer/operators.h"
 #include "optimizer/operator_visitor.h"
 #include "storage/data_table.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -28,10 +29,12 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(storage::DataTable *table, std::string alias) {
+Operator LogicalGet::make(storage::DataTable *table, std::string alias,
+                          bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
+  get->is_for_update = update;
   util::to_lower_string(get->table_alias);
   return Operator(get);
 }
@@ -42,11 +45,13 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
   //  if (table->GetOid() != r.table->GetOid()) return false;
   //
   //  return true;
-  return table_alias == r.table_alias;
+  return table_alias == r.table_alias && is_for_update == r.is_for_update;
 }
 
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
+  if (table == nullptr)
+    return hash;
   oid_t table_oid = table->GetOid();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
@@ -126,16 +131,6 @@ Operator LogicalGroupBy::make(
 }
 
 //===--------------------------------------------------------------------===//
-// Limit
-//===--------------------------------------------------------------------===//
-Operator LogicalLimit::make(int64_t limit, int64_t offset) {
-  LogicalLimit *limit_op = new LogicalLimit;
-  limit_op->limit = limit;
-  limit_op->offset = offset;
-  return Operator(limit_op);
-}
-
-//===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
@@ -163,7 +158,7 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<peloton::parser::UpdateClause *> updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -171,22 +166,56 @@ Operator LogicalUpdate::make(
 }
 
 //===--------------------------------------------------------------------===//
-// Scan
+// DummyScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalScan::make(storage::DataTable *table) {
-  PhysicalScan *scan = new PhysicalScan;
+Operator DummyScan::make() {
+  DummyScan *dummy = new DummyScan;
+  return Operator(dummy);
+}
+
+//===--------------------------------------------------------------------===//
+// SeqScan
+//===--------------------------------------------------------------------===//
+Operator PhysicalSeqScan::make(storage::DataTable *table) {
+  assert(table != nullptr);
+  PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
   return Operator(scan);
 }
 
-bool PhysicalScan::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Scan) return false;
-  const PhysicalScan &r = *static_cast<const PhysicalScan *>(&node);
+bool PhysicalSeqScan::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::SeqScan) return false;
+  const PhysicalSeqScan &r = *static_cast<const PhysicalSeqScan *>(&node);
   if (table_->GetOid() != r.table_->GetOid()) return false;
   return true;
 }
 
-hash_t PhysicalScan::Hash() const {
+hash_t PhysicalSeqScan::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  oid_t table_oid = table_->GetOid();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
+// IndexScan
+//===--------------------------------------------------------------------===//
+Operator PhysicalIndexScan::make(storage::DataTable *table, bool update) {
+  assert(table != nullptr);
+  PhysicalIndexScan *scan = new PhysicalIndexScan;
+  scan->table_ = table;
+  scan->is_for_update = update;
+  return Operator(scan);
+}
+
+bool PhysicalIndexScan::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::IndexScan) return false;
+  const PhysicalIndexScan &r = *static_cast<const PhysicalIndexScan *>(&node);
+  if (table_->GetOid() != r.table_->GetOid()) return false;
+  return true;
+}
+
+hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table_->GetOid();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
@@ -213,12 +242,7 @@ Operator PhysicalOrderBy::make() {
 //===--------------------------------------------------------------------===//
 // Physical Limit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make(int64_t limit, int64_t offset) {
-  PhysicalLimit *limit_op = new PhysicalLimit;
-  limit_op->limit = limit;
-  limit_op->offset = offset;
-  return Operator(limit_op);
-}
+Operator PhysicalLimit::make() { return Operator(new PhysicalLimit); }
 
 //===--------------------------------------------------------------------===//
 // Filter
@@ -320,7 +344,7 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<peloton::parser::UpdateClause *> updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
@@ -339,6 +363,23 @@ Operator PhysicalHashGroupBy::make(
   return Operator(agg);
 }
 
+bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::HashGroupBy) return false;
+  const PhysicalHashGroupBy &r = *static_cast<const PhysicalHashGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+    return false;
+  return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
+}
+
+hash_t PhysicalHashGroupBy::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  if (having != nullptr)
+    hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns)
+    hash = HashUtil::SumHashes(hash, expr->Hash());
+  return hash;
+}
+
 //===--------------------------------------------------------------------===//
 // PhysicalSortGroupBy
 //===--------------------------------------------------------------------===//
@@ -349,6 +390,23 @@ Operator PhysicalSortGroupBy::make(
   agg->columns = std::move(columns);
   agg->having = having;
   return Operator(agg);
+}
+
+bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::SortGroupBy) return false;
+  const PhysicalSortGroupBy &r = *static_cast<const PhysicalSortGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+    return false;
+  return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
+}
+
+hash_t PhysicalSortGroupBy::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  if (having != nullptr)
+    hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns)
+    hash = HashUtil::SumHashes(hash, expr->Hash());
+  return hash;
 }
 
 //===--------------------------------------------------------------------===//
@@ -403,9 +461,6 @@ template <>
 void OperatorNode<LogicalGroupBy>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLimit>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
 void OperatorNode<LogicalSemiJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -440,15 +495,17 @@ std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
 template <>
 std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
 template <>
-std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
-template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
 template <>
 std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
 template <>
 std::string OperatorNode<LogicalDelete>::name_ = "LogicalDelete";
 template <>
-std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
+std::string OperatorNode<DummyScan>::name_ = "DummyScan";
+template <>
+std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
+template <>
+std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
 template <>
 std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
@@ -513,15 +570,17 @@ OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
 template <>
 OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
 template <>
-OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
-template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
 template <>
 OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
 template <>
 OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
 template <>
-OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
+OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
+template <>
+OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
+template <>
+OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
 template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
