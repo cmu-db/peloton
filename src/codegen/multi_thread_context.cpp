@@ -67,5 +67,10 @@ void MultiThreadContext::AddLocalHashTable(utils::OAHashTable *hash_table) {
     bar_->AddLocalHashTable(thread_id_, hash_table);
 }
 
+utils::OAHashTable* MultiThreadContext::GetLocalHashTable(int32_t idx) {
+    return bar_->GetLocalHashTable(idx);
+}
+
+
 }
 }
