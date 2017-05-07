@@ -14,6 +14,7 @@
 
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "catalog/function_catalog.h"
 
 namespace peloton {
 namespace expression {
@@ -28,7 +29,8 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION),
         func_name_(func_name),
-        func_ptr_(nullptr) {
+        func_ptr_(nullptr), 
+        is_udf_(false) {
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
@@ -39,13 +41,15 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<type::Type::TypeId>& arg_types,
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION, return_type),
-        func_ptr_(func_ptr) {
+        func_ptr_(func_ptr),
+        is_udf_(false) {
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
     CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
+  // For a built-in function
   void SetFunctionExpressionParameters(
       type::Value (*func_ptr)(const std::vector<type::Value>&),
       type::Type::TypeId val_type,
@@ -55,24 +59,65 @@ class FunctionExpression : public AbstractExpression {
     CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
+  void SetUDFType(bool is_udf) {
+    is_udf_ = is_udf;
+  }
+
   type::Value Evaluate(
       const AbstractTuple* tuple1, const AbstractTuple* tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext* context) const override {
     // for now support only one child
     std::vector<type::Value> child_values;
-    PL_ASSERT(func_ptr_ != nullptr);
     for (auto& child : children_) {
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
-    type::Value ret = func_ptr_(child_values);
-    // if this is false we should throw an exception
-    // TODO: maybe checking this every time is not neccesary? but it prevents
-    // crashing
-    if (ret.GetElementType() != return_value_type_) {
-      throw Exception(
-          EXCEPTION_TYPE_EXPRESSION,
-          "function " + func_name_ + " returned an unexpected type.");
+    type::Value ret;
+
+    if(is_udf_) {
+      // Populate the necessary fields
+      auto func_catalog = catalog::FunctionCatalog::GetInstance();
+      const catalog::UDFFunctionData &func_data = 
+        func_catalog->GetFunction(func_name_, context->GetTransaction());
+
+      if(func_data.func_is_present_) {
+        CheckChildrenTypes(func_data.argument_types_, children_, func_name_);
+
+        /*func_data.func_string_
+        func_data.return_type_
+        func_data.argument_types_ 
+
+        Use these variables @@Haoran
+        */
+
+
+        //Logic for UDF
+        //@@Haoran This is where you can add in your code
+        // All the class fields are populated with the data you need.
+
+        if (ret.GetElementType() != func_data.return_type_) {
+        throw Exception(
+            EXCEPTION_TYPE_EXPRESSION,
+            "function " + func_name_ + " returned an unexpected type.");
+        }
+      }
+      else {
+         throw Exception("function " + func_name_ + " not found.");
+      }
     }
+    else {
+      PL_ASSERT(func_ptr_ != nullptr);
+      ret = func_ptr_(child_values);
+
+      // if this is false we should throw an exception
+      // TODO: maybe checking this every time is not neccesary? but it prevents
+      // crashing
+      if (ret.GetElementType() != return_value_type_) {
+        throw Exception(
+            EXCEPTION_TYPE_EXPRESSION,
+            "function " + func_name_ + " returned an unexpected type.");
+      }
+    }
+    
     return ret;
   }
 
@@ -86,10 +131,14 @@ class FunctionExpression : public AbstractExpression {
   FunctionExpression(const FunctionExpression& other)
       : AbstractExpression(other),
         func_name_(other.func_name_),
-        func_ptr_(other.func_ptr_) {}
+        func_ptr_(other.func_ptr_) ,
+        is_udf_(false){}
 
  private:
   type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;
+
+  // For UDFs
+  bool is_udf_ = false;
 
   // throws an exception if children return unexpected types
   static void CheckChildrenTypes(

@@ -192,6 +192,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
 void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
+void QueryToOperatorTransformer::Visit(UNUSED_ATTRIBUTE const parser::CreateFunctionStatement *op) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}

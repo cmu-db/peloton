@@ -84,12 +84,17 @@ void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   property_set_.AddProperty(shared_ptr<PropertySort>(
       new PropertySort(move(sort_cols), sort_ascendings)));
 }
+
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *limit) {
   // When offset is not specified in the query, parser will set offset to -1
   int64_t offset = limit->offset == -1 ? 0 : limit->offset;
   property_set_.AddProperty(shared_ptr<PropertyLimit>(
       new PropertyLimit(offset, limit->limit)));
 }
+
+
+void QueryPropertyExtractor::Visit(UNUSED_ATTRIBUTE const parser::CreateFunctionStatement *) {}
+
 
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}

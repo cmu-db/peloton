@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "catalog/catalog.h"
+#include "catalog/function_catalog.h"
 #include "catalog/schema.h"
 #include "expression/aggregate_expression.h"
 #include "expression/comparison_expression.h"
@@ -478,6 +479,7 @@ class ExpressionUtil {
       auto tup_expr = (TupleValueExpression *)expr;
       std::shared_ptr<AbstractExpression> probe_expr(
           std::shared_ptr<AbstractExpression>{}, tup_expr);
+
       auto iter = expr_map.find(probe_expr);
       if (iter != expr_map.end()) tup_expr->SetValueIdx(iter->second);
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
@@ -487,16 +489,30 @@ class ExpressionUtil {
       auto iter = expr_map.find(probe_expr);
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
+
       auto func_expr = (expression::FunctionExpression *)expr;
-      // Check and set the function ptr
       auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData &func_data =
+      try {
+
+        const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
-      LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
-      LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+        LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
+        LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
+        func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
+       }
+       // If not found in map, try in pg_proc (UDF catalog)
+      catch (Exception &e) { 
+
+        LOG_INFO("Function is probably a UDF");
+        /* 
+        Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
+        Since, we need Transaction ID to query from the catalog.
+        */
+
+        func_expr->SetUDFType(true); // Sets is_udf_ to True
+      }
     }
 
     // Decude the expression type for Non-TupleValueExpressions
@@ -652,11 +668,25 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData &func_data =
+      try {
+        const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+        func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
-                                                 func_data.argument_types_);
+                                                 func_data.argument_types_); 
+      }
+      // If not found in map, try in pg_proc (UDF catalog)
+      catch (Exception &e) { 
+
+        LOG_INFO("Function is a UDF, maybe");
+
+        /* 
+        Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
+        Since, we need Transaction ID to query from the catalog.
+        */
+
+        func_expr->SetUDFType(true); // Sets is_udf_ to True
+      }
     }
     // make sure the return types for expressions are set correctly
     // this is useful in operator expressions
