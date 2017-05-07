@@ -12,47 +12,39 @@
 
 #pragma once
 
-#include <vector>
-
-#include "optimizer/stats/column_stats.h"
-#include "catalog/schema.h"
-#include "storage/data_table.h"
+#include "common/macros.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace optimizer {
+
+class ColumnStats;
 
 //===--------------------------------------------------------------------===//
 // TableStats
 //===--------------------------------------------------------------------===//
 class TableStats {
-public:
-  TableStats(storage::DataTable* table);
+ public:
+  TableStats() : num_rows(0) {}
 
-  ~TableStats();
+  TableStats(size_t num_rows) : num_rows(num_rows) {}
 
-  void CollectColumnStats();
+  TableStats(size_t num_rows,
+             std::vector<std::shared_ptr<ColumnStats>> col_stats_list);
 
-  inline size_t GetActiveTupleCount() {
-    return active_tuple_count_;
-  }
+  size_t num_rows;
 
-  inline size_t GetColumnCount() {
-    return column_count_;
-  }
+  bool HasColumnStats(std::string col_name);
 
-  ColumnStats* GetColumnStats(oid_t column_id);
+  std::shared_ptr<ColumnStats> GetColumnStats(std::string col_name);
 
-private:
-  storage::DataTable* table_;
-	catalog::Schema* schema_;
-  std::vector<std::unique_ptr<ColumnStats>> column_stats_;
-  size_t active_tuple_count_;
-  size_t column_count_;
+  bool AddColumnStats(std::shared_ptr<ColumnStats> col_stats);
 
-  TableStats(const TableStats&);
-  void operator=(const TableStats&);
+  bool RemoveColumnStats(std::string col_name);
 
-  void InitColumnStats();
+ private:
+  std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
+      col_name_to_stats_map_;
 };
 
 } /* namespace optimizer */

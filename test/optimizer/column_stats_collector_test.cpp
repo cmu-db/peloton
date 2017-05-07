@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// column_stats_test.cpp
+// column_stats_collector_test.cpp
 //
-// Identification: test/optimizer/column_stats_test.cpp
+// Identification: test/optimizer/column_stats_collector_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "common/logger.h"
-#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/column_stats_collector.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -28,12 +28,12 @@ namespace test {
 
 using namespace optimizer;
 
-class ColumnStatsTests : public PelotonTest {};
+class ColumnStatsCollectorTests : public PelotonTest {};
 
 // Basic test with tiny dataset.
-TEST_F(ColumnStatsTests, BasicTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::INTEGER};
+TEST_F(ColumnStatsCollectorTests, BasicTest) {
+  ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
+                                type::Type::TypeId::INTEGER, ""};
   // Edge case
   EXPECT_EQ(colstats.GetFracNull(), 0);  // Should also log error
   EXPECT_EQ(colstats.GetCardinality(), 0);
@@ -51,9 +51,9 @@ TEST_F(ColumnStatsTests, BasicTest) {
 
 // Test categorical values. Categorical data refers to data that
 // are not compariable but still hashable.
-TEST_F(ColumnStatsTests, DistinctValueTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::BOOLEAN};
+TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
+  ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
+                                type::Type::TypeId::BOOLEAN, ""};
   for (int i = 0; i < 1250; i++) {
     type::Value v = type::ValueFactory::GetBooleanValue(i % 5 == 0);
     colstats.AddValue(v);
@@ -66,9 +66,9 @@ TEST_F(ColumnStatsTests, DistinctValueTest) {
 // Test dataset with extreme distribution.
 // More specifically distribution with large amount of data at tail
 // with single continuous value to the left of tail.
-TEST_F(ColumnStatsTests, SkewedDistTest) {
-  ColumnStats colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::BIGINT};
+TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
+  ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
+                                type::Type::TypeId::BIGINT, ""};
   int big_int = 1234567;
   int height = 100000;
   int n = 10;
@@ -91,7 +91,7 @@ TEST_F(ColumnStatsTests, SkewedDistTest) {
   EXPECT_EQ(colstats.GetFracNull(), 0);
   uint64_t cardinality = colstats.GetCardinality();
   double error = colstats.GetCardinalityError();
-  int buffer = 30000; // extreme case error buffer
+  int buffer = 30000;  // extreme case error buffer
   EXPECT_GE(cardinality, (big_int + 10) * (1 - error) - buffer);
   EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
   EXPECT_GE(colstats.GetHistogramBound().size(), 0);
@@ -102,8 +102,8 @@ TEST_F(ColumnStatsTests, SkewedDistTest) {
 }
 
 // Test double values.
-TEST_F(ColumnStatsTests, DecimalTest) {
-  ColumnStats colstats{0, 0, 0, type::Type::TypeId::DECIMAL};
+TEST_F(ColumnStatsCollectorTests, DecimalTest) {
+  ColumnStatsCollector colstats{0, 0, 0, type::Type::TypeId::DECIMAL, ""};
   for (int i = 0; i < 1000; i++) {
     type::Value v = type::ValueFactory::GetDecimalValue(4.1525);
     colstats.AddValue(v);

@@ -73,9 +73,9 @@ TEST_F(AnalyzeSQLTests, AnalyzeSingleTableTest) {
   // Check stats information in catalog
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *catalog_database = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  storage::DataTable *db_column_stats_table = catalog_database->GetTableWithName(COLUMN_STATS_CATALOG_NAME);
-  EXPECT_NE(db_column_stats_table, nullptr);
-  EXPECT_EQ(db_column_stats_table->GetTupleCount(), 4);
+  storage::DataTable *db_column_stats_collector_table = catalog_database->GetTableWithName(column_stats_catalog_NAME);
+  EXPECT_NE(db_column_stats_collector_table, nullptr);
+  EXPECT_EQ(db_column_stats_collector_table->GetTupleCount(), 4);
 
   // Free the database
   txn = txn_manager.BeginTransaction();

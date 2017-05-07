@@ -17,7 +17,7 @@
 // 0: database_id (pkey)
 // 1: table_id (pkey)
 // 2: column_id (pkey)
-// 3: num_row
+// 3: num_rows
 // 4: cardinality
 // 5: frac_null
 // 6: most_common_vals
@@ -55,10 +55,11 @@ class ColumnStatsCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-                         int num_row, double cardinality, double frac_null,
+                         int num_rows, double cardinality, double frac_null,
                          std::string most_common_vals,
                          std::string most_common_freqs,
-                         std::string histogram_bounds, type::AbstractPool *pool,
+                         std::string histogram_bounds, std::string column_name,
+                         type::AbstractPool *pool,
                          concurrency::Transaction *txn);
   bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
                          concurrency::Transaction *txn);
@@ -75,22 +76,24 @@ class ColumnStatsCatalog : public AbstractCatalog {
     DATABASE_ID = 0,
     TABLE_ID = 1,
     COLUMN_ID = 2,
-    NUM_ROW = 3,
+    NUM_ROWS = 3,
     CARDINALITY = 4,
     FRAC_NULL = 5,
     MOST_COMMON_VALS = 6,
     MOST_COMMON_FREQS = 7,
     HISTOGRAM_BOUNDS = 8,
+    COLUMN_NAME = 9,
     // Add new columns here in creation order
   };
 
   enum ColumnStatsOffset {
-    NUM_ROW_OFF = 0,
+    NUM_ROWS_OFF = 0,
     CARDINALITY_OFF = 1,
     FRAC_NULL_OFF = 2,
     COMMON_VALS_OFF = 3,
     COMMON_FREQS_OFF = 4,
     HIST_BOUNDS_OFF = 5,
+    COLUMN_NAME_OFF = 6,
   };
 
  private:
