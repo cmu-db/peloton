@@ -93,7 +93,11 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         // TODO: more expression types need to be supported
         if (col->check_expression->GetValueType() == type::Type::TypeId::BOOLEAN) {
           catalog::Constraint constraint(ConstraintType::CHECK, "con_check");
-          type::Value tmp_value = type::ValueFactory::GetIntegerValue(100);
+
+          const expression::ConstantValueExpression *const_expr_elem =
+            dynamic_cast<const expression::ConstantValueExpression *>(col->check_expression->GetChild(1));
+
+          type::Value tmp_value = const_expr_elem->GetValue();
           constraint.AddCheck(std::move(col->check_expression->GetExpressionType()), std::move(tmp_value));
           column_constraints.push_back(constraint);
           LOG_DEBUG("Added a check constraint on column \"%s\"", col->name);
