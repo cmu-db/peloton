@@ -43,15 +43,15 @@
 #include "planner/plan_util.h"
 #include "parser/postgresparser.h"
 
-//#define NOTNULL_TEST
-//#define MULTI_NOTNULL_TEST
-//#define CHECK_TEST
-//#define DEFAULT_TEST
+#define NOTNULL_TEST
+#define MULTI_NOTNULL_TEST
+#define CHECK_TEST
+#define DEFAULT_TEST
 // #define PRIMARY_UNIQUEKEY_TEST
 #define FOREIGN_KEY_TEST
 //#define FOREIGN_MULTI_KEY_TEST
-//#define UNIQUE_TEST
-//#define MULTI_UNIQUE_TEST
+#define UNIQUE_TEST
+#define MULTI_UNIQUE_TEST
 
 #define DEFAULT_VALUE 11111
 
