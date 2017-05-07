@@ -50,9 +50,9 @@ void StatsStorage::CreateStatsCatalog() {
  * This function iterates all column stats in the table stats and insert column
  * stats tuples into the 'stats' table in the catalog database.
  */
-void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
-                                            TableStatsCollector *table_stats_collector,
-                                            concurrency::Transaction *txn) {
+void StatsStorage::InsertOrUpdateTableStats(
+    storage::DataTable *table, TableStatsCollector *table_stats_collector,
+    concurrency::Transaction *txn) {
   // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
@@ -60,7 +60,8 @@ void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
 
   oid_t column_count = table_stats_collector->GetColumnCount();
   for (oid_t column_id = 0; column_id < column_count; column_id++) {
-    ColumnStatsCollector *column_stats_collector = table_stats_collector->GetColumnStats(column_id);
+    ColumnStatsCollector *column_stats_collector =
+        table_stats_collector->GetColumnStats(column_id);
     double cardinality = column_stats_collector->GetCardinality();
     double frac_null = column_stats_collector->GetFracNull();
     // Currently, we only store the most common value and its frequency in stats
@@ -68,7 +69,8 @@ void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
     // TODO: Store multiple common values and freqs in stats table.
     std::vector<ValueFrequencyPair> most_common_val_freqs =
         column_stats_collector->GetCommonValueAndFrequency();
-    std::vector<double> histogram_bounds = column_stats_collector->GetHistogramBound();
+    std::vector<double> histogram_bounds =
+        column_stats_collector->GetHistogramBound();
 
     std::string most_common_vals_str, most_common_freqs_str,
         histogram_bounds_str;
@@ -79,9 +81,12 @@ void StatsStorage::InsertOrUpdateTableStats(storage::DataTable *table,
 
     histogram_bounds_str = ConvertDoubleArrayToString(histogram_bounds);
 
+    std::string column_name = column_stats_collector->GetColumnName();
+
     InsertOrUpdateColumnStats(database_id, table_id, column_id, num_row,
                               cardinality, frac_null, most_common_vals_str,
-                              most_common_freqs_str, histogram_bounds_str, txn);
+                              most_common_freqs_str, histogram_bounds_str,
+                              column_name, txn);
   }
 }
 
@@ -89,7 +94,7 @@ void StatsStorage::InsertOrUpdateColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
-    concurrency::Transaction *txn) {
+    std::string column_name, concurrency::Transaction *txn) {
   LOG_DEBUG("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_row,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
@@ -105,7 +110,8 @@ void StatsStorage::InsertOrUpdateColumnStats(
                                           txn);
   column_stats_catalog->InsertColumnStats(
       database_id, table_id, column_id, num_row, cardinality, frac_null,
-      most_common_vals, most_common_freqs, histogram_bounds, pool_.get(), txn);
+      most_common_vals, most_common_freqs, histogram_bounds, column_name,
+      pool_.get(), txn);
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
@@ -115,43 +121,61 @@ void StatsStorage::InsertOrUpdateColumnStats(
 /**
  * GetColumnStatsByID - Query the 'stats' table to get the column stats by IDs.
  */
-std::unique_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(
-    oid_t database_id, oid_t table_id, oid_t column_id) {
+std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
+                                                              oid_t table_id,
+                                                              oid_t column_id) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto column_stats_collector = column_stats_catalog->GetColumnStats(
+  auto column_stats = column_stats_catalog->GetColumnStats(
       database_id, table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
-  if (column_stats_collector == nullptr) {
-    LOG_TRACE("ColumnStatsCollector not found for db: %u, table: %u, column: %u",
-              database_id, table_id, column_id);
+  if (column_stats == nullptr) {
+    LOG_TRACE(
+        "ColumnStatsCollector not found for db: %u, table: %u, column: %u",
+        database_id, table_id, column_id);
     return nullptr;
   }
-  int num_row = (*column_stats_collector)[0].GetAs<int>();
-  double cardinality = (*column_stats_collector)[1].GetAs<double>();
-  double frac_null = (*column_stats_collector)[2].GetAs<double>();
+
+  int num_row =
+      (*column_stats)[catalog::ColumnStatsCatalog::NUM_ROW_OFF].GetAs<int>();
+  double cardinality =
+      (*column_stats)[catalog::ColumnStatsCatalog::CARDINALITY_OFF]
+          .GetAs<double>();
+  double frac_null = (*column_stats)[catalog::ColumnStatsCatalog::FRAC_NULL_OFF]
+                         .GetAs<double>();
+
   std::vector<double> val_array, freq_array, histogram_bounds;
-  char *val_array_ptr = (*column_stats_collector)[3].GetAs<char *>();
+  char *val_array_ptr =
+      (*column_stats)[catalog::ColumnStatsCatalog::COMMON_VALS_OFF]
+          .GetAs<char *>();
   if (val_array_ptr != nullptr) {
     val_array = ConvertStringToDoubleArray(std::string(val_array_ptr));
   }
-  char *freq_array_ptr = (*column_stats_collector)[4].GetAs<char *>();
+  char *freq_array_ptr =
+      (*column_stats)[catalog::ColumnStatsCatalog::COMMON_FREQS_OFF]
+          .GetAs<char *>();
   if (freq_array_ptr != nullptr) {
     freq_array = ConvertStringToDoubleArray(std::string(freq_array_ptr));
   }
-  char *hist_bounds_ptr = (*column_stats_collector)[5].GetAs<char *>();
+  char *hist_bounds_ptr =
+      (*column_stats)[catalog::ColumnStatsCatalog::HIST_BOUNDS_OFF]
+          .GetAs<char *>();
   if (hist_bounds_ptr != nullptr) {
     LOG_TRACE("histgram bounds: %s", hist_bounds_ptr);
     histogram_bounds = ConvertStringToDoubleArray(std::string(hist_bounds_ptr));
   }
 
-  std::unique_ptr<ColumnStats> column_stats(
-      new ColumnStats(num_row, cardinality, frac_null, val_array, freq_array,
-                         histogram_bounds));
+  char *column_name =
+      (*column_stats)[catalog::ColumnStatsCatalog::COLUMN_NAME_OFF]
+          .GetAs<char *>();
 
-  return std::move(column_stats);
+  std::shared_ptr<ColumnStats> column_stats_result(new ColumnStats(
+      database_id, table_id, column_id, std::string(column_name), num_row,
+      cardinality, frac_null, val_array, freq_array, histogram_bounds));
+
+  return std::move(column_stats_result);
 }
 
 /**
@@ -180,7 +204,8 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
     for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
       auto table = database->GetTable(table_offset);
       LOG_DEBUG("analyzing table: %s", table->GetName().c_str());
-      std::unique_ptr<TableStatsCollector> table_stats_collector(new TableStatsCollector(table));
+      std::unique_ptr<TableStatsCollector> table_stats_collector(
+          new TableStatsCollector(table));
       table_stats_collector->CollectColumnStats();
       InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
     }
@@ -195,7 +220,8 @@ ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
               table_name.c_str());
     return ResultType::FAILURE;
   }
-  std::unique_ptr<TableStatsCollector> table_stats_collector(new TableStatsCollector(table));
+  std::unique_ptr<TableStatsCollector> table_stats_collector(
+      new TableStatsCollector(table));
   table_stats_collector->CollectColumnStats();
   InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
   return ResultType::SUCCESS;

@@ -48,7 +48,7 @@ TEST_F(TableStatsCollectorTests, BasicTests) {
 TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -88,22 +88,24 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
 TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
-    "CREATE TABLE test(a INT, b VARCHAR, c DOUBLE, d TIMESTAMP);");
+      "CREATE TABLE test(a INT, b VARCHAR, c DOUBLE, d TIMESTAMP);");
 
   int nrow = 10000;
   for (int i = 0; i < nrow; i++) {
-    if (i % 2  == 0) {
+    if (i % 2 == 0) {
       TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO test VALUES (0, 'even', 1.234, '2017-04-01 00:00:02-04');");
+          "INSERT INTO test VALUES (0, 'even', 1.234, '2017-04-01 "
+          "00:00:02-04');");
     } else {
       TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO test VALUES (1, 'odd', 1.234, '2017-01-01 11:11:12-04');");
+          "INSERT INTO test VALUES (1, 'odd', 1.234, '2017-01-01 "
+          "11:11:12-04');");
     }
   }
 
@@ -118,7 +120,8 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   ColumnStatsCollector* b_stats = stats.GetColumnStats(1);
   EXPECT_EQ(b_stats->GetFracNull(), 0);
   EXPECT_EQ(b_stats->GetCardinality(), 2);
-  EXPECT_EQ((b_stats->GetHistogramBound()).size(), 0); // varchar has no histogram dist
+  EXPECT_EQ((b_stats->GetHistogramBound()).size(),
+            0);  // varchar has no histogram dist
 
   // Double stats
   ColumnStatsCollector* c_stats = stats.GetColumnStats(2);

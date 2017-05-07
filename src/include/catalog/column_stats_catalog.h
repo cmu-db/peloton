@@ -58,7 +58,8 @@ class ColumnStatsCatalog : public AbstractCatalog {
                          int num_row, double cardinality, double frac_null,
                          std::string most_common_vals,
                          std::string most_common_freqs,
-                         std::string histogram_bounds, type::AbstractPool *pool,
+                         std::string histogram_bounds, std::string column_name,
+                         type::AbstractPool *pool,
                          concurrency::Transaction *txn);
   bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
                          concurrency::Transaction *txn);
@@ -81,6 +82,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
     MOST_COMMON_VALS = 6,
     MOST_COMMON_FREQS = 7,
     HISTOGRAM_BOUNDS = 8,
+    COLUMN_NAME = 9,
     // Add new columns here in creation order
   };
 
@@ -91,6 +93,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
     COMMON_VALS_OFF = 3,
     COMMON_FREQS_OFF = 4,
     HIST_BOUNDS_OFF = 5,
+    COLUMN_NAME_OFF = 6,
   };
 
  private:

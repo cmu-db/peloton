@@ -17,12 +17,15 @@
 namespace peloton {
 namespace optimizer {
 
-ColumnStatsCollector::ColumnStatsCollector(oid_t database_id, oid_t table_id, oid_t column_id,
-                         type::Type::TypeId column_type)
+ColumnStatsCollector::ColumnStatsCollector(oid_t database_id, oid_t table_id,
+                                           oid_t column_id,
+                                           type::Type::TypeId column_type,
+                                           std::string column_name)
     : database_id_{database_id},
       table_id_{table_id},
       column_id_{column_id},
       column_type_{column_type},
+      column_name_{column_name},
       hll_{hll_precision},
       hist_{max_bins},
       sketch_{cmsketch_eps, cmsketch_gamma, 0},
@@ -33,8 +36,8 @@ ColumnStatsCollector::~ColumnStatsCollector() {}
 void ColumnStatsCollector::AddValue(const type::Value& value) {
   if (value.GetTypeId() != column_type_) {
     LOG_TRACE(
-      "Incompatible value type %d with expected column stats value type %d",
-      value.GetTypeId(), column_type_);
+        "Incompatible value type %d with expected column stats value type %d",
+        value.GetTypeId(), column_type_);
     return;
   }
   total_count_++;

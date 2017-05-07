@@ -33,7 +33,7 @@ class ColumnStatsCollectorTests : public PelotonTest {};
 // Basic test with tiny dataset.
 TEST_F(ColumnStatsCollectorTests, BasicTest) {
   ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::INTEGER};
+                                type::Type::TypeId::INTEGER, ""};
   // Edge case
   EXPECT_EQ(colstats.GetFracNull(), 0);  // Should also log error
   EXPECT_EQ(colstats.GetCardinality(), 0);
@@ -53,7 +53,7 @@ TEST_F(ColumnStatsCollectorTests, BasicTest) {
 // are not compariable but still hashable.
 TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
   ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::BOOLEAN};
+                                type::Type::TypeId::BOOLEAN, ""};
   for (int i = 0; i < 1250; i++) {
     type::Value v = type::ValueFactory::GetBooleanValue(i % 5 == 0);
     colstats.AddValue(v);
@@ -68,7 +68,7 @@ TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
 // with single continuous value to the left of tail.
 TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
   ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
-                       type::Type::TypeId::BIGINT};
+                                type::Type::TypeId::BIGINT, ""};
   int big_int = 1234567;
   int height = 100000;
   int n = 10;
@@ -91,7 +91,7 @@ TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
   EXPECT_EQ(colstats.GetFracNull(), 0);
   uint64_t cardinality = colstats.GetCardinality();
   double error = colstats.GetCardinalityError();
-  int buffer = 30000; // extreme case error buffer
+  int buffer = 30000;  // extreme case error buffer
   EXPECT_GE(cardinality, (big_int + 10) * (1 - error) - buffer);
   EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
   EXPECT_GE(colstats.GetHistogramBound().size(), 0);
@@ -103,7 +103,7 @@ TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
 
 // Test double values.
 TEST_F(ColumnStatsCollectorTests, DecimalTest) {
-  ColumnStatsCollector colstats{0, 0, 0, type::Type::TypeId::DECIMAL};
+  ColumnStatsCollector colstats{0, 0, 0, type::Type::TypeId::DECIMAL, ""};
   for (int i = 0; i < 1000; i++) {
     type::Value v = type::ValueFactory::GetDecimalValue(4.1525);
     colstats.AddValue(v);

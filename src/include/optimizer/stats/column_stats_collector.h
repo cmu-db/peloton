@@ -29,7 +29,7 @@ namespace optimizer {
 // ColumnStatsCollector
 //===--------------------------------------------------------------------===//
 class ColumnStatsCollector {
-public:
+ public:
   /* Default parameters for probabilistic stats collector */
   int hll_precision = 8;
   double cmsketch_eps = 0.01;
@@ -40,7 +40,7 @@ public:
   using ValueFrequencyPair = std::pair<type::Value, double>;
 
   ColumnStatsCollector(oid_t database_id, oid_t table_id, oid_t column_id,
-              type::Type::TypeId column_type);
+                       type::Type::TypeId column_type, std::string column_name);
 
   ~ColumnStatsCollector();
 
@@ -52,23 +52,20 @@ public:
     return topk_.GetAllOrderedMaxFirst();
   }
 
-  inline uint64_t GetCardinality() {
-    return hll_.EstimateCardinality();
-  }
+  inline uint64_t GetCardinality() { return hll_.EstimateCardinality(); }
 
-  inline double GetCardinalityError() {
-    return hll_.RelativeError();
-  }
+  inline double GetCardinalityError() { return hll_.RelativeError(); }
 
-  inline std::vector<double> GetHistogramBound() {
-    return hist_.Uniform();
-  }
+  inline std::vector<double> GetHistogramBound() { return hist_.Uniform(); }
+
+  inline std::string GetColumnName() { return column_name_; }
 
  private:
   const oid_t database_id_;
   const oid_t table_id_;
   const oid_t column_id_;
   const type::Type::TypeId column_type_;
+  const std::string column_name_;
   HyperLogLog hll_;
   Histogram hist_;
   CountMinSketch sketch_;

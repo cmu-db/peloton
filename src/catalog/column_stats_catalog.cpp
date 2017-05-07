@@ -38,7 +38,8 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::Transaction *txn)
                       "frac_null      DECIMAL NOT NULL, "
                       "most_common_vals  VARCHAR, "
                       "most_common_freqs VARCHAR, "
-                      "histogram_bounds  VARCHAR);",
+                      "histogram_bounds  VARCHAR, "
+                      "column_name       VARCHAR);",
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
@@ -53,7 +54,8 @@ bool ColumnStatsCatalog::InsertColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
-    type::AbstractPool *pool, concurrency::Transaction *txn) {
+    std::string column_name, type::AbstractPool *pool,
+    concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -83,6 +85,9 @@ bool ColumnStatsCatalog::InsertColumnStats(
         type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
   }
 
+  type::Value val_column_name =
+      type::ValueFactory::GetVarcharValue(column_name);
+
   tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
   tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
   tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
@@ -92,6 +97,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
   tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool);
   tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, pool);
   tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool);
+  tuple->SetValue(ColumnId::COLUMN_NAME, val_column_name, pool);
 
   // Insert the tuple into catalog table
   return InsertTuple(std::move(tuple), txn);
@@ -116,7 +122,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   std::vector<oid_t> column_ids(
       {ColumnId::NUM_ROW, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
-       ColumnId::HISTOGRAM_BOUNDS});
+       ColumnId::HISTOGRAM_BOUNDS, ColumnId::COLUMN_NAME});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -128,7 +134,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Value num_row, cardinality, frac_null, most_common_vals,
-      most_common_freqs, hist_bounds;
+      most_common_freqs, hist_bounds, column_name;
 
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
@@ -143,6 +149,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       most_common_freqs =
           tile->GetValue(0, ColumnStatsOffset::COMMON_FREQS_OFF);
       hist_bounds = tile->GetValue(0, ColumnStatsOffset::HIST_BOUNDS_OFF);
+      column_name = tile->GetValue(0, ColumnStatsOffset::COLUMN_NAME_OFF);
     } else {
       return nullptr;
     }
@@ -158,6 +165,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   column_stats->push_back(most_common_vals);
   column_stats->push_back(most_common_freqs);
   column_stats->push_back(hist_bounds);
+  column_stats->push_back(column_name);
 
   return std::move(column_stats);
 }

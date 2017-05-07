@@ -50,17 +50,15 @@ class StatsStorage {
                                 TableStatsCollector *table_stats_collector,
                                 concurrency::Transaction *txn = nullptr);
 
-  void InsertOrUpdateColumnStats(oid_t database_id, oid_t table_id,
-                                 oid_t column_id, int num_row,
-                                 double cardinality, double frac_null,
-                                 std::string most_common_vals,
-                                 std::string most_common_freqs,
-                                 std::string histogram_bounds,
-                                 concurrency::Transaction *txn = nullptr);
+  void InsertOrUpdateColumnStats(
+      oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
+      double cardinality, double frac_null, std::string most_common_vals,
+      std::string most_common_freqs, std::string histogram_bounds,
+      std::string column_name, concurrency::Transaction *txn = nullptr);
 
-  std::unique_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
-                                                     oid_t table_id,
-                                                     oid_t column_id);
+  std::shared_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
+                                                  oid_t table_id,
+                                                  oid_t column_id);
 
   /* Functions for triggerring stats collection */
 
@@ -105,7 +103,6 @@ class StatsStorage {
     return double_array;
   }
 
-
   std::pair<std::string, std::string> ConvertValueFreqArrayToStrings(
       std::vector<ValueFrequencyPair> &val_freqs) {
     size_t array_size = val_freqs.size();
@@ -129,6 +126,5 @@ class StatsStorage {
     return std::make_pair(ss_value.str(), ss_freq.str());
   }
 };
-
 }
 }

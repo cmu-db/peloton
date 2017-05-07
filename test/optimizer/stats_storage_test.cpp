@@ -127,7 +127,8 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
   auto catalog = catalog::Catalog::GetInstance();
   (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-  stats_storage->InsertOrUpdateTableStats(data_table.get(), table_stats_collector.get());
+  stats_storage->InsertOrUpdateTableStats(data_table.get(),
+                                          table_stats_collector.get());
 
   VerifyAndPrintColumnStats(data_table.get(), 4);
 }
@@ -146,10 +147,11 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   std::string most_common_vals = "12";
   std::string most_common_freqs = "3";
   std::string histogram_bounds = "1,5,7";
+  std::string column_name = "random";
 
   stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row, cardinality, frac_null,
-      most_common_vals, most_common_freqs, histogram_bounds);
+      most_common_vals, most_common_freqs, histogram_bounds, column_name);
 
   auto column_stats_ptr =
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
@@ -160,6 +162,8 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   EXPECT_EQ(column_stats_ptr->num_row, num_row);
   EXPECT_EQ(column_stats_ptr->cardinality, cardinality);
   EXPECT_EQ(column_stats_ptr->frac_null, frac_null);
+
+  EXPECT_EQ(column_stats_ptr->column_name, column_name);
 
   // Should return nullptr
   auto column_stats_ptr2 =
@@ -182,6 +186,7 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   std::string most_common_vals_0 = "12";
   std::string most_common_freqs_0 = "3";
   std::string histogram_bounds_0 = "1,5,7";
+  std::string column_name_0 = "random0";
 
   int num_row_1 = 20;
   double cardinality_1 = 16;
@@ -189,13 +194,16 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   std::string most_common_vals_1 = "24";
   std::string most_common_freqs_1 = "6";
   std::string histogram_bounds_1 = "2,10,14";
+  std::string column_name_1 = "random1";
 
   stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row_0, cardinality_0, frac_null_0,
-      most_common_vals_0, most_common_freqs_0, histogram_bounds_0);
+      most_common_vals_0, most_common_freqs_0, histogram_bounds_0,
+      column_name_0);
   stats_storage->InsertOrUpdateColumnStats(
       database_id, table_id, column_id, num_row_1, cardinality_1, frac_null_1,
-      most_common_vals_1, most_common_freqs_1, histogram_bounds_1);
+      most_common_vals_1, most_common_freqs_1, histogram_bounds_1,
+      column_name_1);
 
   auto column_stats_ptr =
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id);
@@ -206,6 +214,8 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   EXPECT_EQ(column_stats_ptr->num_row, num_row_1);
   EXPECT_EQ(column_stats_ptr->cardinality, cardinality_1);
   EXPECT_EQ(column_stats_ptr->frac_null, frac_null_1);
+
+  EXPECT_EQ(column_stats_ptr->column_name, column_name_1);
 }
 
 // TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
