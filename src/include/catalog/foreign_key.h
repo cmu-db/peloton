@@ -41,20 +41,7 @@ class ForeignKey {
         fk_update_action(fk_update_action),
         fk_delete_action(fk_delete_action),
         fk_name(constraint_name) {}
-/*
-   ~ForeignKey() {
-     for (auto key : pk_column_names) {
-       delete[] (key);
-     }
-     delete pk_column_names;
 
-     for (auto key : fk_column_names) {
-       delete (key);
-     }
-     delete fk_column_names;
-     delete fk_name;
-   }
-*/
   std::string GetSinkTableName() const { return sink_table_name; }
 
   std::vector<std::string> GetPKColumnNames() const { return pk_column_names; }
