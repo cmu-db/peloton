@@ -341,11 +341,20 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
+<<<<<<< HEAD
   // assert(tuple);
   if (check_constraint && tuple != nullptr) {
     if (CheckConstraints(tuple) == false)
       return INVALID_ITEMPOINTER;
   }
+=======
+  //TODO: delete this section
+  if (!check_constraint) {
+    ;
+  }
+  //if (tuple && check_constraint && CheckConstraints(tuple) == false)
+  //  return INVALID_ITEMPOINTER;
+>>>>>>> 462c364... Added debug statements for foreign key addition
 
   //=============== garbage collection==================
   // check if there are recycled tuple slots
@@ -1100,18 +1109,25 @@ oid_t DataTable::GetValidIndexCount() const {
 //===--------------------------------------------------------------------===//
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
+  LOG_DEBUG("In AddForeignKey().");
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Schema *schema = this->GetSchema();
+    LOG_DEBUG("Locked.");
+    //catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
+    LOG_DEBUG("Made the constraint.");
+    LOG_DEBUG("%lu", foreign_keys_.size());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
+    LOG_DEBUG("Finished the constraint");
     for (auto fk_column : key->GetFKColumnNames()) {
       schema->AddConstraint(fk_column, constraint);
     }
+    LOG_DEBUG("Added constraint to the schema.");
     // TODO :: We need this one..
-    catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys_.push_back(fk);
+    //catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
+    LOG_DEBUG("Made a new foreign key object.");
+    foreign_keys_.push_back(key);
   }
 }
 
