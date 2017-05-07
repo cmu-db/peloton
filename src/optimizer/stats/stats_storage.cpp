@@ -56,7 +56,7 @@ void StatsStorage::InsertOrUpdateTableStats(
   // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
-  size_t num_row = table_stats_collector->GetActiveTupleCount();
+  size_t num_rows = table_stats_collector->GetActiveTupleCount();
 
   oid_t column_count = table_stats_collector->GetColumnCount();
   for (oid_t column_id = 0; column_id < column_count; column_id++) {
@@ -83,7 +83,7 @@ void StatsStorage::InsertOrUpdateTableStats(
 
     std::string column_name = column_stats_collector->GetColumnName();
 
-    InsertOrUpdateColumnStats(database_id, table_id, column_id, num_row,
+    InsertOrUpdateColumnStats(database_id, table_id, column_id, num_rows,
                               cardinality, frac_null, most_common_vals_str,
                               most_common_freqs_str, histogram_bounds_str,
                               column_name, txn);
@@ -91,11 +91,11 @@ void StatsStorage::InsertOrUpdateTableStats(
 }
 
 void StatsStorage::InsertOrUpdateColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id, int num_row,
+    oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, concurrency::Transaction *txn) {
-  LOG_DEBUG("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_row,
+  LOG_DEBUG("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
@@ -109,7 +109,7 @@ void StatsStorage::InsertOrUpdateColumnStats(
   column_stats_catalog->DeleteColumnStats(database_id, table_id, column_id,
                                           txn);
   column_stats_catalog->InsertColumnStats(
-      database_id, table_id, column_id, num_row, cardinality, frac_null,
+      database_id, table_id, column_id, num_rows, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds, column_name,
       pool_.get(), txn);
 
@@ -138,8 +138,8 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
     return nullptr;
   }
 
-  int num_row =
-      (*column_stats)[catalog::ColumnStatsCatalog::NUM_ROW_OFF].GetAs<int>();
+  int num_rows =
+      (*column_stats)[catalog::ColumnStatsCatalog::NUM_ROWS_OFF].GetAs<int>();
   double cardinality =
       (*column_stats)[catalog::ColumnStatsCatalog::CARDINALITY_OFF]
           .GetAs<double>();
@@ -172,7 +172,7 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
           .GetAs<char *>();
 
   std::shared_ptr<ColumnStats> column_stats_result(new ColumnStats(
-      database_id, table_id, column_id, std::string(column_name), num_row,
+      database_id, table_id, column_id, std::string(column_name), num_rows,
       cardinality, frac_null, val_array, freq_array, histogram_bounds));
 
   return std::move(column_stats_result);

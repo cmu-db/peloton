@@ -34,35 +34,35 @@ namespace optimizer {
 static constexpr double DEFAULT_SELECTIVITY = 0.5;
 
 class Selectivity {
-public:
-
+ public:
   // Get comparison operators selectivity.
-  static double GetExpressionSelectivity(SelParam *param, ExpressionType type) {
-      switch (type) {
-        case ExpressionType::COMPARE_LESSTHAN:
-          return LessThan(param);
-        case ExpressionType::COMPARE_GREATERTHAN:
-          return GreaterThan(param);
-        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-          return LessThanOrEqualTo(param);
-        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-          return GreaterThanOrEqualTo(param);
-        case ExpressionType::COMPARE_EQUAL:
-          return Equal(param);
-        case ExpressionType::COMPARE_NOTEQUAL:
-          return NotEqual(param);
-        case ExpressionType::COMPARE_LIKE:
-          return Like(param);
-        case ExpressionType::COMPARE_NOTLIKE:
-          return NotLike(param);
-        case ExpressionType::COMPARE_IN:
-          return In(param);
-        case ExpressionType::COMPARE_DISTINCT_FROM:
-          return DistinctFrom(param);
-        default:
-          LOG_TRACE("Expression type %d not supported for computing selectivity", type);
-          return DEFAULT_SELECTIVITY;
-      }
+  static double GetExpressionSelectivity(SelParam* param, ExpressionType type) {
+    switch (type) {
+      case ExpressionType::COMPARE_LESSTHAN:
+        return LessThan(param);
+      case ExpressionType::COMPARE_GREATERTHAN:
+        return GreaterThan(param);
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        return LessThanOrEqualTo(param);
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        return GreaterThanOrEqualTo(param);
+      case ExpressionType::COMPARE_EQUAL:
+        return Equal(param);
+      case ExpressionType::COMPARE_NOTEQUAL:
+        return NotEqual(param);
+      case ExpressionType::COMPARE_LIKE:
+        return Like(param);
+      case ExpressionType::COMPARE_NOTLIKE:
+        return NotLike(param);
+      case ExpressionType::COMPARE_IN:
+        return In(param);
+      case ExpressionType::COMPARE_DISTINCT_FROM:
+        return DistinctFrom(param);
+      default:
+        LOG_TRACE("Expression type %d not supported for computing selectivity",
+                  type);
+        return DEFAULT_SELECTIVITY;
+    }
   }
 
   // Selectivity for '<' operator.
@@ -72,7 +72,7 @@ public:
     // Get column stats and histogram from stats storage
     auto stats_storage = optimizer::StatsStorage::GetInstance();
     auto column_stats = stats_storage->GetColumnStatsByID(
-      param->database_id, param->table_id, param->column_id);
+        param->database_id, param->table_id, param->column_id);
     // Return default selectivity if no column stats for given column_id
     if (column_stats == nullptr) {
       return DEFAULT_SELECTIVITY;
@@ -90,66 +90,69 @@ public:
   }
 
   // Selectivity for '<=' operator.
-  static double LessThanOrEqualTo(SelParam *param) {
+  static double LessThanOrEqualTo(SelParam* param) {
     double res = LessThan(param) + Equal(param);
     return std::max(res, 1.0);
   }
 
   // Selectivity for '>' operator.
-  static double GreaterThan(SelParam *param) {
+  static double GreaterThan(SelParam* param) {
     return 1 - LessThanOrEqualTo(param);
   }
 
   // Selectivity for '>=' operator.
-  static double GreaterThanOrEqualTo(SelParam *param) {
+  static double GreaterThanOrEqualTo(SelParam* param) {
     return 1 - LessThan(param);
   }
 
   // Selectivity for '=' operator.
   static double Equal(SelParam* param) {
-      auto stats_storage = optimizer::StatsStorage::GetInstance();
-      auto column_stats = stats_storage->GetColumnStatsByID(
-       param->database_id, param->table_id, param->column_id);
-      double value = PelotonValueToNumericValue(param->value);
+    auto stats_storage = optimizer::StatsStorage::GetInstance();
+    auto column_stats = stats_storage->GetColumnStatsByID(
+        param->database_id, param->table_id, param->column_id);
+    double value = PelotonValueToNumericValue(param->value);
 
-      // Stats not found.
-      if (column_stats == nullptr) {
-        return DEFAULT_SELECTIVITY;
+    // Stats not found.
+    if (column_stats == nullptr) {
+      return DEFAULT_SELECTIVITY;
+    }
+
+    size_t numrows = column_stats->num_rows;
+    // For now only double is supported in stats storage
+    std::vector<double> most_common_vals = column_stats->most_common_vals;
+    std::vector<double> most_common_freqs = column_stats->most_common_freqs;
+    std::vector<double>::iterator first = most_common_vals.begin(),
+                                  last = most_common_vals.end();
+
+    while (first != last) {
+      // For now only double is supported in stats storage
+      if (*first == value) {
+        break;
+      }
+      ++first;
+    }
+
+    double res = DEFAULT_SELECTIVITY;
+    if (first != last) {
+      // the target value for equality comparison (param value) is
+      // found in most common values
+      size_t idx = first - most_common_vals.begin();
+
+      res = most_common_freqs[idx] / (double)numrows;
+    } else {
+      // the target value for equality comparison (parm value) is
+      // NOT found in most common values
+      // (1 - sum(mvf))/(num_distinct - num_mcv)
+      double sum_mvf = 0;
+      std::vector<double>::iterator first = most_common_freqs.begin(),
+                                    last = most_common_freqs.end();
+      while (first != last) {
+        sum_mvf += *first;
+        ++first;
       }
 
-      size_t numrows = column_stats->num_row;
-     // For now only double is supported in stats storage
-     std::vector<double> most_common_vals = column_stats->most_common_vals;
-     std::vector<double> most_common_freqs = column_stats->most_common_freqs;
-     std::vector<double>::iterator first = most_common_vals.begin(), last = most_common_vals.end();
-
-     while (first != last) {
-       // For now only double is supported in stats storage
-       if (*first == value) {
-         break;
-       }
-       ++first;
-     }
-
-     double res = DEFAULT_SELECTIVITY;
-     if (first != last) {
-       // the target value for equality comparison (param value) is
-       // found in most common values
-       size_t idx = first - most_common_vals.begin();
-
-       res = most_common_freqs[idx] / (double) numrows;
-     } else {
-       // the target value for equality comparison (parm value) is
-       // NOT found in most common values
-       // (1 - sum(mvf))/(num_distinct - num_mcv)
-       double sum_mvf = 0;
-       std::vector<double>::iterator first = most_common_freqs.begin(), last = most_common_freqs.end();
-       while (first != last) {
-         sum_mvf += *first;
-         ++first;
-       }
-
-       res = (1 - sum_mvf / (double) numrows) / (column_stats->cardinality - most_common_vals.size());
+      res = (1 - sum_mvf / (double)numrows) /
+            (column_stats->cardinality - most_common_vals.size());
     }
     PL_ASSERT(res >= 0);
     PL_ASSERT(res <= 1);
@@ -157,9 +160,7 @@ public:
   }
 
   // Selectivity for '!=' operator.
-  static double NotEqual(SelParam* param) {
-    return 1 - Equal(param);
-  }
+  static double NotEqual(SelParam* param) { return 1 - Equal(param); }
 
   // Selectivity for 'LIKE' operator. The column type must be VARCHAR.
   // Complete implementation once we support LIKE operator.
@@ -175,19 +176,21 @@ public:
 
     // Check whether column type is VARCHAR.
     auto column_catalog = catalog::ColumnCatalog::GetInstance();
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    type::Type::TypeId column_type = column_catalog->GetColumnType(table_id, column_id, txn);
+    type::Type::TypeId column_type =
+        column_catalog->GetColumnType(table_id, column_id, txn);
     txn_manager.CommitTransaction(txn);
 
-    if(column_type != type::Type::TypeId::VARCHAR) {
+    if (column_type != type::Type::TypeId::VARCHAR) {
       return DEFAULT_SELECTIVITY;
     }
 
     std::vector<type::Value> column_samples;
     auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
     txn = txn_manager.BeginTransaction();
-    tuple_storage->GetColumnSamples(database_id, table_id, column_id, column_samples);
+    tuple_storage->GetColumnSamples(database_id, table_id, column_id,
+                                    column_samples);
     txn_manager.CommitTransaction(txn);
 
     for (size_t i = 0; i < column_samples.size(); i++) {
@@ -198,9 +201,7 @@ public:
   }
 
   // Selectivity for 'NOT LIKE' operator.
-  static double NotLike(SelParam* param) {
-    return 1 - Like(param);
-  }
+  static double NotLike(SelParam* param) { return 1 - Like(param); }
 
   // Selectivity for 'IN' operator.
   static double In(UNUSED_ATTRIBUTE SelParam* param) {

@@ -100,7 +100,7 @@ void VerifyAndPrintColumnStats(storage::DataTable *data_table,
   for (int column_id = 0; column_id < expect_tuple_count; ++column_id) {
     auto column_stats = stats_storage->GetColumnStatsByID(
         data_table->GetDatabaseOid(), data_table->GetOid(), column_id);
-    LOG_DEBUG("num_row: %lu", column_stats->num_row);
+    LOG_DEBUG("num_rows: %lu", column_stats->num_rows);
     LOG_DEBUG("cardinality: %lf", column_stats->cardinality);
     LOG_DEBUG("frac_null: %lf", column_stats->frac_null);
     auto most_common_vals = column_stats->most_common_vals;
@@ -141,7 +141,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   oid_t database_id = 1;
   oid_t table_id = 2;
   oid_t column_id = 3;
-  int num_row = 10;
+  int num_rows = 10;
   double cardinality = 8;
   double frac_null = 0.56;
   std::string most_common_vals = "12";
@@ -150,7 +150,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   std::string column_name = "random";
 
   stats_storage->InsertOrUpdateColumnStats(
-      database_id, table_id, column_id, num_row, cardinality, frac_null,
+      database_id, table_id, column_id, num_rows, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds, column_name);
 
   auto column_stats_ptr =
@@ -159,7 +159,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   // Check the result
   EXPECT_NE(column_stats_ptr, nullptr);
 
-  EXPECT_EQ(column_stats_ptr->num_row, num_row);
+  EXPECT_EQ(column_stats_ptr->num_rows, num_rows);
   EXPECT_EQ(column_stats_ptr->cardinality, cardinality);
   EXPECT_EQ(column_stats_ptr->frac_null, frac_null);
 
@@ -211,7 +211,7 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   // Check the result
   EXPECT_NE(column_stats_ptr, nullptr);
 
-  EXPECT_EQ(column_stats_ptr->num_row, num_row_1);
+  EXPECT_EQ(column_stats_ptr->num_rows, num_row_1);
   EXPECT_EQ(column_stats_ptr->cardinality, cardinality_1);
   EXPECT_EQ(column_stats_ptr->frac_null, frac_null_1);
 

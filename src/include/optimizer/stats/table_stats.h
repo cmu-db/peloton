@@ -25,14 +25,14 @@ class ColumnStats;
 //===--------------------------------------------------------------------===//
 class TableStats {
  public:
-  TableStats() : num_row(0) {}
+  TableStats() : num_rows(0) {}
 
-  TableStats(size_t num_row) : num_row(num_row) {}
+  TableStats(size_t num_rows) : num_rows(num_rows) {}
 
-  TableStats(size_t num_row,
+  TableStats(size_t num_rows,
              std::vector<std::shared_ptr<ColumnStats>> col_stats_list);
 
-  size_t num_row;
+  size_t num_rows;
 
   bool HasColumnStats(std::string col_name);
 

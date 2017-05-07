@@ -16,9 +16,9 @@
 namespace peloton {
 namespace optimizer {
 
-TableStats::TableStats(size_t num_row,
+TableStats::TableStats(size_t num_rows,
                        std::vector<std::shared_ptr<ColumnStats>> col_stats_list)
-    : num_row(num_row) {
+    : num_rows(num_rows) {
   for (size_t i = 0; i < col_stats_list.size(); ++i) {
     AddColumnStats(col_stats_list[i]);
   }
