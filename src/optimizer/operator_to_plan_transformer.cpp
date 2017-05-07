@@ -329,7 +329,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
-void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {
+void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
   output_plan_ = 
     move(GenerateNLJoinPlan((op->join_predicate).get(), JoinType::INNER));
 }
@@ -608,7 +608,8 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
   
   if (predicate_prop != nullptr) {
     auto where_predicate = predicate_prop->GetPredicate()->Copy();
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+    // predicates are evaluate after projection
+    expression::ExpressionUtil::EvaluateExpression({*output_expr_map_},
                                                    where_predicate);
     LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
     predicates.emplace_back(where_predicate);
@@ -626,6 +627,9 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
           left_hash_keys, right_hash_keys, join_predicate, true);
 
   if (remaining_predicate != nullptr) {
+    // Quite strange, but have to set tuple_idx/value_idx again
+    expression::ExpressionUtil::EvaluateExpression({*output_expr_map_},
+                                                   remaining_predicate);
     LOG_TRACE("remaining %s", remaining_predicate->GetInfo().c_str());
     predicates.emplace_back(remaining_predicate);
   }
@@ -657,6 +661,8 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
 OperatorToPlanTransformer::GenerateNLJoinPlan(
     expression::AbstractExpression *join_predicate, JoinType join_type) {
   // TODO: generate nested loop join plan
+  (void) join_predicate;
+  (void) join_type;
   return nullptr;
 }
 void OperatorToPlanTransformer::VisitOpExpression(

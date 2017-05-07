@@ -74,7 +74,7 @@ void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){
+void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *op){
   JoinHelper(op);
 };
 void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};

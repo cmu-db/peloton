@@ -464,11 +464,19 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       false);
 
   // 2 table join with where clause and predicate
+  TestUtil(
+      "SELECT test.a, test1.b FROM test, test1 "
+      "WHERE test.a = test1.a AND test1.b = 22",
+      {"1", "22", 
+       "3", "22"}, 
+      false);
+
+  // 2 table join with where clause and predicate
+  // predicate column not in select list
   // TestUtil(
-  //     "SELECT test.a, test1.b FROM test, test1 "
+  //     "SELECT test.a FROM test, test1 "
   //     "WHERE test.a = test1.a AND test1.b = 22",
-  //     {"1", "22" 
-  //      "3", "22"}, 
+  //     {"1", "3"}, 
   //     false);
 
 }
