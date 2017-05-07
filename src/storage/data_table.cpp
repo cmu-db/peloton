@@ -501,8 +501,9 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
   //TODO: delete this section
-  if (!check_constraint)
-    LOG_DEBUG("This line should never be executed.");
+  if (!check_constraint) {
+    ;
+  }
   //if (tuple && check_constraint && CheckConstraints(tuple) == false)
   //  return INVALID_ITEMPOINTER;
 
@@ -1259,18 +1260,25 @@ oid_t DataTable::GetValidIndexCount() const {
 //===--------------------------------------------------------------------===//
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
+  LOG_DEBUG("In AddForeignKey().");
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Schema *schema = this->GetSchema();
+    LOG_DEBUG("Locked.");
+    //catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
+    LOG_DEBUG("Made the constraint.");
+    LOG_DEBUG("%lu", foreign_keys_.size());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
+    LOG_DEBUG("Finished the constraint");
     for (auto fk_column : key->GetFKColumnNames()) {
       schema->AddConstraint(fk_column, constraint);
     }
+    LOG_DEBUG("Added constraint to the schema.");
     // TODO :: We need this one..
-    catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys_.push_back(fk);
+    //catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
+    LOG_DEBUG("Made a new foreign key object.");
+    foreign_keys_.push_back(key);
   }
 }
 
