@@ -181,8 +181,13 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   else if (node->list != nullptr && node->list->size() > 1) {
     node->list->at(0)->Accept(this);
     auto left_expr = output_expr;
+    auto left_table_alias_set = table_alias_set_;
+    table_alias_set_.clear();
+
     node->list->at(1)->Accept(this);
     auto right_expr = output_expr;
+
+    util::SetUnion(table_alias_set_, left_table_alias_set);
 
     auto join_expr = std::make_shared<OperatorExpression>(
         LogicalInnerJoin::make(
