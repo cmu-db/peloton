@@ -14,6 +14,7 @@
 
 #include "expression/abstract_expression.h"
 
+#include "type/types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
@@ -147,9 +148,11 @@ class TupleValueExpression : public AbstractExpression {
         table_name_(other.table_name_),
         col_name_(other.col_name_) {}
 
-  // Binder stuff
+  // Bound flag
   bool is_bound_ = false;
-  std::tuple<oid_t, oid_t, oid_t> bound_obj_id_;
+  // Bound ids. Init to INVALID_OID
+  std::tuple<oid_t, oid_t, oid_t> bound_obj_id_
+      = std::make_tuple(INVALID_OID, INVALID_OID, INVALID_OID);
   int value_idx_;
   int tuple_idx_;
   std::string table_name_;
