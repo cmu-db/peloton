@@ -15,6 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "catalog/function_catalog.h"
+#include "udf/udf_main.h"
 
 namespace peloton {
 namespace expression {
@@ -76,23 +77,24 @@ class FunctionExpression : public AbstractExpression {
     if(is_udf_) {
       // Populate the necessary fields
       auto func_catalog = catalog::FunctionCatalog::GetInstance();
-      const catalog::UDFFunctionData &func_data = 
+      catalog::UDFFunctionData func_data =
         func_catalog->GetFunction(func_name_, context->GetTransaction());
 
       if(func_data.func_is_present_) {
         CheckChildrenTypes(func_data.argument_types_, children_, func_name_);
+        std::vector<std::string> argument_names;
 
-        /*func_data.func_string_
-        func_data.return_type_
-        func_data.argument_types_ 
+        // TODO: This is a fake arglist
+        for (size_t i = 0; i < func_data.argument_types_.size(); ++i)
+          argument_names.push_back("i");
 
-        Use these variables @@Haoran
-        */
+        // TODO: check if the func_body is aligned with the grammer
+        // TODO: save it back to catalog
+        auto *udf_handle = new peloton::udf::UDFHandle(func_data.func_string_,
+            argument_names, func_data.argument_types_, func_data.return_type_);
 
-
-        //Logic for UDF
-        //@@Haoran This is where you can add in your code
-        // All the class fields are populated with the data you need.
+        // Try to compile it
+        ret = udf_handle->Execute(child_values);
 
         if (ret.GetElementType() != func_data.return_type_) {
         throw Exception(

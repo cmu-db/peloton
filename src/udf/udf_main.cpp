@@ -7,7 +7,7 @@ namespace udf {
 int yy_scan_string(const char *);
 int yyparse();
 
-bool UDFHandle::compile() {
+bool UDFHandle::Compile() {
   // TODO: May require lock here.
   if (stmt_)
     return false;
@@ -20,7 +20,8 @@ bool UDFHandle::compile() {
   return true;
 }
 
-int UDFHandle::execute(std::vector<arg_value> values) {
+arg_value UDFHandle::Execute(std::vector<arg_value> values) {
+  Compile();
   return stmt_.get()->Execute(values);
 }
 
