@@ -521,7 +521,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
   while (iterator.HasNext()) {
     shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function
-    if (rule.Check(plan)) {
+    if (rule.Check(plan, &memo_)) {
       LOG_TRACE("Rule matched expression of group %d with op %s",
                 gexpr->GetGroupID(), gexpr->Op().name().c_str());
       // Apply rule transformations

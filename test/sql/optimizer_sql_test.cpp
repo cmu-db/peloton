@@ -463,6 +463,17 @@ TEST_F(OptimizerSQLTests, JoinTest) {
        "4", "0", "11", "0"}, 
       false);
 
+  // 3 table join with where clause
+  // This one test NLJoin
+  // TestUtil(
+  //     "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
+  //     "WHERE test.b = test2.b AND test2.c = test1.c",
+  //     {"1", "22", "11", "0", 
+  //      "2", "11", "22", "333", 
+  //      "2", "11", "0", "333", 
+  //      "4", "0", "11", "0"}, 
+  //     false);
+
   // 2 table join with where clause and predicate
   TestUtil(
       "SELECT test.a, test1.b FROM test, test1 "
@@ -478,7 +489,18 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   //     "WHERE test.a = test1.a AND test1.b = 22",
   //     {"1", "3"}, 
   //     false);
+  
+  // Product
+  // TestUtil(
+  //     "SELECT test.a, test1.b FROM test, test1 "
+  //     "WHERE test.a = 1",
+  //     {"1", "22", 
+  //      "1", "11",
+  //      "1", "22",
+  //      "1", "0"}, 
+  //      false);
 
+ 
 }
 
 }  // namespace test

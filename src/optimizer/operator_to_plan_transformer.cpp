@@ -624,7 +624,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
 
   // Combine remaining predicate with
   auto remaining_predicate = expression::ExpressionUtil::ExtractJoinColumns(
-      left_hash_keys, right_hash_keys, join_predicate, true);
+      left_hash_keys, right_hash_keys, join_predicate);
 
   if (remaining_predicate != nullptr) {
     // Quite strange, but have to set tuple_idx/value_idx again

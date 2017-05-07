@@ -82,6 +82,11 @@ expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
     MultiTablePredicates& join_predicates);
 
+bool ContainsJoinColumns(
+    const std::unordered_set<std::string>& l_group_alias,
+    const std::unordered_set<std::string>& r_group_alias,
+    const expression::AbstractExpression* expr);
+
 
 } /* namespace util */
 } /* namespace optimizer */

@@ -548,26 +548,25 @@ class ExpressionUtil {
           l_column_exprs,
       std::vector<std::unique_ptr<const expression::AbstractExpression>> &
           r_column_exprs,
-      const expression::AbstractExpression *expr, bool remove = false) {
+      const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
       auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                          expr->GetChild(0), remove);
+                                          expr->GetChild(0));
 
       auto right_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                           expr->GetChild(1), remove);
+                                           expr->GetChild(1));
 
       expression::AbstractExpression *root = nullptr;
-      if (remove) {
-        if (left_expr == nullptr || right_expr == nullptr) {
-          // Remove the CONJUNCTION_AND if left child or right child (or both)
-          // is removed
-          if (left_expr != nullptr) root = left_expr;
-          if (right_expr != nullptr) root = right_expr;
-        } else
-          root = ConjunctionFactory(ExpressionType::CONJUNCTION_AND, left_expr,
-                                    right_expr);
-      }
+
+      if (left_expr == nullptr || right_expr == nullptr) {
+        // Remove the CONJUNCTION_AND if left child or right child (or both)
+        // is removed
+        if (left_expr != nullptr) root = left_expr;
+        if (right_expr != nullptr) root = right_expr;
+      } else
+        root = ConjunctionFactory(ExpressionType::CONJUNCTION_AND, left_expr,
+                                  right_expr);
 
       return root;
     } else if (expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
@@ -610,7 +609,7 @@ class ExpressionUtil {
       }
     }
 
-    return remove ? expr->Copy() : nullptr;
+    return expr->Copy();
   }
 
   /*

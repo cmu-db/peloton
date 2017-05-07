@@ -25,7 +25,7 @@ class InnerJoinCommutativity : public Rule {
  public:
   InnerJoinCommutativity();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -38,7 +38,7 @@ class GetToSeqScan : public Rule {
  public:
   GetToSeqScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -51,7 +51,7 @@ class GetToDummyScan : public Rule {
  public:
   GetToDummyScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -64,7 +64,7 @@ class GetToIndexScan : public Rule {
  public:
   GetToIndexScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -77,7 +77,7 @@ class LogicalFilterToPhysical : public Rule {
  public:
   LogicalFilterToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -90,7 +90,7 @@ class LogicalDeleteToPhysical : public Rule {
  public:
   LogicalDeleteToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -103,7 +103,7 @@ class LogicalUpdateToPhysical : public Rule {
  public:
   LogicalUpdateToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -116,7 +116,7 @@ class LogicalInsertToPhysical : public Rule {
  public:
   LogicalInsertToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -129,7 +129,7 @@ class LogicalGroupByToHashGroupBy : public Rule {
  public:
   LogicalGroupByToHashGroupBy();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -142,7 +142,7 @@ class LogicalGroupByToSortGroupBy : public Rule {
  public:
   LogicalGroupByToSortGroupBy();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -156,7 +156,7 @@ class LogicalAggregateToPhysical : public Rule {
  public:
   LogicalAggregateToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -169,7 +169,7 @@ class InnerJoinToInnerNLJoin : public Rule {
  public:
   InnerJoinToInnerNLJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -182,7 +182,7 @@ class LeftJoinToLeftNLJoin : public Rule {
  public:
   LeftJoinToLeftNLJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -195,7 +195,7 @@ class RightJoinToRightNLJoin : public Rule {
  public:
   RightJoinToRightNLJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -208,7 +208,7 @@ class OuterJoinToOuterNLJoin : public Rule {
  public:
   OuterJoinToOuterNLJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -221,7 +221,7 @@ class InnerJoinToInnerHashJoin : public Rule {
  public:
   InnerJoinToInnerHashJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -234,7 +234,7 @@ class LeftJoinToLeftHashJoin : public Rule {
  public:
   LeftJoinToLeftHashJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -247,7 +247,7 @@ class RightJoinToRightHashJoin : public Rule {
  public:
   RightJoinToRightHashJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
@@ -260,7 +260,7 @@ class OuterJoinToOuterHashJoin : public Rule {
  public:
   OuterJoinToOuterHashJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)

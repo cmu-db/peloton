@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/rule_impls.h"
+#include "optimizer/util.h"
 #include "optimizer/operators.h"
 #include "storage/data_table.h"
 
@@ -33,8 +34,9 @@ InnerJoinCommutativity::InnerJoinCommutativity() {
   match_pattern->AddChild(predicate);
 }
 
-bool InnerJoinCommutativity::Check(
-    std::shared_ptr<OperatorExpression> expr) const {
+bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
+                                   Memo *memo) const {
+  (void)memo;
   (void)expr;
   return true;
 }
@@ -60,7 +62,9 @@ GetToDummyScan::GetToDummyScan() {
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan,
+                           Memo *memo) const {
+  (void)memo;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   return get->table == nullptr;
 }
@@ -81,7 +85,9 @@ GetToSeqScan::GetToSeqScan() {
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan,
+                         Memo *memo) const {
+  (void)memo;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   return get->table != nullptr;
 }
@@ -109,9 +115,11 @@ GetToIndexScan::GetToIndexScan() {
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan) const {
+bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
+                           Memo *memo) const {
   // If there is a index for the table, return true,
   // else return false
+  (void)memo;
   bool index_exist = false;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   if (get != nullptr && get->table != nullptr &&
@@ -147,9 +155,10 @@ LogicalFilterToPhysical::LogicalFilterToPhysical() {
   match_pattern->AddChild(predicate);
 }
 
-bool LogicalFilterToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalFilterToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -174,9 +183,10 @@ LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   match_pattern->AddChild(child);
 }
 
-bool LogicalDeleteToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalDeleteToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -200,9 +210,10 @@ LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
   match_pattern->AddChild(child);
 }
 
-bool LogicalUpdateToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalUpdateToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -226,9 +237,10 @@ LogicalInsertToPhysical::LogicalInsertToPhysical() {
   //  match_pattern->AddChild(child);
 }
 
-bool LogicalInsertToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalInsertToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -253,7 +265,9 @@ LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
 }
 
 bool LogicalGroupByToHashGroupBy::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -278,7 +292,9 @@ LogicalGroupByToSortGroupBy::LogicalGroupByToSortGroupBy() {
 }
 
 bool LogicalGroupByToSortGroupBy::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -303,7 +319,9 @@ LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
 }
 
 bool LogicalAggregateToPhysical::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -335,8 +353,9 @@ InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   return;
 }
 
-bool InnerJoinToInnerNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -378,8 +397,9 @@ LeftJoinToLeftNLJoin::LeftJoinToLeftNLJoin() {
   return;
 }
 
-bool LeftJoinToLeftNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LeftJoinToLeftNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                 Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -420,8 +440,9 @@ RightJoinToRightNLJoin::RightJoinToRightNLJoin() {
   return;
 }
 
-bool RightJoinToRightNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool RightJoinToRightNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -462,8 +483,9 @@ OuterJoinToOuterNLJoin::OuterJoinToOuterNLJoin() {
   return;
 }
 
-bool OuterJoinToOuterNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool OuterJoinToOuterNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -505,12 +527,26 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   return;
 }
 
-bool InnerJoinToInnerHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   // TODO(abpoms): Figure out how to determine if the join condition is hashable
   // If join column != empty then hashable
-  return true;
+  auto children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  const auto &left_group_alias =
+      memo->GetGroupByID(left_group_id)->GetTableAliases();
+  const auto &right_group_alias =
+      memo->GetGroupByID(right_group_id)->GetTableAliases();
+
+  auto expr = plan->Op().As<LogicalInnerJoin>()->join_predicate.get();
+
+  if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr))
+    return true;
+  return false;
 }
 
 void InnerJoinToInnerHashJoin::Transform(
@@ -550,8 +586,9 @@ LeftJoinToLeftHashJoin::LeftJoinToLeftHashJoin() {
   return;
 }
 
-bool LeftJoinToLeftHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LeftJoinToLeftHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
@@ -592,8 +629,9 @@ RightJoinToRightHashJoin::RightJoinToRightHashJoin() {
   return;
 }
 
-bool RightJoinToRightHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool RightJoinToRightHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
@@ -634,8 +672,9 @@ OuterJoinToOuterHashJoin::OuterJoinToOuterHashJoin() {
   return;
 }
 
-bool OuterJoinToOuterHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool OuterJoinToOuterHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
