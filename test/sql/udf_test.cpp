@@ -36,7 +36,20 @@ TEST_F(UDFTests, PLPGSQLTest) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
   TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1; END; $$ LANGUAGE plpgsql;");
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from pg_catalog.pg_proc", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+
+  EXPECT_EQ(result[0].second[0],'2');
+
 }
 }  // namespace test
 }  // namespace peloton
