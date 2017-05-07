@@ -382,8 +382,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
-  if (tuple && check_constraint && CheckConstraints(tuple) == false)
-    return INVALID_ITEMPOINTER;
+  //TODO: delete this section
+  if (!check_constraint)
+    LOG_DEBUG("This line should never be executed.");
+  //if (tuple && check_constraint && CheckConstraints(tuple) == false)
+  //  return INVALID_ITEMPOINTER;
+
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -490,6 +494,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     index_entry_ptr = &temp_ptr;
   }
 
+  //Check NOT NULL and DEFAULT constraints
+  CheckConstraints(tuple);
+
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
@@ -504,7 +511,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     IncreaseTupleCount(1);
     return location;
   }
-  // Index checks and updates
+  // Index checks and updates (checks PRIMARY KEY and UNIQUE constraints)
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
 
@@ -516,8 +523,10 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
+    throw ConstraintException("FOREIGN KEY constraint violated : " +
+                               std::string(tuple->GetInfo()));
     return INVALID_ITEMPOINTER;
   }
 
@@ -595,6 +604,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   // Since this is NOT protected by a lock, concurrent insert may happen.
   bool res = true;
+  std::string failure_type = "";
   int success_count = 0;
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
@@ -606,11 +616,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case IndexConstraintType::PRIMARY_KEY:
+      case IndexConstraintType::PRIMARY_KEY: {
+        failure_type = "PRIMARY";
+        res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
+      } break;
       case IndexConstraintType::UNIQUE: {
         // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
+        failure_type = "UNIQUE";
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       } break;
 
@@ -626,6 +640,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       // the pointer has a chance to be dereferenced by readers and it cannot be
       // deleted
       *index_entry_ptr = nullptr;
+      LOG_TRACE("Index constraint of type %s violated", failure_type.c_str());
+      throw ConstraintException("Constraint of type " + failure_type +
+          " violated.");
       return false;
     } else {
       success_count += 1;
@@ -718,13 +735,14 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple,
+                                           concurrency::Transaction *current_txn
+                                           UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
-    oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Catalog::GetInstance()->GetTableWithOid(
-            database_oid, sink_table_id);
+    std::string sink_table_name = foreign_key->GetSinkTableName();
+    storage::Database *database = 
+        catalog::Catalog::GetInstance()->GetDatabaseWithOid(database_oid);
+    storage::DataTable *ref_table = database->GetTableWithName(sink_table_name);
 
     int ref_table_index_count = ref_table->GetIndexCount();
 
@@ -736,7 +754,12 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
+        
+        std::vector<std::string> key_names = foreign_key->GetFKColumnNames();
+        std::vector<oid_t> key_attrs;
+        for (std::string col_name : key_names) {
+          key_attrs.push_back(schema->GetColumnID(col_name));
+        }
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
@@ -753,8 +776,33 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
           return false;
+        } else {
+          LOG_DEBUG("Location pointer size: %lu", location_ptrs.size());
+          auto &transaction_manager = 
+                          concurrency::TransactionManagerFactory::GetInstance();
+          auto &manager = catalog::Manager::GetInstance();
+          bool acquire_owner = true;
+          for (auto location_ptr : location_ptrs) {
+              auto tile_group = manager.GetTileGroup(location_ptr->block);
+              auto tile_group_header = tile_group.get()->GetHeader();
+              auto visibility = transaction_manager.IsVisible(
+                         current_txn, tile_group_header, location_ptr->offset);
+              if (visibility == VisibilityType::OK) {
+                LOG_DEBUG("performing read: %u, %u", location_ptr->block,
+                  location_ptr->offset);
+                bool res = transaction_manager.PerformRead(
+                                    current_txn, *location_ptr, acquire_owner);
+                if (!res) {
+                  LOG_DEBUG("read failed of location: %u, %u",
+                    location_ptr->block, location_ptr->offset);
+                    return false;
+                }
+              } else {
+                LOG_DEBUG("Location not visible.");
+                return false;
+              }
+          }
         }
-
         break;
       }
     }

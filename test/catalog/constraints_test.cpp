@@ -43,15 +43,15 @@
 #include "planner/plan_util.h"
 #include "parser/postgresparser.h"
 
-#define NOTNULL_TEST
-#define MULTI_NOTNULL_TEST
-#define CHECK_TEST
-#define DEFAULT_TEST
+//#define NOTNULL_TEST
+//#define MULTI_NOTNULL_TEST
+//#define CHECK_TEST
+//#define DEFAULT_TEST
 // #define PRIMARY_UNIQUEKEY_TEST
-// #define FOREIGN_KEY_TEST
-// #define FOREIGN_MULTI_KEY_TEST
-#define UNIQUE_TEST
-#define MULTI_UNIQUE_TEST
+#define FOREIGN_KEY_TEST
+//#define FOREIGN_MULTI_KEY_TEST
+//#define UNIQUE_TEST
+//#define MULTI_UNIQUE_TEST
 
 #define DEFAULT_VALUE 11111
 
@@ -358,7 +358,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
 }
 #endif
-
+/*
 #ifdef FOREIGN_KEY_TEST
 TEST_F(ConstraintsTests, SimpleForeignKeyTest) {
   // Create the database
@@ -512,7 +512,7 @@ TEST_F(ConstraintsTests, SimpleForeignKeyTest) {
 
 }
 #endif
-
+*/
 #ifdef CHECK_TEST
 TEST_F(ConstraintsTests, CHECKTest) {
   // First, generate the table with index
@@ -750,25 +750,23 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  std::string db_name = "db2";
+  std::string db_name = DEFAULT_DB_NAME;
   std::string table_a_name = "tableA";
   std::string table_b_name = "tableB";
-  catalog::Catalog::GetInstance()->CreateDatabase(db_name, nullptr);
-  // txn_manager.CommitTransaction(txn);
+  catalog->CreateDatabase(db_name, txn);
+  txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   auto column1 = catalog::Column(type::Type::INTEGER, 25, "a", false, 0);
   auto column2 = catalog::Column(type::Type::INTEGER, 25, "b", false, 1);
 
   auto constraints = catalog::Constraint(ConstraintType::PRIMARY, "primary1");
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo());
   std::unique_ptr<catalog::Schema> tableA_schema(
       new catalog::Schema({column1, column2}));
 
   catalog->CreateTable(db_name, table_a_name, std::move(tableA_schema), txn);
   txn_manager.CommitTransaction(txn);
-
-  auto table_A = catalog->GetTableWithName(db_name, table_a_name);
 
   txn = txn_manager.BeginTransaction();
   auto column3 = catalog::Column(type::Type::INTEGER, 25, "b", false, 0);
@@ -778,53 +776,159 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
       new catalog::Schema({column3, column4}));
 
   catalog->CreateTable(db_name, table_b_name, std::move(tableB_schema), txn);
+  txn_manager.CommitTransaction(txn);
+
 
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
-  txn_manager.CommitTransaction(txn);
-  oid_t table_B_id = table_b->GetTableOid();
   catalog::ForeignKey *foreign_key =
-      new catalog::ForeignKey(table_B_id, {"a", "b"}, {0, 1}, {"b", "c"},
-                              {0, 1}, 'r', 'c', "foreign_constraint1");
-  table_A->AddForeignKey(foreign_key);
+      new catalog::ForeignKey(table_b_name, {"b"}, {"a"},
+                              'r', 'c', "foreign_constraint1");
+  table_a->AddForeignKey(foreign_key);
 
-  // Test1: insert a tuple with column  meet the constraint requirment
-
+  // Test1: insert a tuple with column that satisfies the constraint
+  std::vector<type::Value> ccs;
   txn = txn_manager.BeginTransaction();
-  // begin this transaction
-  // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
   try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
     ccs.clear();
     ccs.push_back(type::ValueFactory::GetIntegerValue(1));
     ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+
+    txn_manager.CommitTransaction(txn);
+    txn = txn_manager.BeginTransaction();
+    ccs.clear();
+
+    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+    txn_manager.CommitTransaction(txn);
   } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_FALSE(hasException);
 
-  hasException = true;
+  // Test 2: insert a tuple with a column that doesn't satisfy the constraint
+  txn = txn_manager.BeginTransaction();
+  hasException = false;
   try {
-    std::vector<type::Value> ccs;
+    ccs.clear();
     ccs.push_back(type::ValueFactory::GetIntegerValue(3));
     ccs.push_back(type::ValueFactory::GetIntegerValue(4));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+
+    txn_manager.CommitTransaction(txn);
     ccs.clear();
+    txn = txn_manager.BeginTransaction();
+
     ccs.push_back(type::ValueFactory::GetIntegerValue(2));
     ccs.push_back(type::ValueFactory::GetIntegerValue(5));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+    txn_manager.CommitTransaction(txn);
   } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
 
-  // commit this transaction
+  // Test 3: concurrent insertions into source and sink
+  //         N.B.: the tuple inserted into sink is required for the source
+  auto txn1 = txn_manager.BeginTransaction();
+  auto txn2 = txn_manager.BeginTransaction();
+  hasException = false;
+  try {
+    ccs.clear();
+    ccs.push_back(type::ValueFactory::GetIntegerValue(7));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(8));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
+
+    ccs.clear();
+
+    ccs.push_back(type::ValueFactory::GetIntegerValue(7));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(8));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
+    
+    txn_manager.CommitTransaction(txn2);
+    txn_manager.CommitTransaction(txn1);
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // Test 4: concurrent insertion into source, deletion from sink
+  txn = txn_manager.BeginTransaction();
+  optimizer::SimpleOptimizer optimizer;
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  std::vector<type::Value> params;
+  std::vector<StatementResult> result;
+  std::vector<int> result_format = std::move(std::vector<int>(0, 0));
+  std::string error_message = "Create Error";
+  std::string nm = "create_query";
+  std::string create_tabB = "CREATE TABLE tabB (a INTEGER PRIMARY KEY, b INTEGER);";
+  std::string create_tabA = "CREATE TABLE tabA (b INTEGER REFERENCES tabB (a), c INTEGER);";
+  auto statement = traffic_cop.PrepareStatement(nm, create_tabB, error_message);
+  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                   params, result, result_format);
+  statement = traffic_cop.PrepareStatement(nm, create_tabA, error_message);
+  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                   params, result, result_format);
   txn_manager.CommitTransaction(txn);
+  auto tab_a = catalog->GetTableWithName(db_name, "tabA");
+  //auto tab_b = catalog->GetTableWithName(db_name, "tabB");
+  catalog::ForeignKey *fk =
+      new catalog::ForeignKey("tabB", {"b"}, {"a"},
+                              'r', 'c', "foreign_constraint2");
+  tab_a->AddForeignKey(fk);
+
+  //txn_manager.CommitTransaction(txn);
+
+  txn1 = txn_manager.BeginTransaction();
+  txn2 = txn_manager.BeginTransaction();
+  hasException = false;
+  try {
+    // Insert sink tuple to later be deleted
+    ccs.clear();
+    ccs.push_back(type::ValueFactory::GetIntegerValue(9));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
+    txn_manager.CommitTransaction(txn1);
+
+    // Prepare to insert a valid tuple in source
+    ccs.clear();
+    ccs.push_back(type::ValueFactory::GetIntegerValue(9));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
+
+    // Delete sink tuple
+    txn1 = txn_manager.BeginTransaction();
+    //ConstraintsTestsUtil::ExecuteTruncate(txn1, table_b);
+
+    
+    //std::shared_ptr<Statement> statement;
+    //std::vector<type::Value> params;
+    //std::vector<StatementResult> result;
+    //std::vector<int> result_format = std::move(std::vector<int>(0, 0));
+    //statement.reset(new Statement("DELETE", "DELETE FROM " + db_name + "." + table_b_name + ";"));
+    //statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
+    //std::string error_message = "Error";
+    //std::string nm = "truncate_query";
+    std::string q = "DELETE FROM tabB;";
+    statement = traffic_cop.PrepareStatement(nm, q, error_message);
+    
+    traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                                params, result, result_format);
+    
+    txn_manager.CommitTransaction(txn1);
+
+    // Commit source tuple
+    LOG_DEBUG("Final commit.");
+    txn_manager.CommitTransaction(txn2);
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // Clean up the test
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
   txn_manager.CommitTransaction(txn);
@@ -870,7 +974,6 @@ TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   cols.push_back(1);
   auto mc =
       catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1", cols);
-  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo());
 
   catalog::Schema *table_schema = new catalog::Schema({column3, column4});
   table_schema->AddMultiConstraints(mc);
@@ -920,7 +1023,7 @@ TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   }
   EXPECT_TRUE(hasException);
 
-  // commit this transaction
+  // Clean up the test
   txn_manager.CommitTransaction(txn);
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
