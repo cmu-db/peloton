@@ -22,6 +22,7 @@
 #include "common/macros.h"
 #include "expression/date_functions.h"
 #include "expression/string_functions.h"
+#include "expression/decimal_functions.h"
 #include "index/index_factory.h"
 #include "util/string_util.h"
 #include "catalog/function_catalog.h"
@@ -918,6 +919,8 @@ void Catalog::InitializeFunctions() {
               type::Type::VARCHAR, expression::StringFunctions::RTrim);
   AddFunction("btrim", {type::Type::VARCHAR, type::Type::VARCHAR},
               type::Type::VARCHAR, expression::StringFunctions::BTrim);
+  AddFunction("sqrt", {type::Type::DECIMAL}, type::Type::DECIMAL,
+              expression::DecimalFunctions::Sqrt);
 
   /**
    * date functions

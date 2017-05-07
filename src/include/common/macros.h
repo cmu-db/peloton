@@ -32,6 +32,7 @@ namespace peloton {
 #define NEVER_INLINE __attribute__((noinline))
 #define ALWAYS_INLINE __attribute__((always_inline))
 #define UNUSED_ATTRIBUTE __attribute__((unused))
+#define PACKED __attribute__((packed))
 
 //===--------------------------------------------------------------------===//
 // memfuncs
@@ -118,5 +119,22 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #define ARRAY_NELEMS(a) (sizeof(a) / sizeof((a)[0]))
+
+//===----------------------------------------------------------------------===//
+// Handy macros to hide move/copy class constructors
+//===----------------------------------------------------------------------===//
+
+// Macros to disable copying and moving
+#define DISALLOW_COPY(cname) \
+  cname(const cname &) = delete; \
+  cname &operator=(const cname &) = delete;
+
+#define DISALLOW_MOVE(cname) \
+  cname(cname &&) = delete; \
+  cname &operator=(cname &&) = delete;
+
+#define DISALLOW_COPY_AND_MOVE(cname) \
+  DISALLOW_COPY(cname); \
+  DISALLOW_MOVE(cname);
 
 }  // End peloton namespace

@@ -59,10 +59,19 @@
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 
+#include <pthread.h>
 
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
  *****************************************************************************/
+
+typedef struct PGThreadContext {
+  MemoryContext TopMemoryContext;
+  MemoryContext ErrorContext;
+  MemoryContext CurrentMemoryContext;
+} PGThreadContext;
+
+static pthread_key_t thread_ctx_key;
 
 /*
  * CurrentMemoryContext
@@ -78,10 +87,6 @@ __thread MemoryContext CurrentMemoryContext = NULL;
 __thread MemoryContext TopMemoryContext = NULL;
 
 __thread MemoryContext ErrorContext = NULL;
-
-
-
-
 
 
 
@@ -103,6 +108,30 @@ static void MemoryContextStatsInternal(MemoryContext context, int level);
  *	  EXPORTED ROUTINES														 *
  *****************************************************************************/
 
+void MemoryContextShutdown(void *ptr) {
+	PGThreadContext *thread_ctx = (PGThreadContext *) ptr;
+	MemoryContext context = thread_ctx->TopMemoryContext;
+
+	// Delete the top memory context if it's there
+	if (context != NULL) {
+		// Clean up all the child contexts
+		MemoryContextReset(context);
+
+		// Unlink all children
+		MemoryContextDeleteChildren(context);
+		MemoryContextCallResetCallbacks(context);
+		MemoryContextSetParent(context, NULL);
+
+		(*context->methods->delete_context) (context);
+		VALGRIND_DESTROY_MEMPOOL(context);
+
+		// The top context doesn't have a parent and, hence, was malloc'd
+		free(context);
+	}
+
+	// Free the thread context
+	free(thread_ctx);
+}
 
 /*
  * MemoryContextInit
@@ -124,6 +153,8 @@ void
 MemoryContextInit(void)
 {
 	AssertState(TopMemoryContext == NULL);
+
+  pthread_key_create(&thread_ctx_key, MemoryContextShutdown);
 
 	/*
 	 * Initialize TopMemoryContext as an AllocSetContext with slow growth rate
@@ -162,6 +193,13 @@ MemoryContextInit(void)
 										 0,
 										 0);
 	MemoryContextAllowInCriticalSection(ErrorContext, true);
+
+	PGThreadContext *thread_context = malloc(sizeof(PGThreadContext));
+	thread_context->TopMemoryContext = TopMemoryContext;
+	thread_context->ErrorContext = ErrorContext;
+	thread_context->CurrentMemoryContext = CurrentMemoryContext;
+
+	pthread_setspecific(thread_ctx_key, thread_context);
 }
 
 /*

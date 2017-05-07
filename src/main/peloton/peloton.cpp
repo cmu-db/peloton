@@ -39,8 +39,11 @@ int main(int argc, char *argv[]) {
     // Setup
     peloton::PelotonInit::Initialize();
 
-    // Launch server
+    // Create LibeventServer object
     peloton::wire::LibeventServer libeventserver;
+    
+    // Start Libevent Server    
+    libeventserver.StartServer();
 
     // Teardown
     peloton::PelotonInit::Shutdown();

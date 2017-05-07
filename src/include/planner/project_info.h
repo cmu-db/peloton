@@ -38,18 +38,27 @@ namespace planner {
  * NB: in case of a constant-valued projection, it is still under the umbrella
  * of \b target_list, though it sounds simple enough.
  */
+
+struct DerivedAttribute {
+  AttributeInfo attribute_info;
+  const expression::AbstractExpression *expr;
+};
+
 class ProjectInfo {
  public:
-  ProjectInfo(ProjectInfo &) = delete;
-  ProjectInfo operator=(ProjectInfo &) = delete;
-  ProjectInfo(ProjectInfo &&) = delete;
-  ProjectInfo operator=(ProjectInfo &&) = delete;
-
   /* Force explicit move to emphasize the transfer of ownership */
   ProjectInfo(TargetList &tl, DirectMapList &dml) = delete;
 
   ProjectInfo(TargetList &&tl, DirectMapList &&dml)
       : target_list_(tl), direct_map_list_(dml) {}
+
+  ~ProjectInfo();
+
+  void PerformRebinding(
+      BindingContext &output_context,
+      const std::vector<const BindingContext *> &input_contexts) const;
+
+  void PartitionInputs(std::vector<std::vector<oid_t>> &input) const;
 
   const TargetList &GetTargetList() const { return target_list_; }
 
@@ -67,14 +76,12 @@ class ProjectInfo {
 
   std::string Debug() const;
 
-  ~ProjectInfo();
-
   std::unique_ptr<const ProjectInfo> Copy() const {
     std::vector<Target> new_target_list;
     for (const Target &target : target_list_) {
-      new_target_list.push_back(
-          std::pair<oid_t, const expression::AbstractExpression *>(
-              target.first, target.second->Copy()));
+      new_target_list.emplace_back(
+          target.first, DerivedAttribute{target.second.attribute_info,
+                                         target.second.expr->Copy()});
     }
 
     std::vector<DirectMap> new_map_list;
@@ -92,7 +99,10 @@ class ProjectInfo {
   TargetList target_list_;
 
   DirectMapList direct_map_list_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(ProjectInfo);
 };
 
-} /* namespace planner */
-} /* namespace peloton */
+}  // namespace planner
+}  // namespace peloton

@@ -49,6 +49,11 @@ class LibeventThread {
   const int thread_id_;
   struct event_base *libevent_base_;
 
+ private:
+  bool is_started = false;
+  bool is_closed = false;
+  int sock_fd = -1;
+
  public:
   LibeventThread(const int thread_id, struct event_base *libevent_base)
       : thread_id_(thread_id), libevent_base_(libevent_base) {
@@ -64,6 +69,19 @@ class LibeventThread {
 
   // TODO implement destructor
   inline ~LibeventThread() {}
+
+  // Getter and setter for flags
+  bool GetThreadIsStarted() { return is_started; }
+
+  void SetThreadIsStarted(bool is_started) { this->is_started = is_started; }
+
+  bool GetThreadIsClosed() { return is_closed; }
+
+  void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
+
+  int GetThreadSockFd() { return sock_fd; }
+
+  void SetThreadSockFd(int fd) { this->sock_fd = fd; }
 };
 
 class LibeventWorkerThread : public LibeventThread {
@@ -71,18 +89,30 @@ class LibeventWorkerThread : public LibeventThread {
   // New connection event
   struct event *new_conn_event_;
 
- public:
+  // Timeout event
+  struct event *ev_timeout_;
+
   // Notify new connection pipe(send end)
-  int new_conn_send_fd;
+  int new_conn_send_fd_;
 
   // Notify new connection pipe(receive end)
-  int new_conn_receive_fd;
+  int new_conn_receive_fd_;
 
+ public:
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
  public:
   LibeventWorkerThread(const int thread_id);
+
+  // Getters and setters
+  event *GetNewConnEvent() { return this->new_conn_event_; }
+
+  event *GetTimeoutEvent() { return this->ev_timeout_; }
+
+  int GetNewConnSendFd() { return this->new_conn_send_fd_; }
+
+  int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
 };
 
 // a master thread contains multiple worker threads.
@@ -97,6 +127,8 @@ class LibeventMasterThread : public LibeventThread {
   LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
 
   void DispatchConnection(int new_conn_fd, short event_flags);
+
+  void CloseConnection();
 
   std::vector<std::shared_ptr<LibeventWorkerThread>> &GetWorkerThreads();
 

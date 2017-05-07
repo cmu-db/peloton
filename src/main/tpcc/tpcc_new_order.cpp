@@ -367,9 +367,11 @@ bool RunNewOrder(const size_t &thread_id){
                                    std::pair<oid_t, oid_t>(0, col_itr));
   }
   type::Value  district_update_val = type::ValueFactory::GetIntegerValue(district_update_value).Copy();
-  
-  district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
+
+  planner::DerivedAttribute attribute;
+  attribute.expr = expression::ExpressionUtil::ConstantValueFactory(district_update_val);
+  attribute.attribute_info.type = attribute.expr->GetValueType();
+  district_target_list.emplace_back(10, attribute);
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
       new planner::ProjectInfo(std::move(district_target_list),
@@ -549,14 +551,30 @@ bool RunNewOrder(const size_t &thread_id){
                                      std::pair<oid_t, oid_t>(0, col_itr));
       }
     }
-    stock_target_list.emplace_back(
-        2, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_quantity)));
-    stock_target_list.emplace_back(
-        13, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_ytd)));
-    stock_target_list.emplace_back(
-        14, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_order_cnt)));
-    stock_target_list.emplace_back(
-        15, expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_remote_cnt)));
+    planner::DerivedAttribute s_quantity_attr;
+    s_quantity_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_quantity));
+    s_quantity_attr.attribute_info.type = s_quantity_attr.expr->GetValueType();
+
+    planner::DerivedAttribute s_ytd_attr;
+    s_ytd_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_ytd));
+    s_ytd_attr.attribute_info.type = s_ytd_attr.expr->GetValueType();
+
+    planner::DerivedAttribute s_order_cnt_attr;
+    s_order_cnt_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_order_cnt));
+    s_order_cnt_attr.attribute_info.type = s_order_cnt_attr.expr->GetValueType();
+
+    planner::DerivedAttribute s_remote_cnt_attr;
+    s_remote_cnt_attr.expr =
+        expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(s_remote_cnt));
+    s_remote_cnt_attr.attribute_info.type = s_remote_cnt_attr.expr->GetValueType();
+
+    stock_target_list.emplace_back(2, s_quantity_attr);
+    stock_target_list.emplace_back(13, s_ytd_attr);
+    stock_target_list.emplace_back(14, s_order_cnt_attr);
+    stock_target_list.emplace_back(15, s_remote_cnt_attr);
 
     std::unique_ptr<const planner::ProjectInfo> stock_project_info(
         new planner::ProjectInfo(std::move(stock_target_list),
