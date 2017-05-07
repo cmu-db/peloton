@@ -82,11 +82,12 @@ void StatsStorage::InsertOrUpdateTableStats(
     histogram_bounds_str = ConvertDoubleArrayToString(histogram_bounds);
 
     std::string column_name = column_stats_collector->GetColumnName();
+    bool has_index = column_stats_collector->HasIndex();
 
     InsertOrUpdateColumnStats(database_id, table_id, column_id, num_rows,
                               cardinality, frac_null, most_common_vals_str,
                               most_common_freqs_str, histogram_bounds_str,
-                              column_name, txn);
+                              column_name, has_index, txn);
   }
 }
 
@@ -94,7 +95,7 @@ void StatsStorage::InsertOrUpdateColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
-    std::string column_name, concurrency::Transaction *txn) {
+    std::string column_name, bool has_index, concurrency::Transaction *txn) {
   LOG_DEBUG("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
@@ -111,7 +112,7 @@ void StatsStorage::InsertOrUpdateColumnStats(
   column_stats_catalog->InsertColumnStats(
       database_id, table_id, column_id, num_rows, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds, column_name,
-      pool_.get(), txn);
+      has_index, pool_.get(), txn);
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
@@ -171,9 +172,13 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
       (*column_stats)[catalog::ColumnStatsCatalog::COLUMN_NAME_OFF]
           .GetAs<char *>();
 
+  bool has_index =
+      (*column_stats)[catalog::ColumnStatsCatalog::HAS_INDEX_OFF].GetAs<bool>();
+
   std::shared_ptr<ColumnStats> column_stats_result(new ColumnStats(
-      database_id, table_id, column_id, std::string(column_name), num_rows,
-      cardinality, frac_null, val_array, freq_array, histogram_bounds));
+      database_id, table_id, column_id, std::string(column_name), has_index,
+      num_rows, cardinality, frac_null, val_array, freq_array,
+      histogram_bounds));
 
   return std::move(column_stats_result);
 }

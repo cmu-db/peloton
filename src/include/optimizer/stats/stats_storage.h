@@ -54,7 +54,8 @@ class StatsStorage {
       oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
       double cardinality, double frac_null, std::string most_common_vals,
       std::string most_common_freqs, std::string histogram_bounds,
-      std::string column_name, concurrency::Transaction *txn = nullptr);
+      std::string column_name, bool has_index = false,
+      concurrency::Transaction *txn = nullptr);
 
   std::shared_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
                                                   oid_t table_id,
