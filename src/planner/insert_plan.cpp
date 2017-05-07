@@ -70,6 +70,11 @@ InsertPlan::InsertPlan(
         for (expression::AbstractExpression *elem : *values) {
           // Default value to be inserted
           if (elem == nullptr) {
+            // No default value
+            if (table_schema->GetDefaultValue(col_cntr) == nullptr) {
+              throw ConstraintException("No DEFAULT constraint !");
+            }
+
             type::Value *v = table_schema->GetDefaultValue(col_cntr);
             tuple->SetValue(col_cntr, std::move(*v), nullptr);
           } else if (elem->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
