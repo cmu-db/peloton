@@ -51,7 +51,7 @@ class LeafOperator : OperatorNode<LeafOperator> {
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
   static Operator make(storage::DataTable *table = nullptr,
-                       std::string alias = "");
+                       std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -59,6 +59,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 
   storage::DataTable *table;
   std::string table_alias;
+  bool is_for_update;
 };
 
 //===--------------------------------------------------------------------===//
@@ -141,17 +142,6 @@ class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
 };
 
 //===--------------------------------------------------------------------===//
-// Limit
-//===--------------------------------------------------------------------===//
-class LogicalLimit : public OperatorNode<LogicalLimit> {
- public:
-  static Operator make(int64_t limit, int64_t offset);
-
-  int64_t limit;
-  int64_t offset;
-};
-
-//===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
 class LogicalInsert : public OperatorNode<LogicalInsert> {
@@ -189,9 +179,17 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
-// Scan
+// DummyScan
 //===--------------------------------------------------------------------===//
-class PhysicalScan : public OperatorNode<PhysicalScan> {
+class DummyScan : public OperatorNode<DummyScan> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// SeqScan
+//===--------------------------------------------------------------------===//
+class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
   static Operator make(storage::DataTable *table);
 
@@ -200,6 +198,21 @@ class PhysicalScan : public OperatorNode<PhysicalScan> {
   hash_t Hash() const override;
 
   storage::DataTable *table_;
+};
+
+//===--------------------------------------------------------------------===//
+// IndexScan
+//===--------------------------------------------------------------------===//
+class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
+ public:
+  static Operator make(storage::DataTable *table, bool update);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  storage::DataTable *table_;
+  bool is_for_update;
 };
 
 //===--------------------------------------------------------------------===//
@@ -223,10 +236,7 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
  public:
-  static Operator make(int64_t limit, int64_t offset);
-
-  int64_t limit;
-  int64_t offset;
+  static Operator make();
 };
 
 //===--------------------------------------------------------------------===//
@@ -346,6 +356,9 @@ class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       expression::AbstractExpression *having);
 
+  bool operator==(const BaseOperatorNode &r) override;
+  hash_t Hash() const override;
+
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;
 };
@@ -358,6 +371,9 @@ class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       expression::AbstractExpression *having);
+
+  bool operator==(const BaseOperatorNode &r) override;
+  hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
   expression::AbstractExpression *having;

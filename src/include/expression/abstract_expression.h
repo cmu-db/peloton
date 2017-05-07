@@ -17,6 +17,7 @@
 #include "common/printable.h"
 #include "planner/attribute_info.h"
 #include "type/types.h"
+#include "type/value.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -241,5 +242,5 @@ class ExprHasher {
   }
 };
 
-}  // namespace expression
-}  // namespace peloton
+}  // End expression namespace
+}  // End peloton namespace

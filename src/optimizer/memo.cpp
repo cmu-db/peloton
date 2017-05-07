@@ -24,12 +24,14 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Memo::Memo() {}
 
-bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr) {
-  return InsertExpression(gexpr, UNDEFINED_GROUP);
+std::shared_ptr<GroupExpression> Memo::InsertExpression(
+    std::shared_ptr<GroupExpression> gexpr, bool enforced) {
+  return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
-bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                            GroupID target_group) {
+std::shared_ptr<GroupExpression> Memo::InsertExpression(
+    std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
+    bool enforced) {
   // If leaf, then just return
   if (gexpr->Op().type() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
@@ -40,17 +42,15 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   }
 
   // Lookup in hash table
-  auto it = group_expressions_.find(gexpr.get());
+  auto it = group_expressions_.find(gexpr);
 
-  bool new_expression;
   if (it != group_expressions_.end()) {
-    new_expression = false;
     assert(target_group == UNDEFINED_GROUP ||
            target_group == (*it)->GetGroupID());
     gexpr->SetGroupID((*it)->GetGroupID());
+    return *it;
   } else {
-    new_expression = true;
-    group_expressions_.insert(gexpr.get());
+    group_expressions_.insert(gexpr);
     // New expression, so try to insert into an existing group or
     // create a new group if none specified
     GroupID group_id;
@@ -60,10 +60,9 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
       group_id = target_group;
     }
     Group *group = GetGroupByID(group_id);
-    group->AddExpression(gexpr);
+    group->AddExpression(gexpr, enforced);
+    return gexpr;
   }
-
-  return new_expression;
 }
 
 const std::vector<Group> &Memo::Groups() const { return groups_; }

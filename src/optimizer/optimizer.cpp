@@ -12,21 +12,22 @@
 
 #include <memory>
 
+#include "optimizer/optimizer.h"
+
 #include "catalog/manager.h"
 
+#include "parser/create_statement.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
-#include "optimizer/optimizer.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/properties.h"
 
-#include "parser/sql_statement.h"
 
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
@@ -34,6 +35,8 @@
 #include "planner/create_plan.h"
 #include "planner/create_function_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/populate_index_plan.h"
+
 #include "binder/bind_node_visitor.h"
 
 using std::vector;
@@ -51,15 +54,18 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
-  physical_implementation_rules_.emplace_back(new LogicalLimitToPhysical());
+  //  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
-//  physical_implementation_rules_.emplace_back(new LogicalGroupByToSortGroupBy());
+  physical_implementation_rules_.emplace_back(
+      new LogicalGroupByToHashGroupBy());
+  physical_implementation_rules_.emplace_back(
+      new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
-  physical_implementation_rules_.emplace_back(new GetToScan());
+  physical_implementation_rules_.emplace_back(new GetToDummyScan());
+  physical_implementation_rules_.emplace_back(new GetToSeqScan());
+  physical_implementation_rules_.emplace_back(new GetToIndexScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
@@ -70,8 +76,6 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list) {
-  LOG_TRACE("Enter new optimizer...");
-
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -113,8 +117,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Reset memo after finishing the optimization
   Reset();
 
-  LOG_TRACE("Exit new optimizer...");
-
   //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
   return move(best_plan);
 }
@@ -126,7 +128,7 @@ void Optimizer::Reset() {
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt) {
-  unique_ptr<planner::AbstractPlan> ddl_plan;
+  unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
@@ -139,10 +141,38 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
-      unique_ptr<planner::AbstractPlan> create_plan(
-          new planner::CreatePlan((parser::CreateStatement *)tree));
-      ddl_plan = move(create_plan);
+
+      // This is adapted from the simple optimizer
+      auto create_plan =
+          new planner::CreatePlan((parser::CreateStatement*)tree);
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
+      ddl_plan = move(child_CreatePlan);
+
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        auto create_stmt = (parser::CreateStatement*)tree;
+        auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName());
+        std::vector<oid_t> column_ids;
+        auto schema = target_table->GetSchema();
+        for (auto column_name : create_plan->GetIndexAttributes()) {
+          column_ids.push_back(schema->GetColumnID(column_name));
+        }
+        // Create a plan to retrieve data
+        std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
+            new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
+
+        child_SeqScanPlan->AddChild(std::move(ddl_plan));
+        ddl_plan = std::move(child_SeqScanPlan);
+        // Create a plan to add data to index
+        std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
+            new planner::PopulateIndexPlan(target_table, column_ids));
+        child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
+        ddl_plan = std::move(child_PopulateIndexPlan);
+      }
     } break;
+
+    case StatementType::TRANSACTION:
+      break;
 
     case StatementType::CREATE_FUNC: {
       LOG_TRACE("Adding Create function plan...");
@@ -150,7 +180,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)tree));
       ddl_plan = move(create_func_plan);
     } break;
-
+      
     default:
       is_ddl_stmt = false;
   }
@@ -186,8 +216,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, PropertySet requirements, ExprMap *output_expr_map) {
-  LOG_TRACE("Choosing best plan for group %d", id);
-
   Group *group = memo_.GetGroupByID(id);
   shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
@@ -205,9 +233,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    children_plans.push_back(ChooseBestPlan(
-        child_groups[i], required_input_props[i], &child_expr_map));
-    children_expr_map.push_back(move(child_expr_map));
+    auto child_plan = ChooseBestPlan(
+        child_groups[i], required_input_props[i], &child_expr_map);
+    if (child_plan) {
+      children_plans.push_back(move(child_plan));
+      children_expr_map.push_back(move(child_expr_map));
+    }
   }
   // Derive root plan
   shared_ptr<OperatorExpression> op =
@@ -217,11 +248,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
                                          children_plans, children_expr_map,
                                          output_expr_map);
 
+  LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
 }
 
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
-  LOG_TRACE("Optimizing group %d with req %s", id, requirements.ToString().c_str());
+  LOG_TRACE("Optimizing group %d with req %s", id,
+            requirements.ToString().c_str());
   Group *group = memo_.GetGroupByID(id);
 
   // Whether required properties have already been optimized for the group
@@ -243,20 +276,20 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
   vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
       move(DeriveChildProperties(gexpr, requirements));
-  
+
   size_t num_property_pairs = output_input_property_pairs.size();
 
   auto child_group_ids = gexpr->GetChildGroupIDs();
-  
+
   for (size_t pair_offset = 0; pair_offset < num_property_pairs;
        ++pair_offset) {
     auto output_properties = output_input_property_pairs[pair_offset].first;
     const auto &input_properties_list =
         output_input_property_pairs[pair_offset].second;
-    
+
     vector<shared_ptr<Stats>> best_child_stats;
     vector<double> best_child_costs;
-    for (size_t i = 0; i < child_group_ids.size(); ++i) { 
+    for (size_t i = 0; i < child_group_ids.size(); ++i) {
       GroupID child_group_id = child_group_ids[i];
       const PropertySet &input_properties = input_properties_list[i];
       // Optimize child
@@ -273,7 +306,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       best_child_stats.push_back(best_expression->GetStats(input_properties));
       best_child_costs.push_back(best_expression->GetCost(input_properties));
     }
-    
+
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
     DeriveCostAndStats(gexpr, output_properties, input_properties_list,
@@ -294,7 +327,9 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       new_cols_prop.reset(GenerateNewPropertyCols(requirements));
 
     // enforce missing properties
-    for (auto property : requirements.Properties()) {
+    auto &required_props = requirements.Properties();
+    for (unsigned i = 0; i < required_props.size(); i++) {
+      auto property = required_props[i];
       // When enforce PropertyColumns, use the new PropertyCols if necessary
       if (property->Type() == PropertyType::COLUMNS && new_cols_prop != nullptr)
         property = new_cols_prop;
@@ -359,7 +394,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-  
+
   auto child_stats = vector<shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = vector<double>();
@@ -369,15 +404,24 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   auto enforced_gexpr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
 
-  // the new gexpr have the
-  // same GrouID as the one beforce
-  // enforcing the property
-  memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID());
+  // the new enforced gexpr have the same GrouID as the parent expr
+  // The enforced expression may already exist
+  enforced_gexpr =
+      memo_.InsertExpression(enforced_gexpr, gexpr->GetGroupID(), true);
 
-  // new output property would have the enforced Property
+  // For orderby, Restore the PropertyColumn back to the original one so that
+  // orderby does not output the additional columns only used in order by
+  if (property->Type() == PropertyType::SORT) {
+    output_properties.RemoveProperty(PropertyType::COLUMNS);
+    output_properties.AddProperty(
+        requirements.GetPropertyOfType(PropertyType::COLUMNS));
+  }
   // If the property with the same type exists, remove it first
+  // For example, when enforcing PropertyColumns, there will already be a
+  // PropertyColumn in the output_properties
   if (output_properties.GetPropertyOfType(property->Type()) != nullptr)
     output_properties.RemoveProperty(property->Type());
+  // New output property would have the enforced Property
   output_properties.AddProperty(shared_ptr<Property>(property));
 
   DeriveCostAndStats(enforced_gexpr, output_properties, child_input_properties,
@@ -518,28 +562,16 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 
 //////////////////////////////////////////////////////////////////////////////
 /// Memo insertion
+
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
-  vector<GroupID> child_groups = MemoTransformedChildren(expr);
-  return make_shared<GroupExpression>(expr->Op(), child_groups);
-}
-
-vector<GroupID> Optimizer::MemoTransformedChildren(
-    shared_ptr<OperatorExpression> expr) {
   vector<GroupID> child_groups;
-  for (shared_ptr<OperatorExpression> child : expr->Children()) {
-    child_groups.push_back(MemoTransformedExpression(child));
+  for (auto &child : expr->Children()) {
+    auto gexpr = MakeGroupExpression(child);
+    memo_.InsertExpression(gexpr, false);
+    child_groups.push_back(gexpr->GetGroupID());
   }
-  return child_groups;
-}
-
-GroupID Optimizer::MemoTransformedExpression(
-    shared_ptr<OperatorExpression> expr) {
-  shared_ptr<GroupExpression> gexpr = MakeGroupExpression(expr);
-  // Ignore whether this expression is new or not as we only care about that
-  // at the top level
-  (void)memo_.InsertExpression(gexpr);
-  return gexpr->GetGroupID();
+  return make_shared<GroupExpression>(expr->Op(), child_groups);
 }
 
 bool Optimizer::RecordTransformedExpression(
@@ -551,7 +583,7 @@ bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             shared_ptr<GroupExpression> &gexpr,
                                             GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
-  return memo_.InsertExpression(gexpr, target_group);
+  return memo_.InsertExpression(gexpr, target_group, false) != gexpr;
 }
 
 }  // namespace optimizer

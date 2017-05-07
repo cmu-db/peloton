@@ -46,49 +46,48 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
-  if (op->from_table != nullptr) op->from_table->Accept(this);
-  if (op->group_by != nullptr) {
-    // Make copies of groupby columns
-    vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-    for (auto col : *op->group_by->columns)
-      group_by_cols.emplace_back(col->Copy());
-    auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
-    aggregate->PushChild(output_expr);
-    output_expr = aggregate;
-  } else {
-    // Check plain aggregation
-    bool aggregation = false;
-    bool non_aggregation = false;
-    for (auto expr : *op->getSelectList()) {
-      if (expression::ExpressionUtil::IsAggregateExpression(
-              expr->GetExpressionType()))
-        aggregation = true;
-      else
-        non_aggregation = true;
-    }
-    // Syntax error when there are mixture of aggregation and other exprs
-    // when group by is absent
-    if (aggregation && non_aggregation)
-      throw SyntaxException(
-          "Non aggregation expressionmust appear in the GROUP BY "
-          "clause or be used in an aggregate function");
-    // Plain aggregation
-    else if (aggregation && !non_aggregation) {
-      auto aggregate =
-          std::make_shared<OperatorExpression>(LogicalAggregate::make());
-      aggregate->PushChild(output_expr);
-      output_expr = aggregate;
-    }
-  }
 
-  if (op->limit != nullptr) {
-    // When offset is not specified in the query, parser will set offset to -1
-    if (op->limit->offset == -1) op->limit->offset = 0;
-    auto limit = std::make_shared<OperatorExpression>(
-        LogicalLimit::make(op->limit->limit, op->limit->offset));
-    limit->PushChild(output_expr);
-    output_expr = limit;
+  if (op->from_table != nullptr) {
+    // SELECT with FROM
+    op->from_table->Accept(this);
+    if (op->group_by != nullptr) {
+      // Make copies of groupby columns
+      vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
+      for (auto col : *op->group_by->columns)
+        group_by_cols.emplace_back(col->Copy());
+      auto group_by = std::make_shared<OperatorExpression>(
+          LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
+      group_by->PushChild(output_expr);
+      output_expr = group_by;
+    } else {
+      // Check plain aggregation
+      bool has_aggregation = false;
+      bool has_other_exprs = false;
+      for (auto expr : *op->getSelectList()) {
+        vector<shared_ptr<expression::AggregateExpression>> aggr_exprs;
+        expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr);
+        if (aggr_exprs.size() > 0)
+          has_aggregation = true;
+        else
+          has_other_exprs = true;
+      }
+      // Syntax error when there are mixture of aggregation and other exprs
+      // when group by is absent
+      if (has_aggregation && has_other_exprs)
+        throw SyntaxException(
+            "Non aggregation expression must appear in the GROUP BY "
+            "clause or be used in an aggregate function");
+      // Plain aggregation
+      else if (has_aggregation && !has_other_exprs) {
+        auto aggregate =
+            std::make_shared<OperatorExpression>(LogicalAggregate::make());
+        aggregate->PushChild(output_expr);
+        output_expr = aggregate;
+      }
+    }
+  } else {
+    // SELECT without FROM
+    output_expr = std::make_shared<OperatorExpression>(LogicalGet::make());
   }
 
   // Update output_expr if upper_expr exists
@@ -145,12 +144,18 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
 }
 void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   // Nested select. Not supported in the current executors
-  if (node->select != nullptr) node->select->Accept(this);
+  if (node->select != nullptr) {
+    throw NotImplementedException("Not support joins");
+    node->select->Accept(this);
+  }
   // Join
-  else if (node->join != nullptr)
+  else if (node->join != nullptr) {
+    throw NotImplementedException("Not support joins");
     node->join->Accept(this);
+  }
   // Multiple tables
   else if (node->list != nullptr && node->list->size() > 1) {
+    throw NotImplementedException("Not support joins");
     std::shared_ptr<OperatorExpression> join_expr = nullptr;
     std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
 
@@ -224,12 +229,11 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->table->GetDatabaseName(), op->table->GetTableName());
 
-  auto update_expr =
-      std::make_shared<OperatorExpression>(
-          LogicalUpdate::make(target_table, *op->updates));
+  auto update_expr = std::make_shared<OperatorExpression>(
+      LogicalUpdate::make(target_table, *op->updates));
 
   auto table_scan = std::make_shared<OperatorExpression>(
-      LogicalGet::make(target_table, op->table->GetTableName()));
+      LogicalGet::make(target_table, op->table->GetTableName(), true));
 
   update_expr->PushChild(table_scan);
 
