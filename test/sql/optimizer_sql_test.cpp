@@ -447,9 +447,30 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       "SELECT test.a, test.b, test1.b, test2.c FROM test2 "
       "JOIN test ON test.b = test2.b "
       "JOIN test1 ON test2.c = test1.c",
-      {"1", "22", "0", "11", "2", "11", "333", "22", "2", "11", "333", "0", 
+      {"1", "22", "0", "11", 
+       "2", "11", "333", "22", 
+       "2", "11", "333", "0", 
        "4", "0", "0", "11"}, 
       false);
+
+  // 3 table join with where clause
+  TestUtil(
+      "SELECT test.a, test.b, test1.b, test2.c FROM test2, test, test1 "
+      "WHERE test.b = test2.b AND test2.c = test1.c",
+      {"1", "22", "11", "0", 
+       "2", "11", "22", "333", 
+       "2", "11", "0", "333", 
+       "4", "0", "11", "0"}, 
+      false);
+
+  // 2 table join with where clause and predicate
+  // TestUtil(
+  //     "SELECT test.a, test1.b FROM test, test1 "
+  //     "WHERE test.a = test1.a AND test1.b = 22",
+  //     {"1", "22" 
+  //      "3", "22"}, 
+  //     false);
+
 }
 
 }  // namespace test

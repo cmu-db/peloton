@@ -463,6 +463,8 @@ class ExpressionUtil {
    * Walks an expression trees and find all TupleValueExprs in the tree
    */
   static void GetTupleValueExprs(ExprSet &expr_set, AbstractExpression *expr) {
+    if (expr == nullptr) 
+      return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
@@ -483,6 +485,7 @@ class ExpressionUtil {
   static void EvaluateExpression(const std::vector<ExprMap> &expr_maps,
                                  AbstractExpression *expr) {
     // To evaluate the return type, we need a bottom up approach.
+    if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
       EvaluateExpression(expr_maps, expr->GetModifiableChild(i));
@@ -546,6 +549,7 @@ class ExpressionUtil {
       std::vector<std::unique_ptr<const expression::AbstractExpression>> &
           r_column_exprs,
       const expression::AbstractExpression *expr, bool remove = false) {
+    if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
       auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
                                           expr->GetChild(0), remove);

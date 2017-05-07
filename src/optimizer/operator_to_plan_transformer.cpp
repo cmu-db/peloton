@@ -577,7 +577,7 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
         dml.emplace_back(curr_col_offset, make_pair(1, r_child_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
-      
+
       planner::DerivedAttribute attribute;
       attribute.expr = expr->Copy();
       attribute.attribute_info.type = attribute.expr->GetValueType();
@@ -594,13 +594,41 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
       new planner::ProjectInfo(move(tl), move(dml)));
   shared_ptr<const catalog::Schema> schema_ptr(new catalog::Schema(columns));
 
+  // Combine predicate in the where clause
+  // with predicate in join clause
+  // TODO the two predicate should not be combined
+  // But hash plan currently only have one predicate
+  vector<expression::AbstractExpression *> predicates;
+  auto predicate_prop =
+      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
+  
+  if (predicate_prop != nullptr) {
+    auto where_predicate = predicate_prop->GetPredicate()->Copy();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   where_predicate);
+    LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
+    predicates.emplace_back(where_predicate);
+  }
+  
   // Extract join columns
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, join_predicate);
-  vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys, right_hash_keys;
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                 join_predicate);
+  vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys,
+      right_hash_keys;
 
-  unique_ptr<const expression::AbstractExpression> remaining_predicate{
+  // Combine remaining predicate with 
+  auto remaining_predicate = 
       expression::ExpressionUtil::ExtractJoinColumns(
-          left_hash_keys, right_hash_keys, join_predicate, true)};
+          left_hash_keys, right_hash_keys, join_predicate, true);
+
+  if (remaining_predicate != nullptr) {
+    LOG_TRACE("remaining %s", remaining_predicate->GetInfo().c_str());
+    predicates.emplace_back(remaining_predicate);
+  }
+
+  unique_ptr<const expression::AbstractExpression> predicate{
+      util::CombinePredicates(predicates)};
 
   PL_ASSERT(left_hash_keys.size() == right_hash_keys.size());
   PL_ASSERT(left_hash_keys.size() != 0);
@@ -614,7 +642,7 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
   hash_plan->AddChild(move(children_plans_[1]));
 
   unique_ptr<planner::HashJoinPlan> hash_join_plan(new planner::HashJoinPlan(
-      join_type, move(remaining_predicate), move(proj_info), schema_ptr,
+      join_type, move(predicate), move(proj_info), schema_ptr,
       left_hash_keys, right_hash_keys));
 
   hash_join_plan->AddChild(move(children_plans_[0]));
