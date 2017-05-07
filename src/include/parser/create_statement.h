@@ -31,6 +31,8 @@ struct ColumnDefinition {
     PRIMARY,
     FOREIGN,
 
+    MULTIUNIQUE,
+
     CHAR,
     INT,
     INTEGER,
@@ -89,6 +91,11 @@ struct ColumnDefinition {
       for (auto key : *foreign_key_sink) delete[] (key);
       delete foreign_key_sink;
     }
+    if (multi_unique_cols) {
+      for (auto key : *multi_unique_cols) delete[] (key);
+      delete multi_unique_cols;
+    }
+
     delete[] name;
     if (table_info_ != nullptr)
       delete table_info_;
@@ -173,6 +180,8 @@ struct ColumnDefinition {
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;
   std::vector<char*>* foreign_key_sink = nullptr;
+
+  std::vector<char *>* multi_unique_cols = nullptr;
 
   char* foreign_key_table_name = nullptr;
   FKConstrActionType foreign_key_delete_action;
