@@ -23,6 +23,7 @@
 #include "planner/limit_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
+#include "planner/abstract_join_plan.h"
 #include "expression/aggregate_expression.h"
 #include "planner/seq_scan_plan.h"
 
@@ -330,8 +331,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
-  output_plan_ = 
-    move(GenerateNLJoinPlan((op->join_predicate).get(), JoinType::INNER));
+  output_plan_ = move(
+      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
@@ -342,7 +343,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOuterNLJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *op) {
   output_plan_ =
-      move(GenerateHashJoinPlan((op->join_predicate).get(), JoinType::INNER));
+      move(GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, true));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
@@ -550,9 +551,9 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
   return move(agg_plan);
 }
 
-unique_ptr<planner::HashJoinPlan>
-OperatorToPlanTransformer::GenerateHashJoinPlan(
-    expression::AbstractExpression *join_predicate, JoinType join_type) {
+unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
+    expression::AbstractExpression *join_predicate, JoinType join_type,
+    bool is_hash) {
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                        ->As<PropertyColumns>();
 
@@ -605,7 +606,7 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
-  
+
   if (predicate_prop != nullptr) {
     auto where_predicate = predicate_prop->GetPredicate()->Copy();
     // predicates are evaluate after projection
@@ -614,17 +615,16 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
     LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
     predicates.emplace_back(where_predicate);
   }
-  
+
   // Extract join columns
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate);
   vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys,
       right_hash_keys;
 
-  // Combine remaining predicate with 
-  auto remaining_predicate = 
-      expression::ExpressionUtil::ExtractJoinColumns(
-          left_hash_keys, right_hash_keys, join_predicate, true);
+  // Combine remaining predicate with
+  auto remaining_predicate = expression::ExpressionUtil::ExtractJoinColumns(
+      left_hash_keys, right_hash_keys, join_predicate, true);
 
   if (remaining_predicate != nullptr) {
     // Quite strange, but have to set tuple_idx/value_idx again
@@ -637,34 +637,49 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
   unique_ptr<const expression::AbstractExpression> predicate{
       util::CombinePredicates(predicates)};
 
-  PL_ASSERT(left_hash_keys.size() == right_hash_keys.size());
-  PL_ASSERT(left_hash_keys.size() != 0);
+  unique_ptr<planner::AbstractPlan> join_plan;
+  if (is_hash) {
+    // Generate hash join plan
+    PL_ASSERT(left_hash_keys.size() == right_hash_keys.size());
+    PL_ASSERT(left_hash_keys.size() != 0);
 
-  // Hash keys for hash plan is
-  // a copy of right hash key
-  vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
-  for (auto &expr : right_hash_keys) hash_keys.emplace_back(expr->Copy());
+    // Hash keys for hash plan is
+    // a copy of right hash key
+    vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
+    for (auto &expr : right_hash_keys) hash_keys.emplace_back(expr->Copy());
 
-  unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
-  hash_plan->AddChild(move(children_plans_[1]));
+    unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+    hash_plan->AddChild(move(children_plans_[1]));
 
-  unique_ptr<planner::HashJoinPlan> hash_join_plan(new planner::HashJoinPlan(
-      join_type, move(predicate), move(proj_info), schema_ptr,
-      left_hash_keys, right_hash_keys));
+    join_plan = unique_ptr<planner::AbstractPlan>(
+        new planner::HashJoinPlan(join_type, move(predicate), move(proj_info),
+                                  schema_ptr, left_hash_keys, right_hash_keys));
 
-  hash_join_plan->AddChild(move(children_plans_[0]));
-  hash_join_plan->AddChild(move(hash_plan));
-  return move(hash_join_plan);
+    join_plan->AddChild(move(children_plans_[0]));
+    join_plan->AddChild(move(hash_plan));
+  } else {
+    // NL Join plan use offset for join column
+    vector<oid_t> left_join_col_ids, right_join_col_ids;
+    for (auto &expr : left_hash_keys)
+      left_join_col_ids.emplace_back(
+          reinterpret_cast<const expression::TupleValueExpression *>(expr.get())
+              ->GetColumnId());
+
+    for (auto &expr : right_hash_keys)
+      right_join_col_ids.emplace_back(
+          reinterpret_cast<const expression::TupleValueExpression *>(expr.get())
+              ->GetColumnId());
+
+    join_plan =
+        unique_ptr<planner::AbstractPlan>(new planner::NestedLoopJoinPlan(
+            join_type, move(predicate), move(proj_info), schema_ptr,
+            left_join_col_ids, right_join_col_ids));
+    join_plan->AddChild(move(children_plans_[0]));
+    join_plan->AddChild(move(children_plans_[1]));
+  }
+  return move(join_plan);
 }
 
-  unique_ptr<planner::HashJoinPlan>
-OperatorToPlanTransformer::GenerateNLJoinPlan(
-    expression::AbstractExpression *join_predicate, JoinType join_type) {
-  // TODO: generate nested loop join plan
-  (void) join_predicate;
-  (void) join_type;
-  return nullptr;
-}
 void OperatorToPlanTransformer::VisitOpExpression(
     shared_ptr<OperatorExpression> op) {
   op->Op().Accept(this);
