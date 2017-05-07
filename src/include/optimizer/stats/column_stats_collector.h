@@ -60,6 +60,10 @@ class ColumnStatsCollector {
 
   inline std::string GetColumnName() { return column_name_; }
 
+  inline void SetColumnIndexed() { has_index_ = true; }
+
+  inline bool HasIndex() { return has_index_; }
+
  private:
   const oid_t database_id_;
   const oid_t table_id_;
@@ -70,6 +74,8 @@ class ColumnStatsCollector {
   Histogram hist_;
   CountMinSketch sketch_;
   TopKElements topk_;
+
+  bool has_index_ = false;
 
   size_t null_count_ = 0;
   size_t total_count_ = 0;

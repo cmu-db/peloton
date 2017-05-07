@@ -18,6 +18,8 @@
 namespace peloton {
 namespace optimizer {
 
+#define DEFAULT_CARDINALITY 1
+
 class ColumnStats;
 
 //===--------------------------------------------------------------------===//
@@ -32,7 +34,15 @@ class TableStats {
   TableStats(size_t num_rows,
              std::vector<std::shared_ptr<ColumnStats>> col_stats_list);
 
-  size_t num_rows;
+  void UpdateNumRows(size_t new_num_rows);
+
+  bool HasIndex(const std::string column_name);
+
+  bool HasPrimaryIndex(const std::string column_name);
+
+  double GetCardinality(const std::string column_name);
+
+  void ClearColumnStats();
 
   bool HasColumnStats(std::string col_name);
 
@@ -41,6 +51,8 @@ class TableStats {
   bool AddColumnStats(std::shared_ptr<ColumnStats> col_stats);
 
   bool RemoveColumnStats(std::string col_name);
+
+  size_t num_rows;
 
  private:
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>>

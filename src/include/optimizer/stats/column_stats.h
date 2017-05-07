@@ -24,7 +24,7 @@ namespace optimizer {
 class ColumnStats {
  public:
   ColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-              const std::string column_name, size_t num_rows,
+              const std::string column_name, bool has_index, size_t num_rows,
               double cardinality, double frac_null,
               std::vector<double> most_common_vals,
               std::vector<double> most_common_freqs,
@@ -33,6 +33,7 @@ class ColumnStats {
         table_id(table_id),
         column_id(column_id),
         column_name(column_name),
+        has_index(has_index),
         num_rows(num_rows),
         cardinality(cardinality),
         frac_null(frac_null),
@@ -45,6 +46,7 @@ class ColumnStats {
   oid_t table_id;
   oid_t column_id;
   std::string column_name;
+  bool has_index;
 
   size_t num_rows;
   double cardinality;

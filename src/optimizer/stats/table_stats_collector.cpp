@@ -73,6 +73,12 @@ void TableStatsCollector::InitColumnStatsCollectors() {
         schema_->GetColumn(column_id).GetName()));
     column_stats_collectors_.push_back(std::move(colstats));
   }
+
+  // Set indexes in the column stats collectors.
+  for (auto& column_set : table_->GetIndexColumns()) {
+    auto column_id = *(column_set.begin());
+    column_stats_collectors_[column_id]->SetColumnIndexed();
+  }
 }
 
 ColumnStatsCollector* TableStatsCollector::GetColumnStats(oid_t column_id) {

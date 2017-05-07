@@ -24,6 +24,30 @@ TableStats::TableStats(size_t num_rows,
   }
 }
 
+void TableStats::UpdateNumRows(size_t new_num_rows) { num_rows = new_num_rows; }
+
+bool TableStats::HasIndex(const std::string column_name) {
+  auto column_stats = GetColumnStats(column_name);
+  if (column_stats == nullptr) {
+    return false;
+  }
+  return column_stats->has_index;
+}
+
+bool TableStats::HasPrimaryIndex(const std::string column_name) {
+  return HasIndex(column_name);
+}
+
+double TableStats::GetCardinality(const std::string column_name) {
+  auto column_stats = GetColumnStats(column_name);
+  if (column_stats == nullptr) {
+    return DEFAULT_CARDINALITY;
+  }
+  return column_stats->cardinality;
+}
+
+void TableStats::ClearColumnStats() { col_name_to_stats_map_.clear(); }
+
 bool TableStats::HasColumnStats(std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it == col_name_to_stats_map_.end()) {
