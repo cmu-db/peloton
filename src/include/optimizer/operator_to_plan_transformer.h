@@ -106,6 +106,9 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   
   std::unique_ptr<planner::HashJoinPlan> GenerateHashJoinPlan(
       expression::AbstractExpression *join_predicate, JoinType join_type);
+
+  std::unique_ptr<planner::HashJoinPlan> GenerateNLJoinPlan(
+      expression::AbstractExpression *join_predicate, JoinType join_type);
   
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;

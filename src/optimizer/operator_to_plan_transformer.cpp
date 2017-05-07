@@ -329,7 +329,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
-void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {
+  output_plan_ = 
+    move(GenerateNLJoinPlan((op->join_predicate).get(), JoinType::INNER));
+}
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
 
@@ -650,6 +653,12 @@ OperatorToPlanTransformer::GenerateHashJoinPlan(
   return move(hash_join_plan);
 }
 
+  unique_ptr<planner::HashJoinPlan>
+OperatorToPlanTransformer::GenerateNLJoinPlan(
+    expression::AbstractExpression *join_predicate, JoinType join_type) {
+  // TODO: generate nested loop join plan
+  return nullptr;
+}
 void OperatorToPlanTransformer::VisitOpExpression(
     shared_ptr<OperatorExpression> op) {
   op->Op().Accept(this);

@@ -85,11 +85,17 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
   output_cost_ = 0;
 }
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
-void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){};
+void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){
+  // TODO: Replace with more accurate cost
+  output_cost_ = 1;
+};
 void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalRightNLJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalOuterNLJoin *){};
-void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *){};
+void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *){
+  // TODO: Replace with more accurate cost
+  output_cost_ = 0;
+};
 void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *){};

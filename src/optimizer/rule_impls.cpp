@@ -321,18 +321,16 @@ void LogicalAggregateToPhysical::Transform(
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   physical = true;
 
-  // Make three node types for pattern matching
+  // TODO NLJoin currently only support left deep tree
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Get));
 
   // Initialize a pattern for optimizer to match
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
 
-  // Add node - we match join relation R and S as well as the predicate exp
+  // Add node - we match join relation R and S
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
 
   return;
 }
@@ -351,12 +349,11 @@ void InnerJoinToInnerNLJoin::Transform(
   auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalInnerNLJoin::make(inner_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
+  PL_ASSERT(children.size() == 2);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
 
   transformed.push_back(result_plan);
 
