@@ -642,21 +642,17 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
     ccs.push_back(type::ValueFactory::GetIntegerValue(2));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 
-    txn_manager.CommitTransaction(txn);
-    txn = txn_manager.BeginTransaction();
     ccs.clear();
 
     ccs.push_back(type::ValueFactory::GetIntegerValue(1));
     ccs.push_back(type::ValueFactory::GetIntegerValue(2));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
-    txn_manager.CommitTransaction(txn);
   } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_FALSE(hasException);
 
   // Test 2: insert a tuple with a column that doesn't satisfy the constraint
-  txn = txn_manager.BeginTransaction();
   hasException = false;
   try {
     ccs.clear();
@@ -664,96 +660,93 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
     ccs.push_back(type::ValueFactory::GetIntegerValue(4));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 
-    txn_manager.CommitTransaction(txn);
     ccs.clear();
-    txn = txn_manager.BeginTransaction();
 
     ccs.push_back(type::ValueFactory::GetIntegerValue(2));
     ccs.push_back(type::ValueFactory::GetIntegerValue(5));
     ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
-    txn_manager.CommitTransaction(txn);
   } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
 
-  // Test 3: concurrent insertions into source and sink
-  //         N.B.: the tuple inserted into sink is required for the source
-  auto txn1 = txn_manager.BeginTransaction();
-  auto txn2 = txn_manager.BeginTransaction();
-  hasException = false;
-  try {
-    ccs.clear();
-    ccs.push_back(type::ValueFactory::GetIntegerValue(7));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(8));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
+  // // Test 3: concurrent insertions into source and sink
+  // //         N.B.: the tuple inserted into sink is required for the source
+  // auto txn1 = txn_manager.BeginTransaction();
+  // auto txn2 = txn_manager.BeginTransaction();
+  // hasException = false;
+  // try {
+  //   ccs.clear();
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(7));
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(8));
+  //   ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
 
-    ccs.clear();
+  //   ccs.clear();
 
-    ccs.push_back(type::ValueFactory::GetIntegerValue(7));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(8));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(7));
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(8));
+  //   ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
     
-    txn_manager.CommitTransaction(txn2);
-    txn_manager.CommitTransaction(txn1);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
+  //   txn_manager.CommitTransaction(txn2);
+  //   txn_manager.CommitTransaction(txn1);
+  // } catch (ConstraintException e) {
+  //   hasException = true;
+  // }
+  // EXPECT_TRUE(hasException);
 
-  // Test 4: concurrent insertion into source, deletion from sink
-  txn1 = txn_manager.BeginTransaction();
-  txn2 = txn_manager.BeginTransaction();
-  hasException = false;
-  try {
-    // Insert sink tuple to later be deleted
-    ccs.clear();
-    ccs.push_back(type::ValueFactory::GetIntegerValue(9));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
-    txn_manager.CommitTransaction(txn1);
+  // // Test 4: concurrent insertion into source, deletion from sink
+  // txn1 = txn_manager.BeginTransaction();
+  // txn2 = txn_manager.BeginTransaction();
+  // hasException = false;
+  // try {
+  //   // Insert sink tuple to later be deleted
+  //   ccs.clear();
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(9));
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+  //   ConstraintsTestsUtil::ExecuteMultiInsert(txn1, table_b, ccs);
+  //   txn_manager.CommitTransaction(txn1);
 
-    // Prepare to insert a valid tuple in source
-    ccs.clear();
-    ccs.push_back(type::ValueFactory::GetIntegerValue(9));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
+  //   // Prepare to insert a valid tuple in source
+  //   ccs.clear();
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(9));
+  //   ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+  //   ConstraintsTestsUtil::ExecuteMultiInsert(txn2, table_a, ccs);
 
-    // Delete sink tuple
-    txn1 = txn_manager.BeginTransaction();
-    //ConstraintsTestsUtil::ExecuteTruncate(txn1, table_b);
+  //   // Delete sink tuple
+  //   txn1 = txn_manager.BeginTransaction();
+  //   //ConstraintsTestsUtil::ExecuteTruncate(txn1, table_b);
 
     
-    //std::shared_ptr<Statement> statement;
-    //std::vector<type::Value> params;
-    //std::vector<StatementResult> result;
-    //std::vector<int> result_format = std::move(std::vector<int>(0, 0));
-    //statement.reset(new Statement("DELETE", "DELETE FROM " + db_name + "." + table_b_name + ";"));
-    //statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
-    //std::string error_message = "Error";
-    //std::string nm = "truncate_query";
-    //std::string q = "DELETE FROM tabB;";
-    //statement = traffic_cop.PrepareStatement(nm, q, error_message);
+  //   //std::shared_ptr<Statement> statement;
+  //   //std::vector<type::Value> params;
+  //   //std::vector<StatementResult> result;
+  //   //std::vector<int> result_format = std::move(std::vector<int>(0, 0));
+  //   //statement.reset(new Statement("DELETE", "DELETE FROM " + db_name + "." + table_b_name + ";"));
+  //   //statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
+  //   //std::string error_message = "Error";
+  //   //std::string nm = "truncate_query";
+  //   //std::string q = "DELETE FROM tabB;";
+  //   //statement = traffic_cop.PrepareStatement(nm, q, error_message);
     
-    //traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
-                                                params, result, result_format);
+  //   //traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  //                                               params, result, result_format);
     
-    txn_manager.CommitTransaction(txn1);
+  //   txn_manager.CommitTransaction(txn1);
 
-    // Commit source tuple
-    LOG_DEBUG("Final commit.");
-    txn_manager.CommitTransaction(txn2);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  //TODO: comment back in when above deletion is working
-  //EXPECT_TRUE(hasException);
+  //   // Commit source tuple
+  //   LOG_DEBUG("Final commit.");
+  //   txn_manager.CommitTransaction(txn2);
+  // } catch (ConstraintException e) {
+  //   hasException = true;
+  // }
+  // //TODO: comment back in when above deletion is working
+  // //EXPECT_TRUE(hasException);
 
-  // Clean up the test
+  // Clean up the test  
+  txn_manager.CommitTransaction(txn);
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
   txn_manager.CommitTransaction(txn);
-  delete foreign_key;
 }
 #endif
 
