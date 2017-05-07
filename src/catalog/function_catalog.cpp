@@ -63,94 +63,94 @@ namespace peloton {
       // Primary keys
       auto function_oid_column = catalog::Column(
           type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-          "function_oid", true);
+          "function_oid", true);  //oid
       function_oid_column.AddConstraint(catalog::Constraint(
             ConstraintType::PRIMARY, primary_key_constraint_name));
       function_oid_column.AddConstraint(not_null_constraint);
 
       auto name_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "function_name", false);
+          "function_name", false); //val1
       name_column.AddConstraint(not_null_constraint);
 
       auto owner_oid_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "owner_oid", true);
+          type::Type::INTEGER, integer_type_size, "owner_oid", true); //val2
 
-      auto lang_oid_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "lang_oid", true);
+      auto lang_oid_column = catalog::Column( 
+          type::Type::INTEGER, integer_type_size, "lang_oid", true);  //val3
       lang_oid_column.AddConstraint(not_null_constraint);
 
       auto cost_column = catalog::Column(
-          type::Type::DECIMAL, float_type_size , "cost", true);
+          type::Type::DECIMAL, float_type_size , "cost", true); //val4
 
-      auto rows_column = catalog::Column(
-          type::Type::DECIMAL, float_type_size , "rows", true);
+      auto rows_column = catalog::Column(  
+          type::Type::DECIMAL, float_type_size , "rows", true); //val5
       // Parameters
       auto variadic_oid_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "variadic_oid", true);
+          type::Type::INTEGER, integer_type_size, "variadic_oid", true); //val6
 
       auto isagg_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "isagg_column", true);
+          type::Type::BOOLEAN, bool_type_size, "isagg_column", true); //val7
 
-      auto iswindow_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "iswindow_column", true);
+      auto iswindow_column = catalog::Column( 
+          type::Type::BOOLEAN, bool_type_size, "iswindow_column", true); //val8
 
       auto secdef_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "secdef_column", true);
+          type::Type::BOOLEAN, bool_type_size, "secdef_column", true); //val9
 
       auto leakproof_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "leakproof_column", true);
+          type::Type::BOOLEAN, bool_type_size, "leakproof_column", true); //val10
 
       auto isstrict_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "isstrict_column", true);
+          type::Type::BOOLEAN, bool_type_size, "isstrict_column", true); //val11
 
       auto retset_column = catalog::Column(
-          type::Type::BOOLEAN, bool_type_size, "retset_column", true);
+          type::Type::BOOLEAN, bool_type_size, "retset_column", true); //val12
     
       auto volatile_column = catalog::Column(
-          type::Type::VARCHAR, varchar_type_size, "volatile_column", false);
+          type::Type::VARCHAR, varchar_type_size, "volatile_column", false); //val13
 
       auto num_args_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "num_params", true);
+          type::Type::INTEGER, integer_type_size, "num_params", true); //val14
       num_args_column.AddConstraint(not_null_constraint);
 
       //might need a not null constraint?
       auto num_default_args_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "num_default_params", true);
+          type::Type::INTEGER, integer_type_size, "num_default_params", true); //val15
 
       auto rettype_oid_column = catalog::Column(
-          type::Type::INTEGER, integer_type_size, "rettype_oid", true);
+          type::Type::INTEGER, integer_type_size, "rettype_oid", true); //val16
       lang_oid_column.AddConstraint(not_null_constraint);
 
       auto arg_types_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
           "arg_types", false);
-      name_column.AddConstraint(not_null_constraint);
+      name_column.AddConstraint(not_null_constraint); //val17
 
 
       auto all_arg_types_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "all_arg_types", false);
+          "all_arg_types", false); //val18
 
       auto arg_modes_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "arg_modes", false);
+          "arg_modes", false); //val19
 
       auto arg_names_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "arg_names", false);
+          "arg_names", false); //val20
 
 
       auto arg_defaults_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "arg_defaults", false);
+          "arg_defaults", false); //21
 
       auto src_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "src", false);
+          "src", false); //22
       name_column.AddConstraint(not_null_constraint);
 
       auto bin_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "bin", false);
+          "bin", false); //23
       
       auto config_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "config", false);
+          "config", false); //24
 
       auto aclitem_column = catalog::Column(type::Type::VARCHAR, varchar_type_size,
-          "aclitem", false);
+          "aclitem", false); //25
 
       std::unique_ptr<catalog::Schema> function_catalog_schema(
           new catalog::Schema({function_oid_column, name_column, owner_oid_column,
@@ -228,53 +228,54 @@ namespace peloton {
       auto val0 = type::ValueFactory::GetIntegerValue(oid);
       auto val1 = type::ValueFactory::GetVarcharValue(proname, nullptr);
       auto val2 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-      auto val3 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-      auto val4 = type::ValueFactory::GetIntegerValue(prolang);
+      //auto val3 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      auto val3 = type::ValueFactory::GetIntegerValue(prolang);
+      auto val4 = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
       auto val5 = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
-      auto val6 = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
-      auto val7 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      auto val6 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      auto val7 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val8 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val9 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val10 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val11 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val12 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
-      auto val13 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
-      auto val14 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-      auto val15 = type::ValueFactory::GetIntegerValue(pronargs);
-      auto val16 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-      auto val17 = type::ValueFactory::GetIntegerValue(prorettype);
+      //auto val13 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+      auto val13 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+      auto val14 = type::ValueFactory::GetIntegerValue(pronargs);
+      auto val15 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      auto val16 = type::ValueFactory::GetIntegerValue(prorettype);
 
       std::stringstream os;
       for(oid_t param_type : proargtypes)
             os << std::to_string(param_type) << "";
       
-      auto val18 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
+      auto val17 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
     
     
+      auto val18 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
       auto val19 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-      auto val20 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-      auto val21 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+     // auto val21 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
      
       std::stringstream os2;
       for(auto param_name : proargnames)
             os2 << param_name  << "";
-      auto val22 = type::ValueFactory::GetVarcharValue(os2.str(), nullptr);
+      auto val20 = type::ValueFactory::GetVarcharValue(os2.str(), nullptr);
 
-      auto val23 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-      auto val24 = type::ValueFactory::GetVarcharValue(prosrc_bin[0], nullptr);
+      auto val21 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+      auto val22 = type::ValueFactory::GetVarcharValue(prosrc_bin[0], nullptr);
 
-      auto val25 =  type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+      auto val23 =  type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
 
       if(prosrc_bin.size() == 1) //only src, no binary
       {
-        val25 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+        val23 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
       }
       else { 
-        val25 = type::ValueFactory::GetVarcharValue(prosrc_bin[1], nullptr);
+        val23 = type::ValueFactory::GetVarcharValue(prosrc_bin[1], nullptr);
       }
      
-      auto val26 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-      auto val27 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+      auto val24 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+      auto val25 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
  
 
       tuple->SetValue(0, val0, pool);
@@ -303,8 +304,6 @@ namespace peloton {
       tuple->SetValue(23, val23, pool);
       tuple->SetValue(24, val24, pool);
       tuple->SetValue(25, val25, pool);
-      tuple->SetValue(26, val26, pool);
-      tuple->SetValue(27, val27, pool);
    
 
       if(InsertTuple(std::move(tuple), txn) == true)
