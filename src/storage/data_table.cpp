@@ -120,6 +120,9 @@ DataTable::~DataTable() {
     auto oid = indirection_array->GetOid();
     catalog_manager.DropIndirectionArray(oid);
   }
+  
+  // free memory used by trigger list
+  delete trigger_list;
 
   // AbstractTable cleans up the schema
 }
