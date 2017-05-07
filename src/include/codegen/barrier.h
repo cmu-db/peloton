@@ -45,6 +45,7 @@ public:
     ~Barrier()
     {
         delete bar_;
+        delete [] local_hash_tables_;
     }
 
     void SetBarrier(boost::barrier *bar)
@@ -59,21 +60,24 @@ public:
 
     void AddLocalHashTable(UNUSED_ATTRIBUTE int64_t thread_id, UNUSED_ATTRIBUTE utils::OAHashTable *hash_table)
     {
-        LOG_DEBUG("vector size: %zd, thread id: %ld", local_hash_tables_.size(), long(thread_id));
+        LOG_DEBUG("Adding: vector size: %ld, thread id: %ld", n_local_hts_, long(thread_id));
         local_hash_tables_[int(thread_id)] = hash_table;
+        LOG_DEBUG("Done: vector size: %ld, thread id: %ld", n_local_hts_, long(thread_id));
     }
 
-    void AllocateVector(uint64_t n_workers)
+    void AllocateVector(uint64_t n_local_hts)
     {
-        local_hash_tables_.resize(n_workers);
-        LOG_DEBUG("vector size: %zd", local_hash_tables_.size());
+        n_local_hts_ = n_local_hts;
+        local_hash_tables_ = new utils::OAHashTable*[n_local_hts_];
+        LOG_DEBUG("vector size: %ld", n_local_hts_);
     }
 
 private:
     Barrier(): bar_(nullptr) {}
     boost::barrier *bar_;
     std::atomic<uint64_t> n_workers_;
-    std::vector<utils::OAHashTable*> local_hash_tables_;
+    uint64_t n_local_hts_;
+    utils::OAHashTable **local_hash_tables_;
 };
 
 }
