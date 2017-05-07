@@ -17,7 +17,6 @@
 #include "storage/data_table.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
-#include "catalog/foreign_key.h"
 
 namespace peloton {
 namespace planner {
@@ -48,6 +47,10 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // put it into a ColumnDefinition. Later when we implement constraint
       // we may need to change this. Just skip foreign key constraint for now
       if (col->type == parser::ColumnDefinition::FOREIGN) {
+        if (foreign_keys.get() == nullptr) {
+          foreign_keys.reset(new std::vector<catalog::ForeignKey>());
+        }
+
         LOG_DEBUG("Found a foreign key constraint.");
         // Extract source and sink column names
         std::vector<std::string> foreign_key_source;
@@ -63,13 +66,18 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         std::string fk_name = strdup("fk_name");
 
         LOG_DEBUG("About to make the ForeignKey.");
-        //TODO: replace latter three parameters
-        auto fk = new catalog::ForeignKey(sink_table_name,
-            foreign_key_sink, foreign_key_source, 't', 't', fk_name);
+
+        // TODO: replace latter three parameters
+        catalog::ForeignKey fk(sink_table_name,
+                               foreign_key_sink, foreign_key_source, 't', 't', fk_name);
         LOG_DEBUG("About to add the FK to the table");
-        target_table_->AddForeignKey(fk);
+        // table->AddForeignKey(fk);
         LOG_DEBUG("Added a foreign key constraint toward sink table %s", 
             sink_table_name.c_str());
+
+        // WARNING : the col is deleted later before the executor
+        // TODO : define a new data structure to replace ColumnDefinition ?
+        foreign_keys.get()->push_back(fk);
         continue;
       }
   

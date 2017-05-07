@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "catalog/foreign_key.h"
 
 namespace peloton {
 namespace catalog {
@@ -63,6 +64,8 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
+  std::vector<catalog::ForeignKey> *GetForeignKeys() const { return foreign_keys.get(); }
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
@@ -90,6 +93,9 @@ class CreatePlan : public AbstractPlan {
 
   // UNIQUE INDEX flag
   bool unique;
+
+  // ColumnDefinition for multi-column constraints (including foreign key)
+  std::unique_ptr<std::vector<catalog::ForeignKey>> foreign_keys; 
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);

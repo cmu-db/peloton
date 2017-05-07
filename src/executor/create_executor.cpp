@@ -14,6 +14,7 @@
 #include "executor/executor_context.h"
 #include "common/logger.h"
 #include "catalog/catalog.h"
+#include "catalog/foreign_key.h"
 
 #include <vector>
 
@@ -52,6 +53,15 @@ bool CreateExecutor::DExecute() {
 
     if (current_txn->GetResult() == ResultType::SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
+
+      // Add the foreign key constraint (or other multi-column constriants)
+      if (node.GetForeignKeys() != nullptr) {
+        auto table = catalog::Catalog::GetInstance()->GetDatabaseWithName(database_name)
+                    ->GetTableWithName(table_name);
+        for (auto &fk : *(node.GetForeignKeys())) {
+          table->AddForeignKey(new catalog::ForeignKey(fk));
+        }
+      }
     } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
