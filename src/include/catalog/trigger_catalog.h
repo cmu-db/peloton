@@ -78,16 +78,20 @@ class TriggerCatalog : public AbstractCatalog {
   commands::TriggerList* GetTriggers(
       oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
 
+  oid_t GetTriggerOid(std::string trigger_name,
+        oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
+
 
   enum ColumnId {
-    TRIGGER_NAME = 0,
-    DATABASE_OID = 1,
-    TABLE_OID = 2,
-    TRIGGER_TYPE = 3,
-    FIRE_CONDITION = 4,
-    FUNCTION_NAME = 5,
-    FUNCTION_ARGS = 6,
-    TIME_STAMP = 7
+    TRIGGER_OID = 0,
+    TRIGGER_NAME = 1,
+    DATABASE_OID = 2,
+    TABLE_OID = 3,
+    TRIGGER_TYPE = 4,
+    FIRE_CONDITION = 5,
+    FUNCTION_NAME = 6,
+    FUNCTION_ARGS = 7,
+    TIME_STAMP = 8
     // Add new columns here in creation order
   };
 
@@ -98,6 +102,8 @@ class TriggerCatalog : public AbstractCatalog {
     SECONDARY_KEY_0 = 0,
     // Add new indexes here in creation order
     DATABASE_TABLE_KEY_1 = 1,
+    DB_TABLE_TRIGGERNAME_KEY_2 = 2,
+    TRIGGEROID_KEY_3 = 3
   };
 
 };

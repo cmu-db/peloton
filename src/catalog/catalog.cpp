@@ -225,7 +225,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   oid_t table_oid =
       TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
   if (table_oid != INVALID_OID) {
-    LOG_TRACE("Cannot find the table %s in pg_table", table_name.c_str());
+    LOG_TRACE("table %s already exists in pg_table", table_name.c_str());
     return ResultType::FAILURE;
   }
 
