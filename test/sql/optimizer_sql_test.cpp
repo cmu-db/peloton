@@ -513,6 +513,22 @@ TEST_F(OptimizerSQLTests, JoinTest) {
        {"1", "3"},
        false);
 
+  // Test joining same table with different alias
+  TestUtil(
+      "SELECT A.a, B.a FROM test1 as A , test1 as B "
+          "WHERE A.a = 1 and B.a = 1",
+      {"1", "1"},
+      false);
+  TestUtil(
+      "SELECT A.b, B.b FROM test1 as A, test1 as B "
+          "WHERE A.a = B.a",
+      {"22", "22",
+       "22", "22",
+       "11", "11",
+       "0", "0",
+      },
+      false);
+
 
 
 }

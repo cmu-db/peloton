@@ -191,12 +191,14 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(storage::DataTable *table);
+  static Operator make(storage::DataTable *table, std::string alias,
+                       bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
-
+  std::string table_alias;
+  bool is_for_update;
   storage::DataTable *table_;
 };
 
@@ -205,14 +207,15 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(storage::DataTable *table, bool update);
+  static Operator make(storage::DataTable *table, std::string alias,
+                       bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
-
-  storage::DataTable *table_;
+  std::string table_alias;
   bool is_for_update;
+  storage::DataTable *table_;
 };
 
 //===--------------------------------------------------------------------===//

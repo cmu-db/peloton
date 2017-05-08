@@ -104,7 +104,12 @@ class TupleValueExpression : public AbstractExpression {
     if (exp_type_ != expr->GetExpressionType())
       return false;
     auto tup_expr = (TupleValueExpression *) expr;
-    return bound_obj_id_ == tup_expr->bound_obj_id_;
+    if (table_name_.empty() xor tup_expr->table_name_.empty())
+      return false;
+    bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
+    if (!table_name_.empty() && !tup_expr->table_name_.empty())
+      res = table_name_ == tup_expr->table_name_ && res;
+    return res;
   }
 
   virtual hash_t Hash() const;

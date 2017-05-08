@@ -98,7 +98,8 @@ void GetToSeqScan::Transform(
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalSeqScan::make(get->table));
+      std::make_shared<OperatorExpression>(
+          PhysicalSeqScan::make(get->table, get->table_alias, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -134,7 +135,7 @@ void GetToIndexScan::Transform(
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalIndexScan::make(get->table, get->is_for_update));
+      PhysicalIndexScan::make(get->table, get->table_alias, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();

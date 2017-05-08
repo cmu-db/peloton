@@ -69,13 +69,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
+  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_);
+      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
 
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
@@ -89,7 +89,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
           ->As<PropertyPredicate>();
 
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_);
+      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
   vector<ExpressionType> expr_types;
   vector<type::Value> values;
@@ -114,7 +114,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_);
+  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
 
   // Create index scan plan
   auto index = op->table_->GetIndex(index_id);
@@ -381,7 +381,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   TargetList tl;
   std::unordered_set<oid_t> update_col_ids;
   auto schema = op->target_table->GetSchema();
-  GenerateTableExprMap(table_expr_map, op->target_table);
+  auto table_alias = op->target_table->GetName();
+  GenerateTableExprMap(table_expr_map, table_alias, op->target_table);
 
   // Evaluate update expression and add to target list
   for (auto update : op->updates) {
@@ -418,7 +419,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
 // Generate expr map for all the columns in the given table. Used to evaluate
 // the predicate.
 void OperatorToPlanTransformer::GenerateTableExprMap(
-    ExprMap &expr_map, const storage::DataTable *table) {
+    ExprMap &expr_map, const std::string& alias, const storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   size_t num_col = table->GetSchema()->GetColumnCount();
@@ -426,7 +427,7 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
     auto col_expr = shared_ptr<expression::TupleValueExpression>(
-        new expression::TupleValueExpression(""));
+        new expression::TupleValueExpression("", alias.c_str()));
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;
@@ -435,13 +436,13 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
 
 // Generate columns for scan plan
 vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
-    const PropertyColumns *column_prop, const storage::DataTable *table) {
+    const PropertyColumns *column_prop, const std::string& alias, const storage::DataTable *table) {
   vector<oid_t> column_ids;
   if (column_prop->HasStarExpression()) {
     size_t num_col = table->GetSchema()->GetColumnCount();
     for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);
-    GenerateTableExprMap(*output_expr_map_, table);
+    GenerateTableExprMap(*output_expr_map_, alias, table);
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
@@ -463,11 +464,11 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
 // Generate predicate for scan plan
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
-    const PropertyPredicate *predicate_prop, const storage::DataTable *table) {
+    const PropertyPredicate *predicate_prop, const std::string& alias, const storage::DataTable *table) {
   expression::AbstractExpression *predicate = nullptr;
   if (predicate_prop != nullptr) {
     ExprMap table_expr_map;
-    GenerateTableExprMap(table_expr_map, table);
+    GenerateTableExprMap(table_expr_map, alias, table);
     predicate = predicate_prop->GetPredicate()->Copy();
     expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
   }

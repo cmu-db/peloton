@@ -42,9 +42,6 @@ Operator LogicalGet::make(storage::DataTable *table, std::string alias,
 bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
   const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
-  //  if (table->GetOid() != r.table->GetOid()) return false;
-  //
-  //  return true;
   return table_alias == r.table_alias && is_for_update == r.is_for_update;
 }
 
@@ -52,8 +49,8 @@ hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   if (table == nullptr)
     return hash;
-  oid_t table_oid = table->GetOid();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
   return hash;
 }
 
@@ -181,49 +178,52 @@ Operator DummyScan::make() {
 //===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalSeqScan::make(storage::DataTable *table) {
+Operator PhysicalSeqScan::make(
+    storage::DataTable *table, std::string alias, bool update) {
   assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
+  scan->table_alias = alias;
+  scan->is_for_update = update;
   return Operator(scan);
 }
 
 bool PhysicalSeqScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::SeqScan) return false;
   const PhysicalSeqScan &r = *static_cast<const PhysicalSeqScan *>(&node);
-  if (table_->GetOid() != r.table_->GetOid()) return false;
-  return true;
+  return table_alias == r.table_alias && is_for_update == r.is_for_update;
 }
 
 hash_t PhysicalSeqScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  oid_t table_oid = table_->GetOid();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
   return hash;
 }
 
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(storage::DataTable *table, bool update) {
+Operator PhysicalIndexScan::make(
+    storage::DataTable *table, std::string alias, bool update) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
   scan->is_for_update = update;
+  scan->table_alias = alias;
   return Operator(scan);
 }
 
 bool PhysicalIndexScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::IndexScan) return false;
   const PhysicalIndexScan &r = *static_cast<const PhysicalIndexScan *>(&node);
-  if (table_->GetOid() != r.table_->GetOid()) return false;
-  return true;
+  return table_alias == r.table_alias && is_for_update == r.is_for_update;
 }
 
 hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  oid_t table_oid = table_->GetOid();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
   return hash;
 }
 
