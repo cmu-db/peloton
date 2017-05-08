@@ -33,7 +33,7 @@ namespace codegen {
 class ExpressionComparator {
 
 public:
-  ExpressionComparator() {};
+  ExpressionComparator() = delete;
   static int Compare(const expression::AbstractExpression *,
                      const expression::AbstractExpression *);
 private:
@@ -43,16 +43,20 @@ private:
 
 //===----------------------------------------------------------------------===//
 // PlanComparator provides compare function for all plans that are currently
-// supported by codegen including SeqScanPlan, OrderByPlan, .
+// supported by codegen including SeqScanPlan, OrderByPlan, etc.
 //===----------------------------------------------------------------------===//
 class PlanComparator {
 
 public:
-  PlanComparator() {};
+  PlanComparator() = delete;
   static int Compare(const planner::AbstractPlan &, const planner::AbstractPlan &);
 
 private:
   //different compare functions for derived plan
+  static int CompareInsert(const planner::InsertPlan &, const planner::InsertPlan &);
+  static int CompareDelete(const planner::DeletePlan &, const planner::DeletePlan &);
+//  static int CompareInsert(const planner::InsertPlan &, const planner::InsertPlan &);
+
   static int CompareSeqScan (const planner::SeqScanPlan &, const planner::SeqScanPlan &);
   static int CompareOrderBy (const planner::OrderByPlan &, const planner::OrderByPlan &);
   static int CompareAggregate (const planner::AggregatePlan &, const planner::AggregatePlan &);

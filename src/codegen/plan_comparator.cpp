@@ -11,11 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 
+#include <include/planner/insert_plan.h>
+#include <include/planner/delete_plan.h>
 #include "codegen/plan_comparator.h"
 #include "storage/database.h"
 #include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
-
+#include "expression/parameter_value_expression.h"
 
 namespace peloton {
 namespace codegen {
@@ -39,8 +41,12 @@ int PlanComparator::Compare(const planner::AbstractPlan &A, const planner::Abstr
     return CompareHash((planner::HashPlan &) A, (planner::HashPlan &) B);
   case (PlanNodeType::HASHJOIN):
     return CompareHashJoin((planner::HashJoinPlan &) A, (planner::HashJoinPlan &) B);
+  case (PlanNodeType::INSERT):
+    return CompareInsert((planner::InsertPlan &) A, (planner::InsertPlan &) B);
+  case (PlanNodeType::DELETE):
+    return CompareDelete((planner::DeletePlan &) A, (planner::DeletePlan &) B);
   default:
-    LOG_DEBUG("Plan type not supported");
+    LOG_ERROR("Plan type %d not supported", (int)nodeTypeA);
     return -1;
   }
 }
@@ -242,6 +248,46 @@ int PlanComparator::CompareHashJoin(const planner::HashJoinPlan & A, const plann
   return CompareChildren(A, B);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Compare function for InsertPlan
+// Return: A < B: -1, A = B: 0, A > B: 1
+//===----------------------------------------------------------------------===//
+int PlanComparator::CompareInsert(const planner::InsertPlan & A, const planner::InsertPlan & B) {
+  if (A.GetTable() != B.GetTable())
+    return (A.GetTable() < B.GetTable())?-1:1;
+  int ret = PlanComparator::CompareProjectInfo(A.GetProjectInfo(), B.GetProjectInfo());
+  if (ret != 0)
+    return ret;
+  if (A.GetBulkInsertCount() != B.GetBulkInsertCount())
+    return (A.GetBulkInsertCount() < B.GetBulkInsertCount())?-1:1;
+  for (int i = 0; i < (int) A.GetBulkInsertCount(); i++) {
+    int comp = A.GetTuple(i)->Compare(*B.GetTuple(i));
+    if (comp != 0)
+      return  comp;
+  }
+  return CompareChildren(A, B);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Compare function for DeletePlan
+// Return: A < B: -1, A = B: 0, A > B: 1
+//===----------------------------------------------------------------------===//
+int PlanComparator::CompareDelete(const planner::DeletePlan & A, const planner::DeletePlan & B) {
+
+  if (A.GetTable() != B.GetTable())
+    return (A.GetTable() < B.GetTable())?-1:1;
+  if (A.GetTruncate() != B.GetTruncate())
+    return (A.GetTruncate() < B.GetTruncate())?-1:1;
+
+  int ret = ExpressionComparator::Compare(const_cast<planner::DeletePlan&>(A).GetPredicate(),
+    const_cast<planner::DeletePlan&>(B).GetPredicate());
+  if (ret != 0)
+    return  ret;
+  return CompareChildren(A, B);
+}
+
 //===----------------------------------------------------------------------===//
 // Compare two plans' children
 //===----------------------------------------------------------------------===//
@@ -316,6 +362,10 @@ int PlanComparator::CompareDerivedAttr(const planner::DerivedAttribute & A, cons
 //===----------------------------------------------------------------------===//
 int PlanComparator::CompareProjectInfo(const planner::ProjectInfo * A, const planner::ProjectInfo * B) {
 
+  if (A == nullptr && B == nullptr)
+    return 0;
+  if (A == nullptr || B == nullptr)
+    return (A == nullptr)?-1:1;
   //compare TargetList
   if (A->GetTargetList().size() != B->GetTargetList().size())
     return (A->GetTargetList().size() < B->GetTargetList().size())?-1:1;
@@ -434,18 +484,32 @@ int ExpressionComparator::Compare(const expression::AbstractExpression * A, cons
     if (ptr_A->GetColumnName() != ptr_B->GetColumnName())
       return ptr_A->GetColumnName().compare(ptr_B->GetColumnName());
     //compare attribute_info
-    if (ptr_A->GetAttributeRef()->type != ptr_B->GetAttributeRef()->type)
-      return (ptr_A->GetAttributeRef()->type < ptr_B->GetAttributeRef()->type)?-1:1;
-    if (ptr_A->GetAttributeRef()->attribute_id != ptr_B->GetAttributeRef()->attribute_id)
-      return (ptr_A->GetAttributeRef()->attribute_id < ptr_B->GetAttributeRef()->attribute_id)?-1:1;
+    if (ptr_A->GetAttributeRef() != nullptr && ptr_B->GetAttributeRef() != nullptr) {
+      if (ptr_A->GetAttributeRef()->type != ptr_B->GetAttributeRef()->type)
+        return (ptr_A->GetAttributeRef()->type < ptr_B->GetAttributeRef()->type) ? -1 : 1;
+      if (ptr_A->GetAttributeRef()->attribute_id != ptr_B->GetAttributeRef()->attribute_id)
+        return (ptr_A->GetAttributeRef()->attribute_id < ptr_B->GetAttributeRef()->attribute_id) ? -1 : 1;
+    }
+    else if (ptr_A->GetAttributeRef() != nullptr || ptr_B->GetAttributeRef() != nullptr){
+      return (ptr_A->GetAttributeRef() == nullptr) ? -1:1;
+    }
 
     break;
   }
+  case (ExpressionType::VALUE_PARAMETER): {
+    expression::ParameterValueExpression * ptr_A = (expression::ParameterValueExpression *) A;
+    expression::ParameterValueExpression * ptr_B = (expression::ParameterValueExpression *) B;
+    if (ptr_A->GetValueIdx() != ptr_B->GetValueIdx())
+      return (ptr_A->GetValueIdx() < ptr_B->GetValueIdx())?-1:1;
+  }
   default:
+    LOG_ERROR("Expression type %d not supported\n", (int)nodeTypeA);
     return -1;
   }
   return 0;
 }
+
+
 
 }  // namespace codegen
 }  // namespace peloton

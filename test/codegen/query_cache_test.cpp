@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// plan_comparator_test.cpp
+// query_cache_test.cpp
 //
-// Identification: test/codegen/plan_comparator_test.cpp
+// Identification: test/codegen/query_cache_test.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -14,12 +14,14 @@
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"
+#include "expression/parameter_value_expression.h"
 #include "expression/operator_expression.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
 #include "codegen/plan_comparator.h"
 #include "codegen/codegen_test_util.h"
 #include "codegen/query_cache.h"
+
 
 namespace peloton {
 namespace test {
@@ -42,9 +44,9 @@ namespace test {
 //===----------------------------------------------------------------------===//
 typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
 
-class PlanComparatorTest : public PelotonCodeGenTest {
+class QueryCacheTest : public PelotonCodeGenTest {
 public:
-  PlanComparatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  QueryCacheTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
     LoadTestTable(RightTableId(), 4 * num_rows_to_insert);
@@ -65,7 +67,31 @@ public:
     return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(&GetTestTable(TestTableId()), a_gt_40, {0, 1}));
   }
 
-  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanWithPlan() {
+  std::pair<std::shared_ptr<planner::SeqScanPlan>, type::Value> GetSeqScanPlanWithParams(int param) {
+    
+    // SELECT a, b FROM table where b = a + ?;
+    // Construct the components of the predicate
+    // a + ?
+    auto *a_col_exp =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+    auto* param_1_exp = CodegenTestUtils::ParamExpression(0);
+    type::Value param_a = type::ValueFactory::GetIntegerValue(param);
+    auto *a_plus_param = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp, param_1_exp);
+
+    // b = a + ?
+    auto *b_col_exp =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+    auto *b_eq_a_plus_param = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_param);
+
+    // Setup the scan plan node
+    return make_pair(std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(&GetTestTable(TestTableId()), b_eq_a_plus_param, {0, 1})),
+      param_a);
+  }
+
+
+  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanWithPredicate() {
     //
     // SELECT a, b, c FROM table where a >= 20 and b = 21;
     //
@@ -199,7 +225,7 @@ private:
 };
 
 
-TEST_F(PlanComparatorTest, SimpleCacheCheck) {
+TEST_F(QueryCacheTest, SimpleCacheCheck) {
   
   std::shared_ptr<planner::SeqScanPlan> scan =GetSeqScanPlan();
   std::shared_ptr<planner::SeqScanPlan> scan2 = GetSeqScanPlan();
@@ -225,199 +251,293 @@ TEST_F(PlanComparatorTest, SimpleCacheCheck) {
   CompileAndExecuteWithCache(scan2, buffer2, reinterpret_cast<char*>(buffer2.GetState()));
   const auto &results2 = buffer2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results2.size());
-  codegen::QueryCache::Instance().GetSize();
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
 }
 
-TEST_F(PlanComparatorTest, SeqScanCacheCheck) {
- //
- // SELECT a, b, c FROM table where a >= 20 and b = 21;
- //
- std::shared_ptr<planner::SeqScanPlan> scan = GetSeqScanPlanWithPlan();
- std::shared_ptr<planner::SeqScanPlan> scan2 = GetSeqScanPlanWithPlan();
- // Do binding
- planner::BindingContext context;
- scan->PerformBinding(context);
- planner::BindingContext context2;
- scan2->PerformBinding(context2);
+TEST_F(QueryCacheTest, SeqScanCacheCheck) {
+  //
+  // SELECT a, b, c FROM table where a >= 20 and b = 21;
+  //
+  auto scan = GetSeqScanPlanWithPredicate();
+  auto scan2 = GetSeqScanPlanWithPredicate();
+  // Do binding
+  planner::BindingContext context;
+  scan->PerformBinding(context);
+  planner::BindingContext context2;
+  scan2->PerformBinding(context2);
 
- int ret = codegen::PlanComparator::Compare(*scan, *scan2);
- EXPECT_EQ(ret, 0);
+  int ret = codegen::PlanComparator::Compare(*scan, *scan2);
+  EXPECT_EQ(ret, 0);
 
- codegen::BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
- // COMPILE and execute
- CompileAndExecuteWithCache(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+  // COMPILE and execute
+  CompileAndExecuteWithCache(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
- // Check that we got all the results
- const auto &results = buffer.GetOutputTuples();
- ASSERT_EQ(1, results.size());
- EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
+  // Check that we got all the results
+  const auto &results = buffer.GetOutputTuples();
+  ASSERT_EQ(1, results.size());
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
                                type::ValueFactory::GetIntegerValue(20)));
- EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
                                type::ValueFactory::GetIntegerValue(21)));
 
- codegen::BufferingConsumer buffer2{{0, 1, 2}, context2};
- CompileAndExecuteWithCache(scan2, buffer2, reinterpret_cast<char*>(buffer2.GetState()));
+  codegen::BufferingConsumer buffer2{{0, 1, 2}, context2};
+  CompileAndExecuteWithCache(scan2, buffer2, reinterpret_cast<char*>(buffer2.GetState()));
 
- const auto &results2 = buffer2.GetOutputTuples();
- ASSERT_EQ(1, results2.size());
- EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(0).CompareEquals(
+  const auto &results2 = buffer2.GetOutputTuples();
+  ASSERT_EQ(1, results2.size());
+  EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(0).CompareEquals(
                                type::ValueFactory::GetIntegerValue(20)));
- EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(1).CompareEquals(
                                type::ValueFactory::GetIntegerValue(21)));
- codegen::QueryCache::Instance().GetSize();
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
 }
 
-TEST_F(PlanComparatorTest, HashJoinPlanCacheCheck) {
+TEST_F(QueryCacheTest, HashJoinPlanCacheCheck) {
 
- std::shared_ptr<planner::HashJoinPlan> hj_plan = GetHashJoinPlan();
- std::shared_ptr<planner::HashJoinPlan> hj_plan2 = GetHashJoinPlan();
+  auto hj_plan = GetHashJoinPlan();
+  auto hj_plan2 = GetHashJoinPlan();
 
- // Do binding
- planner::BindingContext context, context2;
- hj_plan->PerformBinding(context);
- hj_plan2->PerformBinding(context2);
- int ret = codegen::PlanComparator::Compare(*hj_plan2, *hj_plan);
- EXPECT_EQ(ret, 0);
+  // Do binding
+  planner::BindingContext context, context2;
+  hj_plan->PerformBinding(context);
+  hj_plan2->PerformBinding(context2);
 
- // We collect the results of the query into an in-memory buffer
- codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+  int ret = codegen::PlanComparator::Compare(*hj_plan2, *hj_plan);
+  EXPECT_EQ(ret, 0);
 
- // COMPILE and run
- CompileAndExecuteWithCache(hj_plan, buffer,
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+
+  // COMPILE and run
+  CompileAndExecuteWithCache(hj_plan, buffer,
                  reinterpret_cast<char*>(buffer.GetState()));
 
-// Check results
- const auto& results = buffer.GetOutputTuples();
+  // Check results
+  const auto& results = buffer.GetOutputTuples();
 
- EXPECT_EQ(64, results.size());
+  EXPECT_EQ(64, results.size());
   // The output has the join columns (that should match) in positions 0 and 1
- for (const auto& tuple : results) {
-   type::Value v0 = tuple.GetValue(0);
-   EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+  for (const auto& tuple : results) {
+    type::Value v0 = tuple.GetValue(0);
+    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
 
-   // Check that the joins keys are actually equal
-   EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
+    // Check that the joins keys are actually equal
+    EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
              type::CMP_TRUE);
- }
+  }
 
- codegen::BufferingConsumer buffer2{{0, 1, 2, 3}, context2};
-
- // COMPILE and run
- CompileAndExecuteWithCache(hj_plan2, buffer2,
+  codegen::BufferingConsumer buffer2{{0, 1, 2, 3}, context2};
+  // COMPILE and run
+  CompileAndExecuteWithCache(hj_plan2, buffer2,
                    reinterpret_cast<char*>(buffer2.GetState()));
 
- // Check results
- const auto& results2 = buffer2.GetOutputTuples();
+  // Check results
+  const auto& results2 = buffer2.GetOutputTuples();
+  EXPECT_EQ(64, results2.size());
+  for (const auto& tuple : results2) {
+    type::Value v0 = tuple.GetValue(0);
+    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
 
- EXPECT_EQ(64, results2.size());
- for (const auto& tuple : results2) {
-   type::Value v0 = tuple.GetValue(0);
-   EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
-
-   // Check that the joins keys are actually equal
-   EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
+    // Check that the joins keys are actually equal
+    EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
              type::CMP_TRUE);
- }
- codegen::QueryCache::Instance().GetSize();
+  }
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
 }
 
-
-
-TEST_F(PlanComparatorTest, OrderByCacheCheck) {
- //
- // SELECT * FROM test_table ORDER BY a DESC;
- //
- std::shared_ptr<planner::OrderByPlan> order_by_plan{
+TEST_F(QueryCacheTest, OrderByCacheCheck) {
+  //
+  // plan 1, 2: SELECT * FROM test_table ORDER BY b DESC a ASC;
+  // plan 3: SELECT * FROM test_table ORDER BY b ASC a DESC;
+  //
+  std::shared_ptr<planner::OrderByPlan> order_by_plan{
      new planner::OrderByPlan({1, 0}, {true, false}, {0, 1, 2, 3})};
- std::shared_ptr<planner::OrderByPlan> order_by_plan_2{
+  std::shared_ptr<planner::OrderByPlan> order_by_plan_2{
      new planner::OrderByPlan({1, 0}, {true, false}, {0, 1, 2, 3})};
- std::shared_ptr<planner::OrderByPlan> order_by_plan_3{
+  std::shared_ptr<planner::OrderByPlan> order_by_plan_3{
      new planner::OrderByPlan({1, 0}, {false, true}, {0, 1, 2, 3})};
- std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
+
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
- std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_2{new planner::SeqScanPlan(
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_2{new planner::SeqScanPlan(
      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
- std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_3{new planner::SeqScanPlan(
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_3{new planner::SeqScanPlan(
      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
- order_by_plan->AddChild(std::move(seq_scan_plan));
- order_by_plan_2->AddChild(std::move(seq_scan_plan_2));
- order_by_plan_3->AddChild(std::move(seq_scan_plan_3));
+  order_by_plan->AddChild(std::move(seq_scan_plan));
+  order_by_plan_2->AddChild(std::move(seq_scan_plan_2));
+  order_by_plan_3->AddChild(std::move(seq_scan_plan_3));
 
- planner::BindingContext context, context2, context3;
- order_by_plan->PerformBinding(context);
- order_by_plan_2->PerformBinding(context2);
- order_by_plan_3->PerformBinding(context3);
+  planner::BindingContext context, context2, context3;
+  order_by_plan->PerformBinding(context);
+  order_by_plan_2->PerformBinding(context2);
+  order_by_plan_3->PerformBinding(context3);
 
- int ret = codegen::PlanComparator::Compare(*order_by_plan.get(), *order_by_plan_2.get());
- EXPECT_EQ(ret, 0);
+  int ret = codegen::PlanComparator::Compare(*order_by_plan.get(), *order_by_plan_2.get());
+  EXPECT_EQ(ret, 0);
 
- ret = (codegen::PlanComparator::Compare(*order_by_plan.get(), *order_by_plan_3.get()) == 0);
- EXPECT_EQ(ret, 0);
+  ret = (codegen::PlanComparator::Compare(*order_by_plan.get(), *order_by_plan_3.get()) == 0);
+  EXPECT_EQ(ret, 0);
 
 
- codegen::BufferingConsumer buffer{{0, 1}, context};
- codegen::BufferingConsumer buffer2{{0, 1}, context2};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer2{{0, 1}, context2};
 
- CompileAndExecuteWithCache(order_by_plan, buffer,
+  CompileAndExecuteWithCache(order_by_plan, buffer,
                    reinterpret_cast<char *>(buffer.GetState()));
 
- auto &results = buffer.GetOutputTuples();
- EXPECT_EQ(results.size(), NumRowsInTestTable());
- EXPECT_TRUE(std::is_sorted(
+  auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(results.size(), NumRowsInTestTable());
+  EXPECT_TRUE(std::is_sorted(
      results.begin(), results.end(),
      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
        auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
        return is_gte == type::CMP_TRUE;
      }));
 
- CompileAndExecuteWithCache(order_by_plan_2, buffer2,
+  CompileAndExecuteWithCache(order_by_plan_2, buffer2,
                    reinterpret_cast<char *>(buffer2.GetState()));
- auto &results2 = buffer2.GetOutputTuples();
- EXPECT_EQ(results2.size(), NumRowsInTestTable());
- EXPECT_TRUE(std::is_sorted(
+  auto &results2 = buffer2.GetOutputTuples();
+  EXPECT_EQ(results2.size(), NumRowsInTestTable());
+  EXPECT_TRUE(std::is_sorted(
      results2.begin(), results2.end(),
      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
        auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
        return is_gte == type::CMP_TRUE;
      }));
 
- ret = (codegen::QueryCache::Instance().FindPlan(std::move(order_by_plan_3)) == nullptr);
- EXPECT_EQ(ret, 1);
- codegen::QueryCache::Instance().GetSize();
+  ret = (codegen::QueryCache::Instance().FindPlan(std::move(order_by_plan_3)) == nullptr);
+  EXPECT_EQ(ret, 1);
+
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
 }
 
 
-TEST_F(PlanComparatorTest, AggregatePlanCacheCheck) {
+TEST_F(QueryCacheTest, AggregatePlanCacheCheck) {
 
- std::shared_ptr<planner::AggregatePlan> agg_plan = GetAggregatePlan();
- std::shared_ptr<planner::AggregatePlan> agg_plan2 = GetAggregatePlan();
- planner::BindingContext context, context2;
- agg_plan->PerformBinding(context);
- agg_plan2->PerformBinding(context2);
- int ret = codegen::PlanComparator::Compare(*agg_plan, *agg_plan2);
- EXPECT_EQ(ret, 0);
+  auto agg_plan = GetAggregatePlan();
+  auto agg_plan2 = GetAggregatePlan();
+  planner::BindingContext context, context2;
+  agg_plan->PerformBinding(context);
+  agg_plan2->PerformBinding(context2);
+  int ret = codegen::PlanComparator::Compare(*agg_plan, *agg_plan2);
+  EXPECT_EQ(ret, 0);
 
- codegen::BufferingConsumer buffer{{0, 1}, context};
- codegen::BufferingConsumer buffer2{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer2{{0, 1}, context};
 
- // Compile it all
- CompileAndExecuteWithCache(agg_plan, buffer,
-                   reinterpret_cast<char*>(buffer.GetState()));
+  // Compile and execute
+  CompileAndExecuteWithCache(agg_plan, buffer,
+      reinterpret_cast<char*>(buffer.GetState()));
+  // Check results
+  const auto& results = buffer.GetOutputTuples();
+  EXPECT_EQ(results.size(), 59);
 
- // Check results
- const auto& results = buffer.GetOutputTuples();
- EXPECT_EQ(results.size(), 59);
+  CompileAndExecuteWithCache(agg_plan2, buffer2,
+      reinterpret_cast<char*>(buffer2.GetState()));
 
- CompileAndExecuteWithCache(agg_plan2, buffer2,
-                   reinterpret_cast<char*>(buffer2.GetState()));
+  const auto& results2 = buffer2.GetOutputTuples();
+  EXPECT_EQ(results2.size(), 59);
 
- const auto& results2 = buffer2.GetOutputTuples();
- EXPECT_EQ(results2.size(), 59);
- codegen::QueryCache::Instance().GetSize();
- codegen::QueryCache::Instance().CleanCache(0);
- codegen::QueryCache::Instance().GetSize();
 
+  //Clean the query cache and leaves only one query
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
+  codegen::QueryCache::Instance().CleanCache(1);
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
+  
+  // Check the correctness of LRU
+  auto agg_plan3 = GetAggregatePlan();
+  planner::BindingContext context3;
+  agg_plan3->PerformBinding(context3);
+  ret = (codegen::QueryCache::Instance().FindPlan(agg_plan3) == nullptr)? 1:0;
+  
+  EXPECT_EQ(ret, 0);
+
+}
+
+TEST_F(QueryCacheTest, ParameterCacheTest) {
+  
+
+  auto pair = GetSeqScanPlanWithParams(1);
+  
+  auto scan = pair.first;
+  // Do binding
+  planner::BindingContext context;
+  scan->PerformBinding(context);
+
+  // Collect params
+  std::vector<type::Value> params = {pair.second};
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+
+  // COMPILE and execute
+  CompileAndExecuteWithCache(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+
+  // Check output results
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable(), results.size());
+  codegen::QueryCache::Instance().GetSize();
+
+  auto pair2 = GetSeqScanPlanWithParams(1);
+  
+  auto scan2 = pair2.first;
+  // Do binding
+  planner::BindingContext context2;
+  scan2->PerformBinding(context2);
+  // Collect params
+  std::vector<type::Value> params2 = {pair2.second};
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer2{{0, 1}, context2};
+
+  // COMPILE and execute
+  CompileAndExecuteWithCache(scan2, buffer2, reinterpret_cast<char*>(buffer2.GetState()), &params2);
+
+  // Check output results
+  const auto &results2 = buffer2.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable(), results2.size());
+  LOG_DEBUG("Query cache current size is %d\n", (int)codegen::QueryCache::Instance().GetSize());
+}
+
+TEST_F(QueryCacheTest, CachePerformanceTest) {
+
+  codegen::QueryCache::Instance().ClearCache();
+  Timer<std::ratio<1, 1000>> timer, timer2;
+  timer.Start();
+
+  for (int i = 0; i < 10; i++) {
+    auto plan = GetHashJoinPlan();
+    // Do binding
+    planner::BindingContext context;
+    plan->PerformBinding(context);    
+    // We collect the results of the query into an in-memory buffer
+    codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+    // COMPILE and run without cache
+    CompileAndExecute(*plan, buffer,
+                      reinterpret_cast<char*>(buffer.GetState()));
+    
+  }
+  timer.Stop();
+  
+
+  timer2.Start();
+  for (int i = 0; i < 10; i++) {
+    auto plan = GetHashJoinPlan();
+    // Do binding
+    planner::BindingContext context;
+    plan->PerformBinding(context);
+    // We collect the results of the query into an in-memory buffer
+    codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+    // COMPILE and execute with cache
+    CompileAndExecuteWithCache(plan, buffer, reinterpret_cast<char*>(buffer.GetState())); 
+  } 
+  timer2.Stop();
+
+  LOG_INFO("Time used without cache is %f ms", timer.GetDuration());
+  LOG_INFO("Time used with cache is %f ms", timer2.GetDuration());
+  
 }
 
 }

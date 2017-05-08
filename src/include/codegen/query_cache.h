@@ -14,6 +14,11 @@
 #include <list>
 namespace peloton {
 namespace codegen {
+
+/* This is the implementation of query cache that maps an AbstractPlan with a codegen
+ * Query using LRU eviction policy. The cache is implemented as a singleton with a list
+ * and a map.
+*/
 class QueryCache {
 public:
   static QueryCache& Instance() {
@@ -22,7 +27,6 @@ public:
   }
 
   size_t GetSize() {
-    LOG_DEBUG("cache size %d", int(cache_map.size()));
     return cache_map.size();
   }
 
@@ -30,6 +34,7 @@ public:
     cache_map.clear();
   }
 
+  //Clean the cache until the cache size is within target_size with LRU policy
   void CleanCache(int target_size) {
     if (target_size < 0)
       return;
@@ -60,9 +65,8 @@ public:
 
   }
 
-
-
 private:
+  //compartor function of AbstractPlan
   struct ComparePlan {
 
     bool operator()(const  std::shared_ptr<planner::AbstractPlan> & a,
