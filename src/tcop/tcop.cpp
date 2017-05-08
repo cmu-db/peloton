@@ -140,8 +140,7 @@ ResultType TrafficCop::AbortQueryHelper() {
 ResultType TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
+    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
@@ -197,8 +196,7 @@ ResultType TrafficCop::ExecuteStatement(
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                         result, result_format,
-                                         thread_id);
+                                         result, result_format, thread_id);
       LOG_TRACE("Statement executed. Result: %s",
                 ResultTypeToString(status.m_result).c_str());
       rows_changed = status.m_processed;
@@ -235,7 +233,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                 result_format);
+                                                   result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
@@ -318,40 +316,31 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 }
 
-void TrafficCop::GetDataTables(parser::TableRef *from_table, 
-                               std::vector<storage::DataTable *> &target_tables) {
-  if (from_table == nullptr) 
-    return;
+void TrafficCop::GetDataTables(
+    parser::TableRef *from_table,
+    std::vector<storage::DataTable *> &target_tables) {
+  if (from_table == nullptr) return;
 
   if (from_table->list == NULL) {
     if (from_table->join == NULL) {
       auto *target_table = static_cast<storage::DataTable *>(
           catalog::Catalog::GetInstance()->GetTableWithName(
-              from_table->GetDatabaseName(),
-              from_table->GetTableName()));
+              from_table->GetDatabaseName(), from_table->GetTableName()));
       target_tables.push_back(target_table);
-    }
-    else {
+    } else {
       GetDataTables(from_table->join->left, target_tables);
       GetDataTables(from_table->join->right, target_tables);
     }
   }
 
-  // Query has multiple tables
-  // Example: SELECT COUNT(ID) FROM A,B <Condition>
-  // For now we only pick the first table in the list
-  // FIX: Better handle for queries with multiple tables
+  // Query has multiple tables. Recursively add all tables
   else {
     for (auto table : *(from_table->list)) {
-      auto *target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              table->GetDatabaseName(), table->GetTableName()));
-      target_tables.push_back(target_table);
-      break;
+      GetDataTables(table, target_tables);
     }
   }
 }
- 
+
 std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfo> tuple_descriptor;
@@ -371,7 +360,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table, target_tables); 
+  GetDataTables(select_stmt->from_table, target_tables);
 
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
@@ -441,7 +430,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64; // FIXME: Bytes???
+      field_size = 64;  // FIXME: Bytes???
       break;
     }
     default: {
