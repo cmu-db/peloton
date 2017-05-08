@@ -49,8 +49,8 @@ struct DropStatement : TableRefStatement {
       delete[] prep_stmt;
     }
 
-    if (table_name != nullptr) {
-      delete[] table_name;
+    if (table_name_of_trigger != nullptr) {
+      delete[] table_name_of_trigger;
     }
 
     if (trigger_name != nullptr) {
