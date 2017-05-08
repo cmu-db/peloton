@@ -70,6 +70,11 @@ class ColumnStatsCatalog : public AbstractCatalog {
   std::unique_ptr<std::vector<type::Value>> GetColumnStats(
       oid_t database_id, oid_t table_id, oid_t column_id,
       concurrency::Transaction *txn);
+
+  size_t GetTableStats(
+      oid_t database_id, oid_t table_id, concurrency::Transaction *txn,
+      std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
+          column_stats_map);
   // TODO: add more if needed
 
   enum ColumnId {
@@ -103,6 +108,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,
+    SECONDARY_KEY_1 = 1,
     // Add new indexes here in creation order
   };
 };

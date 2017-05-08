@@ -17,6 +17,7 @@
 
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/tile.h"
@@ -37,10 +38,10 @@ using namespace optimizer;
 
 class StatsStorageTests : public PelotonTest {};
 
-std::unique_ptr<storage::DataTable> InitializeTestTable() {
-  const int tuple_count = 100;
-  const int tuple_per_tilegroup = 100;
+const int tuple_count = 100;
+const int tuple_per_tilegroup = 100;
 
+std::unique_ptr<storage::DataTable> InitializeTestTable() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
@@ -54,9 +55,6 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
 storage::DataTable *CreateTestDBAndTable() {
   const std::string test_db_name = "test_db";
   auto database = TestingExecutorUtil::InitializeDatabase(test_db_name);
-
-  const int tuple_count = 100;
-  const int tuple_per_tilegroup = 100;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -222,7 +220,7 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
 
 // }
 
-TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
+TEST_F(StatsStorageTests, AnalyzeStatsForTableTest) {
   auto data_table = InitializeTestTable();
 
   // Analyze table.
@@ -243,7 +241,7 @@ TEST_F(StatsStorageTests, AnalyzeStatsForTable) {
 }
 
 // TODO: Add more tables.
-TEST_F(StatsStorageTests, AnalyzeStatsForAllTables) {
+TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
   auto data_table = CreateTestDBAndTable();
 
   StatsStorage *stats_storage = StatsStorage::GetInstance();
@@ -260,6 +258,21 @@ TEST_F(StatsStorageTests, AnalyzeStatsForAllTables) {
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table, 4);
+}
+
+TEST_F(StatsStorageTests, GetTableStatsTest) {
+  auto data_table = InitializeTestTable();
+
+  StatsStorage *stats_storage = StatsStorage::GetInstance();
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  stats_storage->AnalyzeStatsForAllTables(txn);
+  txn_manager.CommitTransaction(txn);
+
+  std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
+      data_table->GetDatabaseOid(), data_table->GetOid());
+  EXPECT_EQ(table_stats->num_rows, tuple_count);
 }
 
 } /* namespace test */
