@@ -48,7 +48,7 @@ public:
   static double LessThanOrEqualTo(const std::shared_ptr<TableStats>& table_stats,
   const ValueCondition& condition) {
     double res = LessThan(table_stats, condition) + Equal(table_stats, condition);
-    return std::max(res, 1.0);
+    return std::max(std::min(res, 1.0), 0.0);
   }
 
   static double GreaterThan(const std::shared_ptr<TableStats>& table_stats,
@@ -92,3 +92,4 @@ public:
 
 } /* namespace optimizer */
 } /* namespace peloton */
+

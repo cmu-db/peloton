@@ -107,3 +107,4 @@ TEST_F(CostTests, ScanCostTest) {
 
 } /* namespace test */
 } /* namespace peloton */
+

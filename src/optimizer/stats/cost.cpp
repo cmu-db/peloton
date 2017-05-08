@@ -203,3 +203,4 @@ size_t Cost::GetEstimatedGroupByRows(
 
 } /* namespace optimizer */
 } /* namespace peloton */
+
