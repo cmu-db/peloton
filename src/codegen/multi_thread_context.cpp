@@ -71,6 +71,22 @@ utils::OAHashTable* MultiThreadContext::GetLocalHashTable(int32_t idx) {
     return bar_->GetLocalHashTable(idx);
 }
 
+void MultiThreadContext::MergeToGlobalHashTable(utils::OAHashTable *local_ht) {
+    static std::atomic<int64_t> turns{0};
+    if (thread_id_ == 0) {
+        bar_->InitGlobalHashTable(local_ht->KeySize(), local_ht->ValueSize());
+    }
+    while (thread_id_ != turns);
+    LOG_DEBUG("Start Merging local hash table from %ld", thread_id_);
+    bar_->MergeToGlobalHashTable(local_ht);
+    LOG_DEBUG("Done Merging local hash table from %ld", thread_id_);
+    ++turns;
+}
+
+utils::OAHashTable* MultiThreadContext::GetGlobalHashTable() {
+    return bar_->GetGlobalHashTable();
+}
+
 
 }
 }
