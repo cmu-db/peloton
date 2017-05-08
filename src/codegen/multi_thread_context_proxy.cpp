@@ -155,8 +155,8 @@ llvm::Function *MultiThreadContextProxy::GetAddLocalHashTableFunction(CodeGen &c
   return codegen.RegisterFunction(func_name, fn_type);
 }
 
-llvm::Function *MultiThreadContextProxy::GetGetLocalHashTableFunction(CodeGen &codegen) {
-  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext17GetLocalHashTableEi";
+llvm::Function *MultiThreadContextProxy::GetGetGlobalHashTableFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext18GetGlobalHashTableEv";
   auto *func = codegen.LookupFunction(func_name);
   if (func != nullptr) {
     return func;
@@ -166,7 +166,23 @@ llvm::Function *MultiThreadContextProxy::GetGetLocalHashTableFunction(CodeGen &c
       OAHashTableProxy::GetType(codegen)->getPointerTo(),
       {
           MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
-          codegen.Int32Type()
+      },
+      false);
+  return codegen.RegisterFunction(func_name, fn_type);
+}
+
+llvm::Function *MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(CodeGen &codegen) {
+  static const std::string func_name = "_ZN7peloton7codegen18MultiThreadContext22MergeToGlobalHashTableEPNS0_5utils11OAHashTableE";
+  auto *func = codegen.LookupFunction(func_name);
+  if (func != nullptr) {
+    return func;
+  }
+  // Not cached, create the type
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {
+          MultiThreadContextProxy::GetType(codegen)->getPointerTo(),
+          OAHashTableProxy::GetType(codegen)->getPointerTo()
       },
       false);
   return codegen.RegisterFunction(func_name, fn_type);

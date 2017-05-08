@@ -147,40 +147,42 @@ void HashJoinTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   codegen.CallPrintf("HashJoinTranslator::Produce()\n", {});
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
-  codegen.CallFunc(MultiThreadContextProxy::GetAddLocalHashTableFunction(codegen), {multi_thread_context, LoadStatePtr(hash_table_id_)});
+  // codegen.CallFunc(MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(codegen), {multi_thread_context, LoadStatePtr(hash_table_id_)});
 
-  // wait for local table constructions
-  codegen.CallPrintf("Hash:barrier wait \n", {});
-  llvm::Value* is_last = codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
-  codegen.CallPrintf("Hash:barrier pass \n", {});
+  // wait for global hash table constructions
+  codegen.CallPrintf("Hash: barrier wait \n", {});
+  UNUSED_ATTRIBUTE llvm::Value* is_last = codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
+  codegen.CallPrintf("Hash: barrier pass \n", {});
 
   // last oen to finish constructing it's local hash table does the merge
-  If branch{codegen, is_last};
-  {
-      codegen.CallPrintf("Hash: I am the last one to complete \n", {});
-      // merge all local hash tables
-      auto *global_ht = codegen.CallFunc(MultiThreadContextProxy::GetGetLocalHashTableFunction(codegen), {multi_thread_context, codegen.Const32(0)});
-      llvm::Value *idx = codegen.Const32(1);
-      llvm::Value *end_idx = codegen.Const32(4);
-      Loop loop{codegen, codegen->CreateICmpULT(idx, end_idx),{{"idx", idx}}};
-      {
-        idx = loop.GetLoopVar(0);
-        codegen.CallPrintf("idx: %d\n", {idx});
-        auto *local_ht = codegen.CallFunc(MultiThreadContextProxy::GetGetLocalHashTableFunction(codegen), {multi_thread_context, idx});
-        // TODO: @tq5124 seg fault when merging
-        codegen.CallFunc(OAHashTableProxy::_Merge::GetFunction(codegen), {global_ht, local_ht});
-        // Move to next index in loop.
-        idx = codegen->CreateAdd(idx, codegen.Const32(1));
-        loop.LoopEnd(codegen->CreateICmpULT(idx, end_idx), {idx});
-      }
-  }
-  branch.ElseBlock();
-  {
-      codegen.CallPrintf("Local Hast:barrier wait \n", {});
-      codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
-      codegen.CallPrintf("Local Hast:barrier pass \n", {});
-  }
-  branch.EndIf();
+  // If branch{codegen, is_last};
+  // {
+  //     codegen.CallPrintf("Hash: I am the last one to complete \n", {});
+  //     // merge all local hash tables
+  //     auto *global_ht = codegen.CallFunc(MultiThreadContextProxy::GetGetLocalHashTableFunction(codegen), {multi_thread_context, codegen.Const32(0)});
+  //     llvm::Value *idx = codegen.Const32(1);
+  //     llvm::Value *end_idx = codegen.Const32(4);
+  //     Loop loop{codegen, codegen->CreateICmpULT(idx, end_idx),{{"idx", idx}}};
+  //     {
+  //       idx = loop.GetLoopVar(0);
+  //       codegen.CallPrintf("idx: %d\n", {idx});
+  //       auto *local_ht = codegen.CallFunc(MultiThreadContextProxy::GetGetLocalHashTableFunction(codegen), {multi_thread_context, idx});
+  //       // TODO: @tq5124 seg fault when merging
+  //       codegen.CallFunc(OAHashTableProxy::_Merge::GetFunction(codegen), {global_ht, local_ht});
+  //       // Move to next index in loop.
+  //       idx = codegen->CreateAdd(idx, codegen.Const32(1));
+  //       loop.LoopEnd(codegen->CreateICmpULT(idx, end_idx), {idx});
+  //     }
+  // }
+  // branch.ElseBlock();
+  // {
+  //     codegen.CallPrintf("Local Hast:barrier wait \n", {});
+  //     codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
+  //     codegen.CallPrintf("Local Hast:barrier pass \n", {});
+  // }
+  // branch.EndIf();
+
+  // UNUSED_ATTRIBUTE global_hash_table_ = codegen.CallFunc(MultiThreadContextProxy::GetGetGlobalHashTableFunction(codegen), {multi_thread_context});
 
   // Let the right child produce tuples, which we use to probe the hash table
   GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
@@ -324,6 +326,12 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
   if (join_plan.GetJoinType() == JoinType::INNER) {
     // For inner joins, find all join partners
     ProbeRight probe_right{*this, context, row, key};
+
+    // auto &codegen = GetCodeGen();
+    // llvm::Value *multi_thread_context = codegen.GetArgument(1);
+    // auto *temp_global_hash_table_ = codegen.CallFunc(MultiThreadContextProxy::GetGetGlobalHashTableFunction(codegen), {multi_thread_context});
+    // hash_table_.FindAll(GetCodeGen(), temp_global_hash_table_, key, probe_right);
+
     hash_table_.FindAll(GetCodeGen(), LoadStatePtr(hash_table_id_), key,
                         probe_right);
   }
