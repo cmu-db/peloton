@@ -39,26 +39,60 @@ bool DropExecutor::DInit() {
 bool DropExecutor::DExecute() {
   LOG_TRACE("Executing Drop...");
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
-  std::string table_name = node.GetTableName();
+  DropType dropType = node.GetDropType();
+  switch (dropType) {
+    case DropType::TABLE: {
+      std::string table_name = node.GetTableName();
 
-  auto current_txn = context->GetTransaction();
+      auto current_txn = context->GetTransaction();
 
-  ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      DEFAULT_DB_NAME, table_name, current_txn);
-  current_txn->SetResult(result);
+      ResultType result = catalog::Catalog::GetInstance()->DropTable(
+        DEFAULT_DB_NAME, table_name, current_txn);
+      current_txn->SetResult(result);
 
-  if (current_txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Dropping table succeeded!");
-  } else if (current_txn->GetResult() == ResultType::FAILURE &&
-             node.IsMissing()) {
-    current_txn->SetResult(ResultType::SUCCESS);
-    LOG_TRACE("Dropping table Succeeded!");
-  } else if (current_txn->GetResult() == ResultType::FAILURE &&
-             !node.IsMissing()) {
-    LOG_TRACE("Dropping table Failed!");
-  } else {
-    LOG_TRACE("Result is: %s", ResultTypeToString(
-              current_txn->GetResult()).c_str());
+      if (current_txn->GetResult() == ResultType::SUCCESS) {
+        LOG_TRACE("Dropping table succeeded!");
+      } else if (current_txn->GetResult() == ResultType::FAILURE &&
+        node.IsMissing()) {
+        current_txn->SetResult(ResultType::SUCCESS);
+        LOG_TRACE("Dropping table Succeeded!");
+      } else if (current_txn->GetResult() == ResultType::FAILURE &&
+        !node.IsMissing()) {
+        LOG_TRACE("Dropping table Failed!");
+      } else {
+        LOG_TRACE("Result is: %s", ResultTypeToString(
+          current_txn->GetResult()).c_str());
+      }
+      break;
+    }
+    case DropType::TRIGGER: {
+      std::string table_name = node.GetTableName();
+      std::string trigger_name = node.GetTriggerName();
+
+      auto current_txn = context->GetTransaction();
+
+      ResultType result = catalog::Catalog::GetInstance()->DropTrigger(
+        DEFAULT_DB_NAME, table_name, trigger_name, current_txn);
+      current_txn->SetResult(result);
+
+      if (current_txn->GetResult() == ResultType::SUCCESS) {
+        LOG_TRACE("Dropping trigger succeeded!");
+      } else if (current_txn->GetResult() == ResultType::FAILURE &&
+        node.IsMissing()) {
+        current_txn->SetResult(ResultType::SUCCESS);
+        LOG_TRACE("Dropping trigger Succeeded!");
+      } else if (current_txn->GetResult() == ResultType::FAILURE &&
+        !node.IsMissing()) {
+        LOG_TRACE("Dropping trigger Failed!");
+      } else {
+        LOG_TRACE("Result is: %s", ResultTypeToString(
+          current_txn->GetResult()).c_str());
+      }
+    }
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+        "Drop type %d not supported yet.\n", dropType));
+    }
   }
 
   return false;

@@ -91,6 +91,51 @@ bool TriggerCatalog::InsertTrigger(
   return InsertTuple(std::move(tuple), txn);
 }
 
+ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
+                        const std::string &table_name,
+                       const std::string &trigger_name,
+                       concurrency::Transaction *txn) {
+
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to drop trigger: %s", table_name.c_str());
+    return ResultType::FAILURE;
+  }
+
+  // Checking if statement is valid
+  oid_t database_oid =
+    DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
+  if (database_oid == INVALID_OID) {
+    LOG_TRACE("Cannot find database  %s!", database_name.c_str());
+    return ResultType::FAILURE;
+  }
+
+  oid_t table_oid =
+    TableCatalog::GetInstance()->GetTableOid(table_name, txn);
+  if (table_oid == INVALID_OID) {
+    LOG_TRACE("Cannot find table %s!", table_name.c_str());
+    return ResultType::FAILURE;
+  }
+
+  oid_t trigger_oid =
+    TriggerCatalog::GetInstance()->GetTriggerOid(trigger_name, table_oid, database_oid, txn);
+  if (trigger_oid == INVALID_OID) {
+    LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
+    return ResultType::FAILURE;
+  }
+
+  ResultType result = DeleteTrigger(trigger_oid, txn);
+
+  return result;
+}
+
+bool TriggerCatalog::DeleteTrigger(oid_t trigger_oid, concurrency::Transaction *txn) {
+  oid_t index_offset = 0;  // Index of trigger_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(trigger_oid).Copy());
+
+  return DeleteWithIndexScan(index_offset, values, txn);
+}
+
 commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t database_oid,
                                           oid_t table_oid,
                                           int16_t trigger_type,

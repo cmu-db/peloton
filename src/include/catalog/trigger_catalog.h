@@ -57,9 +57,12 @@ class TriggerCatalog : public AbstractCatalog {
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::Transaction *txn);
 
-  // // TODO:
-  // bool DeleteTrigger(const std::string &trigger_name, oid_t database_oid, oid_t table_oid, 
-  //                         concurrency::Transaction *txn);
+  ResultType DropTrigger(const std::string &database_name,
+                         const std::string &table_name,
+                         const std::string &trigger_name,
+                         concurrency::Transaction *txn);
+
+  bool DeleteTrigger(oid_t trigger_oid, concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // get triggers for a specific table; one table may have multiple triggers

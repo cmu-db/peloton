@@ -69,7 +69,7 @@ struct DropStatement : TableRefStatement {
   bool missing;
 
   // drop trigger
-  char* table_name = nullptr;
+  char* table_name_of_trigger = nullptr;
   char* trigger_name = nullptr;
 };
 

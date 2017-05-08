@@ -49,7 +49,8 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
     }
   }
   else if (parse_tree->type == parser::DropStatement::EntityType::kTrigger) {
-    table_name = std::string(parse_tree->table_name);
+    // note parse_tree->table_name is different from parse_tree->GetTableName()
+    table_name = std::string(parse_tree->table_name_of_trigger);
     trigger_name = std::string(parse_tree->trigger_name);
     drop_type = DropType::TRIGGER;
   }
