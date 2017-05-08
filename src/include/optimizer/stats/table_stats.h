@@ -27,36 +27,59 @@ class ColumnStats;
 //===--------------------------------------------------------------------===//
 class TableStats {
  public:
-  TableStats() : num_rows(0) {}
+  TableStats() : TableStats(0) {}
 
-  TableStats(size_t num_rows) : num_rows(num_rows) {}
+  TableStats(size_t num_rows) :
+    num_rows(num_rows),
+    col_stats_list_{},
+    col_name_to_stats_map_{}
+  {}
 
   TableStats(size_t num_rows,
              std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
 
   TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
 
+  /*
+   * Right now table_stats need to support both column id and column name
+   * lookup to support both base and intermediate table with alias.
+   */
+
   void UpdateNumRows(size_t new_num_rows);
 
   bool HasIndex(const std::string column_name);
 
+  bool HasIndex(const oid_t column_id);
+
   bool HasPrimaryIndex(const std::string column_name);
+
+  bool HasPrimaryIndex(const oid_t column_id);
 
   double GetCardinality(const std::string column_name);
 
+  double GetCardinality(const oid_t column_id);
+
   void ClearColumnStats();
 
-  bool HasColumnStats(std::string col_name);
+  bool HasColumnStats(const std::string col_name);
 
-  std::shared_ptr<ColumnStats> GetColumnStats(std::string col_name);
+  bool HasColumnStats(const oid_t column_id);
+
+  std::shared_ptr<ColumnStats> GetColumnStats(const std::string col_name);
+
+  std::shared_ptr<ColumnStats> GetColumnStats(const oid_t column_id);
 
   bool AddColumnStats(std::shared_ptr<ColumnStats> col_stats);
 
-  bool RemoveColumnStats(std::string col_name);
+  bool RemoveColumnStats(const std::string col_name);
+
+  bool RemoveColumnStats(const oid_t column_id);
 
   size_t num_rows;
 
  private:
+  //TODO: only keep one ptr of ColumnStats
+  std::vector<std::shared_ptr<ColumnStats>> col_stats_list_;
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
       col_name_to_stats_map_;
 };

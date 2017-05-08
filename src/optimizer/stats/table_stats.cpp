@@ -18,14 +18,17 @@ namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
                        std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : num_rows(num_rows) {
+    : num_rows(num_rows),
+      col_stats_list_(col_stats_ptrs)
+{
   for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
     AddColumnStats(col_stats_ptrs[i]);
   }
 }
 
-TableStats::TableStats(
-    std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs) {
+TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
+  : col_stats_list_(col_stats_ptrs)
+{
   size_t col_count = col_stats_ptrs.size();
   for (size_t i = 0; i < col_count; ++i) {
     AddColumnStats(col_stats_ptrs[i]);
@@ -61,7 +64,7 @@ double TableStats::GetCardinality(const std::string column_name) {
 
 void TableStats::ClearColumnStats() { col_name_to_stats_map_.clear(); }
 
-bool TableStats::HasColumnStats(std::string col_name) {
+bool TableStats::HasColumnStats(const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it == col_name_to_stats_map_.end()) {
     return false;
@@ -69,7 +72,7 @@ bool TableStats::HasColumnStats(std::string col_name) {
   return true;
 }
 
-std::shared_ptr<ColumnStats> TableStats::GetColumnStats(std::string col_name) {
+std::shared_ptr<ColumnStats> TableStats::GetColumnStats(const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it != col_name_to_stats_map_.end()) {
     return it->second;
@@ -86,12 +89,55 @@ bool TableStats::AddColumnStats(std::shared_ptr<ColumnStats> col_stats) {
   return true;
 }
 
-bool TableStats::RemoveColumnStats(std::string col_name) {
+bool TableStats::RemoveColumnStats(const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it == col_name_to_stats_map_.end()) {
     return false;
   }
   col_name_to_stats_map_.erase(col_name);
+  return true;
+}
+
+//===--------------------------------------------------------------------===//
+// TableStats with column_id operations
+//===--------------------------------------------------------------------===//
+bool TableStats::HasIndex(const oid_t column_id) {
+  auto column_stats = GetColumnStats(column_id);
+  if (column_stats == nullptr) {
+    return false;
+  }
+  return column_stats->has_index;
+}
+
+// Update this function once we support primary index operations.
+bool TableStats::HasPrimaryIndex(const oid_t column_id) {
+  return HasIndex(column_id);
+}
+
+double TableStats::GetCardinality(const oid_t column_id) {
+  auto column_stats = GetColumnStats(column_id);
+  if (column_stats == nullptr) {
+    return DEFAULT_CARDINALITY;
+  }
+  return column_stats->cardinality;
+}
+
+bool TableStats::HasColumnStats(const oid_t column_id) {
+  return column_id < col_stats_list_.size();
+}
+
+std::shared_ptr<ColumnStats> TableStats::GetColumnStats(const oid_t column_id) {
+  if (column_id >= col_stats_list_.size()) {
+    return nullptr;
+  }
+  return col_stats_list_[column_id];
+}
+
+bool TableStats::RemoveColumnStats(const oid_t column_id) {
+  if (column_id >= col_stats_list_.size()) {
+    return false;
+  }
+  col_stats_list_.erase(col_stats_list_.begin() + column_id);
   return true;
 }
 
