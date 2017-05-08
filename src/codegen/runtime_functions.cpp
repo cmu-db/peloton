@@ -88,9 +88,9 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
         tile->GetTupleLocation(0) + tile_schema->GetOffset(tile_column_offset);
     infos[col_idx].stride = tile_schema->GetLength();
     infos[col_idx].is_columnar = tile_schema->GetColumnCount() == 1;
-    LOG_DEBUG("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
-              infos[col_idx].column, infos[col_idx].stride,
-              infos[col_idx].is_columnar ? "true" : "false");
+//    LOG_DEBUG("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
+//              infos[col_idx].column, infos[col_idx].stride,
+//              infos[col_idx].is_columnar ? "true" : "false");
   }
 }
 
