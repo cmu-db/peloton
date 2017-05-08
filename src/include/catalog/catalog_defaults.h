@@ -40,6 +40,7 @@ namespace catalog {
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
 #define TABLE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TABLE))
 #define INDEX_OID_MASK (static_cast<oid_t>(catalog::CatalogType::INDEX))
+#define TRIGGER_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TRIGGER))
 
 // Reserved pg_catalog database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)
@@ -69,6 +70,7 @@ enum class CatalogType : uint32_t {
   TABLE = 2 << CATALOG_TYPE_OFFSET,
   INDEX = 3 << CATALOG_TYPE_OFFSET,
   COLUMN = 4 << CATALOG_TYPE_OFFSET,
+  TRIGGER = 5 << CATALOG_TYPE_OFFSET,
   // To be added
 };
 }
