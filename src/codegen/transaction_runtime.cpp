@@ -232,7 +232,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
 
       // Examine the result
       if (ret == true) {
-        //executor_context_->num_processed += 1;  // updated one
+        executor_context_->num_processed += 1;  // updated one
       }
       // When fail, ownership release is done inside PerformUpdatePrimaryKey
       else {
@@ -285,7 +285,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
                                       target_list_size, direct_list_, executor_context_);
 
         if (ret == true) {
-            //executor_context_->num_processed += 1;  // updated one
+            executor_context_->num_processed += 1;  // updated one
         }
             // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
@@ -352,7 +352,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
                                         new_location);
 
         // TODO: Why don't we also do this in the if branch above?
-        //executor_context_->num_processed += 1;  // updated one
+        executor_context_->num_processed += 1;  // updated one
       }
     } else {
       // transaction should be aborted as we cannot update the latest version.

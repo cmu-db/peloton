@@ -132,8 +132,15 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   // Run
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
-  compiled_query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
-      new executor::ExecutorContext{txn, *params}).get(): nullptr);
+  std::vector<type::Value> params_;
+  for (uint32_t i = 0; params != nullptr && i < params->size(); i ++) {
+    params_.emplace_back(params->at(i));
+  }
+  compiled_query->Execute(
+          *txn, consumer_state, nullptr,
+          std::unique_ptr<executor::ExecutorContext> (
+               new executor::ExecutorContext{txn, params_}).get()
+  );
   txn_manager.CommitTransaction(txn);
 
   return stats;

@@ -109,15 +109,10 @@ void UpdateTranslator::Consume(ConsumerContext &,
 
   llvm::Value *target_list_ptr = context.GetTargetListPtr();
   /* Loop for collecting target col ids and corresponding derived values */
-  uint32_t idx = 0;
-  llvm::Value *target_list_idx = codegen.Const64(idx);
   llvm::Value *target_list_size = codegen.Const64(target_list_.size());
 
-  Loop loop{codegen,
-          codegen->CreateICmpULT(target_list_idx, target_list_size),
-          {{"targetListIdx", target_list_idx}}};
-  {
-    target_list_idx = loop.GetLoopVar(0);
+  for (uint32_t idx = 0; idx < target_list_.size(); idx ++) {
+    auto target_list_idx = codegen.Const64(idx);
 
     // collect col id
     col_vec.SetValue(codegen, target_list_idx,
@@ -186,10 +181,6 @@ void UpdateTranslator::Consume(ConsumerContext &,
         throw Exception{msg};
       }
     }
-
-    target_list_idx = codegen.Const64(++idx);
-    loop.LoopEnd(codegen->CreateICmpULT(target_list_idx, target_list_size),
-                 {target_list_idx});
   }
 
   llvm::Value *direct_list_ptr = context.GetDirectListPtr();
