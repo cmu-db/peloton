@@ -69,7 +69,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
+  vector<oid_t> column_ids =
+      GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
@@ -114,7 +115,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
-  vector<oid_t> column_ids = GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
+  vector<oid_t> column_ids =
+      GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
 
   // Create index scan plan
   auto index = op->table_->GetIndex(index_id);
@@ -419,7 +421,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
 // Generate expr map for all the columns in the given table. Used to evaluate
 // the predicate.
 void OperatorToPlanTransformer::GenerateTableExprMap(
-    ExprMap &expr_map, const std::string& alias, const storage::DataTable *table) {
+    ExprMap &expr_map, const std::string &alias,
+    const storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   size_t num_col = table->GetSchema()->GetColumnCount();
@@ -436,7 +439,8 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
 
 // Generate columns for scan plan
 vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
-    const PropertyColumns *column_prop, const std::string& alias, const storage::DataTable *table) {
+    const PropertyColumns *column_prop, const std::string &alias,
+    const storage::DataTable *table) {
   vector<oid_t> column_ids;
   if (column_prop->HasStarExpression()) {
     size_t num_col = table->GetSchema()->GetColumnCount();
@@ -464,7 +468,8 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
 // Generate predicate for scan plan
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
-    const PropertyPredicate *predicate_prop, const std::string& alias, const storage::DataTable *table) {
+    const PropertyPredicate *predicate_prop, const std::string &alias,
+    const storage::DataTable *table) {
   expression::AbstractExpression *predicate = nullptr;
   if (predicate_prop != nullptr) {
     ExprMap table_expr_map;
@@ -610,9 +615,6 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
 
   if (predicate_prop != nullptr) {
     auto where_predicate = predicate_prop->GetPredicate()->Copy();
-    // predicates are evaluate after projection for NL join
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                   where_predicate);
     LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
     predicates.emplace_back(where_predicate);
   }
@@ -622,21 +624,18 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
                                                  join_predicate);
   vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys,
       right_hash_keys;
-
-  // Combine remaining predicate with
   auto remaining_predicate = expression::ExpressionUtil::ExtractJoinColumns(
       left_hash_keys, right_hash_keys, join_predicate);
-
   if (remaining_predicate != nullptr) {
-    // Quite strange, but have to set tuple_idx/value_idx again
-    expression::ExpressionUtil::EvaluateExpression({*output_expr_map_},
-                                                   remaining_predicate);
     LOG_TRACE("remaining %s", remaining_predicate->GetInfo().c_str());
     predicates.emplace_back(remaining_predicate);
   }
 
-  unique_ptr<const expression::AbstractExpression> predicate{
+  // Generate the combined predicate and evaluate it
+  unique_ptr<expression::AbstractExpression> predicate{
       util::CombinePredicates(predicates)};
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                 predicate.get());
 
   unique_ptr<planner::AbstractPlan> join_plan;
   if (is_hash) {
