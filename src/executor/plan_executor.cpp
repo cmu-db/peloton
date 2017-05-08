@@ -83,7 +83,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
       while (status == true) {
         // Handle constraint exceptions
         // TODO: This is a temporary solution
-        // The best way to handle constraint vialations is NOT using
+        // The best way to handle constraint violations is NOT using
         // exceptions
         try {
           status = executor_tree->Execute();
