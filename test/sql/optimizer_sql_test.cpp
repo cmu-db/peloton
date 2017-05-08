@@ -427,10 +427,10 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 22, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
 
+  /************************* Basic Queries (only joins) *******************************/
   // Product
-
   TestUtil("SELECT * FROM test1, test2 WHERE test1.a = 1 AND test2.b = 0",
-           {"1","22","333","4","0","0"}, false);
+           {"1", "22", "333", "4", "0", "0"}, false);
   TestUtil(
       "SELECT test.a, test1.b FROM test, test1 "
           "WHERE test1.b = 22",
@@ -509,11 +509,11 @@ TEST_F(OptimizerSQLTests, JoinTest) {
 
   // 2 table join with where clause and predicate
   // predicate column not in select list
-   TestUtil(
-       "SELECT test.a FROM test, test1 "
-       "WHERE test.a = test1.a AND test1.b = 22",
-       {"1", "3"},
-       false);
+  TestUtil(
+      "SELECT test.a FROM test, test1 "
+          "WHERE test.a = test1.a AND test1.b = 22",
+      {"1", "3"},
+      false);
 
   // Test joining same table with different alias
   TestUtil(
@@ -531,7 +531,29 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       },
       false);
 
+  /************************* Complex Queries *******************************/
+  // Test projection with join
+  TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 WHERE test.a = test2.a",
+           {"1", "44", "2", "22", "3", "55", "4", "0"}, false);
 
+  // Test order by, limit, projection with join
+  TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
+               "WHERE test.a = test2.a "
+               "ORDER BY test.c+test2.c LIMIT 3",
+           {"1", "44", "2", "22", "4", "0"}, true);
+
+  // Test group by with join
+  TestUtil("SELECT SUM(test2.b) FROM TEST, TEST2 "
+               "WHERE test.a = test2.a "
+               "GROUP BY test.a",
+           {"11", "0", "22", "22"}, false);
+
+  // Test group by, order by with join
+  TestUtil("SELECT SUM(test2.b), test.a FROM TEST, TEST2 "
+               "WHERE test.a = test2.a "
+               "GROUP BY test.a "
+               "ORDER BY test.a",
+           {"22", "1", "11", "2", "22", "3", "0", "4"}, true);
 
 }
 
