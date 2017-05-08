@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <cmath>
+#include <memory>
 
 #include "table_stats.h"
 #include "value_condition.h"
@@ -52,36 +53,48 @@ class Cost {
 public:
 
   /*
-   * Cost of scan for single condition. You should use xxx to merge
-   * stats of conjunctive conditions.
+   * Cost of scan for single condition. For scan with multiple conditions,
+   * you should use CombineConjunctionStats to combine output_stats.
    */
-  static double SingleConditionSeqScanCost(TableStats* input_stats,
-    ValueCondition* condition, TableStats* output_stats = nullptr);
+  static double SingleConditionSeqScanCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    const ValueCondition& condition,
+    std::shared_ptr<TableStats>& output_stats);
 
-  static double SingleConditionIndexScanCost(TableStats* input_stats,
-    ValueCondition* condition, TableStats* output_stats = nullptr);
+  static double SingleConditionIndexScanCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    const ValueCondition& condition,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    *  Combine two stats with conjunction clause.
    *  ExpressionType type can be CONJUNCTION_AND / CONJUNCTION_OR
    */
-  static void CombineConjunctionStats(TableStats* lhs, TableStats* rhs,
-    ExpressionType type, TableStats* output_stats = nullptr);
+  static void CombineConjunctionStats(
+    const std::shared_ptr<TableStats>& lhs,
+    const std::shared_ptr<TableStats>& rhs,
+    ExpressionType type,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Cost of GROUP BY.
    */
-  static double SortGroupByCost(TableStats* input_stats,
-    std::vector<oid_t> columns, TableStats* output_stats = nullptr);
+  static double SortGroupByCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t> columns,
+    std::shared_ptr<TableStats>& output_stats);
 
-  static double HashGroupByCost(TableStats* input_stats,
-    std::vector<oid_t> columns, TableStats* output_stats = nullptr);
+  static double HashGroupByCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t> columns,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Aggregation (SUM, COUNT, etc) cost = cost of scan input table.
    * Note it does not update table stats.
    */
-  static inline double AggregateCost(TableStats* input_stats) {
+  static inline double AggregateCost(
+    const std::shared_ptr<TableStats>& input_stats) {
     PL_ASSERT(input_stats != nullptr);
     return input_stats->num_rows * DEFAULT_TUPLE_COST;
   }
@@ -89,27 +102,35 @@ public:
   /*
    * Cost of DISTINCT = cost of building hash table.
    */
-  static double DistinctCost(TableStats* input_stats, oid_t column,
-    TableStats* output_stats = nullptr);
+  static double DistinctCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    oid_t column,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Cost of projection = full table scan.
    */
-  static double ProjectCost(TableStats* input_stats, std::vector<oid_t> columns,
-    TableStats* output_stats = nullptr);
+  static double ProjectCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t> columns,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Cost of LIMIT = limit * tuple_cost
    */
-  static double LimitCost(TableStats* input_stats, size_t limit,
-    TableStats* output_stats = nullptr);
+  static double LimitCost(
+    const std::shared_ptr<TableStats>& input_stats, size_t limit,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Cost of ORDER BY.
    * TODO: implement me!
    */
-  static double OrderByCost(TableStats* input_stats, std::vector<oid_t> columns,
-    std::vector<bool> orders, TableStats* output_stats = nullptr);
+  static double OrderByCost(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t> columns,
+    std::vector<bool> orders,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Join
@@ -126,15 +147,20 @@ public:
    * Update output statistics given input table and one condition.
    * Updated stats will be placed in output_stats.
    */
-  static void UpdateConditionStats(TableStats* input_stats, ValueCondition* condition,
-    TableStats* output_stats);
+  static void UpdateConditionStats(
+    const std::shared_ptr<TableStats>& input_stats,
+    const ValueCondition& condition,
+    std::shared_ptr<TableStats>& output_stats);
 
   /*
    * Return estimated number of rows after group by operation.
    * This function is used by HashGroupBy and SortGroupBy.
    */
-  static size_t GetEstimatedGroupByRows(TableStats* input_stats, std::vector<oid_t> columns);
+  static size_t GetEstimatedGroupByRows(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t>& columns);
 };
 
 } /* namespace optimizer */
 } /* namespace peloton */
+

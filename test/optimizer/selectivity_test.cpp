@@ -43,17 +43,8 @@ const std::string TEST_TABLE_NAME = "test";
 const double DEFAULT_SELECTIVITY_OFFSET = 0.01;
 
 void CreateAndLoadTable() {
-  // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(id INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
-
-  // Insert tuples into table
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (1, 1.1, 'one');");
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (2, 2.2, 'two');");
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (3, 3.3, 'three');");
 }
 
 // Utility function for compare approximate equality.
@@ -92,7 +83,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   ValueCondition condition{column_id, ExpressionType::COMPARE_LESSTHAN, value1};
 
   // Check for default selectivity when table stats does not exist.
-  double default_sel = Selectivity::ComputeSelectivity(table_stats, &condition);
+  double default_sel = Selectivity::ComputeSelectivity(table_stats, condition);
   EXPECT_EQ(default_sel, DEFAULT_SELECTIVITY);
 
   // Run analyze
@@ -101,13 +92,13 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   // Get updated table stats and check new selectivity
   table_stats = stats_storage->GetTableStats(db_id, table_id);
   double less_than_sel =
-      Selectivity::ComputeSelectivity(table_stats, &condition);
+      Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(less_than_sel, 0.25);
 
   condition = std::move(
       ValueCondition{column_id, ExpressionType::COMPARE_GREATERTHAN, value1});
   double greater_than_sel =
-      Selectivity::ComputeSelectivity(table_stats, &condition);
+      Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(greater_than_sel, 0.75);
 
   // Free the database
@@ -151,13 +142,13 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
   ValueCondition condition4{3, ExpressionType::COMPARE_LIKE, value};
 
   double like_than_sel_1 =
-      Selectivity::ComputeSelectivity(table_stats, &condition1);
+      Selectivity::ComputeSelectivity(table_stats, condition1);
   double like_than_sel_2 =
-      Selectivity::ComputeSelectivity(table_stats, &condition2);
+      Selectivity::ComputeSelectivity(table_stats, condition2);
   double like_than_sel_3 =
-      Selectivity::ComputeSelectivity(table_stats, &condition3);
+      Selectivity::ComputeSelectivity(table_stats, condition3);
   double like_than_sel_4 =
-      Selectivity::ComputeSelectivity(table_stats, &condition4);
+      Selectivity::ComputeSelectivity(table_stats, condition4);
 
   EXPECT_EQ(like_than_sel_1, DEFAULT_SELECTIVITY);
   EXPECT_EQ(like_than_sel_2, DEFAULT_SELECTIVITY);
@@ -193,7 +184,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Check for default selectivity when table stats does not exist.
   ValueCondition condition1{column_id1, ExpressionType::COMPARE_EQUAL, value1};
-  double sel = Selectivity::ComputeSelectivity(table_stats, &condition1);
+  double sel = Selectivity::ComputeSelectivity(table_stats, condition1);
   EXPECT_EQ(sel, DEFAULT_SELECTIVITY);
 
   // Run analyze
@@ -202,11 +193,11 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   // Check selectivity
   // equal, in mcv
   double eq_sel_in_mcv =
-      Selectivity::ComputeSelectivity(table_stats, &condition1);
+      Selectivity::ComputeSelectivity(table_stats, condition1);
   condition1 = std::move(
       ValueCondition{column_id1, ExpressionType::COMPARE_NOTEQUAL, value1});
   double neq_sel_in_mcv =
-      Selectivity::ComputeSelectivity(table_stats, &condition1);
+      Selectivity::ComputeSelectivity(table_stats, condition1);
   ExpectSelectivityEqual(eq_sel_in_mcv, 0.33);
   ExpectSelectivityEqual(neq_sel_in_mcv, 0.67);
 
@@ -238,19 +229,14 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   ValueCondition condition2{column_id2, ExpressionType::COMPARE_EQUAL, value2};
 
   double eq_sel_nin_mcv =
-      Selectivity::ComputeSelectivity(table_stats, &condition2);
+      Selectivity::ComputeSelectivity(table_stats, condition2);
   condition2 = std::move(
       ValueCondition{column_id2, ExpressionType::COMPARE_NOTEQUAL, value2});
   double neq_sel_nin_mcv =
-      Selectivity::ComputeSelectivity(table_stats, &condition2);
+      Selectivity::ComputeSelectivity(table_stats, condition2);
   // (1 - 2/3) / (3 + 7 + 50 - 10) = 1 / 150 = 0.01667
   ExpectSelectivityEqual(eq_sel_nin_mcv, 0.0066, 0.01);
   ExpectSelectivityEqual(neq_sel_nin_mcv, 0.9933, 0.01);
-
-  // Free the database
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 }
 
 } /* namespace test */
