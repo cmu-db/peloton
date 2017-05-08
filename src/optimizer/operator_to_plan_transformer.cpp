@@ -609,13 +609,9 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
 
   if (predicate_prop != nullptr) {
     auto where_predicate = predicate_prop->GetPredicate()->Copy();
-    // predicates are evaluate after projection
-    if (is_hash)
-      expression::ExpressionUtil::EvaluateExpression({*output_expr_map_},
-                                                     where_predicate);
-    else
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                     where_predicate);
+    // predicates are evaluate after projection for NL join
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   where_predicate);
     LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
     predicates.emplace_back(where_predicate);
   }

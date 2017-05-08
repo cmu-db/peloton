@@ -148,15 +148,18 @@ bool NestedLoopJoinExecutor::DExecute() {
 
           expression::ContainerTuple<executor::LogicalTile> right_tuple(
               right_tile.get(), right_tile_row_itr);
-          auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
-                                           executor_context_);
-          
-          // Join predicate is false. Skip pair and continue.
-          if (eval.IsFalse()) {
-            LOG_INFO("Not math join predicate");
-            continue;
+
+          if (predicate_ != nullptr) {
+            auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
+                                             executor_context_);
+
+            // Join predicate is false. Skip pair and continue.
+            if (eval.IsFalse()) {
+              LOG_INFO("Not math join predicate");
+              continue;
+            }
+            LOG_INFO("Find a tuple with join predicate");
           }
-          LOG_INFO("Find a tuple with join predicate");
           pos_lists_builder.AddRow(left_tile_row_itr_, right_tile_row_itr);
         }  // Outer loop of NLJ
 

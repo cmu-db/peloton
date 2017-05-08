@@ -319,6 +319,8 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
   expression::AbstractExpression *join_cond = nullptr;
   if (op->type() == OpType::InnerHashJoin)
     join_cond = ((PhysicalInnerHashJoin *)op)->join_predicate.get();
+  else if (op->type() == OpType::InnerNLJoin)
+    join_cond = ((PhysicalInnerNLJoin *)op)->join_predicate.get();
 
   ExprSet child_cols;
   ExprSet provided_cols;

@@ -442,6 +442,12 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       },
       false);
 
+  TestUtil(
+      "SELECT A.a, B.b, C.c FROM test as A, test1 as B, test2 as C "
+          "WHERE B.a = 1 AND A.b = 22 and C.a = 2",
+      {"1", "22", "333"},
+      false);
+
   // Simple 2 table join
   TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
            {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
@@ -479,15 +485,17 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       false);
 
   // 3 table join with where clause
-  // This one test NLJoin
-  // TestUtil(
-  //     "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
-  //     "WHERE test.b = test2.b AND test2.c = test1.c",
-  //     {"1", "22", "11", "0",
-  //      "2", "11", "22", "333",
-  //      "2", "11", "0", "333",
-  //      "4", "0", "11", "0"},
-  //     false);
+  // This one test NLJoin.
+  // Currently cannot support this query because
+  // the interpreted hash join is broken.
+  //   TestUtil(
+  //       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
+  //       "WHERE test.b = test2.b AND test2.c = test1.c",
+  //       {"1", "22", "11", "0",
+  //        "2", "11", "22", "333",
+  //        "2", "11", "0", "333",
+  //        "4", "0", "11", "0"},
+  //       false);
 
   // 2 table join with where clause and predicate
   TestUtil(
@@ -499,11 +507,11 @@ TEST_F(OptimizerSQLTests, JoinTest) {
 
   // 2 table join with where clause and predicate
   // predicate column not in select list
-  // TestUtil(
-  //     "SELECT test.a FROM test, test1 "
-  //     "WHERE test.a = test1.a AND test1.b = 22",
-  //     {"1", "3"},
-  //     false);
+   TestUtil(
+       "SELECT test.a FROM test, test1 "
+       "WHERE test.a = test1.a AND test1.b = 22",
+       {"1", "3"},
+       false);
 
 
 
