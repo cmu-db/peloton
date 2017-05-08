@@ -25,13 +25,17 @@ namespace test {
 
 class UDFTests : public PelotonTest {};
 
-TEST_F(UDFTests, ExecuteTest) {
+
+// UDF Registering Tests
+
+TEST_F(UDFTests, CUDFTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
   TestingSQLUtil::ExecuteSQLQuery("CREATE FUNCTION c_overpaid(integer, integer) RETURNS boolean AS 'DIRECTORY/funcs', 'c_overpaid' LANGUAGE C STRICT;");
 }
+
 TEST_F(UDFTests, PLPGSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -49,11 +53,28 @@ TEST_F(UDFTests, PLPGSQLTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
 
-  TestingSQLUtil::ShowTable("pg_catalog","pg_proc");
+  //TestingSQLUtil::ShowTable("pg_catalog","pg_proc");
   LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status).c_str());
  
+}
+
+TEST_F(UDFTests, PLPGSQLInvocationTest){
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT increment(5);", result, tuple_descriptor,rows_affected, error_message);
+  
 
 }
+
+
 }  // namespace test
 }  // namespace peloton

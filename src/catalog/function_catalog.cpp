@@ -14,6 +14,7 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
 #include "common/macros.h"
+#include "common/logger.h"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/foreach.hpp>
@@ -163,6 +164,8 @@ namespace peloton {
                                    concurrency::Transaction *txn) {
   // Write logic to populate the fields of UDFFunctionData
 
+  LOG_DEBUG("GetFunction call to search for udf in pg_proc");
+
   std::vector<oid_t> column_ids({1,16,17,22});
   oid_t index_offset = 1;
   std::vector<type::Value> values;
@@ -174,6 +177,7 @@ namespace peloton {
   auto result_tiles = GetResultWithIndexScan(column_ids, index_offset, values, txn);
   
    if (result_tiles->size() != 0) {
+
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       function_info.func_name_ = (*result_tiles)[0]
                       ->GetValue(0, 0)
@@ -199,6 +203,10 @@ namespace peloton {
 
       function_info.func_is_present_ = true;
     }
+  }
+
+  else {
+    LOG_DEBUG("No function by that name!");
   }
   
   return function_info;
