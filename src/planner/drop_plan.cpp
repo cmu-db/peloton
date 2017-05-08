@@ -33,19 +33,28 @@ DropPlan::DropPlan(std::string name, concurrency::Transaction *txn) {
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree,
                    concurrency::Transaction *txn) {
-  table_name = parse_tree->GetTableName();
-  // Set it up for the moment , cannot seem to find it in DropStatement
-  missing = parse_tree->missing;
+  if (parse_tree->type == parser::DropStatement::EntityType::kTable) {
+    table_name = parse_tree->GetTableName();
+    // Set it up for the moment , cannot seem to find it in DropStatement
+    missing = parse_tree->missing;
 
-  try {
-    target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
+    try {
+      target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
         parse_tree->GetDatabaseName(), table_name, txn);
-  } catch (CatalogException &e) {
-    // Dropping a table which doesn't exist
-    if (missing == false) {
-      throw e;
+    }
+    catch (CatalogException &e) {
+      // Dropping a table which doesn't exist
+      if (missing == false) {
+        throw e;
+      }
     }
   }
+  else if (parse_tree->type == parser::DropStatement::EntityType::kTrigger) {
+    table_name = std::string(parse_tree->table_name);
+    trigger_name = std::string(parse_tree->trigger_name);
+    drop_type = DropType::TRIGGER;
+  }
+
 }
 
 }  // namespace planner

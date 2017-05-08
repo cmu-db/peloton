@@ -57,9 +57,12 @@ class DropPlan : public AbstractPlan {
   bool IsMissing() const { return missing; }
 
  private:
+  DropType drop_type = DropType::TABLE;
+
   // Target Table
   storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+  std::string trigger_name;
   bool missing;
 
  private:

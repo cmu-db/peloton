@@ -644,6 +644,19 @@ enum class CreateType {
 };
 
 //===--------------------------------------------------------------------===//
+// Drop Types
+//===--------------------------------------------------------------------===//
+
+enum class DropType {
+  INVALID = INVALID_TYPE_ID,  // invalid drop type
+  DB = 1,                     // db drop type
+  TABLE = 2,                  // table drop type
+  INDEX = 3,                  // index drop type
+  CONSTRAINT = 4,             // constraint drop type
+  TRIGGER = 5                 // trigger drop type
+};
+
+//===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
