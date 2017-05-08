@@ -39,7 +39,7 @@ class TupleValueExpression : public AbstractExpression {
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
-        table_name_(table_name),
+        table_name_(StringUtil::Lower(table_name)),
         col_name_(col_name),
         ai_(nullptr) {}
 
