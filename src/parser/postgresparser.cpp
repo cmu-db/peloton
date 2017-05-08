@@ -1080,7 +1080,7 @@ parser::DropStatement* PostgresParser::DropTriggerTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTrigger);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List*>(cell->data.ptr_value);
-  res->table_name = cstrdup(reinterpret_cast<value*>(list->head->data.ptr_value)->val.str);
+  res->table_name_of_trigger = cstrdup(reinterpret_cast<value*>(list->head->data.ptr_value)->val.str);
   res->trigger_name = cstrdup(reinterpret_cast<value*>(list->head->next->data.ptr_value)->val.str);
   return res;
 }

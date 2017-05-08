@@ -978,7 +978,7 @@ TEST_F(PostgresParserTests, DropTriggerTest) {
   // trigger name
   EXPECT_EQ("if_dist_exists", std::string(drop_trigger_stmt->trigger_name));
   // table name
-  EXPECT_EQ("films", std::string(drop_trigger_stmt->table_name));
+  EXPECT_EQ("films", std::string(drop_trigger_stmt->table_name_of_trigger));
   delete stmt_list;
 }
 
