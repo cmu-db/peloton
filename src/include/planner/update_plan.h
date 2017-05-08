@@ -76,6 +76,9 @@ class UpdatePlan : public AbstractPlan {
         new UpdatePlan(target_table_, std::move(project_info_->Copy())));
   }
 
+  // Bindings
+  void PerformBinding(BindingContext &binding_context) override;
+
  private:
   // Initialize private members and construct colum_ids given a UpdateStatement.
   void BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,

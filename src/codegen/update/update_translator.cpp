@@ -81,11 +81,12 @@ void UpdateTranslator::Consume(ConsumerContext &,
   CodeGen &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
 
-  llvm::Value *catalog_ptr = GetCatalogPtr();
-
   /*
    * Prepare parameters for calling TransactionRuntime::PerformUpdate
    */
+
+  llvm::Value *tid = row.GetTID(codegen);
+  llvm::Value *catalog_ptr = GetCatalogPtr();
 
   llvm::Value *txn_ptr = context.GetTransactionPtr();
 
@@ -195,6 +196,7 @@ void UpdateTranslator::Consume(ConsumerContext &,
   llvm::Value *direct_list_size = codegen.Const64(direct_list_.size());
 
   llvm::Value *exec_context = context.GetExecContextPtr();
+  llvm::Value *col_ids = col_vec.GetVectorPtr();
 
   /*
    * Call TrasactionRuntimeProxy::PerformUpdate
@@ -203,8 +205,8 @@ void UpdateTranslator::Consume(ConsumerContext &,
   codegen.CallFunc(
     TransactionRuntimeProxy::_PerformUpdate::GetFunction(codegen),
     {
-      txn_ptr, table_ptr, tile_group, row.GetTID(codegen),
-      col_vec.GetVectorPtr(), target_vec, update_primary_key,
+      txn_ptr, table_ptr, tile_group, tid,
+      col_ids, target_vec, update_primary_key,
       target_list_ptr, target_list_size,
       direct_list_ptr, direct_list_size,
       exec_context
