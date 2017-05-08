@@ -341,20 +341,11 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
-<<<<<<< HEAD
   // assert(tuple);
   if (check_constraint && tuple != nullptr) {
     if (CheckConstraints(tuple) == false)
       return INVALID_ITEMPOINTER;
   }
-=======
-  //TODO: delete this section
-  if (!check_constraint) {
-    ;
-  }
-  //if (tuple && check_constraint && CheckConstraints(tuple) == false)
-  //  return INVALID_ITEMPOINTER;
->>>>>>> 462c364... Added debug statements for foreign key addition
 
   //=============== garbage collection==================
   // check if there are recycled tuple slots
@@ -461,9 +452,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   if (index_entry_ptr == nullptr) {
     index_entry_ptr = &temp_ptr;
   }
-
-  //Check NOT NULL and DEFAULT constraints
-  CheckConstraints(tuple);
 
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
