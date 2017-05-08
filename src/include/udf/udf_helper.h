@@ -1,5 +1,7 @@
 #include <string>
 #include <vector>
+#include "tcop/tcop.h"
+#include "catalog/catalog.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -24,6 +26,7 @@ class UDF_SQL_Expr final: UDF_Stmt {
   UDF_SQL_Expr(std::string query, int dtype = 0):query_(query), dtype_(dtype)
   {}
   arg_value Execute(std::vector<arg_value>);
+  static tcop::TrafficCop traffic_cop_;
  private:
   std::string query_;
   int dtype_;
