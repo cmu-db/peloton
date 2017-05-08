@@ -48,6 +48,14 @@ struct DropStatement : TableRefStatement {
     if (prep_stmt != nullptr) {
       delete[] prep_stmt;
     }
+
+    if (table_name != nullptr) {
+      delete[] table_name;
+    }
+
+    if (trigger_name != nullptr) {
+      delete[] trigger_name;
+    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
