@@ -32,6 +32,7 @@ namespace optimizer {
 using ValueFrequencyPair = std::pair<type::Value, double>;
 
 class ColumnStats;
+class TableStats;
 
 class StatsStorage {
  public:
@@ -61,6 +62,11 @@ class StatsStorage {
                                                   oid_t table_id,
                                                   oid_t column_id);
 
+  std::shared_ptr<TableStats> GetTableStats(oid_t database_id, oid_t table_id);
+
+  std::shared_ptr<TableStats> GetTableStats(oid_t database_id, oid_t table_id,
+                                            std::vector<oid_t> column_ids);
+
   /* Functions for triggerring stats collection */
 
   ResultType AnalyzeStatsForAllTables(concurrency::Transaction *txn = nullptr);
@@ -73,6 +79,10 @@ class StatsStorage {
 
  private:
   std::unique_ptr<type::AbstractPool> pool_;
+
+  std::shared_ptr<ColumnStats> ConvertVectorToColumnStats(
+      oid_t database_id, oid_t table_id, oid_t column_id,
+      std::unique_ptr<std::vector<type::Value>> &column_stats_vector);
 
   std::string ConvertDoubleArrayToString(std::vector<double> &double_array) {
     if (double_array.size() == 0) {

@@ -32,7 +32,9 @@ class TableStats {
   TableStats(size_t num_rows) : num_rows(num_rows) {}
 
   TableStats(size_t num_rows,
-             std::vector<std::shared_ptr<ColumnStats>> col_stats_list);
+             std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
+
+  TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
 
   void UpdateNumRows(size_t new_num_rows);
 

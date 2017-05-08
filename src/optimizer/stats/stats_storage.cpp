@@ -12,6 +12,7 @@
 
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats.h"
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
 #include "type/value.h"
@@ -128,11 +129,19 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto column_stats = column_stats_catalog->GetColumnStats(
+  // std::unique_ptr<std::vector<type::Value>> column_stats_vector
+  auto column_stats_vector = column_stats_catalog->GetColumnStats(
       database_id, table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
-  if (column_stats == nullptr) {
+  return ConvertVectorToColumnStats(database_id, table_id, column_id,
+                                    column_stats_vector);
+}
+
+std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
+    oid_t database_id, oid_t table_id, oid_t column_id,
+    std::unique_ptr<std::vector<type::Value>> &column_stats_vector) {
+  if (column_stats_vector == nullptr) {
     LOG_TRACE(
         "ColumnStatsCollector not found for db: %u, table: %u, column: %u",
         database_id, table_id, column_id);
@@ -140,28 +149,30 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
   }
 
   int num_rows =
-      (*column_stats)[catalog::ColumnStatsCatalog::NUM_ROWS_OFF].GetAs<int>();
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::NUM_ROWS_OFF]
+          .GetAs<int>();
   double cardinality =
-      (*column_stats)[catalog::ColumnStatsCatalog::CARDINALITY_OFF]
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::CARDINALITY_OFF]
           .GetAs<double>();
-  double frac_null = (*column_stats)[catalog::ColumnStatsCatalog::FRAC_NULL_OFF]
-                         .GetAs<double>();
+  double frac_null =
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::FRAC_NULL_OFF]
+          .GetAs<double>();
 
   std::vector<double> val_array, freq_array, histogram_bounds;
   char *val_array_ptr =
-      (*column_stats)[catalog::ColumnStatsCatalog::COMMON_VALS_OFF]
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::COMMON_VALS_OFF]
           .GetAs<char *>();
   if (val_array_ptr != nullptr) {
     val_array = ConvertStringToDoubleArray(std::string(val_array_ptr));
   }
   char *freq_array_ptr =
-      (*column_stats)[catalog::ColumnStatsCatalog::COMMON_FREQS_OFF]
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::COMMON_FREQS_OFF]
           .GetAs<char *>();
   if (freq_array_ptr != nullptr) {
     freq_array = ConvertStringToDoubleArray(std::string(freq_array_ptr));
   }
   char *hist_bounds_ptr =
-      (*column_stats)[catalog::ColumnStatsCatalog::HIST_BOUNDS_OFF]
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::HIST_BOUNDS_OFF]
           .GetAs<char *>();
   if (hist_bounds_ptr != nullptr) {
     LOG_TRACE("histgram bounds: %s", hist_bounds_ptr);
@@ -169,18 +180,59 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
   }
 
   char *column_name =
-      (*column_stats)[catalog::ColumnStatsCatalog::COLUMN_NAME_OFF]
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::COLUMN_NAME_OFF]
           .GetAs<char *>();
 
   bool has_index =
-      (*column_stats)[catalog::ColumnStatsCatalog::HAS_INDEX_OFF].GetAs<bool>();
+      (*column_stats_vector)[catalog::ColumnStatsCatalog::HAS_INDEX_OFF]
+          .GetAs<bool>();
 
-  std::shared_ptr<ColumnStats> column_stats_result(new ColumnStats(
+  std::shared_ptr<ColumnStats> column_stats(new ColumnStats(
       database_id, table_id, column_id, std::string(column_name), has_index,
       num_rows, cardinality, frac_null, val_array, freq_array,
       histogram_bounds));
 
-  return std::move(column_stats_result);
+  return std::move(column_stats);
+}
+
+std::shared_ptr<TableStats> StatsStorage::GetTableStats(oid_t database_id,
+                                                        oid_t table_id) {
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
+  column_stats_catalog->GetTableStats(database_id, table_id, txn,
+                                      column_stats_map);
+  txn_manager.CommitTransaction(txn);
+
+  std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
+  for (auto it = column_stats_map.begin(); it != column_stats_map.end(); ++it) {
+    column_stats_ptrs.push_back(ConvertVectorToColumnStats(
+        database_id, table_id, it->first, it->second));
+  }
+
+  return std::shared_ptr<TableStats>(new TableStats(column_stats_ptrs));
+}
+
+std::shared_ptr<TableStats> StatsStorage::GetTableStats(
+    oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids) {
+  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
+  column_stats_catalog->GetTableStats(database_id, table_id, txn,
+                                      column_stats_map);
+
+  std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
+  for (oid_t col_id : column_ids) {
+    auto it = column_stats_map.find(col_id);
+    if (it != column_stats_map.end()) {
+      column_stats_ptrs.push_back(ConvertVectorToColumnStats(
+          database_id, table_id, col_id, it->second));
+    }
+  }
+
+  return std::shared_ptr<TableStats>(new TableStats(column_stats_ptrs));
 }
 
 /**

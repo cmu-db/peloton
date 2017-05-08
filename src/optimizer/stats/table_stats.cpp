@@ -17,10 +17,23 @@ namespace peloton {
 namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
-                       std::vector<std::shared_ptr<ColumnStats>> col_stats_list)
+                       std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
     : num_rows(num_rows) {
-  for (size_t i = 0; i < col_stats_list.size(); ++i) {
-    AddColumnStats(col_stats_list[i]);
+  for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
+    AddColumnStats(col_stats_ptrs[i]);
+  }
+}
+
+TableStats::TableStats(
+    std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs) {
+  size_t col_count = col_stats_ptrs.size();
+  for (size_t i = 0; i < col_count; ++i) {
+    AddColumnStats(col_stats_ptrs[i]);
+  }
+  if (col_count == 0) {
+    num_rows = 0;
+  } else {
+    num_rows = col_stats_ptrs[0]->num_rows;
   }
 }
 
