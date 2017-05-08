@@ -48,14 +48,26 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     Stats stats;
 
     for (uint32_t i = 0; i < num_runs; i++) {
-      planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
+      //
+      // SELECT b FROM table where a >= 40;
+      //
+
+      // Setup the predicate
+      auto* a_col_exp =
+          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+      auto* a_gt_40 = new expression::ComparisonExpression(
+          ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+
+      // Setup the scan plan node
+      planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_40, {0, 1}};
 
       // Do binding
       planner::BindingContext context;
       scan.PerformBinding(context);
 
       // We collect the results of the query into an in-memory buffer
-      codegen::BufferingConsumer buffer{{0, 1, 2}, context};
+      codegen::BufferingConsumer buffer{{0}, context};
 
       // COMPILE and execute
       codegen::Query::RuntimeStats runtime_stats;
@@ -75,7 +87,15 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     Stats stats;
 
     for (uint32_t i = 0; i < num_runs; i++) {
-      planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
+      // Setup the predicate
+      auto* a_col_exp =
+          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+      auto* a_gt_40 = new expression::ComparisonExpression(
+          ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+
+      // Setup the scan plan node
+      planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_40, {0, 1}};
       std::vector<std::vector<type::Value>> vals;
 
       codegen::QueryCompiler::CompileStats compile_stats;
