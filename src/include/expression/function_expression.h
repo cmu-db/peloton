@@ -31,8 +31,7 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION),
         func_name_(func_name),
-        func_ptr_(nullptr), 
-        is_udf_(false) {
+        func_ptr_(nullptr) {
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
@@ -43,8 +42,7 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<type::Type::TypeId>& arg_types,
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION, return_type),
-        func_ptr_(func_ptr),
-        is_udf_(false) {
+        func_ptr_(func_ptr){
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
@@ -63,6 +61,10 @@ class FunctionExpression : public AbstractExpression {
 
   void SetUDFType(bool is_udf) {
     is_udf_ = is_udf;
+  }
+
+  bool GetUDFType() {
+    return is_udf_;
   }
 
   type::Value Evaluate(
@@ -84,7 +86,6 @@ class FunctionExpression : public AbstractExpression {
       catalog::UDFFunctionData func_data =
         func_catalog->GetFunction(func_name_, context->GetTransaction());
 
-
       if(func_data.func_is_present_) {
         CheckChildrenTypes(func_data.argument_types_, children_, func_name_);
         std::vector<std::string> argument_names;
@@ -94,7 +95,7 @@ class FunctionExpression : public AbstractExpression {
           argument_names.push_back("i");
 
         // TODO: check if the func_body is aligned with the grammer
-        // TODO: save it back to catalog
+        // TODO: save it back to catalogc
         auto *udf_handle = new peloton::udf::UDFHandle(func_data.func_string_,
             argument_names, func_data.argument_types_, func_data.return_type_);
 
@@ -129,7 +130,6 @@ class FunctionExpression : public AbstractExpression {
   }
 
   void DeduceExpressionType() override {
-    /* Currently hardcoded. This is because there is no way to get the return value type from the catalog without the transaction object. Should fix this later when we have transaction objects in Expression classes*/
     if(is_udf_)
       return_value_type_ = type::Type::INTEGER;
   }
@@ -144,8 +144,7 @@ class FunctionExpression : public AbstractExpression {
   FunctionExpression(const FunctionExpression& other)
       : AbstractExpression(other),
         func_name_(other.func_name_),
-        func_ptr_(other.func_ptr_) ,
-        is_udf_(false){}
+        func_ptr_(other.func_ptr_) {}
 
  private:
   type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;

@@ -512,6 +512,7 @@ class ExpressionUtil {
         */
 
         func_expr->SetUDFType(true); // Sets is_udf_ to True
+        LOG_DEBUG("IS UDF: %d", (int)func_expr->GetUDFType());
       }
     }
 
