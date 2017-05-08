@@ -3,7 +3,7 @@
 namespace peloton {
 namespace udf {
 
-arg_value UDF_SQL_Expr::Execute(std::vector<arg_value>) {
+arg_value UDF_SQL_Expr::Execute(std::vector<arg_value> inputs) {
   // TODO: not sure we need this or not
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -16,8 +16,14 @@ arg_value UDF_SQL_Expr::Execute(std::vector<arg_value>) {
   std::string error_message;
   int rows_changed;
 
-  // TODO: How to handle with the return value
-  traffic_cop_.ExecuteStatement(query_, result, tuple_descriptor,
+  auto query_with_value = query_;
+
+  // TODO: This is an adhoc fix here. Should pass argnames along with the name values
+  query_with_value.replace(query_.find("i", 0), 1,
+      std::to_string(inputs[0].GetAs<int32_t>()));
+
+  // TODO: How to handle with the return status
+  traffic_cop_.ExecuteStatement(query_with_value, result, tuple_descriptor,
                                 rows_changed, error_message);
 
   // TODO: not sure we need this or not
