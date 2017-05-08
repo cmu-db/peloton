@@ -105,7 +105,7 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
       r_column_ids;
   // Table1.a = Table2.b -> nullptr
   auto ret_expr1 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr3, true);
+      l_column_ids, r_column_ids, expr3);
   EXPECT_EQ(nullptr, ret_expr1);
   EXPECT_EQ(1, l_column_ids.size());
 
@@ -115,7 +115,7 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   auto ret_expr2 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr13, true);
+      l_column_ids, r_column_ids, expr13);
 
   EXPECT_EQ(ExpressionType::COMPARE_LESSTHAN, ret_expr2->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,
@@ -147,7 +147,7 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   auto ret_expr3 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr18, true);
+      l_column_ids, r_column_ids, expr18);
 
   EXPECT_EQ(2, l_column_ids.size());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
