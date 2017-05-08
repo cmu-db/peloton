@@ -84,6 +84,7 @@ class FunctionExpression : public AbstractExpression {
       catalog::UDFFunctionData func_data =
         func_catalog->GetFunction(func_name_, context->GetTransaction());
 
+
       if(func_data.func_is_present_) {
         CheckChildrenTypes(func_data.argument_types_, children_, func_name_);
         std::vector<std::string> argument_names;
@@ -125,6 +126,12 @@ class FunctionExpression : public AbstractExpression {
     }
     
     return ret;
+  }
+
+  void DeduceExpressionType() override {
+    /* Currently hardcoded. This is because there is no way to get the return value type from the catalog without the transaction object. Should fix this later when we have transaction objects in Expression classes*/
+    if(is_udf_)
+      return_value_type_ = type::Type::INTEGER;
   }
 
   AbstractExpression* Copy() const { return new FunctionExpression(*this); }
