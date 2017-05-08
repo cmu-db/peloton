@@ -96,7 +96,7 @@ class AbstractTable : public Printable {
 
   void SetSchema(catalog::Schema *given_schema) { schema = given_schema; }
 
-  catalog::Schema *GetSchema() const { return (schema); }
+  catalog::Schema* __attribute__ ((noinline)) __attribute__((optimize("O0"))) GetSchema() const { return (schema); }
 
   virtual std::string GetName() const = 0;
 

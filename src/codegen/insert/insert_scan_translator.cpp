@@ -107,14 +107,6 @@ void InsertScanTranslator::Consume(ConsumerContext &,
   auto ncolumns = schema->GetColumnCount();
   auto &codegen = this->GetCodeGen();
 
-  llvm::Value *tile_group_id = row.GetTileGroupID();
-  llvm::Value *tuple_id = row.GetTID(this->GetCodeGen());
-
-  this->GetCodeGen().CallPrintf(
-      "tile_group_id: %d, tuple_id: %d\n",
-      { tile_group_id, tuple_id }
-  );
-
   // Retrieve all the attribute infos.
   std::vector<const planner::AttributeInfo *> ais;
   auto scan = static_cast<const planner::AbstractScan *>(
@@ -129,13 +121,6 @@ void InsertScanTranslator::Consume(ConsumerContext &,
   for (oid_t i = 0; i != ncolumns; ++i) {
     raw_tuple_ref.Materialize(i);
   }
-
-  // Debug: print the mateialized tuple.
-  // TODO: delete this.
-  codegen.CallFunc(
-      RawTupleRuntimeProxy::_DumpTuple::GetFunction(codegen),
-      { this->tuple_ptr_ }
-  );
 
   // Perform insertion by calling the relevant transaction function.
   llvm::Value *catalog_ptr = GetCatalogPtr();

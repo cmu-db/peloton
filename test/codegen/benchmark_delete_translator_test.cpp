@@ -96,6 +96,8 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   LOG_INFO("compiled empty table finished in: %.2f ms\n", timer.GetDuration());
   EXPECT_EQ(0, getCurrentTableSize());
 
+  timer.Reset();
+
   reloadTable();
 
   // =========================
@@ -206,6 +208,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
 
   EXPECT_TRUE(delete_executor->Init());
 
+  timer.Reset();
   timer.Start();
   while (delete_executor->Execute()) {}
   txn_manager.CommitTransaction(txn);
@@ -287,7 +290,7 @@ TEST_F(DeleteTranslatorTest, DeleteHalfRecords) {
   delete_executor->AddChild(scan_executor.get());
 
   EXPECT_TRUE(delete_executor->Init());
-
+  timer.Reset();
   timer.Start();
   while (delete_executor->Execute()) {}
 
@@ -371,7 +374,7 @@ TEST_F(DeleteTranslatorTest, DeleteMajorityRecords) {
   delete_executor->AddChild(scan_executor.get());
 
   EXPECT_TRUE(delete_executor->Init());
-
+  timer.Reset();
   timer.Start();
   while (delete_executor->Execute()) {}
 
@@ -455,7 +458,7 @@ TEST_F(DeleteTranslatorTest, DeleteMinorityRecords) {
   delete_executor->AddChild(scan_executor.get());
 
   EXPECT_TRUE(delete_executor->Init());
-
+  timer.Reset();
   timer.Start();
   while (delete_executor->Execute()) {}
 
@@ -466,91 +469,6 @@ TEST_F(DeleteTranslatorTest, DeleteMinorityRecords) {
   EXPECT_EQ(75000, getCurrentTableSize());
   reloadTable();
 }
-//
-//TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
-//  //
-//  // DELETE FROM table where a >= 40 and b = 21;
-//  //
-//
-//  // Construct the components of the predicate
-//
-//  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
-//
-//  // a >= 20
-//  auto* a_col_exp =
-//      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-//  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
-//  auto* a_gt_20 = new expression::ComparisonExpression(
-//      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
-//
-//  // b = 21
-//  auto* b_col_exp =
-//      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-//  auto* const_21_exp = CodegenTestUtils::ConstIntExpression(21);
-//  auto* b_eq_21 = new expression::ComparisonExpression(
-//      ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
-//
-//  // a >= 20 AND b = 21
-//  auto* conj_eq = new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
-//
-//  std::unique_ptr<planner::DeletePlan> delete_plan{
-//      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-//  std::unique_ptr<planner::AbstractPlan> scan{
-//      new planner::SeqScanPlan(&GetTestTable(TestTableId()), conj_eq, {0, 1, 2})};
-//  delete_plan->AddChild(std::move(scan));
-//
-//  // Do binding
-//  planner::BindingContext context;
-//  delete_plan->PerformBinding(context);
-//
-//  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-//
-//  // COMPILE and execute
-//  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
-//
-//  ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
-//  reloadTable();
-//}
-//
-//
-//TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
-//  //
-//  // DELETE FROM table where a = b % 1;
-//  //
-//
-//  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
-//
-//  auto* b_col_exp =
-//      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-//  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
-//  auto* b_mod_1 = new expression::OperatorExpression(
-//      ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
-//      const_1_exp);
-//
-//  // a = b % 1
-//  auto* a_col_exp =
-//      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-//  auto* a_eq_b_mod_1 = new expression::ComparisonExpression(
-//      ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
-//
-//  std::unique_ptr<planner::DeletePlan> delete_plan{
-//      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-//  std::unique_ptr<planner::AbstractPlan> scan{
-//      new planner::SeqScanPlan(&GetTestTable(TestTableId()), a_eq_b_mod_1, {0, 1, 2})};
-//  delete_plan->AddChild(std::move(scan));
-//
-//  // Do binding
-//  planner::BindingContext context;
-//  delete_plan->PerformBinding(context);
-//
-//  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-//
-//  // COMPILE and execute
-//  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
-//
-//  ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
-//  reloadTable();
-//}
 
 }  // namespace test
 }  // namespace peloton
