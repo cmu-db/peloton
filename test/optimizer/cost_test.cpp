@@ -37,6 +37,8 @@ namespace test {
 
 using namespace optimizer;
 
+const int N_ROW = 10000;
+
 class CostTests : public PelotonTest {};
 
 // tablename: test
@@ -44,8 +46,7 @@ class CostTests : public PelotonTest {};
 void CreateAndLoadTable() {
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(id INT PRIMARY KEY, name VARCHAR, salary DECIMAL);");
-  int nrow = 10000; // 10k
-  for (int i = 1; i <= nrow; i++) {
+  for (int i = 1; i <= N_ROW; i++) {
     std::ostringstream os;
     os << "INSERT INTO test VALUES (" << i << ", 'name', 1.1);";
     TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -59,18 +60,7 @@ std::shared_ptr<TableStats> GetTableStatsWithName(std::string table_name) {
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
   auto stats_storage = StatsStorage::GetInstance();
-  auto table_stats = stats_storage->GetTableStats(db_id, table_id);
-  return table_stats;
-}
-
-TEST_F(CostTests, SimpleCostTest) {
-
-  TableStats table_stats{};
-  type::Value value = type::ValueFactory::GetIntegerValue(1);
-  ValueCondition condition{0, ExpressionType::COMPARE_EQUAL, value};
-
-  double cost = Cost::SingleConditionSeqScanCost(&table_stats, &condition);
-  EXPECT_EQ(cost, 0);
+  return stats_storage->GetTableStats(db_id, table_id);
 }
 
 TEST_F(CostTests, ScanCostTest) {
@@ -87,16 +77,27 @@ TEST_F(CostTests, ScanCostTest) {
 
   auto table_stats = GetTableStatsWithName("test");
   EXPECT_NE(table_stats, nullptr);
-  EXPECT_EQ(table_stats->num_rows, 10000);
+  EXPECT_EQ(table_stats->num_rows, N_ROW);
 
   // condition1: id < 1000
   type::Value value1 = type::ValueFactory::GetIntegerValue(1000);
   ValueCondition condition1{0, "id", ExpressionType::COMPARE_LESSTHAN, value1};
-  TableStats output_stats{};
+  std::shared_ptr<TableStats> output_stats(new TableStats{});
+  double cost1 = Cost::SingleConditionSeqScanCost(table_stats, condition1, output_stats);
+  LOG_INFO("cost for condition 1 is %f", cost1);
+  EXPECT_GE(cost1, 0);
+  // EXPECT_EQ(output_stats->num_rows, 1000);
 
-  UNUSED_ATTRIBUTE double cost = Cost::SingleConditionSeqScanCost(table_stats.get(), &condition1, &output_stats);
-  // std::cout << cost << std::endl;
-  // EXPECT_EQ(output_stats.num_rows, 1000);
+  // condition2: id = 1000
+  ValueCondition condition2{0, "id", ExpressionType::COMPARE_EQUAL, value1};
+  output_stats->ClearColumnStats();
+  double cost2 = Cost::SingleConditionSeqScanCost(table_stats, condition2, output_stats);
+  LOG_INFO("cost for condition 2 is: %f", cost2);
+  EXPECT_GE(cost2, 0);
+  // EXPECT_EQ(output_stats->num_rows, 1);
+
+  // Two seq scan cost should be the same
+  EXPECT_EQ(cost1, cost2);
 
   // Free the database
   txn = txn_manager.BeginTransaction();

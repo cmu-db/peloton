@@ -43,17 +43,8 @@ const std::string TEST_TABLE_NAME = "test";
 const double DEFAULT_SELECTIVITY_OFFSET = 0.01;
 
 void CreateAndLoadTable() {
-  // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(id INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
-
-  // Insert tuples into table
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (1, 1.1, 'one');");
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (2, 2.2, 'two');");
-  // TestingSQLUtil::ExecuteSQLQuery(
-  //     "INSERT INTO test VALUES (3, 3.3, 'three');");
 }
 
 // Utility function for compare approximate equality.
@@ -92,7 +83,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   ValueCondition condition{column_id, ExpressionType::COMPARE_LESSTHAN, value1};
 
   // Check for default selectivity when table stats does not exist.
-  double default_sel = Selectivity::ComputeSelectivity(table_stats, &condition);
+  double default_sel = Selectivity::ComputeSelectivity(table_stats, condition);
   EXPECT_EQ(default_sel, DEFAULT_SELECTIVITY);
 
   // Run analyze
@@ -100,7 +91,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
 
   // Get updated table stats and check new selectivity
   table_stats = stats_storage->GetTableStats(db_id, table_id);
-  double less_than_sel = Selectivity::ComputeSelectivity(table_stats, &condition);
+  double less_than_sel = Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(less_than_sel, 0.25);
   // double greater_than_sel = Selectivity::GreaterThanSel(&params);
   // ExpectSelectivityEqual(greater_than_sel, 0.75);
