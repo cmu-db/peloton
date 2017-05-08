@@ -447,6 +447,8 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
     for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);
     GenerateTableExprMap(*output_expr_map_, alias, table);
+    auto t = *output_expr_map_;
+    LOG_INFO("%ld", t.size());
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
@@ -566,34 +568,57 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   PL_ASSERT(children_expr_map_.size() == 2);
   auto &l_child_map = children_expr_map_[0];
   auto &r_child_map = children_expr_map_[1];
+
+  // Retrive output columns
+  vector<shared_ptr<expression::AbstractExpression>> output_exprs;
+  size_t col_size = cols_prop->GetSize();
+  for (size_t curr_col_offset = 0; curr_col_offset < col_size;
+       ++curr_col_offset) {
+    auto expr = cols_prop->GetColumn(curr_col_offset);
+    // Generate all output columns from child
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      vector<std::shared_ptr<expression::AbstractExpression>> l_output_exprs =
+          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              children_expr_map_[0]));
+      vector<std::shared_ptr<expression::AbstractExpression>> r_output_exprs =
+          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              children_expr_map_[1]));
+      output_exprs.insert(output_exprs.end(), l_output_exprs.begin(),
+                          l_output_exprs.end());
+      output_exprs.insert(output_exprs.end(), r_output_exprs.begin(),
+                          r_output_exprs.end());
+    }
+    else
+      output_exprs.emplace_back(expr);
+  }
+
   // expressions to evaluate
   TargetList tl = TargetList();
   // columns which can be returned directly
   DirectMapList dml = DirectMapList();
   // schema of the projections output
   vector<catalog::Column> columns;
-  size_t col_size = cols_prop->GetSize();
-  for (size_t curr_col_offset = 0; curr_col_offset < col_size;
-       ++curr_col_offset) {
-    auto expr = cols_prop->GetColumn(curr_col_offset);
+  size_t output_size = output_exprs.size();
+  for (size_t output_offset = 0; output_offset<output_size; output_offset++) {
+    auto expr = output_exprs[output_offset];
     auto expr_type = expr->GetExpressionType();
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                   expr.get());
+
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr.get());
     if (expr_type == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, we can just do a direct mapping.
       if (l_child_map.count(expr))
-        dml.emplace_back(curr_col_offset, make_pair(0, l_child_map[expr]));
+        dml.emplace_back(output_offset, make_pair(0, l_child_map[expr]));
       else
-        dml.emplace_back(curr_col_offset, make_pair(1, r_child_map[expr]));
+        dml.emplace_back(output_offset, make_pair(1, r_child_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
 
       planner::DerivedAttribute attribute;
       attribute.expr = expr->Copy();
       attribute.attribute_info.type = attribute.expr->GetValueType();
-      tl.emplace_back(curr_col_offset, attribute);
+      tl.emplace_back(output_offset, attribute);
     }
-    (*output_expr_map_)[expr] = curr_col_offset;
+    (*output_expr_map_)[expr] = output_offset;
     columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
         expr->GetExpressionName()));

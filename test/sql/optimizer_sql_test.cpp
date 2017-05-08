@@ -428,6 +428,9 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
 
   // Product
+
+  TestUtil("SELECT * FROM test1, test2 WHERE test1.a = 1 AND test2.b = 0",
+           {"1","22","333","4","0","0"}, false);
   TestUtil(
       "SELECT test.a, test1.b FROM test, test1 "
           "WHERE test1.b = 22",
@@ -441,7 +444,6 @@ TEST_F(OptimizerSQLTests, JoinTest) {
        "4", "22"
       },
       false);
-
   TestUtil(
       "SELECT A.a, B.b, C.c FROM test as A, test1 as B, test2 as C "
           "WHERE B.a = 1 AND A.b = 22 and C.a = 2",
