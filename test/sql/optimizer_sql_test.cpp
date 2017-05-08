@@ -427,6 +427,21 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 22, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
 
+  // Product
+  TestUtil(
+      "SELECT test.a, test1.b FROM test, test1 "
+          "WHERE test1.b = 22",
+      {"1", "22",
+       "1", "22",
+       "2", "22",
+       "2", "22",
+       "3", "22",
+       "3", "22",
+       "4", "22",
+       "4", "22"
+      },
+      false);
+
   // Simple 2 table join
   TestUtil("SELECT test.a, test1.a FROM test JOIN test1 ON test.a = test1.a",
            {"1", "1", "2", "2", "3", "3", "4", "4"}, false);
@@ -437,7 +452,7 @@ TEST_F(OptimizerSQLTests, JoinTest) {
 
   TestUtil(
       "SELECT test.a, test.b, test1.b, test1.c FROM test, test1 WHERE test.b = "
-      "test1.b",
+          "test1.b",
       {"1", "22", "22", "333", "1", "22", "22", "444", "2", "11", "11", "0",
        "4", "0", "0", "333"},
       false);
@@ -445,22 +460,22 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // 3 table join
   TestUtil(
       "SELECT test.a, test.b, test1.b, test2.c FROM test2 "
-      "JOIN test ON test.b = test2.b "
-      "JOIN test1 ON test2.c = test1.c",
-      {"1", "22", "0", "11", 
-       "2", "11", "333", "22", 
-       "2", "11", "333", "0", 
-       "4", "0", "0", "11"}, 
+          "JOIN test ON test.b = test2.b "
+          "JOIN test1 ON test2.c = test1.c",
+      {"1", "22", "0", "11",
+       "2", "11", "333", "22",
+       "2", "11", "333", "0",
+       "4", "0", "0", "11"},
       false);
 
   // 3 table join with where clause
   TestUtil(
       "SELECT test.a, test.b, test1.b, test2.c FROM test2, test, test1 "
-      "WHERE test.b = test2.b AND test2.c = test1.c",
-      {"1", "22", "11", "0", 
-       "2", "11", "22", "333", 
-       "2", "11", "0", "333", 
-       "4", "0", "11", "0"}, 
+          "WHERE test.b = test2.b AND test2.c = test1.c",
+      {"1", "22", "11", "0",
+       "2", "11", "22", "333",
+       "2", "11", "0", "333",
+       "4", "0", "11", "0"},
       false);
 
   // 3 table join with where clause
@@ -468,18 +483,18 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // TestUtil(
   //     "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
   //     "WHERE test.b = test2.b AND test2.c = test1.c",
-  //     {"1", "22", "11", "0", 
-  //      "2", "11", "22", "333", 
-  //      "2", "11", "0", "333", 
-  //      "4", "0", "11", "0"}, 
+  //     {"1", "22", "11", "0",
+  //      "2", "11", "22", "333",
+  //      "2", "11", "0", "333",
+  //      "4", "0", "11", "0"},
   //     false);
 
   // 2 table join with where clause and predicate
   TestUtil(
       "SELECT test.a, test1.b FROM test, test1 "
-      "WHERE test.a = test1.a AND test1.b = 22",
-      {"1", "22", 
-       "3", "22"}, 
+          "WHERE test.a = test1.a AND test1.b = 22",
+      {"1", "22",
+       "3", "22"},
       false);
 
   // 2 table join with where clause and predicate
@@ -487,20 +502,11 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // TestUtil(
   //     "SELECT test.a FROM test, test1 "
   //     "WHERE test.a = test1.a AND test1.b = 22",
-  //     {"1", "3"}, 
+  //     {"1", "3"},
   //     false);
-  
-  // Product
-  // TestUtil(
-  //     "SELECT test.a, test1.b FROM test, test1 "
-  //     "WHERE test.a = 1",
-  //     {"1", "22", 
-  //      "1", "11",
-  //      "1", "22",
-  //      "1", "0"}, 
-  //      false);
 
- 
+
+
 }
 
 }  // namespace test
