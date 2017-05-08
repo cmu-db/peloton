@@ -18,7 +18,8 @@
 namespace peloton {
 namespace optimizer {
 
-double Selectivity::ComputeSelectivity(TableStats* stats, ValueCondition* condition) {
+double Selectivity::ComputeSelectivity(TableStats* stats,
+                                       ValueCondition* condition) {
   switch (condition->type) {
     case ExpressionType::COMPARE_LESSTHAN:
       return LessThan(stats, condition);
@@ -41,20 +42,24 @@ double Selectivity::ComputeSelectivity(TableStats* stats, ValueCondition* condit
     case ExpressionType::COMPARE_DISTINCT_FROM:
       return DistinctFrom(stats, condition);
     default:
-      LOG_TRACE("Expression type %d not supported for computing selectivity", type);
+      LOG_TRACE("Expression type %d not supported for computing selectivity",
+                type);
       return DEFAULT_SELECTIVITY;
   }
 }
 
-double Selectivity::LessThan(TableStats* table_stats, ValueCondition* condition) {
+double Selectivity::LessThan(TableStats* table_stats,
+                             ValueCondition* condition) {
   // Convert peloton value type to raw value (double)
   double v = StatsUtil::PelotonValueToNumericValue(condition->value);
   if (isnan(v)) {
     LOG_TRACE("Error computing less than for non-numeric type");
     return DEFAULT_SELECTIVITY;
   }
-  // TODO: make sure condition uses column id. check if column name is not empty.
-  std::shared_ptr<ColumnStats> column_stats = table_stats->GetColumnStats(condition->column_id);
+  // TODO: make sure condition uses column id. check if column name is not
+  // empty.
+  std::shared_ptr<ColumnStats> column_stats =
+      table_stats->GetColumnStats(condition->column_id);
   // Return default selectivity if no column stats for given column_id
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
@@ -72,46 +77,49 @@ double Selectivity::LessThan(TableStats* table_stats, ValueCondition* condition)
 }
 
 double Selectivity::Equal(TableStats* table_stats, ValueCondition* condition) {
-    double value = StatsUtil::PelotonValueToNumericValue(condition->value);
-    auto column_stats = table_stats->GetColumnStats(condition->column_id);
+  double value = StatsUtil::PelotonValueToNumericValue(condition->value);
+  auto column_stats = table_stats->GetColumnStats(condition->column_id);
 
-    if (isnan(value) || column_stats == nullptr) {
-      return DEFAULT_SELECTIVITY;
+  if (isnan(value) || column_stats == nullptr) {
+    return DEFAULT_SELECTIVITY;
+  }
+
+  size_t numrows = column_stats->num_rows;
+  // For now only double is supported in stats storage
+  std::vector<double> most_common_vals = column_stats->most_common_vals;
+  std::vector<double> most_common_freqs = column_stats->most_common_freqs;
+  std::vector<double>::iterator first = most_common_vals.begin(),
+                                last = most_common_vals.end();
+
+  while (first != last) {
+    // For now only double is supported in stats storage
+    if (*first == value) {
+      break;
+    }
+    ++first;
+  }
+
+  double res = DEFAULT_SELECTIVITY;
+  if (first != last) {
+    // the target value for equality comparison (param value) is
+    // found in most common values
+    size_t idx = first - most_common_vals.begin();
+
+    res = most_common_freqs[idx] / (double)numrows;
+  } else {
+    // the target value for equality comparison (parm value) is
+    // NOT found in most common values
+    // (1 - sum(mvf))/(num_distinct - num_mcv)
+    double sum_mvf = 0;
+    std::vector<double>::iterator first = most_common_freqs.begin(),
+                                  last = most_common_freqs.end();
+    while (first != last) {
+      sum_mvf += *first;
+      ++first;
     }
 
-    size_t numrows = column_stats->num_rows;
-   // For now only double is supported in stats storage
-   std::vector<double> most_common_vals = column_stats->most_common_vals;
-   std::vector<double> most_common_freqs = column_stats->most_common_freqs;
-   std::vector<double>::iterator first = most_common_vals.begin(), last = most_common_vals.end();
-
-   while (first != last) {
-     // For now only double is supported in stats storage
-     if (*first == value) {
-       break;
-     }
-     ++first;
-   }
-
-   double res = DEFAULT_SELECTIVITY;
-   if (first != last) {
-     // the target value for equality comparison (param value) is
-     // found in most common values
-     size_t idx = first - most_common_vals.begin();
-
-     res = most_common_freqs[idx] / (double) numrows;
-   } else {
-     // the target value for equality comparison (parm value) is
-     // NOT found in most common values
-     // (1 - sum(mvf))/(num_distinct - num_mcv)
-     double sum_mvf = 0;
-     std::vector<double>::iterator first = most_common_freqs.begin(), last = most_common_freqs.end();
-     while (first != last) {
-       sum_mvf += *first;
-       ++first;
-     }
-
-     res = (1 - sum_mvf / (double) numrows) / (column_stats->cardinality - most_common_vals.size());
+    res = (1 - sum_mvf / (double)numrows) /
+          (column_stats->cardinality - most_common_vals.size());
   }
   PL_ASSERT(res >= 0);
   PL_ASSERT(res <= 1);
@@ -133,19 +141,21 @@ double Selectivity::Like(TableStats* table_stats, ValueCondition* condition) {
 
   // Check whether column type is VARCHAR.
   auto column_catalog = catalog::ColumnCatalog::GetInstance();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  type::Type::TypeId column_type = column_catalog->GetColumnType(table_id, column_id, txn);
+  type::Type::TypeId column_type =
+      column_catalog->GetColumnType(table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
-  if(column_type != type::Type::TypeId::VARCHAR) {
+  if (column_type != type::Type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 
   std::vector<type::Value> column_samples;
   auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
   txn = txn_manager.BeginTransaction();
-  tuple_storage->GetColumnSamples(database_id, table_id, column_id, column_samples);
+  tuple_storage->GetColumnSamples(database_id, table_id, column_id,
+                                  column_samples);
   txn_manager.CommitTransaction(txn);
 
   for (size_t i = 0; i < column_samples.size(); i++) {

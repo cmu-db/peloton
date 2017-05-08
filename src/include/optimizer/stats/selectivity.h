@@ -36,27 +36,32 @@ namespace optimizer {
 static constexpr double DEFAULT_SELECTIVITY = 0.5;
 
 class Selectivity {
-public:
+ public:
+  static double ComputeSelectivity(TableStats* table_stats,
+                                   ValueCondition* condition);
 
-  static double ComputeSelectivity(TableStats* table_stats, ValueCondition* condition);
-
-  static inline double ComputeSelectivity(const std::shared_ptr<TableStats>& table_stats,
-    ValueCondition* condition) {
+  static inline double ComputeSelectivity(
+      const std::shared_ptr<TableStats>& table_stats,
+      ValueCondition* condition) {
     return ComputeSelectivity(table_stats.get(), condition);
   }
 
   static double LessThan(TableStats* table_stats, ValueCondition* condition);
 
-  static double LessThanOrEqualTo(TableStats* table_stats, ValueCondition* condition) {
-    double res = LessThan(table_stats, condition) + Equal(table_stats, condition);
-    return std::max(res, 1.0);
+  static double LessThanOrEqualTo(TableStats* table_stats,
+                                  ValueCondition* condition) {
+    double res =
+        LessThan(table_stats, condition) + Equal(table_stats, condition);
+    return std::max(std::min(res, 1.0), 0.0);
   }
 
-  static double GreaterThan(TableStats* table_stats, ValueCondition* condition) {
+  static double GreaterThan(TableStats* table_stats,
+                            ValueCondition* condition) {
     return 1 - LessThanOrEqualTo(table_stats, condition);
   }
 
-  static double GreaterThanOrEqualTo(TableStats* table_stats, ValueCondition* condition) {
+  static double GreaterThanOrEqualTo(TableStats* table_stats,
+                                     ValueCondition* condition) {
     return 1 - LessThan(table_stats, condition);
   }
 
@@ -75,12 +80,12 @@ public:
   }
 
   static double In(UNUSED_ATTRIBUTE TableStats* table_stats,
-    UNUSED_ATTRIBUTE ValueCondition* condition) {
+                   UNUSED_ATTRIBUTE ValueCondition* condition) {
     return DEFAULT_SELECTIVITY;
   }
 
   static double DistinctFrom(UNUSED_ATTRIBUTE TableStats* table_stats,
-    UNUSED_ATTRIBUTE ValueCondition* condition) {
+                             UNUSED_ATTRIBUTE ValueCondition* condition) {
     return DEFAULT_SELECTIVITY;
   }
 };
