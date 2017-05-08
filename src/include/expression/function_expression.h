@@ -144,7 +144,8 @@ class FunctionExpression : public AbstractExpression {
   FunctionExpression(const FunctionExpression& other)
       : AbstractExpression(other),
         func_name_(other.func_name_),
-        func_ptr_(other.func_ptr_) {}
+        func_ptr_(other.func_ptr_),
+        is_udf_(other.is_udf_) {}
 
  private:
   type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;
