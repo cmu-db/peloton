@@ -45,9 +45,7 @@ class ForeignKey {
   std::string GetSinkTableName() const { return sink_table_name; }
 
   std::vector<std::string> GetPKColumnNames() const { return pk_column_names; }
-  //std::vector<oid_t> GetPKColumnOffsets() const { return pk_column_offsets; }
   std::vector<std::string> GetFKColumnNames() const { return fk_column_names; }
-  //std::vector<oid_t> GetFKColumnOffsets() const { return fk_column_offsets; }
 
   char GetUpdateAction() const { return fk_update_action; }
 
@@ -60,15 +58,11 @@ class ForeignKey {
 
   // Columns in the reference table (sink)
   std::vector<std::string> pk_column_names;
-  //std::vector<oid_t> pk_column_offsets;
 
   // Columns in the current table (source)
   // Can be a single column or multiple columns depending on the constraint
   std::vector<std::string> fk_column_names;
-  //std::vector<oid_t> fk_column_offsets;
 
-  // What to do when foreign key is updated or deleted ?
-  // FIXME: Not used in our executors currently
   char fk_update_action;
   char fk_delete_action;
 

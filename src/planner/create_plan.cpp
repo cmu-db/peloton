@@ -43,15 +43,14 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
-      // TODO: Currently, the parser will parse the foreign key constraint and
-      // put it into a ColumnDefinition. Later when we implement constraint
-      // we may need to change this. Just skip foreign key constraint for now
+      /* The parser puts the Foreign Key information into an artificial
+       * ColumnDefinition.
+       */
       if (col->type == parser::ColumnDefinition::FOREIGN) {
         if (foreign_keys.get() == nullptr) {
           foreign_keys.reset(new std::vector<catalog::ForeignKey>());
         }
 
-        LOG_DEBUG("Found a foreign key constraint.");
         // Extract source and sink column names
         std::vector<std::string> foreign_key_source;
         for (auto key : *(col->foreign_key_source)) {
@@ -65,12 +64,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         std::string sink_table_name = strdup(col->table_info_->table_name);
         std::string fk_name = strdup("fk_name");
 
-        LOG_DEBUG("About to make the ForeignKey.");
-
         // TODO: replace latter three parameters
         catalog::ForeignKey fk(sink_table_name,
                                foreign_key_sink, foreign_key_source, 't', 't', fk_name);
-        LOG_DEBUG("About to add the FK to the table");
         // table->AddForeignKey(fk);
         LOG_DEBUG("Added a foreign key constraint toward sink table %s", 
             sink_table_name.c_str());

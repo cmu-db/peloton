@@ -1097,24 +1097,14 @@ oid_t DataTable::GetValidIndexCount() const {
 //===--------------------------------------------------------------------===//
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
-  LOG_DEBUG("In AddForeignKey().");
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    LOG_DEBUG("Locked.");
-    //catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
-    LOG_DEBUG("Made the constraint.");
-    LOG_DEBUG("%lu", foreign_keys_.size());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
-    LOG_DEBUG("Finished the constraint");
     for (auto fk_column : key->GetFKColumnNames()) {
       schema->AddConstraint(fk_column, constraint);
     }
-    LOG_DEBUG("Added constraint to the schema.");
-    // TODO :: We need this one..
-    //catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    LOG_DEBUG("Made a new foreign key object.");
     foreign_keys_.push_back(key);
   }
 }
