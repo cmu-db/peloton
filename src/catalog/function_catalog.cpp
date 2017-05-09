@@ -249,7 +249,7 @@ namespace peloton {
 
       std::stringstream os;
       for(oid_t param_type : proargtypes){
-            os << std::to_string(param_type) << "";
+            os << std::to_string(param_type) << " ";
       }
       
       auto val17 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
@@ -260,7 +260,7 @@ namespace peloton {
      
       std::stringstream os2;
       for(auto param_name : proargnames){
-            os2 << param_name  << "";
+            os2 << param_name  << " ";
       }
 
       auto val20 = type::ValueFactory::GetVarcharValue(os2.str(), nullptr);
