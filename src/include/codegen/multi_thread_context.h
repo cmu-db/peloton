@@ -23,9 +23,10 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 // Multi thread context is created per thread, and stored all information that
-// thread needed.
+// thread needs.
 //===----------------------------------------------------------------------===//
-class MultiThreadContext {
+class MultiThreadContext
+{
  public:
 
   static void InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count, Barrier *bar);
@@ -52,17 +53,17 @@ class MultiThreadContext {
   MultiThreadContext(int64_t thread_id, int64_t thread_count, Barrier *bar)
      : thread_id_(thread_id), thread_count_(thread_count), bar_(bar) {}
 
-  void SetThreadId(int64_t thread_id)
+  inline void SetThreadId(int64_t thread_id)
   {
       thread_id_ = thread_id;
   }
 
-  void SetThreadCount(int64_t thread_count)
+  inline void SetThreadCount(int64_t thread_count)
   {
       thread_count_ = thread_count;
   }
 
-  void SetBarrier(Barrier *bar)
+  inline void SetBarrier(Barrier *bar)
   {
       bar_ = bar;
   }
