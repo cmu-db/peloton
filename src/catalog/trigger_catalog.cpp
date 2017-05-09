@@ -141,9 +141,10 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
   bool delete_success = DeleteTrigger(trigger_oid, txn);
   if (delete_success) {
+    LOG_DEBUG("Delete trigger successfully");
     return ResultType::SUCCESS;
   }
-
+  LOG_DEBUG("Failed to delete trigger");
   return ResultType::FAILURE;
 }
 
