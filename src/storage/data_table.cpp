@@ -1125,6 +1125,26 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
 
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
+// Adds to the list of tables for which this table's PK is the foreign key sink
+void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    foreign_key_sources_.push_back(source_table_name);
+  }
+}
+
+// Remove a table for which this table's PK is the foreign key sink
+void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
+      if (foreign_key_sources_[i] == source_table_name) {
+        foreign_key_sources_.erase(foreign_key_sources_.begin()+i);
+      }
+    }
+  }
+}
+
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
     storage::TileGroup *tile_group, const column_map_type &column_map) {
