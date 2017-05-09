@@ -112,7 +112,7 @@ DEFINE_bool(layout_tuner,
 //===----------------------------------------------------------------------===//
 
 DEFINE_bool(codegen,
-            false,
+            true,
             "Enable code-generation for query execution (default: true)");
 
 // Layout mode
