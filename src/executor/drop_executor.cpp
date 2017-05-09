@@ -88,6 +88,7 @@ bool DropExecutor::DExecute() {
         LOG_TRACE("Result is: %s", ResultTypeToString(
           current_txn->GetResult()).c_str());
       }
+      break;
     }
     default: {
       throw NotImplementedException(StringUtil::Format(

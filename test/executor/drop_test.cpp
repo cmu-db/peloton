@@ -80,6 +80,7 @@ TEST_F(DropTests, DroppingTable) {
 
 TEST_F(DropTests, DroppingTrigger) {
   auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -133,6 +134,7 @@ TEST_F(DropTests, DroppingTrigger) {
   commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "update_dept_name");
 
+  LOG_INFO("Create trigger finishes. Now drop it.");
 
   // Drop statement and drop plan
   parser::DropStatement drop_statement(parser::DropStatement::EntityType::kTrigger, "department_table", "update_dept_name");
