@@ -674,14 +674,12 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
-  txn_manager.CommitTransaction(txn);
-  oid_t table_B_id = table_b->GetTableOid();
+  FKConstrActionType upd_action = FKConstrActionType.NOACTION;
+  FKConstrActionType del_action = FKConstrActionType.NOACTION;
   catalog::ForeignKey *foreign_key =
-      new catalog::ForeignKey(table_B_id, {"a", "b"}, {0, 1}, {"b", "c"},
-                              {0, 1}, 'r', 'c', "foreign_constraint1");
-  table_A->AddForeignKey(foreign_key);
-
-  // Test1: insert a tuple with column  meet the constraint requirment
+      new catalog::ForeignKey(table_b_name, {"b"}, {"a"},
+                              upd_action, del_action, "foreign_constraint1");
+  table_a->AddForeignKey(foreign_key);
 
   txn = txn_manager.BeginTransaction();
   // begin this transaction
