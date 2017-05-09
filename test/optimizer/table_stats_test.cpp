@@ -65,6 +65,10 @@ TEST_F(TableStatsTests, BaiscTests) {
 
   EXPECT_EQ(table_stats2.GetCardinality("col0"), 10);
   EXPECT_EQ(table_stats2.GetCardinality("col1"), 20);
+
+  EXPECT_EQ(table_stats2.GetColumnCount(), 2);
+
+  LOG_INFO("%s", table_stats2.ToCSV().c_str());
 }
 
 // Test all update functions of TableStats, including UpdateNumRows,

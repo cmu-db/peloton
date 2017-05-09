@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <sstream>
+
 #include "common/macros.h"
 #include "type/types.h"
 
@@ -74,6 +76,10 @@ class TableStats {
   bool RemoveColumnStats(const std::string col_name);
 
   bool RemoveColumnStats(const oid_t column_id);
+
+  size_t GetColumnCount();
+
+  std::string ToCSV();
 
   size_t num_rows;
 

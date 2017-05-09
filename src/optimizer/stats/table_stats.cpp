@@ -12,6 +12,7 @@
 
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace optimizer {
@@ -96,6 +97,21 @@ bool TableStats::RemoveColumnStats(const std::string col_name) {
   }
   col_name_to_stats_map_.erase(col_name);
   return true;
+}
+
+size_t TableStats::GetColumnCount() {
+  return col_stats_list_.size();
+}
+
+std::string TableStats::ToCSV() {
+  std::ostringstream os;
+  os << "\n" << "===[TableStats]===\n";
+  os << "column_id|column_name|num_rows|has_index|cardinality|"
+     << "frac_null|most_common_freqs|most_common_vals|histogram_bounds\n";
+  for (auto column_stats : col_stats_list_) {
+    os << column_stats->ToCSV();
+  }
+  return os.str();
 }
 
 //===--------------------------------------------------------------------===//
