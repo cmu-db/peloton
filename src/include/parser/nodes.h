@@ -273,7 +273,7 @@ typedef enum NodeTag {
   /*
    * TAGS FOR LIST NODES (pg_list.h)
    */
-  T_List, //656
+  T_List = 656, //656
   T_IntList,
   T_OidList,
 

@@ -77,6 +77,8 @@ typedef struct A_Expr {
   int location;     /* token location, or -1 if unknown */
 } A_Expr;
 
+
+
 /* ----------------
  * NullTest
  *
@@ -102,11 +104,16 @@ typedef struct NullTest
   int			location;		/* token location, or -1 if unknown */
 } NullTest;
 
-typedef struct ListExpr {
-    NodeTag type;
-    List *elements;
-    int location;
-} ListExpr;
+typedef struct ArrayExpr
+{
+  Expr		xpr;
+  Oid			array_typeid;	/* type of expression result */
+  Oid			array_collid;	/* OID of collation, or InvalidOid if none */
+  Oid			element_typeid; /* common type of array elements */
+  List	   *elements;		/* the array elements or sub-arrays */
+  bool		multidims;		/* true if elements are sub-arrays */
+  int			location;		/* token location, or -1 if unknown */
+} ArrayExpr;
 
 typedef struct JoinExpr {
   NodeTag type;

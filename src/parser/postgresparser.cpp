@@ -357,26 +357,34 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   expression::AbstractExpression* result = nullptr;
   switch (val.type) {
     case T_Integer: {
+      LOG_DEBUG("T_Integer\n");
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetIntegerValue((int32_t) val.val.ival));
       break;
     }
     case T_String: {
+      LOG_DEBUG("T_String\n");
+
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
       break;
     }
     case T_Float: {
+      LOG_DEBUG("T_Float\n");
+
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetDecimalValue(
                       std::stod(std::string(val.val.str))));
       break;
     }
     case T_Null: {
+      LOG_DEBUG("T_Null\n");
+
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
       break;
     }
+
     default:
       throw NotImplementedException(StringUtil::Format(
           "Value type %d not supported yet...\n", val.type));
@@ -517,6 +525,8 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
 expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
+    LOG_ERROR("Node type: %d...\n",node->type);
+
     case T_ColumnRef: {
       expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
       break;
@@ -526,6 +536,7 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       break;
     }
     case T_A_Expr: {
+      LOG_DEBUG("Enter T_A_Expr....\n");
       expr = AExprTransform(reinterpret_cast<A_Expr*>(node));
       break;
     }
@@ -546,7 +557,8 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       break;
     }
     case T_List:{
-      expr = InListTransform(reinterpret_cast<ListExpr*>(node));
+      expr = InListTransform(reinterpret_cast<List*>(node));
+      break;
     }
     default: {
       throw NotImplementedException(StringUtil::Format(
@@ -556,13 +568,7 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   return expr;
 }
 
-expression::AbstractExpression* PostgresParser::InListTransform(ListExpr* root) {
-  if (root == nullptr) {
-    return nullptr;
-  }
-  expression::AbstractExpression* result = nullptr;
-  return result;
-}
+
 
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
@@ -578,10 +584,12 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   const char* name =
       (reinterpret_cast<value*>(root->name->head->data.ptr_value))->val.str;
   if ((root->kind) != AEXPR_DISTINCT) {
+    LOG_DEBUG("A_Expr_Kind: %d \n", root->kind);
     target_type = StringToExpressionType(std::string(name));
   } else {
     target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
   }
+  LOG_DEBUG("target_type: %d \n", target_type);
   if (target_type == ExpressionType::INVALID) {
     throw NotImplementedException(StringUtil::Format(
           "COMPARE type %s not supported yet...\n", name));
@@ -595,15 +603,16 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   }
   catch(NotImplementedException e) {
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in left expr left expr:\n%s", e.what()));
   }
   try {
+    LOG_DEBUG("nodetype of root->rexpr:%d", root->rexpr->type);
     right_expr = ExprTransform(root->rexpr);
   }
   catch(NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in right expr right expr:\n%s", e.what()));
   }
 
 
@@ -678,6 +687,22 @@ expression::AbstractExpression* PostgresParser::NullTestTransform(NullTest* root
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("BOOLEAN"), nulltesttype, arg_expr, right_expr);
   }
+  return result;
+}
+
+
+
+expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+  LOG_DEBUG("list length: %d.", root->length);
+  expression::AbstractExpression* result = nullptr;
+
+  for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    ValueTransform(((A_Const*)(cell->data.ptr_value))->val);
+  }
+
   return result;
 }
 
@@ -1275,7 +1300,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
 
   // DEBUG only. Comment this out in release mode
 
-//  print_pg_parse_tree(result.tree);
+  print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
