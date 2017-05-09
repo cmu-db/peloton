@@ -37,6 +37,9 @@ namespace type {
   case Type::VARCHAR: { \
     auto r_value = right.CastAs(Type::INTEGER); \
     return GetCmpBool(left.value_.integer OP r_value.GetAs<int32_t>()); \
+  }\
+  case Type::ARRAY: {\
+    return GetCmpBool((right.InList(left)).IsTrue());\
   } \
   default: \
     break; \
