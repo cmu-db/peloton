@@ -48,9 +48,8 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
  public:
   HashJoinTranslatorTest() : PelotonCodeGenTest() {
     // Load the test table
-    uint32_t num_rows = 879;
-    LoadTestTable(LeftTableId(), 2 * num_rows);
-    LoadTestTable(RightTableId(), 8 * num_rows);
+    LoadTestTable(LeftTableId(), num_rows_);
+    LoadTestTable(RightTableId(), num_rows_ * right_table_scale);
   }
 
   uint32_t LeftTableId() const { return test_table1_id; }
@@ -64,6 +63,9 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
   storage::DataTable& GetRightTable() const {
     return GetTestTable(RightTableId());
   }
+
+  uint32_t num_rows_ = 1000;
+  uint32_t right_table_scale = 4;
 };
 
 TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
@@ -135,7 +137,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   // Check results
   const auto& results = buffer.GetOutputTuples();
   // The left table has 20 columns, the right has 80, all of them match
-  EXPECT_EQ(20, results.size());
+  EXPECT_EQ(num_rows_, results.size());
   // The output has the join columns (that should match) in positions 0 and 1
   for (const auto& tuple : results) {
     type::Value v0 = tuple.GetValue(0);
