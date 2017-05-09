@@ -492,10 +492,13 @@ class ExpressionUtil {
 
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      try {
-
-        const catalog::FunctionData &func_data =
+      
+      
+       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
+      try {
+        //const catalog::FunctionData &func_data =
+        //  catalog->GetFunction(func_expr->func_name_);
         LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
         LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
         func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
@@ -504,6 +507,10 @@ class ExpressionUtil {
        }
        // If not found in map, try in pg_proc (UDF catalog)
       catch (Exception &e) { 
+	// Change this later to throw a different Exception type
+	// Since , it now can throw exception for mismatched type as well as function not found in catalog 
+	if(func_data.func_ptr_ == nullptr)
+	{
 
         LOG_INFO("Function is probably a UDF");
         /* 
@@ -513,6 +520,8 @@ class ExpressionUtil {
 
         func_expr->SetUDFType(true); // Sets is_udf_ to True
         LOG_DEBUG("IS UDF: %d", (int)func_expr->GetUDFType());
+
+	}
       }
     }
 
