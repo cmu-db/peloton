@@ -76,10 +76,8 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
-  llvm::Value *thread_id = codegen.CallFunc(
-      MultiThreadContextProxy::GetThreadIdFunction(codegen),
-      {multi_thread_context});
 
+  // start index
   llvm::Value *tile_group_idx = codegen.CallFunc(
     MultiThreadContextProxy::GetRangeStartFunction(codegen),
     {
@@ -87,16 +85,13 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       num_tile_groups
     });
 
+  // end index
   llvm::Value *tile_group_idx_end = codegen.CallFunc(
     MultiThreadContextProxy::GetRangeEndFunction(codegen),
     {
       multi_thread_context,
       num_tile_groups
     });
-  // llvm::Value *tile_group_idx = codegen.Const64(0);
-  // llvm::Value *tile_group_idx_end = num_tile_groups;
-
-  codegen.CallPrintf("#%d, Table.cpp, this thread produces tiles group from [%lu to %lu), %lu in all.\n", {thread_id, tile_group_idx, tile_group_idx_end, num_tile_groups});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,
@@ -129,12 +124,6 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, tile_group_idx_end),
                  {tile_group_idx});
   }
-
-  // // barrier wait
-  // codegen.CallPrintf("table: barrier waiting .. \n", {});
-  // // codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen),{multi_thread_context});
-  // codegen.CallFunc(MultiThreadContextProxy::GetWorkerFinishFunction(codegen),{multi_thread_context});
-  // codegen.CallPrintf("table: barrier passed !!! \n", {});
 }
 
 }  // namespace codegen
