@@ -46,6 +46,10 @@ struct UDFFunctionData {
   std::string func_name_;
   // type of input arguments
   std::vector<type::Type::TypeId> argument_types_;
+  // names of input parameters
+  std::vector<std::string> argument_names_;
+  // language name
+  PLType language_id_;  
   // funtion's return type
   type::Type::TypeId return_type_;
   // UDF function query string
