@@ -56,6 +56,7 @@ namespace catalog {
 #define COLUMN_CATALOG_OID (3 | TABLE_OID_MASK)
 #define FUNCTION_CATALOG_OID (4 | TABLE_OID_MASK)
 
+
 // Reserved pg_column index oid
 #define COLUMN_CATALOG_PKEY_OID (0 | INDEX_OID_MASK)
 #define COLUMN_CATALOG_SKEY0_OID (1 | INDEX_OID_MASK)

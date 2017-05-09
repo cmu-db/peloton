@@ -179,17 +179,14 @@ namespace peloton {
    if (result_tiles->size() != 0) {
 
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      function_info.func_name_ = (*result_tiles)[0]
-                      ->GetValue(0, 0)
-                      .GetAs<oid_t>();  // After projection left 1 column
+      function_info.func_name_ = (*result_tiles)[0]->GetValue(0, 0).ToString();  // After projection left 1 column
 
       function_info.return_type_ = (*result_tiles)[0]
                       ->GetValue(0, 1)
                       .GetAs<type::Type::TypeId>();  // After projection left 1 colum
 
-      auto arg_types = (*result_tiles)[0]
-                      ->GetValue(0, 2)
-                      .GetAs<std::string>();  // After projection left 1 column
+      auto arg_types = (*result_tiles)[0]->GetValue(0, 2).ToString();  // After projection left 1 column
+
       std::vector<std::string> arg_types_split;
 
       boost::split(arg_types_split,arg_types, boost::is_any_of(" "));
@@ -197,9 +194,7 @@ namespace peloton {
       for(auto e : arg_types_split)
         function_info.argument_types_.push_back(static_cast<type::Type::TypeId>(std::stoi(e)));
       
-      function_info.func_string_ = (*result_tiles)[0]
-                      ->GetValue(0, 3)
-                      .GetAs<std::string>();  // After projection left 1 column
+      function_info.func_string_ = (*result_tiles)[0]->GetValue(0, 3).ToString();  // After projection left 1 column
 
       function_info.func_is_present_ = true;
     }

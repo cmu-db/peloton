@@ -93,6 +93,11 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
               IndexConstraintType::DEFAULT, false, txn, true);
 
   CreateIndex(CATALOG_DATABASE_OID, FUNCTION_CATALOG_OID,
+              std::vector<std::string>({"function_oid"}),
+              FUNCTION_CATALOG_NAME "_pkey", IndexType::BWTREE,
+              IndexConstraintType::DEFAULT, true, txn, true);
+
+  CreateIndex(CATALOG_DATABASE_OID, FUNCTION_CATALOG_OID,
               std::vector<std::string>({"function_name"}),
               FUNCTION_CATALOG_NAME "_skey0", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
@@ -125,6 +130,12 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       std::vector<oid_t>({2}), pool_.get(), txn);
+
+/*   IndexCatalog::GetInstance()->InsertIndex(
+      FUNCTION_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
+      std::vector<oid_t>({0}), pool_.get(), txn); */
+
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
