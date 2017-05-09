@@ -179,7 +179,7 @@ void Query::PrepareParams(executor::ExecutorContext *exec_context) {
       case Parameter::ParamType::Param:
         PL_ASSERT(exec_context != nullptr);
         value = exec_context->GetParams().at(
-                params_[i].GetParamIdx());
+                params_[i].GetParamIdx()).CastAs(params_[i].GetValueType());
         StoreParam(Parameter::GetConstValParamInstance(value), i);
         break;
       default: {

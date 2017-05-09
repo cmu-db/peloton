@@ -31,13 +31,14 @@ class Parameter {
   };
 
   static Parameter GetConstValParamInstance(type::Value value) {
-    return Parameter{ParamType::Const, value, 0};
+    return Parameter{ParamType::Const, value, 0, value.GetTypeId()};
   }
 
-  static Parameter GetParamValParamInstance(int param_idx) {
+  static Parameter GetParamValParamInstance(int param_idx,
+                                            type::Type::TypeId type_id) {
     return Parameter{ParamType::Param,
                      type::ValueFactory::GetBooleanValue(false),
-                     param_idx};
+                     param_idx, type_id};
   }
 
 
@@ -49,21 +50,31 @@ class Parameter {
     return type_;
   }
 
+  type::Type::TypeId GetValueType() {
+    return type_id_;
+  }
+
   int GetParamIdx() {
     return param_idx_;
   }
 
  private:
   Parameter(ParamType type,
-            type::Value value, int param_idx)
+            type::Value value, int param_idx,
+            type::Type::TypeId type_id)
           : type_(type),
-            value_(value), param_idx_(param_idx) {}
+            value_(value),
+            type_id_(type_id),
+            param_idx_(param_idx) {}
 
  private:
   ParamType type_;
 
   // Field for CVE, trivial for PVE
   type::Value value_;
+
+  // Field for PVE, trival for CVE
+  type::Type::TypeId type_id_;
 
   // Field for PVE, trivial for CVE
   int param_idx_;

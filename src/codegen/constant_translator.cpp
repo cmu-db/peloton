@@ -33,7 +33,7 @@ ConstantTranslator::ConstantTranslator(
     case ExpressionType::VALUE_PARAMETER: {
       int param_idx =
             GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
-      offset_ = ctx.StoreParam(Parameter::GetParamValParamInstance(param_idx));
+      offset_ = ctx.StoreParam(Parameter::GetParamValParamInstance(param_idx, GetValueType()));
       break;
     }
     default: {
