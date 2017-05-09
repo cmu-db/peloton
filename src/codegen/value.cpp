@@ -195,12 +195,11 @@ Value Value::LogicalOr(CodeGen &codegen, const Value &o) const {
 
   return Value{GetType(), codegen->CreateOr(GetValue(), o.GetValue())};
 }
-// Is Null
+// Is Null and Is Not Null
 Value Value::IsNull(CodeGen &codegen, int nulltesttype ) const {
   Value isNull;
   codegen::Value null_val = Type::GetNullValue(codegen, GetType());
   if (nulltesttype == 0) {
-    LOG_INFO("In IsNull function isnull branch!");
     isNull = CompareEq(codegen, null_val);
   } else {
     isNull = CompareNe(codegen, null_val);
