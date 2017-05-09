@@ -38,11 +38,7 @@ namespace peloton {
       : AbstractCatalog(FUNCTION_CATALOG_OID, FUNCTION_CATALOG_NAME,
           InitializeSchema().release(), pg_catalog) {
      
-      //index created so we can query on name   
-  /*   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, FUNCTION_CATALOG_NAME,
-      {"function_name"}, FUNCTION_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn); */
+
       } 
 
     FunctionCatalog::~FunctionCatalog() {}
@@ -166,7 +162,7 @@ namespace peloton {
 
   LOG_DEBUG("GetFunction call to search for udf in pg_proc");
 
-  std::vector<oid_t> column_ids({1,16,17,22});
+  std::vector<oid_t> column_ids({1,3,16,17,20,22});
   oid_t index_offset = 1;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name,nullptr).Copy());
@@ -181,20 +177,25 @@ namespace peloton {
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       function_info.func_name_ = (*result_tiles)[0]->GetValue(0, 0).ToString();  // After projection left 1 column
 
+      function_info.language_id_ = (*result_tiles)[0]->GetValue(0, 1).GetAs<peloton::PLType>(); 
+
       function_info.return_type_ = (*result_tiles)[0]
-                      ->GetValue(0, 1)
+                      ->GetValue(0, 2)
                       .GetAs<type::Type::TypeId>();  // After projection left 1 colum
 
-      auto arg_types = (*result_tiles)[0]->GetValue(0, 2).ToString();  // After projection left 1 column
-
+      auto arg_types = (*result_tiles)[0]->GetValue(0, 3).ToString();  // After projection left 1 column
       std::vector<std::string> arg_types_split;
-
       boost::split(arg_types_split,arg_types, boost::is_any_of(" "));
-
       for(auto e : arg_types_split)
         function_info.argument_types_.push_back(static_cast<type::Type::TypeId>(std::stoi(e)));
       
-      function_info.func_string_ = (*result_tiles)[0]->GetValue(0, 3).ToString();  // After projection left 1 column
+      auto arg_names = (*result_tiles)[0]->GetValue(0, 4).ToString();  // After projection left 1 column
+      std::vector<std::string> arg_names_split;
+      boost::split(arg_names_split,arg_names, boost::is_any_of(" "));
+      for(auto e : arg_names_split)
+        function_info.argument_names_.push_back(e);
+
+      function_info.func_string_ = (*result_tiles)[0]->GetValue(0, 5).ToString();  // After projection left 1 column
 
       function_info.func_is_present_ = true;
     }
@@ -231,7 +232,6 @@ namespace peloton {
       auto val0 = type::ValueFactory::GetIntegerValue(oid);
       auto val1 = type::ValueFactory::GetVarcharValue(proname, nullptr);
       auto val2 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-      //auto val3 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
       auto val3 = type::ValueFactory::GetIntegerValue(prolang);
       auto val4 = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
       auto val5 = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
@@ -242,7 +242,6 @@ namespace peloton {
       auto val10 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val11 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val12 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
-      //auto val13 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       auto val13 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
       auto val14 = type::ValueFactory::GetIntegerValue(pronargs);
       auto val15 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
@@ -258,7 +257,6 @@ namespace peloton {
     
       auto val18 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
       auto val19 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-     // auto val21 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
      
       std::stringstream os2;
       for(auto param_name : proargnames){
@@ -326,7 +324,6 @@ oid_t FunctionCatalog::GetFunctionOid(const std::string &function_name,
   values.push_back(
       type::ValueFactory::GetVarcharValue(function_name, nullptr).Copy());
 
- // auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   auto result_tiles =
     GetResultWithIndexScan(column_ids, index_offset, values, txn);
