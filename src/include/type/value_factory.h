@@ -94,7 +94,9 @@ class ValueFactory {
       const std::string &value, UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(Type::VARBINARY, value);
   }
-
+  static inline Value GetArrayValue(std::vector<Value> value) {
+    return Value(Type::ARRAY, value, value[0].GetTypeId());
+  }
   static inline Value GetVarbinaryValue(
       const unsigned char *rawBuf, int32_t rawLength, bool manage_data,
       UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
