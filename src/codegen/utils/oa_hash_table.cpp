@@ -264,7 +264,7 @@ void OAHashTable::Insert(uint64_t hash, const char *k, const char *v) {
     // If entry isn't free, check hash first
     if (entry->hash == hash) {
       // Hashes match, check key
-      if (memcmp(entry->data, k, key_size_)) {
+      if (!memcmp(entry->data, k, key_size_)) {
         // data points to the value place only
         char *data = StoreTuple(entry, hash);
         memcpy(data, v, value_size_);
