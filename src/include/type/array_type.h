@@ -60,8 +60,14 @@ class ArrayType : public Type {
                    AbstractPool *pool UNUSED_ATTRIBUTE) const override {
     throw Exception("Can't serialize array types to storage");
   }
+  // Access the raw variable length data
+  const char *GetData(const Value &val) const {
+    return val.value_.array;
+  }
 
-  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override { return ValueFactory::GetNullValueByType(type_id_); }
+  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
+    return ValueFactory::GetArrayValue(*(std::vector<type::Value>*)GetData(val));
+  }
 
 };
 

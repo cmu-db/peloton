@@ -428,7 +428,6 @@ type::Value PostgresParser::GetValue(value val) {
 // This function takes in a Posgres A_Const parsenode and transfers it into
 // a Peloton constant value expression.
 expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
-      LOG_ERROR("    type: %d", (root->val.type));
   return ValueTransform(root->val);
 }
 
@@ -729,7 +728,6 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
   if (root == nullptr) {
     return nullptr;
   }
-  LOG_DEBUG("list length: %d.", root->length);
   std::vector<type::Value> vector_;
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     vector_.push_back(GetValue(((A_Const*)(cell->data.ptr_value))->val));
