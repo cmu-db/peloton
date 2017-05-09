@@ -18,14 +18,14 @@ using arg_tuple=std::tuple<std::string, arg_type>;
 
 class UDF_Stmt {
  public:
-  virtual arg_value Execute(std::vector<arg_value>)=0;
+  virtual arg_value Execute(std::vector<arg_value>, std::vector<std::string>)=0;
 };
 
 class UDF_SQL_Expr final: UDF_Stmt {
  public:
   UDF_SQL_Expr(std::string query, int dtype = 0):query_(query), dtype_(dtype)
   {}
-  arg_value Execute(std::vector<arg_value>);
+  arg_value Execute(std::vector<arg_value>, std::vector<std::string>);
   static tcop::TrafficCop traffic_cop_;
  private:
   std::string query_;

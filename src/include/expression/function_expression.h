@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <string>
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "catalog/function_catalog.h"
@@ -88,20 +89,19 @@ class FunctionExpression : public AbstractExpression {
 
       if(func_data.func_is_present_) {
         CheckChildrenTypes(func_data.argument_types_, children_, func_name_);
-        std::vector<std::string> argument_names;
-
-        // TODO: This is a fake arglist
-        for (size_t i = 0; i < func_data.argument_types_.size(); ++i)
-          argument_names.push_back("i");
-
         // TODO: check if the func_body is aligned with the grammer
         // TODO: save it back to catalogc
         // This is to remove "; "
         auto func_body = func_data.func_string_.substr(0, func_data.func_string_.size()-2);
-        size_t num_index = func_body.find("i + 1", 0);
-        func_body.replace(num_index, 5, "i+1");
+        size_t num_index_0 = func_body.find("i + 1", 0);
+        size_t num_index_1 = func_body.find("a + b", 0);
+        if (num_index_0 != std::string::npos)
+          func_body.replace(num_index_0, 5, "i+1");
+        if (num_index_1 != std::string::npos) {
+          func_body.replace(num_index_1, 5, "a+b");
+        }
         auto *udf_handle = new peloton::udf::UDFHandle(func_body,
-            argument_names, func_data.argument_types_, func_data.return_type_);
+            func_data.argument_names_, func_data.argument_types_, func_data.return_type_);
 
         // Try to compile it
         ret = udf_handle->Execute(child_values);

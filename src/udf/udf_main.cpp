@@ -22,7 +22,7 @@ bool UDFHandle::Compile() {
 
 arg_value UDFHandle::Execute(std::vector<arg_value> values) {
   Compile();
-  return stmt_.get()->Execute(values);
+  return stmt_.get()->Execute(values, args_name_);
 }
 
 }  // namespace udf

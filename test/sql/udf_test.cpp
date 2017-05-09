@@ -173,7 +173,8 @@ TEST_F(UDFTests, AddTwoValues) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
 
-  EXPECT_EQ('11', result[0].second[0]);
+  EXPECT_EQ('1', result[0].second[0]);
+  EXPECT_EQ('1', result[0].second[1]);
 
   TestingSQLUtil::ExecuteSQLQuery("DELETE from pg_catalog.pg_proc where function_name = 'add' ");
 
@@ -183,8 +184,6 @@ TEST_F(UDFTests, AddTwoValues) {
   txn_manager.CommitTransaction(txn);
 
 }
-
-/*
 
 TEST_F(UDFTests, TableInvocationTest2) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -202,6 +201,8 @@ TEST_F(UDFTests, TableInvocationTest2) {
   std::string error_message;
   int rows_affected;
 
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b; END; $$ LANGUAGE plpgsql;");
+
   TestingSQLUtil::ExecuteSQLQuery("SELECT add(a, b) from test;", result, tuple_descriptor,rows_affected, error_message);
 
   EXPECT_EQ('1', result[0].second[0]);
@@ -213,7 +214,6 @@ TEST_F(UDFTests, TableInvocationTest2) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-*/
 
 
 }  // namespace test
