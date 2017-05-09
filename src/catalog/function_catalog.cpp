@@ -186,14 +186,19 @@ namespace peloton {
       auto arg_types = (*result_tiles)[0]->GetValue(0, 3).ToString();  // After projection left 1 column
       std::vector<std::string> arg_types_split;
       boost::split(arg_types_split,arg_types, boost::is_any_of(" "));
-      for(auto e : arg_types_split)
-        function_info.argument_types_.push_back(static_cast<type::Type::TypeId>(std::stoi(e)));
+      
+      for(auto e : arg_types_split){
+        if(e.size() != 0)
+          function_info.argument_types_.push_back(static_cast<type::Type::TypeId>(std::stoi(e)));
+      }
       
       auto arg_names = (*result_tiles)[0]->GetValue(0, 4).ToString();  // After projection left 1 column
       std::vector<std::string> arg_names_split;
       boost::split(arg_names_split,arg_names, boost::is_any_of(" "));
-      for(auto e : arg_names_split)
-        function_info.argument_names_.push_back(e);
+      for(auto e : arg_names_split){
+        if(e.size() != 0)
+          function_info.argument_names_.push_back(e);
+      }
 
       function_info.func_string_ = (*result_tiles)[0]->GetValue(0, 5).ToString();  // After projection left 1 column
 
