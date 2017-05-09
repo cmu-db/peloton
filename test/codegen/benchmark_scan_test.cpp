@@ -219,7 +219,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   }
 
  private:
-  uint32_t num_rows_to_insert = 10000;
+  uint32_t num_rows_to_insert = 1000000;
 };
 
 void PrintName(std::string test_name) {
@@ -294,6 +294,7 @@ TEST_F(BenchmarkScanTest, PredicateComplexityTestWithInterpretation) {
  PrintName("SCAN_COMPLEXITY: INTERPRETATION");
  for (ScanComplexity complexity : complexities) {
    TestConfig config;
+   config.selectivity = 0.5;
    config.scan_complexity = complexity;
 
    auto stats = RunInterpretedExperiment(config);
