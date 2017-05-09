@@ -114,13 +114,7 @@ bool DeleteExecutor::DExecute() {
 
 
     // check whether there are per-row-before-delete triggers on this table using trigger catalog
-    oid_t database_oid = target_table_->GetDatabaseOid();
-    LOG_INFO("database_oid = %d", database_oid);
-    LOG_INFO("table name=%s", target_table_->GetName().c_str());
-    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table_->GetName(), database_oid, current_txn);
-    LOG_INFO("table_oid = %d", table_oid);
-    commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
-                            static_cast<peloton::commands::EnumTriggerType>(TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_DELETE), current_txn);
+    commands::TriggerList* trigger_list = target_table_->GetTriggerList();
     LOG_INFO("reach here safely");
     if (trigger_list == nullptr) {
       LOG_INFO("nullptr");
