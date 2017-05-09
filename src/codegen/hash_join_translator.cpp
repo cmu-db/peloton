@@ -151,14 +151,12 @@ void HashJoinTranslator::Produce() const {
   // Let the left child produce tuples which we materialize into the hash-table
   GetCompilationContext().Produce(*join_.GetChild(0));
 
-  // multithread: register local hash tables
+  // Merge to the global hash table
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
   codegen.CallFunc(MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(codegen), {multi_thread_context, LoadStatePtr(global_hash_table_id_), local_ht_ptr});
 
-  // wait for global hash table constructions
-  codegen.CallPrintf("Hash: barrier wait \n", {});
+  // Wait for global hash table constructions
   codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
-  codegen.CallPrintf("Hash: barrier pass \n", {});
 
   // Let the right child produce tuples, which we use to probe the hash table
   GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
