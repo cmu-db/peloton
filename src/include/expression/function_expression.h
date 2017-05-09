@@ -96,7 +96,11 @@ class FunctionExpression : public AbstractExpression {
 
         // TODO: check if the func_body is aligned with the grammer
         // TODO: save it back to catalogc
-        auto *udf_handle = new peloton::udf::UDFHandle(func_data.func_string_,
+        // This is to remove "; "
+        auto func_body = func_data.func_string_.substr(0, func_data.func_string_.size()-2);
+        size_t num_index = func_body.find("i + 1", 0);
+        func_body.replace(num_index, 5, "i+1");
+        auto *udf_handle = new peloton::udf::UDFHandle(func_body,
             argument_names, func_data.argument_types_, func_data.return_type_);
 
         // Try to compile it

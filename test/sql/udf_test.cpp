@@ -71,9 +71,29 @@ TEST_F(UDFTests, PLPGSQLInvocationTest){
   int rows_affected;
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT increment(5);", result, tuple_descriptor,rows_affected, error_message);
-  
+
+  EXPECT_EQ('6', result[0].second[0]);
 
 }
+
+TEST_F(UDFTests, TABLE) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b double);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (0, 1);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 2);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 3);");
+  TestingSQLUtil::ExecuteSQLQuery("SELECT a + 1 from test;");
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 
 
 }  // namespace test
