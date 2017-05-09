@@ -69,7 +69,11 @@
      K_RETURN = 258,
      K_BEGIN = 259,
      K_END = 260,
-     FUNC_BODY = 261
+     FUNC_BODY = 261,
+     K_IF = 262,
+     K_THEN = 263,
+     K_ELSE = 264,
+     K_SEMICOLON = 265
    };
 #endif
 /* Tokens.  */
@@ -77,6 +81,10 @@
 #define K_BEGIN 259
 #define K_END 260
 #define FUNC_BODY 261
+#define K_IF 262
+#define K_THEN 263
+#define K_ELSE 264
+#define K_SEMICOLON 265
 
 
 
@@ -93,18 +101,18 @@
 
 #include <stdio.h>
 #include <string>
-#include <include/udf/udf.h>
-#include <include/udf/udf_helper.h>
+#include "udf/udf.h"
+#include "udf/udf_helper.h"
 
-# ifndef YYFPRINTF
-#  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
-#  define YYFPRINTF fprintf
-# endif
 
-namespace peloton {
-namespace udf {
+namespace peloton{
+namespace udf{
 
-extern int yylex();
+static UDF_SQL_Expr *make_return_stmt(const char *);
+static UDF_IFELSE_Stmt *make_ifelse_stmt(const char *, const char *, const char *);
+void yyerror(std::string);
+int yylex(void);
+
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -126,13 +134,16 @@ extern int yylex();
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 18 "udf_gram.y"
+#line 25 "udf_gram.y"
 {
   char  *keyword;
   class UDF_Stmt *udf;
+  class UDF_SQL_Expr *udf_sql_expr;
+  class UDF_IFELSE_Stmt *udf_ifelse_stmt;
+
 }
 /* Line 193 of yacc.c.  */
-#line 129 "udf_gram.tab.c"
+#line 147 "udf_gram.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -145,7 +156,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 142 "udf_gram.tab.c"
+#line 160 "udf_gram.tab.c"
 
 #ifdef short
 # undef short
@@ -301,10 +312,6 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #endif /* ! defined yyoverflow || YYERROR_VERBOSE */
 
 
-static UDF_SQL_Expr *make_return_stmt(const char *);
-void yyerror(std::string);
-
-
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
 	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
@@ -362,22 +369,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  7
+#define YYFINAL  9
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   4
+#define YYLAST   15
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  7
+#define YYNTOKENS  11
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  5
+#define YYNNTS  6
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  5
+#define YYNRULES  7
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  10
+#define YYNSTATES  19
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   261
+#define YYMAXUTOK   265
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -411,7 +418,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6
+       5,     6,     7,     8,     9,    10
 };
 
 #if YYDEBUG
@@ -419,20 +426,21 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     5,     9,    11
+       0,     0,     3,     5,     9,    11,    13,    22
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-       8,     0,    -1,     9,    -1,     4,    10,     5,    -1,    11,
-      -1,     3,     6,    -1
+      12,     0,    -1,    13,    -1,     4,    14,     5,    -1,    16,
+      -1,    15,    -1,     7,     6,     8,    16,     9,    16,     5,
+       7,    -1,     3,     6,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    30,    30,    37,    44,    51
+       0,    42,    42,    49,    56,    61,    68,    77
 };
 #endif
 
@@ -442,8 +450,8 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "K_RETURN", "K_BEGIN", "K_END",
-  "FUNC_BODY", "$accept", "pl_function", "pl_block", "proc_stmt",
-  "stmt_return", 0
+  "FUNC_BODY", "K_IF", "K_THEN", "K_ELSE", "K_SEMICOLON", "$accept",
+  "pl_function", "pl_block", "proc_stmt", "ifelse_stmt", "stmt_return", 0
 };
 #endif
 
@@ -452,20 +460,21 @@ static const char *const yytname[] =
    token YYLEX-NUM.  */
 static const yytype_uint16 yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,     7,     8,     9,    10,    11
+       0,    11,    12,    13,    14,    14,    15,    16
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     3,     1,     2
+       0,     2,     1,     3,     1,     1,     8,     2
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -473,27 +482,29 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     2,     0,     0,     4,     1,     5,     3
+       0,     0,     0,     2,     0,     0,     0,     5,     4,     1,
+       7,     0,     3,     0,     0,     0,     0,     0,     6
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     2,     3,     5,     6
+      -1,     2,     3,     6,     7,     8
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -5
+#define YYPACT_NINF -13
 static const yytype_int8 yypact[] =
 {
-      -4,    -2,     2,    -5,    -3,    -1,    -5,    -5,    -5,    -5
+      -2,    -3,     5,   -13,     0,     1,     3,   -13,   -13,   -13,
+     -13,     2,   -13,     6,     4,     6,     7,     8,   -13
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-      -5,    -5,    -5,    -5,    -5
+     -13,   -13,   -13,   -13,   -13,   -12
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -503,19 +514,22 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-       1,     4,     7,     8,     9
+       4,    14,     1,    16,     5,     9,    10,    11,    12,     4,
+      13,     0,    17,    15,     0,    18
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int8 yycheck[] =
 {
-       4,     3,     0,     6,     5
+       3,    13,     4,    15,     7,     0,     6,     6,     5,     3,
+       8,    -1,     5,     9,    -1,     7
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     4,     8,     9,     3,    10,    11,     0,     6,     5
+       0,     4,    12,    13,     3,     7,    14,    15,    16,     0,
+       6,     6,     5,     8,    16,     9,    16,     5,     7
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -611,6 +625,10 @@ while (YYID (0))
 /* Enable debugging if requested.  */
 #if YYDEBUG
 
+# ifndef YYFPRINTF
+#  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYFPRINTF fprintf
+# endif
 
 # define YYDPRINTF(Args)			\
 do {						\
@@ -1326,7 +1344,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 31 "udf_gram.y"
+#line 43 "udf_gram.y"
     {
             printf("pl_func\n");
 						udf_parsed_result = (yyvsp[(1) - (1)].udf);
@@ -1334,7 +1352,7 @@ yyreduce:
     break;
 
   case 3:
-#line 38 "udf_gram.y"
+#line 50 "udf_gram.y"
     {
             printf("pl_block\n");
 						(yyval.udf) = (yyvsp[(2) - (3)].udf);
@@ -1342,24 +1360,44 @@ yyreduce:
     break;
 
   case 4:
-#line 45 "udf_gram.y"
+#line 57 "udf_gram.y"
     {
-              printf("proc_stmt\n");
-              (yyval.udf) = (yyvsp[(1) - (1)].udf);
+              printf("proc_stmt: return \n");
+              (yyval.udf) = (UDF_Stmt*)(yyvsp[(1) - (1)].udf_sql_expr);
             ;}
     break;
 
   case 5:
-#line 52 "udf_gram.y"
+#line 62 "udf_gram.y"
+    {
+              printf("proc_stmt: ifelse \n");
+              (yyval.udf) = (UDF_Stmt*)(yyvsp[(1) - (1)].udf_ifelse_stmt);
+            ;}
+    break;
+
+  case 6:
+#line 69 "udf_gram.y"
+    {
+              printf("if else statement\n");
+              std::string str = (yyvsp[(2) - (8)].keyword);
+              size_t then_pos = str.find("THEN");
+              printf("if else statement %s\n", str.substr(0, then_pos).c_str());
+						  (yyval.udf_ifelse_stmt) = make_ifelse_stmt(str.substr(0, then_pos).c_str(), (yyvsp[(4) - (8)].udf_sql_expr)->query_.c_str(), (yyvsp[(6) - (8)].udf_sql_expr)->query_.c_str());
+             ;}
+    break;
+
+  case 7:
+#line 78 "udf_gram.y"
     {
             printf("stmt_return\n");
-						(yyval.udf) = (UDF_Stmt*)make_return_stmt((const char *)(yyvsp[(2) - (2)].keyword));
+            printf("stmt_return %s\n", (yyvsp[(2) - (2)].keyword));
+						(yyval.udf_sql_expr) = make_return_stmt((const char *)(yyvsp[(2) - (2)].keyword));
 					;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1356 "udf_gram.tab.c"
+#line 1401 "udf_gram.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1573,7 +1611,7 @@ yyreturn:
 }
 
 
-#line 58 "udf_gram.y"
+#line 85 "udf_gram.y"
 
 
 /* Convenience routine to read an expression with one possible terminator */
@@ -1636,7 +1674,14 @@ static UDF_SQL_Expr *
 make_return_stmt(const char *func_body)
 {
 	UDF_SQL_Expr	*expr = new UDF_SQL_Expr(func_body);
-	return (UDF_SQL_Expr *) expr;
+	return expr;
+}
+
+static UDF_IFELSE_Stmt *
+make_ifelse_stmt(const char *if_expr, const char *func_body0, const char *func_body1)
+{
+	UDF_IFELSE_Stmt	*expr = new UDF_IFELSE_Stmt(if_expr, func_body0, func_body1);
+	return expr;
 }
 
 void yyerror(std::string s) {
@@ -1645,3 +1690,4 @@ void yyerror(std::string s) {
 
 }
 }
+

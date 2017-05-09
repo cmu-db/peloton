@@ -69,7 +69,7 @@ TEST_F(UDFTests, PLPGSQLTest) {
   int rows_affected;
 
   // Insert UDF
-  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1; END; $$ LANGUAGE plpgsql;");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1; END $$ LANGUAGE plpgsql;");
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT function_name from pg_catalog.pg_proc", result,
                                   tuple_descriptor, rows_affected,
@@ -102,7 +102,7 @@ TEST_F(UDFTests, PLPGSQLInvocationTest){
   int rows_affected;
 
   //Insert the UDF
-  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1; END; $$ LANGUAGE plpgsql;");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1 END $$ LANGUAGE plpgsql;");
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT increment(5);", result, tuple_descriptor,rows_affected, error_message);
 
@@ -131,7 +131,7 @@ TEST_F(UDFTests, TableInvocationTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 3);");
 
   //Insert the UDF
-  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1; END; $$ LANGUAGE plpgsql;");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$ BEGIN RETURN i + 1 END $$ LANGUAGE plpgsql;");
 
 
   std::vector<StatementResult> result;
@@ -167,7 +167,7 @@ TEST_F(UDFTests, AddTwoValues) {
   std::string error_message;
   int rows_affected;
 
-  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b; END; $$ LANGUAGE plpgsql;");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b END $$ LANGUAGE plpgsql;");
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT add(5,6);", result,
                                   tuple_descriptor, rows_affected,
@@ -201,13 +201,45 @@ TEST_F(UDFTests, TableInvocationTest2) {
   std::string error_message;
   int rows_affected;
 
-  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b; END; $$ LANGUAGE plpgsql;");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b END $$ LANGUAGE plpgsql;");
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT add(a, b) from test;", result, tuple_descriptor,rows_affected, error_message);
 
   EXPECT_EQ('1', result[0].second[0]);
   EXPECT_EQ('3', result[1].second[0]);
   EXPECT_EQ('5', result[2].second[0]);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(UDFTests, TableInvocationTest3) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (0, 1);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 2);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 3);");
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION ifelse(a integer) RETURNS integer AS $$ BEGIN IF a%2=0 THEN RETURN a ELSE RETURN -a END IF END $$ LANGUAGE plpgsql;");
+  
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT ifelse(a) from test;", result, tuple_descriptor,rows_affected, error_message);
+
+  EXPECT_EQ('0', result[0].second[0]);
+  EXPECT_EQ('-', result[1].second[0]);
+  EXPECT_EQ('1', result[1].second[1]);
+  EXPECT_EQ('2', result[2].second[0]);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

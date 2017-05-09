@@ -33,9 +33,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-namespace peloton {
-namespace udf {
-
+namespace peloton{
+namespace udf{
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -46,7 +45,11 @@ namespace udf {
      K_RETURN = 258,
      K_BEGIN = 259,
      K_END = 260,
-     FUNC_BODY = 261
+     FUNC_BODY = 261,
+     K_IF = 262,
+     K_THEN = 263,
+     K_ELSE = 264,
+     K_SEMICOLON = 265
    };
 #endif
 /* Tokens.  */
@@ -54,19 +57,26 @@ namespace udf {
 #define K_BEGIN 259
 #define K_END 260
 #define FUNC_BODY 261
+#define K_IF 262
+#define K_THEN 263
+#define K_ELSE 264
+#define K_SEMICOLON 265
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 18 "udf_gram.y"
+#line 25 "udf_gram.y"
 {
   char  *keyword;
   class UDF_Stmt *udf;
+  class UDF_SQL_Expr *udf_sql_expr;
+  class UDF_IFELSE_Stmt *udf_ifelse_stmt;
+
 }
 /* Line 1529 of yacc.c.  */
-#line 66 "udf_gram.tab.h"
+#line 77 "udf_gram.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

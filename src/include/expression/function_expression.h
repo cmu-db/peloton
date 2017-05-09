@@ -92,7 +92,8 @@ class FunctionExpression : public AbstractExpression {
         // TODO: check if the func_body is aligned with the grammer
         // TODO: save it back to catalogc
         // This is to remove "; "
-        auto func_body = func_data.func_string_.substr(0, func_data.func_string_.size()-2);
+        //auto func_body = func_data.func_string_.substr(0, func_data.func_string_.size()-2);
+        auto func_body = func_data.func_string_;
         size_t num_index_0 = func_body.find("i + 1", 0);
         size_t num_index_1 = func_body.find("a + b", 0);
         if (num_index_0 != std::string::npos)

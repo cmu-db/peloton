@@ -27,8 +27,19 @@ class UDF_SQL_Expr final: UDF_Stmt {
   {}
   arg_value Execute(std::vector<arg_value>, std::vector<std::string>);
   static tcop::TrafficCop traffic_cop_;
- private:
   std::string query_;
+ private:
+  int dtype_;
+};
+
+class UDF_IFELSE_Stmt final: UDF_Stmt {
+ public:
+  UDF_IFELSE_Stmt(std::string cond, std::string query1,std::string query2 = "", int dtype = 0):cond_exp_{cond}, true_exp_{query1}, false_exp_{query2}, dtype_(dtype) {}
+  arg_value Execute(std::vector<arg_value>, std::vector<std::string>);
+ private:
+  UDF_SQL_Expr cond_exp_;
+  UDF_SQL_Expr true_exp_;
+  UDF_SQL_Expr false_exp_;
   int dtype_;
 };
 
