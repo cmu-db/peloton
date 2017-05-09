@@ -14,7 +14,6 @@
 #include <string>
 #include <unordered_set>
 #include <include/parser/pg_list.h>
-
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
 #include "expression/comparison_expression.h"
@@ -29,6 +28,7 @@
 #include "parser/postgresparser.h"
 #include "type/types.h"
 #include "type/value_factory.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace parser {
@@ -391,7 +391,40 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   }
   return result;
 }
+type::Value PostgresParser::GetValue(value val) {
+  type::Value result;
+  switch (val.type) {
+    case T_Integer: {
+      LOG_DEBUG("T_Integer\n");
+      result = type::ValueFactory::GetIntegerValue((int32_t) val.val.ival);
+      break;
+    }
+    case T_String: {
+      LOG_DEBUG("T_String\n");
 
+      result = type::ValueFactory::GetVarcharValue(std::string(val.val.str));
+      break;
+    }
+    case T_Float: {
+      LOG_DEBUG("T_Float\n");
+
+      result = type::ValueFactory::GetDecimalValue(
+              std::stod(std::string(val.val.str)));
+      break;
+    }
+    case T_Null: {
+      LOG_DEBUG("T_Null\n");
+
+      result = type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER);
+      break;
+    }
+
+    default:
+      throw NotImplementedException(StringUtil::Format(
+          "Value type %d not supported yet...\n", val.type));
+  }
+  return result;
+}
 // This function takes in a Posgres A_Const parsenode and transfers it into
 // a Peloton constant value expression.
 expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
@@ -697,13 +730,14 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
     return nullptr;
   }
   LOG_DEBUG("list length: %d.", root->length);
-  expression::AbstractExpression* result = nullptr;
-
+  std::vector<type::Value> vector_;
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    ValueTransform(((A_Const*)(cell->data.ptr_value))->val);
+    vector_.push_back(GetValue(((A_Const*)(cell->data.ptr_value))->val));
   }
-
+  type::Value value = type::ValueFactory::GetArrayValue(vector_);
+  expression::AbstractExpression* result = new expression::ConstantValueExpression(value);
   return result;
+
 }
 
 // This function takes in the whereClause part of a Postgres SelectStmt
