@@ -12,8 +12,11 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/barrier.h"
+#include "codegen/codegen.h"
+#include "codegen/utils/oa_hash_table.h"
+
+#include <atomic>
 
 namespace peloton {
 namespace codegen {
@@ -37,13 +40,7 @@ class MultiThreadContext {
 
   void NotifyMaster();
 
-  void AddLocalHashTable(utils::OAHashTable *hash_table);
-
-  utils::OAHashTable* GetLocalHashTable(int32_t idx);
-
-  void MergeToGlobalHashTable(utils::OAHashTable *local_ht);
-
-  utils::OAHashTable* GetGlobalHashTable();
+  void MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht);
 
   ~MultiThreadContext()
   {

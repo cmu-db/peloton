@@ -67,7 +67,7 @@ class OAHashTableTest : public PelotonTest {
   }
 
   inline void Insert(Key k, Value v, codegen::utils::OAHashTable &hash_table) {
-    hash_table.Insert(Hash(k), k, v);
+    hash_table.Insert(Hash(k), reinterpret_cast<char *>(&k), reinterpret_cast<char *>(&v));
   }
 
   inline void Reset() {

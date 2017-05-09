@@ -133,13 +133,11 @@ class HashJoinTranslator : public OperatorTranslator {
   Pipeline left_pipeline_;
 
   // The ID of the hash-table in the runtime state
-  RuntimeState::StateID hash_table_id_;
+  RuntimeState::StateID global_hash_table_id_;
+  RuntimeState::StateID local_hash_table_id_;
 
   // The hash table we use to perform the join
   OAHashTable hash_table_;
-
-  // The global hash table
-  llvm::Value *global_hash_table_;
 
   // The left and right hash key expressions
   std::vector<const expression::AbstractExpression *> left_key_exprs_;

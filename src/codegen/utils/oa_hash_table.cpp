@@ -244,6 +244,41 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
   return StoreToKeyValueList(&entry->kv_list);
 }
 
+void OAHashTable::Insert(uint64_t hash, const char *k, const char *v) {
+  uint64_t bucket = hash & bucket_mask_;
+
+  uint64_t entry_int =
+      reinterpret_cast<uint64_t>(buckets_) + bucket * entry_size_;
+  while (true) {
+    HashEntry *entry = reinterpret_cast<HashEntry *>(entry_int);
+
+    // If entry is free, dump key and value
+    if (entry->IsFree()) {
+      // data points to key and data storage area
+      char *data = StoreTuple(entry, hash);
+      memcpy(data, k, key_size_);
+      memcpy(data + key_size_, v, value_size_);
+      return;
+    }
+
+    // If entry isn't free, check hash first
+    if (entry->hash == hash) {
+      // Hashes match, check key
+      if (memcmp(entry->data, k, key_size_)) {
+        // data points to the value place only
+        char *data = StoreTuple(entry, hash);
+        memcpy(data, v, value_size_);
+        return;
+      }
+    }
+
+    // Continue
+    bucket = (bucket == num_buckets_) ? 0 : bucket + 1;
+    entry_int = (bucket == num_buckets_) ? reinterpret_cast<uint64_t>(buckets_)
+                                         : entry_int + entry_size_;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Merge another hash table into this hash table.
 //===----------------------------------------------------------------------===//
