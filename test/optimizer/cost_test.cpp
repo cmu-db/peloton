@@ -105,6 +105,18 @@ TEST_F(CostTests, ScanCostTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(CostTests, ConjunctionTest) {
+  std::shared_ptr<TableStats> lhs(new TableStats{8080});
+  std::shared_ptr<TableStats> rhs(new TableStats{3695});
+  std::shared_ptr<TableStats> output(new TableStats{});
+  int n_rows = 200000;
+  Cost::CombineConjunctionStats(lhs, rhs, n_rows, ExpressionType::CONJUNCTION_AND, output);
+  EXPECT_GE(output->num_rows, 149);
+  EXPECT_LE(output->num_rows, 150);
+  Cost::CombineConjunctionStats(lhs, rhs, n_rows, ExpressionType::CONJUNCTION_OR, output);
+  EXPECT_GE(output->num_rows, 11625);
+  EXPECT_LE(output->num_rows, 11626);
+}
+
 } /* namespace test */
 } /* namespace peloton */
-

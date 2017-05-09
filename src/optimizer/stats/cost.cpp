@@ -55,21 +55,25 @@ double Cost::SingleConditionIndexScanCost(
 void Cost::CombineConjunctionStats(
   const std::shared_ptr<TableStats>& lhs,
   const std::shared_ptr<TableStats>& rhs,
-  ExpressionType type,
+  const size_t num_rows, const ExpressionType type,
   std::shared_ptr<TableStats>& output_stats) {
 
   PL_ASSERT(lhs != nullptr);
   PL_ASSERT(rhs != nullptr);
+  PL_ASSERT(num_rows > 0);
 
   size_t num_tuples = 1;
+  double sel1 = lhs->num_rows / static_cast<double>(num_rows);
+  double sel2 = rhs->num_rows / static_cast<double>(num_rows);
+  LOG_TRACE("Conjunction sel1[%f] sel2[%f]", sel1, sel2);
   switch (type) {
     case ExpressionType::CONJUNCTION_AND:
-      // Minimum of two stats rows, overestimation.
-      num_tuples = std::min(lhs->num_rows, rhs->num_rows);
+      // (sel1 * sel2) * num_rows
+      num_tuples = static_cast<size_t>(num_rows * sel1 * sel2);
       break;
     case ExpressionType::CONJUNCTION_OR:
-      // Maximum of two stats rows, underestimation.
-      num_tuples = std::max(lhs->num_rows, rhs->num_rows);
+      // (sel1 + sel2 - sel1 * sel2) * num_rows
+      num_tuples = static_cast<size_t>((sel1 + sel2 - sel1 * sel2) * num_rows);
       break;
     default:
       LOG_TRACE("Cost model conjunction on expression type %d not supported", type);
@@ -203,4 +207,3 @@ size_t Cost::GetEstimatedGroupByRows(
 
 } /* namespace optimizer */
 } /* namespace peloton */
-

@@ -73,7 +73,7 @@ public:
   static void CombineConjunctionStats(
     const std::shared_ptr<TableStats>& lhs,
     const std::shared_ptr<TableStats>& rhs,
-    ExpressionType type,
+    const size_t num_rows, const ExpressionType type,
     std::shared_ptr<TableStats>& output_stats);
 
   /*
@@ -163,4 +163,3 @@ public:
 
 } /* namespace optimizer */
 } /* namespace peloton */
-
