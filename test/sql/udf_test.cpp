@@ -169,12 +169,11 @@ TEST_F(UDFTests, AddTwoValues) {
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE OR REPLACE FUNCTION add(a integer, b integer) RETURNS integer AS $$ BEGIN RETURN a + b; END; $$ LANGUAGE plpgsql;");
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT function_name from pg_catalog.pg_proc", result,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT add(5,6);", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
 
-  TestingSQLUtil::ShowTable("pg_catalog","pg_proc");
-  // LOG_DEBUG("Statement executed. Result: %s", ResultTypeToString(status).c_str());
+  EXPECT_EQ('11', result[0].second[0]);
 
   TestingSQLUtil::ExecuteSQLQuery("DELETE from pg_catalog.pg_proc where function_name = 'add' ");
 
