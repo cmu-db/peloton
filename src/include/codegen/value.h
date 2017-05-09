@@ -87,6 +87,7 @@ class Value {
                      const OnError on_error = OnError::Exception) const;
   codegen::Value Min(CodeGen &codegen, const codegen::Value &o) const;
   codegen::Value Max(CodeGen &codegen, const codegen::Value &o) const;
+  codegen::Value IsNull(CodeGen &codegen, int nulltesttype) const;
 
   //===--------------------------------------------------------------------===//
   // Logical/Boolean functions
