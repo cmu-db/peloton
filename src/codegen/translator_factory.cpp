@@ -134,7 +134,8 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::OPERATOR_MINUS:
     case ExpressionType::OPERATOR_MULTIPLY:
     case ExpressionType::OPERATOR_DIVIDE:
-    case ExpressionType::OPERATOR_MOD: {
+    case ExpressionType::OPERATOR_MOD:
+    case ExpressionType::OPERATOR_IS_NULL:{
       auto &arithmetic_exp =
           static_cast<const expression::OperatorExpression &>(exp);
       translator = new ArithmeticTranslator(arithmetic_exp, context);

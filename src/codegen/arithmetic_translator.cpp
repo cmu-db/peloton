@@ -43,6 +43,13 @@ codegen::Value ArithmeticTranslator::DeriveValue(CodeGen &codegen,
       return left.Div(codegen, right);
     case ExpressionType::OPERATOR_MOD:
       return left.Mod(codegen, right);
+    case ExpressionType::OPERATOR_IS_NULL:
+      if (arithmetic.get_nulltesttype() == NullTestType::IS_NULL) {
+        LOG_INFO("In is null branch!");
+        return left.IsNull(codegen, 0);
+      } else {
+        return left.IsNull(codegen, 1);
+      }
     default: {
       throw Exception(
           "Arithmetic expression has invalid type for translation: " +

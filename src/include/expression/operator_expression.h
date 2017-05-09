@@ -87,7 +87,9 @@ class OperatorExpression : public AbstractExpression {
         throw Exception("Invalid operator expression type.");
     }
   }
-
+  NullTestType get_nulltesttype() const {
+    return this->nulltesttype_;
+  }
   void DeduceExpressionType() {
     // if we are a decimal or int we should take the highest type id of both
     // children
