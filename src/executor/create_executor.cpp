@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
+#include "type/types.h"
 
 #include <vector>
 
@@ -58,8 +59,22 @@ bool CreateExecutor::DExecute() {
       if (node.GetForeignKeys() != nullptr) {
         auto table = catalog::Catalog::GetInstance()->GetDatabaseWithName(database_name)
                     ->GetTableWithName(table_name);
+        int count = 1;
         for (auto &fk : *(node.GetForeignKeys())) {
           table->AddForeignKey(new catalog::ForeignKey(fk));
+
+          // Add a non-unique index on the source table if needed
+          if (fk->fk_update_action != FKConstrActionType.NOACTION ||
+              fk->fk_delete_action != FKConstrActionType.NOACTION) {
+            std::vector<std::string> source_col_names = fk->fk_column_names;
+            std::string index_name = table_name + "_FK_" + std::to_string(count);
+            catalog::Catalog::GetInstance()->CreateIndex(database_name,
+                table_name, source_col_names, index_name,
+                false, IndexType::BWTREE, current_txn);
+            LOG_DEBUG("Added a FOREIGN index on %s in %s.",
+                      col_name.c_str(), table_name.c_str());
+            count++;
+          }
         }
       }
     } else if (current_txn->GetResult() == ResultType::FAILURE) {

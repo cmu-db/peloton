@@ -61,13 +61,19 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
           foreign_key_sink.push_back(key);
         }
 
+        // Extract table names
         std::string sink_table_name = strdup(col->table_info_->table_name);
-        std::string fk_name = strdup("fk_name");
+        std::string source_table_name = strdup(col->foreign_key_table_name);
 
-        // TODO: replace latter three parameters
+        // Extract delete and update actions
+        FKConstrActionType upd_action = col->foreign_key_update_action;
+        FKConstrActionType del_action = col->foreign_key_delete_action;
+
+        std::string fk_name =
+            "FK_" + source_table_name + "->" + sink_table_name;
         catalog::ForeignKey fk(sink_table_name,
-                               foreign_key_sink, foreign_key_source, 't', 't', fk_name);
-        // table->AddForeignKey(fk);
+                               foreign_key_sink, foreign_key_source,
+                               upd_action, del_action, fk_name);
         LOG_DEBUG("Added a foreign key constraint toward sink table %s", 
             sink_table_name.c_str());
 

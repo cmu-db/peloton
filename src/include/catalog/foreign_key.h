@@ -32,10 +32,12 @@ class ForeignKey {
   ForeignKey(const std::string &sink_table_name,
              std::vector<std::string> pk_column_names,
              std::vector<std::string> fk_column_names,
-             char fk_update_action, char fk_delete_action,
+             FKConstrActionType fk_update_action,
+             FKConstrActionType fk_delete_action,
              std::string constraint_name)
 
       : sink_table_name(sink_table_name),
+        //source_table_name(sink_table_name),
         pk_column_names(pk_column_names),
         fk_column_names(fk_column_names),
         fk_update_action(fk_update_action),
@@ -47,9 +49,9 @@ class ForeignKey {
   std::vector<std::string> GetPKColumnNames() const { return pk_column_names; }
   std::vector<std::string> GetFKColumnNames() const { return fk_column_names; }
 
-  char GetUpdateAction() const { return fk_update_action; }
+  FKConstrActionType GetUpdateAction() const { return fk_update_action; }
 
-  char GetDeleteAction() const { return fk_delete_action; }
+  FKConstrActionType GetDeleteAction() const{ return fk_delete_action; }
 
   std::string &GetConstraintName() { return fk_name; }
 
@@ -63,8 +65,8 @@ class ForeignKey {
   // Can be a single column or multiple columns depending on the constraint
   std::vector<std::string> fk_column_names;
 
-  char fk_update_action;
-  char fk_delete_action;
+  FKConstrActionType fk_update_action;
+  FKConstrActionType fk_delete_action;
 
   std::string fk_name;
 };
