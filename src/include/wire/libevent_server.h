@@ -156,7 +156,7 @@ class LibeventSocket {
   struct event *event = nullptr;  // libevent handle
   short event_flags;              // event flags mask
 
-  SSL* conn_SSL_context;          // SSL context for the connection
+  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
   LibeventThread *thread;          // reference to the libevent thread
   PacketManager pkt_manager;       // Stores state for this socket
