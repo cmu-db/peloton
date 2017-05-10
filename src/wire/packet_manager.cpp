@@ -30,6 +30,7 @@
 #include "wire/marshal.h"
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
+#define UNUSED(x) (void)(x)
 
 namespace peloton {
 namespace wire {
@@ -123,16 +124,43 @@ void PacketManager::MakeHardcodedParameterStatus(
   PacketPutString(response.get(), kv.second);
   responses.push_back(std::move(response));
 }
+
 /*
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
+int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
+  LOG_INFO("protocol version: %d", proto_version);
+  bool res;
+  int res_base = 0;
+  // TODO: consider more about return value
+  if (proto_version == 80877103) {
+    res = ProcessSSLRequestPacket(pkt);
+    if (!res)
+      res_base = 0;
+    else
+      res_base = -1;
+  }
+  else {
+    res = ProcessStartupPacket(pkt, proto_version);
+    if (!res)
+      res_base = 0;
+    else
+      res_base = 1;
+  }
 
+  return res_base;
+}
+
+bool PacketManager::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+  std::string token, value;
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+
+//  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
     LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
@@ -179,6 +207,16 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
   // we need to send the response right away
   force_flush = true;
 
+  return true;
+}
+
+bool PacketManager::ProcessSSLRequestPacket(InputPacket *pkt) {
+  UNUSED(pkt);
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  // TODO: consider more about a proper response
+  response->msg_type = NetworkMessageType::SSL_YES;
+  responses.push_back(std::move(response));
+  force_flush = true;
   return true;
 }
 

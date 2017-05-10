@@ -372,6 +372,9 @@ enum class NetworkMessageType : unsigned char {
   PARSE_COMMAND = 'P',
   SIMPLE_QUERY_COMMAND = 'Q',
   CLOSE_COMMAND = 'C',
+  // SSL willingness
+  SSL_YES = 'S',
+  SSL_NO = 'N',
 };
 
 enum class NetworkTransactionStateType : unsigned char {
