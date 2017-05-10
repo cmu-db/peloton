@@ -180,6 +180,10 @@ class DataTable : public AbstractTable {
 
   oid_t GetForeignKeyCount() const;
 
+  void RegisterForeignKeySource(const std::string &source_table_name);
+
+  void RemoveForeignKeySource(const std::string &source_table_name);
+
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//

@@ -55,6 +55,10 @@ class ForeignKey {
 
   std::string &GetConstraintName() { return fk_name; }
 
+  FKConstrActionType GetUpdateAction() { return fk_update_action; }
+  FKConstrActionType GetDeleteAction() { return fk_delete_action; }
+  std::vector<std::string> GetFKColumnNames() { return fk_column_names; }
+
  private:
   std::string sink_table_name;
 
