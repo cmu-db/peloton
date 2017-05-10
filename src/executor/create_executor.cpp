@@ -65,21 +65,24 @@ bool CreateExecutor::DExecute() {
           source_table->AddForeignKey(new catalog::ForeignKey(fk));
 
           // Register FK with the sink table for delete/update actions
-          std::string sink_table_name = fk->GetSinkTableName();
+          std::string sink_table_name = fk.GetSinkTableName();
           auto sink_table = catalog->GetDatabaseWithName(database_name)
                     ->GetTableWithName(sink_table_name);
           sink_table->RegisterForeignKeySource(table_name);
 
           // Add a non-unique index on the source table if needed
-          if (fk->fk_update_action != FKConstrActionType.NOACTION ||
-              fk->fk_delete_action != FKConstrActionType.NOACTION) {
-            std::vector<std::string> source_col_names = fk->fk_column_names;
+          if (fk.GetUpdateAction() != FKConstrActionType::NOACTION ||
+              fk.GetDeleteAction() != FKConstrActionType::NOACTION) {
+            std::vector<std::string> source_col_names = fk.GetFKColumnNames();
             std::string index_name =
-                source_table + "_FK_" + std::to_string(count);
-            catalog->CreateIndex(database_name, source_table, source_col_names,
+                source_table->GetName() + "_FK_" + std::to_string(count);
+            catalog->CreateIndex(database_name, source_table->GetName(), source_col_names,
                 index_name, false, IndexType::BWTREE, current_txn);
-            LOG_DEBUG("Added a FOREIGN index on %s in %s.",
-                      col_name.c_str(), table_name.c_str());
+            LOG_DEBUG("Added a FOREIGN index on in %s.", table_name.c_str());
+            LOG_DEBUG("Foreign key column names: ");
+            for (auto c : source_col_names) {
+              LOG_DEBUG("FK col name: %s", c.c_str());
+            }
             count++;
           }
         }
