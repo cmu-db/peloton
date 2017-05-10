@@ -68,6 +68,9 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
       len = codegen.Const32(str.length());
       break;
     }
+    case type::Type::TypeId::ARRAY: {
+      break;
+    }
     default: {
       throw Exception{"Unknown constant value type " +
                       TypeIdToString(constant.GetTypeId())};

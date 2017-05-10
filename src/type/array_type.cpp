@@ -19,6 +19,7 @@
 #include "type/timestamp_type.h"
 #include "type/type.h"
 #include "type/varlen_type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace type {
@@ -74,6 +75,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
   PL_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(Type::BOOLEAN);
+  LOG_DEBUG("the element type is %d",list.GetElementType());
   switch (list.GetElementType()) {
     case Type::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array);

@@ -17,6 +17,7 @@
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
 #include "type/varlen_type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace type {

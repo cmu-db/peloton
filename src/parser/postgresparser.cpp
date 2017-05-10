@@ -391,40 +391,6 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   }
   return result;
 }
-type::Value PostgresParser::GetValue(value val) {
-  type::Value result;
-  switch (val.type) {
-    case T_Integer: {
-      LOG_DEBUG("T_Integer\n");
-      result = type::ValueFactory::GetIntegerValue((int32_t) val.val.ival);
-      break;
-    }
-    case T_String: {
-      LOG_DEBUG("T_String\n");
-
-      result = type::ValueFactory::GetVarcharValue(std::string(val.val.str));
-      break;
-    }
-    case T_Float: {
-      LOG_DEBUG("T_Float\n");
-
-      result = type::ValueFactory::GetDecimalValue(
-              std::stod(std::string(val.val.str)));
-      break;
-    }
-    case T_Null: {
-      LOG_DEBUG("T_Null\n");
-
-      result = type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER);
-      break;
-    }
-
-    default:
-      throw NotImplementedException(StringUtil::Format(
-          "Value type %d not supported yet...\n", val.type));
-  }
-  return result;
-}
 // This function takes in a Posgres A_Const parsenode and transfers it into
 // a Peloton constant value expression.
 expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
@@ -728,12 +694,52 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
   if (root == nullptr) {
     return nullptr;
   }
-  std::vector<type::Value> vector_;
-  for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    vector_.push_back(GetValue(((A_Const*)(cell->data.ptr_value))->val));
+  value val =((A_Const*)(root->head->data.ptr_value))->val;
+  type::Value arr;
+  switch (val.type) {
+    case T_Integer: {
+      LOG_DEBUG("T_Integer\n");
+      std::vector<int32_t> vector_;
+      for (auto cell = root->head; cell != NULL; cell = cell->next) {
+        vector_.push_back((int32_t) val.val.ival);
+      }
+      arr = type::ValueFactory::GetArrayValue<int32_t>(type::Type::INTEGER,vector_);
+      break;
+    }
+    case T_String: {
+      LOG_DEBUG("T_String\n");
+      std::vector<std::string> vector_;
+      for (auto cell = root->head; cell != NULL; cell = cell->next) {
+        vector_.push_back((std::string) val.val.str);
+      }
+      arr = type::ValueFactory::GetArrayValue<std::string>(type::Type::VARCHAR,vector_);
+      break;
+    }
+    case T_Float: {
+      LOG_DEBUG("T_Float\n");
+      std::vector<int64_t> vector_;
+      for (auto cell = root->head; cell != NULL; cell = cell->next) {
+        vector_.push_back((int64_t) val.val.ival);
+      }
+      arr = type::ValueFactory::GetArrayValue<int64_t>(type::Type::DECIMAL,vector_);
+      break;
+    }
+    case T_Null: {
+      LOG_DEBUG("T_Null\n");
+      type::Value null = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      std::vector<int32_t> vector_;
+      for (auto cell = root->head; cell != NULL; cell = cell->next) {
+        vector_.push_back((int32_t) *(null.GetData()));
+      }
+      arr = type::ValueFactory::GetArrayValue<int32_t>(type::Type::INTEGER,vector_);
+      break;
+    }
+    default:
+      throw NotImplementedException(StringUtil::Format(
+          "Value type %d not supported yet...\n", val.type));
   }
-  type::Value value = type::ValueFactory::GetArrayValue(vector_);
-  expression::AbstractExpression* result = new expression::ConstantValueExpression(value);
+
+  expression::AbstractExpression* result = new expression::ConstantValueExpression(arr);
   return result;
 
 }

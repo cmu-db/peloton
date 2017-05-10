@@ -127,7 +127,6 @@ class PostgresParser {
   static expression::AbstractExpression* InListTransform(List* root);
   // transform helper for BoolExpr nodes
   static expression::AbstractExpression* BoolExprTransform(BoolExpr* root);
-  static type::Value GetValue(value val);
 
   // transform helper for NullTest nodes
   static expression::AbstractExpression* NullTestTransform(NullTest* root);

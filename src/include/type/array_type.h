@@ -66,7 +66,21 @@ class ArrayType : public Type {
   }
 
   Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
-    return ValueFactory::GetArrayValue(*(std::vector<type::Value>*)GetData(val));
+    switch (val.GetElementType()) {
+      case INTEGER: {
+        return ValueFactory::GetArrayValue<int32_t>(val.GetTypeId(),*(std::vector<int32_t>*)GetData(val));
+      }
+      case VARCHAR: {
+        return ValueFactory::GetArrayValue<std::string>(val.GetTypeId(),*(std::vector<std::string>*)GetData(val));
+      }
+      case DECIMAL: {
+        return ValueFactory::GetArrayValue<int64_t>(val.GetTypeId(),*(std::vector<int64_t>*)GetData(val));
+      }
+      default:
+        throw NotImplementedException(StringUtil::Format(
+            "Value type %d not supported in Copy yet...\n", val.GetTypeId()));
+    }
+
   }
 
 };
