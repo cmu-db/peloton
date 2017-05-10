@@ -144,7 +144,7 @@ void StateMachine(LibeventSocket *conn) {
               LOG_ERROR("general error: %lu", ERR_get_error());
               ERR_print_errors_fp(stderr);
               // TODO: consider more about proper action
-//              PL_ASSERT(false);
+              PL_ASSERT(false);
               conn->TransitState(CONN_CLOSED);
             }
             LOG_ERROR("SSL handshake completed");
