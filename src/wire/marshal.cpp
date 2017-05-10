@@ -24,6 +24,7 @@ namespace wire {
 // checks for parsing overflows
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
                           UNUSED_ATTRIBUTE size_t size) {
+  LOG_INFO("rpkt->len: %lu", rpkt->len);
   PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
