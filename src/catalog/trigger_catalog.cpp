@@ -139,9 +139,14 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
   LOG_INFO("trigger %d will be deleted!", trigger_oid);
 
-  bool delete_success = DeleteTrigger(trigger_oid, txn);
+  bool delete_success = DeleteTriggerByName(trigger_name, database_oid, table_oid, txn);
   if (delete_success) {
     LOG_DEBUG("Delete trigger successfully");
+    // ask target table to update its trigger list variable
+    storage::DataTable *target_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name);
+    target_table->UpdateTriggerListFromCatalog(txn);
     return ResultType::SUCCESS;
   }
   LOG_DEBUG("Failed to delete trigger");
@@ -174,6 +179,17 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name,
   }
 
   return trigger_oid;
+}
+
+bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name, oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn) {
+  oid_t index_offset = IndexId::DB_TABLE_TRIGGERNAME_KEY_2;
+  std::vector<type::Value> values;
+  // where trigger_name = args.trigger_name and database_oid = args.database_oid and table_oid = args.table_oid
+  values.push_back(type::ValueFactory::GetVarcharValue(trigger_name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  return DeleteWithIndexScan(index_offset, values, txn);
 }
 
 bool TriggerCatalog::DeleteTrigger(oid_t trigger_oid, concurrency::Transaction *txn) {

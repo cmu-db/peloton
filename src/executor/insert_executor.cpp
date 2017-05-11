@@ -197,8 +197,6 @@ bool InsertExecutor::DExecute() {
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer location =
           target_table->InsertTuple(new_tuple, current_txn, &index_entry_ptr);
-      LOG_DEBUG("Inserted into location: %u, %u", location.block,
-                location.offset);
       if (new_tuple->GetColumnCount() > 2) {
         type::Value val = (new_tuple->GetValue(2));
         LOG_TRACE("value: %s", val.GetInfo().c_str());
