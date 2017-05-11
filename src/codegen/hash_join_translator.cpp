@@ -311,7 +311,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
 
 // Cleanup by destroying the hash-table instance
 void HashJoinTranslator::TearDownState() {
-//  global_hash_table_.Destroy(GetCodeGen(), LoadStatePtr(global_hash_table_id_));
+//  hash_table_.Destroy(GetCodeGen(), LoadStatePtr(global_hash_table_id_));
 }
 
 // Get the stringified name of this join
