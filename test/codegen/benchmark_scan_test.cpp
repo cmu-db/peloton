@@ -219,7 +219,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   }
 
  private:
-  uint32_t num_rows_to_insert = 1000000;
+  uint32_t num_rows_to_insert = 1000;
 };
 
 void PrintName(std::string test_name) {

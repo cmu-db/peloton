@@ -28,42 +28,50 @@ class Barrier
 public:
     static void InitInstance(Barrier *ins, uint64_t n_workers);
 
-    bool BarrierWait()
-    {
-        return bar_->wait();
-    }
-
-    void WorkerFinish()
-    {
-        --n_workers_;
-    }
-
     void MasterWait();
 
     void Destroy();
 
-    void SetBarrier(boost::barrier *bar)
+    inline bool BarrierWait()
     {
-        bar_ = bar;
+        return bar_->wait();
     }
 
-    void SetWorkerCount(uint64_t n_workers)
+    inline void WorkerFinish()
+    {
+        --n_workers_;
+    }
+
+    void SetBarrier(boost::barrier *bar) {
+      bar_ = bar;
+    }
+
+    inline void SetWorkerCount(uint64_t n_workers)
     {
         n_workers_ = n_workers;
     }
 
-    void MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht);
+    inline void MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht)
+    {
+        bool expect = false;
+        while (!global_hash_table_merge_lock_.compare_exchange_strong(expect, true))
+        {
+          expect = false;
+        }
+        global_ht->Merge(local_ht);
+        global_hash_table_merge_lock_.store(false);
+    }
 
 private:
+    Barrier(): bar_(nullptr) {}
 
-    void InitGlobalHashTableMergeLock() {
+    inline void InitGlobalHashTableMergeLock()
+    {
       global_hash_table_merge_lock_.store(false);
     }
 
-    Barrier(): bar_(nullptr) {}
     boost::barrier *bar_;
     std::atomic<uint64_t> n_workers_;
-
     std::atomic<bool> global_hash_table_merge_lock_;
 };
 
