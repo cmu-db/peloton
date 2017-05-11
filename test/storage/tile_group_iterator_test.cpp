@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include <memory>
 
 #include "common/harness.h"
@@ -41,8 +42,8 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
-                                     false, true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
+                                   true, txn);
   txn_manager.CommitTransaction(txn);
 
   storage::TileGroupIterator tile_group_itr(data_table.get());

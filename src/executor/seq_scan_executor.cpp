@@ -16,8 +16,6 @@
 #include <utility>
 #include <vector>
 #include <numeric>
-#include <cstdio>
-#include <sstream>
 
 #include "type/types.h"
 #include "executor/logical_tile.h"
@@ -157,6 +155,7 @@ bool SeqScanExecutor::DExecute() {
       auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
+
       // Construct position list by looping through tile group
       // and applying the predicate.
       std::vector<oid_t> position_list;

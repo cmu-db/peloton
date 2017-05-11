@@ -59,7 +59,6 @@ class Catalog {
   // Global Singleton
   static Catalog *GetInstance(void);
 
-
   // Bootstrap addtional catalogs, only used in system initialization phase
   void Bootstrap(void);
 
@@ -84,7 +83,6 @@ class Catalog {
   // Create a database
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::Transaction *txn);
-
 
   // Create a table in a database
   ResultType CreateTable(const std::string &database_name,
@@ -132,7 +130,6 @@ class Catalog {
   // Drop an index, using its index_oid
   ResultType DropIndex(oid_t index_oid,
                        concurrency::Transaction *txn);
-
 
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION

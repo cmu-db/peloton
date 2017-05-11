@@ -64,6 +64,7 @@ class Manager {
 
   void ClearTileGroup(void);
 
+
   //===--------------------------------------------------------------------===//
   // INDIRECTION ARRAY ALLOCATION
   //===--------------------------------------------------------------------===//
@@ -102,8 +103,7 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::IndirectionArray>>
-      indirection_array_locator_;
+  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
 
   static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };

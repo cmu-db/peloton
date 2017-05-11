@@ -40,6 +40,7 @@ TEST_F(DatabaseTests, AddDropTest) {
   EXPECT_FALSE(catalog->HasDatabase(db_id));
 }
 
+
 TEST_F(DatabaseTests, AddDropTableTest) {
   // ADD!
   auto catalog = catalog::Catalog::GetInstance();
@@ -57,8 +58,9 @@ TEST_F(DatabaseTests, AddDropTableTest) {
 
   EXPECT_TRUE(database->GetTableCount() == 1);
 
-  database->DropTableWithOid(table_oid);
 
+  database->DropTableWithOid(table_oid);
+  
   EXPECT_TRUE(database->GetTableCount() == 0);
 
   data_table.release();

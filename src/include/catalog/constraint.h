@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include <string>
@@ -67,6 +68,7 @@ class Constraint : public Printable {
   oid_t unique_index_list_offset = INVALID_OID;
 
   std::string constraint_name;
+
 };
 
 }  // End catalog namespace
