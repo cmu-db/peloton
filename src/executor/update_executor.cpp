@@ -289,10 +289,15 @@ bool UpdateExecutor::DExecute() {
           // get indirection.
           ItemPointer *indirection =
               tile_group_header->GetIndirection(old_location.offset);
+
+          // Indicate later whether this is a foreign key constraint failure
+          bool fk_failure;    
+
           // finally install new version into the table
           ret = target_table_->InstallVersion(&new_tuple,
                                               &(project_info_->GetTargetList()),
-                                              current_txn, indirection);
+                                              current_txn, indirection,
+                                              fk_failure);
 
           // PerformUpdate() will not be executed if the insertion failed.
           // There is a write lock acquired, but since it is not in the write
@@ -311,6 +316,14 @@ bool UpdateExecutor::DExecute() {
             }
             transaction_manager.SetTransactionResult(current_txn,
                                                      ResultType::FAILURE);
+            if (fk_failure) {
+              throw ConstraintException("FOREIGN KEY constraint violated : " +
+                               std::string(new_tuple.GetInfo()));
+            } else {
+              throw ConstraintException("Secondary index constraint violated : " +
+                               std::string(new_tuple.GetInfo()));
+            }
+
             return false;
           }
 

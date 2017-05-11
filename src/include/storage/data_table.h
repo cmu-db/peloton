@@ -110,7 +110,7 @@ class DataTable : public AbstractTable {
   // required.
   bool InstallVersion(const AbstractTuple *tuple, const TargetList *targets_ptr,
                       concurrency::Transaction *transaction,
-                      ItemPointer *index_entry_ptr);
+                      ItemPointer *index_entry_ptr, bool &fk_failure);
 
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
@@ -307,7 +307,7 @@ class DataTable : public AbstractTable {
                                 ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
-  bool CheckForeignKeyConstraints(const storage::Tuple *tuple,
+  bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                   concurrency::Transaction *transaction);
 
  public:
