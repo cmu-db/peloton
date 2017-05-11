@@ -1122,6 +1122,9 @@ commands::TriggerList* DataTable::GetTriggerList() {
 
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
   oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
+  if (trigger_list) {
+    delete trigger_list;
+  }
   trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, txn);
 }
 

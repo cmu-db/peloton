@@ -214,6 +214,14 @@ TEST_F(CreateTests, CreatingTrigger) {
     delete stmt_list;
   }
 
+  if (new_trigger_list) {
+    delete new_trigger_list;
+  }
+
+  if (target_table) {
+    delete target_table;
+  }
+
   // TODO: test for creating a trigger without "when"
 }
 
@@ -299,6 +307,10 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
 
   if (stmt_list) {
     delete stmt_list;
+  }
+
+  if (trigger_list) {
+    delete trigger_list;
   }
 }
 
