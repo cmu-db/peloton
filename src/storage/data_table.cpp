@@ -471,13 +471,23 @@ ItemPointer DataTable::AcquireVersion() {
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
                                concurrency::Transaction *transaction,
-                               ItemPointer *index_entry_ptr) {
+                               ItemPointer *index_entry_ptr,
+                               bool &fk_failure) {
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
+    fk_failure = false;
     return false;
   }
+
+  // Check foreign key constraint
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
+    LOG_TRACE("ForeignKey constraint violated");
+    fk_failure = true;
+    return false;
+  }
+
   return true;
 }
 
@@ -731,7 +741,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple,
+bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                            concurrency::Transaction *current_txn
                                            UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
