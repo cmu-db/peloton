@@ -124,6 +124,7 @@ TEST_F(DropTests, DroppingTrigger) {
   createTriggerExecutor.Execute();
   txn_manager.CommitTransaction(txn);
 
+
   // Check the effect of creation
   storage::DataTable *target_table =
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
@@ -149,8 +150,7 @@ TEST_F(DropTests, DroppingTrigger) {
 
   // Check the effect of drop
   // Most major check in this test case
-  // TODO: change this to 0
-  EXPECT_EQ(1, target_table->GetTriggerNumber());
+  EXPECT_EQ(0, target_table->GetTriggerNumber());
 
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
