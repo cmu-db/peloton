@@ -63,7 +63,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
         // Extract table names
         std::string sink_table_name = strdup(col->table_info_->table_name);
-        std::string source_table_name = strdup(col->foreign_key_table_name);
+        std::string source_table_name = table_name;
 
         // Extract delete and update actions
         FKConstrActionType upd_action = col->foreign_key_update_action;
