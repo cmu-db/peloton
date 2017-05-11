@@ -32,7 +32,6 @@ void Barrier::MasterWait()
 void Barrier::MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht) {
   bool expect = false;
   while (!global_hash_table_merge_lock_.compare_exchange_strong(expect, true)) {
-    LOG_DEBUG("cas fail");
     expect = false;
   }
 
@@ -43,6 +42,12 @@ void Barrier::MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHas
   LOG_DEBUG("Done Merging local hash table, global size: %lu, local size: %lu", global_ht->NumEntries(), local_ht->NumEntries());
 
   global_hash_table_merge_lock_.store(false);
+}
+
+void Barrier::Destroy() {
+  if (bar_ != nullptr) {
+    delete bar_;
+  }
 }
 
 }

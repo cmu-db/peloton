@@ -40,10 +40,7 @@ public:
 
     void MasterWait();
 
-    ~Barrier()
-    {
-        delete bar_;
-    }
+    void Destroy();
 
     void SetBarrier(boost::barrier *bar)
     {
