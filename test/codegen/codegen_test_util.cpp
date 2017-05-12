@@ -43,6 +43,10 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  GetDatabase().DropTableWithOid(test_table1_id);
+  GetDatabase().DropTableWithOid(test_table2_id);
+  GetDatabase().DropTableWithOid(test_table3_id);
+  GetDatabase().DropTableWithOid(test_table4_id);
   auto result = catalog->DropDatabaseWithOid(test_db_id, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);

@@ -205,6 +205,9 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
           }
           vals.push_back(std::move(tv));
         }
+        if (tile != nullptr) {
+          delete tile;
+        }
       }
       timer.Stop();
       runtime_stats.plan_ms = timer.GetDuration();
