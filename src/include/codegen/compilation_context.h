@@ -81,6 +81,9 @@ class CompilationContext {
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
 
+  // Check if multi thread is supported given plan.
+  bool IsMultiThreadSupported(const planner::AbstractPlan &root);
+
  private:
   // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
