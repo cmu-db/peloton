@@ -3,7 +3,7 @@
 
 # Customize VM resources
 VM_CPUS = "4"
-VM_MEMORY = "4096" # MB
+VM_MEMORY = "2048" # MB
 VM_NAME = "PelotonVM"
 
 Vagrant.configure(2) do |config|
