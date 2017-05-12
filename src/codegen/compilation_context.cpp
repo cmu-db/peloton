@@ -12,17 +12,17 @@
 
 #include "codegen/compilation_context.h"
 
+#include "codegen/barrier.h"
+#include "codegen/barrier_proxy.h"
 #include "codegen/catalog_proxy.h"
 #include "codegen/multi_thread_context.h"
 #include "codegen/multi_thread_context_proxy.h"
+#include "codegen/query_thread_pool.h"
+#include "codegen/query_thread_pool_proxy.h"
 #include "codegen/transaction_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
-
-#include "codegen/query_thread_pool.h"
-#include "codegen/query_thread_pool_proxy.h"
-#include "codegen/barrier.h"
-#include "codegen/barrier_proxy.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -218,7 +218,14 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   llvm::Value *runtime_state_ptr = codegen_.GetState();
 
   // Get thread information.
-  uint64_t nthreads = QueryThreadPool::GetThreadCount();
+  uint64_t nthreads;
+  if (IsMultiThreadSupported(root)) {
+    LOG_DEBUG("This plan supports multi thread feature.");
+    nthreads = QueryThreadPool::GetThreadCount();
+  } else {
+    LOG_DEBUG("This plan does not support multi thread feature.");
+    nthreads = 1;
+  }
   llvm::Value *thread_id = codegen_.Const64(0);
   llvm::Value *thread_count = codegen_.Const64(nthreads);
   llvm::Value *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
@@ -291,6 +298,28 @@ OperatorTranslator *CompilationContext::GetTranslator(
     const planner::AbstractPlan &op) const {
   auto iter = op_translators_.find(&op);
   return iter == op_translators_.end() ? nullptr : iter->second.get();
+}
+
+// Check if multi thread is supported given plan.
+bool CompilationContext::IsMultiThreadSupported(const planner::AbstractPlan &plan) {
+  LOG_DEBUG("node type: %s", PlanNodeTypeToString(plan.GetPlanNodeType()).c_str());
+  switch (plan.GetPlanNodeType()) {
+    case PlanNodeType::SEQSCAN:
+    case PlanNodeType::HASHJOIN:
+    case PlanNodeType::HASH:
+      break;
+    default:
+      return false;
+  }
+
+  // Check all children
+  for (const auto &child : plan.GetChildren()) {
+    if (!IsMultiThreadSupported(*child)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace codegen
