@@ -122,7 +122,9 @@ DataTable::~DataTable() {
   }
   
   // free memory used by trigger list
-  delete trigger_list;
+  if (trigger_list) {
+    delete trigger_list;
+  }
 
   // AbstractTable cleans up the schema
 }
