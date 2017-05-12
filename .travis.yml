@@ -21,6 +21,16 @@ matrix:
                     - ubuntu-toolchain-r-test
                     - boost-latest
                 packages:
+                    - g++-4.9
+          env: CXX=g++-4.9
+        - compiler: gcc
+          addons:
+              apt:
+                sources:
+                    - llvm-toolchain-precise-3.7
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
+                packages:
                     - g++-5
           env: CXX=g++-5
 
