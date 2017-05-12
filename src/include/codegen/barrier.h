@@ -42,6 +42,10 @@ public:
         --n_workers_;
     }
 
+    void SetBarrier(boost::barrier *bar) {
+      bar_ = bar;
+    }
+
     inline void SetWorkerCount(uint64_t n_workers)
     {
         n_workers_ = n_workers;
@@ -56,11 +60,6 @@ public:
         }
         global_ht->Merge(local_ht);
         global_hash_table_merge_lock_.store(false);
-    }
-
-    ~Barrier()
-    {
-        delete bar_;
     }
 
 private:

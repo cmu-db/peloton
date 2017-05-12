@@ -205,6 +205,9 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
           }
           vals.push_back(std::move(tv));
         }
+        if (tile != nullptr) {
+          delete tile;
+        }
       }
       timer.Stop();
       runtime_stats.plan_ms = timer.GetDuration();
@@ -219,7 +222,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   }
 
  private:
-  uint32_t num_rows_to_insert = 1000000;
+  uint32_t num_rows_to_insert = 1000;
 };
 
 void PrintName(std::string test_name) {

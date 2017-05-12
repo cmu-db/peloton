@@ -40,6 +40,10 @@ PelotonCodeGenTest::PelotonCodeGenTest()
 }
 
 PelotonCodeGenTest::~PelotonCodeGenTest() {
+  GetDatabase().DropTableWithOid(test_table1_id);
+  GetDatabase().DropTableWithOid(test_table2_id);
+  GetDatabase().DropTableWithOid(test_table3_id);
+  GetDatabase().DropTableWithOid(test_table4_id);
   catalog::Catalog::GetInstance()->DropDatabaseWithOid(test_db_id);
 }
 
