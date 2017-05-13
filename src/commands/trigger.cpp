@@ -123,10 +123,12 @@ storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   std::string &trigger_funcname = trigger_data.tg_trigger->trigger_funcname[0];
   LOG_INFO("Trigger %s is invoked", trigger_name.c_str());
   LOG_INFO("Function %s should be called", trigger_funcname.c_str());
-  // TODO: It should call UDF function. This could be implemented after UDF is supported in
-  // the master branch. Another concern is that currently UDF looks like only support read only
-  // operations, but usually functions invoked by a trigger need to apply SQL statements on
-  // databases.
+  // TODO: It should call UDF function here.
+  // One concern is that UDF is not supported in the master branch currently.
+  // Another concern is that currently UDF is mainly designed for read-only
+  // operations without SQL statements, but mostly, functions invoked by a
+  // trigger need to apply SQL statements on databases. Hope `ExecCallTriggerFunc`
+  // could be truly implemented after these problems are resolved.
   return nullptr;
 }
 
