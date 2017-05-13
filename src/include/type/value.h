@@ -75,12 +75,13 @@ inline CmpBool GetCmpBool(bool boolean) {
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
 class Value : public Printable {
-#ifdef VALUE_TESTS
- public:
-#else
- private:
-#endif
+// #ifdef VALUE_TESTS
+//  public:
+// #else
+//  private:
+// #endif
 
+public:
   Value(const Type::TypeId type) : manage_data_(false), type_id_(type) {
     size_.len = PELOTON_VALUE_NULL;
   }

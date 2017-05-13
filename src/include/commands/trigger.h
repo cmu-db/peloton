@@ -20,8 +20,8 @@
 #include "common/logger.h"
 #include "storage/tuple.h"
 #include "expression/tuple_value_expression.h"
-#include "expression/abstract_expression.h"
 #include "expression/comparison_expression.h"
+#include "concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace commands {
@@ -87,7 +87,7 @@ class Trigger {
   inline std::string GetWhen() {return "function_arguments";}
 
   //only apply to the simple case: old.balance != new.balance
-  std::string SerializeWhen();
+  std::string SerializeWhen(oid_t table_oid, concurrency::Transaction *txn);
   expression::AbstractExpression* DeserializeWhen(std::string fire_condition);
 
   inline expression::AbstractExpression* GetTriggerWhen() const {return trigger_when;}

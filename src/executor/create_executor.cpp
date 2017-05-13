@@ -103,6 +103,10 @@ bool CreateExecutor::DExecute() {
     //                                                       table_name);
     // target_table->AddTrigger(newTrigger);
 
+
+    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
+    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
+
     //debug for check newtrigger's trigger_when has been settled or not.
     LOG_INFO("in CreateExecutor::DExecute==========================");
     if (newTrigger.GetTriggerWhen() == nullptr) {
@@ -116,7 +120,7 @@ bool CreateExecutor::DExecute() {
         LOG_INFO("type is not COMPARE_NOTEQUAL");
       }
 
-      std::string serialize_when = newTrigger.SerializeWhen();
+      std::string serialize_when = newTrigger.SerializeWhen(table_oid, current_txn);
       if (serialize_when == "") {
         LOG_INFO("serialize_when is empty str");
       } else {
@@ -125,14 +129,12 @@ bool CreateExecutor::DExecute() {
     }
 
     // durable trigger: insert the information of this trigger in the trigger catalog table
-    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
-    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
                         time_since_epoch).count();
     LOG_INFO("1");
     catalog::TriggerCatalog::GetInstance()->InsertTrigger(trigger_name, database_oid, table_oid,
-                    newTrigger.GetTriggerType(), newTrigger.SerializeWhen(),
+                    newTrigger.GetTriggerType(), newTrigger.SerializeWhen(table_oid, current_txn),
                     newTrigger.GetFuncname(), newTrigger.GetArgs(),
                     time_stamp, pool_.get(), current_txn);
     LOG_INFO("2");
