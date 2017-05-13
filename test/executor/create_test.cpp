@@ -212,8 +212,101 @@ TEST_F(CreateTests, CreatingTrigger) {
   if (stmt_list) {
     delete stmt_list;
   }
+}
 
-  // TODO: test for creating a trigger without "when"
+// This test is added because we once found it has problem when "when" is not specified.
+// So we add a test to avoid problem like that happen in the feature.
+TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
+  // Bootstrap
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  // Insert a table first
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "balance", true);
+  auto name_column =
+    catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+
+  // Schema
+  std::unique_ptr<catalog::Schema> table_schema(
+    new catalog::Schema({id_column, name_column}));
+
+  std::unique_ptr<executor::ExecutorContext> context(
+    new executor::ExecutorContext(txn));
+
+  // Create plans
+  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
+                           CreateType::TABLE);
+
+  // Create executer
+  executor::CreateExecutor executor(&node, context.get());
+
+  executor.Init();
+  executor.Execute();
+
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+              ->GetDatabaseWithName(DEFAULT_DB_NAME)
+              ->GetTableCount(),
+            1);
+
+  // Create statement
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query =
+    "CREATE TRIGGER check_update "
+      "BEFORE UPDATE OF balance ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE check_account_update();";
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
+  auto create_trigger_stmt =
+    static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+
+  // Create plans
+  planner::CreatePlan plan(create_trigger_stmt);
+
+  // plan type
+  EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
+  // when
+  auto when = plan.GetTriggerWhen();
+  EXPECT_EQ(nullptr, when);
+
+  // Execute the create trigger
+  txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context2(
+    new executor::ExecutorContext(txn));
+  executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
+  createTriggerExecutor.Init();
+  createTriggerExecutor.Execute();
+  txn_manager.CommitTransaction(txn);
+
+  // Check the effect of creation
+  storage::DataTable *target_table =
+    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                      "accounts");
+  EXPECT_EQ(1, target_table->GetTriggerNumber());
+  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
+
+  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  if (when) {
+    delete when;
+  }
+
+  if (stmt_list) {
+    delete stmt_list;
+  }
 }
 
 
