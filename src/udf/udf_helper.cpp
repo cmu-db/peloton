@@ -31,11 +31,6 @@ arg_value UDF_SQL_Expr::Execute(std::vector<arg_value> inputs, std::vector<std::
   traffic_cop_.ExecuteStatement(query_with_value, result, tuple_descriptor,
                                 rows_changed, error_message);
 
-  // TODO: not sure we need this or not
-  // txn = txn_manager.BeginTransaction();
-  // catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  // txn_manager.CommitTransaction(txn);
-
   std::string value(result[0].second.begin(), result[0].second.end());
   if (value.compare("true") == 0)
     return ::peloton::type::ValueFactory::GetIntegerValue(1);
@@ -46,11 +41,11 @@ arg_value UDF_SQL_Expr::Execute(std::vector<arg_value> inputs, std::vector<std::
 }
 
 arg_value UDF_IFELSE_Stmt::Execute(std::vector<arg_value> inputs, std::vector<std::string> names) {
-  auto cond_res = cond_exp_.Execute(inputs, names);
+  auto cond_res = cond_exp_.get()->Execute(inputs, names);
   if (cond_res.GetAs<int32_t>() == 1)
-    return true_exp_.Execute(inputs, names);
+    return true_exp_.get()->Execute(inputs, names);
   else
-    return false_exp_.Execute(inputs, names);
+    return false_exp_.get()->Execute(inputs, names);
 }
 
 tcop::TrafficCop UDF_SQL_Expr::traffic_cop_;

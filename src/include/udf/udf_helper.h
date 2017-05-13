@@ -34,12 +34,13 @@ class UDF_SQL_Expr final: UDF_Stmt {
 
 class UDF_IFELSE_Stmt final: UDF_Stmt {
  public:
-  UDF_IFELSE_Stmt(std::string cond, std::string query1,std::string query2 = "", int dtype = 0):cond_exp_{cond}, true_exp_{query1}, false_exp_{query2}, dtype_(dtype) {}
+  UDF_IFELSE_Stmt(std::string cond, UDF_SQL_Expr *true_exp, UDF_SQL_Expr *false_exp, int dtype = 0): true_exp_{true_exp}, false_exp_{false_exp}, dtype_(dtype) {
+    auto cond_exp = new UDF_SQL_Expr(cond);
+    cond_exp_.reset(cond_exp);
+  }
   arg_value Execute(std::vector<arg_value>, std::vector<std::string>);
  private:
-  UDF_SQL_Expr cond_exp_;
-  UDF_SQL_Expr true_exp_;
-  UDF_SQL_Expr false_exp_;
+  std::unique_ptr<UDF_SQL_Expr> cond_exp_, true_exp_, false_exp_;
   int dtype_;
 };
 

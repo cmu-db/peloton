@@ -109,7 +109,7 @@ namespace peloton{
 namespace udf{
 
 static UDF_SQL_Expr *make_return_stmt(const char *);
-static UDF_IFELSE_Stmt *make_ifelse_stmt(const char *, const char *, const char *);
+static UDF_IFELSE_Stmt *make_ifelse_stmt(const char *, UDF_SQL_Expr *, UDF_SQL_Expr *);
 void yyerror(std::string);
 int yylex(void);
 
@@ -440,7 +440,7 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    42,    42,    49,    56,    61,    68,    77
+       0,    42,    42,    49,    56,    61,    68,    76
 };
 #endif
 
@@ -1378,16 +1378,15 @@ yyreduce:
   case 6:
 #line 69 "udf_gram.y"
     {
-              printf("if else statement\n");
               std::string str = (yyvsp[(2) - (8)].keyword);
               size_t then_pos = str.find("THEN");
               printf("if else statement %s\n", str.substr(0, then_pos).c_str());
-						  (yyval.udf_ifelse_stmt) = make_ifelse_stmt(str.substr(0, then_pos).c_str(), (yyvsp[(4) - (8)].udf_sql_expr)->query_.c_str(), (yyvsp[(6) - (8)].udf_sql_expr)->query_.c_str());
+						  (yyval.udf_ifelse_stmt) = make_ifelse_stmt(str.substr(0, then_pos).c_str(), (yyvsp[(4) - (8)].udf_sql_expr), (yyvsp[(6) - (8)].udf_sql_expr));
              ;}
     break;
 
   case 7:
-#line 78 "udf_gram.y"
+#line 77 "udf_gram.y"
     {
             printf("stmt_return\n");
             printf("stmt_return %s\n", (yyvsp[(2) - (3)].keyword));
@@ -1397,7 +1396,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1401 "udf_gram.tab.c"
+#line 1400 "udf_gram.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1611,64 +1610,8 @@ yyreturn:
 }
 
 
-#line 85 "udf_gram.y"
+#line 84 "udf_gram.y"
 
-
-/* Convenience routine to read an expression with one possible terminator */
-
-//static UDFSQL_expr *
-//read_sql_construct(int stop_char,
-//				   const char *expected,
-//				   const char *sqlstart,
-//				   bool isexpression,
-//				   bool valid_sql,
-//				   bool trim,
-//				   int *startloc,
-//				   int *endtoken)
-//{
-//	int					tok;
-//  std::string query_str;
-//	IdentifierLookup	save_IdentifierLookup;
-//	int					startlocation = -1;
-//	int					parenlevel = 0;
-//
-//  // Haoran: add select before anything else
-//  query_str += sqlstart;
-//
-//  // TODO(Haoran): Not sure whether we need to call yylex() here
-//	for (;;)
-//	{
-//		tok = yylex();
-//		if (startlocation < 0)			/* remember loc of first token */
-//			startlocation = yylloc;
-//		if (tok == stop_char && parenlevel == 0)
-//			break;
-//	}
-//
-//  // Assert this returns false
-//	if (startloc)
-//		*startloc = startlocation;
-//
-//  // TODO: rewrite this one
-//	plpgsql_append_source_text(&ds, startlocation, yylloc);
-//
-//  // TODO: do we need to do trim or not?
-//	//if (trim)
-//	//{
-//	//	while (ds.len > 0 && scanner_isspace(ds.data[ds.len - 1]))
-//	//		ds.data[--ds.len] = '\0';
-//	//}
-//
-//  // what does the ns do?
-//	// expr->ns			= plpgsql_ns_top();
-//
-//  // Initialize this later
-//	UDFSQL_expr		*expr = new UDFSQL_expr(query_str, PLPGSQL_DTYPE_EXPR);
-//
-//  // No validation yet. No raw_parser in Peloton
-//
-//	return expr;
-//}
 
 static UDF_SQL_Expr *
 make_return_stmt(const char *func_body)
@@ -1678,9 +1621,9 @@ make_return_stmt(const char *func_body)
 }
 
 static UDF_IFELSE_Stmt *
-make_ifelse_stmt(const char *if_expr, const char *func_body0, const char *func_body1)
+make_ifelse_stmt(const char *cond_str, UDF_SQL_Expr * true_expr_, UDF_SQL_Expr * false_expr_)
 {
-	UDF_IFELSE_Stmt	*expr = new UDF_IFELSE_Stmt(if_expr, func_body0, func_body1);
+	UDF_IFELSE_Stmt	*expr = new UDF_IFELSE_Stmt(cond_str, true_expr_, false_expr_);
 	return expr;
 }
 
