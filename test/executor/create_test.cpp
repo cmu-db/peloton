@@ -214,8 +214,8 @@ TEST_F(CreateTests, CreatingTrigger) {
   }
 }
 
-// This test is added because we once found it has problem when "when" is not specified.
-// So we add a test to avoid problem like that happen in the feature.
+// This test is added because there was a bug for triggers without "when". After fixing that,
+// we add this test to avoid problem like that happen in the future.
 TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
