@@ -42,6 +42,64 @@ Trigger::Trigger(std::string name, int16_t type, UNUSED_ATTRIBUTE std::string fu
   //   // TODO:
   // }
   trigger_type = type;
+  trigger_when = DeserializeWhen(fire_condition);
+}
+
+std::string Trigger::SerializeWhen()
+{
+  if (trigger_when == nullptr) {
+    return "";
+  }
+  if (trigger_when->GetExpressionType() != ExpressionType::COMPARE_NOTEQUAL) {
+    return "";
+  }
+  if (trigger_when->GetChildrenSize() != 2) {
+    return "";
+  }
+  auto left = trigger_when->GetChild(0);
+  auto right = trigger_when->GetChild(1);
+  auto compare = trigger_when->GetExpressionType();
+  if (left->GetExpressionType() != ExpressionType::VALUE_TUPLE || right->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
+    return "";
+  }
+  std::string left_table = static_cast<const expression::TupleValueExpression *>(left)->GetTableName();
+  std::string left_column = static_cast<const expression::TupleValueExpression *>(left)->GetColumnName();
+  std::string right_table = static_cast<const expression::TupleValueExpression *>(right)->GetTableName();
+  std::string right_column = static_cast<const expression::TupleValueExpression *>(right)->GetColumnName();
+  return ExpressionTypeToString(compare) + "-" + left_table + "-" + left_column + "-" + right_table + "-" + right_column;
+}
+
+expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condition) {
+  expression::AbstractExpression* trigger_when = nullptr;
+  if (fire_condition == "") {
+    return trigger_when;
+  }
+
+  //parse expression from string
+  std::string s = fire_condition;
+  std::string delimiter = "-";
+  static std::vector<std::string> v;
+  size_t pos = 0;
+  std::string token;
+  while ((pos = s.find(delimiter)) != std::string::npos) {
+    token = s.substr(0, pos);
+    v.push_back(token);
+    s.erase(0, pos + delimiter.length());
+  }
+  v.push_back(s);
+
+  // ExpressionType compare = StringToExpressionType(v[0]);
+  std::string left_table = v[1];
+  std::string left_column = v[2];
+  std::string right_table = v[3];
+  std::string right_column = v[4];
+
+  //construct expression
+  auto left_exp = new expression::TupleValueExpression(std::move(left_column), std::move(left_table));
+  auto right_exp = new expression::TupleValueExpression(std::move(right_column), std::move(right_table));
+  // expression::ComparisonExpression compare_exp(ExpressionType::COMPARE_NOTEQUAL, left_exp, right_exp);
+  auto compare_exp = new expression::ComparisonExpression(ExpressionType::COMPARE_NOTEQUAL, left_exp, right_exp);
+  return compare_exp;
 }
 
 /*
@@ -106,9 +164,29 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
 
     //TODO: check if trigger is enabled
 
+    //TODO: check trigger fire condition
+    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    if (predicate_ != nullptr) {
+      LOG_INFO("predicate_ is not nullptr");
+      LOG_INFO("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_INFO("predicate_ size = %lu", predicate_->GetChildrenSize());
+      if (executor_context_ != nullptr) {
+        LOG_INFO("before evalulate");
+        auto tuple_new = (const AbstractTuple *) tuple;
+        LOG_INFO("step1");
+        auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
+        LOG_INFO("Evaluation result: %s", eval.GetInfo().c_str());
+        if (eval.IsTrue()) {
+          continue;
+        }
+      }
+    } else {
+      LOG_INFO("predicate_ is nullptr");
+    }
 
     // Construct trigger data
     TriggerData trigger_data(trigger_type, &obj, nullptr, tuple);
+
     // apply all per-row-before-insert triggers on the tuple
     new_tuple = obj.ExecCallTriggerFunc(trigger_data);
   }

@@ -19,6 +19,9 @@
 #include "planner/create_plan.h"
 #include "common/logger.h"
 #include "storage/tuple.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/abstract_expression.h"
+#include "expression/comparison_expression.h"
 
 namespace peloton {
 namespace commands {
@@ -83,6 +86,12 @@ class Trigger {
   //TODO
   inline std::string GetWhen() {return "function_arguments";}
 
+  //only apply to the simple case: old.balance != new.balance
+  std::string SerializeWhen();
+  expression::AbstractExpression* DeserializeWhen(std::string fire_condition);
+
+  inline expression::AbstractExpression* GetTriggerWhen() const {return trigger_when;}
+
  private:
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
@@ -119,7 +128,7 @@ class TriggerList {
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
-  storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple);
+  storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
  private:
   // types_summary contains a boolean for each kind of EnumTriggerType, this is
   // used for facilitate checking weather there is a trigger to be invoked
