@@ -204,8 +204,8 @@ commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t database_oid,
                                           oid_t table_oid,
                                           int16_t trigger_type,
                                           concurrency::Transaction *txn) {
-  LOG_INFO("get triggers for table %d", table_oid);
-  LOG_INFO("want type %d", trigger_type);
+  LOG_INFO("Get triggers for table %d", table_oid);
+  LOG_DEBUG("want type %d", trigger_type);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_NAME, ColumnId::FUNCTION_ARGS});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
@@ -231,11 +231,11 @@ commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t database_oid,
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
-        LOG_INFO("trigger_name is %s", (*result_tiles)[i]->GetValue(j, 0).ToString().c_str());
-        LOG_INFO("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 1).ToString().c_str());
-        LOG_INFO("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
-        LOG_INFO("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
-        LOG_INFO("reach here safely");
+        LOG_DEBUG("trigger_name is %s", (*result_tiles)[i]->GetValue(j, 0).ToString().c_str());
+        LOG_DEBUG("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 1).ToString().c_str());
+        LOG_DEBUG("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
+        LOG_DEBUG("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
+        LOG_DEBUG("reach here safely");
         // create a new trigger instance
         commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
                                      trigger_type,
@@ -245,23 +245,23 @@ commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t database_oid,
         commands::TriggerList tmpTriggerList;
         tmpTriggerList.AddTrigger(newTrigger);
 
-        LOG_INFO("reach here safely 2");
+        LOG_TRACE("reach here safely 2");
         if (newTriggerList == nullptr) {
-          LOG_INFO("newTriggerList is null....");
+          LOG_DEBUG("newTriggerList is null....");
         }
         newTriggerList->AddTrigger(newTrigger);
-        LOG_INFO("reach here safely 3");
+        LOG_TRACE("reach here safely 3");
       }
     }
   }
-  LOG_INFO("reach here safely 4");
+  LOG_TRACE("reach here safely 4");
   return newTriggerList;
 }
 
 commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
                                           oid_t table_oid,
                                           concurrency::Transaction *txn) {
-  LOG_INFO("get triggers for table %d", table_oid);
+  LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_NAME, ColumnId::FUNCTION_ARGS});
   oid_t index_offset = IndexId::DATABASE_TABLE_KEY_1; // multi-column (database_oid, table_oid) bwtree index
@@ -286,11 +286,11 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
-        LOG_INFO("trigger_name is %s", (*result_tiles)[i]->GetValue(j, 0).ToString().c_str());
-        LOG_INFO("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
-        LOG_INFO("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
-        LOG_INFO("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 4).ToString().c_str());
-        LOG_INFO("trigger_type is %d", (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>());
+        LOG_DEBUG("trigger_name is %s", (*result_tiles)[i]->GetValue(j, 0).ToString().c_str());
+        LOG_DEBUG("FIRE_CONDITION is %s", (*result_tiles)[i]->GetValue(j, 2).ToString().c_str());
+        LOG_DEBUG("FUNCTION_NAME is %s", (*result_tiles)[i]->GetValue(j, 3).ToString().c_str());
+        LOG_DEBUG("FUNCTION_ARGS is %s", (*result_tiles)[i]->GetValue(j, 4).ToString().c_str());
+        LOG_DEBUG("trigger_type is %d", (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>());
 
         // create a new trigger instance
         commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
@@ -300,10 +300,10 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t database_oid,
                                      (*result_tiles)[i]->GetValue(j, 2).ToString());
 
         commands::TriggerList tmpTriggerList;
-        LOG_INFO("tmp trigger list size = %d", tmpTriggerList.GetTriggerListSize());
-        LOG_INFO("new trigger list size = %d", newTriggerList->GetTriggerListSize());
-        LOG_INFO("new trigger name = %s", newTrigger.GetTriggerName().c_str());
-        LOG_INFO("new trigger type = %d", newTrigger.GetTriggerType());
+        LOG_DEBUG("tmp trigger list size = %d", tmpTriggerList.GetTriggerListSize());
+        LOG_DEBUG("new trigger list size = %d", newTriggerList->GetTriggerListSize());
+        LOG_DEBUG("new trigger name = %s", newTrigger.GetTriggerName().c_str());
+        LOG_DEBUG("new trigger type = %d", newTrigger.GetTriggerType());
 
         newTriggerList->AddTrigger(newTrigger);
 
