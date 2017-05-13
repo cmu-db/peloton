@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <assert.h>
 #include <atomic>
 #include <boost/thread/barrier.hpp>
 
@@ -22,58 +23,42 @@
 namespace peloton {
 namespace codegen {
 
-class Barrier
-{
+class Barrier {
+ public:
+  static void InitInstance(Barrier *ins, uint64_t n_workers);
 
-public:
-    static void InitInstance(Barrier *ins, uint64_t n_workers);
+  void MasterWait();
 
-    void MasterWait();
+  void Destroy();
 
-    void Destroy();
+  inline bool BarrierWait() {
+    assert(bar_ != nullptr);
+    return bar_->wait();
+  }
 
-    inline bool BarrierWait()
-    {
-        return bar_->wait();
+  inline void WorkerFinish() { --n_workers_; }
+
+  inline void MergeToGlobalHashTable(utils::OAHashTable *global_ht,
+                                     utils::OAHashTable *local_ht) {
+    while (global_hash_table_merge_lock_.exchange(true)) {
     }
+    global_ht->Merge(local_ht);
+    global_hash_table_merge_lock_ = false;
+  }
 
-    inline void WorkerFinish()
-    {
-        --n_workers_;
-    }
+ private:
+  Barrier()
+      : bar_(nullptr), n_workers_(0), global_hash_table_merge_lock_(false) {}
 
-    void SetBarrier(boost::barrier *bar) {
-      bar_ = bar;
-    }
+  inline void SetBarrier(boost::barrier *bar) { bar_ = bar; }
 
-    inline void SetWorkerCount(uint64_t n_workers)
-    {
-        n_workers_ = n_workers;
-    }
+  inline void SetWorkerCount(uint64_t n_workers) { n_workers_ = n_workers; }
 
-    inline void MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht)
-    {
-        bool expect = false;
-        while (!global_hash_table_merge_lock_.compare_exchange_strong(expect, true))
-        {
-          expect = false;
-        }
-        global_ht->Merge(local_ht);
-        global_hash_table_merge_lock_.store(false);
-    }
+  inline void InitGlobalHashTableMergeLock() { global_hash_table_merge_lock_ = false; }
 
-private:
-    Barrier(): bar_(nullptr) {}
-
-    inline void InitGlobalHashTableMergeLock()
-    {
-      global_hash_table_merge_lock_.store(false);
-    }
-
-    boost::barrier *bar_;
-    std::atomic<uint64_t> n_workers_;
-    std::atomic<bool> global_hash_table_merge_lock_;
+  boost::barrier *bar_;
+  std::atomic<uint64_t> n_workers_;
+  std::atomic<bool> global_hash_table_merge_lock_;
 };
-
 }
 }

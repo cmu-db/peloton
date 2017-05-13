@@ -22,7 +22,8 @@ class QueryThreadPoolProxy {
  public:
   static llvm::Type *GetType(CodeGen &codegen);
 
-  static llvm::Function *GetSubmitQueryTaskFunction(CodeGen &codegen, RuntimeState *runtime_state);
+  static llvm::Function *GetSubmitQueryTaskFunction(
+      CodeGen &codegen, RuntimeState *runtime_state);
   static llvm::Function *GetGetIntanceFunction(CodeGen &codegen);
 };
 

@@ -55,10 +55,10 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Allocate state for our hash table
-  global_hash_table_id_ =
-      runtime_state.RegisterState("global_join", OAHashTableProxy::GetType(codegen));
-  local_hash_table_id_ =
-      runtime_state.RegisterState("local_join", OAHashTableProxy::GetType(codegen), true);
+  global_hash_table_id_ = runtime_state.RegisterState(
+      "global_join", OAHashTableProxy::GetType(codegen));
+  local_hash_table_id_ = runtime_state.RegisterState(
+      "local_join", OAHashTableProxy::GetType(codegen), true);
 
   // Prepare translators for the left and right input operators
   context.Prepare(*join_.GetChild(0), left_pipeline_);
@@ -153,10 +153,14 @@ void HashJoinTranslator::Produce() const {
 
   // Merge to the global hash table
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
-  codegen.CallFunc(MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(codegen), {multi_thread_context, LoadStatePtr(global_hash_table_id_), local_ht_ptr});
+  codegen.CallFunc(
+      MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(codegen),
+      {multi_thread_context, LoadStatePtr(global_hash_table_id_),
+       local_ht_ptr});
 
   // Wait for global hash table constructions
-  codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen), {multi_thread_context});
+  codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen),
+                   {multi_thread_context});
 
   // Let the right child produce tuples, which we use to probe the hash table
   GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));

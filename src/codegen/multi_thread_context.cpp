@@ -20,16 +20,16 @@
 namespace peloton {
 namespace codegen {
 
-void MultiThreadContext::InitInstance(MultiThreadContext *ins, int64_t thread_id, int64_t thread_count, Barrier *bar)
-{
+void MultiThreadContext::InitInstance(MultiThreadContext *ins,
+                                      int64_t thread_id, int64_t thread_count,
+                                      Barrier *bar) {
   assert(thread_id < thread_count);
   ins->SetThreadId(thread_id);
   ins->SetThreadCount(thread_count);
   ins->SetBarrier(bar);
 }
 
-int64_t MultiThreadContext::GetRangeStart(int64_t tile_group_num)
-{
+int64_t MultiThreadContext::GetRangeStart(int64_t tile_group_num) {
   // thread_count_ must be less than tile_group_num
   int64_t slice_size = tile_group_num / std::min(thread_count_, tile_group_num);
   int64_t start = thread_id_ * slice_size;
@@ -37,8 +37,7 @@ int64_t MultiThreadContext::GetRangeStart(int64_t tile_group_num)
   return start;
 }
 
-int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num)
-{
+int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num) {
   // thread_count_ must be less than tile_group_num
   int64_t slice_size = tile_group_num / std::min(thread_count_, tile_group_num);
   int64_t end;
@@ -51,21 +50,15 @@ int64_t MultiThreadContext::GetRangeEnd(int64_t tile_group_num)
   return end;
 }
 
-int64_t MultiThreadContext::GetThreadId() {
-  return thread_id_;
-}
+int64_t MultiThreadContext::GetThreadId() { return thread_id_; }
 
-bool MultiThreadContext::BarrierWait() {
-  return bar_->BarrierWait();
-}
+bool MultiThreadContext::BarrierWait() { return bar_->BarrierWait(); }
 
-void MultiThreadContext::NotifyMaster() {
-    bar_->WorkerFinish();
-}
+void MultiThreadContext::NotifyMaster() { bar_->WorkerFinish(); }
 
-void MultiThreadContext::MergeToGlobalHashTable(utils::OAHashTable *global_ht, utils::OAHashTable *local_ht) {
+void MultiThreadContext::MergeToGlobalHashTable(utils::OAHashTable *global_ht,
+                                                utils::OAHashTable *local_ht) {
   bar_->MergeToGlobalHashTable(global_ht, local_ht);
 }
-
 }
 }

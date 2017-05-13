@@ -62,17 +62,14 @@ class OAHashTableTest : public PelotonTest {
     return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
   }
 
-  inline void Insert(Key k, Value v) {
-    Insert(k, v, GetHashTable());
-  }
+  inline void Insert(Key k, Value v) { Insert(k, v, GetHashTable()); }
 
   inline void Insert(Key k, Value v, codegen::utils::OAHashTable &hash_table) {
-    hash_table.Insert(Hash(k), reinterpret_cast<char *>(&k), reinterpret_cast<char *>(&v));
+    hash_table.Insert(Hash(k), reinterpret_cast<char *>(&k),
+                      reinterpret_cast<char *>(&v));
   }
 
-  inline void Reset() {
-    Reset(GetHashTable());
-  }
+  inline void Reset() { Reset(GetHashTable()); }
 
   inline void Reset(codegen::utils::OAHashTable &hash_table) {
     hash_table.Destroy();
@@ -84,7 +81,8 @@ class OAHashTableTest : public PelotonTest {
   }
 
   codegen::utils::OAHashTable &GetBackupHashTable() {
-    return *reinterpret_cast<codegen::utils::OAHashTable *>(backup_raw_hash_table);
+    return *reinterpret_cast<codegen::utils::OAHashTable *>(
+               backup_raw_hash_table);
   }
 
  private:
@@ -145,8 +143,8 @@ TEST_F(OAHashTableTest, CanIterate) {
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = hashtable.begin(), end = hashtable.end();
-       iter != end; ++iter) {
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
     const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
     if (*iter_key == key_dup) {
       dup_count++;

@@ -70,28 +70,22 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   // First get the columns from the table the consumer needs. For every column,
   // we'll need to have a ColumnInfoLayout struct
   llvm::Value *column_layouts = codegen->CreateAlloca(
-    RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
-    codegen.Const32(table_.GetSchema()->GetColumnCount()));
+      RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
+      codegen.Const32(table_.GetSchema()->GetColumnCount()));
 
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
 
   // start index
-  llvm::Value *tile_group_idx = codegen.CallFunc(
-    MultiThreadContextProxy::GetRangeStartFunction(codegen),
-    {
-      multi_thread_context,
-      num_tile_groups
-    });
+  llvm::Value *tile_group_idx =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeStartFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
 
   // end index
-  llvm::Value *tile_group_idx_end = codegen.CallFunc(
-    MultiThreadContextProxy::GetRangeEndFunction(codegen),
-    {
-      multi_thread_context,
-      num_tile_groups
-    });
+  llvm::Value *tile_group_idx_end =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeEndFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,

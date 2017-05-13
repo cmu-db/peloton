@@ -22,29 +22,23 @@ namespace codegen {
 
 class QueryThreadPool {
  public:
-
   static QueryThreadPool *GetInstance();
 
-  static uint64_t GetThreadCount()
-  {
-      return std::thread::hardware_concurrency();
+  static uint64_t GetThreadCount() {
+    return std::thread::hardware_concurrency();
   }
 
-  QueryThreadPool()
-  {
-    pool.Initialize(GetThreadCount(), 0);
-  }
+  QueryThreadPool() { pool.Initialize(GetThreadCount(), 0); }
 
-  ~QueryThreadPool() {
-    pool.Shutdown();
-  }
+  ~QueryThreadPool() { pool.Shutdown(); }
 
-  void SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*));
+  void SubmitQueryTask(RuntimeState *runtime_state,
+                       MultiThreadContext *multi_thread_context,
+                       void (*target_func)(RuntimeState *,
+                                           MultiThreadContext *));
 
  private:
-
   ThreadPool pool;
 };
-
 }
 }

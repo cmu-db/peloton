@@ -284,7 +284,8 @@ void OAHashTable::Insert(uint64_t hash, const char *k, const char *v) {
 //===----------------------------------------------------------------------===//
 void OAHashTable::Merge(OAHashTable *another) {
   // Loop through all hash entries of another oa hash table
-  for (OAHashTable::Iterator iter = another->begin(); iter != another->end(); ++iter) {
+  for (OAHashTable::Iterator iter = another->begin(); iter != another->end();
+       ++iter) {
     const char *key = iter.Key();
     const char *value = iter.Value();
     this->Insert(iter.curr_->hash, key, value);
@@ -472,7 +473,7 @@ OAHashTable::Iterator &OAHashTable::Iterator::operator++() {
 
   curr_bucket_++;
   curr_ = reinterpret_cast<HashEntry *>(reinterpret_cast<uint64_t>(curr_) +
-      table_.entry_size_);
+                                        table_.entry_size_);
   NextEntry();
 
   return *this;
@@ -483,9 +484,7 @@ bool OAHashTable::Iterator::operator==(const OAHashTable::Iterator &rhs) {
   return curr_bucket_ == rhs.curr_bucket_ && curr_ == rhs.curr_;
 }
 
-const char *OAHashTable::Iterator::Key() {
-  return curr_->data;
-}
+const char *OAHashTable::Iterator::Key() { return curr_->data; }
 
 const char *OAHashTable::Iterator::Value() {
   if (kvl_ != nullptr) {
@@ -500,7 +499,7 @@ void OAHashTable::Iterator::NextEntry() {
   while (curr_bucket_ < table_.NumBuckets() && curr_->IsFree()) {
     curr_bucket_++;
     curr_ = reinterpret_cast<HashEntry *>(reinterpret_cast<uint64_t>(curr_) +
-        table_.entry_size_);
+                                          table_.entry_size_);
   }
 
   if (curr_bucket_ < table_.NumBuckets()) {
