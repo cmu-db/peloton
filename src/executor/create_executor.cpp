@@ -93,79 +93,25 @@ bool CreateExecutor::DExecute() {
     std::string database_name = node.GetDatabaseName();
     std::string table_name = node.GetTableName();
     std::string trigger_name = node.GetTriggerName();
-    // std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
     commands::Trigger newTrigger(node);
 
-    // // new approach: add trigger to the data_table instance directly
-    // storage::DataTable *target_table =
-    //     catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-    //                                                       table_name);
-    // target_table->AddTrigger(newTrigger);
-
-
     oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
     oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
-
-    //debug for check newtrigger's trigger_when has been settled or not.
-    LOG_INFO("in CreateExecutor::DExecute==========================");
-    if (newTrigger.GetTriggerWhen() == nullptr) {
-      LOG_INFO("new trigger's trigger_when is nullptr");
-    } else {
-      LOG_INFO("new trigger's trigger_when is not nullptr");
-      auto trigger_when_t = newTrigger.GetTriggerWhen();
-      if (trigger_when_t->GetExpressionType() == ExpressionType::COMPARE_NOTEQUAL) {
-        LOG_INFO("type is COMPARE_NOTEQUAL");
-      } else {
-        LOG_INFO("type is not COMPARE_NOTEQUAL");
-      }
-
-      std::string serialize_when = newTrigger.SerializeWhen(table_oid, current_txn);
-      if (serialize_when == "") {
-        LOG_INFO("serialize_when is empty str");
-      } else {
-        LOG_INFO("serialize_when is %s", serialize_when.c_str());
-      }
-    }
 
     // durable trigger: insert the information of this trigger in the trigger catalog table
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
                         time_since_epoch).count();
-    LOG_INFO("1");
     catalog::TriggerCatalog::GetInstance()->InsertTrigger(trigger_name, database_oid, table_oid,
                     newTrigger.GetTriggerType(), newTrigger.SerializeWhen(table_oid, current_txn),
                     newTrigger.GetFuncname(), newTrigger.GetArgs(),
                     time_stamp, pool_.get(), current_txn);
-    LOG_INFO("2");
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(database_name,
                                                           table_name);
     target_table->UpdateTriggerListFromCatalog(current_txn);
-
-
-
-    // // debug:
-    // auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid,
-    //                           newTrigger.GetTriggerType(), current_txn);
-    // if (trigger_list == nullptr) {
-    //   LOG_INFO("nullptr");
-    // } else {
-    //   LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-    // }
-
-    // LOG_INFO("trigger type=%d", newTrigger.GetTriggerType());
-    // LOG_INFO("3");
-
-    // if (current_txn->GetResult() == ResultType::SUCCESS) {
-    //   LOG_TRACE("Creating trigger succeeded!");
-    // } else if (current_txn->GetResult() == ResultType::FAILURE) {
-    //   LOG_TRACE("Creating trigger failed!");
-    // } else {
-    //   LOG_TRACE("Result is: %s", ResultTypeToString(
-    //     current_txn->GetResult()).c_str());
-    // }
 
     // hardcode SUCCESS result for current_txn
     current_txn->SetResult(ResultType::SUCCESS);

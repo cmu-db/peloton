@@ -68,7 +68,7 @@ TriggerCatalog::~TriggerCatalog() {}
 bool TriggerCatalog::InsertTrigger(
     std::string trigger_name, oid_t database_oid, oid_t table_oid,
     int16_t trigger_type,
-    std::string fire_condition, //TODO: this actually should be expression
+    std::string fire_condition,
     std::string function_name,
     std::string function_arguments,
     int64_t time_stamp, type::AbstractPool *pool,
@@ -192,6 +192,10 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name, oid_t 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+//===--------------------------------------------------------------------===//
+// DEPRECATED
+// Somehow, TRIGGEROID_KEY_3 index doesn't work
+//===--------------------------------------------------------------------===//
 bool TriggerCatalog::DeleteTrigger(oid_t trigger_oid, concurrency::Transaction *txn) {
   oid_t index_offset = IndexId::TRIGGEROID_KEY_3;  // Index of trigger_oid
   std::vector<type::Value> values;
