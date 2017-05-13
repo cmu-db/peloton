@@ -20,6 +20,7 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/logger.h"
 
 #include "type/serializeio.h"
 #include "type/type.h"
@@ -304,13 +305,15 @@ class Value : public Printable {
   inline Value GetElementAt(uint64_t idx) const {
     return Type::GetInstance(type_id_)->GetElementAt(*this, idx);
   }
-
+  // Get the element type in this array
   inline Type::TypeId GetElementType() const {
     return Type::GetInstance(type_id_)->GetElementType(*this);
   }
 
   // Does this value exist in this array?
   inline Value InList(const Value &object) const {
+    LOG_DEBUG("BEFORE THE GETELEMENT IN INLIST IN VALUE.H%d",(*(std::vector<int32_t> *)value_.array).at(0));
+    LOG_DEBUG("the first element in inlist in value.h is %d",GetElementAt(0).value_.integer);
     return Type::GetInstance(type_id_)->InList(*this, object);
   }
 

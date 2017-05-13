@@ -40,7 +40,14 @@ namespace type {
     return GetCmpBool(left.value_.integer OP r_value.GetAs<int32_t>()); \
   }\
   case Type::ARRAY: {\
-    return GetCmpBool((right.InList(left)).IsTrue());\
+    std::vector<int32_t> vec_integer;\
+    for (size_t i = 0; i < 1; i++) {\
+      vec_integer.push_back(2);\
+    }\
+    type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);\
+    type::Value in_list =\
+        right.InList(left);\
+    return GetCmpBool((in_list).IsTrue());\
   } \
   default: \
     break; \

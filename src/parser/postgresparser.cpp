@@ -523,8 +523,6 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
 expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
-    LOG_ERROR("Node type: %d...\n",node->type);
-
     case T_ColumnRef: {
       expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
       break;
@@ -534,7 +532,6 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       break;
     }
     case T_A_Expr: {
-      LOG_DEBUG("Enter T_A_Expr....\n");
       expr = AExprTransform(reinterpret_cast<A_Expr*>(node));
       break;
     }
@@ -703,7 +700,7 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((int32_t) val.val.ival);
       }
-      arr = type::ValueFactory::GetArrayValue<int32_t>(type::Type::INTEGER,vector_);
+      arr = type::ValueFactory::GetArrayValue(type::Type::INTEGER, vector_);
       break;
     }
     case T_String: {
@@ -712,7 +709,7 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((std::string) val.val.str);
       }
-      arr = type::ValueFactory::GetArrayValue<std::string>(type::Type::VARCHAR,vector_);
+      arr = type::ValueFactory::GetArrayValue(type::Type::VARCHAR, vector_);
       break;
     }
     case T_Float: {
@@ -721,7 +718,7 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((int64_t) val.val.ival);
       }
-      arr = type::ValueFactory::GetArrayValue<int64_t>(type::Type::DECIMAL,vector_);
+      arr = type::ValueFactory::GetArrayValue(type::Type::DECIMAL, vector_);
       break;
     }
     case T_Null: {
@@ -731,15 +728,17 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((int32_t) *(null.GetData()));
       }
-      arr = type::ValueFactory::GetArrayValue<int32_t>(type::Type::INTEGER,vector_);
+      arr = type::ValueFactory::GetArrayValue(type::Type::INTEGER, vector_);
       break;
     }
     default:
       throw NotImplementedException(StringUtil::Format(
           "Value type %d not supported yet...\n", val.type));
   }
-
+  LOG_DEBUG("The arr get element 0 before construnction is: %d",arr.GetElementAt(0).GetAs<int32_t>());
   expression::AbstractExpression* result = new expression::ConstantValueExpression(arr);
+  type::Value a = ((expression::ConstantValueExpression*)result)->GetValue();
+  LOG_DEBUG("The arr get element 0 after construction is: %d",a.GetElementAt(0).GetAs<int32_t>());
   return result;
 
 }

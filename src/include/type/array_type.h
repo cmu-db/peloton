@@ -61,24 +61,27 @@ class ArrayType : public Type {
     throw Exception("Can't serialize array types to storage");
   }
   // Access the raw variable length data
-  const char *GetData(const Value &val) const {
+  const char *GetData(const Value &val) const override {
     return val.value_.array;
   }
 
   Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
     switch (val.GetElementType()) {
       case INTEGER: {
-        return ValueFactory::GetArrayValue<int32_t>(val.GetTypeId(),*(std::vector<int32_t>*)GetData(val));
+        Value result = Value(Type::ARRAY,*(std::vector<int32_t>*)GetData(val),Type::INTEGER);
+        return result;
       }
       case VARCHAR: {
-        return ValueFactory::GetArrayValue<std::string>(val.GetTypeId(),*(std::vector<std::string>*)GetData(val));
+        Value result = Value(Type::ARRAY,*(std::vector<std::string>*)GetData(val),Type::VARCHAR);
+        return result;
       }
       case DECIMAL: {
-        return ValueFactory::GetArrayValue<int64_t>(val.GetTypeId(),*(std::vector<int64_t>*)GetData(val));
+        Value result = Value(Type::ARRAY,*(std::vector<int64_t>*)GetData(val),Type::DECIMAL);
+        return result;
       }
       default:
         throw NotImplementedException(StringUtil::Format(
-            "Value type %d not supported in Copy yet...\n", val.GetTypeId()));
+            "Value type %d not supported in Copy yet...\n", val.GetElementType()));
     }
 
   }
