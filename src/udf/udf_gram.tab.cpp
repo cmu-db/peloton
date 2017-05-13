@@ -371,7 +371,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  9
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   15
+#define YYLAST   16
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  11
@@ -380,7 +380,7 @@ union yyalloc
 /* YYNRULES -- Number of rules.  */
 #define YYNRULES  7
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  19
+#define YYNSTATES  20
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
@@ -434,7 +434,7 @@ static const yytype_int8 yyrhs[] =
 {
       12,     0,    -1,    13,    -1,     4,    14,     5,    -1,    16,
       -1,    15,    -1,     7,     6,     8,    16,     9,    16,     5,
-       7,    -1,     3,     6,    -1
+       7,    -1,     3,     6,    10,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
@@ -474,7 +474,7 @@ static const yytype_uint8 yyr1[] =
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     3,     1,     1,     8,     2
+       0,     2,     1,     3,     1,     1,     8,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -483,7 +483,7 @@ static const yytype_uint8 yyr2[] =
 static const yytype_uint8 yydefact[] =
 {
        0,     0,     0,     2,     0,     0,     0,     5,     4,     1,
-       7,     0,     3,     0,     0,     0,     0,     0,     6
+       0,     0,     3,     7,     0,     0,     0,     0,     0,     6
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -494,17 +494,17 @@ static const yytype_int8 yydefgoto[] =
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -13
+#define YYPACT_NINF -14
 static const yytype_int8 yypact[] =
 {
-      -2,    -3,     5,   -13,     0,     1,     3,   -13,   -13,   -13,
-     -13,     2,   -13,     6,     4,     6,     7,     8,   -13
+      -2,    -3,     5,   -14,     0,     1,     3,   -14,   -14,   -14,
+      -1,     2,   -14,   -14,     8,     4,     8,     7,     9,   -14
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -13,   -13,   -13,   -13,   -13,   -12
+     -14,   -14,   -14,   -14,   -14,   -13
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -514,14 +514,14 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-       4,    14,     1,    16,     5,     9,    10,    11,    12,     4,
-      13,     0,    17,    15,     0,    18
+       4,    15,     1,    17,     5,     9,    10,    11,    12,    13,
+      14,     4,    18,    16,     0,     0,    19
 };
 
 static const yytype_int8 yycheck[] =
 {
-       3,    13,     4,    15,     7,     0,     6,     6,     5,     3,
-       8,    -1,     5,     9,    -1,     7
+       3,    14,     4,    16,     7,     0,     6,     6,     5,    10,
+       8,     3,     5,     9,    -1,    -1,     7
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -529,7 +529,7 @@ static const yytype_int8 yycheck[] =
 static const yytype_uint8 yystos[] =
 {
        0,     4,    12,    13,     3,     7,    14,    15,    16,     0,
-       6,     6,     5,     8,    16,     9,    16,     5,     7
+       6,     6,     5,    10,     8,    16,     9,    16,     5,     7
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1390,8 +1390,8 @@ yyreduce:
 #line 78 "udf_gram.y"
     {
             printf("stmt_return\n");
-            printf("stmt_return %s\n", (yyvsp[(2) - (2)].keyword));
-						(yyval.udf_sql_expr) = make_return_stmt((const char *)(yyvsp[(2) - (2)].keyword));
+            printf("stmt_return %s\n", (yyvsp[(2) - (3)].keyword));
+						(yyval.udf_sql_expr) = make_return_stmt((const char *)(yyvsp[(2) - (3)].keyword));
 					;}
     break;
 

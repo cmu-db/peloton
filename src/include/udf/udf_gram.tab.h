@@ -33,10 +33,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Tokens.  */
 namespace peloton{
 namespace udf{
-
-/* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
    /* Put the tokens into the symbol table, so that GDB and other debuggers

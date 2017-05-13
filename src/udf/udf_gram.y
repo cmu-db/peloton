@@ -15,8 +15,8 @@
 namespace peloton{
 namespace udf{
 
-static UDF_Stmt *make_return_stmt(const char *);
-static UDF_Stmt *make_ifelse_stmt(const char *, const char *, const char *);
+static UDF_SQL_Expr *make_return_stmt(const char *);
+static UDF_IFELSE_Stmt *make_ifelse_stmt(const char *, const char *, const char *);
 void yyerror(std::string);
 int yylex(void);
 %}
@@ -25,12 +25,17 @@ int yylex(void);
 {
   char  *keyword;
   class UDF_Stmt *udf;
+  class UDF_SQL_Expr *udf_sql_expr;
+  class UDF_IFELSE_Stmt *udf_ifelse_stmt;
+
 } 
 
 %token K_RETURN K_BEGIN K_END FUNC_BODY K_IF K_THEN K_ELSE K_SEMICOLON
 
 %type<keyword> K_RETURN K_BEGIN K_END FUNC_BODY K_IF K_THEN K_ELSE K_SEMICOLON
-%type<udf> pl_function pl_block proc_stmt stmt_return ifelse_stmt
+%type<udf> pl_function pl_block proc_stmt
+%type<udf_sql_expr> stmt_return
+%type<udf_ifelse_stmt> ifelse_stmt 
 
 %%
 
@@ -51,26 +56,29 @@ pl_block		:  K_BEGIN proc_stmt K_END
 proc_stmt		: stmt_return
 						{
               printf("proc_stmt: return \n");
-              $$ = $1;
+              $$ = (UDF_Stmt*)$1;
             }
             | ifelse_stmt
 						{
               printf("proc_stmt: ifelse \n");
-              $$ = $1;
+              $$ = (UDF_Stmt*)$1;
             }
 				;
 
 ifelse_stmt	: K_IF FUNC_BODY K_THEN stmt_return K_ELSE stmt_return K_END K_IF
              {
-              printf("if else statement xxx\n");
-              printf("if else statement %s\n", $2);
-						  $$ = (UDF_Stmt*)make_ifelse_stmt((const char *)$2, (const char *)$4, (const char *)$6);
+              printf("if else statement\n");
+              std::string str = $2;
+              size_t then_pos = str.find("THEN");
+              printf("if else statement %s\n", str.substr(0, then_pos).c_str());
+						  $$ = make_ifelse_stmt(str.substr(0, then_pos).c_str(), $4->query_.c_str(), $6->query_.c_str());
              }
 
-stmt_return		: K_RETURN FUNC_BODY
+stmt_return		: K_RETURN FUNC_BODY K_SEMICOLON
 					{
             printf("stmt_return\n");
-						$$ = (UDF_Stmt*)make_return_stmt((const char *)$2);
+            printf("stmt_return %s\n", $2);
+						$$ = make_return_stmt((const char *)$2);
 					}
 				;
 
@@ -132,18 +140,18 @@ stmt_return		: K_RETURN FUNC_BODY
 //	return expr;
 //}
 
-static UDF_Stmt *
+static UDF_SQL_Expr *
 make_return_stmt(const char *func_body)
 {
 	UDF_SQL_Expr	*expr = new UDF_SQL_Expr(func_body);
-	return (UDF_Stmt *) expr;
+	return expr;
 }
 
-static UDF_Stmt *
+static UDF_IFELSE_Stmt *
 make_ifelse_stmt(const char *if_expr, const char *func_body0, const char *func_body1)
 {
 	UDF_IFELSE_Stmt	*expr = new UDF_IFELSE_Stmt(if_expr, func_body0, func_body1);
-	return (UDF_Stmt *) expr;
+	return expr;
 }
 
 void yyerror(std::string s) {
