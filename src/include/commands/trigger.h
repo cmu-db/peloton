@@ -23,6 +23,21 @@
 namespace peloton {
 namespace commands {
 
+class Trigger;
+
+class TriggerData {
+ public:
+  // This field is the type of trigger, but it is called `tg_event` in Postgres. Try to
+  // keep the variable name same, but not create a new type like TriggerEvent
+  int16_t tg_event;
+  Trigger *tg_trigger;
+  storage::Tuple *tg_trigtuple; // i.e. old tuple
+  storage::Tuple * tg_newtuple;
+
+  TriggerData(int16_t tg_event, Trigger *tg_trigger, storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple) :
+    tg_event(tg_event), tg_trigger(tg_trigger), tg_trigtuple(tg_trigtuple), tg_newtuple(tg_newtuple) {}
+};
+
 class Trigger {
  public:
   Trigger(const planner::CreatePlan& plan);
@@ -44,11 +59,18 @@ class Trigger {
       delete trigger_when;
     }
   }
-  Trigger(std::string name, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition);
-  Trigger(std::string name, int16_t type, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition);
+  Trigger(std::string name,
+          UNUSED_ATTRIBUTE std::string function_name,
+          UNUSED_ATTRIBUTE std::string arguments,
+          UNUSED_ATTRIBUTE std::string fire_condition);
+  Trigger(std::string name,
+          int16_t type,
+          UNUSED_ATTRIBUTE std::string function_name,
+          UNUSED_ATTRIBUTE std::string arguments,
+          UNUSED_ATTRIBUTE std::string fire_condition);
   inline int16_t GetTriggerType() { return trigger_type; }
   inline std::string GetTriggerName() { return trigger_name; }
-  storage::Tuple* ExecCallTriggerFunc(storage::Tuple *new_tuple);
+  storage::Tuple* ExecCallTriggerFunc(TriggerData &trigger_data);
 
   inline std::string GetFuncname() {
     return boost::algorithm::join(trigger_funcname, ",");

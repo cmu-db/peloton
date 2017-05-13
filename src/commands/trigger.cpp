@@ -97,17 +97,20 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
 
   storage::Tuple* new_tuple = tuple;
   for (i = 0; i < triggers.size(); i++) {
-    Trigger obj = triggers[i];
-
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
     //check valid type
-    if (!TRIGGER_TYPE_MATCHES(obj.GetTriggerType(), TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT)) {
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT)) {
       continue;
     }
 
     //TODO: check if trigger is enabled
 
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, tuple);
     // apply all per-row-before-insert triggers on the tuple
-    new_tuple = obj.ExecCallTriggerFunc(tuple);
+    new_tuple = obj.ExecCallTriggerFunc(trigger_data);
   }
   return new_tuple;
 }
@@ -115,10 +118,16 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
 /**
  * Call a trigger function.
  */
-storage::Tuple* Trigger::ExecCallTriggerFunc(storage::Tuple *tuple) {
-  LOG_INFO("enter into ExecCallTriggerFunc");
-  //TODO: call UDF function.
-  return tuple;
+storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
+  std::string &trigger_name = trigger_data.tg_trigger->trigger_name;
+  std::string &trigger_funcname = trigger_data.tg_trigger->trigger_funcname[0];
+  LOG_INFO("Trigger %s is invoked", trigger_name.c_str());
+  LOG_INFO("Function %s should be called", trigger_funcname.c_str());
+  // TODO: It should call UDF function. This could be implemented after UDF is supported in
+  // the master branch. Another concern is that currently UDF looks like only support read only
+  // operations, but usually functions invoked by a trigger need to apply SQL statements on
+  // databases.
+  return nullptr;
 }
 
 }
