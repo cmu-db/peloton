@@ -33,13 +33,13 @@ StatsStorage *StatsStorage::GetInstance(void) {
  */
 StatsStorage::StatsStorage() {
   pool_.reset(new type::EphemeralPool());
-  CreateStatsCatalog();
+  CreateStatsTableInCatalog();
 }
 
 /**
  * CreateStatsCatalog - Create 'stats' table in the catalog database.
  */
-void StatsStorage::CreateStatsCatalog() {
+void StatsStorage::CreateStatsTableInCatalog() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::ColumnStatsCatalog::GetInstance(txn);
@@ -284,12 +284,12 @@ ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
   return ResultType::SUCCESS;
 }
 
-// void StatsStorage::AnalayzeStatsForColumns(
-//               UNUSED_ATTRIBUTE std::string database_name,
-//               UNUSED_ATTRIBUTE std::string table_name,
-//               UNUSED_ATTRIBUTE std::vector<std::string> column_names) {
-
-// }
+// TODO: Implement it.
+ResultType StatsStorage::AnalayzeStatsForColumns(
+    UNUSED_ATTRIBUTE storage::DataTable *table,
+    UNUSED_ATTRIBUTE std::vector<std::string> column_names) {
+  return ResultType::FAILURE;
+}
 
 } /* namespace optimizer */
 } /* namespace peloton */

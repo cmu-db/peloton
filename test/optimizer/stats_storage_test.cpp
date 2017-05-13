@@ -216,10 +216,6 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   EXPECT_EQ(column_stats_ptr->column_name, column_name_1);
 }
 
-// TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
-
-// }
-
 TEST_F(StatsStorageTests, AnalyzeStatsForTableTest) {
   auto data_table = InitializeTestTable();
 

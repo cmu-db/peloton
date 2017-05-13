@@ -19,17 +19,14 @@ namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
                        std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : num_rows(num_rows),
-      col_stats_list_(col_stats_ptrs)
-{
+    : num_rows(num_rows), col_stats_list_(col_stats_ptrs) {
   for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
     AddColumnStats(col_stats_ptrs[i]);
   }
 }
 
 TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-  : col_stats_list_(col_stats_ptrs)
-{
+    : col_stats_list_(col_stats_ptrs) {
   size_t col_count = col_stats_ptrs.size();
   for (size_t i = 0; i < col_count; ++i) {
     AddColumnStats(col_stats_ptrs[i]);
@@ -46,7 +43,7 @@ void TableStats::UpdateNumRows(size_t new_num_rows) { num_rows = new_num_rows; }
 bool TableStats::HasIndex(const std::string column_name) {
   auto column_stats = GetColumnStats(column_name);
   if (column_stats == nullptr) {
-    return false;
+    return DEFAULT_HAS_INDEX;
   }
   return column_stats->has_index;
 }
@@ -73,7 +70,8 @@ bool TableStats::HasColumnStats(const std::string col_name) {
   return true;
 }
 
-std::shared_ptr<ColumnStats> TableStats::GetColumnStats(const std::string col_name) {
+std::shared_ptr<ColumnStats> TableStats::GetColumnStats(
+    const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it != col_name_to_stats_map_.end()) {
     return it->second;
@@ -99,13 +97,12 @@ bool TableStats::RemoveColumnStats(const std::string col_name) {
   return true;
 }
 
-size_t TableStats::GetColumnCount() {
-  return col_stats_list_.size();
-}
+size_t TableStats::GetColumnCount() { return col_stats_list_.size(); }
 
 std::string TableStats::ToCSV() {
   std::ostringstream os;
-  os << "\n" << "===[TableStats]===\n";
+  os << "\n"
+     << "===[TableStats]===\n";
   os << "column_id|column_name|num_rows|has_index|cardinality|"
      << "frac_null|most_common_freqs|most_common_vals|histogram_bounds\n";
   for (auto column_stats : col_stats_list_) {

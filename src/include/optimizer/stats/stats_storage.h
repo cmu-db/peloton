@@ -43,7 +43,7 @@ class StatsStorage {
 
   /* Functions for managing stats table and schema */
 
-  void CreateStatsCatalog();
+  void CreateStatsTableInCatalog();
 
   /* Functions for adding, updating and quering stats */
 
@@ -74,8 +74,8 @@ class StatsStorage {
   ResultType AnalyzeStatsForTable(storage::DataTable *table,
                                   concurrency::Transaction *txn = nullptr);
 
-  // void AnalayzeStatsForColumns(std::string database_name, std::string
-  // table_name, std::vector<std::string> column_names);
+  ResultType AnalayzeStatsForColumns(storage::DataTable *table,
+                                     std::vector<std::string> column_names);
 
  private:
   std::unique_ptr<type::AbstractPool> pool_;

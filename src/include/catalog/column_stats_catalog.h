@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// column_catalog.h
+// column_stats_catalog.h
 //
 // Identification: src/include/catalog/column_stats_catalog.h
 //

@@ -21,6 +21,7 @@ namespace peloton {
 namespace optimizer {
 
 #define DEFAULT_CARDINALITY 1
+#define DEFAULT_HAS_INDEX false
 
 class ColumnStats;
 
@@ -31,11 +32,8 @@ class TableStats {
  public:
   TableStats() : TableStats(0) {}
 
-  TableStats(size_t num_rows) :
-    num_rows(num_rows),
-    col_stats_list_{},
-    col_name_to_stats_map_{}
-  {}
+  TableStats(size_t num_rows)
+      : num_rows(num_rows), col_stats_list_{}, col_name_to_stats_map_{} {}
 
   TableStats(size_t num_rows,
              std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
@@ -84,7 +82,7 @@ class TableStats {
   size_t num_rows;
 
  private:
-  //TODO: only keep one ptr of ColumnStats
+  // TODO: only keep one ptr of ColumnStats
   std::vector<std::shared_ptr<ColumnStats>> col_stats_list_;
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
       col_name_to_stats_map_;

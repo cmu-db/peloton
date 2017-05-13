@@ -28,8 +28,8 @@ double Cost::SingleConditionSeqScanCost(
   const ValueCondition& condition,
   std::shared_ptr<TableStats>& output_stats) {
 
-  PL_ASSERT(input_stats != nullptr);
-  PL_ASSERT(condition != nullptr);
+  //PL_ASSERT(input_stats != nullptr);
+  //PL_ASSERT(condition != nullptr);
 
   UpdateConditionStats(input_stats, condition, output_stats);
 
