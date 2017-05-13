@@ -17,6 +17,7 @@
 #include "expression/constant_value_expression.h"
 #include "catalog/column_catalog.h"
 #include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace commands {
@@ -53,10 +54,9 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
   if (trigger_when == nullptr) {
     return "";
   }
-  if (trigger_when->GetExpressionType() != ExpressionType::COMPARE_NOTEQUAL) {
-    return "";
-  }
   if (trigger_when->GetChildrenSize() != 2) {
+    LOG_ERROR("only simple predicates are supported; \
+      for example: NEW.some_columne != some_value or NEW.some_columne = OLD.some_columne");
     return "";
   }
   auto left = trigger_when->GetChild(0);
@@ -64,7 +64,6 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
   auto compare = trigger_when->GetExpressionType();
 
   // parse left side of the predicate
-  std::cout << "left->GetExpressionType()=" << left->GetExpressionType() << std::endl;
   std::string left_side;
   switch (left->GetExpressionType()) {
     case ExpressionType::VALUE_CONSTANT:
@@ -72,7 +71,6 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
       LOG_INFO("left side is value constant");
       auto left_value = static_cast<const expression::ConstantValueExpression *>(left)->GetValue();
       left_side = "left|VALUE_CONSTANT|" + std::to_string(left_value.GetTypeId()) + "|" + left_value.ToString();
-      std::cout << "left_side=" << left_side << std::endl;
       break;
     }
     case ExpressionType::VALUE_TUPLE:
@@ -83,10 +81,7 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
       // get column id
       auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(table_oid, left_column, txn);
       auto column_type = catalog::ColumnCatalog::GetInstance()->GetColumnType(table_oid, left_column, txn);
-      std::cout << "column_id = " << column_id << "column_type = " << (int)column_type << std::endl;
       left_side = "left|VALUE_TUPLE|" + left_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
-      std::cout << "left_side=" << left_side << std::endl;
-
       break;
     }
     default:
@@ -95,7 +90,6 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
 
   // parse right side of the predicate
   // TODO: should I check whether the value type is the same?? potential bug!!
-  std::cout << "right->GetExpressionType()=" << right->GetExpressionType() << std::endl;
   std::string right_side;
   switch (right->GetExpressionType()) {
     case ExpressionType::VALUE_CONSTANT:
@@ -103,7 +97,6 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
       LOG_INFO("right side is value constant");
       auto right_value = static_cast<const expression::ConstantValueExpression *>(right)->GetValue();
       right_side = "right|VALUE_CONSTANT|" + std::to_string(right_value.GetTypeId()) + "|" + right_value.ToString();
-      std::cout << "right_side=" << right_side << std::endl;
       break;
     }
     case ExpressionType::VALUE_TUPLE:
@@ -113,15 +106,14 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
       // get column id
       auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(table_oid, right_column, txn);
       auto column_type = catalog::ColumnCatalog::GetInstance()->GetColumnType(table_oid, right_column, txn);
-      std::cout << "column_id = " << column_id << "column_type = " << (int)column_type << std::endl;
       right_side = "right|VALUE_TUPLE|" + right_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
-      std::cout << "right_side=" << right_side << std::endl;
-
       break;
     }
     default:
       break;
   }
+  LOG_INFO("left size of the serialized predicate:%s", left_side.c_str());
+  LOG_INFO("right size of the serialized predicate:%s", right_side.c_str());
   return ExpressionTypeToString(compare) + "|" + left_side + "|" + right_side;
 }
 
@@ -144,7 +136,6 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
   }
   v.push_back(s);
 
-  std::cout << "v.size()=" << v.size() << std::endl;
   if (v.size() <= 0) {
     // TODO: throw exception??
     LOG_ERROR("the format of fire condition is not correct");
@@ -154,9 +145,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
   std::string left_exp_type, right_exp_type;
   int left_info_begin_index = -1, right_info_begin_index = -1;
   ExpressionType compare = StringToExpressionType(v[0]);
-  std::cout << "compare type = " << compare << std::endl;
   for (unsigned int i = 0; i < v.size(); i++) {
-    std::cout << v[i] << std::endl;
     if (v[i] == "left" && left_info_begin_index < 0) {
       left_info_begin_index = i + 1;
     }
@@ -168,27 +157,39 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
 
   expression::AbstractExpression *left_exp;
   if (v[left_info_begin_index] == "VALUE_TUPLE") {
-    std::cout << "left is a tuple expression!" << std::endl;
+    LOG_INFO("left side is a tuple value tuple expression");
     // do I need the table nambe?
     auto column_type = atoi(v[left_info_begin_index + 2].c_str());
     auto column_id = atoi(v[left_info_begin_index + 3].c_str());
-    std::cout << "column_type=" << column_type << " column_id=" << column_id << std::endl;
-    // TODO: remove the hardcoded column type!!!
-    // 5 is the Integer type; 0 means use the first tuple in the arguments
-    left_exp = new expression::TupleValueExpression((type::Type::TypeId)5, 0, column_id);
-    std::cout << left_exp->GetExpressionType() << std::endl;
+    // 0 means use the first tuple in the arguments
+    left_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 0, column_id);
 
   } else if (v[left_info_begin_index] == "VALUE_CONSTANT") {
-    std::cout << "left is a constant value expression!" << std::endl;
+    LOG_INFO("left side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[left_info_begin_index + 1].c_str());
-    std::cout << (type::Type::TypeId)value_type << "||" << v[left_info_begin_index + 2] << std::endl;
-    auto left_value = type::Value((type::Type::TypeId)value_type, atoi(v[left_info_begin_index + 2].c_str()));
-    std::cout << "value_type=" << value_type << " value=" << left_value << std::endl;
+    type::Value left_value;
+    switch ((type::Type::TypeId)value_type) {
+      case type::Type::INTEGER:
+        left_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::TINYINT:
+        left_value = type::ValueFactory::GetTinyIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::SMALLINT:
+        left_value = type::ValueFactory::GetSmallIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::BIGINT:
+        left_value = type::ValueFactory::GetBigIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::DECIMAL:
+        left_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      default:
+        LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId)value_type);
+        break;
+    }
     left_exp = new expression::ConstantValueExpression(left_value);
-    std::cout << static_cast<const expression::ConstantValueExpression *>(left_exp)->GetValue() << std::endl;
-    std::cout << left_exp->GetExpressionType() << std::endl;
-    std::cout << "value_type=" << value_type << std::endl;
   } else {
     // not support
     LOG_ERROR("%s type expression is not supported in trigger", v[left_info_begin_index].c_str());
@@ -197,37 +198,47 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
 
   expression::AbstractExpression *right_exp;
   if (v[right_info_begin_index] == "VALUE_TUPLE") {
-    std::cout << "right is a tuple expression!" << std::endl;
+    LOG_INFO("right side is a value tuple expression");
+    auto column_type = atoi(v[right_info_begin_index + 2].c_str());
+    auto column_id = atoi(v[right_info_begin_index + 3].c_str());
+    // 1 means use the second tuple in the arguments
+    right_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 1, column_id);
 
   } else if (v[right_info_begin_index] == "VALUE_CONSTANT") {
-    std::cout << "right is a constant value expression!" << std::endl;
+    LOG_INFO("right side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[right_info_begin_index + 1].c_str());
-    std::cout << (type::Type::TypeId)value_type << "||" << v[right_info_begin_index + 2] << std::endl;
-    auto right_value = type::Value((type::Type::TypeId)value_type, atoi(v[right_info_begin_index + 2].c_str()));
-    std::cout << "value_type=" << value_type << " value=" << right_value << std::endl;
+    type::Value right_value;
+    switch ((type::Type::TypeId)value_type) {
+      case type::Type::INTEGER:
+        right_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::TINYINT:
+        right_value = type::ValueFactory::GetTinyIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::SMALLINT:
+        right_value = type::ValueFactory::GetSmallIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::BIGINT:
+        right_value = type::ValueFactory::GetBigIntValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      case type::Type::DECIMAL:
+        right_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
+        break;
+      default:
+        LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId)value_type);
+        break;
+    }
     right_exp = new expression::ConstantValueExpression(right_value);
-    std::cout << static_cast<const expression::ConstantValueExpression *>(right_exp)->GetValue() << std::endl;
-    std::cout << right_exp->GetExpressionType() << std::endl;
-    std::cout << "value_type=" << value_type << std::endl;
   } else {
     // not support
     LOG_ERROR("%s type expression is not supported in trigger", v[left_info_begin_index].c_str());
     return nullptr;
   }
-  std::string left_table = v[1];
-  std::string left_column = v[2];
-  std::string right_table = v[3];
-  std::string right_column = v[4];
 
   //construct expression
-  // auto left_exp = new expression::TupleValueExpression(std::move(left_column), std::move(left_table));
-  // auto right_exp = new expression::TupleValueExpression(std::move(right_column), std::move(right_table));
-  // expression::ComparisonExpression compare_exp(ExpressionType::COMPARE_NOTEQUAL, left_exp, right_exp);
-  // auto compare_exp = new expression::ComparisonExpression(ExpressionType::COMPARE_NOTEQUAL, left_exp, right_exp);
-  // return compare_exp;
   auto final_exp = new expression::ComparisonExpression(compare, left_exp, right_exp);
-  LOG_INFO("successfully construct what I want!!!");
+  LOG_INFO("successfully construct the final predicate!");
   return final_exp;
 }
 
@@ -307,6 +318,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
         LOG_INFO("Evaluation result: %s", eval.GetInfo().c_str());
         if (eval.IsTrue()) {
           LOG_INFO("pass one trigger fire condition!!!");
+          LOG_INFO("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
           continue;
         } else {
           LOG_INFO("fail one trigger fire condition!!!");
