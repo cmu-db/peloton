@@ -144,7 +144,7 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
 /**
  * execute trigger on each row before inserting tuple.
  */
-storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
+storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   unsigned i;
   LOG_INFO("enter into ExecBRInsertTriggers");
 
@@ -174,7 +174,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple) {
         LOG_INFO("before evalulate");
         auto tuple_new = (const AbstractTuple *) tuple;
         LOG_INFO("step1");
-        auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
+        auto eval = predicate_->Evaluate(nullptr, tuple_new, executor_context_);
         LOG_INFO("Evaluation result: %s", eval.GetInfo().c_str());
         if (eval.IsTrue()) {
           continue;
