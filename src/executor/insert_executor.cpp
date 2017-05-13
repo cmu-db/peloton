@@ -172,7 +172,7 @@ bool InsertExecutor::DExecute() {
       // LOG_INFO("table name=%s", target_table->GetName().c_str());
       // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
       // LOG_INFO("table_oid = %d", table_oid);
-      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
+      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid,
       //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
       // LOG_INFO("reach here safely");
 
@@ -183,7 +183,7 @@ bool InsertExecutor::DExecute() {
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
           LOG_INFO("target table has per-row-before-insert triggers!");
           LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
-          new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple));
+          new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple), executor_context_);
           LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
         }
       }
@@ -234,7 +234,7 @@ bool InsertExecutor::DExecute() {
       // }
       // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
       // LOG_INFO("table_oid = %d", table_oid);
-      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
+      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid,
       //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
       // LOG_INFO("reach here safely");
 
