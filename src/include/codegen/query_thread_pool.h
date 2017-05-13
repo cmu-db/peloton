@@ -35,6 +35,10 @@ class QueryThreadPool {
     pool.Initialize(GetThreadCount(), 0);
   }
 
+  ~QueryThreadPool() {
+    pool.Shutdown();
+  }
+
   void SubmitQueryTask(RuntimeState *runtime_state, MultiThreadContext *multi_thread_context, void (*target_func)(RuntimeState*,MultiThreadContext*));
 
  private:
