@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
+#include "common/logger.h"
 #include "codegen/raw_tuple/raw_tuple_runtime.h"
 #include "type/abstract_pool.h"
 
@@ -36,12 +38,13 @@ void RawTupleRuntime::SetVarLen(uint32_t len, char *data,
 }
 
 void RawTupleRuntime::DumpTuple(storage::Tuple *tuple) {
+  std::ostringstream os;
   const catalog::Schema *schema = tuple->GetSchema();
   for (oid_t i = 0; i != schema->GetColumnCount(); ++i) {
     type::Value value = tuple->GetValue(i);
-    std::cout << value << "\t";
+    os << value << "\t";
   }
-  std::cout << std::endl;
+  LOG_DEBUG("%s", os.str().c_str());
 }
 
 }  // namespace codegen
