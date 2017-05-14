@@ -20,12 +20,6 @@
 namespace peloton {
 namespace test {
 
-expression::ConstantValueExpression *CodegenTestUtils::ConstIntExpression(
-    int64_t val) {
-  return new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(val));
-}
-
 //===----------------------------------------------------------------------===//
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
@@ -127,6 +121,13 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
   txn_manager.CommitTransaction(txn);
   return stats;
+}
+
+std::unique_ptr<expression::AbstractExpression>
+PelotonCodeGenTest::ConstIntExpr(int64_t val) {
+  auto *expr = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(val));
+  return std::unique_ptr<expression::AbstractExpression>{expr};
 }
 
 //===----------------------------------------------------------------------===//

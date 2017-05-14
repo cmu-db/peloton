@@ -107,8 +107,8 @@ void OverflowTest(type::Type::TypeId data_type, ExpressionType op) {
         // Overflow when: lhs == INT_MIN && rhs == -1
         // (a - 1) --> this makes a[0] = -1
         // INT64_MIN / (a - 1)
-        auto *const_min_exp = CodegenTestUtils::ConstIntExpression(INT32_MIN);
-        auto *const_one_exp = CodegenTestUtils::ConstIntExpression(1);
+        auto *const_min_exp = ConstIntExpr(INT32_MIN).release();
+        auto *const_one_exp = ConstIntExpr(1).release();
         auto *a_sub_one = new expression::OperatorExpression(
             ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
             a_col_exp, const_one_exp);
