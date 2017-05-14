@@ -160,12 +160,18 @@ class CompressedTile : public Tile {
   oid_t compressed_columns_count;
   int tuple_count;
 
-  std::map<size_t, oid_t> column_offset_map;
+  std::map<size_t, oid_t>
+      column_offset_map;  // Key : column_offset, Value : column_id
 
   std::map<oid_t, std::pair<type::Type::TypeId, type::Value>>
-      compressed_column_map;
-  std::map<oid_t, type::Value> exponent_column_map;
-  std::map<oid_t, std::vector<type::Value>> decoder_map;
+      compressed_column_map;  // Key : column_id, Value : pair
+                              // (COMPRESSED_DATA_TYPE, BASE_VALUE)
+  std::map<oid_t, type::Value>
+      exponent_column_map;  // Key : column_id, Value : max exponent (DECIMAL)
+  std::map<oid_t, std::vector<type::Value>> decoder_map;  // Key : column_id,
+                                                          // Value : vector of
+                                                          // dictionary of words
+                                                          // (VARCHAR)
 };
 }
 }
