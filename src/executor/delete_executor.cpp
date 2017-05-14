@@ -92,6 +92,15 @@ bool DeleteExecutor::DExecute() {
   LOG_TRACE("Transaction ID: %lu",
             executor_context_->GetTransaction()->GetTransactionId());
 
+  commands::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_STATEMENT)) {
+      LOG_INFO("target table has per-statement-before-delete triggers!");
+      trigger_list->ExecBSDeleteTriggers();
+    }
+  }
+
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
 
@@ -105,7 +114,7 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    // if running at snapshot isolation, 
+    // if running at snapshot isolation,
     // then we need to retrieve the latest version of this tuple.
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
@@ -127,16 +136,11 @@ bool DeleteExecutor::DExecute() {
     // which means the current transaction has already updated the version.
 
     // check whether there are per-row-before-delete triggers on this table using trigger catalog
-    commands::TriggerList* trigger_list = target_table_->GetTriggerList();
-    LOG_INFO("reach here safely");
-    if (trigger_list == nullptr) {
-      LOG_INFO("nullptr");
-    } else {
+    if (trigger_list != nullptr) {
       LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-      if (trigger_list->GetTriggerListSize() > 0) {
-        LOG_INFO("this table has trigger per-row-before-delete triggers!!!!");
-
-        // TODO: check whether fire condition is met!
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_ROW)) {
+        LOG_INFO("target table has per-row-before-delete triggers!");
+        trigger_list->ExecBRDeleteTriggers();
       }
     }
 
@@ -144,9 +148,7 @@ bool DeleteExecutor::DExecute() {
       // if the transaction is the owner of the tuple, then directly update in place.
       LOG_TRACE("The current transaction is the owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
-
     } else {
-
       bool is_ownable = is_owner ||
           transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
 
@@ -184,7 +186,6 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.PerformDelete(current_txn, old_location, new_location);
 
         executor_context_->num_processed += 1;  // deleted one
-
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
@@ -192,8 +193,23 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
     }
+
+    if (trigger_list != nullptr) {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_ROW)) {
+        LOG_INFO("target table has per-row-after-delete triggers!");
+        trigger_list->ExecARDeleteTriggers();
+      }
+    }
   }
 
+  if (trigger_list != nullptr) {
+    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_STATEMENT)) {
+      LOG_INFO("target table has per-statement-after-delete triggers!");
+      trigger_list->ExecASDeleteTriggers();
+    }
+  }
   return true;
 }
 

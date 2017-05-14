@@ -144,6 +144,15 @@ bool UpdateExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  commands::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_STATEMENT)) {
+      LOG_INFO("target table has per-statement-before-update triggers!");
+      trigger_list->ExecBSUpdateTriggers();
+    }
+  }
+
   // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
 
@@ -179,7 +188,15 @@ bool UpdateExecutor::DExecute() {
     }
     ///////////////////////////////////////////////////////////
 
-    bool is_owner = 
+    if (trigger_list != nullptr) {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW)) {
+        LOG_INFO("target table has per-row-before-update triggers!");
+        trigger_list->ExecBRUpdateTriggers();
+      }
+    }
+
+    bool is_owner =
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
 
     bool is_written = 
@@ -192,7 +209,6 @@ bool UpdateExecutor::DExecute() {
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
-
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
         ret =
@@ -222,6 +238,14 @@ bool UpdateExecutor::DExecute() {
                                 executor_context_);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
+      }
+
+      if (trigger_list != nullptr) {
+        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW)) {
+          LOG_INFO("target table has per-row-after-update triggers!");
+          trigger_list->ExecARUpdateTriggers();
+        }
       }
     }
     // if we have already obtained the ownership
@@ -323,6 +347,14 @@ bool UpdateExecutor::DExecute() {
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
         }
+
+        if (trigger_list != nullptr) {
+          LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+          if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW)) {
+            LOG_INFO("target table has per-row-after-update triggers!");
+            trigger_list->ExecARUpdateTriggers();
+          }
+        }
       } else {
 
         // transaction should be aborted as we cannot update the latest version.
@@ -331,6 +363,14 @@ bool UpdateExecutor::DExecute() {
                                                  ResultType::FAILURE);
         return false;
       }
+    }
+  }
+
+  if (trigger_list != nullptr) {
+    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_STATEMENT)) {
+      LOG_INFO("target table has per-statement-after-update triggers!");
+      trigger_list->ExecASUpdateTriggers();
     }
   }
   return true;

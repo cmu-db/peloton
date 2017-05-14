@@ -129,6 +129,17 @@ class TriggerList {
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
   storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
+  storage::Tuple* ExecARInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
+  bool ExecBRUpdateTriggers();
+  bool ExecARUpdateTriggers();
+  bool ExecBRDeleteTriggers();
+  bool ExecARDeleteTriggers();
+  void ExecBSInsertTriggers();
+  void ExecASInsertTriggers();
+  bool ExecBSUpdateTriggers();
+  bool ExecASUpdateTriggers();
+  bool ExecBSDeleteTriggers();
+  bool ExecASDeleteTriggers();
  private:
   // types_summary contains a boolean for each kind of EnumTriggerType, this is
   // used for facilitate checking weather there is a trigger to be invoked
