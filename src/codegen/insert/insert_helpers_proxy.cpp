@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.cpp
+// insert_helpers_proxy.cpp
 //
 // Identification: src/codegen/insert/insert_helpers_proxy.cpp
 //
@@ -21,7 +21,8 @@ namespace codegen {
 
 const std::string &InsertHelpersProxy::_InsertRawTuple::GetFunctionName() {
   static const std::string kInsertRawTupleFnName =
-      "_ZN7peloton7codegen13InsertHelpers14InsertRawTupleEPNS_11concurrency11TransactionEPNS_7storage9DataTableEPKNS5_5TupleE";
+      "_ZN7peloton7codegen13InsertHelpers14InsertRawTupleEPNS_11concurrency11"
+          "TransactionEPNS_7storage9DataTableEPKNS5_5TupleE";
   return kInsertRawTupleFnName;
 }
 

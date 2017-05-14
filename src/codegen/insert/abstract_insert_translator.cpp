@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.cpp
+// abstract_insert_translator.cpp
 //
 // Identification: src/codegen/insert/abstract_insert_translator.cpp
 //
@@ -19,9 +19,10 @@
 namespace peloton {
 namespace codegen {
 
-AbstractInsertTranslator::AbstractInsertTranslator(const planner::InsertPlan &insert_plan,
-                                   CompilationContext &context,
-                                   Pipeline &pipeline)
+AbstractInsertTranslator::AbstractInsertTranslator(
+    const planner::InsertPlan &insert_plan,
+    CompilationContext &context,
+    Pipeline &pipeline)
     : OperatorTranslator(context, pipeline), insert_plan_(insert_plan) {}
 
 }  // namespace codegen

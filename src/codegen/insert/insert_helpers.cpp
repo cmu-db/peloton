@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.cpp
+// insert_helpers.cpp
 //
 // Identification: src/codegen/insert/insert_helpers.cpp
 //

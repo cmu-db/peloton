@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// transaction_manager.h
+// delete_translator.cpp
 //
-// Identification: src/include/concurrency/transaction_manager.h
+// Identification: src/codegen/delete/delete_translator.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

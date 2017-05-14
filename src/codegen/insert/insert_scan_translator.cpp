@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.cpp
+// insert_scan_translator.cpp
 //
 // Identification: src/codegen/insert/insert_scan_translator.cpp
 //
@@ -24,9 +24,10 @@
 namespace peloton {
 namespace codegen {
 
-InsertScanTranslator::InsertScanTranslator(const planner::InsertPlan &insert_plan,
-                                           CompilationContext &context,
-                                           Pipeline &pipeline)
+InsertScanTranslator::InsertScanTranslator(
+    const planner::InsertPlan &insert_plan,
+    CompilationContext &context,
+    Pipeline &pipeline)
     : AbstractInsertTranslator(insert_plan, context, pipeline) {
 
   // Also create the translator for our child.
@@ -71,18 +72,6 @@ void InsertScanTranslator::Produce() const {
   this->tuple_ptr_ = tuple_ptr;
   this->tuple_data_ptr_ = tuple_data_ptr;
   this->pool_ptr_ = pool_ptr;
-
-//  auto &runtime_state = compilation_context.GetRuntimeState();
-//  RuntimeState::StateID tuple_ptr_state_id = runtime_state.RegisterState(
-//      "insert_tuple_ptr",
-//      codegen.Int8Type()->getPointerTo()
-//  );
-//  RuntimeState::StateID tuple_data_ptr_state_id = runtime_state.RegisterState(
-//      "insert_tuple_data_ptr",
-//      codegen.Int8Type()->getPointerTo()
-//  );
-//  runtime_state.LoadStatePtr(codegen, tuple_ptr_state_id);
-//  runtime_state.LoadStatePtr(codegen, tuple_data_ptr_state_id);
 
   // the child of delete executor will be a scan. call produce function
   // of the child to produce the scanning result

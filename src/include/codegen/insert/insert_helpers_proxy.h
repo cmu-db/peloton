@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// hash_group_by_translator.h
+// insert_helpers_proxy.h
 //
 // Identification: src/include/codegen/insert/insert_helpers_proxy.h
 //

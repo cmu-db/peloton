@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// expression_translator.h
+// delete_translator.h
 //
 // Identification: src/include/codegen/delete/delete_translator.h
 //
