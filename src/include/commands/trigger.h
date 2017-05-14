@@ -128,6 +128,11 @@ class TriggerList {
   void AddTrigger(Trigger trigger);
   void UpdateTypeSummary(int16_t type);
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
+
+  // Execute different types of triggers
+  // B/A means before or after
+  // R/S means row level or statement level
+  // Insert/Update/Delete are events that invoke triggers
   storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
   storage::Tuple* ExecARInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
   bool ExecBRUpdateTriggers();

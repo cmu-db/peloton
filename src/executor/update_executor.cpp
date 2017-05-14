@@ -151,9 +151,9 @@ bool UpdateExecutor::DExecute() {
 
   commands::TriggerList* trigger_list = target_table_->GetTriggerList();
   if (trigger_list != nullptr) {
-    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_STATEMENT)) {
-      LOG_INFO("target table has per-statement-before-update triggers!");
+      LOG_TRACE("target table has per-statement-before-update triggers!");
       trigger_list->ExecBSUpdateTriggers();
     }
   }
@@ -168,9 +168,9 @@ bool UpdateExecutor::DExecute() {
               visible_tuple_id, physical_tuple_id);
 
     if (trigger_list != nullptr) {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW)) {
-        LOG_INFO("target table has per-row-before-update triggers!");
+        LOG_TRACE("target table has per-row-before-update triggers!");
         trigger_list->ExecBRUpdateTriggers();
       }
     }
@@ -219,9 +219,9 @@ bool UpdateExecutor::DExecute() {
       }
 
       if (trigger_list != nullptr) {
-        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW)) {
-          LOG_INFO("target table has per-row-after-update triggers!");
+          LOG_TRACE("target table has per-row-after-update triggers!");
           trigger_list->ExecARUpdateTriggers();
         }
       }
@@ -329,9 +329,9 @@ bool UpdateExecutor::DExecute() {
         }
 
         if (trigger_list != nullptr) {
-          LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+          LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
           if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW)) {
-            LOG_INFO("target table has per-row-after-update triggers!");
+            LOG_TRACE("target table has per-row-after-update triggers!");
             trigger_list->ExecARUpdateTriggers();
           }
         }
@@ -347,9 +347,9 @@ bool UpdateExecutor::DExecute() {
   }
 
   if (trigger_list != nullptr) {
-    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_STATEMENT)) {
-      LOG_INFO("target table has per-statement-after-update triggers!");
+      LOG_TRACE("target table has per-statement-after-update triggers!");
       trigger_list->ExecASUpdateTriggers();
     }
   }

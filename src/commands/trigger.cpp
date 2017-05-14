@@ -309,7 +309,6 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
 
     //TODO: check if trigger is enabled
 
-    //TODO: check trigger fire condition
     expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
@@ -343,7 +342,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
 
 storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   unsigned i;
-  LOG_INFO("enter into ExecARInsertTriggers");
+  LOG_DEBUG("enter into ExecARInsertTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_INSERT_ROW]) {
@@ -392,7 +391,7 @@ storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executo
 }
 
 bool TriggerList::ExecBRUpdateTriggers() {
-  LOG_INFO("enter into ExecBRUpdateTriggers");
+  LOG_DEBUG("enter into ExecBRUpdateTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_UPDATE_ROW]) {
@@ -417,7 +416,7 @@ bool TriggerList::ExecBRUpdateTriggers() {
 }
 
 bool TriggerList::ExecARUpdateTriggers() {
-  LOG_INFO("enter into ExecARUpdateTriggers");
+  LOG_DEBUG("enter into ExecARUpdateTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_UPDATE_ROW]) {
@@ -442,7 +441,7 @@ bool TriggerList::ExecARUpdateTriggers() {
 }
 
 bool TriggerList::ExecBRDeleteTriggers() {
-  LOG_INFO("enter into ExecBRDeleteTriggers");
+  LOG_DEBUG("enter into ExecBRDeleteTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_DELETE_ROW]) {
@@ -467,7 +466,7 @@ bool TriggerList::ExecBRDeleteTriggers() {
 }
 
 bool TriggerList::ExecARDeleteTriggers() {
-  LOG_INFO("enter into ExecARDeleteTriggers");
+  LOG_DEBUG("enter into ExecARDeleteTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_DELETE_ROW]) {
@@ -492,7 +491,7 @@ bool TriggerList::ExecARDeleteTriggers() {
 }
 
 void TriggerList::ExecBSInsertTriggers() {
-  LOG_INFO("enter into ExecBSInsertTriggers");
+  LOG_DEBUG("enter into ExecBSInsertTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_INSERT_STATEMENT]) {
@@ -517,7 +516,7 @@ void TriggerList::ExecBSInsertTriggers() {
 }
 
 void TriggerList::ExecASInsertTriggers() {
-  LOG_INFO("enter into ExecASInsertTriggers");
+  LOG_DEBUG("enter into ExecASInsertTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_INSERT_STATEMENT]) {
@@ -542,7 +541,7 @@ void TriggerList::ExecASInsertTriggers() {
 }
 
 bool TriggerList::ExecBSUpdateTriggers() {
-  LOG_INFO("enter into ExecBSUpdateTriggers");
+  LOG_DEBUG("enter into ExecBSUpdateTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_UPDATE_STATEMENT]) {
@@ -567,7 +566,7 @@ bool TriggerList::ExecBSUpdateTriggers() {
 }
 
 bool TriggerList::ExecASUpdateTriggers() {
-  LOG_INFO("enter into ExecASUpdateTriggers");
+  LOG_DEBUG("enter into ExecASUpdateTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_UPDATE_STATEMENT]) {
@@ -592,7 +591,7 @@ bool TriggerList::ExecASUpdateTriggers() {
 }
 
 bool TriggerList::ExecBSDeleteTriggers() {
-  LOG_INFO("enter into ExecBSDeleteTriggers");
+  LOG_DEBUG("enter into ExecBSDeleteTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_DELETE_STATEMENT]) {
@@ -617,7 +616,7 @@ bool TriggerList::ExecBSDeleteTriggers() {
 }
 
 bool TriggerList::ExecASDeleteTriggers() {
-  LOG_INFO("enter into ExecASDeleteTriggers");
+  LOG_DEBUG("enter into ExecASDeleteTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::AFTER_DELETE_STATEMENT]) {
@@ -647,7 +646,6 @@ bool TriggerList::ExecASDeleteTriggers() {
 storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   std::string &trigger_name = trigger_data.tg_trigger->trigger_name;
   std::string &trigger_funcname = trigger_data.tg_trigger->trigger_funcname[0];
-  LOG_INFO("=====================");
   LOG_INFO("Trigger %s is invoked", trigger_name.c_str());
   LOG_INFO("Function %s should be called", trigger_funcname.c_str());
   // TODO: It should call UDF function here.

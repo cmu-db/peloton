@@ -80,9 +80,9 @@ bool InsertExecutor::DExecute() {
 
   commands::TriggerList* trigger_list = target_table->GetTriggerList();
   if (trigger_list != nullptr) {
-    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_STATEMENT)) {
-      LOG_INFO("target table has per-statement-before-insert triggers!");
+      LOG_TRACE("target table has per-statement-before-insert triggers!");
       trigger_list->ExecBSInsertTriggers();
     }
   }
@@ -135,9 +135,9 @@ bool InsertExecutor::DExecute() {
     }
 
     if (trigger_list != nullptr) {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_STATEMENT)) {
-        LOG_INFO("target table has per-statement-after-insert triggers!");
+        LOG_TRACE("target table has per-statement-after-insert triggers!");
         trigger_list->ExecASInsertTriggers();
       }
     }
@@ -182,30 +182,20 @@ bool InsertExecutor::DExecute() {
       // instead, get it from the trigger catalog table
       commands::TriggerList* trigger_list = target_table->GetTriggerList();
 
-      // // check whether there are per-row-before-insert triggers on this table using trigger catalog
-      // oid_t database_oid = target_table->GetDatabaseOid();
-      // LOG_INFO("database_oid = %d", database_oid);
-      // LOG_INFO("table name=%s", target_table->GetName().c_str());
-      // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
-      // LOG_INFO("table_oid = %d", table_oid);
-      // commands::TriggerList* trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid,
-      //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
-      // LOG_INFO("reach here safely");
-
       auto new_tuple = tuple;
       if (trigger_list != nullptr) {
-        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
-          LOG_INFO("target table has per-row-before-insert triggers!");
-          LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          LOG_TRACE("target table has per-row-before-insert triggers!");
+          LOG_TRACE("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
           new_tuple = trigger_list->ExecBRInsertTriggers(const_cast<storage::Tuple *> (tuple), executor_context_);
-          LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+          LOG_TRACE("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
         }
       }
 
       if (new_tuple == nullptr) {
         // trigger doesn't allow this tuple to be inserted
-        LOG_INFO("this tuple is rejected by trigger");
+        LOG_TRACE("this tuple is rejected by trigger");
         continue;
       }
 
@@ -234,42 +224,21 @@ bool InsertExecutor::DExecute() {
 
       new_tuple = tuple;
       if (trigger_list != nullptr) {
-        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_ROW)) {
-          LOG_INFO("target table has per-row-after-insert triggers!");
-          LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          LOG_TRACE("target table has per-row-after-insert triggers!");
+          LOG_TRACE("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
           new_tuple = trigger_list->ExecARInsertTriggers(const_cast<storage::Tuple *> (tuple), executor_context_);
-          LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+          LOG_TRACE("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
         }
       }
-
-      // // debug code below
-      // oid_t database_oid = target_table->GetDatabaseOid();
-      // LOG_INFO("database_oid = %d", database_oid);
-      // LOG_INFO("table name=%s", target_table->GetName().c_str());
-      // if (catalog::TriggerCatalog::GetInstance() == nullptr) {
-      //   LOG_INFO("trigger catalog is null");
-      // } else {
-      //   LOG_INFO("trigger catalog is not null!");
-      // }
-      // if (catalog::TableCatalog::GetInstance() == nullptr) {
-      //   LOG_INFO("table catalog is null!!!");
-      // } else {
-      //   LOG_INFO("table catalog is not null");
-      // }
-      // oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(target_table->GetName(), database_oid, current_txn);
-      // LOG_INFO("table_oid = %d", table_oid);
-      // trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid,
-      //                         peloton::commands::EnumTriggerType::BEFORE_INSERT_ROW, current_txn);
-      // LOG_INFO("reach here safely");
-
     }
 
     trigger_list = target_table->GetTriggerList();
     if (trigger_list != nullptr) {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_STATEMENT)) {
-        LOG_INFO("target table has per-statement-after-insert triggers!");
+        LOG_TRACE("target table has per-statement-after-insert triggers!");
         trigger_list->ExecASInsertTriggers();
       }
     }
