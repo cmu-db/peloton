@@ -123,10 +123,10 @@ void CompressedTile::CompressTile(Tile *tile) {
         new_columns[i] = new_column_values;
         break;
       case type::Type::VARCHAR:
-        LOG_TRACE("dictionary");
+        LOG_INFO("dictionary");
         new_column_values = CompressCharColumn(tile, i);
         if (new_column_values.size() == 0) {
-          LOG_TRACE("No deduplicate is needed");
+          LOG_INFO("No deduplicate is needed");
         } else {
           new_columns[i] = new_column_values;
           type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
@@ -367,77 +367,39 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   bool is_inlined = tile_schema->IsInlined(column_id);
   size_t column_offset = tile_schema->GetOffset(column_id);
   auto column_type = tile_schema->GetType(column_id);
-  std::vector<type::Value> column_values(num_tuples);
+  
+  std::vector< type::Value > encoded_values(num_tuples);
+  std::map< std::string, int > encoder;
+  std::vector< type::Value> decoder;
+  oid_t num_unique_words = 0;
+  std::map< std::string, int>::iterator it;
 
-  // use 3rd party
-  cuckoohash_map<std::string, int> dictionary;
-
-  std::vector<type::Value> decoder;
-
-  std::vector<type::Value> modified_values(num_tuples);
-
-  /* put data here first.
-   * since we do not know how many uniq words at the beginning
-   * first store them as int
-   * decide exact Value type later
-   */
-
-  std::vector<int> modified_raw(num_tuples);
-
-  int counter = 0;
-  int new_value = 0;
   for (oid_t i = 0; i < num_tuples; i++) {
+    
     type::Value val =
         tile->GetValueFast(i, column_offset, column_type, is_inlined);
-    std::string word = val.ToString();
-
-    if (dictionary.contains(word) == false) {
-      // add a new word to dictionary
-      dictionary.insert(word, counter);
-      decoder.push_back(type::ValueFactory::GetVarcharValue(word));
-      LOG_TRACE("new word: #%d : %s", counter,
-                decoder.at(counter).ToString().c_str());
-      new_value = counter;
-      counter++;
-
+    std::string string_val = val.ToString();
+     it = encoder.find(string_val);
+    
+    if (it == encoder.end()) {
+      encoder[string_val] = num_unique_words;
+      type::Value encoded_value = type::ValueFactory::GetSmallIntValue(num_unique_words);
+      decoder.push_back(type::ValueFactory::GetVarcharValue(string_val));
+      encoded_values[i] = encoded_value;
+      num_unique_words++;
     } else {
-      new_value = dictionary.find(word);
+      encoded_values[i] = type::ValueFactory::GetSmallIntValue(encoder[string_val]);
     }
-    modified_raw[i] = new_value;
   }
 
-  LOG_TRACE("number of uniq words: %d", counter);
-  if ((oid_t)counter == num_tuples) {
-    // no duplicate
-    LOG_TRACE("All words are unique");
-    modified_values.clear();
-    return modified_values;
-  }
-
-  // determine value type according to number of uniq words
-  if (counter <=
-      (int32_t)type::Type::GetMaxValue(type::Type::TINYINT).GetAs<int8_t>() +
-          1) {
-    LOG_TRACE("store as tiny int");
-    for (oid_t i = 0; i < num_tuples; i++) {
-      // tiny int
-      modified_values[i] = type::ValueFactory::GetTinyIntValue(modified_raw[i]);
-    }
-
+  LOG_TRACE("Number of unique words in column : %d", (int)num_unique_words);
+  
+  if (static_cast<double>(num_unique_words) > (0.75 * static_cast<double>(num_tuples))) {
+    encoded_values.clear();
   } else {
-    LOG_TRACE("store as small int");
-    for (oid_t i = 0; i < num_tuples; i++) {
-      // samll int
-      modified_values[i] =
-          type::ValueFactory::GetSmallIntValue(modified_raw[i]);
-    }
+    SetDecoderMapValue(column_id, decoder);
   }
-  size_t dictionary_cap = decoder.capacity();
-  LOG_TRACE("dictionary capacity: %zu", dictionary_cap);
-  // if use log trace, dictionary_size will not be used
-  (void)dictionary_cap;
-  SetDecoderMapValue(column_id, decoder);
-  return modified_values;
+  return encoded_values;
 }
 
 /*

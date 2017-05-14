@@ -71,17 +71,12 @@ TEST_F(CompressionDictionaryTest, BasicTest) {
 
   storage::DataTable *foo_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
+  
   foo_table->CompressTable();
-  // os << "select * from foo;";
-  os << "select id,year  from foo;";
 
-  // os << "select word from foo;";
+  os << "select word from foo;";
+  
   TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
-                                  rows_affected, error_message);
-
-  std::ostringstream os2;
-  os2 << "select word from foo;";
-  TestingSQLUtil::ExecuteSQLQuery(os2.str(), result, tuple_descriptor,
                                   rows_affected, error_message);
   for (i = 0; i < 10; i++) {
     LOG_INFO("%s", TestingSQLUtil::GetResultValueAsString(result, i).c_str());
@@ -116,6 +111,7 @@ TEST_F(CompressionDictionaryTest, UniqTest) {
 
   storage::DataTable *foo_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
+  
   foo_table->CompressTable();
 
   std::vector<StatementResult> result;
@@ -124,16 +120,8 @@ TEST_F(CompressionDictionaryTest, UniqTest) {
   int rows_affected;
   std::ostringstream os;
 
-  // os << "select * from foo;";
-  os << "select id,year  from foo;";
-
-  // os << "select word from foo;";
+  os << "select word from foo;";
   TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
-                                  rows_affected, error_message);
-
-  std::ostringstream os2;
-  os2 << "select word from foo;";
-  TestingSQLUtil::ExecuteSQLQuery(os2.str(), result, tuple_descriptor,
                                   rows_affected, error_message);
 
   for (i = 0; i < 2500; i++) {
@@ -201,5 +189,6 @@ TEST_F(CompressionDictionaryTest, SizeTest) {
     txn_manager.CommitTransaction(txn);
   }
 }
+
 }
 }
