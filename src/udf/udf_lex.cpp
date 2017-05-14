@@ -1,5 +1,4 @@
 
-#line 3 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -469,9 +468,6 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "udf_lex.l"
-#line 3 "udf_lex.l"
-#line 477 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -651,10 +647,8 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 14 "udf_lex.l"
 
 
-#line 662 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -739,12 +733,10 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 16 "udf_lex.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 18 "udf_lex.l"
 {
             printf("match semi-colon\n");
             return K_SEMICOLON;
@@ -752,7 +744,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 23 "udf_lex.l"
 {
             printf("match begin\n");
             return K_BEGIN;
@@ -760,7 +751,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 28 "udf_lex.l"
 {
             printf ("match end\n");
             return K_END;
@@ -768,7 +758,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 33 "udf_lex.l"
 {
             printf ("match IF\n");
             return K_IF;
@@ -776,7 +765,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 38 "udf_lex.l"
 {
             printf ("match then\n");
             return K_THEN;
@@ -784,7 +772,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 43 "udf_lex.l"
 {
             printf ("match else\n");
             return K_ELSE;
@@ -792,7 +779,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 48 "udf_lex.l"
 {
             printf ("match return\n");
             return K_RETURN;
@@ -801,7 +787,6 @@ YY_RULE_SETUP
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 54 "udf_lex.l"
 {
             yylval.keyword = yytext;
             printf("func_body is: %s\n", yytext);
@@ -810,10 +795,8 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 61 "udf_lex.l"
 ECHO;
 	YY_BREAK
-#line 821 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1773,7 +1756,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 61 "udf_lex.l"
 
 
 

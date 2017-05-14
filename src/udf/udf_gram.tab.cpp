@@ -90,7 +90,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "udf_gram.y"
+
 
 /*-------------------------------------------------------------------------
  *
@@ -134,7 +134,6 @@ int yylex(void);
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 25 "udf_gram.y"
 {
   char  *keyword;
   class UDF_Stmt *udf;
@@ -143,7 +142,6 @@ typedef union YYSTYPE
 
 }
 /* Line 193 of yacc.c.  */
-#line 147 "udf_gram.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -156,7 +154,6 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 160 "udf_gram.tab.c"
 
 #ifdef short
 # undef short
@@ -1344,7 +1341,6 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 43 "udf_gram.y"
     {
             printf("pl_func\n");
 						udf_parsed_result = (yyvsp[(1) - (1)].udf);
@@ -1352,7 +1348,6 @@ yyreduce:
     break;
 
   case 3:
-#line 50 "udf_gram.y"
     {
             printf("pl_block\n");
 						(yyval.udf) = (yyvsp[(2) - (3)].udf);
@@ -1360,7 +1355,6 @@ yyreduce:
     break;
 
   case 4:
-#line 57 "udf_gram.y"
     {
               printf("proc_stmt: return \n");
               (yyval.udf) = (UDF_Stmt*)(yyvsp[(1) - (1)].udf_sql_expr);
@@ -1368,7 +1362,6 @@ yyreduce:
     break;
 
   case 5:
-#line 62 "udf_gram.y"
     {
               printf("proc_stmt: ifelse \n");
               (yyval.udf) = (UDF_Stmt*)(yyvsp[(1) - (1)].udf_ifelse_stmt);
@@ -1376,7 +1369,6 @@ yyreduce:
     break;
 
   case 6:
-#line 69 "udf_gram.y"
     {
               std::string str = (yyvsp[(2) - (8)].keyword);
               size_t then_pos = str.find("THEN");
@@ -1386,7 +1378,6 @@ yyreduce:
     break;
 
   case 7:
-#line 77 "udf_gram.y"
     {
             printf("stmt_return\n");
             printf("stmt_return %s\n", (yyvsp[(2) - (3)].keyword));
@@ -1396,7 +1387,6 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1400 "udf_gram.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1610,7 +1600,6 @@ yyreturn:
 }
 
 
-#line 84 "udf_gram.y"
 
 
 static UDF_SQL_Expr *

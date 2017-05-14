@@ -67,7 +67,6 @@ namespace udf{
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 25 "udf_gram.y"
 {
   char  *keyword;
   class UDF_Stmt *udf;
@@ -76,7 +75,6 @@ typedef union YYSTYPE
 
 }
 /* Line 1529 of yacc.c.  */
-#line 77 "udf_gram.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
