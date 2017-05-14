@@ -30,14 +30,6 @@ namespace peloton {
 namespace test {
 
 //===----------------------------------------------------------------------===//
-// Common utilities
-//===----------------------------------------------------------------------===//
-class CodegenTestUtils {
- public:
-  static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
-};
-
-//===----------------------------------------------------------------------===//
 // Common base class for all codegen tests
 //===----------------------------------------------------------------------===//
 class PelotonCodeGenTest : public PelotonTest {
@@ -68,6 +60,11 @@ class PelotonCodeGenTest : public PelotonTest {
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
       char *consumer_state);
+
+  //===--------------------------------------------------------------------===//
+  // Helpers
+  //===--------------------------------------------------------------------===//
+  std::unique_ptr<expression::AbstractExpression> ConstIntExpr(int64_t val);
 
  private:
   storage::Database *test_db;

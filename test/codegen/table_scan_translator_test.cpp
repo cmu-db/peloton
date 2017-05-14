@@ -83,7 +83,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   // Setup the predicate
   auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
+  auto* const_20_exp = ConstIntExpr(20).release();
   auto* a_gt_20 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
@@ -113,7 +113,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   // 1) Setup the predicate
   auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+  auto* const_40_exp = ConstIntExpr(40).release();
   auto* a_gt_40 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
 
@@ -145,14 +145,14 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // a >= 20
   auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
+  auto* const_20_exp = ConstIntExpr(20).release();
   auto* a_gt_20 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
   // b = 21
   auto* b_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_21_exp = CodegenTestUtils::ConstIntExpression(21);
+  auto* const_21_exp = ConstIntExpr(21).release();
   auto* b_eq_21 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
 
@@ -192,8 +192,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   // a + 1
   auto *a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-//  auto *const_1_exp = CodegenTestUtils::ConstIntExpression(1);
-  auto *const_1_exp = new expression::ConstantValueExpression(type::ValueFactory::GetSmallIntValue(1));
+  auto *const_1_exp = ConstIntExpr(1).release();
   auto *a_plus_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
       const_1_exp);
@@ -274,7 +273,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   // b - 1
   auto* b_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* const_1_exp = ConstIntExpr(1).release();
   auto* b_minus_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER, b_col_exp,
       const_1_exp);
@@ -355,7 +354,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   // a / 1
   auto* a_rhs_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(2);
+  auto* const_1_exp = ConstIntExpr(2).release();
   auto* a_div_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::INTEGER,
       a_rhs_col_exp, const_1_exp);
@@ -437,7 +436,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   // b % 1
   auto* b_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* const_1_exp = ConstIntExpr(1).release();
   auto* b_mod_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
       const_1_exp);

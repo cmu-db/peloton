@@ -317,7 +317,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   // 6) The predicate on the grouping column
   auto* a_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_50 = CodegenTestUtils::ConstIntExpression(50);
+  auto* const_50 = ConstIntExpr(50).release();
   auto* a_gt_50 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_GREATERTHAN, a_exp, const_50);
 
