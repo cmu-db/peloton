@@ -83,7 +83,9 @@ SKIP_FILES_LIST = [
     "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
     "src/codegen/utils/oa_hash_table.cpp",
-    "src/codegen/utils/cc_hash_table.cpp"
+    "src/codegen/utils/cc_hash_table.cpp",
+    "src/udf/udf_lex.cpp",
+    "src/udf/udf_gram.tab.cpp",
 ]
 
 ## ==============================================
