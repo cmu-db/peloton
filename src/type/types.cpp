@@ -647,7 +647,6 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string& str) {
 
 ExpressionType StringToExpressionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
-  //std::cout<<upper_str<<std::endl;
   if (upper_str == "INVALID") {
     return ExpressionType::INVALID;
   } else if (upper_str == "OPERATOR_PLUS" || upper_str == "+") {
