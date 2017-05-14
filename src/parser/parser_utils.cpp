@@ -201,7 +201,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
 
   if (stmt->type == CreateStatement::CreateType::kIndex) {
     inprint(stmt->index_name, num_indent + 1);
-    std::cout << indent(num_indent);
+    //std::cout << indent(num_indent);
     printf("INDEX : table : %s unique : %d attrs : ",
            stmt->GetTableName().c_str(), stmt->unique);
     for (auto key : *(stmt->index_attrs)) printf("%s ", key);
@@ -212,7 +212,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
 
   if (stmt->columns != nullptr) {
     for (ColumnDefinition* col : *(stmt->columns)) {
-      std::cout << indent(num_indent);
+      //std::cout << indent(num_indent);
       if (col->type == ColumnDefinition::DataType::PRIMARY) {
         printf("-> PRIMARY KEY : ");
         for (auto key : *(col->primary_key)) printf("%s ", key);

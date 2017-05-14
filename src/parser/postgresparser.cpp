@@ -1343,8 +1343,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
 
     parser::SQLStatementList* PostgresParser::ParseSQLString(
             const std::string& sql) {
-      std::string str = (std::string&) sql;
-      return ParseSQLString(str.c_str());
+      return ParseSQLString(sql.c_str());
     }
 
 PostgresParser& PostgresParser::GetInstance() {
