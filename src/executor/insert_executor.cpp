@@ -78,6 +78,15 @@ bool InsertExecutor::DExecute() {
             target_table->GetTupleCount());
   auto executor_pool = executor_context_->GetPool();
 
+  commands::TriggerList* trigger_list = target_table->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_STATEMENT)) {
+      LOG_INFO("target table has per-statement-before-insert triggers!");
+      trigger_list->ExecBSInsertTriggers();
+    }
+  }
+
   // Inserting a logical tile.
   if (children_.size() == 1) {
     if (!children_[0]->Execute()) {
@@ -125,6 +134,13 @@ bool InsertExecutor::DExecute() {
       executor_context_->num_processed += 1;  // insert one
     }
 
+    if (trigger_list != nullptr) {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_STATEMENT)) {
+        LOG_INFO("target table has per-statement-after-insert triggers!");
+        trigger_list->ExecASInsertTriggers();
+      }
+    }
     return true;
   }
   // Inserting a collection of tuples from plan node
@@ -179,7 +195,6 @@ bool InsertExecutor::DExecute() {
       auto new_tuple = tuple;
       if (trigger_list != nullptr) {
         LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-
         if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW)) {
           LOG_INFO("target table has per-row-before-insert triggers!");
           LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
@@ -217,6 +232,16 @@ bool InsertExecutor::DExecute() {
 
       executor_context_->num_processed += 1;  // insert one
 
+      new_tuple = tuple;
+      if (trigger_list != nullptr) {
+        LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_ROW)) {
+          LOG_INFO("target table has per-row-after-insert triggers!");
+          LOG_INFO("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          new_tuple = trigger_list->ExecARInsertTriggers(const_cast<storage::Tuple *> (tuple), executor_context_);
+          LOG_INFO("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+        }
+      }
 
       // // debug code below
       // oid_t database_oid = target_table->GetDatabaseOid();
@@ -240,10 +265,17 @@ bool InsertExecutor::DExecute() {
 
     }
 
+    trigger_list = target_table->GetTriggerList();
+    if (trigger_list != nullptr) {
+      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_STATEMENT)) {
+        LOG_INFO("target table has per-statement-after-insert triggers!");
+        trigger_list->ExecASInsertTriggers();
+      }
+    }
     done_ = true;
     return true;
   }
-
   return true;
 }
 

@@ -341,12 +341,313 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
   return new_tuple;
 }
 
+storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
+  unsigned i;
+  LOG_INFO("enter into ExecARInsertTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_INSERT_ROW]) {
+    return nullptr;
+  }
+
+  storage::Tuple* new_tuple = tuple;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT)) {
+      continue;
+    }
+
+    //TODO: check trigger fire condition
+    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    if (predicate_ != nullptr) {
+      LOG_DEBUG("predicate_ is not nullptr");
+      LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_DEBUG("predicate_ size = %lu", predicate_->GetChildrenSize());
+      if (executor_context_ != nullptr) {
+        LOG_DEBUG("before evalulate");
+        auto tuple_new = (const AbstractTuple *) tuple;
+        auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
+        LOG_DEBUG("Evaluation result: %s", eval.GetInfo().c_str());
+        if (eval.IsTrue()) {
+          LOG_DEBUG("pass one trigger fire condition!!!");
+          LOG_DEBUG("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
+        } else {
+          LOG_DEBUG("fail one trigger fire condition!!!");
+          continue;
+        }
+      }
+    } else {
+      LOG_DEBUG("predicate_ is nullptr");
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, tuple);
+
+    // apply all per-row-after-insert triggers on the tuple
+    new_tuple = obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return new_tuple;
+}
+
+bool TriggerList::ExecBRUpdateTriggers() {
+  LOG_INFO("enter into ExecBRUpdateTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::BEFORE_UPDATE_ROW]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-row-before-update triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecARUpdateTriggers() {
+  LOG_INFO("enter into ExecARUpdateTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_UPDATE_ROW]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-row-after-update triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecBRDeleteTriggers() {
+  LOG_INFO("enter into ExecBRDeleteTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::BEFORE_DELETE_ROW]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-row-before-delete triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecARDeleteTriggers() {
+  LOG_INFO("enter into ExecARDeleteTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_DELETE_ROW]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-row-after-delete triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+void TriggerList::ExecBSInsertTriggers() {
+  LOG_INFO("enter into ExecBSInsertTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::BEFORE_INSERT_STATEMENT]) {
+    return;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-before-insert triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return;
+}
+
+void TriggerList::ExecASInsertTriggers() {
+  LOG_INFO("enter into ExecASInsertTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_INSERT_STATEMENT]) {
+    return;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-after-insert triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return;
+}
+
+bool TriggerList::ExecBSUpdateTriggers() {
+  LOG_INFO("enter into ExecBSUpdateTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::BEFORE_UPDATE_STATEMENT]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-before-update triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecASUpdateTriggers() {
+  LOG_INFO("enter into ExecASUpdateTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_UPDATE_STATEMENT]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-after-update triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecBSDeleteTriggers() {
+  LOG_INFO("enter into ExecBSDeleteTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::BEFORE_DELETE_STATEMENT]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-before-delete triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
+bool TriggerList::ExecASDeleteTriggers() {
+  LOG_INFO("enter into ExecASDeleteTriggers");
+
+  //check valid type
+  if (!types_summary[EnumTriggerType::AFTER_DELETE_STATEMENT]) {
+    return false;
+  }
+  unsigned i;
+  for (i = 0; i < triggers.size(); i++) {
+    Trigger &obj = triggers[i];
+    int16_t trigger_type = obj.GetTriggerType();
+    //check valid type
+    if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE)) {
+      continue;
+    }
+
+    // Construct trigger data
+    TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
+
+    // apply all per-statement-after-delete triggers on the table
+    obj.ExecCallTriggerFunc(trigger_data);
+  }
+  return true;
+}
+
 /**
  * Call a trigger function.
  */
 storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   std::string &trigger_name = trigger_data.tg_trigger->trigger_name;
   std::string &trigger_funcname = trigger_data.tg_trigger->trigger_funcname[0];
+  LOG_INFO("=====================");
   LOG_INFO("Trigger %s is invoked", trigger_name.c_str());
   LOG_INFO("Function %s should be called", trigger_funcname.c_str());
   // TODO: It should call UDF function here.
