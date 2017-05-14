@@ -201,8 +201,8 @@ TEST_F(TriggerTests, BRInsertTriggers) {
 
   std::string query =
     "CREATE TRIGGER b_r_insert_trigger "
-      "BEFORE UPDATE OF dept_id ON accounts "
-      "FOR EACH ROW "
+      "BEFORE INSERT ON accounts "
+      "FOR EACH ROW WHEN (NEW.dept_id = 2333) "
       "EXECUTE PROCEDURE b_r_insert_trigger_func();";
   std::unique_ptr<parser::SQLStatementList> stmt_list(parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
@@ -225,8 +225,8 @@ TEST_F(TriggerTests, BRInsertTriggers) {
   EXPECT_FALSE(TRIGGER_FOR_AFTER(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_INSTEAD(trigger_type));
   // event
-  EXPECT_TRUE(TRIGGER_FOR_UPDATE(trigger_type));
-  EXPECT_FALSE(TRIGGER_FOR_INSERT(trigger_type));
+  EXPECT_FALSE(TRIGGER_FOR_UPDATE(trigger_type));
+  EXPECT_TRUE(TRIGGER_FOR_INSERT(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_DELETE(trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_TRUNCATE(trigger_type));
 
@@ -249,7 +249,7 @@ TEST_F(TriggerTests, BRInsertTriggers) {
 
   commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW));
 
 
   InsertTupleHelper(2333, "LTI");
