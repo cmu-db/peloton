@@ -30,21 +30,26 @@ Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
   trigger_type = plan.GetTriggerType();
 }
 
-// TODO:
+//===--------------------------------------------------------------------===//
+// DEPRECATED
+//===--------------------------------------------------------------------===//
 Trigger::Trigger(std::string name, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition) {
   trigger_name = name;
   // to be continue...
 
 }
-Trigger::Trigger(std::string name, int16_t type, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition) {
+Trigger::Trigger(std::string name, int16_t type, std::string function_name, std::string arguments, std::string fire_condition) {
   trigger_name = name;
-  // to be continue...
-  // if (type == (TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_DELETE)) {
-  //   trigger_type = BEFORE_DELETE_ROW;
-  // } else {
-  //   // probabily not a good way to construct trigger_type
-  //   // TODO:
-  // }
+  std::vector<std::string> strs;
+  boost::split(strs, function_name, boost::is_any_of(","));
+  for (unsigned int i = 0; i < strs.size(); i++) {
+    trigger_funcname.push_back(strs[i]);
+  }
+  strs.clear();
+  boost::split(strs, arguments, boost::is_any_of(","));
+  for (unsigned int i = 0; i < strs.size(); i++) {
+    trigger_args.push_back(strs[i]);
+  }
   trigger_type = type;
   trigger_when = DeserializeWhen(fire_condition);
 }
@@ -307,25 +312,24 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
     //TODO: check trigger fire condition
     expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
-      LOG_INFO("predicate_ is not nullptr");
-      LOG_INFO("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
-      LOG_INFO("predicate_ size = %lu", predicate_->GetChildrenSize());
+      LOG_DEBUG("predicate_ is not nullptr");
+      LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_DEBUG("predicate_ size = %lu", predicate_->GetChildrenSize());
       if (executor_context_ != nullptr) {
-        LOG_INFO("before evalulate");
+        LOG_DEBUG("before evalulate");
         auto tuple_new = (const AbstractTuple *) tuple;
-        LOG_INFO("step1");
         auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
-        LOG_INFO("Evaluation result: %s", eval.GetInfo().c_str());
+        LOG_DEBUG("Evaluation result: %s", eval.GetInfo().c_str());
         if (eval.IsTrue()) {
-          LOG_INFO("pass one trigger fire condition!!!");
-          LOG_INFO("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
-          continue;
+          LOG_DEBUG("pass one trigger fire condition!!!");
+          LOG_DEBUG("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
         } else {
-          LOG_INFO("fail one trigger fire condition!!!");
+          LOG_DEBUG("fail one trigger fire condition!!!");
+          continue;
         }
       }
     } else {
-      LOG_INFO("predicate_ is nullptr");
+      LOG_DEBUG("predicate_ is nullptr");
     }
 
     // Construct trigger data
@@ -351,7 +355,7 @@ storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   // operations without SQL statements, but mostly, functions invoked by a
   // trigger need to apply SQL statements on databases. Hope `ExecCallTriggerFunc`
   // could be truly implemented after these problems are resolved.
-  return nullptr;
+  return trigger_data.tg_newtuple;
 }
 
 }
