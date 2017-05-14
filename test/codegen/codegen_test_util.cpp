@@ -12,7 +12,6 @@
 
 #include "codegen/codegen_test_util.h"
 
-#include "type/value_factory.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
@@ -42,62 +41,102 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   EXPECT_EQ(ResultType::SUCCESS, result);
 }
 
+// Create the test schema for all the tables
+std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
+  bool is_inlined = true;
+
+  // Create the columns
+  static const uint32_t int_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  static const uint32_t dec_size = type::Type::GetTypeSize(type::Type::DECIMAL);
+  std::vector<catalog::Column> cols = {
+      catalog::Column{type::Type::INTEGER, int_size, "COL_A", is_inlined},
+      catalog::Column{type::Type::INTEGER, int_size, "COL_B", is_inlined},
+      catalog::Column{type::Type::DECIMAL, dec_size, "COL_C", is_inlined},
+      catalog::Column{type::Type::VARCHAR, 25, "COL_D", !is_inlined}};
+
+  // Add NOT NULL constraints on COL_A, COL_C, COL_D
+  cols[0].AddConstraint(
+      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  cols[2].AddConstraint(
+      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  cols[3].AddConstraint(
+      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+
+  // Return the schema
+  return std::unique_ptr<catalog::Schema>{new catalog::Schema(cols)};
+}
+
 // Create all the test tables, but don't load any data
 void PelotonCodeGenTest::CreateTestTables() {
   const int tuples_per_tilegroup = 32;
   const bool adapt_table = false;
   const bool own_schema = true;
 
-  auto *table1_schema =
-      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                           TestingExecutorUtil::GetColumnInfo(1),
-                           TestingExecutorUtil::GetColumnInfo(2),
-                           TestingExecutorUtil::GetColumnInfo(3)});
+  // Table 1
+  auto table1_schema = CreateTestSchema();
   auto *table1 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), test_table1_id, table1_schema, "table1",
-      tuples_per_tilegroup, own_schema, adapt_table);
+      GetDatabase().GetOid(), (uint32_t)TableId::_1, table1_schema.release(),
+      "table1", tuples_per_tilegroup, own_schema, adapt_table);
 
-  auto *table2_schema =
-      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                           TestingExecutorUtil::GetColumnInfo(1),
-                           TestingExecutorUtil::GetColumnInfo(2),
-                           TestingExecutorUtil::GetColumnInfo(3)});
+  // Table 2
+  auto table2_schema = CreateTestSchema();
   auto *table2 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), test_table2_id, table2_schema, "table2",
-      tuples_per_tilegroup, own_schema, adapt_table);
+      GetDatabase().GetOid(), (uint32_t)TableId::_2, table2_schema.release(),
+      "table2", tuples_per_tilegroup, own_schema, adapt_table);
 
-  auto *table3_schema =
-      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                           TestingExecutorUtil::GetColumnInfo(1),
-                           TestingExecutorUtil::GetColumnInfo(2),
-                           TestingExecutorUtil::GetColumnInfo(3)});
+  // Table 3
+  auto table3_schema = CreateTestSchema();
   auto *table3 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), test_table3_id, table3_schema, "table3",
-      tuples_per_tilegroup, own_schema, adapt_table);
+      GetDatabase().GetOid(), (uint32_t)TableId::_3, table3_schema.release(),
+      "table3", tuples_per_tilegroup, own_schema, adapt_table);
 
-  auto *table4_schema =
-      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                           TestingExecutorUtil::GetColumnInfo(1),
-                           TestingExecutorUtil::GetColumnInfo(2),
-                           TestingExecutorUtil::GetColumnInfo(3)});
+  // Table 4
+  auto table4_schema = CreateTestSchema();
   auto *table4 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), test_table4_id, table4_schema, "table4",
-      tuples_per_tilegroup, own_schema, adapt_table);
+      GetDatabase().GetOid(), (uint32_t)TableId::_4, table4_schema.release(),
+      "table4", tuples_per_tilegroup, own_schema, adapt_table);
 
+  // Insert all tables into the test database
   GetDatabase().AddTable(table1, false);
   GetDatabase().AddTable(table2, false);
   GetDatabase().AddTable(table3, false);
   GetDatabase().AddTable(table4, false);
 }
 
-void PelotonCodeGenTest::LoadTestTable(uint32_t table_id, uint32_t num_rows) {
-  auto &test_table = GetTestTable(table_id);
-
+void PelotonCodeGenTest::LoadTestTable(TableId table_id, uint32_t num_rows) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
-  TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false, false,
-                                     txn);
+  auto &test_table = GetTestTable(table_id);
+
+  auto col_val =
+      [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
+
+  const bool allocate = true;
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  for (uint32_t rowid = 0; rowid < num_rows; rowid++) {
+    // The input tuple
+    storage::Tuple tuple{test_table.GetSchema(), allocate};
+
+    tuple.SetValue(0, type::ValueFactory::GetIntegerValue(col_val(rowid, 0)));
+    tuple.SetValue(1, type::ValueFactory::GetIntegerValue(col_val(rowid, 1)));
+    tuple.SetValue(2, type::ValueFactory::GetDecimalValue(col_val(rowid, 2)));
+
+    // In case of random, make sure this column has duplicated values
+    auto string_value =
+        type::ValueFactory::GetVarcharValue(std::to_string(col_val(rowid, 3)));
+    tuple.SetValue(3, string_value, testing_pool);
+
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+        test_table.InsertTuple(&tuple, txn, &index_entry_ptr);
+    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+  }
+
   txn_manager.CommitTransaction(txn);
 }
 
@@ -127,6 +166,43 @@ std::unique_ptr<expression::AbstractExpression>
 PelotonCodeGenTest::ConstIntExpr(int64_t val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(val));
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
+std::unique_ptr<expression::AbstractExpression>
+PelotonCodeGenTest::ConstDecimalExpr(double val) {
+  auto *expr = new expression::ConstantValueExpression(
+      type::ValueFactory::GetDecimalValue(val));
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::ColRefExpr(
+    type::Type::TypeId type, uint32_t col_id) {
+  auto *expr = new expression::TupleValueExpression(type, 0, col_id);
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpLtExpr(
+    std::unique_ptr<expression::AbstractExpression> &&left,
+    std::unique_ptr<expression::AbstractExpression> &&right) {
+  auto *expr = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_LESSTHAN, left.release(), right.release());
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGtExpr(
+    std::unique_ptr<expression::AbstractExpression> &&left,
+    std::unique_ptr<expression::AbstractExpression> &&right) {
+  auto *expr = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHAN, left.release(), right.release());
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpEqExpr(
+    std::unique_ptr<expression::AbstractExpression> &&left,
+    std::unique_ptr<expression::AbstractExpression> &&right) {
+  auto *expr = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, left.release(), right.release());
   return std::unique_ptr<expression::AbstractExpression>{expr};
 }
 

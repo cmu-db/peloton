@@ -46,7 +46,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  uint32_t TestTableId() { return test_table1_id; }
+  TableId TestTableId() { return TableId::_1; }
 
  private:
   uint32_t num_rows_to_insert = 64;
@@ -71,7 +71,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -101,8 +101,52 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
+}
+
+TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
+  //
+  // SELECT a, b FROM table where b < 20;
+  //
+
+  // Setup the predicate
+  auto b_lt_20 =
+      CmpLtExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(20));
+
+  // Setup the scan plan node
+  auto& table = GetTestTable(TestTableId());
+  planner::SeqScanPlan scan{&table, b_lt_20.release(), {0, 1, 2}};
+
+  // Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+
+  // Check output results
+  const auto& results = buffer.GetOutputTuples();
+  EXPECT_EQ(2, results.size());
+
+  // First tuple should be (0, 1)
+  EXPECT_EQ(type::CmpBool::CMP_TRUE,
+            results[0].GetValue(0).CompareEquals(
+                type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(type::CmpBool::CMP_TRUE,
+            results[0].GetValue(1).CompareEquals(
+                type::ValueFactory::GetIntegerValue(1)));
+
+  // Second tuple should be (10, 11)
+  EXPECT_EQ(type::CmpBool::CMP_TRUE,
+            results[1].GetValue(0).CompareEquals(
+                type::ValueFactory::GetIntegerValue(10)));
+  EXPECT_EQ(type::CmpBool::CMP_TRUE,
+            results[1].GetValue(1).CompareEquals(
+                type::ValueFactory::GetIntegerValue(11)));
 }
 
 TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
@@ -131,7 +175,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
@@ -190,17 +234,17 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   // Construct the components of the predicate
 
   // a + 1
-  auto *a_col_exp =
+  auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto *const_1_exp = ConstIntExpr(1).release();
-  auto *a_plus_1 = new expression::OperatorExpression(
+  auto* const_1_exp = ConstIntExpr(1).release();
+  auto* a_plus_1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
       const_1_exp);
 
   // b = a + 1
-  auto *b_col_exp =
+  auto* b_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto *b_eq_a_plus_1 = new expression::ComparisonExpression(
+  auto* b_eq_a_plus_1 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_1);
 
   // Setup the scan plan node
@@ -218,7 +262,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -230,18 +274,18 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   // Construct the components of the predicate
 
   // a + b
-  auto *a_col_exp =
+  auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto *b_rhs_col_exp =
+  auto* b_rhs_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto *a_plus_b = new expression::OperatorExpression(
+  auto* a_plus_b = new expression::OperatorExpression(
       ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
       b_rhs_col_exp);
 
   // b = a + b
-  auto *b_lhs_col_exp =
+  auto* b_lhs_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto *b_eq_a_plus_b = new expression::ComparisonExpression(
+  auto* b_eq_a_plus_b = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, a_plus_b);
 
   // Setup the scan plan node
@@ -259,7 +303,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 }
 
@@ -299,7 +343,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -381,7 +425,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results - only one output tuple (with a == 0)
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 }
 
@@ -462,7 +506,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(0)));

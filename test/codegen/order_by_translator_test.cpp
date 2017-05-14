@@ -20,22 +20,11 @@
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of order-by
-// (sort) plans. All tests use a test table with the following schema:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// Each test may choose to sort on a different column.
-//===----------------------------------------------------------------------===//
-
 class OrderByTranslatorTest : public PelotonCodeGenTest {
  public:
   OrderByTranslatorTest() : PelotonCodeGenTest() {}
 
-  uint32_t TestTableId() { return test_table1_id; }
+  TableId TestTableId() { return TableId::_1; }
 };
 
 TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
