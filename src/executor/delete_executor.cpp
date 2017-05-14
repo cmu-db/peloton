@@ -94,9 +94,9 @@ bool DeleteExecutor::DExecute() {
 
   commands::TriggerList* trigger_list = target_table_->GetTriggerList();
   if (trigger_list != nullptr) {
-    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_STATEMENT)) {
-      LOG_INFO("target table has per-statement-before-delete triggers!");
+      LOG_TRACE("target table has per-statement-before-delete triggers!");
       trigger_list->ExecBSDeleteTriggers();
     }
   }
@@ -137,9 +137,9 @@ bool DeleteExecutor::DExecute() {
 
     // check whether there are per-row-before-delete triggers on this table using trigger catalog
     if (trigger_list != nullptr) {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_ROW)) {
-        LOG_INFO("target table has per-row-before-delete triggers!");
+        LOG_TRACE("target table has per-row-before-delete triggers!");
         trigger_list->ExecBRDeleteTriggers();
       }
     }
@@ -195,18 +195,18 @@ bool DeleteExecutor::DExecute() {
     }
 
     if (trigger_list != nullptr) {
-      LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_ROW)) {
-        LOG_INFO("target table has per-row-after-delete triggers!");
+        LOG_TRACE("target table has per-row-after-delete triggers!");
         trigger_list->ExecARDeleteTriggers();
       }
     }
   }
 
   if (trigger_list != nullptr) {
-    LOG_INFO("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_STATEMENT)) {
-      LOG_INFO("target table has per-statement-after-delete triggers!");
+      LOG_TRACE("target table has per-statement-after-delete triggers!");
       trigger_list->ExecASDeleteTriggers();
     }
   }
