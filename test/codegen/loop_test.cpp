@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// if_test.cpp
+// loop_test.cpp
 //
 // Identification: test/codegen/loop_test.cpp
 //

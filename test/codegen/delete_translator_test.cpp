@@ -2,6 +2,11 @@
 //
 //                         Peloton
 //
+//
+// delete_translator_test.cpp
+//
+// Identification: test/codegen/delete_translator_test.cpp
+//
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
