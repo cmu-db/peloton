@@ -24,24 +24,6 @@
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of hash
-// join query plans. All the tests use two test tables we create and load in the
-// SetUp() method. The left and right tables have the following schema:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the left table is loaded with 20 rows of random values, and
-// the second table is loaded with 80 rows of random values.  The scale
-// factor and size difference between the two tables can be controlled
-// through the LoadTestTables() method that individual tests can invoke.
-//===----------------------------------------------------------------------===//
-
 typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
 
 class HashJoinTranslatorTest : public PelotonCodeGenTest {
@@ -53,15 +35,15 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
     LoadTestTable(RightTableId(), 8 * num_rows);
   }
 
-  uint32_t LeftTableId() const { return test_table1_id; }
+  TableId LeftTableId() const { return TableId::_1; }
 
-  uint32_t RightTableId() const { return test_table2_id; }
+  TableId RightTableId() const { return TableId::_2; }
 
-  storage::DataTable& GetLeftTable() const {
+  storage::DataTable &GetLeftTable() const {
     return GetTestTable(LeftTableId());
   }
 
-  storage::DataTable& GetRightTable() const {
+  storage::DataTable &GetRightTable() const {
     return GetTestTable(RightTableId());
   }
 };
@@ -94,16 +76,13 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
 
   // Left and right hash keys
   std::vector<AbstractExprPtr> left_hash_keys;
-  left_hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
+  left_hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
 
   std::vector<AbstractExprPtr> right_hash_keys;
-  right_hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
+  right_hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
 
   std::vector<AbstractExprPtr> hash_keys;
-  hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
+  hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
 
   // Finally, the fucking join node
   std::unique_ptr<planner::HashJoinPlan> hj_plan{
@@ -133,7 +112,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
                     reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   // The left table has 20 columns, the right has 80, all of them match
   EXPECT_EQ(20, results.size());
   // The output has the join columns (that should match) in positions 0 and 1

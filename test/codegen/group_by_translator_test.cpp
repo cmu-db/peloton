@@ -22,33 +22,14 @@
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of
-// aggregation and group-by plans. All the tests use a single table created and
-// loaded at test construction time (i.e., the constructor
-// GroupByTranslatorTest()). Similarily, the resources are torn-down when the
-// test class's destructor is called (i.e., ~GroupByTranslatorTest()).
-//
-// The schema of the testtable is as follows:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the table is loaded with 10 rows of random values.
-//===----------------------------------------------------------------------===//
-
 class GroupByTranslatorTest : public PelotonCodeGenTest {
  public:
   GroupByTranslatorTest() : PelotonCodeGenTest() {
     uint32_t num_rows = 10;
-    LoadTestTable(test_table1_id, num_rows);
+    LoadTestTable(TestTableId(), num_rows);
   }
 
-  uint32_t TestTableOid() const { return test_table1_id; }
+  TableId TestTableId() const { return TableId::_1; }
 };
 
 TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
@@ -84,7 +65,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -144,7 +125,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -203,7 +184,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -264,7 +245,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
 
   // 7) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -323,7 +304,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // 7) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), a_gt_50, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), a_gt_50, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -376,7 +357,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -434,7 +415,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
