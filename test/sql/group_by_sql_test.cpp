@@ -16,8 +16,10 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
+#include "planner/order_by_plan.h"
 
 namespace peloton {
 namespace test {
@@ -57,34 +59,47 @@ TEST_F(GroupBySQLTests, SimpleGroupByTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+  std::string query1("select count(id), salary from xxx group by salary;");
+  LOG_DEBUG("Running Query %s", query1.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query1, result, tuple_descriptor, rows_affected, error_message);
 
-  TestingSQLUtil::ExecuteSQLQuery(
-      "select count(id), salary from xxx group by salary;", result,
-      tuple_descriptor, rows_affected, error_message);
+  //TestingSQLUtil::ExecuteSQLQuery(
+  //    "select count(id), salary from xxx group by salary;", result,
+   //   tuple_descriptor, rows_affected, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_affected);
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 6));
 
   // test: GROUP BY + HAVING
-  TestingSQLUtil::ExecuteSQLQuery(
-      "select count(id), salary from xxx group by salary having salary>1000;",
-      result, tuple_descriptor, rows_affected, error_message);
+  std::string query2("select count(id), salary from xxx group by salary having salary>1000;");
+  LOG_DEBUG("Running Query %s", query2.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query2, result, tuple_descriptor, rows_affected, error_message);
+//  TestingSQLUtil::ExecuteSQLQuery(
+//      "select count(id), salary from xxx group by salary having salary>1000;",
+//      result, tuple_descriptor, rows_affected, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_affected);
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 4));
 
   // test: GROUP BY + ORDER BY
-  TestingSQLUtil::ExecuteSQLQuery(
-      "select count(id), salary from xxx group by salary order by salary;",
-      result, tuple_descriptor, rows_affected, error_message);
+  std::string query3("select count(id), salary from xxx group by salary order by salary;");
+  LOG_DEBUG("Running Query %s", query3.c_str());
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query3, result, tuple_descriptor, rows_affected, error_message);
+//  TestingSQLUtil::ExecuteSQLQuery(
+//      "select count(id), salary from xxx group by salary order by salary;",
+//      result, tuple_descriptor, rows_affected, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_affected);

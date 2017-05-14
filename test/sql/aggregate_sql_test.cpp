@@ -16,6 +16,7 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
@@ -33,13 +34,12 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
-
+  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "xxx");
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
   optimizer::SimpleOptimizer optimizer;
-
   // All of these aggregates should return null
   std::vector<std::string> nullAggregates = {"MIN", "MAX", "AVG", "SUM"};
   std::vector<type::Type::TypeId> expectedTypes = {
@@ -70,12 +70,16 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
 
     EXPECT_EQ(expected, resultStr);
   }
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(AggregateSQLTests, MinMaxTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
@@ -200,6 +204,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   EXPECT_EQ(result[0].second[18], '4');
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
@@ -208,6 +213,7 @@ TEST_F(AggregateSQLTests, SumAvgCountTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
@@ -311,6 +317,7 @@ TEST_F(AggregateSQLTests, SumAvgCountTest) {
   EXPECT_EQ(result[0].second[0], '5');
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
@@ -319,6 +326,7 @@ TEST_F(AggregateSQLTests, ExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create a table first
   // into the table
@@ -336,59 +344,65 @@ TEST_F(AggregateSQLTests, ExpressionTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
 
   // test COUNT + arithmetic: ADD
-  TestingSQLUtil::ExecuteSQLQuery("SELECT count(a+b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT count(a+b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '3');
 
   // test AVG + arithmetic: ADD
-  TestingSQLUtil::ExecuteSQLQuery("SELECT avg(a+b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT avg(a+b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '7');
 
   // test MIN + arithmetic: ADD
-  TestingSQLUtil::ExecuteSQLQuery("SELECT min(a+b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT min(a+b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(result[0].second[0], '3');
 
   // test MAX + arithemtic: MAX
-  TestingSQLUtil::ExecuteSQLQuery("SELECT max(a+b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT max(a+b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(result[0].second[0], '1');
 
   // test COUNT + arithmetic: MUL
-  TestingSQLUtil::ExecuteSQLQuery("SELECT count(a*b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT count(a*b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '3');
 
   // test AVG + arithmetic: MUL
-  TestingSQLUtil::ExecuteSQLQuery("SELECT avg(a*b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT avg(a*b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
 
   // test MIN + arithmetic: MUL
-  TestingSQLUtil::ExecuteSQLQuery("SELECT min(a*b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT min(a*b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(result[0].second[0], '2');
 
   // test MAX + arithemtic: MUL
-  TestingSQLUtil::ExecuteSQLQuery("SELECT max(a*b) from xxx", result,
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,"SELECT max(a*b) from xxx", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(result[0].second[0], '3');
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test
