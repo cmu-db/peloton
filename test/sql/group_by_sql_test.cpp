@@ -72,8 +72,8 @@ TEST_F(GroupBySQLTests, SimpleGroupByTest) {
 
   // Check the return value
   EXPECT_EQ(0, rows_affected);
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 6));
 
