@@ -312,8 +312,6 @@ class Value : public Printable {
 
   // Does this value exist in this array?
   inline Value InList(const Value &object) const {
-    LOG_DEBUG("BEFORE THE GETELEMENT IN INLIST IN VALUE.H%d",(*(std::vector<int32_t> *)value_.array).at(0));
-    LOG_DEBUG("the first element in inlist in value.h is %d",GetElementAt(0).value_.integer);
     return Type::GetInstance(type_id_)->InList(*this, object);
   }
 

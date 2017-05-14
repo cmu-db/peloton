@@ -579,12 +579,10 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   const char* name =
       (reinterpret_cast<value*>(root->name->head->data.ptr_value))->val.str;
   if ((root->kind) != AEXPR_DISTINCT) {
-    LOG_DEBUG("A_Expr_Kind: %d \n", root->kind);
     target_type = StringToExpressionType(std::string(name));
   } else {
     target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
   }
-  LOG_DEBUG("target_type: %d \n", target_type);
   if (target_type == ExpressionType::INVALID) {
     throw NotImplementedException(StringUtil::Format(
           "COMPARE type %s not supported yet...\n", name));
@@ -601,7 +599,6 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
         StringUtil::Format("Exception thrown in left expr left expr:\n%s", e.what()));
   }
   try {
-    LOG_DEBUG("nodetype of root->rexpr:%d", root->rexpr->type);
     right_expr = ExprTransform(root->rexpr);
   }
   catch(NotImplementedException e) {
@@ -695,7 +692,6 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
   type::Value arr;
   switch (val.type) {
     case T_Integer: {
-      LOG_DEBUG("T_Integer\n");
       std::vector<int32_t> vector_;
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((int32_t) val.val.ival);
@@ -704,7 +700,6 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       break;
     }
     case T_String: {
-      LOG_DEBUG("T_String\n");
       std::vector<std::string> vector_;
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((std::string) val.val.str);
@@ -713,7 +708,6 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       break;
     }
     case T_Float: {
-      LOG_DEBUG("T_Float\n");
       std::vector<int64_t> vector_;
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
         vector_.push_back((int64_t) val.val.ival);
@@ -722,7 +716,6 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       break;
     }
     case T_Null: {
-      LOG_DEBUG("T_Null\n");
       type::Value null = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
       std::vector<int32_t> vector_;
       for (auto cell = root->head; cell != NULL; cell = cell->next) {
@@ -735,10 +728,8 @@ expression::AbstractExpression* PostgresParser::InListTransform(List* root) {
       throw NotImplementedException(StringUtil::Format(
           "Value type %d not supported yet...\n", val.type));
   }
-  LOG_DEBUG("The arr get element 0 before construnction is: %d",arr.GetElementAt(0).GetAs<int32_t>());
+
   expression::AbstractExpression* result = new expression::ConstantValueExpression(arr);
-  type::Value a = ((expression::ConstantValueExpression*)result)->GetValue();
-  LOG_DEBUG("The arr get element 0 after construction is: %d",a.GetElementAt(0).GetAs<int32_t>());
   return result;
 
 }
@@ -1263,6 +1254,10 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_CreatedbStmt:
       result = CreateDbTransform((CreatedbStmt*)stmt);
       break;
+    case T_ExplainStmt:
+      //TODO: Suppport parser for explain statement
+      //result = ExpainTransform((ExplainStmt*)stmt);
+      break;
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Statement of type %d not supported yet...\n", stmt->type));
@@ -1350,12 +1345,6 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
             const std::string& sql) {
       std::string str = (std::string&) sql;
       std::cout << str << std::endl;
-      // "=" and "in" have very similar effect
-      // replace "in" as "=" for easy parsing
-//     size_t start_pos = str.find(" in ");
-//     if (start_pos != std::string::npos) {
-//       str.replace(start_pos, 3, "=");
-//     }
       return ParseSQLString(str.c_str());
     }
 

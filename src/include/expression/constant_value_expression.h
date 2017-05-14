@@ -35,9 +35,6 @@ class ConstantValueExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    LOG_DEBUG("In evaluate constant_value_expression.h");
-    type::Value a = value_.GetElementAt(0);
-    LOG_DEBUG("THE FIRST ELEMENT IS %d",a.GetAs<int32_t>());
     return value_;
   }
 

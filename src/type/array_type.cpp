@@ -73,12 +73,8 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
 
 // Does this value exist in this array?
 Value ArrayType::InList(const Value &list, const Value &object) const {
-  LOG_DEBUG("BEFORE GET ELEMENT");
-  LOG_DEBUG("the first element in inlist is %d",list.GetElementAt(0).value_.integer);
   Value ele = (list.GetElementAt(0));
-  LOG_DEBUG("In array_type.cpp L77");
   PL_ASSERT(ele.CheckComparable(object));
-  LOG_DEBUG("In array_type.cpp L79");
   if (object.IsNull()) return ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (list.GetElementType()) {
@@ -112,7 +108,6 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
       return ValueFactory::GetBooleanValue(false);
     }
     case Type::INTEGER: {
-      LOG_DEBUG("in INTEGER case");
       std::vector<int32_t> vec =
           *(std::vector<int32_t> *)(list.value_.array);
       std::vector<int32_t>::iterator it;

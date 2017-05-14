@@ -244,6 +244,45 @@ TEST_F(ExpressionTests, ExtractDateTests) {
   //    EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
   //  }
 }
+//This is array InList test using comparison expression
+TEST_F(ExpressionTests, InArrayTest) {
+  // Create a table with id column and value column
+  std::vector<catalog::Column> columns;
 
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "id",
+                          true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "value",
+                          true);
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  auto left = new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
+  std::vector<int32_t> vec_integer;
+  for (int32_t i = 0; i < 6; i++) {
+    vec_integer.push_back(i);
+  }
+  auto right = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetArrayValue(type::Type::INTEGER, vec_integer));
+  auto cmp_expr = expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, left, right);
+  for (int32_t i = 0; i < 6; i++) {
+    tuple->SetValue(0, type::ValueFactory::GetIntegerValue(i), pool);
+    EXPECT_TRUE(cmp_expr->Evaluate(tuple, nullptr, nullptr).IsTrue());
+  }
+  delete tuple;
+  delete schema;
+  delete cmp_expr;
+
+}
 }  // namespace test
 }  // namespace peloton
