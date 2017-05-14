@@ -170,21 +170,13 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
-  bool valid_slot = true;
+
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
-
-      if (tile_group->GetCompressionStatus() == true) {
-        valid_slot = false;
-      } else {
-        tile_group->CopyTuple(tuple, free_item_pointer.offset);
-      }
-    }
-
-    if (valid_slot) {
+      tile_group->CopyTuple(tuple, free_item_pointer.offset);
       return free_item_pointer;
     }
   }
@@ -1030,8 +1022,12 @@ storage::TileGroup *DataTable::TransformTileGroup(
 void DataTable::CompressTable() {
   oid_t tilegroups_size = tile_groups_.GetSize();
   for (oid_t i = 0; i < tilegroups_size; i++) {
-    storage::TileGroup *tile_group =
-        GetTileGroupById(tile_groups_.Find(i)).get();
+    std::shared_ptr<storage::TileGroup> tile_group =
+        GetTileGroupById(tile_groups_.Find(i));
+
+    if (tile_group == nullptr) {
+      return;
+    }
 
     if (!(tile_group->GetCompressionStatus())) {
       LOG_TRACE("Compressing TileGroup %u", tile_groups_.Find(i));

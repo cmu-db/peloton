@@ -2,9 +2,13 @@
 //
 //                         Peloton
 //
-// Compression Testing Script
+// compression_test.cpp
+//
+// Identification: test/slq/compression_dictionary_sql_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
 //===----------------------------------------------------------------------===//
-
 #include <memory>
 
 #include "sql/testing_sql_util.h"
@@ -71,11 +75,11 @@ TEST_F(CompressionDictionaryTest, BasicTest) {
 
   storage::DataTable *foo_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
-  
+
   foo_table->CompressTable();
 
   os << "select word from foo;";
-  
+
   TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
                                   rows_affected, error_message);
   for (i = 0; i < 10; i++) {
@@ -111,7 +115,7 @@ TEST_F(CompressionDictionaryTest, UniqTest) {
 
   storage::DataTable *foo_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "foo");
-  
+
   foo_table->CompressTable();
 
   std::vector<StatementResult> result;
@@ -189,6 +193,5 @@ TEST_F(CompressionDictionaryTest, SizeTest) {
     txn_manager.CommitTransaction(txn);
   }
 }
-
 }
 }

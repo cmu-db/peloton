@@ -329,7 +329,7 @@ void TileGroup::CompressTiles() {
 
   for (oid_t i = 0; i < num_tiles; i++) {
     LOG_TRACE("Compressing Tile %d in Tile Group", i);
-    Tile *old_tile = tiles[i].get();
+    std::shared_ptr<Tile> old_tile = tiles[i];
     std::shared_ptr<CompressedTile> new_tile(new CompressedTile(
         backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),
         old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount()));
@@ -337,11 +337,8 @@ void TileGroup::CompressTiles() {
     new_tile->CompressTile(old_tile);
 
     if (new_tile->IsCompressed()) {
-      tiles[i].reset();
       tiles[i] = new_tile;
       compression_status = true;
-    } else {
-      new_tile.reset();
     }
   }
 }

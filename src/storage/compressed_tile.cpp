@@ -41,10 +41,9 @@ CompressedTile::CompressedTile(BackendType backend_type,
                                TileGroupHeader *tile_header,
                                const catalog::Schema &tuple_schema,
                                TileGroup *tile_group, int tuple_count)
-    : Tile(backend_type, tile_header, tuple_schema, tile_group, tuple_count) {
-  is_compressed = false;  // tile is currently uncompressed.
-  compressed_columns_count = 0;
-}
+    : Tile(backend_type, tile_header, tuple_schema, tile_group, tuple_count),
+      is_compressed(false),  // The tile is initially uncompressed.
+      compressed_columns_count(0) {}
 
 CompressedTile::~CompressedTile() {}
 
@@ -61,7 +60,7 @@ CompressedTile::~CompressedTile() {}
 //        For each compressed column, store the metadata for retrieving the
 //        original values.
 
-void CompressedTile::CompressTile(Tile *tile) {
+void CompressedTile::CompressTile(std::shared_ptr<Tile> tile) {
   auto allocated_tuple_count = tile->GetAllocatedTupleCount();
   std::vector<type::Value> new_column_values(allocated_tuple_count);
   std::vector<std::vector<type::Value>> new_columns(column_count);
@@ -69,7 +68,7 @@ void CompressedTile::CompressTile(Tile *tile) {
   type::Value max_exponent_count;
   std::vector<type::Value> column_values;
   auto tile_schema = tile->GetSchema();
-  auto compression_type = type::Type::TINYINT;
+  type::Type::TypeId compression_type;
 
   for (oid_t i = 0; i < column_count; i++) {
     type::Value base_value;
@@ -82,8 +81,8 @@ void CompressedTile::CompressTile(Tile *tile) {
       case type::Type::PARAMETER_OFFSET:
       case type::Type::BIGINT:
         column_values = GetIntegerColumnValues(tile, i);
-        new_column_values = CompressColumn(tile, i, column_values, base_value,
-                                           compression_type);
+        new_column_values = CompressNumericColumn(tile, i, column_values,
+                                                  base_value, compression_type);
         if (new_column_values.size() != 0) {
           compressed_columns_count += 1;
 
@@ -102,8 +101,8 @@ void CompressedTile::CompressTile(Tile *tile) {
       case type::Type::DECIMAL:
         max_exponent_count = GetMaxExponentLength(tile, i);
         column_values = ConvertDecimalColumn(tile, i, max_exponent_count);
-        new_column_values = CompressColumn(tile, i, column_values, base_value,
-                                           compression_type);
+        new_column_values = CompressNumericColumn(tile, i, column_values,
+                                                  base_value, compression_type);
         base_value =
             base_value.CastAs(type::Type::DECIMAL).Divide(max_exponent_count);
 
@@ -123,10 +122,9 @@ void CompressedTile::CompressTile(Tile *tile) {
         new_columns[i] = new_column_values;
         break;
       case type::Type::VARCHAR:
-        LOG_INFO("dictionary");
         new_column_values = CompressCharColumn(tile, i);
         if (new_column_values.size() == 0) {
-          LOG_INFO("No deduplicate is needed");
+          LOG_TRACE("Deduplication not possible.");
         } else {
           new_columns[i] = new_column_values;
           type::Type::TypeId type_id = GetCompressedType(new_column_values[0]);
@@ -220,16 +218,14 @@ void CompressedTile::CompressTile(Tile *tile) {
   }
 }
 
-/*
-ConvertDecimalColumn
+// ConvertDecimalColumn()
 
-@brief : Returns the decimal column as a vector of integer values, by
-         multiplying each of the decimal values in a column with the value of
-         the exponent returned by the GetMaxExponentLength() function
-*/
+//@brief : Returns the decimal column as a vector of integer values, by
+//         multiplying each of the decimal values in a column with the value of
+//         the exponent returned by the GetMaxExponentLength() function
 
 std::vector<type::Value> CompressedTile::ConvertDecimalColumn(
-    Tile *tile, oid_t column_id, type::Value exponent) {
+    std::shared_ptr<Tile> tile, oid_t column_id, type::Value exponent) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -246,14 +242,11 @@ std::vector<type::Value> CompressedTile::ConvertDecimalColumn(
   return values;
 }
 
-/*
-GetIntegerColumnValues
-
-@brief : Returns the integer column values of the column as a vector
-*/
+// GetIntegerColumnValues
+//@brief : Returns the integer column values of the column as a vector
 
 std::vector<type::Value> CompressedTile::GetIntegerColumnValues(
-    Tile *tile, oid_t column_id) {
+    std::shared_ptr<Tile> tile, oid_t column_id) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
@@ -269,27 +262,25 @@ std::vector<type::Value> CompressedTile::GetIntegerColumnValues(
   return column_values;
 }
 
-/*
-GetMaxExponentLength()
+// GetMaxExponentLength()
 
-@brief : Returns the exponent needed to convert the entire decimal column to
-         an integer column.
-*/
+// @brief : Returns the exponent needed to convert the entire decimal column to
+//         an integer column.
 
-type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
+type::Value CompressedTile::GetMaxExponentLength(std::shared_ptr<Tile> tile,
+                                                 oid_t column_id) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
   size_t column_offset = tile_schema->GetOffset(column_id);
   auto column_type = tile_schema->GetType(column_id);
 
-  type::Value decimal_value;
   type::Value increment = type::ValueFactory::GetTinyIntValue(10);
 
   type::Value current_max = type::ValueFactory::GetBigIntValue(1);
 
   for (oid_t i = 0; i < num_tuples; i++) {
-    decimal_value =
+    type::Value decimal_value =
         tile->GetValueFast(i, column_offset, column_type, is_inlined);
 
     type::Value new_value = decimal_value.Multiply(current_max);
@@ -303,21 +294,20 @@ type::Value CompressedTile::GetMaxExponentLength(Tile *tile, oid_t column_id) {
   return current_max;
 }
 
-/*
-CompressColumn()
+// CompressNumericColumn()
 
-@brief : The following function is used to compress all columns of a datatable
-         except VARCHAR. It sorts the column and sets the median value as the
-base value for the delta encoding. The remainig values are stored as offsets
-from this base value.
+// @brief : The following function is used to compress all numeric columns of
+//         a datatable. It sorts the column and sets the median value as the
+//         base value for the delta encoding. The remainig values are stored as
+//         offsets from this base value.
 
-@return :The modified values of the column i.e. the offsets of the values of
-         the columns in a vector.
-*/
+// @return :The modified values of the column i.e. the offsets of the values of
+//         the columns in a vector.
 
-std::vector<type::Value> CompressedTile::CompressColumn(
-    Tile *tile, oid_t column_id, std::vector<type::Value> column_values,
-    type::Value &base_value, type::Type::TypeId &compression_type) {
+std::vector<type::Value> CompressedTile::CompressNumericColumn(
+    std::shared_ptr<Tile> tile, oid_t column_id,
+    std::vector<type::Value> column_values, type::Value &base_value,
+    type::Type::TypeId &compression_type) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   auto column_type = tile_schema->GetType(column_id);
@@ -359,42 +349,53 @@ std::vector<type::Value> CompressedTile::CompressColumn(
   return modified_values;
 }
 
-// compression for varchar
-std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
-                                                            oid_t column_id) {
+// CompressCharColumn()
+
+//@brief: This function compresses the VARCHAR columns in a datatable. It
+//        uses a map to determine if any of the VARCHARs can be deduplicated.
+//        In case a column can be compressed, it stores a mapping between
+//        the VARCHAR and SMALLINTS.
+
+//@return : If compressable, SMALLINT values of the corresponding strings. Else,
+//          an empty vector.
+
+std::vector<type::Value> CompressedTile::CompressCharColumn(
+    std::shared_ptr<Tile> tile, oid_t column_id) {
   oid_t num_tuples = tile->GetAllocatedTupleCount();
   auto tile_schema = tile->GetSchema();
   bool is_inlined = tile_schema->IsInlined(column_id);
   size_t column_offset = tile_schema->GetOffset(column_id);
   auto column_type = tile_schema->GetType(column_id);
-  
-  std::vector< type::Value > encoded_values(num_tuples);
-  std::map< std::string, int > encoder;
-  std::vector< type::Value> decoder;
+
+  std::vector<type::Value> encoded_values(num_tuples);
+  std::map<std::string, int> encoder;
+  std::vector<type::Value> decoder;
   oid_t num_unique_words = 0;
-  std::map< std::string, int>::iterator it;
+  std::map<std::string, int>::iterator it;
 
   for (oid_t i = 0; i < num_tuples; i++) {
-    
     type::Value val =
         tile->GetValueFast(i, column_offset, column_type, is_inlined);
     std::string string_val = val.ToString();
-     it = encoder.find(string_val);
-    
+    it = encoder.find(string_val);
+
     if (it == encoder.end()) {
       encoder[string_val] = num_unique_words;
-      type::Value encoded_value = type::ValueFactory::GetSmallIntValue(num_unique_words);
+      type::Value encoded_value =
+          type::ValueFactory::GetSmallIntValue(num_unique_words);
       decoder.push_back(type::ValueFactory::GetVarcharValue(string_val));
       encoded_values[i] = encoded_value;
       num_unique_words++;
     } else {
-      encoded_values[i] = type::ValueFactory::GetSmallIntValue(encoder[string_val]);
+      encoded_values[i] =
+          type::ValueFactory::GetSmallIntValue(encoder[string_val]);
     }
   }
 
   LOG_TRACE("Number of unique words in column : %d", (int)num_unique_words);
-  
-  if (static_cast<double>(num_unique_words) > (0.75 * static_cast<double>(num_tuples))) {
+
+  if (static_cast<double>(num_unique_words) >
+      (0.75 * static_cast<double>(num_tuples))) {
     encoded_values.clear();
   } else {
     SetDecoderMapValue(column_id, decoder);
@@ -402,12 +403,10 @@ std::vector<type::Value> CompressedTile::CompressCharColumn(Tile *tile,
   return encoded_values;
 }
 
-/*
-InsertTuple()
+// InsertTuple()
 
-@brief : The following function prevents insertion of tuples in compressed
-tiles.
-*/
+//@brief : The following function prevents insertion of tuples in compressed
+//         tiles.
 
 void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   if (IsCompressed()) {
@@ -418,43 +417,38 @@ void CompressedTile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   }
 }
 
-/*
-GetValue()
+// GetValue()
 
-@brief : The following function checks if the tile is compressed. If yes, return
-the uncompressed value, else return the deserializedValue.
+// @brief : The following function checks if the tile is compressed. If yes,
+// return
+// the uncompressed value, else return the deserialized_value.
 
-@return : Actual Value(uncompressed) of the tuple at tuple offset.
-*/
+// @return : Actual Value(uncompressed) of the tuple at tuple offset.
 
 type::Value CompressedTile::GetValue(const oid_t tuple_offset,
                                      const oid_t column_id) {
-  type::Value deserializedValue = Tile::GetValue(tuple_offset, column_id);
+  type::Value deserialized_value = Tile::GetValue(tuple_offset, column_id);
 
   if (!IsCompressed()) {
-    return deserializedValue;
+    return deserialized_value;
   }
 
   if (GetCompressedType(column_id) == type::Type::INVALID) {
-    return deserializedValue;
+    return deserialized_value;
   }
 
   type::Type::TypeId compressed_type = GetCompressedType(column_id);
 
   PL_ASSERT(compressed_type != type::Type::INVALID);
 
-  type::Value original = GetUncompressedValue(column_id, deserializedValue);
-
-  return original;
+  return GetUncompressedValue(column_id, deserialized_value);
 }
 
-/*
-GetValueFast()
+// GetValueFast()
 
-@brief : Faster way to get value by amortizing schema lookups.
+// @brief : Faster way to get value by amortizing schema lookups.
 
-@return :  Actual Value(uncompressed) of the tuple at tuple offset.
-*/
+// @return :  Actual Value(uncompressed) of the tuple at tuple offset.
 
 type::Value CompressedTile::GetValueFast(const oid_t tuple_offset,
                                          const size_t column_offset,
@@ -478,9 +472,7 @@ type::Value CompressedTile::GetValueFast(const oid_t tuple_offset,
   return deserializedValue;
 }
 
-/*
-NOTE: We don't allow setting values in compressed tiles.
-*/
+// NOTE: We don't allow setting values in compressed tiles.
 
 void CompressedTile::SetValue(const type::Value &value,
                               const oid_t tuple_offset, const oid_t column_id) {
@@ -502,11 +494,10 @@ void CompressedTile::SetValueFast(const type::Value &value,
 
   PL_ASSERT(column_id < column_count);
 
-  if (IsCompressed()) {
-    if (GetCompressedType(column_id) != type::Type::INVALID) {
-      LOG_TRACE("Peloton does not support SetValueFast on CompressedTile");
-      PL_ASSERT(false);
-    }
+  if ((IsCompressed()) &&
+      (GetCompressedType(column_id) != type::Type::INVALID)) {
+    LOG_TRACE("Peloton does not support SetValueFast on CompressedTile");
+    PL_ASSERT(false);
   }
 
   Tile::SetValueFast(value, tuple_offset, column_offset, is_inlined,

@@ -201,7 +201,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
            tuple_itr++) {
-        type::Value val = (new_tile->GetValue(tuple_itr, uninlined_col_offset));
+        type::Value val = new_tile->GetValue(tuple_itr, uninlined_col_offset);
         new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
     }
@@ -239,7 +239,7 @@ const std::string Tile::GetInfo() const {
   return os.str();
 }
 
-void Tile::CompressTile(Tile *tile) { (void)tile; }
+void Tile::CompressTile(UNUSED_ATTRIBUTE std::shared_ptr<Tile> tile) {}
 
 //===--------------------------------------------------------------------===//
 // Serialization/Deserialization

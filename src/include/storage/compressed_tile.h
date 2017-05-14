@@ -67,21 +67,27 @@ class CompressedTile : public Tile {
   // Operations
   //===--------------------------------------------------------------------===//
 
-  void CompressTile(Tile *tile);
+  void CompressTile(std::shared_ptr<Tile> tile);
 
-  type::Value GetMaxExponentLength(Tile *tile, oid_t column_id);
+ private:
+  type::Value GetMaxExponentLength(std::shared_ptr<Tile> tile, oid_t column_id);
 
-  std::vector<type::Value> ConvertDecimalColumn(Tile *tile, oid_t column_id,
+  std::vector<type::Value> ConvertDecimalColumn(std::shared_ptr<Tile> tile,
+                                                oid_t column_id,
                                                 type::Value exponent);
 
-  std::vector<type::Value> GetIntegerColumnValues(Tile *tile, oid_t column_id);
+  std::vector<type::Value> GetIntegerColumnValues(std::shared_ptr<Tile> tile,
+                                                  oid_t column_id);
 
-  std::vector<type::Value> CompressColumn(
-      Tile *tile, oid_t column_id, std::vector<type::Value> column_values,
-      type::Value &base_value, type::Type::TypeId &compression_type);
+  std::vector<type::Value> CompressNumericColumn(
+      std::shared_ptr<Tile> tile, oid_t column_id,
+      std::vector<type::Value> column_values, type::Value &base_value,
+      type::Type::TypeId &compression_type);
 
-  std::vector<type::Value> CompressCharColumn(Tile *tile, oid_t column_id);
+  std::vector<type::Value> CompressCharColumn(std::shared_ptr<Tile> tile,
+                                              oid_t column_id);
 
+ public:
   void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
   type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);

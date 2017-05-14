@@ -121,10 +121,10 @@ class Tile : public Printable {
   // TODO: Make virtual and copy meta-data for CompressedTile
   Tile *CopyTile(BackendType backend_type);
 
-  //
+  // A regular Tile is always uncompressd.
   virtual inline bool IsCompressed() { return false; }
 
-  virtual void CompressTile(Tile *tile);
+  virtual void CompressTile(UNUSED_ATTRIBUTE std::shared_ptr<Tile> tile);
   //===--------------------------------------------------------------------===//
   // Size Stats
   //===--------------------------------------------------------------------===//
