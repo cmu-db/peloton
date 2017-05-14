@@ -376,6 +376,7 @@ bool Value::CheckComparable(const Value &o) const {
       switch (o.GetTypeId()) {
         case Type::BOOLEAN:
         case Type::VARCHAR:
+        case Type::ARRAY:
           return (true);
         default:break;
       } // SWITCH
@@ -392,6 +393,7 @@ bool Value::CheckComparable(const Value &o) const {
         case Type::BIGINT:
         case Type::DECIMAL:
         case Type::VARCHAR:
+        case Type::ARRAY:
           return true;
         default:
           break;

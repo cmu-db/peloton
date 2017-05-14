@@ -41,7 +41,8 @@ std::unique_ptr<Query> QueryCompiler::Compile(
 }
 
 bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
-  return QueryCompiler::IsSupported(plan, nullptr);
+  QueryCompiler::IsSupported(plan, nullptr);
+  return false;
 }
 
 // Check if the given query can be compiled. This search is not exhaustive ...

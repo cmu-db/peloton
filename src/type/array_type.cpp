@@ -19,6 +19,7 @@
 #include "type/timestamp_type.h"
 #include "type/type.h"
 #include "type/varlen_type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace type {
@@ -42,6 +43,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
     case Type::INTEGER: {
       std::vector<int32_t> vec =
           *(std::vector<int32_t> *)(val.value_.array);
+      LOG_DEBUG("In getelement integer %d.",vec.at(0));
       return ValueFactory::GetIntegerValue((int32_t)vec.at(idx));
     }
     case Type::BIGINT: {
@@ -74,6 +76,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
   PL_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(Type::BOOLEAN);
+
   switch (list.GetElementType()) {
     case Type::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array);

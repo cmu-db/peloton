@@ -89,7 +89,6 @@ bool ProjectionExecutor::DExecute() {
       delete buffer;
       new_tuple_id++;
     }
-
     // Wrap physical tile in logical tile and return it
     SetOutput(LogicalTileFactory::WrapTiles({dest_tile}));
 

@@ -83,7 +83,7 @@ std::string PropertyColumns::ToString() const {
 PropertyDistinct::PropertyDistinct(std::vector<
     std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
-  LOG_TRACE("Size of column property: %ld", columns_.size());
+  //LOG_TRACE("Size of column property: %ld", columns_.size());
 }
 
 PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }

@@ -45,7 +45,7 @@ set(TESTING_UTIL_JOIN       ${PROJECT_SOURCE_DIR}/test/executor/testing_join_uti
 set(TESTING_UTIL_LOGGING    ${PROJECT_SOURCE_DIR}/test/logging/testing_logging_util.cpp)
 set(TESTING_UTIL_TXN        ${PROJECT_SOURCE_DIR}/test/concurrency/testing_transaction_util.cpp)
 set(TESTING_UTIL_STATS      ${PROJECT_SOURCE_DIR}/test/statistics/testing_stats_util.cpp)
-set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp)
+set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp sql/truncate_sql_test.cpp)
 set(TESTING_UTIL_INDEX      ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
 set(TESTING_UTIL_CODEGEN    ${PROJECT_SOURCE_DIR}/test/codegen/codegen_test_util.cpp)
 

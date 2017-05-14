@@ -20,6 +20,7 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/logger.h"
 
 #include "type/serializeio.h"
 #include "type/type.h"
@@ -304,7 +305,7 @@ class Value : public Printable {
   inline Value GetElementAt(uint64_t idx) const {
     return Type::GetInstance(type_id_)->GetElementAt(*this, idx);
   }
-
+  // Get the element type in this array
   inline Type::TypeId GetElementType() const {
     return Type::GetInstance(type_id_)->GetElementType(*this);
   }

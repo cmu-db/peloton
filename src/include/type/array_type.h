@@ -60,8 +60,31 @@ class ArrayType : public Type {
                    AbstractPool *pool UNUSED_ATTRIBUTE) const override {
     throw Exception("Can't serialize array types to storage");
   }
+  // Access the raw variable length data
+  const char *GetData(const Value &val) const override {
+    return val.value_.array;
+  }
 
-  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override { return ValueFactory::GetNullValueByType(type_id_); }
+  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
+    switch (val.GetElementType()) {
+      case INTEGER: {
+        Value result = Value(Type::ARRAY,*(std::vector<int32_t>*)GetData(val),Type::INTEGER);
+        return result;
+      }
+      case VARCHAR: {
+        Value result = Value(Type::ARRAY,*(std::vector<std::string>*)GetData(val),Type::VARCHAR);
+        return result;
+      }
+      case DECIMAL: {
+        Value result = Value(Type::ARRAY,*(std::vector<int64_t>*)GetData(val),Type::DECIMAL);
+        return result;
+      }
+      default:
+        throw NotImplementedException(StringUtil::Format(
+            "Value type %d not supported in Copy yet...\n", val.GetElementType()));
+    }
+
+  }
 
 };
 

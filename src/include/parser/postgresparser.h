@@ -123,9 +123,13 @@ class PostgresParser {
 
   // transform helper for A_Expr nodes
   static expression::AbstractExpression* AExprTransform(A_Expr* root);
-
+  // transform helper for A_Expr nodes
+  static expression::AbstractExpression* InListTransform(List* root);
   // transform helper for BoolExpr nodes
   static expression::AbstractExpression* BoolExprTransform(BoolExpr* root);
+
+  // transform helper for NullTest nodes
+  static expression::AbstractExpression* NullTestTransform(NullTest* root);
 
   // transform helper for where clauses
   static expression::AbstractExpression* WhereTransform(Node* root);
