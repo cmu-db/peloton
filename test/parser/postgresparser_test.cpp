@@ -895,6 +895,10 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+
+  // The following code checks the type and contents in the create statement
+  // are identical to what is specified in the query.
+
   // create type
   EXPECT_EQ(parser::CreateStatement::CreateType::kTrigger, create_trigger_stmt->type);
   // trigger name
@@ -903,16 +907,20 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ("accounts", create_trigger_stmt->GetTableName());
 
   // funcname
+  // the function invoked by this trigger
   std::vector<char *> *funcname = create_trigger_stmt->trigger_funcname;
   EXPECT_EQ(1, funcname->size());
   EXPECT_EQ("check_account_update", std::string((*funcname)[0]));
   // args
+  // arguments in the fuction
   EXPECT_EQ(0, create_trigger_stmt->trigger_args->size());
   // columns
   std::vector<char *> *columns = create_trigger_stmt->trigger_columns;
   EXPECT_EQ(1, columns->size());
   EXPECT_EQ("balance", std::string((*columns)[0]));
   // when
+  // Check the expression tree of trigger_when is identical to the query
+  // Need to check type and value of each node.
   auto when = create_trigger_stmt->trigger_when;
   EXPECT_NE(nullptr, when);
   EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
@@ -930,12 +938,15 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
                            right)->GetColumnName());
   // level
+  // the level is for each row
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
   // timing
+  // timing is before
   EXPECT_TRUE(TRIGGER_FOR_BEFORE(create_trigger_stmt->trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_AFTER(create_trigger_stmt->trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_INSTEAD(create_trigger_stmt->trigger_type));
   // event
+  // event is update
   EXPECT_TRUE(TRIGGER_FOR_UPDATE(create_trigger_stmt->trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_INSERT(create_trigger_stmt->trigger_type));
   EXPECT_FALSE(TRIGGER_FOR_DELETE(create_trigger_stmt->trigger_type));
