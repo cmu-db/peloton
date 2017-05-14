@@ -64,7 +64,6 @@ const std::string SQLStatementList::GetInfo() const {
   if (is_valid) {
     for (auto stmt : statements) {
       os << stmt->GetInfo();
-      std::cout<<stmt->GetInfo()<<std::endl;
     }
   } else {
     os << "Invalid statement list \n";
