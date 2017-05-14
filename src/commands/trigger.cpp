@@ -73,7 +73,7 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
   switch (left->GetExpressionType()) {
     case ExpressionType::VALUE_CONSTANT:
     {
-      LOG_INFO("left side is value constant");
+      LOG_DEBUG("left side is value constant");
       auto left_value = static_cast<const expression::ConstantValueExpression *>(left)->GetValue();
       left_side = "left|VALUE_CONSTANT|" + std::to_string(left_value.GetTypeId()) + "|" + left_value.ToString();
       break;
@@ -99,7 +99,7 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
   switch (right->GetExpressionType()) {
     case ExpressionType::VALUE_CONSTANT:
     {
-      LOG_INFO("right side is value constant");
+      LOG_DEBUG("right side is value constant");
       auto right_value = static_cast<const expression::ConstantValueExpression *>(right)->GetValue();
       right_side = "right|VALUE_CONSTANT|" + std::to_string(right_value.GetTypeId()) + "|" + right_value.ToString();
       break;
@@ -117,8 +117,8 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
     default:
       break;
   }
-  LOG_INFO("left size of the serialized predicate:%s", left_side.c_str());
-  LOG_INFO("right size of the serialized predicate:%s", right_side.c_str());
+  LOG_DEBUG("left size of the serialized predicate:%s", left_side.c_str());
+  LOG_DEBUG("right size of the serialized predicate:%s", right_side.c_str());
   return ExpressionTypeToString(compare) + "|" + left_side + "|" + right_side;
 }
 
@@ -162,7 +162,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
 
   expression::AbstractExpression *left_exp;
   if (v[left_info_begin_index] == "VALUE_TUPLE") {
-    LOG_INFO("left side is a tuple value tuple expression");
+    LOG_DEBUG("left side is a tuple value tuple expression");
     // do I need the table nambe?
     auto column_type = atoi(v[left_info_begin_index + 2].c_str());
     auto column_id = atoi(v[left_info_begin_index + 3].c_str());
@@ -170,7 +170,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
     left_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 0, column_id);
 
   } else if (v[left_info_begin_index] == "VALUE_CONSTANT") {
-    LOG_INFO("left side is a value constant expression");
+    LOG_DEBUG("left side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[left_info_begin_index + 1].c_str());
     type::Value left_value;
@@ -203,14 +203,14 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
 
   expression::AbstractExpression *right_exp;
   if (v[right_info_begin_index] == "VALUE_TUPLE") {
-    LOG_INFO("right side is a value tuple expression");
+    LOG_DEBUG("right side is a value tuple expression");
     auto column_type = atoi(v[right_info_begin_index + 2].c_str());
     auto column_id = atoi(v[right_info_begin_index + 3].c_str());
     // 1 means use the second tuple in the arguments
     right_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 1, column_id);
 
   } else if (v[right_info_begin_index] == "VALUE_CONSTANT") {
-    LOG_INFO("right side is a value constant expression");
+    LOG_DEBUG("right side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[right_info_begin_index + 1].c_str());
     type::Value right_value;
@@ -243,7 +243,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
 
   //construct expression
   auto final_exp = new expression::ComparisonExpression(compare, left_exp, right_exp);
-  LOG_INFO("successfully construct the final predicate!");
+  LOG_DEBUG("successfully construct the final predicate!");
   return final_exp;
 }
 
@@ -251,7 +251,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
  * Add a trigger to the trigger list and update the summary
  */
 void TriggerList::AddTrigger(Trigger trigger) {
-  LOG_INFO("enter AddTrigger()");
+  LOG_DEBUG("enter AddTrigger()");
   triggers.push_back(trigger);
   UpdateTypeSummary(trigger.GetTriggerType());
 }
@@ -291,7 +291,7 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
  */
 storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   unsigned i;
-  LOG_INFO("enter into ExecBRInsertTriggers");
+  LOG_DEBUG("enter into ExecBRInsertTriggers");
 
   //check valid type
   if (!types_summary[EnumTriggerType::BEFORE_INSERT_ROW]) {
