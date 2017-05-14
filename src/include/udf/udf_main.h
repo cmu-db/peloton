@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 
+#include "common/logger.h"
 #include <include/udf/udf_gram.tab.h>
 #include <include/udf/udf_helper.h>
 #include <include/udf/udf.h>
@@ -12,8 +13,6 @@ namespace udf {
 
 class UDFHandle {
  public:
-
-  // TODO: add argument list & return type
 
   // Return false if validation fails
   bool Compile();

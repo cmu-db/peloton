@@ -103,7 +103,10 @@ struct CreateFunctionStatement : public SQLStatement {
   }; 
 
   virtual ~CreateFunctionStatement() {
-    //insert delete code for attributes later 
+    delete return_type;
+    for (auto fp : *func_parameters)
+      delete fp;
+    delete func_parameters;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

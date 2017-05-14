@@ -3,8 +3,10 @@
 namespace peloton {
 namespace udf {
 
-// Reference the interface from udf_gram.tab.c
-int yy_scan_string(const char *);
+// Reference the interface from udf_gram.tab.cpp and udf_lex.cpp
+struct yy_buffer_state;
+struct yy_buffer_state* yy_scan_string (const char *yy_str  );
+int yylex_destroy (void );
 int yyparse();
 
 bool UDFHandle::Compile() {
@@ -13,6 +15,7 @@ bool UDFHandle::Compile() {
     return false;
   yy_scan_string(body_.c_str());
   yyparse();
+  yylex_destroy();
   if (!udf_parsed_result)
     return false;
   stmt_.reset(udf_parsed_result);

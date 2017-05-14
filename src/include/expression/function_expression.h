@@ -101,16 +101,17 @@ class FunctionExpression : public AbstractExpression {
         if (num_index_1 != std::string::npos) {
           func_body.replace(num_index_1, 5, "a+b");
         }
-        auto *udf_handle = new peloton::udf::UDFHandle(func_body,
+        auto udf_handle = new peloton::udf::UDFHandle(func_body,
             func_data.argument_names_, func_data.argument_types_, func_data.return_type_);
 
         // Try to compile it
         ret = udf_handle->Execute(child_values);
+        delete udf_handle;
 
         if (ret.GetElementType() != func_data.return_type_) {
-        throw Exception(
-            EXCEPTION_TYPE_EXPRESSION,
-            "function " + func_name_ + " returned an unexpected type.");
+          throw Exception(
+              EXCEPTION_TYPE_EXPRESSION,
+              "function " + func_name_ + " returned an unexpected type.");
         }
       }
       else {

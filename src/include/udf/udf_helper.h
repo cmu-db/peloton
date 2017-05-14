@@ -5,6 +5,7 @@
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "common/logger.h"
 
 #ifndef UDF_HELP
 #define UDF_HELP
@@ -18,6 +19,7 @@ using arg_tuple=std::tuple<std::string, arg_type>;
 
 class UDF_Stmt {
  public:
+  virtual ~UDF_Stmt() {}
   virtual arg_value Execute(std::vector<arg_value>, std::vector<std::string>)=0;
 };
 
@@ -39,6 +41,7 @@ class UDF_IFELSE_Stmt final: UDF_Stmt {
     cond_exp_.reset(cond_exp);
   }
   arg_value Execute(std::vector<arg_value>, std::vector<std::string>);
+
  private:
   std::unique_ptr<UDF_SQL_Expr> cond_exp_, true_exp_, false_exp_;
   int dtype_;
