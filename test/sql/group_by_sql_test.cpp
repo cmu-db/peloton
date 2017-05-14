@@ -24,20 +24,6 @@ namespace test {
 
 class GroupBySQLTests : public PelotonTest {};
 
-void CreateAndLoadTable() {
-  // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT, d VARCHAR);");
-
-  // Insert tuples into table
-  TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO test VALUES (1, 22, 333, 'abcd');");
-  TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO test VALUES (2, 33, 111, 'bcda');");
-  TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO test VALUES (3, 11, 222, 'bcd');");
-}
-
 TEST_F(GroupBySQLTests, EmptyTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -65,7 +51,7 @@ TEST_F(GroupBySQLTests, SimpleGroupByTest) {
   TestingSQLUtil::ExecuteSQLQuery("insert into xxx values(4, 'Kelly', 4000);");
   TestingSQLUtil::ExecuteSQLQuery("insert into xxx values(5, 'Lucy', 3000);");
   TestingSQLUtil::ExecuteSQLQuery("insert into xxx values(6, 'Tim', 2000);");
-  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "test");
+  TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "xxx");
 
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
