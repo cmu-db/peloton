@@ -584,7 +584,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   } else {
     target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
   }
-  LOG_DEBUG("target_type: %d \n", target_type);
+//  LOG_DEBUG("target_type: %d \n", target_type);
   if (target_type == ExpressionType::INVALID) {
     throw NotImplementedException(StringUtil::Format(
           "COMPARE type %s not supported yet...\n", name));
