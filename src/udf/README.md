@@ -8,7 +8,8 @@ We have added suppport for registering PL\`PGSQL. This includes making changes i
 
 Function Catalog
 -------------
-(TODO: Nasrin)
+The function catalog acts a registry for all user defined functions. The structure of the catalog can be best understood by referring to https://www.postgresql.org/docs/9.3/static/catalog-pg-proc.html.
+  We provide two indexes to scan the catalog - A primary index on the function_oid and a seconday index on the function_name. 
 
 UDF Execution
 -------------
