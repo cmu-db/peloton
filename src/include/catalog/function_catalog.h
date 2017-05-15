@@ -56,6 +56,37 @@
 namespace peloton {
 namespace catalog {
 
+enum class PG_Proc_Columns {
+
+  function_oid = 0,
+  function_name = 1,
+  owner_oid = 2,
+  lang_oid = 3,
+  cost = 4,
+  rows = 5,
+  variadic_oid = 6,
+  isagg_column = 7,
+  iswindow_column = 8,
+  secdef_column = 9,
+  leakproof_column = 10,
+  isstrict_column = 11,
+  retset_column = 12,
+  volatile_column = 13,
+  num_params = 14,
+  num_default_params = 15,
+  rettype_oid = 16,
+  arg_types = 17,
+  all_arg_types = 18,
+  arg_modes = 19,
+  arg_names = 20,
+  arg_defaults = 21,
+  src = 22,
+  bin = 23,
+  config = 24,
+  aclitem = 25
+
+};
+
 // information about functions (for FunctionExpression)
 struct UDFFunctionData {
   // name of the function

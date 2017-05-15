@@ -162,7 +162,14 @@ namespace peloton {
 
   LOG_DEBUG("GetFunction call to search for udf in pg_proc");
 
-  std::vector<oid_t> column_ids({1,3,16,17,20,22});
+  auto column1 = static_cast<unsigned int>(PG_Proc_Columns::function_name);
+  auto column2 = static_cast<unsigned int>(PG_Proc_Columns::lang_oid);
+  auto column3 = static_cast<unsigned int>(PG_Proc_Columns::rettype_oid);
+  auto column4 = static_cast<unsigned int>(PG_Proc_Columns::arg_types);
+  auto column5 = static_cast<unsigned int>(PG_Proc_Columns::arg_names);
+  auto column6 = static_cast<unsigned int>(PG_Proc_Columns::src);
+  
+  std::vector<oid_t> column_ids({column1,column2,column3,column4,column5,column6});
   oid_t index_offset = 1;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name,nullptr).Copy());
@@ -323,6 +330,8 @@ namespace peloton {
 
 oid_t FunctionCatalog::GetFunctionOid(const std::string &function_name,
     concurrency::Transaction *txn) {
+
+
   std::vector<oid_t> column_ids({0});  // table_oid
   oid_t index_offset = 1;              // Index of name
   std::vector<type::Value> values;
