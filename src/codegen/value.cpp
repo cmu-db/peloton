@@ -24,15 +24,36 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// CONSTRUCTORS
-//===----------------------------------------------------------------------===//
-
 Value::Value() : Value(type::Type::TypeId::INVALID) {}
 
 Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
              llvm::Value *null)
     : type_(type), value_(val), length_(length), null_(null) {}
+
+//===----------------------------------------------------------------------===//
+// Utility functions
+//===----------------------------------------------------------------------===//
+
+llvm::Value *Value::ReifyBoolean(CodeGen &codegen) const {
+  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  llvm::Value *null_bit = GetNullBit();
+  if (null_bit == nullptr) {
+    return GetValue();
+  } else {
+    // The value is nullable, need to check the null bit
+    return codegen->CreateSelect(null_bit, codegen.ConstBool(false),
+                                 GetValue());
+  }
+}
+
+// Return a boolean value indicating whether this value is NULL or not
+llvm::Value *Value::IsNull(CodeGen &codegen) const {
+  return (GetNullBit() != nullptr ? GetNullBit() : codegen.ConstBool(false));
+}
+
+llvm::Value *Value::IsNotNull(CodeGen &codegen) const {
+  return codegen->CreateNot(IsNull(codegen));
+}
 
 //===----------------------------------------------------------------------===//
 // COMPARISONS
@@ -212,32 +233,21 @@ void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
 //===----------------------------------------------------------------------===//
 // Generate a hash for the given value
 //===----------------------------------------------------------------------===//
-void Value::ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
+void Value::ValuesForMaterialization(CodeGen &codegen, llvm::Value *&val,
+                                     llvm::Value *&len,
                                      llvm::Value *&null) const {
   PL_ASSERT(type_ != type::Type::TypeId::INVALID);
   val = GetValue();
   len = GetType() == type::Type::TypeId::VARCHAR ? GetLength() : nullptr;
-  null = GetNull();
+  null = IsNull(codegen);
 }
 
 // Return the value that can be
 Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
                                       llvm::Value *len, llvm::Value *null) {
   PL_ASSERT(type != type::Type::TypeId::INVALID);
-  return Value{type, val, type == type::Type::TypeId::VARCHAR ? len : nullptr,
+  return Value{type, val, (type == type::Type::TypeId::VARCHAR ? len : nullptr),
                null};
-}
-
-llvm::Value *Value::SetNullValue(CodeGen &codegen, const Value &value) {
-  llvm::Value *null = nullptr;
-  if (Type::HasVariableLength(value.GetType())) {
-    null = codegen->CreateICmpEQ(value.GetValue(),
-                                 codegen.NullPtr(codegen.CharPtrType()));
-  } else {
-    codegen::Value null_val = Type::GetNullValue(codegen, value.GetType());
-    null = value.CompareEq(codegen, null_val).GetValue();
-  }
-  return null;
 }
 
 // Build a new value that combines values arriving from different BB's into a

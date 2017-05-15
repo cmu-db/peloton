@@ -22,21 +22,6 @@
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of table
-// scan query plans. All the tests use a single table created and loaded during
-// SetUp().  The schema of the table is as follows:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the table is loaded with 64 rows of random values.
-//===----------------------------------------------------------------------===//
-
 class TableScanTranslatorTest : public PelotonCodeGenTest {
  public:
   TableScanTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
@@ -71,7 +56,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -81,14 +66,12 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   //
 
   // Setup the predicate
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = ConstIntExpr(20).release();
-  auto* a_gt_20 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
+  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_20, {0, 1, 2}};
+  auto &table = GetTestTable(TestTableId());
+  planner::SeqScanPlan scan{&table, a_gt_20.release(), {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -106,16 +89,19 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
 }
 
 TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
+  // Insert 10 null rows
+  LoadTestTable(TestTableId(), 10);
+
   //
   // SELECT a, b FROM table where b < 20;
   //
 
   // Setup the predicate
-  auto b_lt_20 =
+  std::unique_ptr<expression::AbstractExpression> b_lt_20 =
       CmpLtExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(20));
 
   // Setup the scan plan node
-  auto& table = GetTestTable(TestTableId());
+  auto &table = GetTestTable(TestTableId());
   planner::SeqScanPlan scan{&table, b_lt_20.release(), {0, 1, 2}};
 
   // Do binding
@@ -155,14 +141,12 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   //
 
   // 1) Setup the predicate
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_40_exp = ConstIntExpr(40).release();
-  auto* a_gt_40 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+  std::unique_ptr<expression::AbstractExpression> a_gt_40 =
+      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_40, {0, 1}};
+  auto &table = GetTestTable(TestTableId());
+  planner::SeqScanPlan scan{&table, a_gt_40.release(), {0, 1}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -175,7 +159,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
@@ -187,22 +171,16 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // 1) Construct the components of the predicate
 
   // a >= 20
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = ConstIntExpr(20).release();
-  auto* a_gt_20 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
+  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // b = 21
-  auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_21_exp = ConstIntExpr(21).release();
-  auto* b_eq_21 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
+  std::unique_ptr<expression::AbstractExpression> b_eq_21 =
+      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
-  auto* conj_eq = new expression::ConjunctionExpression(
-      ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
+  auto *conj_eq = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   // 2) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(TestTableId()), conj_eq, {0, 1, 2}};

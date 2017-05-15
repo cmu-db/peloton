@@ -218,6 +218,76 @@ Value Type::Comparison::DoComparisonForSort(UNUSED_ATTRIBUTE CodeGen &codegen,
 }
 
 //===----------------------------------------------------------------------===//
+// ComparisonWithNullPropagation
+//
+// This is a wrapper around lower-level comparisons that are not null-aware.
+// This class computes the null-bit of the result of the comparison based on the
+// values being compared. It delegates to the wrapped comparison function to
+// perform the actual comparison. The null-bit and resulting value are combined.
+//===----------------------------------------------------------------------===//
+
+class ComparisonWithNullPropagation : public Type::Comparison {
+#define _DO_WRAPPED_COMPARE(OP)                                      \
+  /* Determine the null bit based on the left and right values */    \
+  llvm::Value *null = left.GetNullBit();                             \
+  if (null == nullptr) {                                             \
+    null = right.GetNullBit();                                       \
+  } else if (right.GetNullBit() != nullptr) {                        \
+    null = codegen->CreateOr(null, right.GetNullBit());              \
+  }                                                                  \
+  /* Now perform the comparison using a non-null-aware comparison */ \
+  Value result = (OP);                                               \
+  /* Return the result with the computed null-bit */                 \
+  return Value{result.GetType(), result.GetValue(), result.GetLength(), null};
+
+ public:
+  ComparisonWithNullPropagation(Type::Comparison &inner_comparison)
+      : inner_comparison_(inner_comparison) {}
+
+  Value DoCompareLt(CodeGen &codegen, const Value &left,
+                    const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareLt(codegen, left, right));
+  }
+
+  Value DoCompareLte(CodeGen &codegen, const Value &left,
+                     const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareLte(codegen, left, right));
+  }
+
+  Value DoCompareEq(CodeGen &codegen, const Value &left,
+                    const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareEq(codegen, left, right));
+  }
+
+  Value DoCompareNe(CodeGen &codegen, const Value &left,
+                    const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareNe(codegen, left, right));
+  }
+
+  Value DoCompareGt(CodeGen &codegen, const Value &left,
+                    const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareGt(codegen, left, right));
+  }
+
+  Value DoCompareGte(CodeGen &codegen, const Value &left,
+                     const Value &right) const override {
+    _DO_WRAPPED_COMPARE(inner_comparison_.DoCompareGte(codegen, left, right));
+  }
+
+  Value DoComparisonForSort(CodeGen &codegen, const Value &left,
+                            const Value &right) const override {
+    _DO_WRAPPED_COMPARE(
+        inner_comparison_.DoComparisonForSort(codegen, left, right));
+  }
+
+#undef _DO_WRAPPED_COMPARE
+
+ private:
+  // The non-null-checking comparison
+  Type::Comparison &inner_comparison_;
+};
+
+//===----------------------------------------------------------------------===//
 // BOOL Comparison
 //
 // Boolean comparisons can only compare two boolean types. So the assumption for
@@ -1037,6 +1107,16 @@ static IntegerComparison kIntegerComparison;
 static DecimalComparison kDecimalComparison;
 static VarlenComparison kVarlenComparison;
 
+static ComparisonWithNullPropagation kWrappedComparison{kComparison};
+static ComparisonWithNullPropagation kWrappedBooleanComparison{
+    kBooleanComparison};
+static ComparisonWithNullPropagation kWrappedIntegerComparison{
+    kIntegerComparison};
+static ComparisonWithNullPropagation kWrappedDecimalComparison{
+    kDecimalComparison};
+static ComparisonWithNullPropagation kWrappedVarlenComparison{
+    kVarlenComparison};
+
 static IntegerAdd kIntegerAdd;
 static IntegerSub kIntegerSub;
 static IntegerMul kIntegerMul;
@@ -1070,20 +1150,20 @@ std::vector<const Type::Cast *> Type::kCastingTable = {
     &kInvalidCast};  // UDT
 
 std::vector<const Type::Comparison *> Type::kComparisonTable = {
-    &kComparison,         // Invalid
-    &kIntegerComparison,  // Param offset
-    &kBooleanComparison,  // Boolean
-    &kIntegerComparison,  // Tiny Int
-    &kIntegerComparison,  // Small Int
-    &kIntegerComparison,  // Integer
-    &kIntegerComparison,  // BigInt
-    &kDecimalComparison,  // Decimal
-    &kIntegerComparison,  // Timestamp
-    &kIntegerComparison,  // Date
-    &kVarlenComparison,   // Varchar
-    &kVarlenComparison,   // Varbinary
-    &kComparison,         // Array
-    &kComparison};        // UDT
+    &kWrappedComparison,         // Invalid
+    &kWrappedIntegerComparison,  // Param offset
+    &kWrappedBooleanComparison,  // Boolean
+    &kWrappedIntegerComparison,  // Tiny Int
+    &kWrappedIntegerComparison,  // Small Int
+    &kWrappedIntegerComparison,  // Integer
+    &kWrappedIntegerComparison,  // BigInt
+    &kWrappedDecimalComparison,  // Decimal
+    &kWrappedIntegerComparison,  // Timestamp
+    &kWrappedIntegerComparison,  // Date
+    &kWrappedVarlenComparison,   // Varchar
+    &kWrappedVarlenComparison,   // Varbinary
+    &kWrappedComparison,         // Array
+    &kWrappedComparison};        // UDT
 
 Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
     {Type::OperatorId::Add, {&kIntegerAdd, &kDecimalAdd}},

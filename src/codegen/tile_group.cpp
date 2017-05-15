@@ -132,10 +132,10 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
 }
 
 // Load a given column for the row with the given TID
-codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
-                                     const TileGroup::ColumnLayout &layout,
-                                     uint32_t vector_size) const {
-  // We're calculating: col[tid] = col_start + (tid + col_stride)
+codegen::Value TileGroup::LoadColumn(
+    CodeGen &codegen, llvm::Value *tid,
+    const TileGroup::ColumnLayout &layout) const {
+  // We're calculating: col[tid] = col_start + (tid * col_stride)
   llvm::Value *col_address =
       codegen->CreateInBoundsGEP(codegen.ByteType(), layout.col_start_ptr,
                                  codegen->CreateMul(tid, layout.col_stride));
@@ -148,47 +148,34 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
 
   // Check if it's a string or numeric value
   if (Type::HasVariableLength(column.GetType())) {
-    PL_ASSERT(!column.IsInlined());
-
     if (schema_.AllowNull(layout.col_id)) {
       codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
                                        is_null);
     } else {
       codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
-      is_null = codegen.ConstBool(false);
     }
-    PL_ASSERT(val != nullptr && length != nullptr && is_null != nullptr);
+    PL_ASSERT(val != nullptr && length != nullptr);
   } else {
     // Get the LLVM type of the column
     llvm::Type *col_type = nullptr, *col_len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, column.GetType(), col_type,
                                     col_len_type);
-    PL_ASSERT(col_type != nullptr);
-    PL_ASSERT(col_len_type == nullptr);
+    PL_ASSERT(col_type != nullptr && col_len_type == nullptr);
 
-    if (vector_size > 1) {
-      llvm::Type *vector_type = llvm::VectorType::get(col_type, vector_size);
-      val = codegen->CreateAlignedLoad(
-          codegen->CreateBitCast(col_address, vector_type->getPointerTo()),
-          Vector::kDefaultVectorAlignment);
-    } else {
-      val = codegen->CreateLoad(col_type, col_address);
-    }
+    val = codegen->CreateLoad(col_type, col_address);
 
     if (schema_.AllowNull(layout.col_id)) {
       codegen::Value tmp{column.GetType(), val};
       codegen::Value null_val = Type::GetNullValue(codegen, column.GetType());
       is_null = null_val.CompareEq(codegen, tmp).GetValue();
-    } else {
-      is_null = codegen.ConstBool(false);
     }
-    PL_ASSERT(val != nullptr && is_null != nullptr);
+    PL_ASSERT(val != nullptr);
   }
 
   // Names
   val->setName(column.GetName());
   if (length != nullptr) length->setName(column.GetName() + ".len");
-  is_null->setName(column.GetName() + ".null");
+  if (is_null != nullptr) is_null->setName(column.GetName() + ".null");
 
   // Return the value
   return codegen::Value{column.GetType(), val, length, is_null};
@@ -198,15 +185,15 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
 // TILE GROUP ROW
 //===----------------------------------------------------------------------===//
 
-TileGroup::TileGroupAccess::Row::Row(
-    const TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tid)
-    : tile_group_access_(tile_group_access), tid_(tid) {}
+TileGroup::TileGroupAccess::Row::Row(const TileGroup &tile_group,
+                                     const std::vector<ColumnLayout> &layout,
+                                     llvm::Value *tid)
+    : tile_group_(tile_group), layout_(layout), tid_(tid) {}
 
 codegen::Value TileGroup::TileGroupAccess::Row::LoadColumn(
-    CodeGen &codegen, uint32_t col_idx, uint32_t num_vals_to_load) const {
-  const auto &tile_group = tile_group_access_.GetTileGroup();
-  const auto &col_layout = tile_group_access_.GetLayout(col_idx);
-  return tile_group.LoadColumn(codegen, GetTID(), col_layout, num_vals_to_load);
+    CodeGen &codegen, uint32_t col_idx) const {
+  PL_ASSERT(col_idx < layout_.size());
+  return tile_group_.LoadColumn(codegen, GetTID(), layout_[col_idx]);
 }
 
 //===----------------------------------------------------------------------===//
@@ -215,12 +202,12 @@ codegen::Value TileGroup::TileGroupAccess::Row::LoadColumn(
 
 TileGroup::TileGroupAccess::TileGroupAccess(
     const TileGroup &tile_group,
-    std::vector<TileGroup::ColumnLayout> tile_group_layout)
+    const std::vector<TileGroup::ColumnLayout> &tile_group_layout)
     : tile_group_(tile_group), layout_(tile_group_layout) {}
 
 TileGroup::TileGroupAccess::Row TileGroup::TileGroupAccess::GetRow(
     llvm::Value *tid) const {
-  return TileGroup::TileGroupAccess::Row{*this, tid};
+  return TileGroup::TileGroupAccess::Row{tile_group_, layout_, tid};
 }
 
 }  // namespace codegen
