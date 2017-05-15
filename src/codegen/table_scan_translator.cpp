@@ -218,8 +218,12 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     // Evaluate the predicate to determine row validity
     codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
+    // Reify the boolean value since it may be NULL
+    PL_ASSERT(valid_row.GetType() == type::Type::TypeId::BOOLEAN);
+    llvm::Value *bool_val = valid_row.ReifyBoolean(codegen);
+
     // Set the validity of the row
-    row.SetValidity(codegen, valid_row.GetValue());
+    row.SetValidity(codegen, bool_val);
   });
 }
 

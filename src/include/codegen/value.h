@@ -30,6 +30,10 @@ class Value {
   Value(type::Type::TypeId type, llvm::Value *value = nullptr,
         llvm::Value *length = nullptr, llvm::Value *is_null = nullptr);
 
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
   // Get the SQL type
   type::Type::TypeId GetType() const { return type_; }
 
@@ -40,10 +44,17 @@ class Value {
   llvm::Value *GetLength() const { return length_; }
 
   // Get the null indicator value
-  llvm::Value *GetNull() const { return null_; }
+  llvm::Value *GetNullBit() const { return null_; }
 
   // Return the name of the string
   const std::string GetName() const { return value_->getName(); }
+
+  // Reify this (potentially null) value into a boolean value
+  llvm::Value *ReifyBoolean(CodeGen &codegen) const;
+
+  // Nullability checks
+  llvm::Value *IsNull(CodeGen &codegen) const;
+  llvm::Value *IsNotNull(CodeGen &codegen) const;
 
   //===--------------------------------------------------------------------===//
   // Comparison functions
@@ -106,17 +117,14 @@ class Value {
   //===--------------------------------------------------------------------===//
 
   // Return the a representation of this value suitable for materialization
-  void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
-                                llvm::Value *&null) const;
+  void ValuesForMaterialization(CodeGen &codegen, llvm::Value *&val,
+                                llvm::Value *&len, llvm::Value *&null) const;
 
   // Return a value that can be constructed from the provided type and value
   // registers
   static Value ValueFromMaterialization(type::Type::TypeId type,
                                         llvm::Value *val, llvm::Value *len,
                                         llvm::Value *null);
-
-  // Return the null indicator
-  static llvm::Value *SetNullValue(CodeGen &codegen, const Value &value);
 
  private:
   friend class Hash;

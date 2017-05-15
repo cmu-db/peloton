@@ -33,16 +33,17 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
     return storage_type_;
   }
 
+  // The LLVM type we're constructing
   std::vector<llvm::Type *> llvm_types;
-  const uint32_t num_items = static_cast<uint32_t>(types_.size());
 
-  // We do not keep all the EntryInfos for each bit since it is waste of memory
+  // First, we prepend the NULL bitmap at the front
   llvm::Type *null_bit = codegen.BoolType();
-  for (uint32_t i = 0; i < num_items; i++) {
+  for (uint32_t i = 0; i < types_.size(); i++) {
     llvm_types.push_back(null_bit);
   }
 
-  for (uint32_t i = 0; i < num_items; i++) {
+  // Now, add the actual types
+  for (uint32_t i = 0; i < types_.size(); i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, types_[i], val_type, len_type);
@@ -65,7 +66,7 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   }
   // Construct the finalized types
   storage_type_ = llvm::StructType::get(codegen.GetContext(), llvm_types, true);
-  storage_size_ = codegen.SizeOf(storage_type_);
+  storage_size_ = static_cast<uint32_t>(codegen.SizeOf(storage_type_));
   return storage_type_;
 }
 
@@ -122,12 +123,7 @@ void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *ptr,
                                    uint64_t index,
                                    const codegen::Value &value) const {
   llvm::Value *val = nullptr, *len = nullptr, *null = nullptr;
-  value.ValuesForMaterialization(val, len, null);
-
-  // Some data are coming in without its null bit allocated
-  if (null == nullptr) {
-    null = codegen::Value::SetNullValue(codegen, value);
-  }
+  value.ValuesForMaterialization(codegen, val, len, null);
 
   // TODO: This linear search isn't great ...
   int val_idx = -1, len_idx = -1;

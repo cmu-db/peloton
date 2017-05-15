@@ -22,7 +22,6 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 llvm::Type *CompactStorage::Setup(
     CodeGen &codegen, const std::vector<type::Type::TypeId> &types) {
-
   // Return the constructed type if the compact storage has already been set up
   if (storage_type_ != nullptr) {
     return storage_type_;
@@ -80,33 +79,30 @@ llvm::Value *CompactStorage::StoreValues(
   PL_ASSERT(storage_type_ != nullptr);
   PL_ASSERT(to_store.size() == types_.size());
 
-  // Collect all the values and put them into values, lengths and nulls
-  const auto numitems = types_.size();
-  std::vector<llvm::Value *> vals(numitems), lengths(numitems), nulls(numitems);
-  for (uint32_t i = 0; i < numitems; i++) {
-    to_store[i].ValuesForMaterialization(vals[i], lengths[i], nulls[i]);
+  // Decompose the values we're storing into their raw value, length and
+  // null-bit components
+  const size_t nitems = types_.size();
+  std::vector<llvm::Value *> vals{nitems}, lengths{nitems}, nulls{nitems};
 
-    // Giant hack while we fix-up nulls
-    if (nulls[i] == nullptr) {
-      nulls[i] = codegen::Value::SetNullValue(codegen, to_store[i]);
-    }
+  for (uint32_t i = 0; i < nitems; i++) {
+    to_store[i].ValuesForMaterialization(codegen, vals[i], lengths[i],
+                                         nulls[i]);
   }
 
-  // Cast the area pointer to our construct type, removing taking care of offset
-  llvm::Value *typed_ptr =
-      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
+  // Cast the area pointer to our constructed type
+  auto *typed_ptr = codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
 
-  // Store null bitmaps
-  for (uint32_t i = 0; i < numitems; i++) {
+  // Fill in the NULL bitmap
+  for (uint32_t i = 0; i < nitems; i++) {
     llvm::Value *null_addr =
-         codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, i);
+        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, i);
     codegen->CreateStore(nulls[i], null_addr);
   }
-  auto numentries = storage_format_.size();
-  for (uint32_t i = 0; i < numentries; i++) {
-    llvm::Value *addr =
-        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                            numitems+i);
+
+  // Fill in the actual values, if they're not NULL
+  for (uint32_t i = 0; i < storage_format_.size(); i++) {
+    llvm::Value *addr = codegen->CreateConstInBoundsGEP2_32(
+        storage_type_, typed_ptr, 0, nitems + i);
     const auto &entry_info = storage_format_[i];
     if (entry_info.is_length)
       codegen->CreateStore(lengths[entry_info.index], addr);
@@ -126,34 +122,37 @@ llvm::Value *CompactStorage::StoreValues(
 llvm::Value *CompactStorage::LoadValues(
     CodeGen &codegen, llvm::Value *ptr,
     std::vector<codegen::Value> &output) const {
-
-  const auto numitems = types_.size();
-  std::vector<llvm::Value *> vals(numitems), lengths(numitems), nulls(numitems);
+  const auto nitems = types_.size();
+  std::vector<llvm::Value *> vals{nitems}, lengths{nitems}, nulls{nitems};
 
   // Collect all the values in the provided storage space, separating the values
   // into either value components or length components
-  llvm::Value *typed_ptr =
-      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
-  const auto numentries = storage_format_.size();
-  for (uint32_t i = 0; i < numentries; i++) {
+  auto *typed_ptr = codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
+  for (uint32_t i = 0; i < storage_format_.size(); i++) {
     const auto &entry_info = storage_format_[i];
-    llvm::Value *entry = codegen->CreateLoad(
-        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                            numitems+i));
+
+    // Load the raw value
+    llvm::Value *entry_addr = codegen->CreateConstInBoundsGEP2_32(
+        storage_type_, typed_ptr, 0, nitems + i);
+    llvm::Value *entry = codegen->CreateLoad(entry_addr);
+
+    // Set the length or value component
     if (entry_info.is_length) {
       lengths[entry_info.index] = entry;
     } else {
       vals[entry_info.index] = entry;
-      llvm::Value *null = codegen->CreateLoad(
-          codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                              entry_info.index));
+
+      // Load the null-bit too
+      llvm::Value *null =
+          codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+              storage_type_, typed_ptr, 0, entry_info.index));
       nulls[entry_info.index] = null;
     }
   }
 
   // Create the values
-  output.resize(numitems);
-  for (uint64_t i = 0; i < numitems; i++) {
+  output.resize(nitems);
+  for (uint64_t i = 0; i < nitems; i++) {
     output[i] = codegen::Value::ValueFromMaterialization(types_[i], vals[i],
                                                          lengths[i], nulls[i]);
   }
@@ -165,9 +164,7 @@ llvm::Value *CompactStorage::LoadValues(
 }
 
 // Return the maximum possible bytes that this compact storage will need
-uint64_t CompactStorage::MaxStorageSize() const {
-  return storage_size_;
-}
+uint64_t CompactStorage::MaxStorageSize() const { return storage_size_; }
 
 }  // namespace codegen
 }  // namespace peloton

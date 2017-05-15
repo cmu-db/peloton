@@ -97,8 +97,7 @@ class TileGroup {
 
   // Access a given column for the row with the given tid
   codegen::Value LoadColumn(CodeGen &codegen, llvm::Value *tid,
-                            const TileGroup::ColumnLayout &layout,
-                            uint32_t vector_size) const;
+                            const TileGroup::ColumnLayout &layout) const;
 
  public:
   //===--------------------------------------------------------------------===//
@@ -109,7 +108,7 @@ class TileGroup {
    public:
     // Constructor
     TileGroupAccess(const TileGroup &tile_group,
-                    std::vector<ColumnLayout> tile_group_layout);
+                    const std::vector<ColumnLayout> &tile_group_layout);
 
     //===------------------------------------------------------------------===//
     // A row in this tile group
@@ -117,17 +116,19 @@ class TileGroup {
     class Row {
      public:
       // Constructor
-      Row(const TileGroupAccess &tile_group_access, llvm::Value *tid);
+      Row(const TileGroup &tile_group,
+          const std::vector<ColumnLayout> &tile_group_layout, llvm::Value *tid);
 
       // Load the column at the given index
-      codegen::Value LoadColumn(CodeGen &codegen, uint32_t col_idx,
-                                uint32_t num_vals_to_load = 1) const;
+      codegen::Value LoadColumn(CodeGen &codegen, uint32_t col_idx) const;
 
       inline llvm::Value *GetTID() const { return tid_; }
 
      private:
-      // The batch this row belongs to
-      const TileGroupAccess &tile_group_access_;
+      // The tile group this row belongs to
+      const TileGroup &tile_group_;
+      // The layout of the tile group
+      const std::vector<ColumnLayout> &layout_;
       // The tid of the row
       llvm::Value *tid_;
     };
@@ -149,7 +150,7 @@ class TileGroup {
     // The tile group
     const TileGroup &tile_group_;
     // The layout of all columns in the tile group
-    std::vector<ColumnLayout> layout_;
+    const std::vector<ColumnLayout> &layout_;
   };
 
  private:

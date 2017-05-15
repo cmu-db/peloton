@@ -57,7 +57,8 @@ class PelotonCodeGenTest : public PelotonTest {
   void CreateTestTables();
 
   // Load the given table with the given number of rows
-  void LoadTestTable(TableId table_id, uint32_t num_rows);
+  void LoadTestTable(TableId table_id, uint32_t num_rows,
+                     bool insert_nulls = false);
 
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
@@ -74,11 +75,19 @@ class PelotonCodeGenTest : public PelotonTest {
   std::unique_ptr<expression::AbstractExpression> ColRefExpr(
       type::Type::TypeId type, uint32_t col_id);
 
+  std::unique_ptr<expression::AbstractExpression> CmpExpr(
+      ExpressionType cmp_type,
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+
   std::unique_ptr<expression::AbstractExpression> CmpLtExpr(
       std::unique_ptr<expression::AbstractExpression> &&left,
       std::unique_ptr<expression::AbstractExpression> &&right);
 
   std::unique_ptr<expression::AbstractExpression> CmpGtExpr(
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+  std::unique_ptr<expression::AbstractExpression> CmpGteExpr(
       std::unique_ptr<expression::AbstractExpression> &&left,
       std::unique_ptr<expression::AbstractExpression> &&right);
 

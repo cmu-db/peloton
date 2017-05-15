@@ -103,23 +103,30 @@ void PelotonCodeGenTest::CreateTestTables() {
   GetDatabase().AddTable(table4, false);
 }
 
-void PelotonCodeGenTest::LoadTestTable(TableId table_id, uint32_t num_rows) {
+void PelotonCodeGenTest::LoadTestTable(TableId table_id, uint32_t num_rows,
+                                       bool insert_nulls) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
   auto &test_table = GetTestTable(table_id);
+  auto *table_schema = test_table.GetSchema();
 
   auto col_val =
       [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
 
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  for (uint32_t rowid = 0; rowid < num_rows; rowid++) {
+  for (uint32_t rowid = test_table.GetTupleCount(); rowid < num_rows; rowid++) {
     // The input tuple
-    storage::Tuple tuple{test_table.GetSchema(), allocate};
+    storage::Tuple tuple{table_schema, allocate};
 
     tuple.SetValue(0, type::ValueFactory::GetIntegerValue(col_val(rowid, 0)));
-    tuple.SetValue(1, type::ValueFactory::GetIntegerValue(col_val(rowid, 1)));
+    if (insert_nulls) {
+      auto &col = table_schema->GetColumn(1);
+      tuple.SetValue(1, type::ValueFactory::GetNullValueByType(col.GetType()));
+    } else {
+      tuple.SetValue(1, type::ValueFactory::GetIntegerValue(col_val(rowid, 1)));
+    }
     tuple.SetValue(2, type::ValueFactory::GetDecimalValue(col_val(rowid, 2)));
 
     // In case of random, make sure this column has duplicated values
@@ -182,28 +189,41 @@ std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::ColRefExpr(
   return std::unique_ptr<expression::AbstractExpression>{expr};
 }
 
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpExpr(
+    ExpressionType cmp_type,
+    std::unique_ptr<expression::AbstractExpression> &&left,
+    std::unique_ptr<expression::AbstractExpression> &&right) {
+  auto *expr = new expression::ComparisonExpression(cmp_type, left.release(),
+                                                    right.release());
+  return std::unique_ptr<expression::AbstractExpression>{expr};
+}
+
 std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpLtExpr(
     std::unique_ptr<expression::AbstractExpression> &&left,
     std::unique_ptr<expression::AbstractExpression> &&right) {
-  auto *expr = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_LESSTHAN, left.release(), right.release());
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return CmpExpr(ExpressionType::COMPARE_LESSTHAN, std::move(left),
+                 std::move(right));
 }
 
 std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGtExpr(
     std::unique_ptr<expression::AbstractExpression> &&left,
     std::unique_ptr<expression::AbstractExpression> &&right) {
-  auto *expr = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHAN, left.release(), right.release());
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return CmpExpr(ExpressionType::COMPARE_GREATERTHAN, std::move(left),
+                 std::move(right));
+}
+
+std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGteExpr(
+    std::unique_ptr<expression::AbstractExpression> &&left,
+    std::unique_ptr<expression::AbstractExpression> &&right) {
+  return CmpExpr(ExpressionType::COMPARE_GREATERTHANOREQUALTO, std::move(left),
+                 std::move(right));
 }
 
 std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpEqExpr(
     std::unique_ptr<expression::AbstractExpression> &&left,
     std::unique_ptr<expression::AbstractExpression> &&right) {
-  auto *expr = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, left.release(), right.release());
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return CmpExpr(ExpressionType::COMPARE_EQUAL, std::move(left),
+                 std::move(right));
 }
 
 //===----------------------------------------------------------------------===//

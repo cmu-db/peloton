@@ -12,9 +12,10 @@
 
 #include "codegen/buffering_consumer.h"
 
+#include "codegen/if.h"
+#include "codegen/type.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
-#include "common/logger.h"
 #include "planner/binding_context.h"
 
 namespace peloton {
@@ -104,7 +105,14 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
 
   for (size_t i = 0; i < output_ais_.size(); i++) {
-    Value val = row.DeriveValue(codegen, output_ais_[i]);
+    Value null_val, val = row.DeriveValue(codegen, output_ais_[i]);
+    If val_is_null{codegen, val.IsNull(codegen)};
+    {
+      null_val = Type::GetNullValue(codegen, val.GetType());
+    }
+    val_is_null.EndIf();
+    val = val_is_null.BuildPHI(null_val, val);
+
     switch (val.GetType()) {
       case type::Type::TypeId::TINYINT: {
         codegen.CallFunc(

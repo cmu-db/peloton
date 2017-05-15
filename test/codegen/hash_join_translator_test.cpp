@@ -109,20 +109,22 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
 
   // COMPILE and run
   CompileAndExecute(*hj_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
   // The left table has 20 columns, the right has 80, all of them match
   EXPECT_EQ(20, results.size());
   // The output has the join columns (that should match) in positions 0 and 1
-  for (const auto& tuple : results) {
+  for (const auto &tuple : results) {
     type::Value v0 = tuple.GetValue(0);
-    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+    EXPECT_EQ(type::Type::TypeId::INTEGER, v0.GetTypeId());
+
+    LOG_DEBUG("=====> Output: %s", tuple.GetInfo().c_str());
 
     // Check that the joins keys are actually equal
-    EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
-              type::CMP_TRUE);
+    EXPECT_EQ(type::CMP_TRUE,
+              tuple.GetValue(0).CompareEquals(tuple.GetValue(1)));
   }
 }
 
