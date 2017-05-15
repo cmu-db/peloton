@@ -46,16 +46,6 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
- // InitializeCatalog();
-
-  // Create metrics table in default database
-  // TODO: stats?
- // CreateMetricsCatalog();
-
- // CreateFunctionCatalog();
-
-
-
 
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
@@ -130,12 +120,6 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       std::vector<oid_t>({2}), pool_.get(), txn);
-
-/*   IndexCatalog::GetInstance()->InsertIndex(
-      FUNCTION_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
-      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
-      std::vector<oid_t>({0}), pool_.get(), txn); */
-
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
