@@ -893,7 +893,7 @@ void Catalog::AddFunction(
 
 const FunctionData Catalog::GetFunction(const std::string &name) {
   if (functions_.count(name) == 0) {
-    throw Exception("function " + name + " not found.");
+    throw BuiltinFunctionException("function " + name + " not found.");
   }
   return functions_[name];
 }
