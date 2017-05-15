@@ -21,7 +21,7 @@
 
 namespace peloton {
 namespace commands {
-Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
+Trigger::Trigger(const peloton::planner::CreatePlan &plan) {
   trigger_name = plan.GetTriggerName();
   trigger_funcname = plan.GetTriggerFuncName();
   trigger_args = plan.GetTriggerArgs();
@@ -33,12 +33,19 @@ Trigger::Trigger(const peloton::planner::CreatePlan& plan) {
 //===--------------------------------------------------------------------===//
 // DEPRECATED
 //===--------------------------------------------------------------------===//
-Trigger::Trigger(std::string name, UNUSED_ATTRIBUTE std::string function_name, UNUSED_ATTRIBUTE std::string arguments, UNUSED_ATTRIBUTE std::string fire_condition) {
+Trigger::Trigger(std::string name,
+                 UNUSED_ATTRIBUTE std::string function_name,
+                 UNUSED_ATTRIBUTE std::string arguments,
+                 UNUSED_ATTRIBUTE std::string fire_condition) {
   trigger_name = name;
   // to be continue...
 
 }
-Trigger::Trigger(std::string name, int16_t type, std::string function_name, std::string arguments, std::string fire_condition) {
+Trigger::Trigger(std::string name,
+                 int16_t type,
+                 std::string function_name,
+                 std::string arguments,
+                 std::string fire_condition) {
   trigger_name = name;
   std::vector<std::string> strs;
   boost::split(strs, function_name, boost::is_any_of(","));
@@ -54,8 +61,7 @@ Trigger::Trigger(std::string name, int16_t type, std::string function_name, std:
   trigger_when = DeserializeWhen(fire_condition);
 }
 
-std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *txn)
-{
+std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *txn) {
   if (trigger_when == nullptr) {
     return "";
   }
@@ -71,59 +77,55 @@ std::string Trigger::SerializeWhen(oid_t table_oid, concurrency::Transaction *tx
   // parse left side of the predicate
   std::string left_side;
   switch (left->GetExpressionType()) {
-    case ExpressionType::VALUE_CONSTANT:
-    {
+    case ExpressionType::VALUE_CONSTANT: {
       LOG_DEBUG("left side is value constant");
       auto left_value = static_cast<const expression::ConstantValueExpression *>(left)->GetValue();
       left_side = "left|VALUE_CONSTANT|" + std::to_string(left_value.GetTypeId()) + "|" + left_value.ToString();
       break;
     }
-    case ExpressionType::VALUE_TUPLE:
-    {
+    case ExpressionType::VALUE_TUPLE: {
       // actually, do we need table name?
       std::string left_table = static_cast<const expression::TupleValueExpression *>(left)->GetTableName();
       std::string left_column = static_cast<const expression::TupleValueExpression *>(left)->GetColumnName();
       // get column id
       auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(table_oid, left_column, txn);
       auto column_type = catalog::ColumnCatalog::GetInstance()->GetColumnType(table_oid, left_column, txn);
-      left_side = "left|VALUE_TUPLE|" + left_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
+      left_side =
+        "left|VALUE_TUPLE|" + left_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
       break;
     }
-    default:
-      break;
+    default:break;
   }
 
   // parse right side of the predicate
   // TODO: should I check whether the value type is the same?? potential bug!!
   std::string right_side;
   switch (right->GetExpressionType()) {
-    case ExpressionType::VALUE_CONSTANT:
-    {
+    case ExpressionType::VALUE_CONSTANT: {
       LOG_DEBUG("right side is value constant");
       auto right_value = static_cast<const expression::ConstantValueExpression *>(right)->GetValue();
       right_side = "right|VALUE_CONSTANT|" + std::to_string(right_value.GetTypeId()) + "|" + right_value.ToString();
       break;
     }
-    case ExpressionType::VALUE_TUPLE:
-    {
+    case ExpressionType::VALUE_TUPLE: {
       std::string right_table = static_cast<const expression::TupleValueExpression *>(right)->GetTableName();
       std::string right_column = static_cast<const expression::TupleValueExpression *>(right)->GetColumnName();
       // get column id
       auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(table_oid, right_column, txn);
       auto column_type = catalog::ColumnCatalog::GetInstance()->GetColumnType(table_oid, right_column, txn);
-      right_side = "right|VALUE_TUPLE|" + right_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
+      right_side =
+        "right|VALUE_TUPLE|" + right_table + "|" + std::to_string(column_type) + "|" + std::to_string(column_id);
       break;
     }
-    default:
-      break;
+    default:break;
   }
   LOG_DEBUG("left size of the serialized predicate:%s", left_side.c_str());
   LOG_DEBUG("right size of the serialized predicate:%s", right_side.c_str());
   return ExpressionTypeToString(compare) + "|" + left_side + "|" + right_side;
 }
 
-expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condition) {
-  expression::AbstractExpression* trigger_when = nullptr;
+expression::AbstractExpression *Trigger::DeserializeWhen(std::string fire_condition) {
+  expression::AbstractExpression *trigger_when = nullptr;
   if (fire_condition == "") {
     return trigger_when;
   }
@@ -167,14 +169,14 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
     auto column_type = atoi(v[left_info_begin_index + 2].c_str());
     auto column_id = atoi(v[left_info_begin_index + 3].c_str());
     // 0 means use the first tuple in the arguments
-    left_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 0, column_id);
+    left_exp = new expression::TupleValueExpression((type::Type::TypeId) column_type, 0, column_id);
 
   } else if (v[left_info_begin_index] == "VALUE_CONSTANT") {
     LOG_DEBUG("left side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[left_info_begin_index + 1].c_str());
     type::Value left_value;
-    switch ((type::Type::TypeId)value_type) {
+    switch ((type::Type::TypeId) value_type) {
       case type::Type::INTEGER:
         left_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
@@ -190,8 +192,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
       case type::Type::DECIMAL:
         left_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      default:
-        LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId)value_type);
+      default:LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId) value_type);
         break;
     }
     left_exp = new expression::ConstantValueExpression(left_value);
@@ -207,14 +208,14 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
     auto column_type = atoi(v[right_info_begin_index + 2].c_str());
     auto column_id = atoi(v[right_info_begin_index + 3].c_str());
     // 1 means use the second tuple in the arguments
-    right_exp = new expression::TupleValueExpression((type::Type::TypeId)column_type, 1, column_id);
+    right_exp = new expression::TupleValueExpression((type::Type::TypeId) column_type, 1, column_id);
 
   } else if (v[right_info_begin_index] == "VALUE_CONSTANT") {
     LOG_DEBUG("right side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[right_info_begin_index + 1].c_str());
     type::Value right_value;
-    switch ((type::Type::TypeId)value_type) {
+    switch ((type::Type::TypeId) value_type) {
       case type::Type::INTEGER:
         right_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
@@ -230,8 +231,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(std::string fire_condit
       case type::Type::DECIMAL:
         right_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      default:
-        LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId)value_type);
+      default:LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId) value_type);
         break;
     }
     right_exp = new expression::ConstantValueExpression(right_value);
@@ -261,35 +261,35 @@ void TriggerList::AddTrigger(Trigger trigger) {
  */
 void TriggerList::UpdateTypeSummary(int16_t type) {
   types_summary[BEFORE_INSERT_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT);
   types_summary[BEFORE_INSERT_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSERT);
   types_summary[BEFORE_UPDATE_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE);
   types_summary[BEFORE_UPDATE_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_UPDATE);
   types_summary[BEFORE_DELETE_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE);
   types_summary[BEFORE_DELETE_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_DELETE);
   types_summary[AFTER_INSERT_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT);
   types_summary[AFTER_INSERT_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_INSERT);
   types_summary[AFTER_UPDATE_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE);
   types_summary[AFTER_UPDATE_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE);
   types_summary[AFTER_DELETE_ROW] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE);
+    type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE);
   types_summary[AFTER_DELETE_STATEMENT] |= TRIGGER_TYPE_MATCHES(
-      type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE);
+    type, TRIGGER_TYPE_STATEMENT, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE);
 }
 
 /**
  * execute trigger on each row before inserting tuple.
  */
-storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
+storage::Tuple *TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   unsigned i;
   LOG_DEBUG("enter into ExecBRInsertTriggers");
 
@@ -298,7 +298,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
     return nullptr;
   }
 
-  storage::Tuple* new_tuple = tuple;
+  storage::Tuple *new_tuple = tuple;
   for (i = 0; i < triggers.size(); i++) {
     Trigger &obj = triggers[i];
     int16_t trigger_type = obj.GetTriggerType();
@@ -309,7 +309,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
 
     //TODO: check if trigger is enabled
 
-    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
       LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
@@ -340,7 +340,7 @@ storage::Tuple* TriggerList::ExecBRInsertTriggers(storage::Tuple *tuple, executo
   return new_tuple;
 }
 
-storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
+storage::Tuple *TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   unsigned i;
   LOG_DEBUG("enter into ExecARInsertTriggers");
 
@@ -349,7 +349,7 @@ storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executo
     return nullptr;
   }
 
-  storage::Tuple* new_tuple = tuple;
+  storage::Tuple *new_tuple = tuple;
   for (i = 0; i < triggers.size(); i++) {
     Trigger &obj = triggers[i];
     int16_t trigger_type = obj.GetTriggerType();
@@ -358,8 +358,7 @@ storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executo
       continue;
     }
 
-
-    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
       LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
@@ -415,7 +414,9 @@ bool TriggerList::ExecBRUpdateTriggers() {
   return true;
 }
 
-bool TriggerList::ExecARUpdateTriggers(storage::Tuple *new_tuple, storage::Tuple *old_tuple, executor::ExecutorContext *executor_context_) {
+bool TriggerList::ExecARUpdateTriggers(storage::Tuple *new_tuple,
+                                       storage::Tuple *old_tuple,
+                                       executor::ExecutorContext *executor_context_) {
   LOG_DEBUG("enter into ExecARUpdateTriggers");
 
   //check valid type
@@ -431,7 +432,7 @@ bool TriggerList::ExecARUpdateTriggers(storage::Tuple *new_tuple, storage::Tuple
       continue;
     }
 
-    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
       LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
@@ -477,7 +478,7 @@ bool TriggerList::ExecBRDeleteTriggers(storage::Tuple *tuple, executor::Executor
       continue;
     }
 
-    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
       LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
@@ -524,7 +525,7 @@ bool TriggerList::ExecARDeleteTriggers(storage::Tuple *tuple, executor::Executor
       continue;
     }
 
-    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
       LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
@@ -708,7 +709,7 @@ bool TriggerList::ExecASDeleteTriggers() {
 /**
  * Call a trigger function.
  */
-storage::Tuple* Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
+storage::Tuple *Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   std::string &trigger_name = trigger_data.tg_trigger->trigger_name;
   std::string &trigger_funcname = trigger_data.tg_trigger->trigger_funcname[0];
   LOG_INFO("Trigger %s is invoked", trigger_name.c_str());
