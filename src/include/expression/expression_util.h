@@ -503,20 +503,13 @@ class ExpressionUtil {
                                                  func_data.argument_types_);
        }
        // If not found in map, try in pg_proc (UDF catalog)
-      catch (Exception &e) { 
-      	// Change this later to throw a different Exception type
-      	// Since , it now can throw exception for mismatched type as well as function not found in catalog 
-      	
-        LOG_INFO("Function is probably a UDF");
-        /* 
-        Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
-        Since, we need Transaction ID to query from the catalog.
-        */
+      catch (BuiltinFunctionException &e){
 
+        LOG_INFO("Function is probably a UDF");
         func_expr->SetUDFType(true); // Sets is_udf_ to True
-        LOG_DEBUG("IS UDF: %d", (int)func_expr->GetUDFType());
-  	     
+
       }
+     
     }
 
     // Decude the expression type for Non-TupleValueExpressions
@@ -672,25 +665,14 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      try {
+      
         const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
         func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_); 
-      }
-      // If not found in map, try in pg_proc (UDF catalog)
-      catch (Exception &e) { 
-
-        LOG_INFO("Function is a UDF, maybe");
-
-        /* 
-        Assume it is a UDF. Later in Evaluate(), check if it is present inside pg_proc catalog.
-        Since, we need Transaction ID to query from the catalog.
-        */
-
-        func_expr->SetUDFType(true); // Sets is_udf_ to True
-      }
+      
+     
     }
     // make sure the return types for expressions are set correctly
     // this is useful in operator expressions

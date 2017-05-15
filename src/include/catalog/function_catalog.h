@@ -14,23 +14,39 @@
 // pg_query
 //
 // Schema: (column offset: column_name)
-// 0: name (pkey)
-// 1: database_oid (pkey)
-// 2: num_params
-// 3: param_types
-// 4: param_formats
-// 5: param_values
-// 6: reads
-// 7: updates
-// 8: deletes
-// 9: inserts
-// 10: latency
-// 11: cpu_time
-// 12: time_stamp
+// 0: function_oid (pkey)
+// 1: function_name (skey)
+// 2: owner_oid
+// 3: lang_oid
+// 4: cost
+// 5: rows
+// 6: variadic_oid
+// 7: isagg_column
+// 8: iswindow_column
+// 9: secdef_column
+// 10: leakproof_column
+// 11: isstrict_column
+// 12: retset_column
+// 13: volatile_column
+// 14: num_params
+// 15: num_default_params
+// 16: rettype_oid
+// 17: arg_types
+// 18: all_arg_types
+// 19: arg_modes
+// 20: arg_names
+// 21: arg_defaults
+// 22: src
+// 23: bin
+// 24: config
+// 25: aclitem
+
 //
 // Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
+// 0: function_oid (unique & primary key)
+// 1: function_name (duplicate allowed & secondary key)
 //
+// Reference for column definitions : https://www.postgresql.org/docs/9.3/static/catalog-pg-proc.html 
 //===----------------------------------------------------------------------===//
 
 #pragma once
