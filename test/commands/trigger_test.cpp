@@ -462,9 +462,6 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
 
   // Invoke triggers directly
   new_trigger_list->ExecBRUpdateTriggers();
-  new_trigger_list->ExecARUpdateTriggers();
-  new_trigger_list->ExecBRDeleteTriggers();
-  new_trigger_list->ExecARDeleteTriggers();
   new_trigger_list->ExecBSInsertTriggers();
   new_trigger_list->ExecBSUpdateTriggers();
   new_trigger_list->ExecASUpdateTriggers();

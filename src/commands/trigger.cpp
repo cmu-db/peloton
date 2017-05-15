@@ -415,7 +415,7 @@ bool TriggerList::ExecBRUpdateTriggers() {
   return true;
 }
 
-bool TriggerList::ExecARUpdateTriggers() {
+bool TriggerList::ExecARUpdateTriggers(storage::Tuple *new_tuple, storage::Tuple *old_tuple, executor::ExecutorContext *executor_context_) {
   LOG_DEBUG("enter into ExecARUpdateTriggers");
 
   //check valid type
@@ -429,6 +429,27 @@ bool TriggerList::ExecARUpdateTriggers() {
     //check valid type
     if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_UPDATE)) {
       continue;
+    }
+
+    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    if (predicate_ != nullptr) {
+      LOG_DEBUG("predicate_ is not nullptr");
+      LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_DEBUG("predicate_ size = %lu", predicate_->GetChildrenSize());
+      if (executor_context_ != nullptr) {
+        LOG_DEBUG("before evalulate");
+        auto eval = predicate_->Evaluate(new_tuple, old_tuple, executor_context_);
+        LOG_DEBUG("Evaluation result: %s", eval.GetInfo().c_str());
+        if (eval.IsTrue()) {
+          LOG_DEBUG("pass one trigger fire condition!!!");
+          LOG_DEBUG("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
+        } else {
+          LOG_DEBUG("fail one trigger fire condition!!!");
+          continue;
+        }
+      }
+    } else {
+      LOG_DEBUG("predicate_ is nullptr");
     }
 
     // Construct trigger data
