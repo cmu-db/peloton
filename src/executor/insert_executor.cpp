@@ -177,8 +177,6 @@ bool InsertExecutor::DExecute() {
         tuple = node.GetTuple(insert_itr);
       }
 
-      // DEPRECATED! do not get trigger list from target table member variable;
-      // instead, get it from the trigger catalog table
       commands::TriggerList* trigger_list = target_table->GetTriggerList();
 
       auto new_tuple = tuple;

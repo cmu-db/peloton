@@ -137,8 +137,8 @@ class TriggerList {
   storage::Tuple* ExecARInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
   bool ExecBRUpdateTriggers();
   bool ExecARUpdateTriggers();
-  bool ExecBRDeleteTriggers();
-  bool ExecARDeleteTriggers();
+  bool ExecBRDeleteTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
+  bool ExecARDeleteTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
   void ExecBSInsertTriggers();
   void ExecASInsertTriggers();
   bool ExecBSUpdateTriggers();
