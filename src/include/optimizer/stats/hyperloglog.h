@@ -15,12 +15,12 @@
 #include <cmath>
 #include <vector>
 
-#include <murmur3/MurmurHash3.h>
 #include <libcount/hll.h>
 
 #include "type/value.h"
 #include "common/macros.h"
 #include "common/logger.h"
+#include "optimizer/stats/stats_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -44,7 +44,7 @@ class HyperLogLog {
   }
 
   void Update(const type::Value& value) {
-    hll_->Update(Hash(value));
+    hll_->Update(StatsUtil::HashValue(value));
   }
 
   uint64_t EstimateCardinality() {
@@ -63,29 +63,6 @@ class HyperLogLog {
   const int precision_;
   const int register_count_;
   libcount::HLL* hll_;
-
-  // Compute hash for given value using Murmur3.
-  uint64_t Hash(const type::Value& value) {
-    uint64_t hash[2];
-    if (value.CheckInteger())
-    {
-      int raw_value = value.GetAs<int>();
-      MurmurHash3_x64_128(&raw_value, sizeof(raw_value), 0, hash);
-    }
-    else if (value.GetTypeId() == type::Type::VARCHAR ||
-             value.GetTypeId() == type::Type::VARBINARY)
-    {
-      const char* raw_value = value.GetData();
-      MurmurHash3_x64_128(raw_value, (uint64_t)strlen(raw_value), 0, hash);
-    }
-    else // Hack for other data types.
-    {
-      std::string value_str = value.ToString();
-      const char* raw_value = value_str.c_str();
-      MurmurHash3_x64_128(raw_value, (uint64_t)strlen(raw_value), 0, hash);
-    }
-    return hash[0];
-  }
 };
 
 } /* namespace optimizer */

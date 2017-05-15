@@ -120,6 +120,11 @@ double Selectivity::Equal(const std::shared_ptr<TableStats>& table_stats,
       ++first;
     }
 
+    if (numrows == 0 || column_stats->cardinality == most_common_vals.size()) {
+      LOG_TRACE("Equal selectivity division by 0.");
+      return DEFAULT_SELECTIVITY;
+    }
+
     res = (1 - sum_mvf / (double)numrows) /
           (column_stats->cardinality - most_common_vals.size());
   }

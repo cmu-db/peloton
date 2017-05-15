@@ -174,7 +174,38 @@ double Cost::LimitCost(
 //===----------------------------------------------------------------------===//
 // ORDER BY
 //===----------------------------------------------------------------------===//
-
+double OrderByCost(
+  const std::shared_ptr<TableStats>& input_stats,
+  const std::vector<oid_t>& columns,
+  const std::vector<bool>& orders,
+  std::shared_ptr<TableStats>& output_stats) {
+  PL_ASSERT(input_stats);
+  // Invalid case.
+  if (columns.size() == 0 || columns.size() != orders.size()) {
+    return DEFAULT_COST;
+  }
+  oid_t column = columns[0];
+  bool order = orders[0]; // TRUE is ASC, FALSE is DESC
+  double cost = DEFAULT_COST;
+  // Special case when first column has index.
+  if (input_stats->HasPrimaryIndex(column)) {
+    if (order) { // ascending
+      // No cost for order by for now. We might need to take
+      // cardinality of first column into account in the future.
+      cost = DEFAULT_OPERATOR_COST;
+    } else { // descending
+      // Reverse sequence.
+      cost = input_stats->num_rows * DEFAULT_TUPLE_COST;
+    }
+  } else {
+    cost = default_sorting_cost(input_stats->num_rows) * DEFAULT_TUPLE_COST;
+  }
+  if (output_stats != nullptr) {
+    output_stats->num_rows = input_stats->num_rows;
+    // Also set HasPrimaryIndex for first column to true.
+  }
+  return cost;
+}
 
 //===----------------------------------------------------------------------===//
 // Helper functions

@@ -25,6 +25,7 @@ using namespace optimizer;
 
 class CountMinSketchTests : public PelotonTest {};
 
+// Basic CM-Sketch testing with double datatype.
 TEST_F(CountMinSketchTests, SimpleCountMinSketchIntegerTest) {
   CountMinSketch sketch(10, 20, 0);
   EXPECT_EQ(sketch.depth, 10);
@@ -43,6 +44,7 @@ TEST_F(CountMinSketchTests, SimpleCountMinSketchIntegerTest) {
   EXPECT_EQ(sketch.EstimateItemCount(4), 1000000);
 }
 
+// Basic testing with string datatype.
 TEST_F(CountMinSketchTests, SimpleCountMinSketchStringTest) {
   CountMinSketch sketch(10, 5, 0);
   EXPECT_EQ(sketch.depth, 10);

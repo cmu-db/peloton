@@ -123,13 +123,13 @@ public:
     std::shared_ptr<TableStats>& output_stats);
 
   /*
-   * Cost of ORDER BY.
-   * TODO: implement me!
+   * Cost of ORDER BY = cost of sorting or 1 if column has index.
+   * Note right only first column is taken into consideration.
    */
   static double OrderByCost(
     const std::shared_ptr<TableStats>& input_stats,
-    std::vector<oid_t> columns,
-    std::vector<bool> orders,
+    const std::vector<oid_t>& columns,
+    const std::vector<bool>& orders,
     std::shared_ptr<TableStats>& output_stats);
 
   /*

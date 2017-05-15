@@ -246,7 +246,7 @@ public:
     return std::make_tuple(bins[i].p, bins[i+1].p, bins[i].m, bins[i+1].m);
   }
 
-  void PrintHistogram() {
+  inline void PrintHistogram() {
     LOG_INFO("Histogram: total=[%f] num_bins=[%lu]", total_, bins.size());
     for (Bin b : bins) {
       b.Print();

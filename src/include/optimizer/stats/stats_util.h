@@ -13,8 +13,10 @@
 #pragma once
 
 #include <limits>
+#include <murmur3/MurmurHash3.h>
 
 #include "common/macros.h"
+#include "type/type.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -24,6 +26,7 @@ namespace optimizer {
 
 class StatsUtil {
 public:
+
   // Convert numeric peloton value type to primitive value.
   // Return NaN if value is not numeric.
   static double PelotonValueToNumericValue(const type::Value& value) {
@@ -42,6 +45,56 @@ public:
     return raw_value;
   }
 
+  /*
+   * Default type::Value hash uses std::hash, and here we want to
+   * use cusotmized hash functions. Currently we are using
+   * Murmur3 and in the future we want to try Farmhash.
+   */
+  static uint64_t HashValue(const type::Value& value) {
+    uint64_t hash[2];
+    switch(value.GetTypeId()) {
+      case type::Type::VARCHAR:
+      case type::Type::VARBINARY: {
+        const char* key = value.GetData();
+        MurmurHash3_x64_128(key, (uint64_t)strlen(key), 0, hash);
+      } break;
+      case type::Type::BOOLEAN:
+      case type::Type::TINYINT: {
+        int8_t key = value.GetAs<int8_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::SMALLINT: {
+        int16_t key = value.GetAs<int16_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::INTEGER: {
+        int32_t key = value.GetAs<int32_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::BIGINT: {
+        int64_t key = value.GetAs<int64_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::DECIMAL: {
+        double key = value.GetAs<double>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::DATE: {
+        uint32_t key = value.GetAs<uint32_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      case type::Type::TIMESTAMP: {
+        uint64_t key = value.GetAs<uint64_t>();
+        MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
+      } break;
+      default:
+        // Hack for other data types.
+        std::string value_str = value.ToString();
+        const char* key = value_str.c_str();
+        MurmurHash3_x64_128(key, (uint64_t)strlen(key), 0, hash);
+    }
+    return hash[0];
+  }
 };
 } /* namespace optimizer */
 } /* namespace peloton */

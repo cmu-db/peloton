@@ -30,15 +30,18 @@ public:
   ExpressionType type;
   type::Value value;
 
-  // Only with id.
+  // Only with id. Default column_name to empty string.
   ValueCondition(oid_t column_id, ExpressionType type, const type::Value& value)
-  : column_id{column_id},
-    column_name(""),
-    type{type},
-    value{value}
+  : ValueCondition(column_id, "", type, value)
   {}
 
-  ValueCondition(oid_t column_id, std::string column_name, ExpressionType type, type::Value value)
+  // Only with column name. Default column_id to be 1.
+  ValueCondition(std::string column_name, ExpressionType type, const type::Value& value)
+  : ValueCondition(0, column_name, type, value)
+  {}
+
+  ValueCondition(oid_t column_id, std::string column_name,
+                 ExpressionType type, const type::Value& value)
     : column_id{column_id},
       column_name{column_name},
       type{type},

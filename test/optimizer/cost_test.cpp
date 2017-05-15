@@ -26,6 +26,7 @@
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/cost.h"
 #include "type/types.h"
+#include "type/value.h"
 #include "type/value_factory.h"
 #include "executor/testing_executor_util.h"
 #include "catalog/column_catalog.h"
