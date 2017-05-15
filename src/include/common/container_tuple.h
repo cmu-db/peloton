@@ -222,7 +222,25 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   // Get a string representation for debugging
   const std::string GetInfo() const {
     std::stringstream os;
-    os << "FIXME";
+
+    bool first = true;
+    os << "(";
+    for (size_t i = 0; i < container_->size(); i++) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+
+      type::Value val = GetValue(i);
+      if (val.IsNull()) {
+        os << "<NULL(" << TypeIdToString(val.GetTypeId()) << ")>";
+      } else {
+        os << val.ToString();
+      }
+    }
+    os << ")";
+
     return (os.str());
   }
 
@@ -293,5 +311,5 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
   const std::vector<oid_t> *column_ids_ = nullptr;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton
