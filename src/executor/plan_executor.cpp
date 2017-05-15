@@ -380,10 +380,17 @@ executor::AbstractExecutor *BuildExecutorTree(
       LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
+
+    case PlanNodeType::CREATE_FUNC:
+      LOG_TRACE("Adding Create Function Executor");
+      child_executor = new executor::CreateFunctionExecutor(plan, executor_context);
+      break;
+
     case PlanNodeType::COPY:
       LOG_TRACE("Adding Copy Executer");
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
+
     case PlanNodeType::POPULATE_INDEX:
       LOG_TRACE("Adding PopulateIndex Executor");
       child_executor =

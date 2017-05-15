@@ -363,6 +363,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::CREATE_FUNC: {
+      return "CREATE_FUNC";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -400,7 +403,9 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
     return StatementType::COPY;
-  } else {
+  } else if (upper_str == "CREATE_FUNC") {
+    return StatementType::CREATE_FUNC;
+  }  else {
     throw ConversionException(StringUtil::Format(
         "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
@@ -657,9 +662,9 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_MULTIPLY;
   } else if (upper_str == "OPERATOR_DIVIDE" || upper_str == "/") {
     return ExpressionType::OPERATOR_DIVIDE;
-  } else if (upper_str == "OPERATOR_CONCAT") {
+  } else if (upper_str == "OPERATOR_CONCAT" || upper_str == "||") {
     return ExpressionType::OPERATOR_CONCAT;
-  } else if (upper_str == "OPERATOR_MOD") {
+  } else if (upper_str == "OPERATOR_MOD" || upper_str == "%" ) {
     return ExpressionType::OPERATOR_MOD;
   } else if (upper_str == "OPERATOR_CAST") {
     return ExpressionType::OPERATOR_CAST;
@@ -673,7 +678,8 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=" || upper_str == "<>") {
+  } else if (upper_str == "COMPARE_NOTEQUAL"
+      || upper_str == "!=" || upper_str == "<>") {
     return ExpressionType::COMPARE_NOTEQUAL;
   } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
@@ -2386,10 +2392,10 @@ std::string PropertyTypeToString(PropertyType type) {
       return "COLUMNS";
     case PropertyType::PREDICATE:
       return "PREDICATE";
-    case PropertyType::PROJECT:
-      return "PROJECT";
     case PropertyType::DISTINCT:
       return "DISTINCT";
+    case PropertyType::LIMIT:
+      return "LIMIT";
     default:
       throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
                                                    static_cast<int>(type)));

@@ -566,6 +566,7 @@ enum class PlanNodeType {
   // Utility
   RESULT = 70,
   COPY = 71,
+  CREATE_FUNC = 72,
 
   // Test
   MOCK = 80
@@ -587,6 +588,15 @@ enum class CreateType {
 };
 
 //===--------------------------------------------------------------------===//
+// Language Types for UDFs
+//===--------------------------------------------------------------------===//
+
+enum class PLType {
+   PL_PGSQL=0,                // UDF language: Pl_PGSQL
+   PL_C=1                     // UDF language: PL_C
+};
+
+//===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
@@ -603,7 +613,8 @@ enum class StatementType {
   RENAME = 11,                // rename statement type
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
-  COPY = 14                   // copy type
+  COPY = 14,                   // copy type
+  CREATE_FUNC = 15	      // create function type	
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -1142,10 +1153,10 @@ typedef std::vector<DirectMap> DirectMapList;
 //===--------------------------------------------------------------------===//
 enum class PropertyType {
   PREDICATE,
-  PROJECT,
   COLUMNS,
   DISTINCT,
   SORT,
+  LIMIT,
 };
 
 namespace expression {

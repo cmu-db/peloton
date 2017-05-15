@@ -84,9 +84,9 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
-  for (auto update : *node->updates)
+  for (auto update : *node->updates) {
     update->value->Accept(this);
-    
+  }
 
   // TODO: Update columns are not bound because they are char*
   // not TupleValueExpression in update_statement.h
@@ -107,11 +107,13 @@ void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
 void BindNodeVisitor::Visit(const parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(const parser::CopyStatement *) {}
 void BindNodeVisitor::Visit(const parser::CreateStatement *) {}
+void BindNodeVisitor::Visit(const parser::CreateFunctionStatement *) {}
 void BindNodeVisitor::Visit(const parser::InsertStatement *) {}
 void BindNodeVisitor::Visit(const parser::DropStatement *) {}
 void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
 void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
+void BindNodeVisitor::Visit(expression::ConstantValueExpression *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {

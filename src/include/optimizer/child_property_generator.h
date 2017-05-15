@@ -30,7 +30,9 @@ class ChildPropertyGenerator : public OperatorVisitor {
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
       std::shared_ptr<GroupExpression> gexpr, PropertySet requirements);
 
-  void Visit(const PhysicalScan *) override;
+  void Visit(const DummyScan *) override;
+  void Visit(const PhysicalSeqScan *) override;
+  void Visit(const PhysicalIndexScan *) override;
   void Visit(const PhysicalProject *) override;
   void Visit(const PhysicalOrderBy *) override;
   void Visit(const PhysicalLimit *) override;
@@ -50,6 +52,15 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void Visit(const PhysicalSortGroupBy *) override;
   void Visit(const PhysicalDistinct *) override;
   void Visit(const PhysicalAggregate *) override;
+
+ private:
+  /***** Helper functions *****/
+  // Since the ChildPropertyGenerator have similar
+  // behaviour for different implementation of the same
+  // logical operator, we apply helper functions to
+  // reduce duplicate code
+  void AggregateHelper(const BaseOperatorNode *op);
+  void ScanHelper();
 
  private:
   ColumnManager &manager_;

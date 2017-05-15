@@ -65,6 +65,7 @@ class BinderContext {
                               std::tuple<oid_t, oid_t>* id_tuple_ptr);
 
  private:
+  // Map table alias to <db_id, table_id>
   std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
 };
 }  // binder

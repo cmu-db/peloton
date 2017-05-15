@@ -42,9 +42,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   SetTargetTable(table);
 
   if (predicate != NULL) {
-    // we need to copy it here because eventually predicate will be destroyed by
-    // its owner...
-    predicate = predicate->Copy();
     expression::ExpressionUtil::TransformExpression(table->GetSchema(),
                                                     predicate);
     SetPredicate(predicate);

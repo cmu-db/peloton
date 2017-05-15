@@ -184,6 +184,30 @@ class Catalog {
   oid_t GetDatabaseCount();
 
   //===--------------------------------------------------------------------===//
+  // METRIC
+  //===--------------------------------------------------------------------===//
+
+  // Creates the metric tables for statistics
+  void CreateMetricsCatalog();
+  void CreateFunctionCatalog();
+
+  // Create Table for metrics tables
+  std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
+      oid_t database_id, std::string table_name);
+
+  // Initialize the schema of the database metrics table
+  std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
+
+  // Initialize the schema of the table metrics table
+  std::unique_ptr<Schema> InitializeTableMetricsSchema();
+
+  // Initialize the schema of the index metrics table
+  std::unique_ptr<Schema> InitializeIndexMetricsSchema();
+
+  // Initialize the schema of the query metrics table
+  // std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
+
+  //===--------------------------------------------------------------------===//
   // USER DEFINE FUNCTION
   //===--------------------------------------------------------------------===//
 

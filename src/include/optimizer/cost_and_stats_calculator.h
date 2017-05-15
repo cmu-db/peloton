@@ -40,7 +40,9 @@ class CostAndStatsCalculator : public OperatorVisitor {
 
   inline double GetOutputCost() { return output_cost_; }
 
-  void Visit(const PhysicalScan *) override;
+  void Visit(const DummyScan *) override;
+  void Visit(const PhysicalSeqScan *) override;
+  void Visit(const PhysicalIndexScan *) override;
   void Visit(const PhysicalProject *) override;
   void Visit(const PhysicalOrderBy *) override;
   void Visit(const PhysicalLimit *) override;
