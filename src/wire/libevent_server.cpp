@@ -24,10 +24,13 @@
 namespace peloton {
 namespace wire {
 
-std::unordered_map<int, std::unique_ptr<LibeventSocket>>
-    &LibeventServer::GetGlobalSocketList() {
+int LibeventServer::recent_connfd = -1;
+
+std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
+LibeventServer::GetGlobalSocketList() {
   // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> global_socket_list;
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>>
+      global_socket_list;
 
   return global_socket_list;
 }
@@ -45,39 +48,37 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
                                    LibeventThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
+  recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
     LOG_INFO("create new connection: id = %d", connfd);
   }
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
-}
-
-/**
- * Stop signal handling
- */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                     UNUSED_ATTRIBUTE short what, void *arg) {
-  struct event_base *base = (event_base *)arg;
-  LOG_INFO("stop");
-  event_base_loopexit(base, NULL);
+  thread->SetThreadSockFd(connfd);
 }
 
 LibeventServer::LibeventServer() {
-  struct event_base *base = event_base_new();
-  struct event *evstop;
+  base_ = event_base_new();
 
   // Create our event base
-  if (!base) {
+  if (!base_) {
     throw ConnectionException("Couldn't open event base");
   }
 
   // Add hang up signal event
-  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
-  evsignal_add(evstop, NULL);
+  ev_stop_ =
+      evsignal_new(base_, SIGHUP, ControlCallback::Signal_Callback, base_);
+  evsignal_add(ev_stop_, NULL);
+
+  // Add timeout event to check server's start/close flag every one second
+  struct timeval one_seconds = {1, 0};
+  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
+                          ControlCallback::ServerControl_Callback, this);
+  event_add(ev_timeout_, &one_seconds);
 
   // a master thread is responsible for coordinating worker threads.
-  std::shared_ptr<LibeventThread> master_thread(
-      new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
+  master_thread_ =
+      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -93,7 +94,9 @@ LibeventServer::LibeventServer() {
   // Ignore the broken pipe signal
   // We don't want to exit on write when the client disconnects
   signal(SIGPIPE, SIG_IGN);
+}
 
+void LibeventServer::StartServer() {
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -113,7 +116,8 @@ LibeventServer::LibeventServer() {
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
     if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-      throw ConnectionException("Failed to bind socket to port: " + std::to_string(port_));
+      throw ConnectionException("Failed to bind socket to port: " +
+                                std::to_string(port_));
     }
 
     int conn_backlog = 12;
@@ -122,12 +126,21 @@ LibeventServer::LibeventServer() {
     }
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
-                                  master_thread.get(), CONN_LISTENING);
+                                  master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %lu", port_);
-    event_base_dispatch(base);
-    event_free(evstop);
-    event_base_free(base);
+    event_base_dispatch(base_);
+    LibeventServer::GetConn(listen_fd)->CloseSocket();
+
+    // Free events and event base
+    event_free(LibeventServer::GetConn(listen_fd)->event);
+    event_free(ev_stop_);
+    event_free(ev_timeout_);
+    event_base_free(base_);
+    static_cast<LibeventMasterThread *>(master_thread_.get())
+        ->CloseConnection();
+
+    LOG_INFO("Server Closed");
   }
 
   // This socket family code is not implemented yet
@@ -135,5 +148,15 @@ LibeventServer::LibeventServer() {
     throw ConnectionException("Unsupported socket family");
   }
 }
+
+void LibeventServer::CloseServer() {
+  LOG_INFO("Begin to stop server");
+  this->SetIsClosed(true);
+}
+
+/**
+ * Change port to new_port
+ */
+void LibeventServer::SetPort(int new_port) { port_ = new_port; }
 }
 }
