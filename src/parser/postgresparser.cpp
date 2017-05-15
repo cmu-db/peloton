@@ -966,10 +966,10 @@ parser::SQLStatement* PostgresParser::CreateFunctionTransform(CreateFunctionStmt
     else if(strcmp(def_elem->defname, "language") == 0) {
       auto lang = reinterpret_cast<value*>(def_elem->arg)->val.str;
       if ((strcmp(lang, "plpgsql") == 0)) {
-        result->language = PL_PGSQL;
+        result->language = PLType::PL_PGSQL;
       } 
       else if (strcmp(name, "c") == 0) {
-        result->language = PL_C;
+        result->language = PLType::PL_C;
       }
     }
   }

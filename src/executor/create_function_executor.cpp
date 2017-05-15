@@ -43,7 +43,7 @@ bool CreateFunctionExecutor::DExecute() {
   auto pool = context->GetPool();
   
   auto proname = node.GetFunctionName();
-  auto prolang = node.GetUDFLanguage();
+  auto prolang = static_cast<oid_t>(node.GetUDFLanguage());
   auto pronargs = node.GetNumParams();
   auto prorettype = node.GetReturnType();
   auto proargtypes = node.GetFunctionParameterTypes();
@@ -57,6 +57,7 @@ bool CreateFunctionExecutor::DExecute() {
   float dummy5 = 0.0;
   char dummy6 = 'a';
   int dummy7 = 0;
+
 
   ResultType result = catalog::FunctionCatalog::GetInstance()->InsertFunction(proname,dummy4,dummy4,prolang,dummy5,dummy5,dummy4,false,false,false,false,false,false,dummy6,pronargs,dummy7,prorettype,proargtypes,dummy,dummy2,proargnames,dummy,prosrc_bin,dummy3,dummy2,pool,current_txn);
 

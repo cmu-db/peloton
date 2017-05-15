@@ -21,7 +21,7 @@ namespace peloton {
 namespace parser {
 
 struct Parameter {
-  enum FuncParamMode {
+  enum class FuncParamMode {
     FUNC_PARAM_IN = 'i',		/* input only */
     FUNC_PARAM_OUT = 'o',		/* output only */
     FUNC_PARAM_INOUT = 'b',		/* both */
@@ -29,7 +29,7 @@ struct Parameter {
     FUNC_PARAM_TABLE = 't'	
   };
 
-  enum DataType {
+  enum class DataType {
     INT,
     INTEGER,
     TINYINT,
@@ -53,25 +53,25 @@ struct Parameter {
 
   static type::Type::TypeId GetValueType(DataType type) {
     switch (type) {
-      case INT:
-      case INTEGER:
+      case DataType::INT:
+      case DataType::INTEGER:
         return type::Type::INTEGER;
         break;
-      case TINYINT:
+      case DataType::TINYINT:
         return type::Type::TINYINT;
         break;
-      case SMALLINT:
+      case DataType::SMALLINT:
         return type::Type::SMALLINT;
         break;
-      case BIGINT:
+      case DataType::BIGINT:
         return type::Type::BIGINT;
         break;
-      case TEXT:
-      case VARCHAR:
+      case DataType::TEXT:
+      case DataType::VARCHAR:
         return type::Type::VARCHAR;
         break;
-      case BOOL:
-      case BOOLEAN:
+      case DataType::BOOL:
+      case DataType::BOOLEAN:
         return type::Type::BOOLEAN;
         break;
       default:
@@ -94,7 +94,7 @@ struct FuncParameter : Parameter {
 
 //might want to change it to char* instead of string
 struct CreateFunctionStatement : public SQLStatement {
-  enum ASclause {
+  enum class ASclause {
     EXECUTABLE=0,
     QUERY_STRING=1	  	
   };
@@ -123,9 +123,9 @@ struct CreateFunctionStatement : public SQLStatement {
 
   void set_as_type(){
     if(function_body.size() > 1)
-      as_type = EXECUTABLE;
+      as_type = ASclause::EXECUTABLE;
     else
-      as_type = QUERY_STRING;
+      as_type = ASclause::QUERY_STRING;
   }
 };
 
