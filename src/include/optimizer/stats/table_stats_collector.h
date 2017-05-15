@@ -25,26 +25,22 @@ namespace optimizer {
 // TableStatsCollector
 //===--------------------------------------------------------------------===//
 class TableStatsCollector {
-public:
+ public:
   TableStatsCollector(storage::DataTable* table);
 
   ~TableStatsCollector();
 
   void CollectColumnStats();
 
-  inline size_t GetActiveTupleCount() {
-    return active_tuple_count_;
-  }
+  inline size_t GetActiveTupleCount() { return active_tuple_count_; }
 
-  inline size_t GetColumnCount() {
-    return column_count_;
-  }
+  inline size_t GetColumnCount() { return column_count_; }
 
   ColumnStatsCollector* GetColumnStats(oid_t column_id);
 
-private:
+ private:
   storage::DataTable* table_;
-	catalog::Schema* schema_;
+  catalog::Schema* schema_;
   std::vector<std::unique_ptr<ColumnStatsCollector>> column_stats_collectors_;
   size_t active_tuple_count_;
   size_t column_count_;

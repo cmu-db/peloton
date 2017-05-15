@@ -24,12 +24,11 @@ namespace optimizer {
 // Scan
 //===----------------------------------------------------------------------===//
 double Cost::SingleConditionSeqScanCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  const ValueCondition& condition,
-  std::shared_ptr<TableStats>& output_stats) {
-
-  //PL_ASSERT(input_stats != nullptr);
-  //PL_ASSERT(condition != nullptr);
+    const std::shared_ptr<TableStats> &input_stats,
+    const ValueCondition &condition,
+    std::shared_ptr<TableStats> &output_stats) {
+  // PL_ASSERT(input_stats != nullptr);
+  // PL_ASSERT(condition != nullptr);
 
   UpdateConditionStats(input_stats, condition, output_stats);
 
@@ -37,10 +36,9 @@ double Cost::SingleConditionSeqScanCost(
 }
 
 double Cost::SingleConditionIndexScanCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  const ValueCondition& condition,
-  std::shared_ptr<TableStats>& output_stats) {
-
+    const std::shared_ptr<TableStats> &input_stats,
+    const ValueCondition &condition,
+    std::shared_ptr<TableStats> &output_stats) {
   double index_height = default_index_height(input_stats->num_rows);
   double index_cost = index_height * DEFAULT_INDEX_TUPLE_COST;
 
@@ -52,12 +50,11 @@ double Cost::SingleConditionIndexScanCost(
   return index_cost + scan_cost;
 }
 
-void Cost::CombineConjunctionStats(
-  const std::shared_ptr<TableStats>& lhs,
-  const std::shared_ptr<TableStats>& rhs,
-  const size_t num_rows, const ExpressionType type,
-  std::shared_ptr<TableStats>& output_stats) {
-
+void Cost::CombineConjunctionStats(const std::shared_ptr<TableStats> &lhs,
+                                   const std::shared_ptr<TableStats> &rhs,
+                                   const size_t num_rows,
+                                   const ExpressionType type,
+                                   std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(lhs != nullptr);
   PL_ASSERT(rhs != nullptr);
   PL_ASSERT(num_rows > 0);
@@ -76,7 +73,8 @@ void Cost::CombineConjunctionStats(
       num_tuples = static_cast<size_t>((sel1 + sel2 - sel1 * sel2) * num_rows);
       break;
     default:
-      LOG_TRACE("Cost model conjunction on expression type %d not supported", type);
+      LOG_TRACE("Cost model conjunction on expression type %d not supported",
+                type);
   }
   if (output_stats != nullptr) {
     output_stats->num_rows = num_tuples;
@@ -86,11 +84,9 @@ void Cost::CombineConjunctionStats(
 //===----------------------------------------------------------------------===//
 // GROUP BY
 //===----------------------------------------------------------------------===//
-double Cost::SortGroupByCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  std::vector<oid_t> columns,
-  std::shared_ptr<TableStats>& output_stats) {
-
+double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
+                             std::vector<oid_t> columns,
+                             std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   PL_ASSERT(columns.size() > 0);
 
@@ -98,7 +94,8 @@ double Cost::SortGroupByCost(
     output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
   }
 
-  double cost = default_sorting_cost(input_stats->num_rows) * DEFAULT_TUPLE_COST;
+  double cost =
+      default_sorting_cost(input_stats->num_rows) * DEFAULT_TUPLE_COST;
 
   // Update cost to trivial if first group by column has index.
   // TODO: use more complicated cost when group by multiple columns when
@@ -111,11 +108,9 @@ double Cost::SortGroupByCost(
   return cost;
 }
 
-double Cost::HashGroupByCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  std::vector<oid_t> columns,
-  std::shared_ptr<TableStats>& output_stats) {
-
+double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
+                             std::vector<oid_t> columns,
+                             std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
@@ -129,10 +124,9 @@ double Cost::HashGroupByCost(
 //===----------------------------------------------------------------------===//
 // DISTINCT
 //===----------------------------------------------------------------------===//
-double Cost::DistinctCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  oid_t column,
-  std::shared_ptr<TableStats>& output_stats) {
+double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
+                          oid_t column,
+                          std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
@@ -145,10 +139,9 @@ double Cost::DistinctCost(
 //===----------------------------------------------------------------------===//
 // Project
 //===----------------------------------------------------------------------===//
-double ProjectCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  UNUSED_ATTRIBUTE std::vector<oid_t> columns,
-  std::shared_ptr<TableStats>& output_stats) {
+double ProjectCost(const std::shared_ptr<TableStats> &input_stats,
+                   UNUSED_ATTRIBUTE std::vector<oid_t> columns,
+                   std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
@@ -161,9 +154,9 @@ double ProjectCost(
 //===----------------------------------------------------------------------===//
 // LIMIT
 //===----------------------------------------------------------------------===//
-double Cost::LimitCost(
-  const std::shared_ptr<TableStats>& input_stats, size_t limit,
-  std::shared_ptr<TableStats>& output_stats) {
+double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
+                       size_t limit,
+                       std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats != nullptr);
   if (output_stats != nullptr) {
     output_stats->num_rows = std::max(input_stats->num_rows, limit);
@@ -174,26 +167,25 @@ double Cost::LimitCost(
 //===----------------------------------------------------------------------===//
 // ORDER BY
 //===----------------------------------------------------------------------===//
-double OrderByCost(
-  const std::shared_ptr<TableStats>& input_stats,
-  const std::vector<oid_t>& columns,
-  const std::vector<bool>& orders,
-  std::shared_ptr<TableStats>& output_stats) {
+double OrderByCost(const std::shared_ptr<TableStats> &input_stats,
+                   const std::vector<oid_t> &columns,
+                   const std::vector<bool> &orders,
+                   std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   // Invalid case.
   if (columns.size() == 0 || columns.size() != orders.size()) {
     return DEFAULT_COST;
   }
   oid_t column = columns[0];
-  bool order = orders[0]; // TRUE is ASC, FALSE is DESC
+  bool order = orders[0];  // TRUE is ASC, FALSE is DESC
   double cost = DEFAULT_COST;
   // Special case when first column has index.
   if (input_stats->HasPrimaryIndex(column)) {
-    if (order) { // ascending
+    if (order) {  // ascending
       // No cost for order by for now. We might need to take
       // cardinality of first column into account in the future.
       cost = DEFAULT_OPERATOR_COST;
-    } else { // descending
+    } else {  // descending
       // Reverse sequence.
       cost = input_stats->num_rows * DEFAULT_TUPLE_COST;
     }
@@ -210,20 +202,21 @@ double OrderByCost(
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
-void Cost::UpdateConditionStats(
-  const std::shared_ptr<TableStats>& input_stats,
-  const ValueCondition& condition,
-  std::shared_ptr<TableStats>& output_stats) {
+void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
+                                const ValueCondition &condition,
+                                std::shared_ptr<TableStats> &output_stats) {
   if (output_stats != nullptr) {
-    double selectivity = Selectivity::ComputeSelectivity(input_stats, condition);
+    double selectivity =
+        Selectivity::ComputeSelectivity(input_stats, condition);
     output_stats->num_rows = input_stats->num_rows * selectivity;
   }
 }
 
 size_t Cost::GetEstimatedGroupByRows(
-  const std::shared_ptr<TableStats>& input_stats,
-  std::vector<oid_t>& columns) {
-  // Idea is to assume each column is uniformaly distributed and get an overestimation.
+    const std::shared_ptr<TableStats> &input_stats,
+    std::vector<oid_t> &columns) {
+  // Idea is to assume each column is uniformaly distributed and get an
+  // overestimation.
   // Then use max cardinality among all columns as underestimation.
   // And combine them together.
   double rows = 1;

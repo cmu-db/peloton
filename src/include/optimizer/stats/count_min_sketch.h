@@ -21,15 +21,14 @@
 #include <cstdlib>
 #include <cinttypes>
 
-namespace peloton{
-namespace optimizer{
+namespace peloton {
+namespace optimizer {
 
 //===--------------------------------------------------------------------===//
 // Count-min Sketch
 //===--------------------------------------------------------------------===//
 class CountMinSketch {
  public:
-
   using SketchElemType = uint64_t;
 
   const int depth;
@@ -43,22 +42,22 @@ class CountMinSketch {
   std::vector<SketchElemType> row_hash;
 
   // Constructor with specific sketch size.
-  CountMinSketch(int depth, int width, unsigned int seed) :
-      depth{depth},
-      width{width},
-      eps{exp(1) / width},
-      gamma{exp(-depth)},
-      size{0} {
+  CountMinSketch(int depth, int width, unsigned int seed)
+      : depth{depth},
+        width{width},
+        eps{exp(1) / width},
+        gamma{exp(-depth)},
+        size{0} {
     InitTable(depth, width, seed);
   }
 
   // Constructor with specific error bound.
-  CountMinSketch(double eps, double gamma, unsigned int seed) :
-      depth{(int) ceil(log(1 / gamma))},
-      width{(int) ceil(exp(1) / eps)},
-      eps{eps},
-      gamma{gamma},
-      size{0} {
+  CountMinSketch(double eps, double gamma, unsigned int seed)
+      : depth{(int)ceil(log(1 / gamma))},
+        width{(int)ceil(exp(1) / eps)},
+        eps{eps},
+        gamma{gamma},
+        size{0} {
     InitTable(depth, width, seed);
   }
 
@@ -121,29 +120,29 @@ class CountMinSketch {
   }
 
   uint64_t EstimateItemCount(int64_t item) {
-      uint64_t count = UINT64_MAX;
-      std::vector<int> bins = getHashBins(item);
-      for (int i = 0; i < depth; i++) {
-        count = std::min(count, table[i][bins[i]]);
-      }
-      LOG_TRACE("Item count: %" PRIu64, count);
-      return count;
+    uint64_t count = UINT64_MAX;
+    std::vector<int> bins = getHashBins(item);
+    for (int i = 0; i < depth; i++) {
+      count = std::min(count, table[i][bins[i]]);
+    }
+    LOG_TRACE("Item count: %" PRIu64, count);
+    return count;
   }
 
   uint64_t EstimateItemCount(const char* item) {
-      uint64_t count = UINT64_MAX;
-      std::vector<int> bins = getHashBins(item);
-      for (int i = 0; i < depth; i++) {
-        count = std::min(count, table[i][bins[i]]);
-      }
-      LOG_TRACE("Item count: %" PRIu64, count);
-      return count;
+    uint64_t count = UINT64_MAX;
+    std::vector<int> bins = getHashBins(item);
+    for (int i = 0; i < depth; i++) {
+      count = std::min(count, table[i][bins[i]]);
+    }
+    LOG_TRACE("Item count: %" PRIu64, count);
+    return count;
   }
 
  private:
-
   void InitTable(int depth, int width, unsigned int seed) {
-    table = std::vector<std::vector<SketchElemType>>(depth, std::vector<SketchElemType>(width));
+    table = std::vector<std::vector<SketchElemType>>(
+        depth, std::vector<SketchElemType>(width));
     std::srand(seed);
     for (int i = 0; i < depth; i++) {
       row_hash.push_back(std::rand());
@@ -173,4 +172,3 @@ class CountMinSketch {
 
 } /* namespace optimizer */
 } /* namespace peloton */
-

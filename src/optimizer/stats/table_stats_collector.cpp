@@ -23,7 +23,7 @@
 namespace peloton {
 namespace optimizer {
 
-TableStatsCollector::TableStatsCollector(storage::DataTable* table)
+TableStatsCollector::TableStatsCollector(storage::DataTable *table)
     : table_(table),
       column_stats_collectors_{},
       active_tuple_count_{0},
@@ -47,7 +47,7 @@ void TableStatsCollector::CollectColumnStats() {
   for (size_t offset = 0; offset < tile_group_count; offset++) {
     std::shared_ptr<storage::TileGroup> tile_group =
         table_->GetTileGroup(offset);
-    storage::TileGroupHeader* tile_group_header = tile_group->GetHeader();
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     oid_t tuple_count = tile_group->GetAllocatedTupleCount();
     active_tuple_count_ += tile_group_header->GetActiveTupleCount();
     // Collect stats for all tuples in the tile group.
@@ -75,13 +75,13 @@ void TableStatsCollector::InitColumnStatsCollectors() {
   }
 
   // Set indexes in the column stats collectors.
-  for (auto& column_set : table_->GetIndexColumns()) {
+  for (auto &column_set : table_->GetIndexColumns()) {
     auto column_id = *(column_set.begin());
     column_stats_collectors_[column_id]->SetColumnIndexed();
   }
 }
 
-ColumnStatsCollector* TableStatsCollector::GetColumnStats(oid_t column_id) {
+ColumnStatsCollector *TableStatsCollector::GetColumnStats(oid_t column_id) {
   PL_ASSERT(column_id < column_stats_collectors_.size());
   return column_stats_collectors_[column_id].get();
 }

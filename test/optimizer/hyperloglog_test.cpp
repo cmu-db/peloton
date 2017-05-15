@@ -48,7 +48,7 @@ TEST_F(HyperLogLogTests, SmallDatasetTest1) {
   EXPECT_GE(cardinality, threshold / ratio * (1 - error));
   LOG_TRACE("Estimated cardinality: %lu", cardinality);
   UNUSED_ATTRIBUTE double true_error =
-  (threshold * 1.0 - (int) cardinality) / cardinality;
+      (threshold * 1.0 - (int)cardinality) / cardinality;
   LOG_TRACE("Estimated cardinality is [%f] times of real value", true_error);
 }
 
@@ -75,7 +75,8 @@ TEST_F(HyperLogLogTests, SmallDatasetTest3) {
   int ratio = 1000;
   double error = hll.RelativeError();
   for (int i = 1; i <= threshold; i++) {
-    type::Value v = type::ValueFactory::GetVarcharValue(std::to_string(i / ratio));
+    type::Value v =
+        type::ValueFactory::GetVarcharValue(std::to_string(i / ratio));
     hll.Update(v);
   }
   uint64_t cardinality = hll.EstimateCardinality();
@@ -108,7 +109,8 @@ TEST_F(HyperLogLogTests, PrecisionTest) {
   HyperLogLog hll_14{14};
   double error_14 = hll_14.RelativeError() + 0.001;
   HyperLogLog hll_4{4};
-  double error_4 = hll_4.RelativeError() + 0.05; // precision 4 tend to be worse
+  double error_4 =
+      hll_4.RelativeError() + 0.05;  // precision 4 tend to be worse
   for (int i = 1; i <= threshold; i++) {
     type::Value v = type::ValueFactory::GetIntegerValue(i / ratio);
     hll_4.Update(v);
@@ -156,7 +158,8 @@ TEST_F(HyperLogLogTests, DataTypeTest) {
   type::Value str_val = type::ValueFactory::GetVarcharValue(str);
   hll.Update(str_val);
   // Null
-  type::Value null = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+  type::Value null =
+      type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
   hll.Update(str_val);
 
   hll.EstimateCardinality();

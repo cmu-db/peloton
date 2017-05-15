@@ -54,7 +54,7 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(id integer);");
-  int nrow = 10000;
+  int nrow = 100;
   for (int i = 0; i < nrow; i++) {
     std::ostringstream os;
     os << "INSERT INTO test VALUES (" << i << ");";
@@ -96,7 +96,7 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT, b VARCHAR, c DOUBLE, d TIMESTAMP);");
 
-  int nrow = 10000;
+  int nrow = 10;
   for (int i = 0; i < nrow; i++) {
     if (i % 2 == 0) {
       TestingSQLUtil::ExecuteSQLQuery(

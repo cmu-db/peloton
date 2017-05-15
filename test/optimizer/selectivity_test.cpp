@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+ //===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -64,7 +64,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   CreateAndLoadTable();
 
   // Create **uniform** table stats
-  int nrow = 1000;
+  int nrow = 100;
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test VALUES (" << i << ", 1.1, 'abcd');";
@@ -164,10 +164,10 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   CreateAndLoadTable();
 
-  int nrow = 1000;
+  int nrow = 100;
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
-    ss << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1 << ", 1.21);";
+    ss << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1 << ", 'string');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
@@ -207,14 +207,14 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test VALUES (" << i + 1000 << ", " << i % 7 + 4
-       << ", 1.21);";
+       << ", 'string');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
   // these elements will not be in mcv
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test VALUES (" << i + 2000 << ", " << i % 50 + 11
-       << ", 1.21);";
+       << ", 'string');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
@@ -237,6 +237,11 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   // (1 - 2/3) / (3 + 7 + 50 - 10) = 1 / 150 = 0.01667
   ExpectSelectivityEqual(eq_sel_nin_mcv, 0.0066, 0.01);
   ExpectSelectivityEqual(neq_sel_nin_mcv, 0.9933, 0.01);
+
+  // Free the database
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 } /* namespace test */

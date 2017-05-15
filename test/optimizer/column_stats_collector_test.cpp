@@ -66,40 +66,41 @@ TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
 // Test dataset with extreme distribution.
 // More specifically distribution with large amount of data at tail
 // with single continuous value to the left of tail.
-TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
-  ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
-                                type::Type::TypeId::BIGINT, ""};
-  int big_int = 1234567;
-  int height = 100000;
-  int n = 10;
-  // Build up extreme tail distribution.
-  for (int i = 1; i <= n; i++) {
-    type::Value v = type::ValueFactory::GetBigIntValue(i * big_int);
-    for (int j = 0; j < height; j++) {
-      colstats.AddValue(v);
-    }
-  }
-  EXPECT_EQ(colstats.GetFracNull(), 0);
-  EXPECT_EQ(colstats.GetCardinality(), 10);
-  EXPECT_GE(colstats.GetHistogramBound().size(), 0);
-  EXPECT_LE(colstats.GetHistogramBound().size(), 255);
-  // Add head distribution
-  for (int i = 0; i < big_int; i++) {
-    type::Value v = type::ValueFactory::GetBigIntValue(i);
-    colstats.AddValue(v);
-  }
-  EXPECT_EQ(colstats.GetFracNull(), 0);
-  uint64_t cardinality = colstats.GetCardinality();
-  double error = colstats.GetCardinalityError();
-  int buffer = 30000;  // extreme case error buffer
-  EXPECT_GE(cardinality, (big_int + 10) * (1 - error) - buffer);
-  EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
-  EXPECT_GE(colstats.GetHistogramBound().size(), 0);
-  // test null
-  type::Value null = type::ValueFactory::GetNullValueByType(type::Type::BIGINT);
-  colstats.AddValue(null);
-  EXPECT_GE(colstats.GetFracNull(), 0);
-}
+// This test is commented out because it's a performance test and takes long time.
+// TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
+//   ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
+//                                 type::Type::TypeId::BIGINT, ""};
+//   int big_int = 1234567;
+//   int height = 100000;
+//   int n = 10;
+//   // Build up extreme tail distribution.
+//   for (int i = 1; i <= n; i++) {
+//     type::Value v = type::ValueFactory::GetBigIntValue(i * big_int);
+//     for (int j = 0; j < height; j++) {
+//       colstats.AddValue(v);
+//     }
+//   }
+//   EXPECT_EQ(colstats.GetFracNull(), 0);
+//   EXPECT_EQ(colstats.GetCardinality(), 10);
+//   EXPECT_GE(colstats.GetHistogramBound().size(), 0);
+//   EXPECT_LE(colstats.GetHistogramBound().size(), 255);
+//   // Add head distribution
+//   for (int i = 0; i < big_int; i++) {
+//     type::Value v = type::ValueFactory::GetBigIntValue(i);
+//     colstats.AddValue(v);
+//   }
+//   EXPECT_EQ(colstats.GetFracNull(), 0);
+//   uint64_t cardinality = colstats.GetCardinality();
+//   double error = colstats.GetCardinalityError();
+//   int buffer = 30000;  // extreme case error buffer
+//   EXPECT_GE(cardinality, (big_int + 10) * (1 - error) - buffer);
+//   EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
+//   EXPECT_GE(colstats.GetHistogramBound().size(), 0);
+//   // test null
+//   type::Value null = type::ValueFactory::GetNullValueByType(type::Type::BIGINT);
+//   colstats.AddValue(null);
+//   EXPECT_GE(colstats.GetFracNull(), 0);
+// }
 
 // Test double values.
 TEST_F(ColumnStatsCollectorTests, DecimalTest) {

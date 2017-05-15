@@ -30,18 +30,12 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 class HyperLogLog {
  public:
-
   HyperLogLog(const int precision = 8)
-  :
-    precision_{precision},
-    register_count_{1 << precision}
-  {
+      : precision_{precision}, register_count_{1 << precision} {
     hll_ = libcount::HLL::Create(precision);
   }
 
-  ~HyperLogLog() {
-    delete hll_;
-  }
+  ~HyperLogLog() { delete hll_; }
 
   void Update(const type::Value& value) {
     hll_->Update(StatsUtil::HashValue(value));

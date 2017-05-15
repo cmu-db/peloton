@@ -33,7 +33,7 @@ ColumnStatsCollector::ColumnStatsCollector(oid_t database_id, oid_t table_id,
 
 ColumnStatsCollector::~ColumnStatsCollector() {}
 
-void ColumnStatsCollector::AddValue(const type::Value& value) {
+void ColumnStatsCollector::AddValue(const type::Value &value) {
   if (value.GetTypeId() != column_type_) {
     LOG_TRACE(
         "Incompatible value type %d with expected column stats value type %d",

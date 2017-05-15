@@ -25,8 +25,7 @@ namespace peloton {
 namespace optimizer {
 
 class StatsUtil {
-public:
-
+ public:
   // Convert numeric peloton value type to primitive value.
   // Return NaN if value is not numeric.
   static double PelotonValueToNumericValue(const type::Value& value) {
@@ -52,7 +51,7 @@ public:
    */
   static uint64_t HashValue(const type::Value& value) {
     uint64_t hash[2];
-    switch(value.GetTypeId()) {
+    switch (value.GetTypeId()) {
       case type::Type::VARCHAR:
       case type::Type::VARBINARY: {
         const char* key = value.GetData();

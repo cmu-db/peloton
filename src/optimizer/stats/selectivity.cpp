@@ -18,8 +18,8 @@
 namespace peloton {
 namespace optimizer {
 
-double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats>& stats,
-                                       const ValueCondition& condition) {
+double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats> &stats,
+                                       const ValueCondition &condition) {
   switch (condition.type) {
     case ExpressionType::COMPARE_LESSTHAN:
       return LessThan(stats, condition);
@@ -48,8 +48,8 @@ double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats>& stats,
   }
 }
 
-double Selectivity::LessThan(const std::shared_ptr<TableStats>& table_stats,
-                             const ValueCondition& condition) {
+double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
+                             const ValueCondition &condition) {
   // Convert peloton value type to raw value (double)
   double v = StatsUtil::PelotonValueToNumericValue(condition.value);
   if (isnan(v)) {
@@ -76,8 +76,8 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats>& table_stats,
   return res;
 }
 
-double Selectivity::Equal(const std::shared_ptr<TableStats>& table_stats,
-                          const ValueCondition& condition) {
+double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
+                          const ValueCondition &condition) {
   double value = StatsUtil::PelotonValueToNumericValue(condition.value);
   auto column_stats = table_stats->GetColumnStats(condition.column_id);
 
@@ -135,13 +135,13 @@ double Selectivity::Equal(const std::shared_ptr<TableStats>& table_stats,
 
 // Selectivity for 'LIKE' operator. The column type must be VARCHAR.
 // Complete implementation once we support LIKE operator.
-double Selectivity::Like(const std::shared_ptr<TableStats>& table_stats,
-                         const ValueCondition& condition) {
+double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
+                         const ValueCondition &condition) {
   if ((condition.value).GetTypeId() != type::Type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 
-  UNUSED_ATTRIBUTE const char* pattern = (condition.value).GetData();
+  UNUSED_ATTRIBUTE const char *pattern = (condition.value).GetData();
   auto column_stats = table_stats->GetColumnStats(condition.column_id);
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
@@ -152,7 +152,7 @@ double Selectivity::Like(const std::shared_ptr<TableStats>& table_stats,
 
   // Check whether column type is VARCHAR.
   auto column_catalog = catalog::ColumnCatalog::GetInstance();
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   type::Type::TypeId column_type =
       column_catalog->GetColumnType(table_id, column_id, txn);

@@ -82,12 +82,8 @@ class ColumnStats {
 
   std::string ToCSV() {
     std::ostringstream os;
-    os << column_id << "|"
-       << column_name << "|"
-       << num_rows << "|"
-       << has_index << "|"
-       << cardinality << "|"
-       << frac_null << "|"
+    os << column_id << "|" << column_name << "|" << num_rows << "|" << has_index
+       << "|" << cardinality << "|" << frac_null << "|"
        << VectorToString(most_common_vals) << "|"
        << VectorToString(most_common_freqs) << "|"
        << VectorToString(histogram_bounds) << "\n";

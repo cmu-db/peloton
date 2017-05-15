@@ -33,7 +33,7 @@ TEST_F(HistogramTests, UniformDistTest) {
   Histogram h{};
   int n = 100000;
   std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(1,100);
+  std::uniform_int_distribution<int> distribution(1, 100);
   for (int i = 0; i < n; i++) {
     int number = distribution(generator);
     h.Update(number);
@@ -41,7 +41,7 @@ TEST_F(HistogramTests, UniformDistTest) {
   std::vector<double> res = h.Uniform();
   for (int i = 1; i < 100; i++) {
     // Should have each value as histogram bound.
-    EXPECT_EQ(i, std::floor(res[i-1]));
+    EXPECT_EQ(i, std::floor(res[i - 1]));
   }
 }
 
@@ -51,7 +51,7 @@ TEST_F(HistogramTests, GaussianDistTest) {
   int n = 100000;
   std::random_device rd;
   std::mt19937 generator(rd());
-  std::normal_distribution<> distribution(0,10);
+  std::normal_distribution<> distribution(0, 10);
   for (int i = 0; i < n; i++) {
     int number = distribution(generator);
     h.Update(number);
@@ -59,9 +59,8 @@ TEST_F(HistogramTests, GaussianDistTest) {
   std::vector<double> res = h.Uniform();
   // This should have around 68% data in one stdev [-10, 10]
   int count = 0;
-  for(double x : res)
-    if (x >= -10 && x <= 10)
-      count++;
+  for (double x : res)
+    if (x >= -10 && x <= 10) count++;
   EXPECT_GE(count, res.size() * 0.68);
 }
 
@@ -96,8 +95,7 @@ TEST_F(HistogramTests, ExponentialDistTest) {
   double threshold = std::log(2) / lambda;
   int count = 0;
   for (double x : res)
-    if (x < threshold)
-      count++;
+    if (x < threshold) count++;
   EXPECT_GE(count, res.size() * 0.5);
 }
 
@@ -125,7 +123,8 @@ TEST_F(HistogramTests, ValueTypeTest) {
   h.Update(decimal);
   EXPECT_EQ(h.GetTotalValueCount(), 3);
   // Handle null value correctly
-  type::Value invalid = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  type::Value invalid =
+      type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
   h.Update(invalid);
   EXPECT_EQ(h.GetTotalValueCount(), 3);
   // uniform should handle small dataset
