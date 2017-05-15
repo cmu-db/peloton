@@ -10,4 +10,4 @@ Major updates for triggers are:
 - Update DataTable with TriggerList information
 - Evaluate the predicates in the trigger
 - Invoke UDFs and send contexts *(It takes a log of all data needed for a UDF call (function name, arguments, old/new tuples, etc.), but does not really call UDFs. One concern is that UDF is not supported in the master branch currently. Another concern is that currently UDF is mainly designed for read-only operations without SQL statements, but mostly, functions invoked by a trigger need to apply SQL statements on databases. Hope `ExecCallTriggerFunc` could be truly implemented after these problems are resolved.)*
-- Trigger operations for 12 kinds of triggers (before/after, insert/delete/update, row/statement) *(The functionality of delete/update row triggers is not fully complete. It cannot evaluate predicated on old tuples because it is difficult to convert data in the tiles into a tuple (`Tuple`). We find function `GetTuple` in `tile.cpp`, but it is not implemented.)*
+- Trigger operations for 12 kinds of triggers (before/after, insert/delete/update, row/statement)
