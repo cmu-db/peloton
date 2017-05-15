@@ -64,7 +64,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   CreateAndLoadTable();
 
   // Create **uniform** table stats
-  int nrow = 100000;
+  int nrow = 1000;
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test VALUES (" << i << ", 1.1, 'abcd');";
@@ -189,6 +189,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Run analyze
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
+  table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   // Check selectivity
   // equal, in mcv
@@ -219,6 +220,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Run analyze
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
+  table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   // Check selectivity
   // equal, not in mcv
