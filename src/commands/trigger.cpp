@@ -358,7 +358,7 @@ storage::Tuple* TriggerList::ExecARInsertTriggers(storage::Tuple *tuple, executo
       continue;
     }
 
-    //TODO: check trigger fire condition
+
     expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       LOG_DEBUG("predicate_ is not nullptr");
@@ -440,7 +440,7 @@ bool TriggerList::ExecARUpdateTriggers() {
   return true;
 }
 
-bool TriggerList::ExecBRDeleteTriggers() {
+bool TriggerList::ExecBRDeleteTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   LOG_DEBUG("enter into ExecBRDeleteTriggers");
 
   //check valid type
@@ -456,6 +456,28 @@ bool TriggerList::ExecBRDeleteTriggers() {
       continue;
     }
 
+    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    if (predicate_ != nullptr) {
+      LOG_DEBUG("predicate_ is not nullptr");
+      LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_DEBUG("predicate_ size = %lu", predicate_->GetChildrenSize());
+      if (executor_context_ != nullptr) {
+        LOG_DEBUG("before evalulate");
+        auto tuple_new = (const AbstractTuple *) tuple;
+        auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
+        LOG_DEBUG("Evaluation result: %s", eval.GetInfo().c_str());
+        if (eval.IsTrue()) {
+          LOG_DEBUG("pass one trigger fire condition!!!");
+          LOG_DEBUG("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
+        } else {
+          LOG_DEBUG("fail one trigger fire condition!!!");
+          continue;
+        }
+      }
+    } else {
+      LOG_DEBUG("predicate_ is nullptr");
+    }
+
     // Construct trigger data
     TriggerData trigger_data(trigger_type, &obj, nullptr, nullptr);
 
@@ -465,7 +487,7 @@ bool TriggerList::ExecBRDeleteTriggers() {
   return true;
 }
 
-bool TriggerList::ExecARDeleteTriggers() {
+bool TriggerList::ExecARDeleteTriggers(storage::Tuple *tuple, executor::ExecutorContext *executor_context_) {
   LOG_DEBUG("enter into ExecARDeleteTriggers");
 
   //check valid type
@@ -479,6 +501,28 @@ bool TriggerList::ExecARDeleteTriggers() {
     //check valid type
     if (!TRIGGER_TYPE_MATCHES(trigger_type, TRIGGER_TYPE_ROW, TRIGGER_TYPE_AFTER, TRIGGER_TYPE_DELETE)) {
       continue;
+    }
+
+    expression::AbstractExpression* predicate_ = obj.GetTriggerWhen();
+    if (predicate_ != nullptr) {
+      LOG_DEBUG("predicate_ is not nullptr");
+      LOG_DEBUG("predicate_ type = %s", ExpressionTypeToString(predicate_->GetExpressionType()).c_str());
+      LOG_DEBUG("predicate_ size = %lu", predicate_->GetChildrenSize());
+      if (executor_context_ != nullptr) {
+        LOG_DEBUG("before evalulate");
+        auto tuple_new = (const AbstractTuple *) tuple;
+        auto eval = predicate_->Evaluate(tuple_new, nullptr, executor_context_);
+        LOG_DEBUG("Evaluation result: %s", eval.GetInfo().c_str());
+        if (eval.IsTrue()) {
+          LOG_DEBUG("pass one trigger fire condition!!!");
+          LOG_DEBUG("trigger %s is fired!", triggers[i].GetTriggerName().c_str());
+        } else {
+          LOG_DEBUG("fail one trigger fire condition!!!");
+          continue;
+        }
+      }
+    } else {
+      LOG_DEBUG("predicate_ is nullptr");
     }
 
     // Construct trigger data
