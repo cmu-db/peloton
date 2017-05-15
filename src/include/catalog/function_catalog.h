@@ -46,6 +46,7 @@
 // 0: function_oid (unique & primary key)
 // 1: function_name (duplicate allowed & secondary key)
 //
+// Reference for column definitions : https://www.postgresql.org/docs/9.3/static/catalog-pg-proc.html 
 //===----------------------------------------------------------------------===//
 
 #pragma once
