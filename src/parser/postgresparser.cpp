@@ -669,8 +669,8 @@ expression::AbstractExpression* PostgresParser::NullTestTransform(NullTest* root
       break;
     }
     default: {
-      LOG_DEBUG("Arg expr of type %d not supported yet...\n",
-                root->arg->type);
+      throw NotImplementedException(StringUtil::Format(
+          "Arg expr of type %d not supported yet...\n", root->arg->type));
     }
   }
   right_expr = new expression::ConstantValueExpression(
