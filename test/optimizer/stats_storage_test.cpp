@@ -69,11 +69,10 @@ storage::DataTable *CreateTestDBAndTable() {
 
 /**
  * VerifyAndPrintColumnStats - Verify whether the stats of the test table are
- *correctly stored in catalog
- * and print them out.
+ * correctly stored in catalog and print them out.
  *
  * The column stats are retrieved by calling the
- *StatsStorage::GetColumnStatsByID function.
+ * StatsStorage::GetColumnStatsByID function.
  * TODO:
  * 1. Verify the number of tuples in column_stats_catalog.
  * 2. Compare the column stats values with the ground truth.
@@ -81,35 +80,18 @@ storage::DataTable *CreateTestDBAndTable() {
 void VerifyAndPrintColumnStats(storage::DataTable *data_table,
                                int expect_tuple_count) {
   // Check the tuple count in the 'pg_column_stats' catalog.
-  // auto column_stats_catalog =
-  // catalog::ColumnStatsCatalog::GetInstance(nullptr);
   StatsStorage *stats_storage = StatsStorage::GetInstance();
-
-  // Verify both the internal data and the stats got by interface.
-  // storage::DataTable *stats_table = column_stats_catalog->catalog_table_;
-  // EXPECT_EQ(stats_table->GetTupleCount(), expect_tuple_count);
-
-  // auto tile_group = stats_table->GetTileGroup(0);
-  // auto tile = tile_group->GetTile(0);
-  // auto tile_schemas = tile_group->GetTileSchemas();
-  // const catalog::Schema &schema = tile_schemas[0];
 
   // Print out all four column stats.
   for (int column_id = 0; column_id < expect_tuple_count; ++column_id) {
     auto column_stats = stats_storage->GetColumnStatsByID(
         data_table->GetDatabaseOid(), data_table->GetOid(), column_id);
-    LOG_DEBUG("num_rows: %lu", column_stats->num_rows);
-    LOG_DEBUG("cardinality: %lf", column_stats->cardinality);
-    LOG_DEBUG("frac_null: %lf", column_stats->frac_null);
+    LOG_TRACE("num_rows: %lu", column_stats->num_rows);
+    LOG_TRACE("cardinality: %lf", column_stats->cardinality);
+    LOG_TRACE("frac_null: %lf", column_stats->frac_null);
     auto most_common_vals = column_stats->most_common_vals;
     auto most_common_freqs = column_stats->most_common_freqs;
     auto hist_bounds = column_stats->histogram_bounds;
-    // for(size_t i = 0; i < most_common_vals.size(); ++i) {
-    //   LOG_DEBUG("(%lf, %lf)", most_common_vals[i], most_common_freqs[i]);
-    // }
-    // for(size_t i = 0; i < hist_bounds.size(); ++i) {
-    //   LOG_DEBUG("[%lf]", hist_bounds[i]);
-    // }
   }
 }
 

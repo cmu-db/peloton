@@ -73,7 +73,7 @@ TEST_F(AnalyzeSQLTests, AnalyzeSingleTableTest) {
   // Check stats information in catalog
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *catalog_database = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  storage::DataTable *db_column_stats_collector_table = catalog_database->GetTableWithName(column_stats_catalog_NAME);
+  storage::DataTable *db_column_stats_collector_table = catalog_database->GetTableWithName(COLUMN_STATS_CATALOG_NAME);
   EXPECT_NE(db_column_stats_collector_table, nullptr);
   EXPECT_EQ(db_column_stats_collector_table->GetTupleCount(), 4);
 

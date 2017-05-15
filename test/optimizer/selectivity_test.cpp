@@ -66,9 +66,9 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   // Create **uniform** table stats
   int nrow = 100000;
   for (int i = 1; i <= nrow; i++) {
-    std::ostringstream os;
-    os << "INSERT INTO test VALUES (" << i << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    std::stringstream ss;
+    ss << "INSERT INTO test VALUES (" << i << ", 1.1, 'abcd');";
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
   auto catalog = catalog::Catalog::GetInstance();
@@ -166,9 +166,9 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   int nrow = 1000;
   for (int i = 1; i <= nrow; i++) {
-    std::ostringstream os;
-    os << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1 << ", 1.21);";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    std::stringstream ss;
+    ss << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1 << ", 1.21);";
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
   auto catalog = catalog::Catalog::GetInstance();
@@ -204,19 +204,17 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   // Add other values into the table
   // default top_k == 10, so add another 10 - 3 = 7 elements (4-10)
   for (int i = 1; i <= nrow; i++) {
-    std::ostringstream os;
-    os << "INSERT INTO test VALUES (" << i + 1000 << ", " << i % 7 + 4
+    std::stringstream ss;
+    ss << "INSERT INTO test VALUES (" << i + 1000 << ", " << i % 7 + 4
        << ", 1.21);";
-    // os << "INSERT INTO test VALUES (" << i << ", 1.1, 1.21);";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
   // these elements will not be in mcv
   for (int i = 1; i <= nrow; i++) {
-    std::ostringstream os;
-    os << "INSERT INTO test VALUES (" << i + 2000 << ", " << i % 50 + 11
+    std::stringstream ss;
+    ss << "INSERT INTO test VALUES (" << i + 2000 << ", " << i % 50 + 11
        << ", 1.21);";
-    // os << "INSERT INTO test VALUES (" << i << ", 1.1, 1.21);";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
   // Run analyze

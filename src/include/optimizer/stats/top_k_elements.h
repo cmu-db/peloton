@@ -141,8 +141,6 @@ class TopKElements {
       std::string ret;
       switch (approx_top_elem.item_type) {
         case ApproxTopEntryElem::ElemType::INT_TYPE:
-          // sprintf(ret, "{int_elem: %ld, count: %ld}",
-          // approx_top_elem.int_item,  approx_count);
           ret += "{int_elem: ";
           ret += std::to_string(approx_top_elem.int_item);
           ret += " count: ";
@@ -150,8 +148,6 @@ class TopKElements {
           ret += "}";
           break;
         case ApproxTopEntryElem::ElemType::STR_TYPE:
-          // sprintf(ret, "{str_elem: %s, count: %ld}",
-          // approx_top_elem.str_item, approx_count);
           ret += "{str_elem: ";
           ret += approx_top_elem.str_item;
           ret += " count: ";
@@ -250,7 +246,7 @@ class TopKElements {
     }
 
     /*
-     * Retrieve given number of elements, ordered
+     * Retrieve all elements, ordered
      * Max first
      */
     std::vector<ApproxTopEntry> retrieve_all_ordered_max_first() {

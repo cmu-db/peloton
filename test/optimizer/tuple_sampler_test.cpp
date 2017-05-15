@@ -34,12 +34,13 @@ class TupleSamplerTests : public PelotonTest {};
 
 TEST_F(TupleSamplerTests, SampleCountTest) {
   const int tuple_count = 100;
+  const int tuple_per_tilegroup = 100;
 
   // Create a table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_count, false));
+      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);

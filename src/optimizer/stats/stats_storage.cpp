@@ -29,7 +29,8 @@ StatsStorage *StatsStorage::GetInstance(void) {
 
 /**
  * StatsStorage - Constructor of StatsStorage.
- * In the construcotr, `stats` table and `samples_db` database are created.
+ * In the construcotr, `pg_column_stats` table and `samples_db` database are
+ * created.
  */
 StatsStorage::StatsStorage() {
   pool_.reset(new type::EphemeralPool());
@@ -37,7 +38,7 @@ StatsStorage::StatsStorage() {
 }
 
 /**
- * CreateStatsCatalog - Create 'stats' table in the catalog database.
+ * CreateStatsCatalog - Create 'pg_column_stats' table in the catalog database.
  */
 void StatsStorage::CreateStatsTableInCatalog() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -49,7 +50,7 @@ void StatsStorage::CreateStatsTableInCatalog() {
 /**
  * InsertOrUpdateTableStats - Add or update all column stats of a table.
  * This function iterates all column stats in the table stats and insert column
- * stats tuples into the 'stats' table in the catalog database.
+ * stats tuples into the 'pg_column_stats' table in the catalog database.
  */
 void StatsStorage::InsertOrUpdateTableStats(
     storage::DataTable *table, TableStatsCollector *table_stats_collector,
@@ -65,9 +66,11 @@ void StatsStorage::InsertOrUpdateTableStats(
         table_stats_collector->GetColumnStats(column_id);
     double cardinality = column_stats_collector->GetCardinality();
     double frac_null = column_stats_collector->GetFracNull();
-    // Currently, we only store the most common value and its frequency in stats
-    // table because Peloton doesn't support ARRAY type now.
-    // TODO: Store multiple common values and freqs in stats table.
+    // Currently, we only store the most common <value, frequency> pairs for
+    // numeric values.
+    // Since Peloton doesn't support ARRAY type now, we conver the array to
+    // VARCHAR.
+    // TODO: Store common <value, freq> pairs for VARCHAR.
     std::vector<ValueFrequencyPair> most_common_val_freqs =
         column_stats_collector->GetCommonValueAndFrequency();
     std::vector<double> histogram_bounds =
@@ -92,12 +95,15 @@ void StatsStorage::InsertOrUpdateTableStats(
   }
 }
 
+/**
+ * InsertOrUpdateColumnStats - Insert or update a column stats.
+ */
 void StatsStorage::InsertOrUpdateColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, bool has_index, concurrency::Transaction *txn) {
-  LOG_DEBUG("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
+  LOG_TRACE("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
@@ -121,7 +127,8 @@ void StatsStorage::InsertOrUpdateColumnStats(
 }
 
 /**
- * GetColumnStatsByID - Query the 'stats' table to get the column stats by IDs.
+ * GetColumnStatsByID - Query the 'pg_column_stats' table to get the column
+ * stats by IDs.
  */
 std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
                                                               oid_t table_id,
@@ -138,6 +145,11 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
                                     column_stats_vector);
 }
 
+/**
+ * ConvertVectorToColumnStats - It's a helper function to convert the vector of
+ * type::Value to
+ * the object ColumnStats and return the shared pointer to it.
+ */
 std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id,
     std::unique_ptr<std::vector<type::Value>> &column_stats_vector) {
@@ -195,6 +207,12 @@ std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
   return std::move(column_stats);
 }
 
+/**
+ * GetTableStats - This function queries the column_stats_catalog for the table
+ *stats.
+ *
+ * The return value is the shared_ptr of TableStats wrapper.
+ */
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(oid_t database_id,
                                                         oid_t table_id) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
@@ -214,6 +232,13 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(oid_t database_id,
   return std::shared_ptr<TableStats>(new TableStats(column_stats_ptrs));
 }
 
+/**
+ * GetTableStats - This function query the column_stats_catalog for the table
+ *stats.
+ * In this function, the column ids are specified.
+ *
+ * The return value is the shared_ptr of TableStats wrapper.
+ */
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
@@ -236,9 +261,8 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 }
 
 /**
- * CollectStatsForAllTables - This function iterates all databases and
- * datatables
- * to collect their stats and store them in the 'stats' table.
+ * AnalyzeStatsForAllTables - This function iterates all databases and
+ * datatables to collect their stats and store them in the column_stats_catalog.
  */
 ResultType StatsStorage::AnalyzeStatsForAllTables(
     concurrency::Transaction *txn) {
@@ -250,7 +274,7 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
   auto catalog = catalog::Catalog::GetInstance();
 
   oid_t database_count = catalog->GetDatabaseCount();
-  LOG_DEBUG("Database count: %u", database_count);
+  LOG_TRACE("Database count: %u", database_count);
   for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
     auto database =
         catalog::Catalog::GetInstance()->GetDatabaseWithOffset(db_offset);
@@ -260,7 +284,7 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
     oid_t table_count = database->GetTableCount();
     for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
       auto table = database->GetTable(table_offset);
-      LOG_DEBUG("analyzing table: %s", table->GetName().c_str());
+      LOG_TRACE("Analyzing table: %s", table->GetName().c_str());
       std::unique_ptr<TableStatsCollector> table_stats_collector(
           new TableStatsCollector(table));
       table_stats_collector->CollectColumnStats();
@@ -270,6 +294,10 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
   return ResultType::SUCCESS;
 }
 
+/**
+ * AnalyzeStatsForTable - This function analyzes the stats for one table and
+ * sotre the stats in column_stats_catalog.
+ */
 ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
                                               concurrency::Transaction *txn) {
   if (txn == nullptr) {

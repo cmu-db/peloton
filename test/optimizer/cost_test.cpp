@@ -47,9 +47,9 @@ void CreateAndLoadTable() {
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(id INT PRIMARY KEY, name VARCHAR, salary DECIMAL);");
   for (int i = 1; i <= N_ROW; i++) {
-    std::ostringstream os;
-    os << "INSERT INTO test VALUES (" << i << ", 'name', 1.1);";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    std::stringstream ss;
+    ss << "INSERT INTO test VALUES (" << i << ", 'name', 1.1);";
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 }
 
@@ -83,7 +83,8 @@ TEST_F(CostTests, ScanCostTest) {
   type::Value value1 = type::ValueFactory::GetIntegerValue(1000);
   ValueCondition condition1{0, "id", ExpressionType::COMPARE_LESSTHAN, value1};
   std::shared_ptr<TableStats> output_stats(new TableStats{});
-  double cost1 = Cost::SingleConditionSeqScanCost(table_stats, condition1, output_stats);
+  double cost1 =
+      Cost::SingleConditionSeqScanCost(table_stats, condition1, output_stats);
   LOG_INFO("cost for condition 1 is %f", cost1);
   EXPECT_GE(cost1, 0);
   // EXPECT_EQ(output_stats->num_rows, 1000);
@@ -91,7 +92,8 @@ TEST_F(CostTests, ScanCostTest) {
   // condition2: id = 1000
   ValueCondition condition2{0, "id", ExpressionType::COMPARE_EQUAL, value1};
   output_stats->ClearColumnStats();
-  double cost2 = Cost::SingleConditionSeqScanCost(table_stats, condition2, output_stats);
+  double cost2 =
+      Cost::SingleConditionSeqScanCost(table_stats, condition2, output_stats);
   LOG_INFO("cost for condition 2 is: %f", cost2);
   EXPECT_GE(cost2, 0);
   // EXPECT_EQ(output_stats->num_rows, 1);
@@ -110,10 +112,12 @@ TEST_F(CostTests, ConjunctionTest) {
   std::shared_ptr<TableStats> rhs(new TableStats{3695});
   std::shared_ptr<TableStats> output(new TableStats{});
   int n_rows = 200000;
-  Cost::CombineConjunctionStats(lhs, rhs, n_rows, ExpressionType::CONJUNCTION_AND, output);
+  Cost::CombineConjunctionStats(lhs, rhs, n_rows,
+                                ExpressionType::CONJUNCTION_AND, output);
   EXPECT_GE(output->num_rows, 149);
   EXPECT_LE(output->num_rows, 150);
-  Cost::CombineConjunctionStats(lhs, rhs, n_rows, ExpressionType::CONJUNCTION_OR, output);
+  Cost::CombineConjunctionStats(lhs, rhs, n_rows,
+                                ExpressionType::CONJUNCTION_OR, output);
   EXPECT_GE(output->num_rows, 11625);
   EXPECT_LE(output->num_rows, 11626);
 }

@@ -35,13 +35,12 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
   if (tuple_count < target_sample_count) {
     target_sample_count = tuple_count;
   }
-  size_t sampled_count = 0;
 
   size_t rand_tilegroup_offset, rand_tuple_offset;
   srand(time(NULL));
   catalog::Schema *tuple_schema = table->GetSchema();
 
-  while (sampled_count < target_sample_count) {
+  while (sampled_tuples.size() < target_sample_count) {
     // Generate a random tilegroup offset
     rand_tilegroup_offset = rand() % tile_group_count;
     storage::TileGroup *tile_group =
@@ -65,7 +64,6 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
     }
     LOG_TRACE("Add sampled tuple: %s", tuple->GetInfo().c_str());
     sampled_tuples.push_back(std::move(tuple));
-    sampled_count++;
   }
   return sampled_tuples.size();
 }
