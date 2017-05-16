@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/expression_translator.h"
 #include "codegen/case_translator.h"
+
 #include "codegen/compilation_context.h"
+#include "codegen/expression_translator.h"
 #include "codegen/if.h"
 #include "codegen/type.h"
 
