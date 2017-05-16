@@ -20,6 +20,7 @@
 #include "storage/data_table.h"
 #include "codegen/insert/insert_scan_translator.h"
 #include "codegen/raw_tuple/raw_tuple_ref.h"
+#include "codegen/transaction_runtime_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -126,6 +127,9 @@ void InsertScanTranslator::Consume(ConsumerContext &,
       InsertHelpersProxy::_InsertRawTuple::GetFunction(codegen),
       { txn_ptr, table_ptr, this->tuple_ptr_ }
   );
+  codegen.CallFunc(
+      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen),
+      {GetCompilationContext().GetExecContextPtr()});
 }
 
 /**

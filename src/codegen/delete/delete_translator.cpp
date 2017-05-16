@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/tile_group_proxy.h"
 #include "codegen/delete/delete_translator.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
@@ -17,6 +18,7 @@
 #include "codegen/catalog_proxy.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/transaction_proxy.h"
+#include "codegen/transaction_runtime_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -50,6 +52,22 @@ void DeleteTranslator::Produce() const {
  */
 void DeleteTranslator::Consume(ConsumerContext &context,
                                RowBatch &batch) const {
+  auto &codegen = context.GetCodeGen();
+
+  if (table_ptr == nullptr) {
+    storage::DataTable *table = delete_plan_.GetTable();
+
+    table_ptr = codegen.CallFunc(
+        CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+        {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+         codegen.Const32(table->GetOid())});
+  }
+
+  auto tile_group_id = batch.GetTileGroupID();
+
+  this->tile_group_ = this->table_.GetTileGroup(
+      codegen, table_ptr, tile_group_id);
+
   batch.Iterate(context.GetCodeGen(),
                 [&](RowBatch::Row &row) { this->Consume(context, row); });
 }
@@ -68,17 +86,12 @@ void DeleteTranslator::Consume(ConsumerContext &context,
   auto tuple_id = row.GetTID(codegen);
   llvm::Value *txn = compilation_context.GetTransactionPtr();
 
-  if (table_ptr == nullptr) {
-    storage::DataTable *table = delete_plan_.GetTable();
-
-    table_ptr = codegen.CallFunc(
-        CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-        {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
-         codegen.Const32(table->GetOid())});
-  }
-
   codegen.CallFunc(_DeleteWrapper::GetFunction(codegen),
-                   {tile_group_id, tuple_id, txn, table_ptr});
+                   {tile_group_id, tuple_id, txn, table_ptr, tile_group_});
+
+  codegen.CallFunc(
+      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen),
+      {compilation_context.GetExecContextPtr()});
 }
 
 /**
@@ -96,14 +109,15 @@ void DeleteTranslator::Consume(ConsumerContext &context,
 *
 * @return true on success, false otherwise.
 */
-bool DeleteTranslator::delete_wrapper(int64_t tile_group_id, int32_t tuple_id,
+bool DeleteTranslator::delete_wrapper(int64_t tile_group_id, uint32_t tuple_id,
                                       concurrency::Transaction *txn,
-                                      storage::DataTable *table) {
+                                      storage::DataTable *table,
+                                      storage::TileGroup *tile_group) {
+  (void)tile_group_id;
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::shared_ptr<storage::TileGroup> tile_group =
-      table->GetTileGroup(tile_group_id);
   oid_t realTileGroupID = tile_group->GetTileGroupId();
   ItemPointer old_location(realTileGroupID, tuple_id);
 
@@ -171,7 +185,7 @@ bool DeleteTranslator::delete_wrapper(int64_t tile_group_id, int32_t tuple_id,
 const std::string &DeleteTranslator::_DeleteWrapper::GetFunctionName() {
   static const std::string deleteWrapperFnName =
       "_ZN7peloton7codegen16DeleteTranslator14delete_wrapper"
-      "EliPNS_11concurrency11TransactionEPNS_7storage9DataTableE";
+      "EljPNS_11concurrency11TransactionEPNS_7storage9DataTableEPNS5_9TileGroupE";
   return deleteWrapperFnName;
 }
 
@@ -188,7 +202,8 @@ llvm::Function *DeleteTranslator::_DeleteWrapper::GetFunction(
   std::vector<llvm::Type *> fn_args{codegen.Int64Type(),
                                     codegen.Int32Type(),
                                     TransactionProxy::GetType(codegen)->getPointerTo(),
-                                    DataTableProxy::GetType(codegen)->getPointerTo()};
+                                    DataTableProxy::GetType(codegen)->getPointerTo(),
+                                    TileGroupProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =
       llvm::FunctionType::get(codegen.BoolType(), fn_args, false);
   return codegen.RegisterFunction(fn_name, fn_type);

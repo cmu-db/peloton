@@ -54,7 +54,7 @@ std::string ProjectionTranslator::GetName() const {
 /**
  * @brief Construct the expression translators associated with the projection.
  */
-/* static */ void ProjectionTranslator::PrepareProjection(
+void ProjectionTranslator::PrepareProjection(
     CompilationContext &context, const planner::ProjectInfo &projection_info) {
   // If the projection is non-trivial, we need to prepare translators for every
   // target expression

@@ -83,5 +83,32 @@ llvm::Function *TransactionRuntimeProxy::_PerformUpdate::GetFunction(
   auto *fn_type = llvm::FunctionType::get(codegen.BoolType(), arg_types, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
+
+const std::string &
+TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunctionName() {
+  static const std::string kIncreaseNumProcessedFnName =
+      "_ZN7peloton7codegen18TransactionRuntime20IncreaseNumProcessedEPNS_8executor15ExecutorContextE";
+  return kIncreaseNumProcessedFnName;
+}
+
+llvm::Function *TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(
+    CodeGen &codegen) {
+  const std::string &fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  std::vector<llvm::Type *> arg_types = {
+      // exec_context *
+      UpdateRuntimeProxy::GetExecContextType(codegen)->getPointerTo()
+  };
+
+  auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), arg_types, false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
 }  // namespace codegen
 }  // namespace peloton

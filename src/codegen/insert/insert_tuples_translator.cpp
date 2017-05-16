@@ -20,6 +20,7 @@
 #include "codegen/primitive_value_proxy.h"
 #include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/insert/insert_helpers_proxy.h"
+#include "codegen/transaction_runtime_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -92,7 +93,9 @@ void InsertTuplesTranslator::Produce() const {
       InsertHelpersProxy::_InsertValue::GetFunction(codegen),
       {txn_ptr, table_ptr, char_ptr, char_len}
   );
-
+  codegen.CallFunc(
+      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen),
+      {GetCompilationContext().GetExecContextPtr()});
 }
 
 }  // namespace codegen

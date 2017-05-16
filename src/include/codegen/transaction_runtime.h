@@ -61,6 +61,7 @@ class TransactionRuntime {
                                     uint32_t direct_list_size,
                                     executor::ExecutorContext *executor_context_);
 
+  static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
   // Add other stuff for Insert/Update/Delete
 
 };

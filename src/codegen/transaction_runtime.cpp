@@ -58,6 +58,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
 
   return out_idx;
 }
+
 void DoProjection (AbstractTuple *dest, const AbstractTuple *tuple,
                    type::Value *values, uint32_t *col_ids,
                    uint32_t target_size, DirectMapList direct_list,
@@ -206,9 +207,6 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   // Update tuple in a given table
 
   ItemPointer old_location(tile_group_id, physical_tuple_id);
-
-  LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
-            visible_tuple_id, physical_tuple_id);
 
   bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
                                               physical_tuple_id);
@@ -364,5 +362,11 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   }
   return true;
 }
+
+void TransactionRuntime::IncreaseNumProcessed(
+    executor::ExecutorContext *executor_context) {
+  executor_context->num_processed++;
+}
+
 }  // namespace codegen
 }  // namespace peloton

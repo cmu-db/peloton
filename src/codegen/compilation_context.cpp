@@ -186,7 +186,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
       init_fn_name,
       codegen_.VoidType(),
       {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
-        llvm::Value *GetInt8ParamPtr();
+
   // Let the consumer initialize
   result_consumer_.InitializeState(*this);
 

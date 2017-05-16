@@ -61,7 +61,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
 
 // Create all the test tables, but don't load any data
 void PelotonCodeGenTest::CreateTestTables() {
-  const int tuples_per_tilegroup = 32;
+  const int tuples_per_tilegroup = 2048;
   const bool adapt_table = false;
   const bool own_schema = true;
 
