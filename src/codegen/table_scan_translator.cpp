@@ -71,14 +71,13 @@ void TableScanTranslator::Produce() const {
                        {catalog_ptr, codegen.Const32(table.GetDatabaseOid()),
                         codegen.Const32(table.GetOid())});
 
-  // The output buffer for the scan
-  Vector selection_vector{LoadStateValue(selection_vector_id_),
-                          Vector::kDefaultVectorSize, codegen.Int32Type()};
+  // The selection vector for the scan
+  Vector sel_vec{LoadStateValue(selection_vector_id_),
+                 Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  // Do the vectorized scan
-  ScanConsumer scan_consumer{*this, selection_vector};
-  table_.GenerateVectorizedScan(codegen, table_ptr,
-                                selection_vector.GetCapacity(), scan_consumer);
+  // Generate the scan
+  ScanConsumer scan_consumer{*this, sel_vec};
+  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
 
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }

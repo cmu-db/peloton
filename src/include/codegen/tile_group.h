@@ -39,13 +39,8 @@ class TileGroup {
 
   // Generate code that performs a sequential scan over the provided tile group
   void GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
-                       llvm::Value *column_layouts,
+                       llvm::Value *column_layouts, uint32_t batch_size,
                        ScanConsumer &consumer) const;
-
-  void GenerateVectorizedTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
-                                 llvm::Value *column_layouts,
-                                 uint32_t vector_size,
-                                 ScanConsumer &consumer) const;
 
   llvm::Value *GetNumTuples(CodeGen &codegen, llvm::Value *tile_group) const;
 

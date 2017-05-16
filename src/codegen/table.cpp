@@ -41,35 +41,33 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
   return codegen.CallFunc(get_tg_func, {table_ptr, tile_group_id});
 }
 
-// Generate the code for the scan.
+// Generate a scan over all tile groups.
 //
-// This method is only responsible for generating code that iterates over all
-// the tile groups in the table.  It defers to codegen::TileGroup to handle the
-// actual iteration over all tuples within a given tile group.
+// @code
+// column_layouts := alloca<peloton::ColumnLayoutInfo>(
+//     table.GetSchema().GetColumnCount())
 //
-// As such, we just need to generate code that loops over tile groups, and make
-// sure the TileGroupStart() and TileGroupFinish() callbacks are invoked on the
-// scan consumer.
+// oid_t tile_group_idx := 0
+// num_tile_groups = GetTileGroupCount(table_ptr)
+//
+// for (; tile_group_idx < num_tile_groups; ++tile_group_idx) {
+//   tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
+//   consumer.TileGroupStart(tile_group_ptr);
+//   tile_group.TidScan(tile_group_ptr, column_layouts, vector_size, consumer);
+//   consumer.TileGroupEnd(tile_group_ptr);
+// }
+//
+// @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                         ScanConsumer &consumer) const {
-  DoGenerateScan(codegen, table_ptr, 1, consumer);
-}
-
-// Generate a vectorized scan
-void Table::GenerateVectorizedScan(CodeGen &codegen, llvm::Value *table_ptr,
-                                   uint32_t vector_size,
-                                   ScanConsumer &consumer) const {
-  DoGenerateScan(codegen, table_ptr, vector_size, consumer);
-}
-
-// Generate a scan over all tile groups
-void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                           uint32_t vector_size, ScanConsumer &consumer) const {
+                         uint32_t batch_size, ScanConsumer &consumer) const {
   // First get the columns from the table the consumer needs. For every column,
   // we'll need to have a ColumnInfoLayout struct
+  const uint32_t num_columns =
+      static_cast<uint32_t>(table_.GetSchema()->GetColumnCount());
+
   llvm::Value *column_layouts = codegen->CreateAlloca(
       RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
-      codegen.Const32(table_.GetSchema()->GetColumnCount()));
+      codegen.Const32(num_columns));
 
   // Get the number of tile groups in the given table
   llvm::Value *tile_group_idx = codegen.Const64(0);
@@ -92,13 +90,8 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
 
     // Generate the scan cover over the given tile group
-    if (vector_size > 1) {
-      tile_group_.GenerateVectorizedTidScan(
-          codegen, tile_group_ptr, column_layouts, vector_size, consumer);
-    } else {
-      tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
-                                  consumer);
-    }
+    tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
+                                batch_size, consumer);
 
     // Invoke the consumer to let her know that we're done with this tile group
     consumer.TileGroupFinish(codegen, tile_group_ptr);
