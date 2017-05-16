@@ -134,7 +134,6 @@ void LibeventServer::StartServer() {
                                     SSL_FILETYPE_PEM) == 0)
     {
       SSL_CTX_free(ssl_context);
-      ERR_print_errors_fp(stderr);
       throw ConnectionException("Error associating private key.\n");
     }
     LOG_INFO("certificate file path %s", certificate_file_.c_str());
@@ -143,7 +142,6 @@ void LibeventServer::StartServer() {
                                      SSL_FILETYPE_PEM) == 0)
     {
       SSL_CTX_free(ssl_context);
-      ERR_print_errors_fp(stderr);
       throw ConnectionException("Error associating certificate.\n");
     }
 
