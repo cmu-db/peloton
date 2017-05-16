@@ -12,6 +12,7 @@
 
 #include "codegen/projection_translator.h"
 
+#include "common/logger.h"
 #include "planner/projection_plan.h"
 
 namespace peloton {
@@ -78,8 +79,10 @@ void ProjectionTranslator::AddNonTrivialAttributes(
 
     // Add each accessor to the batch
     for (uint32_t i = 0; i < target_list.size(); i++) {
-      const auto &derived_attribute = target_list[i].second;
-      row_batch.AddAttribute(&derived_attribute.attribute_info, &accessors[i]);
+      const auto &attribute_info = target_list[i].second.attribute_info;
+      LOG_DEBUG("Adding attribute '%s' (%p) to batch",
+                attribute_info.name.c_str(), &attribute_info);
+      row_batch.AddAttribute(&attribute_info, &accessors[i]);
     }
   }
 }
