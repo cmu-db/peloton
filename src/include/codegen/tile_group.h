@@ -23,7 +23,7 @@ class Schema;
 
 namespace codegen {
 
-class ScanConsumer;
+class ScanCallback;
 
 //===----------------------------------------------------------------------===//
 // Like codegen::Table, this class is the main entry point for code generation
@@ -40,7 +40,7 @@ class TileGroup {
   // Generate code that performs a sequential scan over the provided tile group
   void GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
                        llvm::Value *column_layouts, uint32_t batch_size,
-                       ScanConsumer &consumer) const;
+                       ScanCallback &consumer) const;
 
   llvm::Value *GetNumTuples(CodeGen &codegen, llvm::Value *tile_group) const;
 

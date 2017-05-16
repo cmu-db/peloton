@@ -16,7 +16,7 @@
 #include "codegen/if.h"
 #include "codegen/loop.h"
 #include "codegen/runtime_functions_proxy.h"
-#include "codegen/scan_consumer.h"
+#include "codegen/scan_callback.h"
 #include "codegen/tile_group_proxy.h"
 #include "codegen/type.h"
 #include "codegen/varlen.h"
@@ -47,7 +47,7 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 uint32_t batch_size,
-                                ScanConsumer &consumer) const {
+                                ScanCallback &consumer) const {
   // Get the column layouts
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
 

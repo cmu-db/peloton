@@ -59,7 +59,7 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
 //
 // @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                         uint32_t batch_size, ScanConsumer &consumer) const {
+                         uint32_t batch_size, ScanCallback &consumer) const {
   // First get the columns from the table the consumer needs. For every column,
   // we'll need to have a ColumnInfoLayout struct
   const uint32_t num_columns =
