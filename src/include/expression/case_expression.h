@@ -30,11 +30,11 @@ class CaseExpression : public AbstractExpression {
 
   CaseExpression(type::Type::TypeId type_id, AbsExprPtr argument,
                  std::vector<WhenClause> &when_clauses,
-                 AbsExprPtr dflt_expression)
+                 AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
         argument_(std::move(argument)),
         clauses_(std::move(when_clauses)),
-        dfltexpr_(std::move(dflt_expression)) {
+        default_expr_(std::move(default_expr)) {
     // If the argument is provided, then we create When Clauses based on it
     // Otherwise, we assume that the When Clauses provided are sufficient
     if (argument_ != nullptr) {
@@ -52,9 +52,11 @@ class CaseExpression : public AbstractExpression {
       if (result.IsTrue())
         return clause.second->Evaluate(tuple1, tuple2, context);
     }
-    if (dfltexpr_ == nullptr)
+    if (default_expr_ == nullptr) {
       return type::ValueFactory::GetNullValueByType(return_value_type_);
-    return dfltexpr_->Evaluate(tuple1, tuple2, context);
+    } else {
+      return default_expr_->Evaluate(tuple1, tuple2, context);
+    }
   }
 
   AbstractExpression* Copy() const override { 
@@ -63,11 +65,11 @@ class CaseExpression : public AbstractExpression {
       copies.push_back(WhenClause(AbsExprPtr(clause.first->Copy()),
                                   AbsExprPtr(clause.second->Copy())));
 	return new CaseExpression(return_value_type_, nullptr, copies,
-                              dfltexpr_ != nullptr ?
-                                  AbsExprPtr(dfltexpr_->Copy()) : nullptr);
+                              default_expr_ != nullptr ?
+                                  AbsExprPtr(default_expr_->Copy()) : nullptr);
   }
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   size_t GetWhenClauseSize() const { return clauses_.size(); }
 
@@ -85,7 +87,7 @@ class CaseExpression : public AbstractExpression {
     return clauses_[index].second.get();
   }
 
-  AbstractExpression *GetDefault() const { return dfltexpr_.get(); };
+  AbstractExpression *GetDefault() const { return default_expr_.get(); };
 
   // Attribute binding
   void PerformBinding(const std::vector<const planner::BindingContext *> &
@@ -94,14 +96,18 @@ class CaseExpression : public AbstractExpression {
       clause.first->PerformBinding(binding_contexts);
       clause.second->PerformBinding(binding_contexts);
     }
-    if (dfltexpr_ != nullptr)
-      dfltexpr_->PerformBinding(binding_contexts);
+    if (default_expr_ != nullptr) {
+      default_expr_->PerformBinding(binding_contexts);
+    }
   }
 
  private:
+  // The (optional) argument to the case statement
   AbsExprPtr argument_;
+  // The list of case-when clauses
   std::vector<WhenClause> clauses_;
-  AbsExprPtr dfltexpr_;
+  // The default value for the case
+  AbsExprPtr default_expr_;
 };
 
 }  // End expression namespace
