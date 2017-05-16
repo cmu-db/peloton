@@ -34,6 +34,7 @@ class ThreadPool {
   ~ThreadPool() { }
 
   void Initialize(const size_t &pool_size, const size_t &dedicated_thread_count) {
+    current_thread_count_ = ATOMIC_VAR_INIT(0);
     pool_size_ = pool_size;
     // PL_ASSERT(pool_size_ != 0);
 

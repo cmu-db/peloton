@@ -28,7 +28,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
 
   // pipe fds should match
-  PL_ASSERT(new_conn_recv_fd == thread->new_conn_receive_fd);
+  PL_ASSERT(new_conn_recv_fd == thread->GetNewConnReceiveFd());
 
   // read the operation that needs to be performed
   if (read(new_conn_recv_fd, m_buf, 1) != 1) {
@@ -53,7 +53,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
         conn->Init(item->event_flags, static_cast<LibeventThread *>(thread),
-                    CONN_READ);
+                   CONN_READ);
       }
       break;
     }
@@ -63,7 +63,8 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   }
 }
 
-void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags, void *arg) {
+void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags,
+                  void *arg) {
   LOG_TRACE("Event callback fired for connfd: %d", connfd);
   LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
   PL_ASSERT(conn != nullptr);
@@ -112,7 +113,7 @@ void StateMachine(LibeventSocket *conn) {
         break;
       }
 
-      case CONN_WAIT : {
+      case CONN_WAIT: {
         if (conn->UpdateEvent(EV_READ | EV_PERSIST) == false) {
           LOG_ERROR("Failed to update event, closing");
           conn->TransitState(CONN_CLOSING);
@@ -124,7 +125,7 @@ void StateMachine(LibeventSocket *conn) {
         break;
       }
 
-      case CONN_PROCESS : {
+      case CONN_PROCESS: {
         bool status;
         if (conn->rpkt.header_parsed == false) {
           // parse out the header first
@@ -152,7 +153,8 @@ void StateMachine(LibeventSocket *conn) {
           conn->pkt_manager.is_started = true;
         } else {
           // Process all other packets
-          status = conn->pkt_manager.ProcessPacket(&conn->rpkt, (size_t)conn->thread_id);
+          status = conn->pkt_manager.ProcessPacket(&conn->rpkt,
+                                                   (size_t)conn->thread_id);
         }
 
         if (status == false) {
@@ -167,7 +169,7 @@ void StateMachine(LibeventSocket *conn) {
 
       case CONN_WRITE: {
         // examine write packets result
-        switch(conn->WritePackets()) {
+        switch (conn->WritePackets()) {
           case WRITE_COMPLETE: {
             // Input Packet can now be reset, before we parse the next packet
             conn->rpkt.Reset();
@@ -211,5 +213,40 @@ void StateMachine(LibeventSocket *conn) {
   }
 }
 
+/**
+ * Stop signal handling
+ */
+void ControlCallback::Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                      UNUSED_ATTRIBUTE short what, void *arg) {
+  struct event_base *base = (event_base *)arg;
+  LOG_INFO("stop");
+  event_base_loopexit(base, NULL);
+}
+
+void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
+                                                 fd,
+                                             UNUSED_ATTRIBUTE short what,
+                                             void *arg) {
+  LibeventServer *server = (LibeventServer *)arg;
+  if (server->GetIsStarted() == false) {
+    server->SetIsStarted(true);
+  }
+  if (server->GetIsClosed() == true) {
+    event_base_loopexit(server->GetEventBase(), NULL);
+  }
+}
+
+void ControlCallback::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
+                                                 fd,
+                                             UNUSED_ATTRIBUTE short what,
+                                             void *arg) {
+  LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
+  if (!thread->GetThreadIsStarted()) {
+    thread->SetThreadIsStarted(true);
+  }
+  if (thread->GetThreadIsClosed()) {
+    event_base_loopexit(thread->GetEventBase(), NULL);
+  }
+}
 }
 }

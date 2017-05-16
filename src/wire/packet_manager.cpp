@@ -301,7 +301,13 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
-  if (queries.size() == 1) {
+  if (queries.size() == 0) {
+    SendEmptyQueryResponse();
+    SendReadyForQuery(txn_state_);
+    return;
+  }
+
+  if (queries.size() == 1 && queries.at(0).empty()) {
     SendEmptyQueryResponse();
     SendReadyForQuery(txn_state_);
     return;
@@ -309,13 +315,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
   for (auto query : queries) {
     // iterate till before the empty string after the last ';'
-    if (query != queries.back()) {
-      if (query.empty()) {
-        SendEmptyQueryResponse();
-        SendReadyForQuery(NetworkTransactionStateType::IDLE);
-        return;
-      }
-
+    if (!query.empty()) {
       std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
@@ -341,9 +341,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
       // TODO: should change to query_type
       CompleteCommand(query, rows_affected);
-    } else if (queries.size() == 1) {
-      // just a ';' sent
+    } else if (query != queries.back()) {
       SendEmptyQueryResponse();
+      SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      return;
     }
   }
 
@@ -654,9 +655,10 @@ size_t PacketManager::ReadParamValue(
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
             std::make_pair(type::Type::VARCHAR, param_str);
-        if (PostgresValueTypeToPelotonValueType(
+        if ((unsigned int)param_idx >= param_types.size() ||
+            PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
-            type::Type::VARCHAR) {
+                type::Type::VARCHAR) {
           param_values[param_idx] =
               type::ValueFactory::GetVarcharValue(param_str);
         } else {
@@ -769,7 +771,8 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id) {
+void PacketManager::ExecExecuteMessage(InputPacket *pkt,
+                                       const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
@@ -815,8 +818,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, const size_t thread_id)
 
   auto status = traffic_cop_->ExecuteStatement(
       statement, param_values, unnamed, param_stat, result_format_, results,
-      rows_affected, error_message,
-      thread_id);
+      rows_affected, error_message, thread_id);
 
   switch (status) {
     case ResultType::FAILURE:
