@@ -47,11 +47,11 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
 
   uint32_t RightTableId() const { return test_table2_id; }
 
-  storage::DataTable& GetLeftTable() const {
+  storage::DataTable &GetLeftTable() const {
     return GetTestTable(LeftTableId());
   }
 
-  storage::DataTable& GetRightTable() const {
+  storage::DataTable &GetRightTable() const {
     return GetTestTable(RightTableId());
   }
 
@@ -62,46 +62,42 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *right_a =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-    AbstractExprPtr left_a_eq_right_a{
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_a, right_a)};
+    AbstractExprPtr left_a_eq_right_a{new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_a, right_a)};
     return left_a_eq_right_a;
   }
 
   AbstractExprPtr ConstructModeratePredicate() {
     // Construct join predicate:
-    //   left_table.a = right_table.a AND left_table.b = right_table.b + 100
+    //   left_table.a = right_table.a AND left_table.b = right_table.b
 
     // left_table.a = right_table.a
     auto *left_a =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *right_a =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-    auto *left_a_eq_right_a =
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_a, right_a);
+    auto *left_a_eq_right_a = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_a, right_a);
 
     // right_table.b + 100
     auto *right_b =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-    auto *const_100_exp = new expression::ConstantValueExpression(
-        type::ValueFactory::GetIntegerValue(100));
-    auto *right_b_plus_100 =
-        new expression::OperatorExpression(
-            ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, right_b, const_100_exp);
+    //    auto *const_100_exp = new expression::ConstantValueExpression(
+    //        type::ValueFactory::GetIntegerValue(100));
+    //    auto *right_b_plus_100 =
+    //        new expression::OperatorExpression(
+    //            ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER,
+    //            right_b, const_100_exp);
 
-    // left_table.b = right_table.b + 100
+    // left_table.b = right_table.b
     auto *left_b =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-    auto *left_b_eq_right_b_plus_100 =
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_b, right_b_plus_100);
+    auto *left_b_eq_right_b = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_b, right_b);
 
-    // left_table.a = right_table.a AND left_table.b = right_table.b + 100
-    AbstractExprPtr conj_exp{
-        new expression::ConjunctionExpression(
-            ExpressionType::CONJUNCTION_AND, left_a_eq_right_a,
-            left_b_eq_right_b_plus_100)};
+    // left_table.a = right_table.a AND left_table.b = right_table.b
+    AbstractExprPtr conj_exp{new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, left_a_eq_right_a, left_b_eq_right_b)};
     return conj_exp;
   }
 
@@ -115,54 +111,49 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *right_a1 =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-    auto *left_a_eq_right_a =
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_a, right_a1);
+    auto *left_a_eq_right_a = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_a, right_a1);
 
     // right_table.b + 100
     auto *right_b =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
     auto *const_100_exp = new expression::ConstantValueExpression(
         type::ValueFactory::GetIntegerValue(100));
-    auto *right_b_plus_100 =
-        new expression::OperatorExpression(
-            ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, right_b, const_100_exp);
+    auto *right_b_plus_100 = new expression::OperatorExpression(
+        ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, right_b,
+        const_100_exp);
 
     // left_table.b = right_table.b + 100
     auto *left_b =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-    auto *left_b_eq_right_b_plus_100 =
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_b, right_b_plus_100);
+    auto *left_b_eq_right_b_plus_100 = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_b, right_b_plus_100);
 
     // left_table.a = right_table.a AND left_table.b = right_table.b + 100
-    auto *conj_exp_1 =
-        new expression::ConjunctionExpression(
-            ExpressionType::CONJUNCTION_AND, left_a_eq_right_a,
-            left_b_eq_right_b_plus_100);
+    auto *conj_exp_1 = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, left_a_eq_right_a,
+        left_b_eq_right_b_plus_100);
 
     // right_table.a * 1000
     auto *right_a2 =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *const_1000_exp = new expression::ConstantValueExpression(
         type::ValueFactory::GetIntegerValue(1000));
-    auto *right_a_times_1000 =
-        new expression::OperatorExpression(
-            ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::INTEGER, right_a2, const_1000_exp);
+    auto *right_a_times_1000 = new expression::OperatorExpression(
+        ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::INTEGER,
+        right_a2, const_1000_exp);
 
     // left_table.c = right_table.a * 1000
     auto *left_c =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 2);
-    auto *left_c_eq_right_a_mul_1000 =
-        new expression::ComparisonExpression(
-            ExpressionType::COMPARE_EQUAL, left_c, right_a_times_1000);
+    auto *left_c_eq_right_a_mul_1000 = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, left_c, right_a_times_1000);
 
     // left_table.a = right_table.a AND left_table.b = right_table.b + 100
     //     AND left_table.c = right_table.a * 1000
-    AbstractExprPtr conj_exp_2{
-        new expression::ConjunctionExpression(
-            ExpressionType::CONJUNCTION_AND, conj_exp_1,
-            left_c_eq_right_a_mul_1000)};
+    AbstractExprPtr conj_exp_2{new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, conj_exp_1,
+        left_c_eq_right_a_mul_1000)};
     return conj_exp_2;
   }
 
@@ -230,12 +221,14 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
     return hj_plan;
   }
 
-  Stats RunCompiledExperiment(JoinComplexity complexity, uint32_t num_runs = 5) {
+  void DestroyPlan() {}
+
+  Stats RunCompiledExperiment(JoinComplexity complexity,
+                              uint32_t num_runs = 5) {
     // Keep one copy of compile and runtime stats
     Stats stats;
 
     for (uint32_t i = 0; i < num_runs; i++) {
-
       auto join_plan = ConstructJoinPlan(complexity);
 
       // Do binding
@@ -248,17 +241,20 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
       // COMPILE and execute
       codegen::Query::RuntimeStats runtime_stats;
       codegen::QueryCompiler::CompileStats compile_stats = CompileAndExecute(
-          *join_plan, buffer, reinterpret_cast<char*>(buffer.GetState()), &runtime_stats);
+          *join_plan, buffer, reinterpret_cast<char *>(buffer.GetState()),
+          &runtime_stats);
 
       stats.Merge(compile_stats, runtime_stats,
                   buffer.GetOutputTuples().size());
     }
 
     stats.Finalize();
+    EXPECT_EQ(num_rows_to_insert, stats.tuple_result_size);
     return stats;
   }
 
-  Stats RunInterpretedExperiment(JoinComplexity complexity, uint32_t num_runs = 5) {
+  Stats RunInterpretedExperiment(JoinComplexity complexity,
+                                 uint32_t num_runs = 5) {
     // Keep one copy of compile and runtime stats
     Stats stats;
 
@@ -277,8 +273,8 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
 
       executor::SeqScanExecutor left_exec{join_plan->GetChild(0), &ctx};
       executor::HashExecutor hash_exec{join_plan->GetChild(1), &ctx};
-      executor::SeqScanExecutor right_exec{join_plan->GetChild(1)->GetChild(0), &ctx};
-
+      executor::SeqScanExecutor right_exec{join_plan->GetChild(1)->GetChild(0),
+                                           &ctx};
 
       hj_exec.AddChild(&left_exec);
       hj_exec.AddChild(&hash_exec);
@@ -304,7 +300,11 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
           }
           vals.push_back(std::move(tv));
         }
+        if (tile != nullptr) {
+          delete tile;
+        }
       }
+      txn_manager.CommitTransaction(txn);
       timer.Stop();
       runtime_stats.plan_ms = timer.GetDuration();
 
@@ -312,11 +312,12 @@ class BenchmarkJoinTest : public PelotonCodeGenTest {
     }
 
     stats.Finalize();
+    EXPECT_EQ(num_rows_to_insert, stats.tuple_result_size);
     return stats;
   }
 
  private:
-   uint32_t num_rows_to_insert = 10000;
+  uint32_t num_rows_to_insert = 10000;
 };
 
 void PrintName(std::string test_name) {
@@ -324,21 +325,21 @@ void PrintName(std::string test_name) {
 }
 
 TEST_F(BenchmarkJoinTest, RowLayoutWithCompilationTest) {
-  JoinComplexity complexities[] = {SIMPLE, MODERATE, COMPLEX};
+  JoinComplexity complexities[] = {SIMPLE, MODERATE};
 
   PrintName("JOIN_COMPLEXITY: COMPILATION");
   for (JoinComplexity complexity : complexities) {
-    auto stats = RunCompiledExperiment(complexity);
+    auto stats = RunCompiledExperiment(complexity, 1);
     stats.PrintStats();
   }
 }
 
 TEST_F(BenchmarkJoinTest, RowLayoutWithInterpretationTest) {
-  JoinComplexity complexities[] = {SIMPLE, MODERATE, COMPLEX};
+  JoinComplexity complexities[] = {SIMPLE, MODERATE};
 
   PrintName("JOIN_COMPLEXITY: INTERPRETATION");
   for (JoinComplexity complexity : complexities) {
-    auto stats = RunInterpretedExperiment(complexity);
+    auto stats = RunInterpretedExperiment(complexity, 1);
     stats.PrintStats();
   }
 }

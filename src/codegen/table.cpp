@@ -78,20 +78,14 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *multi_thread_context = codegen.GetArgument(1);
 
   // start index
-  llvm::Value *tile_group_idx = codegen.CallFunc(
-    MultiThreadContextProxy::GetRangeStartFunction(codegen),
-    {
-      multi_thread_context,
-      num_tile_groups
-    });
+  llvm::Value *tile_group_idx =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeStartFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
 
   // end index
-  llvm::Value *tile_group_idx_end = codegen.CallFunc(
-    MultiThreadContextProxy::GetRangeEndFunction(codegen),
-    {
-      multi_thread_context,
-      num_tile_groups
-    });
+  llvm::Value *tile_group_idx_end =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeEndFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,

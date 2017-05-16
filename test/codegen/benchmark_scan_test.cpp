@@ -54,8 +54,8 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   expression::AbstractExpression *ConstructSimplePredicate(TestConfig &config) {
     // Setup the predicate of the form a >= ? such that the selectivity
     // is equal to that in the configuration
-    double param = (1 - config.selectivity) *
-        num_rows_to_insert * config.scale_factor;
+    double param =
+        (1 - config.selectivity) * num_rows_to_insert * config.scale_factor;
     auto *a_col_exp =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *const_exp = new expression::ConstantValueExpression(
@@ -69,8 +69,8 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     // Setup the predicate a >= ? and b >= a such that the predicate has
     // the selectivity as configured for the experiment
 
-    double param = (1 - config.selectivity) *
-        num_rows_to_insert * config.scale_factor;
+    double param =
+        (1 - config.selectivity) * num_rows_to_insert * config.scale_factor;
     auto *a_col_exp =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *const_exp = new expression::ConstantValueExpression(
@@ -92,8 +92,8 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   expression::AbstractExpression *ConstructComplexPredicate(
       __attribute((unused)) TestConfig &config) {
     // Setup the predicate a >= ? and b >= a and c >= b
-    double param = (1 - config.selectivity) *
-        num_rows_to_insert * config.scale_factor;
+    double param =
+        (1 - config.selectivity) * num_rows_to_insert * config.scale_factor;
     auto *a_col_exp =
         new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
     auto *const_exp = new expression::ConstantValueExpression(
@@ -115,9 +115,8 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     auto *c_gte_b = new expression::ComparisonExpression(
         ExpressionType::COMPARE_LESSTHANOREQUALTO, c_col_exp, b_col_exp2);
 
-    auto *b_gte_a_gte_param =
-        new expression::ConjunctionExpression(
-            ExpressionType::CONJUNCTION_AND, a_gte_param, b_gte_a);
+    auto *b_gte_a_gte_param = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, a_gte_param, b_gte_a);
     return new expression::ConjunctionExpression(
         ExpressionType::CONJUNCTION_AND, b_gte_a_gte_param, c_gte_b);
   }
@@ -138,8 +137,8 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
     }
 
     // Setup the scan plan node
-    return std::unique_ptr<planner::SeqScanPlan>{
-        new planner::SeqScanPlan(&GetTestTable(TestTableId()), predicate, {0, 1, 2})};
+    return std::unique_ptr<planner::SeqScanPlan>{new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), predicate, {0, 1, 2})};
   }
 
   Stats RunCompiledExperiment(TestConfig &config, uint32_t num_runs = 5) {
@@ -159,10 +158,11 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
       // COMPILE and execute
       codegen::Query::RuntimeStats runtime_stats;
       codegen::QueryCompiler::CompileStats compile_stats = CompileAndExecute(
-          *scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &runtime_stats);
+          *scan, buffer, reinterpret_cast<char *>(buffer.GetState()),
+          &runtime_stats);
 
       stats.Merge(compile_stats, runtime_stats,
-          buffer.GetOutputTuples().size());
+                  buffer.GetOutputTuples().size());
     }
 
     stats.Finalize();
@@ -222,7 +222,7 @@ class BenchmarkScanTest : public PelotonCodeGenTest {
   }
 
  private:
-  uint32_t num_rows_to_insert = 1000000;
+  uint32_t num_rows_to_insert = 1000;
 };
 
 void PrintName(std::string test_name) {
@@ -230,11 +230,10 @@ void PrintName(std::string test_name) {
 }
 
 void PrintConfig(TestConfig &config) {
-    fprintf(stderr, "CONFIGURATION:\n===============\n");
-    fprintf(stderr,
-            "Scan complexity: %d, Selectivity: %.2f\n",
-            config.scan_complexity, config.selectivity);
-  }
+  fprintf(stderr, "CONFIGURATION:\n===============\n");
+  fprintf(stderr, "Scan complexity: %d, Selectivity: %.2f\n",
+          config.scan_complexity, config.selectivity);
+}
 
 // TEST_F(BenchmarkScanTest, ScanTestWithCompilation) {
 //   PrintName("SCAN: COMPILATION");
@@ -277,33 +276,33 @@ TEST_F(BenchmarkScanTest, SelectivityTestWithInterpretation) {
 }
 
 TEST_F(BenchmarkScanTest, PredicateComplexityTestWithCompilation) {
- ScanComplexity complexities[] = { SIMPLE, MODERATE };
+  ScanComplexity complexities[] = {SIMPLE, MODERATE};
 
- PrintName("SCAN_COMPLEXITY: COMPILATION");
- for (ScanComplexity complexity : complexities) {
-   TestConfig config;
-   config.selectivity = 0.5;
-   config.scan_complexity = complexity;
+  PrintName("SCAN_COMPLEXITY: COMPILATION");
+  for (ScanComplexity complexity : complexities) {
+    TestConfig config;
+    config.selectivity = 0.5;
+    config.scan_complexity = complexity;
 
-   auto stats = RunCompiledExperiment(config);
-   PrintConfig(config);
-   stats.PrintStats();
- }
+    auto stats = RunCompiledExperiment(config);
+    PrintConfig(config);
+    stats.PrintStats();
+  }
 }
 
 TEST_F(BenchmarkScanTest, PredicateComplexityTestWithInterpretation) {
- ScanComplexity complexities[] = { SIMPLE, MODERATE };
+  ScanComplexity complexities[] = {SIMPLE, MODERATE};
 
- PrintName("SCAN_COMPLEXITY: INTERPRETATION");
- for (ScanComplexity complexity : complexities) {
-   TestConfig config;
-   config.selectivity = 0.5;
-   config.scan_complexity = complexity;
+  PrintName("SCAN_COMPLEXITY: INTERPRETATION");
+  for (ScanComplexity complexity : complexities) {
+    TestConfig config;
+    config.selectivity = 0.5;
+    config.scan_complexity = complexity;
 
-   auto stats = RunInterpretedExperiment(config);
-   PrintConfig(config);
-   stats.PrintStats();
- }
+    auto stats = RunInterpretedExperiment(config);
+    PrintConfig(config);
+    stats.PrintStats();
+  }
 }
 
 }  // namespace test

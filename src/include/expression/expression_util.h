@@ -504,6 +504,7 @@ class ExpressionUtil {
                           expr->GetModifiableChild(child), schemas,
                           needs_projection, find_columns);
     }
+
     // if this is a column, we need to find if it is exists in the schema
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
         expr->GetValueType() == type::Type::INVALID) {

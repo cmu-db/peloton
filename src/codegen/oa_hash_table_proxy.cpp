@@ -208,8 +208,7 @@ llvm::Function *OAHashTableProxy::_Merge::GetFunction(CodeGen &codegen) {
       OAHashTableProxy::GetType(codegen)->getPointerTo()};
 
   // Now create the prototype and register it
-  auto *fn_type =
-      llvm::FunctionType::get(codegen.VoidType(), arg_types, false);
+  auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), arg_types, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
@@ -266,8 +265,8 @@ llvm::Type *OAHashEntryProxy::GetKeyValueListType(CodeGen &codegen) {
       codegen.Int32Type()};
 
   // Construct the type
-  kv_list_type = llvm::StructType::create(codegen.GetContext(), layout,
-                                          kKVListTypeName);
+  kv_list_type =
+      llvm::StructType::create(codegen.GetContext(), layout, kKVListTypeName);
   return kv_list_type;
 }
 

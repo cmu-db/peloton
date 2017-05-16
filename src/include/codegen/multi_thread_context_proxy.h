@@ -36,6 +36,5 @@ class MultiThreadContextProxy {
   static llvm::Function *GetMergeToGlobalHashTableFunction(CodeGen &codegen);
 };
 
-
 }  // namespace codegen
 }  // namespace peloton

@@ -95,9 +95,9 @@ class OAHashTable {
   //===--------------------------------------------------------------------===//
 
   // Key size
-  uint64_t KeySize() const {return key_size_;}
+  uint64_t KeySize() const { return key_size_; }
   // Value size
-  uint64_t ValueSize() const {return value_size_;}
+  uint64_t ValueSize() const { return value_size_; }
   // The number of buckets
   uint64_t NumBuckets() const { return num_buckets_; }
   // The total number of elements in this hash-table

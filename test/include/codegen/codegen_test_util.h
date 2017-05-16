@@ -67,7 +67,8 @@ class PelotonCodeGenTest : public PelotonTest {
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state, codegen::Query::RuntimeStats *runtime_stats = nullptr);
+      char *consumer_state,
+      codegen::Query::RuntimeStats *runtime_stats = nullptr);
 
  private:
   storage::Database *test_db;
@@ -126,7 +127,6 @@ class CountingConsumer : public codegen::QueryResultConsumer {
 };
 
 struct Stats {
-
   // NOTE: for g++ > 4.8
   // codegen::QueryCompiler::CompileStats compile_stats{0.0, 0.0, 0.0};
   // codegen::Query::RuntimeStats runtime_stats{0.0, 0.0, 0.0};
@@ -152,8 +152,9 @@ struct Stats {
     if (tuple_result_size < 0) {
       tuple_result_size = o_tuple_result_size;
     } else if (tuple_result_size != o_tuple_result_size) {
-      throw Exception{"ERROR: tuple result size should not"
-        " vary for the same test!"};
+      throw Exception{
+          "ERROR: tuple result size should not"
+          " vary for the same test!"};
     }
 
     num_samples++;
@@ -179,9 +180,7 @@ struct Stats {
             "time: %.2f ms\n",
             runtime_stats.init_ms, runtime_stats.plan_ms,
             runtime_stats.tear_down_ms);
-    fprintf(stderr,
-            "Tuple result size: %d\n",
-            tuple_result_size);
+    fprintf(stderr, "Tuple result size: %d\n", tuple_result_size);
   }
 };
 

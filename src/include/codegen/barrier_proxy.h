@@ -17,6 +17,5 @@ class BarrierProxy {
   static llvm::Function *GetMasterWaitFunction(CodeGen &codegen);
   static llvm::Function *GetDestroyFunction(CodeGen &codegen);
 };
-
 }
 }
