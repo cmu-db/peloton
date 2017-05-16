@@ -70,23 +70,25 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
         break;
       }
     }
-    case PlanNodeType::INSERT: {
-      const planner::InsertPlan &insert_plan =
-          static_cast<const planner::InsertPlan &>(plan);
-      if (insert_plan.GetChildren().size() != 0) {
-        return false;
-      }
-      if (insert_plan.GetProjectInfo() != nullptr) {
-        return false;
-      }
-      break;
-    }
-    case PlanNodeType::UPDATE: {
-      break;
-    }
-    case PlanNodeType::DELETE: {
-      break;
-    }
+// INSERT, UPDATE, and DELETE are turned off for benchmark reasons.
+// If they are turned on, test cases are passing.
+//    case PlanNodeType::INSERT: {
+//      const planner::InsertPlan &insert_plan =
+//          static_cast<const planner::InsertPlan &>(plan);
+//      if (insert_plan.GetChildren().size() != 0) {
+//        return false;
+//      }
+//      if (insert_plan.GetProjectInfo() != nullptr) {
+//        return false;
+//      }
+//      break;
+//    }
+//    case PlanNodeType::UPDATE: {
+//      break;
+//    }
+//    case PlanNodeType::DELETE: {
+//      break;
+//    }
     default: { return false; }
   }
 
