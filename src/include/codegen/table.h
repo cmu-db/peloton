@@ -13,7 +13,7 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/scan_consumer.h"
+#include "codegen/scan_callback.h"
 #include "codegen/tile_group.h"
 
 namespace peloton {
@@ -40,7 +40,7 @@ class Table {
   // is provided as the second argument. The scan consumer (third argument)
   // should be notified when ready to generate the scan loop body.
   void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                    uint32_t batch_size, ScanConsumer &consumer) const;
+                    uint32_t batch_size, ScanCallback &consumer) const;
 
   // Given a table instance, return the number of tile groups in the table.
   llvm::Value *GetTileGroupCount(CodeGen &codegen,

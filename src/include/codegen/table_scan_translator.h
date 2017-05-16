@@ -15,7 +15,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/operator_translator.h"
-#include "codegen/scan_consumer.h"
+#include "codegen/scan_callback.h"
 #include "codegen/table.h"
 
 namespace peloton {
@@ -82,7 +82,7 @@ class TableScanTranslator : public OperatorTranslator {
   //===--------------------------------------------------------------------===//
   // The class responsible for generating vectorized scan code over tile groups
   //===--------------------------------------------------------------------===//
-  class ScanConsumer : public codegen::ScanConsumer {
+  class ScanConsumer : public codegen::ScanCallback {
    public:
     // Constructor
     ScanConsumer(const TableScanTranslator &translator,
