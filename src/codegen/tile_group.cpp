@@ -29,49 +29,30 @@ namespace codegen {
 // TileGroup constructor
 TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 
-//===----------------------------------------------------------------------===//
-// This method generates code to scan over all the tuples in the provided
-// tile group. The fourth argument is allocated stack space where
-// ColumnLayoutInfo structs are, which we need to acquire the layout information
-// of columns in this tile group.
-//===----------------------------------------------------------------------===//
+// This method generates code to scan over all the tuples in the provided tile
+// group. The fourth argument is allocated stack space where ColumnLayoutInfo
+// structs are - we use this to acquire column layout information of this
+// tile group.
+//
+// @code
+// col_layouts := GetColumnLayouts(tile_group_ptr, column_layouts)
+// num_tuples := GetNumTuples(tile_group_ptr)
+//
+// for (start := 0; start < num_tuples; start += vector_size) {
+//   end := min(start + vector_size, num_tuples)
+//   ProcessTuples(start, end, tile_group_ptr);
+// }
+// @endcode
+//
 void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
+                                uint32_t batch_size,
                                 ScanConsumer &consumer) const {
-  auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
-
-  auto *num_tuples = GetNumTuples(codegen, tile_group_ptr);
-
-  // Iterate from 0 -> num_tuples in batches of batch_size
-  llvm::Value *tid = codegen.Const32(0);
-  Loop tile_group_loop{
-      codegen, codegen->CreateICmpULT(tid, num_tuples), {{"tid", tid}}};
-  {
-    tid = tile_group_loop.GetLoopVar(0);
-
-    // Call the consumer to generate the body of the scan loop
-    TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, tid, num_tuples, tile_group_access);
-
-    // Move to next tuple in the tile group
-    tid = codegen->CreateAdd(tid, codegen.Const32(1));
-    tile_group_loop.LoopEnd(codegen->CreateICmpULT(tid, num_tuples), {tid});
-  }
-}
-
-// All we do here is scan over the tuples in the tile group in vectors of the
-// given size. We let the consumer do with it as it sees fit.
-void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
-                                          llvm::Value *tile_group_ptr,
-                                          llvm::Value *column_layouts,
-                                          uint32_t vector_size,
-                                          ScanConsumer &consumer) const {
   // Get the column layouts
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
 
   llvm::Value *num_tuples = GetNumTuples(codegen, tile_group_ptr);
-
-  VectorizedLoop loop{codegen, num_tuples, vector_size, {}};
+  VectorizedLoop loop{codegen, num_tuples, batch_size, {}};
   {
     VectorizedLoop::Range curr_range = loop.GetCurrentRange();
 
