@@ -166,53 +166,53 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
 }
 
 // Generate a general function for all threads
-llvm::Function *CompilationContext::GenerateInnerPlanFunction(
-    const planner::AbstractPlan &root) {
+llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::AbstractPlan &root) {
+    // Create function definition
+    auto &code_context = query_.GetCodeContext();
+    auto &runtime_state = query_.GetRuntimeState();
 
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-  llvm::Function *inner_func = GenerateInnerPlanFunction(root);
+    auto inner_plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_inner_plan";
+    FunctionBuilder inner_function_builder{
+        code_context,
+        inner_plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
+          {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
+        }};
 
-  auto inner_plan_fn_name =
-      "_" + std::to_string(code_context.GetID()) + "_inner_plan";
-  FunctionBuilder inner_function_builder{
-      code_context,
-      inner_plan_fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
-       {"multiThreadContext",
-        MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}}};
+    llvm::Value *multi_thread_context = codegen_.GetArgument(1);
 
-  llvm::Value *multi_thread_context = codegen_.GetArgument(1);
+    // Create all local state
+    runtime_state.CreateLocalState(codegen_);
 
-  // Create all local state
-  runtime_state.CreateLocalState(codegen_);
+    // Generate the primary plan logic
+    Produce(root);
 
-  codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_), {barrier});
-  codegen_.CallFunc(BarrierProxy::GetDestroyFunction(codegen_), {barrier});
+    // notify master
+    codegen_.CallFunc(MultiThreadContextProxy::GetNotifyMasterFunction(codegen_), {multi_thread_context});
 
-  // notify master
-  codegen_.CallFunc(MultiThreadContextProxy::GetNotifyMasterFunction(codegen_),
-                    {multi_thread_context});
-
-  // Finish the function
-  inner_function_builder.ReturnAndFinish();
-  return inner_function_builder.GetFunction();
+    // Finish the function
+    inner_function_builder.ReturnAndFinish();
+    return inner_function_builder.GetFunction();
 }
+
 
 // Generate the code for the plan() function of the query
 llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
+
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
   llvm::Function *inner_func = GenerateInnerPlanFunction(root);
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
-      code_context,
-      plan_fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+        code_context,
+        plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
   // Get runtime state information.
   llvm::Value *runtime_state_ptr = codegen_.GetState();
@@ -228,29 +228,22 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   }
   llvm::Value *thread_id = codegen_.Const64(0);
   llvm::Value *thread_count = codegen_.Const64(nthreads);
-  llvm::Value *query_thread_pool = codegen_.CallFunc(
-      QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
+  llvm::Value *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
 
   // Get barrier information.
-  llvm::Value *barrier =
-      codegen_->CreateAlloca(BarrierProxy::GetType(codegen_));
-  codegen_.CallFunc(BarrierProxy::GetInitInstanceFunction(codegen_),
-                    {barrier, thread_count});
+  llvm::Value *barrier = codegen_->CreateAlloca(BarrierProxy::GetType(codegen_));
+  codegen_.CallFunc(BarrierProxy::GetInitInstanceFunction(codegen_), {barrier, thread_count});
 
-  Loop loop{codegen_,
-            codegen_->CreateICmpULT(thread_id, thread_count),
-            {{"threadId", thread_id}}};
+  Loop loop{codegen_, codegen_->CreateICmpULT(thread_id, thread_count),
+    {
+        {"threadId", thread_id}
+    }};
   {
     // Assign tasks to threads
     thread_id = loop.GetLoopVar(0);
-    llvm::Value *multi_thread_context =
-        codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
-    codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_),
-                      {multi_thread_context, thread_id, thread_count, barrier});
-    codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(
-                          codegen_, &runtime_state),
-                      {query_thread_pool, runtime_state_ptr,
-                       multi_thread_context, inner_func});
+    llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
+    codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count, barrier});
+    codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_, &runtime_state), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
 
     // Move to next thread id in loop.
     thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
@@ -308,10 +301,8 @@ OperatorTranslator *CompilationContext::GetTranslator(
 }
 
 // Check if multi thread is supported given plan.
-bool CompilationContext::IsMultiThreadSupported(
-    const planner::AbstractPlan &plan) {
-  LOG_DEBUG("node type: %s",
-            PlanNodeTypeToString(plan.GetPlanNodeType()).c_str());
+bool CompilationContext::IsMultiThreadSupported(const planner::AbstractPlan &plan) {
+  LOG_DEBUG("node type: %s", PlanNodeTypeToString(plan.GetPlanNodeType()).c_str());
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::HASHJOIN:
