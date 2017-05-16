@@ -90,7 +90,8 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
 
 TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   // Insert 10 null rows
-  LoadTestTable(TestTableId(), 10);
+  const bool insert_nulls = true;
+  LoadTestTable(TestTableId(), 10, insert_nulls);
 
   //
   // SELECT a, b FROM table where b < 20;
@@ -115,7 +116,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(2, results.size());
 
   // First tuple should be (0, 1)

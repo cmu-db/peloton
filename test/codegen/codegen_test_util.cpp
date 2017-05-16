@@ -110,13 +110,14 @@ void PelotonCodeGenTest::LoadTestTable(TableId table_id, uint32_t num_rows,
 
   auto &test_table = GetTestTable(table_id);
   auto *table_schema = test_table.GetSchema();
+  size_t curr_size = test_table.GetTupleCount();
 
   auto col_val =
       [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
 
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  for (uint32_t rowid = test_table.GetTupleCount(); rowid < num_rows; rowid++) {
+  for (uint32_t rowid = curr_size; rowid < (curr_size + num_rows); rowid++) {
     // The input tuple
     storage::Tuple tuple{table_schema, allocate};
 
