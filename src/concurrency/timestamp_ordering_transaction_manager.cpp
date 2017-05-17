@@ -120,8 +120,19 @@ bool TimestampOrderingTransactionManager::IsOwned(
 }
 
 
-// This method tests whether the current transaction has created this version of
-// the tuple
+// This method tests whether the current transaction has 
+// created this version of the tuple
+// 
+// this method is designed for select_for_update.
+//
+// The DBMS can acquire write locks for a transaction in two cases:
+// (1) Every time a transaction updates a tuple, the DBMS creates 
+//     a new version of the tuple and acquire the locks on both 
+//     the older and the newer version;
+// (2) Every time a transaction executes a select_for_update statement,
+//     the DBMS needs to acquire the lock on the corresponding version
+//     without creating a new version. 
+// IsWritten() method is designed for distinguishing these two cases.
 bool TimestampOrderingTransactionManager::IsWritten(
     UNUSED_ATTRIBUTE Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
