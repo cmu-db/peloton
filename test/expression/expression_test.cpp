@@ -68,30 +68,29 @@ TEST_F(ExpressionTests, EqualityTest) {
   left1->SetBoundOid(bound_oid1);
   auto right1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1);
+  std::unique_ptr<expression::OperatorExpression> root1(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1));
   // Second tree operator_expr(-) -> (tup_expr(A.b), const_expr(2))
   std::tuple<oid_t, oid_t, oid_t> bound_oid2(1, 1, 0);
   auto left2 = new expression::TupleValueExpression("b", "A");
   left2->SetBoundOid(bound_oid2);
   auto right2 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root2 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2);
-  EXPECT_FALSE(root1->Equals(root2));
+  std::unique_ptr<expression::OperatorExpression> root2(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2));
+  EXPECT_FALSE(root1->Equals(root2.get()));
 
   // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
   auto left3 = new expression::TupleValueExpression("a", "a");
   left3->SetBoundOid(bound_oid1);
   auto right3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root3 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3);
-  EXPECT_TRUE(root1->Equals(root3));
-
-  delete root1;
-  delete root2;
-  delete root3;
+  std::unique_ptr<expression::OperatorExpression> root3(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3));
+  EXPECT_TRUE(root1->Equals(root3.get()));
 }
 
 
@@ -102,8 +101,9 @@ TEST_F(ExpressionTests, HashTest) {
   left1->SetBoundOid(oids1);
   auto right1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1);
+  std::unique_ptr<expression::OperatorExpression> root1(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1));
   LOG_INFO("Hash(tree1)=%ld", root1->Hash());
 
   // Second tree operator_expr(-) -> (tup_expr(A.b), const_expr(2))
@@ -112,8 +112,9 @@ TEST_F(ExpressionTests, HashTest) {
   left2->SetBoundOid(oids2);
   auto right2 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root2 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2);
+  std::unique_ptr<expression::OperatorExpression> root2(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2));
   LOG_INFO("Hash(tree2)=%ld", root2->Hash());
 
   EXPECT_NE(root1->Hash(), root2->Hash());
@@ -124,15 +125,12 @@ TEST_F(ExpressionTests, HashTest) {
   left3->SetBoundOid(oids3);
   auto right3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
-  auto root3 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3);
+  std::unique_ptr<expression::OperatorExpression> root3(
+      new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3));
   LOG_INFO("Hash(tree3)=%ld", root3->Hash());
 
   EXPECT_EQ(root1->Hash(), root3->Hash());
-
-  delete root1;
-  delete root2;
-  delete root3;
 }
 
 TEST_F(ExpressionTests, DistinctFromTest) {
@@ -149,43 +147,43 @@ TEST_F(ExpressionTests, DistinctFromTest) {
   columns.push_back(column1);
   columns.push_back(column2);
 
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
 
   // Create "id IS DISTINCT FROM value" comparison
   auto lexpr = new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto rexpr = new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
 
-  expression::ComparisonExpression expr(StringToExpressionType("COMPARE_DISTINCT_FROM"),
-                                        lexpr, rexpr);
+  expression::ComparisonExpression expr(
+      StringToExpressionType("COMPARE_DISTINCT_FROM"), lexpr, rexpr);
 
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   // id, value not NULL with the same values, should be false
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(10), pool);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(10), pool);
-  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsFalse());
+  EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsFalse());
 
   // id, value not NULL with different values, should be true
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(5), pool);
-  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+  EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsTrue());
 
   // id not NULL, value is NULL, should be true
-  tuple->SetValue(1, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
-  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+  tuple->SetValue(1,
+      type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsTrue());
 
   // id is NULL, value not NULL, should be true
-  tuple->SetValue(0, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  tuple->SetValue(0,
+      type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(10), pool);
-  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsTrue());
+  EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsTrue());
 
   // id is NULL, value is NULL, should be false
-  tuple->SetValue(1, type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
-  EXPECT_TRUE(expr.Evaluate(tuple, tuple, nullptr).IsFalse());
-
-  delete tuple;
-  delete schema;
+  tuple->SetValue(1,
+       type::ValueFactory::GetNullValueByType(type::Type::INTEGER), pool);
+  EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsFalse());
 }
 
 TEST_F(ExpressionTests, ExtractDateTests) {
@@ -268,9 +266,10 @@ TEST_F(ExpressionTests, SimpleCase) {
       expression::CaseExpression::AbsExprPtr(when_cond),
       expression::CaseExpression::AbsExprPtr(const_val_exp_2)));
 
-  expression::CaseExpression *case_expression = new expression::CaseExpression(
-      type::Type::INTEGER, nullptr, clauses,
-      expression::CaseExpression::AbsExprPtr(const_val_exp_3));
+  std::unique_ptr<expression::CaseExpression> case_expression(
+      new expression::CaseExpression(
+      type::Type::INTEGER, clauses,
+      expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
   // TUPLE
   std::vector<catalog::Column> columns;
@@ -283,28 +282,25 @@ TEST_F(ExpressionTests, SimpleCase) {
                           "i2", true);
   columns.push_back(column1);
   columns.push_back(column2);
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
 
   // Test with A = 1, should get 2
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  type::Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
-
-  delete case_expression;
-  delete schema;
-  delete tuple;
 }
+
 TEST_F(ExpressionTests, SimpleCaseCopyTest) {
 
   // CASE WHEN i=1 THEN 2 ELSE 3 END
@@ -327,13 +323,12 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
       expression::CaseExpression::AbsExprPtr(when_cond),
       expression::CaseExpression::AbsExprPtr(const_val_exp_2)));
 
-  expression::CaseExpression *o_case_expression =
-      new expression::CaseExpression(
-          type::Type::INTEGER, nullptr, clauses,
-          expression::CaseExpression::AbsExprPtr(const_val_exp_3));
+  std::unique_ptr<expression::CaseExpression> o_case_expression(
+      new expression::CaseExpression(type::Type::INTEGER, clauses,
+          expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
-  expression::CaseExpression *case_expression =
-      dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy());
+  std::unique_ptr<expression::CaseExpression> case_expression(
+      dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy()));
 
   // TUPLE
   std::vector<catalog::Column> columns;
@@ -346,28 +341,23 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
                           "i2", true);
   columns.push_back(column1);
   columns.push_back(column2);
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
 
   // Test with A = 1, should get 2
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  type::Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
-
-  delete case_expression;
-  delete o_case_expression;
-  delete schema;
-  delete tuple;
 }
 
 TEST_F(ExpressionTests, SimpleCaseWithDefault) {
@@ -389,11 +379,10 @@ TEST_F(ExpressionTests, SimpleCaseWithDefault) {
       expression::CaseExpression::AbsExprPtr(const_val_exp_1),
       expression::CaseExpression::AbsExprPtr(const_val_exp_2)));
 
-  expression::CaseExpression *case_expression = new expression::CaseExpression(
-      type::Type::INTEGER,
+  std::unique_ptr<expression::CaseExpression> case_expression(
+      new expression::CaseExpression(type::Type::INTEGER,
       expression::CaseExpression::AbsExprPtr(tup_val_exp),
-      clauses,
-      expression::CaseExpression::AbsExprPtr(const_val_exp_3));
+      clauses, expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
   // TUPLE
   std::vector<catalog::Column> columns;
@@ -406,27 +395,23 @@ TEST_F(ExpressionTests, SimpleCaseWithDefault) {
                           "i2", true);
   columns.push_back(column1);
   columns.push_back(column2);
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
 
   // Test with A = 1, should get 2
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  type::Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
-  result = case_expression->Evaluate(tuple, nullptr, nullptr);
+  result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
   EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
-
-  delete case_expression;
-  delete schema;
-  delete tuple;
 }
 
 }  // namespace test

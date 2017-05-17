@@ -28,23 +28,25 @@ class CaseExpression : public AbstractExpression {
   using AbsExprPtr = std::unique_ptr<AbstractExpression>;
   using WhenClause = std::pair<AbsExprPtr,AbsExprPtr>;
 
+  CaseExpression(type::Type::TypeId type_id,
+                 std::vector<WhenClause> &when_clauses,
+                 AbsExprPtr default_expr)
+      : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
+        clauses_(std::move(when_clauses)),
+        default_expr_(std::move(default_expr)) {}
+
   CaseExpression(type::Type::TypeId type_id, AbsExprPtr argument,
                  std::vector<WhenClause> &when_clauses,
                  AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
-        argument_(std::move(argument)),
         clauses_(std::move(when_clauses)),
         default_expr_(std::move(default_expr)) {
-    // If the argument is provided, then we create When Clauses based on it
-    // Otherwise, we assume that the When Clauses provided are sufficient
-    if (argument_ != nullptr) {
-      for (uint32_t i = 0; i < clauses_.size(); i++)
-		clauses_[i].first.reset(
-           new peloton::expression::ComparisonExpression(
-              peloton::ExpressionType::COMPARE_EQUAL, argument_->Copy(),
-              clauses_[i].first->Copy()));
-    }
+    for (uint32_t i = 0; i < clauses_.size(); i++)
+      clauses_[i].first.reset(new peloton::expression::ComparisonExpression(
+          peloton::ExpressionType::COMPARE_EQUAL, argument->Copy(),
+          clauses_[i].first->Copy()));
   }
+
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
     for (auto &clause : clauses_) {
@@ -64,7 +66,7 @@ class CaseExpression : public AbstractExpression {
     for (auto &clause : clauses_)
       copies.push_back(WhenClause(AbsExprPtr(clause.first->Copy()),
                                   AbsExprPtr(clause.second->Copy())));
-	return new CaseExpression(return_value_type_, nullptr, copies,
+	return new CaseExpression(return_value_type_, copies,
                               default_expr_ != nullptr ?
                                   AbsExprPtr(default_expr_->Copy()) : nullptr);
   }
@@ -102,8 +104,6 @@ class CaseExpression : public AbstractExpression {
   }
 
  private:
-  // The (optional) argument to the case statement
-  AbsExprPtr argument_;
   // The list of case-when clauses
   std::vector<WhenClause> clauses_;
   // The default value for the case

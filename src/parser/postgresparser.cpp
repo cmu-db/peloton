@@ -311,10 +311,12 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   auto defresult_expr = ExprTransform(reinterpret_cast<Node*>(root->defresult));
 
   // Build Case Expression
-  return new expression::CaseExpression(
-      clauses.at(0).second.get()->GetValueType(),
-      expression::CaseExpression::AbsExprPtr(arg_expr),
-      clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+  return arg_expr != nullptr ?
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          expression::CaseExpression::AbsExprPtr(arg_expr),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
 }
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt

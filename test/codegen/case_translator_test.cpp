@@ -82,7 +82,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(
-      type::Type::INTEGER, nullptr, clauses,
+      type::Type::INTEGER, clauses,
       expression::CaseExpression::AbsExprPtr(const_val_exp_0));
 
   // Setup a projection
@@ -172,7 +172,7 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(
-      type::Type::INTEGER, nullptr, clauses,
+      type::Type::INTEGER, clauses,
       expression::CaseExpression::AbsExprPtr(const_val_exp_0));
 
   // Setup a projection
