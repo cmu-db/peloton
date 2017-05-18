@@ -674,8 +674,8 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
-  FKConstrActionType upd_action = FKConstrActionType.NOACTION;
-  FKConstrActionType del_action = FKConstrActionType.NOACTION;
+  FKConstrActionType upd_action = FKConstrActionType::NOACTION;
+  FKConstrActionType del_action = FKConstrActionType::NOACTION;
   catalog::ForeignKey *foreign_key =
       new catalog::ForeignKey(table_b_name, {"b"}, {"a"},
                               upd_action, del_action, "foreign_constraint1");
