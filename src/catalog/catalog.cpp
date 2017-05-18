@@ -25,6 +25,7 @@
 #include "expression/decimal_functions.h"
 #include "index/index_factory.h"
 #include "util/string_util.h"
+#include "catalog/function_catalog.h"
 
 namespace peloton {
 namespace catalog {
@@ -45,6 +46,16 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+ // InitializeCatalog();
+
+  // Create metrics table in default database
+  // TODO: stats?
+ // CreateMetricsCatalog();
+
+ // CreateFunctionCatalog();
+
+
+
 
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
@@ -52,9 +63,10 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   databases_.push_back(pg_catalog);
 
   // Create catalog tables
-  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  IndexCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(),txn);
+  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(),txn);
+  IndexCatalog::GetInstance(pg_catalog, pool_.get(),txn);
+  FunctionCatalog::GetInstance(pg_catalog, pool_.get(),txn);
   //  ColumnCatalog::GetInstance(); // Called implicitly
 
   // Create indexes on catalog tables, insert them into pg_index
@@ -78,6 +90,11 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"database_oid"}),
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
+              IndexConstraintType::DEFAULT, false, txn, true);
+
+  CreateIndex(CATALOG_DATABASE_OID, FUNCTION_CATALOG_OID,
+              std::vector<std::string>({"function_name"}),
+              FUNCTION_CATALOG_NAME "_skey0", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
 
   // actual index already added in column_catalog, index_catalog constructor
@@ -122,6 +139,9 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
                         CATALOG_DATABASE_OID, pool_.get(), txn);
   pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                         CATALOG_DATABASE_OID, pool_.get(), txn);
+  pg_table->InsertTable(FUNCTION_CATALOG_OID, FUNCTION_CATALOG_NAME,
+                        CATALOG_DATABASE_OID, pool_.get(), txn);
+
 
   // Commit transaction
   txn_manager.CommitTransaction(txn);
@@ -845,6 +865,7 @@ storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
   auto database = databases_.at(database_offset);
   return database;
 }
+
 
 //===--------------------------------------------------------------------===//
 // FUNCTION

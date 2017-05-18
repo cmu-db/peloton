@@ -38,7 +38,7 @@
 #include <boost/algorithm/string.hpp>
 #include <include/parser/postgresparser.h>
 
-// #define NEW_OPTIMIZER
+//#define NEW_OPTIMIZER
 
 namespace peloton {
 namespace tcop {
@@ -142,7 +142,7 @@ ResultType TrafficCop::ExecuteStatement(
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Received %s", query.c_str());
+  LOG_DEBUG("Received %s", query.c_str());
 
   // Prepare the statement
   std::string unnamed_statement = "unnamed";

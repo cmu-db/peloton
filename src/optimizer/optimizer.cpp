@@ -32,6 +32,7 @@
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
+#include "planner/create_function_plan.h"
 #include "planner/drop_plan.h"
 #include "binder/bind_node_visitor.h"
 
@@ -142,6 +143,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           new planner::CreatePlan((parser::CreateStatement *)tree));
       ddl_plan = move(create_plan);
     } break;
+
+    case StatementType::CREATE_FUNC: {
+      LOG_TRACE("Adding Create function plan...");
+      unique_ptr<planner::AbstractPlan> create_func_plan(
+          new planner::CreateFunctionPlan((parser::CreateFunctionStatement*)tree));
+      ddl_plan = move(create_func_plan);
+    } break;
+
     default:
       is_ddl_stmt = false;
   }

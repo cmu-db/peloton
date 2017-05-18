@@ -725,6 +725,7 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   delete stmt_list;
 }
 
+
 TEST_F(PostgresParserTests, DistinctFromTest) {
   std::string query = "SELECT id, value FROM foo WHERE id IS DISTINCT FROM value;";
 
@@ -919,6 +920,27 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   const_expr = (expression::ConstantValueExpression*) op_expr->GetChild(1);
   EXPECT_TRUE(const_expr != nullptr);
   EXPECT_TRUE(const_expr->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, CreatePGSQLFuncTest) {
+  std::string query = "CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$   BEGIN  RET  j;  END; $$ LANGUAGE plpgsql;";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  delete stmt_list;
+}
+
+TEST_F(PostgresParserTests, CreateCFuncTest) {
+  std::string query = "CREATE FUNCTION c_overpaid(integer, integer) RETURNS boolean AS 'DIRECTORY/funcs', 'c_overpaid' LANGUAGE C STRICT;";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
 
   delete stmt_list;
 }

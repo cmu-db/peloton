@@ -14,6 +14,7 @@
 
 #include "executor/abstract_executor.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/function_catalog.h"
 
 #include <vector>
 #include "wire/packet_manager.h"

@@ -363,6 +363,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::CREATE_FUNC: {
+      return "CREATE_FUNC";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -400,7 +403,9 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
     return StatementType::COPY;
-  } else {
+  } else if (upper_str == "CREATE_FUNC") {
+    return StatementType::CREATE_FUNC;
+  }  else {
     throw ConversionException(StringUtil::Format(
         "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
