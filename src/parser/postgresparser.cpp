@@ -17,6 +17,7 @@
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -276,6 +277,48 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
   return res;
 }
 
+// This function takes in the Case Expression of a Postgres SelectStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::CaseExprTransform(
+    CaseExpr* root) {
+
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  // Transform the CASE argument
+  auto arg_expr = ExprTransform(reinterpret_cast<Node*>(root->arg));
+
+  // Transform the WHEN conditions
+  std::vector<expression::CaseExpression::WhenClause> clauses;
+  for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+
+    CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
+
+    // When condition
+    auto when_expr = ExprTransform(reinterpret_cast<Node*>(w->expr));;
+
+    // Result
+    auto result_expr = ExprTransform(reinterpret_cast<Node*>(w->result));
+
+    // Build When Clause and add it to the list
+    clauses.push_back(expression::CaseExpression::WhenClause(
+        expression::CaseExpression::AbsExprPtr(when_expr),
+        expression::CaseExpression::AbsExprPtr(result_expr)));
+  }
+
+  // Transform the default result
+  auto defresult_expr = ExprTransform(reinterpret_cast<Node*>(root->defresult));
+
+  // Build Case Expression
+  return arg_expr != nullptr ?
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          expression::CaseExpression::AbsExprPtr(arg_expr),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+}
+
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
@@ -446,7 +489,6 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-// TODO: Add support for CaseExpr.
 std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
     List* root) {
   std::vector<expression::AbstractExpression*>* result =
@@ -510,7 +552,12 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   return result;
 }
 
-expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
+expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
+
+  if (node == nullptr) {
+    return nullptr;
+  }
+
   expression::AbstractExpression* expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
@@ -537,6 +584,10 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       expr = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
       break;
     }
+    case T_CaseExpr: {
+      expr = CaseExprTransform(reinterpret_cast<CaseExpr*>(node));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -544,7 +595,6 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   }
   return expr;
 }
-
 
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
@@ -587,7 +637,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   catch(NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
   }
 
 

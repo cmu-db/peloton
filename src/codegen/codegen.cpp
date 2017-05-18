@@ -31,6 +31,11 @@ llvm::Constant *CodeGen::ConstString(const std::string s) const {
                                   "str");
 }
 
+llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
+  return GetBuilder().CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0,
+                                                 "");
+}
+
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
                                const std::vector<llvm::Value *> &args) const {
   return GetBuilder().CreateCall(fn, args);

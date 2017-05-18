@@ -25,6 +25,7 @@
 #include "codegen/projection_translator.h"
 #include "codegen/table_scan_translator.h"
 #include "codegen/tuple_value_translator.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -141,19 +142,16 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       break;
     }
     case ExpressionType::OPERATOR_UNARY_MINUS: {
-      auto &negation_expr =
+      auto &negation_exp =
           static_cast<const expression::OperatorUnaryMinusExpression &>(exp);
-      translator = new NegationTranslator(negation_expr, context);
+      translator = new NegationTranslator(negation_exp, context);
       break;
     }
-    /*
     case ExpressionType::OPERATOR_CASE_EXPR: {
-      // TODO: Uncomment me when we have case
       auto &case_exp = static_cast<const expression::CaseExpression &>(exp);
       translator = new CaseTranslator(case_exp, context);
       break;
     }
-    */
     default: {
       throw Exception{"We don't have a translator for expression type: " +
                       ExpressionTypeToString(exp.GetExpressionType())};

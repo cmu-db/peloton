@@ -88,6 +88,25 @@ typedef struct JoinExpr {
   int rtindex;       /* RT index assigned for join, or 0 */
 } JoinExpr;
 
+typedef struct CaseExpr
+{
+  Expr xpr;
+  Oid casetype;    /* type of expression result */
+  Oid casecollid;  /* OID of collation, or InvalidOid if none */
+  Expr *arg;       /* implicit equality comparison argument */
+  List *args;      /* the arguments (list of WHEN clauses) */
+  Expr *defresult; /* the default result (ELSE clause) */
+  int location;    /* token location, or -1 if unknown */
+} CaseExpr;
+
+typedef struct CaseWhen
+{
+  Expr xpr;
+  Expr *expr;      /* condition expression */
+  Expr *result;    /* substitution result */
+  int  location;   /* token location, or -1 if unknown */
+} CaseWhen;
+
 typedef struct RangeSubselect {
   NodeTag type;
   bool lateral;   /* does it have LATERAL prefix? */
