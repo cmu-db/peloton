@@ -256,8 +256,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
     for (auto cons : column_cons) {
       ConstraintType type = cons.GetType();
       switch (type) {
-        case ConstraintType::NOTNULL:
-        case ConstraintType::NOT_NULL: {
+        case ConstraintType::NOTNULL: {
           if (CheckNotNulls(tuple, column_itr) == false) {
             LOG_TRACE("Not NULL constraint violated");
             throw ConstraintException("Not NULL constraint violated : " +
@@ -320,7 +319,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
     ConstraintType type = mc.GetType();
     if (cols.size() <= 0) continue;
     switch (type) {
-      case ConstraintType::NOT_NULL:
       case ConstraintType::NOTNULL: {
         // TODO check not null for multi columns
         if (MultiCheckNotNulls(tuple, cols) == false) {
