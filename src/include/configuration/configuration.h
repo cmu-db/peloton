@@ -39,8 +39,6 @@ DECLARE_string(private_key_file);
 // Peloton certificate file
 DECLARE_string(certificate_file);
 
-// Added for SSL only ends
-
 //===----------------------------------------------------------------------===//
 // RESOURCE USAGE
 //===----------------------------------------------------------------------===//

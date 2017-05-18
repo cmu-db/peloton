@@ -173,8 +173,9 @@ void StateMachine(LibeventSocket *conn) {
           // We need to handle startup packet first
           int status_res = conn->pkt_manager.ProcessInitialPacket(&conn->rpkt);
           status = (status_res != 0);
-          if (status_res == 1)
+          if (status_res == 1) {
             conn->pkt_manager.is_started = true;
+          }
           else if (status_res == -1){
             conn->pkt_manager.ssl_sent = true;
           }

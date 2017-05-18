@@ -40,11 +40,13 @@ class PacketManager {
 
   ~PacketManager();
 
-  /* Startup packet processing logic */
+  /* Routine to deal with the first packet from the client */
   int ProcessInitialPacket(InputPacket* pkt);
 
+  /* Routine to deal with general Startup message */
   bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
 
+  /* Routine to deal with SSL request message */
   bool ProcessSSLRequestPacket(InputPacket *pkt);
 
   /* Main switch case wrapper to process every packet apart from the startup
