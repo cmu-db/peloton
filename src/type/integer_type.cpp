@@ -17,6 +17,7 @@
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
 #include "type/varlen_type.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace type {
@@ -37,6 +38,16 @@ namespace type {
   case Type::VARCHAR: { \
     auto r_value = right.CastAs(Type::INTEGER); \
     return GetCmpBool(left.value_.integer OP r_value.GetAs<int32_t>()); \
+  }\
+  case Type::ARRAY: {\
+    std::vector<int32_t> vec_integer;\
+    for (size_t i = 0; i < 1; i++) {\
+      vec_integer.push_back(2);\
+    }\
+    type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);\
+    type::Value in_list =\
+        right.InList(left);\
+    return GetCmpBool((in_list).IsTrue());\
   } \
   default: \
     break; \

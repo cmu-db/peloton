@@ -15,7 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "type/value_factory.h"
-
+#include "parser/postgresparser.h"
 
 namespace peloton {
 namespace expression {
@@ -32,6 +32,12 @@ class OperatorExpression : public AbstractExpression {
   OperatorExpression(ExpressionType type, type::Type::TypeId type_id,
                      AbstractExpression *left, AbstractExpression *right)
       : AbstractExpression(type, type_id, left, right) {}
+  /* for is null test operator */
+  OperatorExpression(ExpressionType type, type::Type::TypeId type_id,
+                     NullTestType nulltesttype, AbstractExpression *left,
+                     AbstractExpression *right)
+      : AbstractExpression(type, type_id, left, right),
+        nulltesttype_(nulltesttype) {}
 
   type::Value Evaluate(
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
@@ -51,7 +57,6 @@ class OperatorExpression : public AbstractExpression {
     PL_ASSERT(children_.size() == 2);
     type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
     type::Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
-
     switch (exp_type_) {
       case (ExpressionType::OPERATOR_PLUS):
         return (vl.Add(vr));
@@ -63,11 +68,28 @@ class OperatorExpression : public AbstractExpression {
         return (vl.Divide(vr));
       case (ExpressionType::OPERATOR_MOD):
         return (vl.Modulo(vr));
+      case (ExpressionType::OPERATOR_IS_NULL):
+        if (this->nulltesttype_ == NullTestType::IS_NULL) {
+          if (vl.IsNull()) {
+            return (type::ValueFactory::GetBooleanValue(true));
+          } else {
+            return (type::ValueFactory::GetBooleanValue(false));
+          }
+        } else {
+          if (!vl.IsNull()) {
+            return (type::ValueFactory::GetBooleanValue(true));
+          } else {
+            return (type::ValueFactory::GetBooleanValue(false));
+          }
+        }
+
       default:
         throw Exception("Invalid operator expression type.");
     }
   }
-
+  NullTestType get_nulltesttype() const {
+    return this->nulltesttype_;
+  }
   void DeduceExpressionType() {
     // if we are a decimal or int we should take the highest type id of both
     // children
@@ -86,7 +108,10 @@ class OperatorExpression : public AbstractExpression {
 
  protected:
   OperatorExpression(const OperatorExpression &other)
-      : AbstractExpression(other) {}
+      : AbstractExpression(other),
+        nulltesttype_(other.nulltesttype_) {}
+ private:
+  NullTestType nulltesttype_;
 };
 
 class OperatorUnaryMinusExpression : public AbstractExpression {

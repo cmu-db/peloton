@@ -157,7 +157,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 
   // Check database metrics
   auto db_oid = database->GetOid();
-  LOG_TRACE("db_oid is %u", db_oid);
+//  LOG_TRACE("db_oid is %lu", db_oid);
   auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
   ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(),
             num_threads * NUM_ITERATION * NUM_DB_COMMIT);

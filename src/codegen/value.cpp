@@ -9,7 +9,7 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include "common/logger.h"
 #include "codegen/value.h"
 
 #include <list>
@@ -195,7 +195,17 @@ Value Value::LogicalOr(CodeGen &codegen, const Value &o) const {
 
   return Value{GetType(), codegen->CreateOr(GetValue(), o.GetValue())};
 }
-
+// Is Null and Is Not Null
+Value Value::IsNull(CodeGen &codegen, int nulltesttype ) const {
+  Value isNull;
+  codegen::Value null_val = Type::GetNullValue(codegen, GetType());
+  if (nulltesttype == 0) {
+    isNull = CompareEq(codegen, null_val);
+  } else {
+    isNull = CompareNe(codegen, null_val);
+  }
+  return isNull;
+}
 //===----------------------------------------------------------------------===//
 // Generate a hash for the given value
 //===----------------------------------------------------------------------===//

@@ -53,11 +53,11 @@ cd $PELOTON_DIR/build
 # start peloton
 bin/peloton -port $PELOTON_PORT > /dev/null &
 PELOTON_PID=$!
-sleep 3
+sleep 5
 
 # run psql
-echo "\i $TEST_SCRIPT" | psql "$PELOTON_ARGS" -U $PELOTON_USER -h $PELOTON_HOST -p $PELOTON_PORT > $TEMP_OUT_FILE 2>&1
 
+psql "$PELOTON_ARGS" -U $PELOTON_USER -h $PELOTON_HOST -p $PELOTON_PORT <$TEST_SCRIPT > $TEMP_OUT_FILE 2>&1
 # compute diff against reference output
 # diff will return a non-zero status code if the files are different
 # This will get trapped by our clean-up function, so we need to set
