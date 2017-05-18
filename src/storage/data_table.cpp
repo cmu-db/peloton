@@ -286,15 +286,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
           break;
         }
         case ConstraintType::FOREIGN: {
-          /*
-          auto fk_offset = cons.GetForeignKeyListOffset();
-          catalog::ForeignKey *foreigh_key = foreign_keys_[fk_offset];
-
-          auto sink_table_oid = foreigh_key->GetSinkTableOid();
-          auto catalog = catalog::Catalog::GetInstance();
-          auto sink_table = catalog->GetTableWithOid(GetDatabaseOid(), sink_table_oid);
-          */
-
           break;
         }
         case ConstraintType::EXCLUSION: {
