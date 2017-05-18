@@ -473,8 +473,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     // Exceptions will be handled in upper layers
     throw ConstraintException("UNIQUE constraint violated : " +
                               std::string(tuple->GetInfo()));
-
-    return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
@@ -482,7 +480,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     LOG_TRACE("ForeignKey constraint violated");
     throw ConstraintException("FOREIGN KEY constraint violated : " +
                                std::string(tuple->GetInfo()));
-    return INVALID_ITEMPOINTER;
   }
 
   PL_ASSERT((*index_entry_ptr)->block == location.block &&
