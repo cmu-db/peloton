@@ -123,7 +123,7 @@ void LibeventServer::StartServer() {
     SSL_load_error_strings();
     SSL_library_init();
 
-    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == NULL)
+    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
     {
       throw ConnectionException("Error creating SSL context.\n");
     }

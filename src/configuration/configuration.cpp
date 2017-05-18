@@ -68,12 +68,13 @@ DEFINE_string(socket_family,
               "Socket family (default: AF_INET)");
 
 DEFINE_string(private_key_file,
-              // TODO: change later
+              // Currently use hardcoded private key path, may need to change
+              // to generate file dynamically at runtime
+              // The same applies to certificate file
              "/home/vagrant/temp/server.key",
              "path to private key file");
 
 DEFINE_string(certificate_file,
-              // TODO: change later
              "/home/vagrant/temp/server.crt",
              "path to certificate file");
 
