@@ -80,6 +80,9 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
   std::string not_null_constraint_name = "not_null";
   catalog::Column dummy_column;
 
+  // The index number used here is just used for individual tests only
+  // They may be changed to any number as like
+
   switch (index) {
     case 0: {
       auto column = catalog::Column(
@@ -111,8 +114,9 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
       return column;
     } break;
 
+    // Some random values were just inserted for testing purposes
     case 3: {
-      auto column = catalog::Column(type::Type::VARCHAR, 25,  // Column length.
+      auto column = catalog::Column(type::Type::VARCHAR, 25,  // A random column length
                                     "COL_D", !is_inlined);    // inlined.
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
