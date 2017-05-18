@@ -39,13 +39,8 @@ llvm::Type* DataTableProxy::GetType(CodeGen& codegen) {
 }
 
 const std::string& DataTableProxy::_GetTileGroupCount::GetFunctionName() {
-  // TODO: FIX ME
   static const std::string kGetTileGroupCount =
-#ifdef __APPLE__
-      "_ZNK7peloton7storage9DataTable17GetTileGroupCountEvy";
-#else
       "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv";
-#endif
   return kGetTileGroupCount;
 }
 

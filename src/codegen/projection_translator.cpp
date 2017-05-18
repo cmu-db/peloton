@@ -67,7 +67,7 @@ void ProjectionTranslator::PrepareProjection(
   }
 }
 
-/* static */ void ProjectionTranslator::AddNonTrivialAttributes(
+void ProjectionTranslator::AddNonTrivialAttributes(
     RowBatch &row_batch, const planner::ProjectInfo &projection_info,
     std::vector<RowBatch::ExpressionAccess> &accessors) {
   // If the projection is non-trivial, we need to add attribute accessors for

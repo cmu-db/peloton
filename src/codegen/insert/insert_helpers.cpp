@@ -38,8 +38,6 @@ bool InsertHelpers::InsertRawTuple(concurrency::Transaction *txn,
 
   txn_mgr->PerformInsert(txn, location, index_entry_ptr);
 
-  // @todo executor_context->num_processed += 1;
-
   return true;
 }
 

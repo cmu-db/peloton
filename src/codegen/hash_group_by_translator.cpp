@@ -326,7 +326,6 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start, llvm::Value *end, Vector &selection_vector,
     HashTable::HashTableAccess &access) const {
 
-  // @todo What should tile_group_id be?
   RowBatch batch{translator_.GetCompilationContext(), /* tile_group_id */ nullptr,
                  start, end,
                  selection_vector, true};

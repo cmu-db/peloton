@@ -81,7 +81,6 @@ void GlobalGroupByTranslator::Produce() const {
 
   Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
 
-  // @todo What should tile_group_id be?
   RowBatch batch{GetCompilationContext(), /* tile_group_id */ nullptr, codegen.Const32(0),
                  codegen.Const32(1), v, false};
 

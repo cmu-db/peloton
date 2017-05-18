@@ -129,38 +129,6 @@ class RawTupleRef {
     }
   }
 
-  // MaterializeTinyInt(char *ptr, int8_t val)
-//  void MaterializeTinyInt(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeSmallInt(char *ptr, int16_t val)
-//  void MaterializeSmallInt(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeInteger(char *ptr, int32_t val)
-//  void MaterializeInteger(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeBigInt(char *ptr, int64_t val)
-//  void MaterializeBigInt(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeTimestamp(char *ptr, int64_t val)
-//  void MaterializeTimestamp(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeDecimal(char *ptr, double val)
-//  void MaterializeDecimal(llvm::Value *ptr, llvm::Value *val) {
-//  }
-
-  // MaterializeVarchar(char *ptr, char *str, uint32_t len)
-//  void MaterializeVarchar(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
-//  }
-
-  // MaterializeVarbinary(char *ptr, char *str, uint32_t len)
-//  void MaterializeVarbinary(llvm::Value *ptr, llvm::Value *str, llvm::Value *len) {
-//  }
-
  private:
   CodeGen &codegen_;
   RowBatch::Row &row_;

@@ -273,7 +273,6 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
   // Construct the row batch we're producing
   auto &compilation_context = translator_.GetCompilationContext();
 
-  // @todo What should tile_group_id be?
   RowBatch batch{compilation_context, /* tile_group_id */ nullptr, start_index, end_index, selection_vector_,
                  false};
 
