@@ -631,7 +631,7 @@ TEST_F(PostgresParserTests, CreateTest) {
   EXPECT_TRUE(column->unique);
   EXPECT_TRUE(column->primary);
   EXPECT_EQ(std::string(column->name), "id");
-  EXPECT_EQ(type::Type::SMALLINT, column->type);
+  EXPECT_EQ(type::Type::INTEGER, column->type);
   // Check Second column
   column = create_stmt->columns->at(1);
   EXPECT_FALSE(column->not_null);
