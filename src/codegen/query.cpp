@@ -75,9 +75,10 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   func_args->consumer_arg = consumer_arg;
 
   // dynamic storage for serializing parameters (for parameterization)
-  std::vector<std::unique_ptr<char []>> params;
+  serialized_params_.clear();
   // load parameters into runtime state
-  LoadParams(params, func_args->char_ptr_params, func_args->char_len_params);
+  LoadParams(serialized_params_, func_args->char_ptr_params,
+             func_args->char_len_params);
 
   // Timer
   Timer<std::ratio<1, 1000>> timer;

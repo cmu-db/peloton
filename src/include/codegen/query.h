@@ -114,6 +114,7 @@ class Query {
   compiled_function_t tear_down_func_;
 
   std::vector<Parameter> params_;
+  std::vector<std::unique_ptr<char []>> serialized_params_;
   TargetList update_target_list_;
   DirectMapList update_direct_list_;
 
