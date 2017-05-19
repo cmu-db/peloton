@@ -11,63 +11,71 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/case_translator.h"
+
 #include "codegen/compilation_context.h"
+#include "codegen/expression_translator.h"
 #include "codegen/if.h"
+#include "codegen/type.h"
 
 namespace peloton {
 namespace codegen {
 
-/*
 CaseTranslator::CaseTranslator(
-    const expression::CaseExpression &case_expression,
-    CompilationContext &context)
-    : ExpressionTranslator(context), case_expression_(case_expression) {
+    const expression::CaseExpression &expression, CompilationContext &context)
+    : ExpressionTranslator(expression, context) {
+
   // We need to prepare each component of the case
-  for (const auto &clause : case_expression_.GetClauses()) {
+  for (const auto &clause : expression.GetWhenClauses()) {
     context.Prepare(*clause.first);
     context.Prepare(*clause.second);
   }
-  if (case_expression_.GetDefault() != nullptr) {
-    context.Prepare(*case_expression_.GetDefault());
+  if (expression.GetDefault() != nullptr) {
+    context.Prepare(*expression.GetDefault());
   }
 }
 
-codegen::Value CaseTranslator::DeriveValue(ConsumerContext &context,
+codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
                                            RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
 
+  // Might not appear in the output IR when all If's are optimized to Switch's
+  // Potential future enhancement: Consider using Switch instead of If
+  //                               It may provide more code readability
   llvm::BasicBlock *merge_bb =
       llvm::BasicBlock::Create(codegen.GetContext(), "caseMerge");
 
   std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> branch_vals;
 
-  const auto &clauses = case_expression_.GetClauses();
-  for (uint32_t i = 0; i < clauses.size(); i++) {
-    codegen::Value cond = context.DeriveValue(*clauses[i].first, row);
+  const auto &expr = GetExpressionAs<expression::CaseExpression>();
+
+  // Handle all the When Cluases
+  codegen::Value ret;
+  for (uint32_t i = 0; i < expr.GetWhenClauseSize(); i++) {
+    codegen::Value cond = row.DeriveValue(codegen, *expr.GetWhenClauseCond(i));
     If when{codegen, cond.GetValue(), "case" + std::to_string(i)};
     {
-      codegen::Value ret = context.DeriveValue(*clauses[i].second, row);
+      ret = row.DeriveValue(codegen, *expr.GetWhenClauseResult(i));
       branch_vals.emplace_back(ret, codegen->GetInsertBlock());
     }
     when.EndIf(merge_bb);
   }
+  // Jump to the merging block from the internal If merging block
+  codegen->CreateBr(merge_bb);
 
-  // If there's a default clause, compute it
-  if (case_expression_.GetDefault() != nullptr) {
-    codegen::Value
-        default_ret = context.DeriveValue(*case_expression_.GetDefault(), row);
-    branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
-  }
+  // Compute the default clause
+  // default_ret will have the same type as one of the ret's from above
+  codegen::Value default_ret = expr.GetDefault() != nullptr ?
+      row.DeriveValue(codegen, *expr.GetDefault()) :
+      Type::GetNullValue(codegen, ret.GetType());
+  branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
 
-  // Push the merging block to the end. Let's continue from there.
+  // Push the merging block to the end and build the PHI on this merging block
   auto *func = codegen->GetInsertBlock()->getParent();
   func->getBasicBlockList().push_back(merge_bb);
   codegen->SetInsertPoint(merge_bb);
 
   // Return the single node combining all possible branch values
-  return codegen::Value::BuildPHI(GetCodeGen(), branch_vals);
+  return codegen::Value::BuildPHI(codegen, branch_vals);
 }
-*/
 
 }  // namespace codegen
 }  // namespace peloton

@@ -85,6 +85,8 @@ class CodeGen {
   llvm::Constant *NullPtr(llvm::PointerType *type) const {
     return llvm::ConstantPointerNull::get(type);
   }
+  // Wrapper for pointer for constant string
+  llvm::Value *ConstStringPtr(const std::string s) const;
 
   // Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
