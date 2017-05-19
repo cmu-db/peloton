@@ -44,11 +44,12 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                        concurrency::Transaction *txn,
-                                        const std::vector<type::Value> &params,
-                                        std::vector<StatementResult> &result,
-                                        const std::vector<int> &result_format) {
+ExecuteResult PlanExecutor::ExecutePlan(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    concurrency::Transaction *txn,
+    const std::vector<type::Value> &params,
+    std::vector<StatementResult> &result,
+    const std::vector<int> &result_format) {
   ExecuteResult p_status;
   if (plan == nullptr) return p_status;
 
@@ -69,7 +70,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     // Build the executor tree
     LOG_TRACE("Building the executor tree");
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
-        BuildExecutorTree(nullptr, plan, executor_context.get()));
+        BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
 
     // Initialize the executor tree
     LOG_TRACE("Initializing the executor tree");
@@ -128,7 +129,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     result.clear();
 
     // Bind: casting const should be removed with later refactoring executor
-    planner::AbstractPlan *planp = const_cast<planner::AbstractPlan *>(plan);
+    planner::AbstractPlan *planp = plan.get();
     planner::BindingContext context;
     planp->PerformBinding(context);
 

@@ -59,8 +59,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::vector<int> result_format;
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
-  result_format = std::vector<int>(tuple_descriptor.size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
 }
 
@@ -123,9 +123,9 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  result_format = std::vector<int>(0, 0);
+  result_format = std::move(std::vector<int>(0, 0));
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -147,8 +147,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(0, 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -171,8 +171,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(0, 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -197,8 +197,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
       tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
-  result_format = std::vector<int>(tuple_descriptor.size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -218,8 +218,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(0, 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -241,8 +241,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  result_format = std::move(std::vector<int>(0, 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());

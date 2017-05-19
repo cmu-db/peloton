@@ -84,7 +84,7 @@ TEST_F(CopyTests, Copying) {
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<StatementResult> result;
     executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-        statement->GetPlanTree().get(), params, result, result_format);
+        statement->GetPlanTree(), params, result, result_format);
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
     LOG_TRACE("Statement executed. Result: %s",
               ResultTypeToString(status.m_result).c_str());
