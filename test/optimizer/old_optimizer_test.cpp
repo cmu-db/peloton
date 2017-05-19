@@ -67,9 +67,9 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Table Created");
@@ -98,8 +98,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
 
   result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
@@ -119,8 +119,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
 
   result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
