@@ -214,7 +214,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -241,7 +241,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -270,7 +270,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -295,7 +295,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -321,7 +321,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
