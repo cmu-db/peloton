@@ -129,11 +129,11 @@ ExecuteResult PlanExecutor::ExecutePlan(
 
     result.clear();
 
-    // Bind: casting const should be removed with later refactoring executor
-    planner::AbstractPlan *planp = plan.get();
+    // Perform binding
     planner::BindingContext context;
-    planp->PerformBinding(context);
+    plan->PerformBinding(context);
 
+    // Prepare output buffer
     std::vector<oid_t> columns;
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
