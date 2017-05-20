@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "executor/plan_executor.h"
 #include "catalog/catalog.h"
+#include "codegen/codegen_test_util.h"
+#include "codegen/insert/insert_tuples_translator.h"
+#include "common/harness.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager.h"
-#include "common/harness.h"
+#include "executor/plan_executor.h"
 #include "parser/insert_statement.h"
 #include "planner/insert_plan.h"
-#include "codegen/insert/insert_tuples_translator.h"
-#include "codegen/codegen_test_util.h"
 
 namespace peloton {
 namespace test {
@@ -49,11 +49,13 @@ TEST_F(InsertTranslatorTest, InsertTuples) {
 
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(10));
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(11));
   tuple->SetValue(2, type::ValueFactory::GetIntegerValue(12));
-  tuple->SetValue(3, type::ValueFactory::GetVarcharValue("he", true), testing_pool);
+  tuple->SetValue(3, type::ValueFactory::GetVarcharValue("he", true),
+                  testing_pool);
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(table, std::move(tuple)));
@@ -87,34 +89,28 @@ TEST_F(InsertTranslatorTest, InsertScanExecutor) {
 
   // Insert into table1
   std::unique_ptr<planner::InsertPlan> insert_plan(
-      new planner::InsertPlan(table1)
-  );
+      new planner::InsertPlan(table1));
 
   // Scan from table2
   std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(
-      new planner::SeqScanPlan(table2, nullptr, { 0, 1, 2, 3 })
-  );
+      new planner::SeqScanPlan(table2, nullptr, {0, 1, 2, 3}));
 
   insert_plan->AddChild(std::move(seq_scan_plan));
 
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   concurrency::Transaction *txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn)
-  );
+      new executor::ExecutorContext(txn));
 
   std::unique_ptr<executor::InsertExecutor> insert_executor =
-      std::make_unique<executor::InsertExecutor>(
-          insert_plan.get(), context.get()
-      );
+      std::make_unique<executor::InsertExecutor>(insert_plan.get(),
+                                                 context.get());
 
   std::unique_ptr<executor::SeqScanExecutor> scan_executor =
-      std::make_unique<executor::SeqScanExecutor>(
-          insert_plan->GetChild(0), context.get()
-      );
+      std::make_unique<executor::SeqScanExecutor>(insert_plan->GetChild(0),
+                                                  context.get());
 
   insert_executor->AddChild(scan_executor.get());
 
@@ -138,13 +134,11 @@ TEST_F(InsertTranslatorTest, InsertScanTranslator) {
 
   // Insert into table1
   std::unique_ptr<planner::InsertPlan> insert_plan(
-      new planner::InsertPlan(table1)
-  );
+      new planner::InsertPlan(table1));
 
   // Scan from table2
   std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(
-      new planner::SeqScanPlan(table2, nullptr, { 0, 1, 2, 3 })
-  );
+      new planner::SeqScanPlan(table2, nullptr, {0, 1, 2, 3}));
 
   insert_plan->AddChild(std::move(seq_scan_plan));
 

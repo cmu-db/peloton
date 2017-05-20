@@ -16,7 +16,7 @@
 namespace peloton {
 namespace codegen {
 
-llvm::Type* SchemaProxy::GetType(CodeGen &codegen) {
+llvm::Type* SchemaProxy::GetType(CodeGen& codegen) {
   static const std::string kSchemaTypeName = "peloton::catalog::Schema";
   // Check if the data table type has already been registered in the current
   // codegen context

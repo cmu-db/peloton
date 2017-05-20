@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
+#include "codegen/codegen_test_util.h"
+#include "codegen/insert/insert_tuples_translator.h"
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"
-#include "codegen/insert/insert_tuples_translator.h"
-#include "codegen/codegen_test_util.h"
 #include "expression/operator_expression.h"
 
 namespace peloton {
@@ -45,35 +45,27 @@ class BenchmarkDeleteTranslatorTest : public PelotonCodeGenTest {
 
   void TestDeleteExecutor(expression::AbstractExpression *predicate) {
     std::unique_ptr<planner::DeletePlan> delete_plan{
-        new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)
-    };
+        new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
 
-    std::unique_ptr<planner::AbstractPlan> scan{
-        new planner::SeqScanPlan(
-            &GetTestTable(TestTableId()), predicate, {0, 1, 2}
-        )
-    };
+    std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), predicate, {0, 1, 2})};
 
     delete_plan->AddChild(std::move(scan));
 
-    auto &txn_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     concurrency::Transaction *txn = txn_manager.BeginTransaction();
 
     std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn)
-    );
+        new executor::ExecutorContext(txn));
 
     std::unique_ptr<executor::DeleteExecutor> delete_executor =
-        std::make_unique<executor::DeleteExecutor>(
-            delete_plan.get(), context.get()
-        );
+        std::make_unique<executor::DeleteExecutor>(delete_plan.get(),
+                                                   context.get());
 
     std::unique_ptr<executor::SeqScanExecutor> scan_executor =
-        std::make_unique<executor::SeqScanExecutor>(
-            delete_plan->GetChild(0), context.get()
-        );
+        std::make_unique<executor::SeqScanExecutor>(delete_plan->GetChild(0),
+                                                    context.get());
 
     delete_executor->AddChild(scan_executor.get());
 
@@ -82,7 +74,8 @@ class BenchmarkDeleteTranslatorTest : public PelotonCodeGenTest {
     Timer<std::ratio<1, 1000>> timer;
     timer.Start();
 
-    while (delete_executor->Execute()) {}
+    while (delete_executor->Execute()) {
+    }
 
     timer.Stop();
 
@@ -93,14 +86,10 @@ class BenchmarkDeleteTranslatorTest : public PelotonCodeGenTest {
 
   void TestDeleteTranslator(expression::AbstractExpression *predicate) {
     std::unique_ptr<planner::DeletePlan> delete_plan{
-        new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)
-    };
+        new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
 
-    std::unique_ptr<planner::AbstractPlan> scan{
-        new planner::SeqScanPlan(
-            &GetTestTable(TestTableId()), predicate, {0, 1, 2}
-        )
-    };
+    std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), predicate, {0, 1, 2})};
 
     delete_plan->AddChild(std::move(scan));
 

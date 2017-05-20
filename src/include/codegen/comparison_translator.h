@@ -36,11 +36,9 @@ class ComparisonTranslator : public ExpressionTranslator {
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
 
-  codegen::Value DoPrimitiveComp(CodeGen &codegen,
-                                 RowBatch::Row &row) const;
+  codegen::Value DoPrimitiveComp(CodeGen &codegen, RowBatch::Row &row) const;
 
-  codegen::Value DoTypeValueComp(CodeGen &codegen,
-                                 RowBatch::Row &row) const;
+  codegen::Value DoTypeValueComp(CodeGen &codegen, RowBatch::Row &row) const;
 };
 
 }  // namespace codegen

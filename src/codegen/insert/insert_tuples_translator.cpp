@@ -14,13 +14,13 @@
 #include "storage/data_table.h"
 
 #include "codegen/catalog_proxy.h"
-#include "codegen/table.h"
-#include "codegen/parameter.h"
-#include "codegen/value_proxy.h"
-#include "codegen/primitive_value_proxy.h"
-#include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/insert/insert_helpers_proxy.h"
+#include "codegen/insert/insert_tuples_translator.h"
+#include "codegen/parameter.h"
+#include "codegen/primitive_value_proxy.h"
+#include "codegen/table.h"
 #include "codegen/transaction_runtime_proxy.h"
+#include "codegen/value_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -34,15 +34,15 @@ namespace codegen {
  * @param context
  * @param pipeline
  */
-InsertTuplesTranslator::InsertTuplesTranslator(const planner::InsertPlan &insert_plan,
-                                               CompilationContext &context,
-                                               Pipeline &pipeline)
+InsertTuplesTranslator::InsertTuplesTranslator(
+    const planner::InsertPlan &insert_plan, CompilationContext &context,
+    Pipeline &pipeline)
     : AbstractInsertTranslator(insert_plan, context, pipeline) {
-
   oid_t num_tuples = insert_plan.GetBulkInsertCount();
 
-  std::unique_ptr<const storage::Tuple *[]> tuples{
-      new const storage::Tuple *[num_tuples]};
+  std::unique_ptr<const storage::Tuple *[]> tuples {
+    new const storage::Tuple *[num_tuples]
+  };
   const storage::Tuple **raw_tuples = tuples.get();
 
   for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
@@ -52,14 +52,9 @@ InsertTuplesTranslator::InsertTuplesTranslator(const planner::InsertPlan &insert
   }
 
   uint32_t offset = context.StoreParam(
-    Parameter::GetConstValParamInstance(
-      type::ValueFactory::GetVarcharValue(
+      Parameter::GetConstValParamInstance(type::ValueFactory::GetVarcharValue(
           reinterpret_cast<char *>(raw_tuples),
-          num_tuples * sizeof(const storage::Tuple *),
-          true
-      )
-    )
-  );
+          num_tuples * sizeof(const storage::Tuple *), true)));
 
   LOG_DEBUG("num_tuples = %u", num_tuples);
 
@@ -67,7 +62,6 @@ InsertTuplesTranslator::InsertTuplesTranslator(const planner::InsertPlan &insert
 }
 
 void InsertTuplesTranslator::Produce() const {
-
   CompilationContext &context = this->GetCompilationContext();
   CodeGen &codegen = this->GetCodeGen();
 
@@ -83,16 +77,14 @@ void InsertTuplesTranslator::Produce() const {
                         codegen.Const32(table->GetOid())});
 
   llvm::Value *char_ptr = codegen.CallFunc(
-          PrimitiveValueProxy::_GetVarcharVal::GetFunction(codegen),
-          {context.GetCharPtrParamPtr(), codegen.Const64(this->tuples_offset_)});
+      PrimitiveValueProxy::_GetVarcharVal::GetFunction(codegen),
+      {context.GetCharPtrParamPtr(), codegen.Const64(this->tuples_offset_)});
   llvm::Value *char_len = codegen.CallFunc(
-          PrimitiveValueProxy::_GetVarcharLen::GetFunction(codegen),
-          {context.GetCharLenParamPtr(), codegen.Const64(this->tuples_offset_)});
+      PrimitiveValueProxy::_GetVarcharLen::GetFunction(codegen),
+      {context.GetCharLenParamPtr(), codegen.Const64(this->tuples_offset_)});
 
-  codegen.CallFunc(
-      InsertHelpersProxy::_InsertValue::GetFunction(codegen),
-      {txn_ptr, table_ptr, char_ptr, char_len}
-  );
+  codegen.CallFunc(InsertHelpersProxy::_InsertValue::GetFunction(codegen),
+                   {txn_ptr, table_ptr, char_ptr, char_len});
   codegen.CallFunc(
       TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen),
       {GetCompilationContext().GetExecContextPtr()});

@@ -16,8 +16,8 @@
 #include "codegen/operator_translator.h"
 #include "codegen/pipeline.h"
 #include "codegen/runtime_state.h"
-#include "planner/update_plan.h"
 #include "codegen/table.h"
+#include "planner/update_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -25,8 +25,8 @@ namespace codegen {
 class UpdateTranslator : public OperatorTranslator {
  public:
   /** @brief Constructor. */
-  UpdateTranslator(const planner::UpdatePlan &plan,
-                   CompilationContext &context, Pipeline &pipeline);
+  UpdateTranslator(const planner::UpdatePlan &plan, CompilationContext &context,
+                   Pipeline &pipeline);
 
   /** @brief Nothing to initialize. */
   void InitializeState() override {}

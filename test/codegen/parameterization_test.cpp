@@ -15,8 +15,8 @@
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
-#include "planner/seq_scan_plan.h"
 #include "expression/parameter_value_expression.h"
+#include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
 
@@ -68,7 +68,8 @@ TEST_F(ParameterizationTest, TestConstVarCharParam) {
       ExpressionType::COMPARE_NOTEQUAL, d_col_exp, const_str_exp);
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), d_ne_str, {0, 1, 2, 3}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), d_ne_str, {0, 1, 2, 3}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -81,7 +82,7 @@ TEST_F(ParameterizationTest, TestConstVarCharParam) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -93,15 +94,16 @@ TEST_F(ParameterizationTest, TestNonConstVarCharParam) {
 
   // 1) Setup the predicate
   auto* d_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::VARCHAR, 0, 3);
+      new expression::TupleValueExpression(type::Type::TypeId::VARCHAR, 0, 3);
   std::string str = "";
   type::Value param_str = type::ValueFactory::GetVarcharValue(str);
   auto* param_str_exp = CodegenTestUtils::ParamExpression(0);
   auto* d_ne_str = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_NOTEQUAL, d_col_exp, param_str_exp);
+      ExpressionType::COMPARE_NOTEQUAL, d_col_exp, param_str_exp);
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), d_ne_str, {0, 1, 2, 3}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), d_ne_str, {0, 1, 2, 3}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -114,10 +116,11 @@ TEST_F(ParameterizationTest, TestNonConstVarCharParam) {
   codegen::BufferingConsumer buffer{{3}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -179,27 +182,28 @@ TEST_F(ParameterizationTest, TestConjunctionWithNonConstParams) {
 
   // a >= 20
   auto* a_col_exp =
-    new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* param_20_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_a = type::ValueFactory::GetIntegerValue(20);
   auto* a_gt_20 = new expression::ComparisonExpression(
-    ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, param_20_exp);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, param_20_exp);
 
   // d != ""
   auto* d_col_exp =
-    new expression::TupleValueExpression(type::Type::TypeId::VARCHAR, 0, 3);
+      new expression::TupleValueExpression(type::Type::TypeId::VARCHAR, 0, 3);
   std::string str = "";
   type::Value param_str = type::ValueFactory::GetVarcharValue(str);
   auto* param_str_exp = CodegenTestUtils::ParamExpression(1);
   auto* d_ne_str = new expression::ComparisonExpression(
-    ExpressionType::COMPARE_NOTEQUAL, d_col_exp, param_str_exp);
+      ExpressionType::COMPARE_NOTEQUAL, d_col_exp, param_str_exp);
 
   // a >= 20 AND d != ""
   auto* conj_eq = new expression::ConjunctionExpression(
-    ExpressionType::CONJUNCTION_AND, a_gt_20, d_ne_str);
+      ExpressionType::CONJUNCTION_AND, a_gt_20, d_ne_str);
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), conj_eq, {0, 1, 2, 3}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), conj_eq, {0, 1, 2, 3}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -212,17 +216,17 @@ TEST_F(ParameterizationTest, TestConjunctionWithNonConstParams) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 2, results.size());
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
-    type::ValueFactory::GetIntegerValue(20)));
+                                type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CMP_FALSE, results[0].GetValue(3).CompareEquals(
-    type::ValueFactory::GetVarcharValue(str)));
+                                 type::ValueFactory::GetVarcharValue(str)));
 }
-
 
 TEST_F(ParameterizationTest, TestColWithParamAddition) {
   //
@@ -233,23 +237,23 @@ TEST_F(ParameterizationTest, TestColWithParamAddition) {
   // Construct the components of the predicate
 
   // a + ?
-  auto *a_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* a_col_exp =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* param_1_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_a = type::ValueFactory::GetIntegerValue(1);
-  auto *a_plus_param = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
-        param_1_exp);
+  auto* a_plus_param = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
+      param_1_exp);
 
   // b = a + ?
-  auto *b_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto *b_eq_a_plus_param = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_param);
+  auto* b_col_exp =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* b_eq_a_plus_param = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_param);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{
-        &GetTestTable(TestTableId()), b_eq_a_plus_param, {0, 1}};
+      &GetTestTable(TestTableId()), b_eq_a_plus_param, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -262,10 +266,11 @@ TEST_F(ParameterizationTest, TestColWithParamAddition) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -279,22 +284,22 @@ TEST_F(ParameterizationTest, TestColWithParamSubtraction) {
 
   // b - 1
   auto* b_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
   auto* param_1_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_b = type::ValueFactory::GetIntegerValue(1);
   auto* b_minus_param = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER, b_col_exp,
-        param_1_exp);
+      ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER, b_col_exp,
+      param_1_exp);
 
   // a = b - ?
   auto* a_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* a_eq_b_minus_param = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_EQUAL, a_col_exp, b_minus_param);
+      ExpressionType::COMPARE_EQUAL, a_col_exp, b_minus_param);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{
-        &GetTestTable(TestTableId()), a_eq_b_minus_param, {0, 1}};
+      &GetTestTable(TestTableId()), a_eq_b_minus_param, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -307,10 +312,11 @@ TEST_F(ParameterizationTest, TestColWithParamSubtraction) {
   std::vector<type::Value> params = {param_b};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -324,22 +330,22 @@ TEST_F(ParameterizationTest, TestColWithParamDivision) {
 
   // a / ?
   auto* a_rhs_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* param_2_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_a = type::ValueFactory::GetIntegerValue(2);
   auto* a_div_param = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::INTEGER,
-        a_rhs_col_exp, param_2_exp);
+      ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::INTEGER,
+      a_rhs_col_exp, param_2_exp);
 
   // a = a / ?
   auto* a_lhs_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* a_eq_a_div_param = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_div_param);
+      ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_div_param);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{
-        &GetTestTable(TestTableId()), a_eq_a_div_param, {0, 1, 2}};
+      &GetTestTable(TestTableId()), a_eq_a_div_param, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -352,10 +358,11 @@ TEST_F(ParameterizationTest, TestColWithParamDivision) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results - only one output tuple (with a == 0)
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 }
 
@@ -369,29 +376,29 @@ TEST_F(ParameterizationTest, TestColWithParamMultiplication) {
 
   // a * b
   auto* a_rhs_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* b_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
   auto* a_mul_b = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
-        a_rhs_col_exp, b_col_exp);
+      ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
+      a_rhs_col_exp, b_col_exp);
 
   // a * ?
   auto* a_lhs_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* param_1_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_a = type::ValueFactory::GetIntegerValue(1);
   auto* a_mul_param = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
-        a_lhs_col_exp, param_1_exp);
+      ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
+      a_lhs_col_exp, param_1_exp);
 
   // a * ? = a * b
   auto* a_mul_param_eq_a_mul_b = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_EQUAL, a_mul_param, a_mul_b);
+      ExpressionType::COMPARE_EQUAL, a_mul_param, a_mul_b);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{
-        &GetTestTable(TestTableId()), a_mul_param_eq_a_mul_b, {0, 1, 2}};
+      &GetTestTable(TestTableId()), a_mul_param_eq_a_mul_b, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -404,7 +411,8 @@ TEST_F(ParameterizationTest, TestColWithParamMultiplication) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -421,22 +429,22 @@ TEST_F(ParameterizationTest, TestColWithParamModulo) {
 
   // b % ?
   auto* b_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
   auto* param_1_exp = CodegenTestUtils::ParamExpression(0);
   type::Value param_a = type::ValueFactory::GetIntegerValue(1);
   auto* b_mod_param = new expression::OperatorExpression(
-        ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
-        param_1_exp);
+      ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
+      param_1_exp);
 
   // a = b % ?
   auto* a_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* a_eq_b_mod_param = new expression::ComparisonExpression(
-        ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_param);
+      ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_param);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{
-        &GetTestTable(TestTableId()), a_eq_b_mod_param, {0, 1, 2}};
+      &GetTestTable(TestTableId()), a_eq_b_mod_param, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -449,15 +457,16 @@ TEST_F(ParameterizationTest, TestColWithParamModulo) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()), &params);
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()),
+                    &params);
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
-        type::ValueFactory::GetIntegerValue(0)));
+                                type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
-        type::ValueFactory::GetIntegerValue(1)));
+                                type::ValueFactory::GetIntegerValue(1)));
 }
 
 }  // namespace test

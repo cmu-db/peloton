@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "executor/plan_executor.h"
 #include "catalog/catalog.h"
-#include "common/harness.h"
-#include "codegen/insert/insert_tuples_translator.h"
 #include "codegen/codegen_test_util.h"
+#include "codegen/insert/insert_tuples_translator.h"
+#include "common/harness.h"
+#include "executor/plan_executor.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 
@@ -54,34 +54,28 @@ class BenchmarkInsertTranslatorTest : public PelotonCodeGenTest {
 
     // Insert into table3
     std::unique_ptr<planner::InsertPlan> insert_plan(
-        new planner::InsertPlan(table3)
-    );
+        new planner::InsertPlan(table3));
 
     // Scan from table2
     std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(
-        new planner::SeqScanPlan(table4, predicate, {0, 1, 2, 3})
-    );
+        new planner::SeqScanPlan(table4, predicate, {0, 1, 2, 3}));
 
     insert_plan->AddChild(std::move(seq_scan_plan));
 
-    auto &txn_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     concurrency::Transaction *txn = txn_manager.BeginTransaction();
 
     std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn)
-    );
+        new executor::ExecutorContext(txn));
 
     std::unique_ptr<executor::InsertExecutor> insert_executor =
-        std::make_unique<executor::InsertExecutor>(
-            insert_plan.get(), context.get()
-        );
+        std::make_unique<executor::InsertExecutor>(insert_plan.get(),
+                                                   context.get());
 
     std::unique_ptr<executor::SeqScanExecutor> scan_executor =
-        std::make_unique<executor::SeqScanExecutor>(
-            insert_plan->GetChild(0), context.get()
-        );
+        std::make_unique<executor::SeqScanExecutor>(insert_plan->GetChild(0),
+                                                    context.get());
 
     insert_executor->AddChild(scan_executor.get());
 
@@ -89,7 +83,8 @@ class BenchmarkInsertTranslatorTest : public PelotonCodeGenTest {
     timer.Start();
 
     EXPECT_TRUE(insert_executor->Init());
-    while (insert_executor->Execute());
+    while (insert_executor->Execute())
+      ;
 
     timer.Stop();
     LOG_INFO("Time: %.2f ms\n", timer.GetDuration());
@@ -109,13 +104,11 @@ class BenchmarkInsertTranslatorTest : public PelotonCodeGenTest {
 
     // Insert into table3
     std::unique_ptr<planner::InsertPlan> insert_plan(
-        new planner::InsertPlan(table3)
-    );
+        new planner::InsertPlan(table3));
 
     // Scan from table4
     std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(
-        new planner::SeqScanPlan(table4, predicate, {0, 1, 2, 3})
-    );
+        new planner::SeqScanPlan(table4, predicate, {0, 1, 2, 3}));
 
     insert_plan->AddChild(std::move(seq_scan_plan));
 
@@ -135,7 +128,7 @@ class BenchmarkInsertTranslatorTest : public PelotonCodeGenTest {
     LOG_INFO("Time: %.2f ms\n", timer.GetDuration());
     // The results should be sorted in ascending order
     auto &results = buffer.GetOutputTuples();
-    (void) results;
+    (void)results;
 
     LOG_INFO("Table 3 has %zu tuples", table3->GetTupleCount());
     LOG_INFO("Table 4 has %zu tuples", table4->GetTupleCount());

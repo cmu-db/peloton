@@ -13,43 +13,42 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/value_factory.h"
 #include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace codegen {
 
 class ValueFactoryProxy {
  public:
-  static void GetTinyIntValue(
-          type::Value *values, uint32_t offset, int8_t value) ;
+  static void GetTinyIntValue(type::Value *values, uint32_t offset,
+                              int8_t value);
 
-  static void GetSmallIntValue(
-          type::Value *values, uint32_t offset, int16_t value) ;
+  static void GetSmallIntValue(type::Value *values, uint32_t offset,
+                               int16_t value);
 
-  static void GetIntegerValue(
-          type::Value *values, uint32_t offset, int32_t value) ;
+  static void GetIntegerValue(type::Value *values, uint32_t offset,
+                              int32_t value);
 
-  static void GetBigIntValue(
-          type::Value *values, uint32_t offset, int64_t value) ;
+  static void GetBigIntValue(type::Value *values, uint32_t offset,
+                             int64_t value);
 
-  static void GetDateValue(
-          type::Value *values, uint32_t offset, uint32_t value) ;
+  static void GetDateValue(type::Value *values, uint32_t offset,
+                           uint32_t value);
 
-  static void GetTimestampValue(
-          type::Value *values, uint32_t offset, int64_t value) ;
+  static void GetTimestampValue(type::Value *values, uint32_t offset,
+                                int64_t value);
 
-  static void GetDecimalValue(
-          type::Value *values, uint32_t offset, double value) ;
+  static void GetDecimalValue(type::Value *values, uint32_t offset,
+                              double value);
 
-  static void GetBooleanValue(
-          type::Value *values, uint32_t offset, bool value) ;
+  static void GetBooleanValue(type::Value *values, uint32_t offset, bool value);
 
-  static void GetVarcharValue(
-          type::Value *values, uint32_t offset, char *c_str, int len) ;
+  static void GetVarcharValue(type::Value *values, uint32_t offset, char *c_str,
+                              int len);
 
-  static void GetVarbinaryValue(
-          type::Value *values, uint32_t offset, char *c_str, int len) ;
+  static void GetVarbinaryValue(type::Value *values, uint32_t offset,
+                                char *c_str, int len);
 
   // The proxy around ValuePeeker::PeekTinyInt()
   struct _GetTinyIntValue {
@@ -87,22 +86,22 @@ class ValueFactoryProxy {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  struct _GetDecimalValue{
+  struct _GetDecimalValue {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  struct _GetBooleanValue{
+  struct _GetBooleanValue {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  struct _GetVarcharValue{
+  struct _GetVarcharValue {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  struct _GetVarbinaryValue{
+  struct _GetVarbinaryValue {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };

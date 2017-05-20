@@ -13,10 +13,12 @@
 #pragma once
 
 #include "catalog/schema.h"
-#include "planner/attribute_info.h"
-#include "planner/binding_context.h"
+#include "codegen/raw_tuple/raw_tuple_runtime_proxy.h"
 #include "codegen/row_batch.h"
 #include "codegen/type.h"
+#include "common/logger.h"
+#include "planner/attribute_info.h"
+#include "planner/binding_context.h"
 
 namespace peloton {
 namespace codegen {
@@ -30,14 +32,16 @@ namespace codegen {
  */
 class RawTupleRef {
  public:
-  RawTupleRef(CodeGen &codegen,
-              RowBatch::Row &row,
+  RawTupleRef(CodeGen &codegen, RowBatch::Row &row,
               const catalog::Schema *schema,
               const std::vector<const planner::AttributeInfo *> &ais,
-              llvm::Value *data,
-              llvm::Value *pool_ptr)
-  : codegen_(codegen), row_(row), schema_(schema), ais_(ais),
-    data_(data), pool_ptr_(pool_ptr) { }
+              llvm::Value *data, llvm::Value *pool_ptr)
+      : codegen_(codegen),
+        row_(row),
+        schema_(schema),
+        ais_(ais),
+        data_(data),
+        pool_ptr_(pool_ptr) {}
 
   /**
    * @brief Writes out an attribute into the buffer.
@@ -80,14 +84,12 @@ class RawTupleRef {
     codegen::Value v = this->row_.DeriveValue(this->codegen_, attrib_info);
 
     llvm::Value *ptr = this->codegen_->CreateConstInBoundsGEP1_32(
-        this->codegen_.ByteType(),
-        this->data_,
-        offset
-    );
+        this->codegen_.ByteType(), this->data_, offset);
 
     llvm::Type *val_type;
     llvm::Type *len_type;
-    Type::GetTypeForMaterialization(this->codegen_, v.GetType(), val_type, len_type);
+    Type::GetTypeForMaterialization(this->codegen_, v.GetType(), val_type,
+                                    len_type);
 
     LOG_DEBUG("CGen Materialization for %d", column_id);
 
@@ -112,12 +114,12 @@ class RawTupleRef {
         this->codegen_.CallFunc(
             RawTupleRuntimeProxy::_SetVarLen::GetFunction(this->codegen_),
             {
-                v.GetLength(),                                              // len
-                v.GetValue(),                                               // value
-                this->codegen_->CreateBitCast(ptr, codegen_.CharPtrType()), // buf
-                this->pool_ptr_                                             // pool
-            }
-        );
+                v.GetLength(),  // len
+                v.GetValue(),   // value
+                this->codegen_->CreateBitCast(ptr,
+                                              codegen_.CharPtrType()),  // buf
+                this->pool_ptr_                                         // pool
+            });
         break;
       }
       default: {

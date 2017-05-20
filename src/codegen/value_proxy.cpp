@@ -30,12 +30,12 @@ llvm::Type* ValueProxy::GetType(CodeGen& codegen) {
 
   // Type isnt cached, create it
   auto* opaque_arr_type =
-        codegen.VectorType(codegen.Int8Type(), sizeof(type::Value));
+      codegen.VectorType(codegen.Int8Type(), sizeof(type::Value));
   return llvm::StructType::create(codegen.GetContext(), {opaque_arr_type},
-                                kValueTypeName);
+                                  kValueTypeName);
 }
 
-type::Value *ValueProxy::GetValue(type::Value *values, uint32_t offset) {
+type::Value* ValueProxy::GetValue(type::Value* values, uint32_t offset) {
   return &values[offset];
 }
 
@@ -65,11 +65,10 @@ llvm::Function* ValueProxy::_GetValue::GetFunction(CodeGen& codegen) {
   }
 
   // The function hasn't been registered, let's do it now
-  llvm::FunctionType* fn_type =
-        llvm::FunctionType::get(
-                ValueProxy::GetType(codegen)->getPointerTo(),
-                {ValueProxy::GetType(codegen)->getPointerTo(), codegen.Int64Type()},
-                false);
+  llvm::FunctionType* fn_type = llvm::FunctionType::get(
+      ValueProxy::GetType(codegen)->getPointerTo(),
+      {ValueProxy::GetType(codegen)->getPointerTo(), codegen.Int64Type()},
+      false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 

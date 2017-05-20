@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/pool/pool_runtime.h"
 #include "type/abstract_pool.h"
 #include "type/ephemeral_pool.h"
-#include "codegen/pool/pool_runtime.h"
 
 namespace peloton {
 namespace codegen {
@@ -22,9 +22,7 @@ type::AbstractPool *PoolRuntime::CreatePool() {
   return pool;
 }
 
-void PoolRuntime::DeletePool(type::AbstractPool *pool) {
-  delete pool;
-}
+void PoolRuntime::DeletePool(type::AbstractPool *pool) { delete pool; }
 
 }  // namespace codegen
 }  // namespace peloton

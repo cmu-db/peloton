@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/value_peeker.h"
 #include "type/value.h"
+#include "type/value_peeker.h"
 
 namespace peloton {
 namespace codegen {
@@ -46,7 +46,6 @@ class InsertHelpersProxy {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 };
-
 
 }  // namespace codegen
 }  // namespace peloton

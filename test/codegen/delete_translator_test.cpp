@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
+#include "codegen/codegen_test_util.h"
+#include "codegen/insert/insert_tuples_translator.h"
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"
-#include "codegen/insert/insert_tuples_translator.h"
-#include "codegen/codegen_test_util.h"
 #include "expression/operator_expression.h"
 
 namespace peloton {
@@ -33,7 +33,7 @@ namespace test {
 
 class DeleteTranslatorTest : public PelotonCodeGenTest {
  public:
-  DeleteTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64){
+  DeleteTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }
 
@@ -51,27 +51,27 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
   void reloadTable() {
     std::unique_ptr<planner::DeletePlan> delete_plan{
         new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-    std::unique_ptr<planner::AbstractPlan> scan{
-        new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
+    std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
     delete_plan->AddChild(std::move(scan));
-
 
     planner::BindingContext deleteContext;
     delete_plan->PerformBinding(deleteContext);
 
     codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
-    CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+    CompileAndExecute(*delete_plan, buffer,
+                      reinterpret_cast<char*>(buffer.GetState()));
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }
 
   uint32_t TestTableId() { return test_table1_id; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
+
  private:
   uint32_t num_rows_to_insert = 64;
 };
 
 TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
-
   //
   // DELETE FROM table;
   //
@@ -79,23 +79,23 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-  std::unique_ptr<planner::AbstractPlan> scan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
+  std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
-  LOG_DEBUG("tile group count %zu", GetTestTable(TestTableId()).GetTileGroupCount());
-
+  LOG_DEBUG("tile group count %zu",
+            GetTestTable(TestTableId()).GetTileGroupCount());
 
   planner::BindingContext deleteContext;
   delete_plan->PerformBinding(deleteContext);
 
   codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
-  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
   EXPECT_EQ(0, getCurrentTableSize());
 
   reloadTable();
 }
-
 
 TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   //
@@ -113,8 +113,8 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-  std::unique_ptr<planner::AbstractPlan> scan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableId()), a_gt_40, {0, 1, 2})};
+  std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), a_gt_40, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -125,11 +125,11 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   EXPECT_EQ(4, getCurrentTableSize());
   reloadTable();
-
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
@@ -156,12 +156,13 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
       ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
 
   // a >= 20 AND b = 21
-  auto* conj_eq = new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
+  auto* conj_eq = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-  std::unique_ptr<planner::AbstractPlan> scan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableId()), conj_eq, {0, 1, 2})};
+  std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), conj_eq, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -171,12 +172,12 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
   reloadTable();
 }
-
 
 TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   //
@@ -200,8 +201,8 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-  std::unique_ptr<planner::AbstractPlan> scan{
-      new planner::SeqScanPlan(&GetTestTable(TestTableId()), a_eq_b_mod_1, {0, 1, 2})};
+  std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), a_eq_b_mod_1, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -211,7 +212,8 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
   reloadTable();

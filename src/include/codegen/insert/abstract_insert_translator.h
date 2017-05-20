@@ -39,7 +39,6 @@ namespace codegen {
  */
 class AbstractInsertTranslator : public OperatorTranslator {
  public:
-
   /**
    * @brief Constructor.
    */
@@ -78,7 +77,6 @@ class AbstractInsertTranslator : public OperatorTranslator {
 
  protected:
   const planner::InsertPlan &insert_plan_;
-
 };
 
 }  // namespace codegen

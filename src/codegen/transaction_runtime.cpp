@@ -59,12 +59,12 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-void DoProjection (AbstractTuple *dest, const AbstractTuple *tuple,
-                   type::Value *values, uint32_t *col_ids,
-                   uint32_t target_size, DirectMapList direct_list,
-                   UNUSED_ATTRIBUTE executor::ExecutorContext *econtext = nullptr) {
+void DoProjection(
+    AbstractTuple *dest, const AbstractTuple *tuple, type::Value *values,
+    uint32_t *col_ids, uint32_t target_size, DirectMapList direct_list,
+    UNUSED_ATTRIBUTE executor::ExecutorContext *econtext = nullptr) {
   // Execute target list
-  for (uint32_t i = 0; i < target_size; i ++) {
+  for (uint32_t i = 0; i < target_size; i++) {
     dest->SetValue(col_ids[i], values[i]);
   }
 
@@ -80,15 +80,15 @@ void DoProjection (AbstractTuple *dest, const AbstractTuple *tuple,
 }
 
 void DoProjection(storage::Tuple *dest, const AbstractTuple *tuple,
-                  type::Value *values, uint32_t *col_ids,
-                  uint32_t target_size, DirectMapList direct_list,
+                  type::Value *values, uint32_t *col_ids, uint32_t target_size,
+                  DirectMapList direct_list,
                   executor::ExecutorContext *econtext = nullptr) {
   // Get varlen pool
   type::AbstractPool *pool = nullptr;
   if (econtext != nullptr) pool = econtext->GetPool();
 
   // Execute target list
-  for (uint32_t i = 0; i < target_size; i ++) {
+  for (uint32_t i = 0; i < target_size; i++) {
     dest->SetValue(col_ids[i], values[i]);
   }
 
@@ -103,18 +103,15 @@ void DoProjection(storage::Tuple *dest, const AbstractTuple *tuple,
 }
 
 bool PerformUpdatePrimaryKey(concurrency::Transaction *current_txn,
-            bool is_owner, oid_t tile_group_id,
-            storage::DataTable *target_table_, oid_t physical_tuple_id,
-            ItemPointer &old_location,
-            storage::TileGroup *tile_group,
-            type::Value *values,
-            uint32_t *col_ids,
-            uint32_t target_size,
-            DirectMapList direct_list_,
-            executor::ExecutorContext *exec_context) {
-
+                             bool is_owner, oid_t tile_group_id,
+                             storage::DataTable *target_table_,
+                             oid_t physical_tuple_id, ItemPointer &old_location,
+                             storage::TileGroup *tile_group,
+                             type::Value *values, uint32_t *col_ids,
+                             uint32_t target_size, DirectMapList direct_list_,
+                             executor::ExecutorContext *exec_context) {
   auto &transaction_manager =
-            concurrency::TransactionManagerFactory::GetInstance();
+      concurrency::TransactionManagerFactory::GetInstance();
 
   ///////////////////////////////////////
   // Delete tuple/version chain
@@ -131,13 +128,12 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *current_txn,
   if (new_location.IsNull() == true) {
     LOG_TRACE("Fail to insert new tuple. Set txn failure.");
     if (is_owner == false) {
-    // If the ownership is acquire inside this update executor, we
-    // release it here
-    transaction_manager.YieldOwnership(current_txn, tile_group_id,
-            physical_tuple_id);
+      // If the ownership is acquire inside this update executor, we
+      // release it here
+      transaction_manager.YieldOwnership(current_txn, tile_group_id,
+                                         physical_tuple_id);
     }
-    transaction_manager.SetTransactionResult(current_txn,
-            ResultType::FAILURE);
+    transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
     return false;
   }
   transaction_manager.PerformDelete(current_txn, old_location, new_location);
@@ -152,20 +148,20 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *current_txn,
   expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                            physical_tuple_id);
 
-  DoProjection(&new_tuple, &old_tuple, values,
-               col_ids, target_size, direct_list_, exec_context);
+  DoProjection(&new_tuple, &old_tuple, values, col_ids, target_size,
+               direct_list_, exec_context);
 
   // insert tuple into the table.
   ItemPointer *index_entry_ptr = nullptr;
   peloton::ItemPointer location =
-        target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
+      target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
 
   // it is possible that some concurrent transactions have inserted the
   // same tuple.
   // in this case, abort the transaction.
   if (location.block == INVALID_OID) {
     transaction_manager.SetTransactionResult(current_txn,
-        peloton::ResultType::FAILURE);
+                                             peloton::ResultType::FAILURE);
     return false;
   }
 
@@ -174,33 +170,26 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *current_txn,
   return true;
 }
 
-bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
-                           storage::DataTable *target_table_,
-                           storage::TileGroup &tile_group,
-                           uint32_t physical_tuple_id,
-                           uint32_t *col_ids,
-                           type::Value *target_vals,
-                           bool update_primary_key,
-                           Target *target_list,
-                           uint32_t target_list_size,
-                           DirectMap *direct_list,
-                           uint32_t direct_list_size,
-                           executor::ExecutorContext *executor_context_) {
-
+bool TransactionRuntime::PerformUpdate(
+    concurrency::Transaction &txn, storage::DataTable *target_table_,
+    storage::TileGroup &tile_group, uint32_t physical_tuple_id,
+    uint32_t *col_ids, type::Value *target_vals, bool update_primary_key,
+    Target *target_list, uint32_t target_list_size, DirectMap *direct_list,
+    uint32_t direct_list_size, executor::ExecutorContext *executor_context_) {
   storage::TileGroupHeader *tile_group_header = tile_group.GetHeader();
   auto tile_group_id = tile_group.GetTileGroupId();
 
   auto &transaction_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
+      concurrency::TransactionManagerFactory::GetInstance();
 
   auto *current_txn = &txn;
 
   TargetList target_list_;
-  for (uint32_t i = 0; i < target_list_size; i ++) {
+  for (uint32_t i = 0; i < target_list_size; i++) {
     target_list_.emplace_back(target_list[i]);
   }
   DirectMapList direct_list_;
-  for (uint32_t i = 0; i < direct_list_size; i ++) {
+  for (uint32_t i = 0; i < direct_list_size; i++) {
     direct_list_.emplace_back(direct_list[i]);
   }
 
@@ -212,7 +201,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
                                               physical_tuple_id);
 
   bool is_written = transaction_manager.IsWritten(
-        current_txn, tile_group_header, physical_tuple_id);
+      current_txn, tile_group_header, physical_tuple_id);
 
   PL_ASSERT((is_owner == false && is_written == true) == false);
 
@@ -220,13 +209,12 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   bool ret = false;
 
   if (is_owner == true && is_written == true) {
-
     if (update_primary_key) {
       // Update primary key
-      ret = PerformUpdatePrimaryKey(current_txn, is_owner, tile_group_id,
-                                    target_table_, physical_tuple_id, old_location,
-                                    &tile_group, target_vals, col_ids,
-                                    target_list_size, direct_list_, executor_context_);
+      ret = PerformUpdatePrimaryKey(
+          current_txn, is_owner, tile_group_id, target_table_,
+          physical_tuple_id, old_location, &tile_group, target_vals, col_ids,
+          target_list_size, direct_list_, executor_context_);
 
       // Examine the result
       if (ret == true) {
@@ -244,7 +232,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
-              &tile_group, physical_tuple_id);
+          &tile_group, physical_tuple_id);
       // Execute the projections
       DoProjection(&old_tuple, &old_tuple, target_vals, col_ids,
                    target_list_size, direct_list_, executor_context_);
@@ -256,17 +244,18 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   else {
     // Skip the IsOwnable and AcquireOwnership if we have already got the
     // ownership
-    bool is_ownable =
-            is_owner || transaction_manager.IsOwnable(
-                    current_txn, tile_group_header, physical_tuple_id);
+    bool is_ownable = is_owner ||
+                      transaction_manager.IsOwnable(
+                          current_txn, tile_group_header, physical_tuple_id);
 
     if (is_ownable == true) {
       // if the tuple is not owned by any transaction and is visible to
       // current transaction.
 
       bool acquire_ownership_success =
-            is_owner || transaction_manager.AcquireOwnership(
-                    current_txn, tile_group_header, physical_tuple_id);
+          is_owner ||
+          transaction_manager.AcquireOwnership(current_txn, tile_group_header,
+                                               physical_tuple_id);
 
       if (acquire_ownership_success == false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -277,17 +266,17 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
 
       if (update_primary_key) {
         // Update primary key
-        ret = PerformUpdatePrimaryKey(current_txn, is_owner, tile_group_id,
-                                      target_table_, physical_tuple_id, old_location,
-                                      &tile_group, target_vals, col_ids,
-                                      target_list_size, direct_list_, executor_context_);
+        ret = PerformUpdatePrimaryKey(
+            current_txn, is_owner, tile_group_id, target_table_,
+            physical_tuple_id, old_location, &tile_group, target_vals, col_ids,
+            target_list_size, direct_list_, executor_context_);
 
         if (ret == true) {
-            executor_context_->num_processed += 1;  // updated one
+          executor_context_->num_processed += 1;  // updated one
         }
-            // When fail, ownership release is done inside PerformUpdatePrimaryKey
+        // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
-            return false;
+          return false;
         }
       }
 
@@ -303,10 +292,10 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
         auto new_tile_group = manager.GetTileGroup(new_location.block);
 
         expression::ContainerTuple<storage::TileGroup> new_tuple(
-              new_tile_group.get(), new_location.offset);
+            new_tile_group.get(), new_location.offset);
 
         expression::ContainerTuple<storage::TileGroup> old_tuple(
-              &tile_group, physical_tuple_id);
+            &tile_group, physical_tuple_id);
 
         // perform projection from old version to new version.
         // this triggers in-place update, and we do not need to allocate
@@ -318,9 +307,8 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
         ItemPointer *indirection =
             tile_group_header->GetIndirection(old_location.offset);
         // finally install new version into the table
-        ret = target_table_->InstallVersion(&new_tuple,
-                                          &target_list_,
-                                          current_txn, indirection);
+        ret = target_table_->InstallVersion(&new_tuple, &target_list_,
+                                            current_txn, indirection);
 
         // PerformUpdate() will not be executed if the insertion failed.
         // There is a write lock acquired, but since it is not in the write
@@ -347,7 +335,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
         LOG_TRACE("perform update new location: %u, %u", new_location.block,
                   new_location.offset);
         transaction_manager.PerformUpdate(current_txn, old_location,
-                                        new_location);
+                                          new_location);
 
         // TODO: Why don't we also do this in the if branch above?
         executor_context_->num_processed += 1;  // updated one
@@ -356,7 +344,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
       // transaction should be aborted as we cannot update the latest version.
       LOG_TRACE("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(current_txn,
-                                             ResultType::FAILURE);
+                                               ResultType::FAILURE);
       return false;
     }
   }

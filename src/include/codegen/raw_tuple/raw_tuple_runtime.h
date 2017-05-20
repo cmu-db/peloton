@@ -13,20 +13,20 @@
 #pragma once
 
 #include "catalog/schema.h"
-#include "planner/attribute_info.h"
-#include "planner/binding_context.h"
 #include "codegen/row_batch.h"
 #include "codegen/type.h"
-#include "type/types.h"
+#include "planner/attribute_info.h"
+#include "planner/binding_context.h"
 #include "storage/tuple.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
 
 class RawTupleRuntime {
  public:
-  static void SetVarLen(uint32_t len, char *data,
-                        char *buf, type::AbstractPool *pool);
+  static void SetVarLen(uint32_t len, char *data, char *buf,
+                        type::AbstractPool *pool);
 
   static void DumpTuple(storage::Tuple *tuple);
 };

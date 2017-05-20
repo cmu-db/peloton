@@ -20,8 +20,7 @@ namespace peloton {
 namespace codegen {
 
 AbstractInsertTranslator::AbstractInsertTranslator(
-    const planner::InsertPlan &insert_plan,
-    CompilationContext &context,
+    const planner::InsertPlan &insert_plan, CompilationContext &context,
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline), insert_plan_(insert_plan) {}
 

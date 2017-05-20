@@ -25,10 +25,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Parameter {
  public:
-  enum class ParamType {
-    Const = 0,
-    Param = 1
-  };
+  enum class ParamType { Const = 0, Param = 1 };
 
   static Parameter GetConstValParamInstance(type::Value value) {
     return Parameter{ParamType::Const, value, 0, value.GetTypeId()};
@@ -37,35 +34,22 @@ class Parameter {
   static Parameter GetParamValParamInstance(int param_idx,
                                             type::Type::TypeId type_id) {
     return Parameter{ParamType::Param,
-                     type::ValueFactory::GetBooleanValue(false),
-                     param_idx, type_id};
+                     type::ValueFactory::GetBooleanValue(false), param_idx,
+                     type_id};
   }
 
+  type::Value GetValue() { return value_; }
 
-  type::Value GetValue() {
-    return value_;
-  }
+  ParamType GetType() { return type_; }
 
-  ParamType GetType() {
-    return type_;
-  }
+  type::Type::TypeId GetValueType() { return type_id_; }
 
-  type::Type::TypeId GetValueType() {
-    return type_id_;
-  }
-
-  int GetParamIdx() {
-    return param_idx_;
-  }
+  int GetParamIdx() { return param_idx_; }
 
  private:
-  Parameter(ParamType type,
-            type::Value value, int param_idx,
+  Parameter(ParamType type, type::Value value, int param_idx,
             type::Type::TypeId type_id)
-          : type_(type),
-            value_(value),
-            type_id_(type_id),
-            param_idx_(param_idx) {}
+      : type_(type), value_(value), type_id_(type_id), param_idx_(param_idx) {}
 
  private:
   ParamType type_;

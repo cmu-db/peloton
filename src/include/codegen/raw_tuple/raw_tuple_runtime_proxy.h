@@ -13,10 +13,10 @@
 #pragma once
 
 #include "catalog/schema.h"
-#include "planner/attribute_info.h"
-#include "planner/binding_context.h"
 #include "codegen/row_batch.h"
 #include "codegen/type.h"
+#include "planner/attribute_info.h"
+#include "planner/binding_context.h"
 #include "type/types.h"
 
 namespace peloton {

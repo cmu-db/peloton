@@ -15,7 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-llvm::Type* PoolRuntimeProxy::GetType(CodeGen &codegen) {
+llvm::Type *PoolRuntimeProxy::GetType(CodeGen &codegen) {
   static const std::string kPoolTypeName = "peloton::type::AbstractPool";
   // Check if the data table type has already been registered in the current
   // codegen context
@@ -25,14 +25,14 @@ llvm::Type* PoolRuntimeProxy::GetType(CodeGen &codegen) {
   }
 
   // Type isn't cached, create a new one
-  auto* byte_array =
+  auto *byte_array =
       llvm::ArrayType::get(codegen.Int8Type(), sizeof(type::AbstractPool));
   schema_type = llvm::StructType::create(codegen.GetContext(), {byte_array},
                                          kPoolTypeName);
   return schema_type;
 }
 
-const std::string& PoolRuntimeProxy::_CreatePool::GetFunctionName() {
+const std::string &PoolRuntimeProxy::_CreatePool::GetFunctionName() {
   static const std::string kInsertRawTupleFnName =
       "_ZN7peloton7codegen11PoolRuntime10CreatePoolEv";
   return kInsertRawTupleFnName;
@@ -48,15 +48,12 @@ llvm::Function *PoolRuntimeProxy::_CreatePool::GetFunction(CodeGen &codegen) {
   }
 
   auto *fn_type = llvm::FunctionType::get(
-      PoolRuntimeProxy::GetType(codegen)->getPointerTo(),
-      { },
-      false
-  );
+      PoolRuntimeProxy::GetType(codegen)->getPointerTo(), {}, false);
 
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
-const std::string& PoolRuntimeProxy::_DeletePool::GetFunctionName() {
+const std::string &PoolRuntimeProxy::_DeletePool::GetFunctionName() {
   static const std::string kDeletePoolFnName =
       "_ZN7peloton7codegen11PoolRuntime10DeletePoolEPNS_4type12AbstractPoolE";
   return kDeletePoolFnName;
@@ -72,14 +69,11 @@ llvm::Function *PoolRuntimeProxy::_DeletePool::GetFunction(CodeGen &codegen) {
   }
 
   auto *fn_type = llvm::FunctionType::get(
-      codegen.VoidType(),
-      {  PoolRuntimeProxy::GetType(codegen)->getPointerTo() },
-      false
-  );
+      codegen.VoidType(), {PoolRuntimeProxy::GetType(codegen)->getPointerTo()},
+      false);
 
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 }  // namespace codegen
 }  // namespace peloton
-

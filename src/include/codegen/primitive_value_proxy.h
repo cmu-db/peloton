@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/value_peeker.h"
 #include "type/value.h"
+#include "type/value_peeker.h"
 
 namespace peloton {
 namespace codegen {

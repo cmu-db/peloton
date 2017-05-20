@@ -15,10 +15,10 @@
 #include "codegen/aggregation.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
+#include "codegen/insert/abstract_insert_translator.h"
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator_translator.h"
 #include "codegen/updateable_storage.h"
-#include "codegen/insert/abstract_insert_translator.h"
 #include "planner/insert_plan.h"
 
 namespace peloton {
@@ -29,7 +29,6 @@ namespace codegen {
  */
 class InsertTuplesTranslator : public AbstractInsertTranslator {
  public:
-
   /**
    * @brief Constructor.
    */

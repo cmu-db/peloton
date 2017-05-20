@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/tile_group_proxy.h"
 #include "codegen/delete/delete_translator.h"
+#include "codegen/catalog_proxy.h"
+#include "codegen/data_table_proxy.h"
+#include "codegen/tile_group_proxy.h"
+#include "codegen/transaction_proxy.h"
+#include "codegen/transaction_runtime_proxy.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "codegen/catalog_proxy.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/transaction_proxy.h"
-#include "codegen/transaction_runtime_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -65,8 +65,8 @@ void DeleteTranslator::Consume(ConsumerContext &context,
 
   auto tile_group_id = batch.GetTileGroupID();
 
-  this->tile_group_ = this->table_.GetTileGroup(
-      codegen, table_ptr, tile_group_id);
+  this->tile_group_ =
+      this->table_.GetTileGroup(codegen, table_ptr, tile_group_id);
 
   batch.Iterate(context.GetCodeGen(),
                 [&](RowBatch::Row &row) { this->Consume(context, row); });
@@ -185,7 +185,8 @@ bool DeleteTranslator::delete_wrapper(int64_t tile_group_id, uint32_t tuple_id,
 const std::string &DeleteTranslator::_DeleteWrapper::GetFunctionName() {
   static const std::string deleteWrapperFnName =
       "_ZN7peloton7codegen16DeleteTranslator14delete_wrapper"
-      "EljPNS_11concurrency11TransactionEPNS_7storage9DataTableEPNS5_9TileGroupE";
+      "EljPNS_11concurrency11TransactionEPNS_7storage9DataTableEPNS5_"
+      "9TileGroupE";
   return deleteWrapperFnName;
 }
 
@@ -199,11 +200,11 @@ llvm::Function *DeleteTranslator::_DeleteWrapper::GetFunction(
     return llvm_fn;
   }
 
-  std::vector<llvm::Type *> fn_args{codegen.Int64Type(),
-                                    codegen.Int32Type(),
-                                    TransactionProxy::GetType(codegen)->getPointerTo(),
-                                    DataTableProxy::GetType(codegen)->getPointerTo(),
-                                    TileGroupProxy::GetType(codegen)->getPointerTo()};
+  std::vector<llvm::Type *> fn_args{
+      codegen.Int64Type(), codegen.Int32Type(),
+      TransactionProxy::GetType(codegen)->getPointerTo(),
+      DataTableProxy::GetType(codegen)->getPointerTo(),
+      TileGroupProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =
       llvm::FunctionType::get(codegen.BoolType(), fn_args, false);
   return codegen.RegisterFunction(fn_name, fn_type);

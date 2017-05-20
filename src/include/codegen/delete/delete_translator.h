@@ -14,8 +14,8 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/pipeline.h"
-#include "planner/delete_plan.h"
 #include "codegen/table.h"
+#include "planner/delete_plan.h"
 #include "storage/tile_group.h"
 
 namespace peloton {
@@ -67,7 +67,6 @@ class DeleteTranslator : public OperatorTranslator {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 };
-
 
 }  // namespace codegen
 }  // namespace peloton

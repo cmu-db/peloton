@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/types.h"
 #include "planner/project_info.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
@@ -32,8 +32,8 @@ class UpdateRuntimeProxy {
     }
 
     // Type isn't cached, create a new one
-    auto *opaque_byte_array = llvm::ArrayType::get(
-        codegen.Int8Type(), sizeof(Target));
+    auto *opaque_byte_array =
+        llvm::ArrayType::get(codegen.Int8Type(), sizeof(Target));
     return llvm::StructType::create(codegen.GetContext(), {opaque_byte_array},
                                     kTargetName);
   }
@@ -45,29 +45,30 @@ class UpdateRuntimeProxy {
     // codegen context
     auto direct_map_type = codegen.LookupTypeByName(kDirectMapName);
     if (direct_map_type != nullptr) {
-        return direct_map_type;
+      return direct_map_type;
     }
 
     // Type isn't cached, create a new one
-    auto *opaque_byte_array = llvm::ArrayType::get(
-            codegen.Int8Type(), sizeof(DirectMap));
+    auto *opaque_byte_array =
+        llvm::ArrayType::get(codegen.Int8Type(), sizeof(DirectMap));
     return llvm::StructType::create(codegen.GetContext(), {opaque_byte_array},
                                     kDirectMapName);
   }
 
   // Get the LLVM type for ExecutorContext
   static llvm::Type *GetExecContextType(CodeGen &codegen) {
-    static const std::string kExecContextName = "peloton::executor::ExecutorContext";
+    static const std::string kExecContextName =
+        "peloton::executor::ExecutorContext";
     // Check if the data table type has already been registered in the current
     // codegen context
     auto exec_context_type = codegen.LookupTypeByName(kExecContextName);
     if (exec_context_type != nullptr) {
-        return exec_context_type;
+      return exec_context_type;
     }
 
     // Type isn't cached, create a new one
-    auto *opaque_byte_array = llvm::ArrayType::get(
-            codegen.Int8Type(), sizeof(DirectMap));
+    auto *opaque_byte_array =
+        llvm::ArrayType::get(codegen.Int8Type(), sizeof(DirectMap));
     return llvm::StructType::create(codegen.GetContext(), {opaque_byte_array},
                                     kExecContextName);
   }

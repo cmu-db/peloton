@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "storage/data_table.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager.h"
+#include "storage/data_table.h"
 
 #include "codegen/aggregation.h"
 #include "codegen/compilation_context.h"
@@ -28,7 +28,6 @@ namespace codegen {
 
 class InsertHelpers {
  public:
-
   /**
    * @brief Perform insertion once we already have a materialized raw tuple.
    */
@@ -37,8 +36,8 @@ class InsertHelpers {
                              const storage::Tuple *tuple);
 
   static void InsertValue(concurrency::Transaction *txn,
-                          storage::DataTable *table,
-                          char *value, size_t num_tuples);
+                          storage::DataTable *table, char *value,
+                          size_t num_tuples);
 
   static storage::Tuple *CreateTuple(catalog::Schema *schema);
 

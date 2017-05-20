@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/raw_tuple/raw_tuple_runtime.h"
 #include <sstream>
 #include "common/logger.h"
-#include "codegen/raw_tuple/raw_tuple_runtime.h"
 #include "type/abstract_pool.h"
 
 namespace peloton {
 namespace codegen {
 
-void RawTupleRuntime::SetVarLen(uint32_t len, char *data,
-                                char *buf, type::AbstractPool *pool) {
+void RawTupleRuntime::SetVarLen(uint32_t len, char *data, char *buf,
+                                type::AbstractPool *pool) {
   (void)pool;
 
   struct varlen_t {
@@ -27,9 +27,8 @@ void RawTupleRuntime::SetVarLen(uint32_t len, char *data,
     char data[];
   };
 
-  varlen_t *actual = reinterpret_cast<varlen_t *>(
-      pool->Allocate(len + sizeof(uint32_t))
-  );
+  varlen_t *actual =
+      reinterpret_cast<varlen_t *>(pool->Allocate(len + sizeof(uint32_t)));
 
   actual->len = len;
   PL_MEMCPY(actual->data, data, len);

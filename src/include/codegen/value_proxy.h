@@ -21,17 +21,16 @@ namespace codegen {
 class ValueProxy {
  public:
   // Get the LLVM Type for type::Value
-  static llvm::Type* GetType(CodeGen& codegen) ;
+  static llvm::Type *GetType(CodeGen &codegen);
 
-  static type::Value *GetValue(type::Value *values, uint32_t offset) ;
+  static type::Value *GetValue(type::Value *values, uint32_t offset);
 
   struct _GetValue {
     // Return the symbol for the ValueProxy.GetValue() function
-    static const std::string &GetFunctionName() ;
+    static const std::string &GetFunctionName();
     // Return the LLVM-typed function definition for ValueProxy.GetValue()
-    static llvm::Function *GetFunction(CodeGen &codegen) ;
+    static llvm::Function *GetFunction(CodeGen &codegen);
   };
-
 };
 
 }  // namespace codegen

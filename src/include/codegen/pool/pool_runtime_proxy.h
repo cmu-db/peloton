@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/codegen.h"
+#include "codegen/pool/pool_runtime.h"
 #include "type/abstract_pool.h"
 #include "type/ephemeral_pool.h"
-#include "codegen/pool/pool_runtime.h"
-#include "codegen/codegen.h"
 
 namespace peloton {
 namespace codegen {
 
 class PoolRuntimeProxy {
  public:
-  static llvm::Type* GetType(CodeGen &codegen);
+  static llvm::Type *GetType(CodeGen &codegen);
 
   struct _CreatePool {
     static const std::string &GetFunctionName();

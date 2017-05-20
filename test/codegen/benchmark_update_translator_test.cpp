@@ -10,19 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression/expression_util.h"
-#include "executor/update_executor.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
-#include "optimizer/simple_optimizer.h"
-#include "tcop/tcop.h"
-#include "planner/create_plan.h"
-#include "executor/create_executor.h"
 #include "common/statement.h"
+#include "executor/create_executor.h"
+#include "executor/update_executor.h"
+#include "expression/expression_util.h"
+#include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
-#include "planner/plan_util.h"
-#include "planner/abstract_plan.h"
 #include "parser/sql_statement.h"
+#include "planner/abstract_plan.h"
+#include "planner/create_plan.h"
+#include "planner/plan_util.h"
+#include "tcop/tcop.h"
 
 #include "codegen/codegen_test_util.h"
 
@@ -51,7 +51,6 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
  public:
   BenchmarkUpdateTranslatorTest()
       : PelotonCodeGenTest(), num_rows_to_insert(NUM_ROWS) {
-
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }
@@ -60,11 +59,11 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
 
   uint32_t TestTableId() { return test_table1_id; }
 
-  void TestUpdateExecutor(expression::AbstractExpression *predicate) {
+  void TestUpdateExecutor(expression::AbstractExpression* predicate) {
     // UPDATE table
     // SET a = 1;
 
-    storage::DataTable *table = &this->GetTestTable(this->TestTableId());
+    storage::DataTable* table = &this->GetTestTable(this->TestTableId());
     (void)table;
     LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
 
@@ -77,40 +76,32 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
         &GetTestTable(TestTableId()), /* table */
         predicate,                    /* predicate */
         {0, 1, 2, 3}                  /* columns */
-    ));
+        ));
 
     // Then it transforms each tuple scanned.
     // Weirdly, the transformation is represented by a "projection".
     std::unique_ptr<planner::ProjectInfo> project_info(new planner::ProjectInfo(
         // target list : [(oid_t, planner::DerivedAttribute)]
         // These specify columns that are transformed.
-        {
-            // Column 0 of the updated tuple will have constant value 1
-            {
-                0,
-                planner::DerivedAttribute{
-                    planner::AttributeInfo{},
-                    expression::ExpressionUtil::ConstantValueFactory(
-                        type::ValueFactory::GetIntegerValue(1)
-                    )
-                }
-            }
-        },
+        {// Column 0 of the updated tuple will have constant value 1
+         {0,
+          planner::DerivedAttribute{
+              planner::AttributeInfo{},
+              expression::ExpressionUtil::ConstantValueFactory(
+                  type::ValueFactory::GetIntegerValue(1))}}},
 
         // direct map list : [(oid_t, (oid_t, oid_t))]
-        // These specify columns that are directly pulled from the original tuple.
+        // These specify columns that are directly pulled from the original
+        // tuple.
         {
-            { 1, { 0, 1 } },
-            { 2, { 0, 2 } },
-            { 3, { 0, 3 } },
-        }
-    ));
+            {1, {0, 1}}, {2, {0, 2}}, {3, {0, 3}},
+        }));
 
     // Now embed the scan and the transformation to build up an update plan.
     std::unique_ptr<planner::UpdatePlan> update_plan(new planner::UpdatePlan(
         &GetTestTable(TestTableId()), /* table */
         std::move(project_info)       /* projection info */
-    ));
+        ));
 
     update_plan->AddChild(std::move(scan_plan));
 
@@ -118,24 +109,20 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
     //  Execute plan
     // ==============
 
-    auto &txn_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    concurrency::Transaction *txn = txn_manager.BeginTransaction();
+    concurrency::Transaction* txn = txn_manager.BeginTransaction();
 
     std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn)
-    );
+        new executor::ExecutorContext(txn));
 
     std::unique_ptr<executor::UpdateExecutor> update_executor =
-        std::make_unique<executor::UpdateExecutor>(
-            update_plan.get(), context.get()
-        );
+        std::make_unique<executor::UpdateExecutor>(update_plan.get(),
+                                                   context.get());
 
     std::unique_ptr<executor::SeqScanExecutor> scan_executor =
-        std::make_unique<executor::SeqScanExecutor>(
-            update_plan->GetChild(0), context.get()
-        );
+        std::make_unique<executor::SeqScanExecutor>(update_plan->GetChild(0),
+                                                    context.get());
 
     update_executor->AddChild(scan_executor.get());
 
@@ -144,9 +131,11 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
 
     EXPECT_TRUE(update_executor->Init());
 
-    // The weird peloton behavior: each time we call Execute, only one tile group
+    // The weird peloton behavior: each time we call Execute, only one tile
+    // group
     // is operated on.
-    while (update_executor->Execute()) {}
+    while (update_executor->Execute()) {
+    }
 
     txn_manager.CommitTransaction(txn);
 
@@ -156,11 +145,11 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
     LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   }
 
-  void TestUpdateTranslator(expression::AbstractExpression *predicate) {
+  void TestUpdateTranslator(expression::AbstractExpression* predicate) {
     // UPDATE table
     // SET a = 1;
 
-    storage::DataTable *table = &this->GetTestTable(this->TestTableId());
+    storage::DataTable* table = &this->GetTestTable(this->TestTableId());
     (void)table;
     LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
 
@@ -173,42 +162,35 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
         &GetTestTable(TestTableId()), /* table */
         predicate,                    /* predicate */
         {0, 1, 2, 3}                  /* columns */
-    ));
+        ));
 
     // Then it transforms each tuple scanned.
     // Weirdly, the transformation is represented by a "projection".
-    std::unique_ptr<const planner::ProjectInfo> project_info(new planner::ProjectInfo(
-        // target list : [(oid_t, planner::DerivedAttribute)]
-        // These specify columns that are transformed.
-        {
-            // Column 0 of the updated tuple will have constant value 1
+    std::unique_ptr<const planner::ProjectInfo> project_info(
+        new planner::ProjectInfo(
+            // target list : [(oid_t, planner::DerivedAttribute)]
+            // These specify columns that are transformed.
+            {// Column 0 of the updated tuple will have constant value 1
+             {0,
+              planner::DerivedAttribute{
+                  // I haven't figured out what this should be
+                  planner::AttributeInfo{},
+
+                  expression::ExpressionUtil::ConstantValueFactory(
+                      type::ValueFactory::GetIntegerValue(1))}}},
+
+            // direct map list : [(oid_t, (oid_t, oid_t))]
+            // These specify columns that are directly pulled from the original
+            // tuple.
             {
-                0,
-                planner::DerivedAttribute{
-                    // I haven't figured out what this should be
-                    planner::AttributeInfo{},
-
-                    expression::ExpressionUtil::ConstantValueFactory(
-                        type::ValueFactory::GetIntegerValue(1)
-                    )
-                }
-            }
-        },
-
-        // direct map list : [(oid_t, (oid_t, oid_t))]
-        // These specify columns that are directly pulled from the original tuple.
-        {
-            { 1, { 0, 1 } },
-            { 2, { 0, 2 } },
-            { 3, { 0, 3 } },
-        }
-    ));
+                {1, {0, 1}}, {2, {0, 2}}, {3, {0, 3}},
+            }));
 
     // Now embed the scan and the transformation to build up an update plan.
     std::unique_ptr<planner::UpdatePlan> update_plan(new planner::UpdatePlan(
         &GetTestTable(TestTableId()), /* table */
         std::move(project_info)       /* projection info */
-    ));
+        ));
 
     update_plan->AddChild(std::move(scan_plan));
 
@@ -223,7 +205,8 @@ class BenchmarkUpdateTranslatorTest : public PelotonCodeGenTest {
     timer.Start();
 
     // COMPILE and execute
-    CompileAndExecute(*update_plan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+    CompileAndExecute(*update_plan, buffer,
+                      reinterpret_cast<char*>(buffer.GetState()));
 
     timer.Stop();
     LOG_INFO("Time: %.2f ms\n", timer.GetDuration());

@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/transaction_manager_factory.h"
 #include "codegen/insert/insert_helpers.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -20,7 +20,6 @@ namespace codegen {
 bool InsertHelpers::InsertRawTuple(concurrency::Transaction *txn,
                                    storage::DataTable *table,
                                    const storage::Tuple *tuple) {
-
   concurrency::TransactionManager *txn_mgr =
       &concurrency::TransactionManagerFactory::GetInstance();
 
@@ -42,11 +41,10 @@ bool InsertHelpers::InsertRawTuple(concurrency::Transaction *txn,
 }
 
 void InsertHelpers::InsertValue(concurrency::Transaction *txn,
-                                storage::DataTable *table,
-                                char *value, size_t num_tuples) {
-
-  const storage::Tuple * const *tuples =
-      reinterpret_cast<const storage::Tuple * const *>(value);
+                                storage::DataTable *table, char *value,
+                                size_t num_tuples) {
+  const storage::Tuple *const *tuples =
+      reinterpret_cast<const storage::Tuple *const *>(value);
 
   num_tuples /= sizeof(const storage::Tuple *);
 
@@ -76,9 +74,7 @@ char *InsertHelpers::GetTupleData(storage::Tuple *tuple) {
   return data;
 }
 
-void InsertHelpers::DeleteTuple(storage::Tuple *tuple) {
-  delete tuple;
-}
+void InsertHelpers::DeleteTuple(storage::Tuple *tuple) { delete tuple; }
 
 }  // namespace codegen
 }  // namespace peloton

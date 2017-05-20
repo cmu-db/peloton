@@ -10,16 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "codegen/aggregation.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
+#include "codegen/insert/abstract_insert_translator.h"
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator_translator.h"
 #include "codegen/updateable_storage.h"
-#include "codegen/insert/abstract_insert_translator.h"
 #include "planner/insert_plan.h"
 
 namespace peloton {
@@ -30,7 +29,6 @@ namespace codegen {
  */
 class InsertScanTranslator : public AbstractInsertTranslator {
  public:
-
   /**
    * @brief Constructor.
    */
@@ -68,9 +66,9 @@ class InsertScanTranslator : public AbstractInsertTranslator {
   std::string GetName() const override { return "Insert"; }
 
  private:
-//  std::unique_ptr<type::AbstractPool> pool_;
-//  std::unique_ptr<storage::Tuple> tuple_;
-//  char *tuple_data_;
+  //  std::unique_ptr<type::AbstractPool> pool_;
+  //  std::unique_ptr<storage::Tuple> tuple_;
+  //  char *tuple_data_;
 
   mutable llvm::Value *tuple_ptr_;
   mutable llvm::Value *tuple_data_ptr_;

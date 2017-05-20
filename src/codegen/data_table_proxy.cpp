@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/schema/schema_proxy.h"
 #include "codegen/data_table_proxy.h"
+#include "codegen/schema/schema_proxy.h"
 
 #include "storage/data_table.h"
 
@@ -72,8 +72,7 @@ const std::string& DataTableProxy::_GetSchema::GetFunctionName() {
   return kGetTileGroupCount;
 }
 
-llvm::Function* DataTableProxy::_GetSchema::GetFunction(
-    CodeGen& codegen) {
+llvm::Function* DataTableProxy::_GetSchema::GetFunction(CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
   // Has the function already been registered?
@@ -85,10 +84,10 @@ llvm::Function* DataTableProxy::_GetSchema::GetFunction(
   // The function hasn't been registered, let's do it now
   llvm::Type* table_type = DataTableProxy::GetType(codegen);
   llvm::FunctionType* fn_type = llvm::FunctionType::get(
-      SchemaProxy::GetType(codegen)->getPointerTo(), // return type
-      { table_type->getPointerTo() },                // argument types
-      false                                          // is vararg
-  );
+      SchemaProxy::GetType(codegen)->getPointerTo(),  // return type
+      {table_type->getPointerTo()},                   // argument types
+      false                                           // is vararg
+      );
   return codegen.RegisterFunction(fn_name, fn_type);
 }
 
