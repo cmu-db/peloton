@@ -128,7 +128,7 @@ codegen::Value TileGroup::LoadColumn(
   const auto &column = schema_.GetColumn(layout.col_id);
 
   // Check if it's a string or numeric value
-  if (Type::HasVariableLength(column.GetType())) {
+  if (Type::IsVariableLength(column.GetType())) {
     if (schema_.AllowNull(layout.col_id)) {
       codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
                                        is_null);

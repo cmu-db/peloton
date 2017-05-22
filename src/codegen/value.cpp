@@ -51,71 +51,116 @@ llvm::Value *Value::IsNull(CodeGen &codegen) const {
   return (GetNullBit() != nullptr ? GetNullBit() : codegen.ConstBool(false));
 }
 
-llvm::Value *Value::IsNotNull(CodeGen &codegen) const {
-  return codegen->CreateNot(IsNull(codegen));
-}
-
 //===----------------------------------------------------------------------===//
 // COMPARISONS
 //===----------------------------------------------------------------------===//
 
-codegen::Value Value::CastTo(CodeGen &codegen,
-                             type::Type::TypeId to_type) const {
+Value Value::CastTo(CodeGen &codegen, type::Type::TypeId to_type) const {
+  // If the type we're casting to is the type of the value, we're done
   if (GetType() == to_type) {
     return *this;
-  } else {
-    const auto &cast = Type::GetCast(GetType(), to_type);
-    return cast->DoCast(codegen, *this, to_type);
   }
+
+  // Do the explicit cast
+  const auto *cast = Type::GetCast(GetType(), to_type);
+  return cast->DoCast(codegen, *this, to_type);
 }
 
-// Equality comparison
-Value Value::CompareEq(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareEq(codegen, *this, o);
+Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareEq(codegen, left, right);
 }
 
-// Inequality comparison
-Value Value::CompareNe(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareNe(codegen, *this, o);
+Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareNe(codegen, left, right);
 }
 
-// Less-than comparison
-Value Value::CompareLt(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareLt(codegen, *this, o);
+Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareLt(codegen, left, right);
 }
 
-// Less-then-or-equal comparison
-Value Value::CompareLte(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareLte(codegen, *this, o);
+Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareLte(codegen, left, right);
 }
 
-// Greater-than comparison
-Value Value::CompareGt(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareGt(codegen, *this, o);
+Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareGt(codegen, left, right);
 }
 
-// Greater-than-or-equal comparison
-Value Value::CompareGte(CodeGen &codegen, const Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoCompareGte(codegen, *this, o);
+Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoCompareGte(codegen, left, right);
 }
 
-// Sort for comparison
-Value Value::CompareForSort(CodeGen &codegen, const codegen::Value &o) const {
-  const auto &comparison = Type::GetComparison(o.GetType());
-  return comparison->DoComparisonForSort(codegen, *this, o);
+Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  const auto *comparison =
+      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return comparison->DoComparisonForSort(codegen, left, right);
 }
 
 // Check that all the values from the left and equal to all the values in right
-codegen::Value Value::TestEquality(CodeGen &codegen,
-                                   const std::vector<codegen::Value> &lhs,
-                                   const std::vector<codegen::Value> &rhs) {
-  std::queue<codegen::Value, std::list<codegen::Value>> results;
+Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
+                          const std::vector<Value> &rhs) {
+  std::queue<Value, std::list<Value>> results;
   // Perform the comparison of each element of lhs to rhs
   for (size_t i = 0; i < lhs.size(); i++) {
     results.push(lhs[i].CompareEq(codegen, rhs[i]));
@@ -123,9 +168,9 @@ codegen::Value Value::TestEquality(CodeGen &codegen,
 
   // Tournament-style collapse
   while (results.size() > 1) {
-    codegen::Value first = results.front();
+    Value first = results.front();
     results.pop();
-    codegen::Value second = results.front();
+    Value second = results.front();
     results.pop();
     results.push(first.LogicalAnd(codegen, second));
   }
@@ -137,84 +182,123 @@ codegen::Value Value::TestEquality(CodeGen &codegen,
 //===----------------------------------------------------------------------===//
 
 // Addition
-Value Value::Add(CodeGen &codegen, const Value &right, OnError on_error) const {
-  auto *add_op = Type::GetBinaryOperator(Type::OperatorId::Add, GetType(),
-                                         right.GetType());
-  return add_op->DoWork(codegen, *this, right, on_error);
+Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  auto *add_op = Type::GetBinaryOperator(
+      Type::OperatorId::Add, GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return add_op->DoWork(codegen, left, right, on_error);
 }
 
 // Subtraction
-Value Value::Sub(CodeGen &codegen, const Value &right, OnError on_error) const {
-  auto *sub_op = Type::GetBinaryOperator(Type::OperatorId::Sub, GetType(),
-                                         right.GetType());
-  return sub_op->DoWork(codegen, *this, right, on_error);
+Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  auto *sub_op = Type::GetBinaryOperator(
+      Type::OperatorId::Sub, GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return sub_op->DoWork(codegen, left, right, on_error);
 }
 
 // Multiplication
-Value Value::Mul(CodeGen &codegen, const Value &right, OnError on_error) const {
-  auto *mul_op = Type::GetBinaryOperator(Type::OperatorId::Mul, GetType(),
-                                         right.GetType());
-  return mul_op->DoWork(codegen, *this, right, on_error);
+Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  auto *mul_op = Type::GetBinaryOperator(
+      Type::OperatorId::Mul, GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return mul_op->DoWork(codegen, left, right, on_error);
 }
 
 // Division
-Value Value::Div(CodeGen &codegen, const Value &right, OnError on_error) const {
-  auto *div_op = Type::GetBinaryOperator(Type::OperatorId::Div, GetType(),
-                                         right.GetType());
-  return div_op->DoWork(codegen, *this, right, on_error);
+Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  auto *div_op = Type::GetBinaryOperator(
+      Type::OperatorId::Div, GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return div_op->DoWork(codegen, left, right, on_error);
 }
 
 // Modulus
-Value Value::Mod(CodeGen &codegen, const Value &right, OnError on_error) const {
-  auto *mod_op = Type::GetBinaryOperator(Type::OperatorId::Mod, GetType(),
-                                         right.GetType());
-  return mod_op->DoWork(codegen, *this, right, on_error);
+Value Value::Mod(CodeGen &codegen, const Value &other, OnError on_error) const {
+  type::Type::TypeId left_cast = GetType();
+  type::Type::TypeId right_cast = other.GetType();
+
+  auto *mod_op = Type::GetBinaryOperator(
+      Type::OperatorId::Mod, GetType(), left_cast, other.GetType(), right_cast);
+
+  Value left = CastTo(codegen, left_cast);
+  Value right = other.CastTo(codegen, right_cast);
+
+  return mod_op->DoWork(codegen, left, right, on_error);
 }
 
 // Mathematical minimum
-Value Value::Min(CodeGen &codegen, const Value &o) const {
+Value Value::Min(CodeGen &codegen, const Value &other) const {
   // Check if this < o
-  auto is_lt = CompareLt(codegen, o);
+  auto is_lt = CompareLt(codegen, other);
 
   // Choose either this or o depending on result of comparison
   llvm::Value *val =
-      codegen->CreateSelect(is_lt.GetValue(), GetValue(), o.GetValue());
+      codegen->CreateSelect(is_lt.GetValue(), GetValue(), other.GetValue());
   llvm::Value *len = nullptr;
-  if (Type::HasVariableLength(GetType())) {
-    len = codegen->CreateSelect(is_lt.GetValue(), GetLength(), o.GetLength());
+  if (Type::IsVariableLength(GetType())) {
+    len =
+        codegen->CreateSelect(is_lt.GetValue(), GetLength(), other.GetLength());
   }
   return Value{GetType(), val, len};
 }
 
 // Mathematical maximum
-Value Value::Max(CodeGen &codegen, const Value &o) const {
-  // Check if this > o
-  auto is_gt = CompareGt(codegen, o);
+Value Value::Max(CodeGen &codegen, const Value &other) const {
+  // Check if this > other
+  auto is_gt = CompareGt(codegen, other);
 
-  // Choose either this or o depending on result of comparison
+  // Choose either this or other depending on result of comparison
   llvm::Value *val =
-      codegen->CreateSelect(is_gt.GetValue(), GetValue(), o.GetValue());
+      codegen->CreateSelect(is_gt.GetValue(), GetValue(), other.GetValue());
   llvm::Value *len = nullptr;
-  if (Type::HasVariableLength(GetType())) {
-    len = codegen->CreateSelect(is_gt.GetValue(), GetLength(), o.GetLength());
+  if (Type::IsVariableLength(GetType())) {
+    len =
+        codegen->CreateSelect(is_gt.GetValue(), GetLength(), other.GetLength());
   }
   return Value{GetType(), val, len};
 }
 
-// Logical AND
-Value Value::LogicalAnd(CodeGen &codegen, const Value &o) const {
-  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
-  PL_ASSERT(GetType() == o.GetType());
+// TODO: AND and OR need to handle NULL
 
-  return Value{GetType(), codegen->CreateAnd(GetValue(), o.GetValue())};
+// Logical AND
+Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
+  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == other.GetType());
+
+  return Value{GetType(), codegen->CreateAnd(GetValue(), other.GetValue())};
 }
 
 // Logical OR
-Value Value::LogicalOr(CodeGen &codegen, const Value &o) const {
+Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
   PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
-  PL_ASSERT(GetType() == o.GetType());
+  PL_ASSERT(GetType() == other.GetType());
 
-  return Value{GetType(), codegen->CreateOr(GetValue(), o.GetValue())};
+  return Value{GetType(), codegen->CreateOr(GetValue(), other.GetValue())};
 }
 
 //===----------------------------------------------------------------------===//
@@ -268,7 +352,7 @@ Value Value::BuildPHI(
   PL_ASSERT(val_type != nullptr);
 
   // Do the merge depending on the type
-  if (Type::HasVariableLength(type)) {
+  if (Type::IsVariableLength(type)) {
     PL_ASSERT(len_type != nullptr);
     auto *val_phi = codegen->CreatePHI(val_type, num_entries);
     auto *len_phi = codegen->CreatePHI(len_type, num_entries);
