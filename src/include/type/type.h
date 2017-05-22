@@ -44,6 +44,12 @@ class Type {
     UDT
   };
 
+  struct TypeIdHasher {
+    size_t operator()(const TypeId &type_id) const {
+      return std::hash<uint32_t>{}(static_cast<uint32_t>(type_id));
+    }
+  };
+
   Type(TypeId type_id) : type_id_(type_id) {}
 
   virtual ~Type() {}

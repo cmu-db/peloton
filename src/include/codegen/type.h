@@ -25,8 +25,8 @@ namespace codegen {
 // system. In the future, this class should replace that one ...
 //
 // This class implements an operator table very similar to Postgres. The main
-// difference is that we break up operators into three categories: comparison
-// operators, unary operators and binary operators.
+// difference is that we break up operators into four categories: casting,
+// comparison, unary, and binary operators.
 //===----------------------------------------------------------------------===//
 class Type {
  public:
@@ -34,7 +34,14 @@ class Type {
   // Casting operator
   //===--------------------------------------------------------------------===//
   struct Cast {
+    // Virtual destructor
     virtual ~Cast() {}
+
+    // Does this cast support casting from the given type to the given type?
+    virtual bool SupportsTypes(type::Type::TypeId from_type,
+                               type::Type::TypeId to_type) const = 0;
+
+    // Perform the cast on the given value to the provided type
     virtual Value DoCast(CodeGen &codegen, const Value &value,
                          type::Type::TypeId to_type) const = 0;
   };
@@ -46,24 +53,29 @@ class Type {
     // Virtual destructor
     virtual ~Comparison() {}
 
+    // Does this instance support comparison of the values of the given left and
+    // right SQL types?
+    virtual bool SupportsTypes(type::Type::TypeId left_type,
+                               type::Type::TypeId right_type) const = 0;
+
     // Main comparison operators
     virtual Value DoCompareLt(CodeGen &codegen, const Value &left,
-                              const Value &right) const;
+                              const Value &right) const = 0;
 
     virtual Value DoCompareLte(CodeGen &codegen, const Value &left,
-                               const Value &right) const;
+                               const Value &right) const = 0;
 
     virtual Value DoCompareEq(CodeGen &codegen, const Value &left,
-                              const Value &right) const;
+                              const Value &right) const = 0;
 
     virtual Value DoCompareNe(CodeGen &codegen, const Value &left,
-                              const Value &right) const;
+                              const Value &right) const = 0;
 
     virtual Value DoCompareGt(CodeGen &codegen, const Value &left,
-                              const Value &right) const;
+                              const Value &right) const = 0;
 
     virtual Value DoCompareGte(CodeGen &codegen, const Value &left,
-                               const Value &right) const;
+                               const Value &right) const = 0;
 
     // Perform a comparison used for sorting. We need a stable and transitive
     // sorting comparison operator here. The operator returns:
@@ -71,7 +83,7 @@ class Type {
     //  = 0 - if the left value is equivalent to the right element
     //  > 0 - if the left value comes after the right value when sorted
     virtual Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                                      const Value &right) const;
+                                      const Value &right) const = 0;
   };
 
   // All builtin operators we currently support
@@ -91,6 +103,16 @@ class Type {
   //===--------------------------------------------------------------------===//
   struct UnaryOperator {
     virtual ~UnaryOperator() {}
+
+    // Does this unary operator support values of the given type?
+    virtual bool SupportsType(type::Type::TypeId type_id) const = 0;
+
+    // What is the SQL type of the result of applying the unary operator on a
+    // value of the provided type?
+    virtual type::Type::TypeId ResultType(
+        type::Type::TypeId val_type) const = 0;
+
+    // Apply the operator on the given value
     virtual Value DoWork(CodeGen &codegen, const Value &val) const = 0;
   };
 
@@ -101,9 +123,12 @@ class Type {
     virtual ~BinaryOperator() {}
     // Does this binary operator support the two provided input types?
     virtual bool SupportsTypes(type::Type::TypeId left_type,
-                               type::Type::TypeId right_type) const {
-      return left_type == right_type;
-    }
+                               type::Type::TypeId right_type) const = 0;
+
+    // What is the SQL type of the result of applying the binary operator on the
+    // provided left and right value types?
+    virtual type::Type::TypeId ResultType(
+        type::Type::TypeId left_type, type::Type::TypeId right_type) const = 0;
 
     // Execute the actual operator
     virtual Value DoWork(CodeGen &codegen, const Value &left,
@@ -118,13 +143,18 @@ class Type {
   static uint32_t GetFixedSizeForType(type::Type::TypeId type_id);
 
   // Is the given type variable length?
-  static bool HasVariableLength(type::Type::TypeId type_id);
+  static bool IsVariableLength(type::Type::TypeId type_id) {
+    return type_id == type::Type::TypeId::VARCHAR ||
+           type_id == type::Type::TypeId::VARBINARY;
+  }
 
   // Is the given type an integral type (i.e., tinyint to bigint)
   static bool IsIntegral(type::Type::TypeId type_id);
 
   // Is the given type a numeric (real, decimal, numeric etc.)
-  static bool IsNumeric(type::Type::TypeId type_id);
+  static bool IsNumeric(type::Type::TypeId type_id) {
+    return type_id == type::Type::TypeId::DECIMAL;
+  }
 
   // Get the min, max, null, and default value for the given type
   static Value GetMinValue(CodeGen &codegen, type::Type::TypeId type_id);
@@ -143,12 +173,16 @@ class Type {
                              type::Type::TypeId to_type);
 
   // Lookup comparison handler for the given type
-  static const Comparison *GetComparison(type::Type::TypeId type_id);
+  static const Comparison *GetComparison(type::Type::TypeId left_type,
+                                         type::Type::TypeId &left_casted_type,
+                                         type::Type::TypeId right_type,
+                                         type::Type::TypeId &right_casted_type);
 
   // Lookup the given binary operator that works on the left and right types
-  static const BinaryOperator *GetBinaryOperator(OperatorId op_id,
-                                                 type::Type::TypeId left_type,
-                                                 type::Type::TypeId right_type);
+  static const BinaryOperator *GetBinaryOperator(
+      OperatorId op_id, type::Type::TypeId left_type,
+      type::Type::TypeId &left_casted_type, type::Type::TypeId right_type,
+      type::Type::TypeId &right_casted_type);
 
  private:
   struct OperatorIdHasher {
@@ -157,6 +191,17 @@ class Type {
     }
   };
 
+  typedef std::unordered_map<type::Type::TypeId,
+                             std::vector<type::Type::TypeId>,
+                             type::Type::TypeIdHasher> ImplicitCastTable;
+
+  typedef std::unordered_map<type::Type::TypeId, std::vector<const Cast *>,
+                             type::Type::TypeIdHasher> CastingTable;
+
+  typedef std::unordered_map<type::Type::TypeId,
+                             std::vector<const Comparison *>,
+                             type::Type::TypeIdHasher> ComparisonTable;
+
   typedef std::unordered_map<OperatorId, std::vector<const UnaryOperator *>,
                              OperatorIdHasher> UnaryOperatorTable;
 
@@ -164,11 +209,13 @@ class Type {
                              OperatorIdHasher> BinaryOperatorTable;
 
  private:
+  static ImplicitCastTable kImplicitCastsTable;
+
   // The table of casting functions
-  static std::vector<const Cast *> kCastingTable;
+  static CastingTable kCastingTable;
 
   // The comparison table
-  static std::vector<const Comparison *> kComparisonTable;
+  static ComparisonTable kComparisonTable;
 
   // The table of builtin unary operators
   static UnaryOperatorTable kBuiltinUnaryOperatorsTable;

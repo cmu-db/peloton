@@ -46,39 +46,36 @@ class Value {
   // Get the null indicator value
   llvm::Value *GetNullBit() const { return null_; }
 
-  // Return the name of the string
-  const std::string GetName() const { return value_->getName(); }
+  // Is this value nullable?
+  bool IsNullable() const { return GetNullBit() != nullptr; }
 
   // Reify this (potentially null) value into a boolean value
   llvm::Value *ReifyBoolean(CodeGen &codegen) const;
 
-  // Nullability checks
+  // Check if this value is actually null
   llvm::Value *IsNull(CodeGen &codegen) const;
-  llvm::Value *IsNotNull(CodeGen &codegen) const;
 
   //===--------------------------------------------------------------------===//
   // Comparison functions
   //===--------------------------------------------------------------------===//
-  codegen::Value CastTo(CodeGen &codegen, type::Type::TypeId to_type) const;
+  Value CastTo(CodeGen &codegen, type::Type::TypeId to_type) const;
 
-  codegen::Value CompareEq(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareNe(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareLt(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareLte(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareGt(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareGte(CodeGen &codegen, const codegen::Value &o) const;
+  Value CompareEq(CodeGen &codegen, const Value &other) const;
+  Value CompareNe(CodeGen &codegen, const Value &other) const;
+  Value CompareLt(CodeGen &codegen, const Value &other) const;
+  Value CompareLte(CodeGen &codegen, const Value &other) const;
+  Value CompareGt(CodeGen &codegen, const Value &other) const;
+  Value CompareGte(CodeGen &codegen, const Value &other) const;
 
-  static codegen::Value TestEquality(CodeGen &codegen,
-                                     const std::vector<codegen::Value> &lhs,
-                                     const std::vector<codegen::Value> &rhs);
+  static Value TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
+                            const std::vector<Value> &rhs);
 
   // Perform a comparison used for sorting. We need a stable and transitive
   // sorting comparison function here. The function returns:
   //  < 0 - if the left value comes before the right value when sorted
   //  = 0 - if the left value is equivalent to the right element
   //  > 0 - if the left value comes after the right value when sorted
-  codegen::Value CompareForSort(CodeGen &codegen,
-                                const codegen::Value &o) const;
+  Value CompareForSort(CodeGen &codegen, const Value &other) const;
 
   //===--------------------------------------------------------------------===//
   // Mathematical functions
@@ -86,31 +83,31 @@ class Value {
 
   enum class OnError : uint32_t { ReturnDefault, ReturnNull, Exception };
 
-  codegen::Value Add(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Sub(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Mul(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Div(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Mod(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Min(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Max(CodeGen &codegen, const codegen::Value &o) const;
+  Value Add(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Sub(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Mul(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Div(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Mod(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Min(CodeGen &codegen, const Value &other) const;
+  Value Max(CodeGen &codegen, const Value &other) const;
 
   //===--------------------------------------------------------------------===//
   // Logical/Boolean functions
   //===--------------------------------------------------------------------===//
 
-  codegen::Value LogicalAnd(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value LogicalOr(CodeGen &codegen, const codegen::Value &o) const;
+  Value LogicalAnd(CodeGen &codegen, const Value &other) const;
+  Value LogicalOr(CodeGen &codegen, const Value &other) const;
 
   // Build a PHI node that combines all the given values (from their basic
   // blocks) into a single value
-  static codegen::Value BuildPHI(
+  static Value BuildPHI(
       CodeGen &codegen,
-      const std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> &vals);
+      const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals);
 
   //===--------------------------------------------------------------------===//
   // Materialization helpers
@@ -146,9 +143,6 @@ class Value {
 
   // NULL indicator (if any)
   llvm::Value *null_;
-
-  // The (optional) name of this value
-  std::string name_;
 };
 
 }  // namespace codegen
