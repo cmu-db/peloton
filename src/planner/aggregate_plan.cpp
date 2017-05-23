@@ -25,6 +25,8 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
 
   children[0]->PerformBinding(input_context);
 
+  PL_ASSERT(groupby_ais_.empty());
+
   // First get bindings for the grouping keys
   for (oid_t gb_col_id : GetGroupbyColIds()) {
     auto *ai = input_context.Find(gb_col_id);
@@ -43,7 +45,11 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
     if (term_exp != nullptr) {
       term_exp->PerformBinding({&input_context});
       term.agg_ai.nullable = term_exp->IsNullable();
-      term.agg_ai.type = term_exp->GetValueType();
+      if (term.aggtype == ExpressionType::AGGREGATE_AVG) {
+        term.agg_ai.type = type::Type::TypeId::DECIMAL;
+      } else {
+        term.agg_ai.type = term_exp->GetValueType();
+      }
     } else {
       PL_ASSERT(term.aggtype == ExpressionType::AGGREGATE_COUNT_STAR);
       term.agg_ai.type = type::Type::TypeId::BIGINT;

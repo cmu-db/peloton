@@ -102,7 +102,10 @@ TPCHDatabase::TPCHDatabase(const Configuration &c) : config_(c) {
 }
 
 TPCHDatabase::~TPCHDatabase() {
-  catalog::Catalog::GetInstance()->DropDatabaseWithOid(kTPCHDatabaseId);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithOid(kTPCHDatabaseId, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 // Create all the TPCH tables
@@ -374,11 +377,11 @@ void TPCHDatabase::LoadPartTable() {
   if (TableIsLoaded(TableId::Part)) {
     return;
   }
-  
+
   const std::string filename = config_.GetPartPath();
 
   LOG_INFO("Loading Part ['%s']\n", filename.c_str());
-  
+
   auto &table = GetTable(TableId::Part);
 
   Timer<std::ratio<1, 1000>> timer;
@@ -664,7 +667,11 @@ void TPCHDatabase::LoadLineitemTable() {
   });
 
   // Commit
-  PL_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
+  auto res = txn_manager.CommitTransaction(txn);
+  PL_ASSERT(res == ResultType::SUCCESS);
+  if (res != ResultType::SUCCESS) {
+    LOG_ERROR("Could not commit transaction during load!");
+  }
 
   timer.Stop();
   LOG_INFO("Loading Lineitem finished: %.2f ms (%lu tuples)\n",
