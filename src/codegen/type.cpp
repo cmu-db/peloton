@@ -1250,8 +1250,7 @@ Type::ImplicitCastTable Type::kImplicitCastsTable = {
     {type::Type::TypeId::PARAMETER_OFFSET, {}},
 
     // Boolean's can only be implicitly casted to integers
-    {type::Type::TypeId::BOOLEAN,
-     {type::Type::TypeId::BOOLEAN, type::Type::TypeId::INTEGER}},
+    {type::Type::TypeId::BOOLEAN, {type::Type::TypeId::BOOLEAN}},
 
     // Tinyint's can be implicitly casted to any of the integral types
     {type::Type::TypeId::TINYINT,

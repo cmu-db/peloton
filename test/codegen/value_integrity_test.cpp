@@ -17,10 +17,7 @@
 namespace peloton {
 namespace test {
 
-class ValueIntegrityTest : public PelotonCodeGenTest {
- public:
-  ValueIntegrityTest() : PelotonCodeGenTest() {}
-};
+class ValueIntegrityTest : public PelotonCodeGenTest {};
 
 // This test sets up a function taking a single argument. The body of the
 // function divides a constant value with the value of the argument. After
@@ -135,40 +132,6 @@ void OverflowTest(type::Type::TypeId data_type, ExpressionType op) {
   EXPECT_THROW(f(2), std::overflow_error);
 }
 
-enum class Cmp : uint32_t { Eq, Ne, Lt, Lte, Gt, Gte };
-
-enum class Op : uint32_t { Add, Sub, Mul, Div, Rem };
-
-static const std::vector<Cmp> kCmpFuncs = {Cmp::Eq,  Cmp::Ne, Cmp::Lt,
-                                           Cmp::Lte, Cmp::Gt, Cmp::Gte};
-
-static const std::vector<Op> kOpFuncs = {Op::Add, Op::Sub, Op::Mul, Op::Div,
-                                         Op::Rem};
-
-static const std::vector<type::Type::TypeId> kTypesToTest = {
-    type::Type::BOOLEAN, type::Type::TINYINT,  type::Type::SMALLINT,
-    type::Type::INTEGER, type::Type::BIGINT,   type::Type::DECIMAL,
-    type::Type::DATE,    type::Type::TIMESTAMP};
-
-codegen::Value DoCmp(Cmp cmp, codegen::CodeGen &codegen,
-                     const codegen::Value &left, const codegen::Value &right) {
-  switch (cmp) {
-    case Cmp::Eq:
-      return left.CompareEq(codegen, right);
-    case Cmp::Ne:
-      return left.CompareNe(codegen, right);
-    case Cmp::Lt:
-      return left.CompareLt(codegen, right);
-    case Cmp::Lte:
-      return left.CompareLte(codegen, right);
-    case Cmp::Gt:
-      return left.CompareGt(codegen, right);
-    case Cmp::Gte:
-      return left.CompareGte(codegen, right);
-  }
-  throw Exception{"WTF? Not possible"};
-}
-
 TEST_F(ValueIntegrityTest, IntegerOverflow) {
   auto overflowable_ops = {ExpressionType::OPERATOR_MINUS,
                            ExpressionType::OPERATOR_PLUS,
@@ -189,108 +152,6 @@ TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
     DivideByZeroTest<int16_t>(type::Type::TypeId::SMALLINT, op);
     DivideByZeroTest<int32_t>(type::Type::TypeId::INTEGER, op);
     DivideByZeroTest<int64_t>(type::Type::TypeId::BIGINT, op);
-  }
-}
-
-TEST_F(ValueIntegrityTest, ImplicitCastTest) {
-  type::Type::TypeId input_type;
-
-  // Tinyint's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::TINYINT;
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::TINYINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::SMALLINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
-
-  // Small's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::SMALLINT;
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::SMALLINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
-
-  // Integer's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::INTEGER;
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
-
-  // Integer's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::BIGINT;
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
-
-  // Decimal's can only be casted to itself
-  input_type = type::Type::DECIMAL;
-  EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
-}
-
-// This test performs every possible comparison between every possible pair of
-// (the most important) null and non-null input types. We use the 'control'
-// variable to control left and right nullability: the first and second LSB in
-// the control are used to determine if the right and left inputs are NULL,
-// respectively.
-TEST_F(ValueIntegrityTest, CompatibleComparisonWithImplicitCastTest) {
-  codegen::CodeContext ctx;
-  codegen::CodeGen codegen{ctx};
-
-  for (uint8_t control = 0; control < 4; control++) {
-    for (auto left_type : kTypesToTest) {
-      for (auto right_type : kTypesToTest) {
-        for (auto cmp : kCmpFuncs) {
-          bool left_null = control & 0x02;
-          bool right_null = control & 0x01;
-
-          codegen::Value left =
-              left_null ? codegen::Type::GetNullValue(codegen, left_type)
-                        : codegen::Type::GetMinValue(codegen, left_type);
-          codegen::Value right =
-              right_null ? codegen::Type::GetNullValue(codegen, right_type)
-                         : codegen::Type::GetMinValue(codegen, right_type);
-
-          LOG_DEBUG("[%s,%s]: %s, %s, %u", TypeIdToString(left_type).c_str(),
-                    TypeIdToString(right_type).c_str(),
-                    (left_null ? "left-null" : "left-non-null"),
-                    (right_null ? "right-null" : "right-non-null"),
-                    static_cast<uint32_t>(cmp));
-
-          codegen::Value result;
-
-          if (codegen::Type::CanImplicitlyCastTo(left_type, right_type) ||
-              codegen::Type::CanImplicitlyCastTo(right_type, left_type)) {
-            // If the types are implicitly cast-able to one or the other, the
-            // comparison shouldn't fail
-            EXPECT_NO_THROW({ result = DoCmp(cmp, codegen, left, right); });
-
-            if (control == 0) {
-              EXPECT_FALSE(result.IsNullable());
-            } else {
-              EXPECT_TRUE(result.IsNullable());
-            }
-          } else {
-            // The types are **NOT** implicitly cast-able, this should fail
-            EXPECT_THROW({ result = DoCmp(cmp, codegen, left, right); },
-                         Exception);
-          }
-        }
-      }
-    }
   }
 }
 
