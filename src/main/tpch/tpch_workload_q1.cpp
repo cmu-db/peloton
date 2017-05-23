@@ -113,7 +113,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ1Plan() const {
   planner::AggregatePlan::AggTerm agg5{
       ExpressionType::AGGREGATE_AVG,
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 2)};
-  agg5.agg_ai.type = type::Type::TypeId::BIGINT;
+  agg5.agg_ai.type = type::Type::TypeId::DECIMAL;
 
   // avg(l_extendedprice)
   planner::AggregatePlan::AggTerm agg6{
@@ -140,7 +140,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ1Plan() const {
            {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_base_price"},
            {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_disc_price"},
            {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_charge"},
-           {type::Type::TypeId::BIGINT, kBigIntSize, "avg_qty"},
+           {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_qty"},
            {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_price"},
            {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_disc"},
            {type::Type::TypeId::BIGINT, kBigIntSize, "count_order"}})};
