@@ -160,21 +160,28 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCa
   codegen::Query* query = codegen::QueryCache::Instance().FindPlan(std::move(plan));
   // Run
   if (query == nullptr) {
-
     LOG_DEBUG("No plan found\n");
+
+    // Compile the query
     auto compiled_query = compiler.Compile(*plan, consumer, &stats);
 
-    compiled_query->Execute(*txn, consumer_state, nullptr, params ? std::unique_ptr<executor::ExecutorContext> (
-      new executor::ExecutorContext{txn, *params}).get(): nullptr);
+    compiled_query->Execute(
+        *txn,
+        consumer_state,
+        nullptr,
+        params ? std::unique_ptr<executor::ExecutorContext>(
+            new executor::ExecutorContext{txn, *params}).get()
+               : nullptr);
     
     txn_manager.CommitTransaction(txn);
 
-    codegen::QueryCache::Instance().InsertPlan(std::move(plan), std::move(compiled_query));
+    codegen::QueryCache::Instance().InsertPlan(plan, std::move(compiled_query));
 
   }
   else {
     LOG_DEBUG("Plan found\n");
 
+    query->ReplaceConsts(plan.get());
 
     std::unique_ptr<executor::ExecutorContext> exec_context{
             params == nullptr ? nullptr:

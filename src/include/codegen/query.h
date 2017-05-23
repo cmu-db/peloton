@@ -82,6 +82,8 @@ class Query {
     return it->second;
   }
 
+  void ReplaceConsts(const planner::AbstractPlan *plan);
+
   void StoreTargetList(TargetList &target_list) {
     update_direct_list_.clear();
     for (uint32_t i = 0; i < target_list.size(); i ++) {

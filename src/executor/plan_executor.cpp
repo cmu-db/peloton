@@ -161,6 +161,8 @@ ExecuteResult PlanExecutor::ExecutePlan(
     } else {
       LOG_DEBUG("Plan found\n");
 
+      query->ReplaceConsts(plan.get());
+
       query->Execute(*txn,
                      reinterpret_cast<char *>(consumer.GetState()),
                      nullptr,

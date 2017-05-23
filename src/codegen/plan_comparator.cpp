@@ -453,6 +453,9 @@ int ExpressionComparator::Compare(const expression::AbstractExpression *A,
           (expression::ConstantValueExpression *)A;
       expression::ConstantValueExpression *ptr_B =
           (expression::ConstantValueExpression *)B;
+      if (ptr_A->GetValueType() == ptr_B->GetValueType()) {
+        return 0;
+      }
       type::Value va = ptr_A->GetValue();
       type::Value vb = ptr_B->GetValue();
       if (va.CompareEquals(vb) == type::CmpBool::CMP_FALSE)

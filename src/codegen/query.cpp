@@ -176,6 +176,11 @@ uint32_t Query::StoreParam(Parameter param, int idx) {
   }
 }
 
+void Query::ReplaceConsts(const planner::AbstractPlan *plan) {
+  std::tie(std::ignore, std::ignore, this->params_) =
+      ParamLoader::LoadParams(plan);
+}
+
 void Query::PrepareParams(executor::ExecutorContext *exec_context) {
   for (uint32_t i = 0; i < params_.size(); i ++) {
     type::Value value = params_[i].GetValue();
