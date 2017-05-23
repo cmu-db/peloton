@@ -30,7 +30,9 @@ namespace peloton {
 namespace test {
 
 //===----------------------------------------------------------------------===//
-// Common base class for all codegen tests
+// Common base class for all codegen tests. This class four test tables that all
+// the codegen components use. Their ID's are available through the TableId
+// enumeration.
 //===----------------------------------------------------------------------===//
 class PelotonCodeGenTest : public PelotonTest {
  public:
