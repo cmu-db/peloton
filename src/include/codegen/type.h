@@ -156,6 +156,11 @@ class Type {
     return type_id == type::Type::TypeId::DECIMAL;
   }
 
+  // Can values of the provided type be implicitly casted into a value of the
+  // other provided type?
+  static bool CanImplicitlyCastTo(type::Type::TypeId from_type,
+                                  type::Type::TypeId to_type);
+
   // Get the min, max, null, and default value for the given type
   static Value GetMinValue(CodeGen &codegen, type::Type::TypeId type_id);
   static Value GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id);

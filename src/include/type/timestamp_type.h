@@ -19,6 +19,8 @@ namespace type {
 
 class TimestampType : public Type {
  public:
+  static constexpr uint64_t kUsecsPerDate = 86400000000ul;
+
   ~TimestampType() {}
   TimestampType();
   

@@ -14,6 +14,7 @@
 
 #include "codegen/if.h"
 #include "codegen/values_runtime_proxy.h"
+#include "type/timestamp_type.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -23,6 +24,30 @@ namespace codegen {
 /// CASTING RULES
 /// TODO: Implement other casting rules
 ///===--------------------------------------------------------------------===///
+
+class CastWithNullPropagation : public Type::Cast {
+ public:
+  CastWithNullPropagation(Type::Cast &inner_cast) : inner_cast_(inner_cast) {}
+
+  bool SupportsTypes(type::Type::TypeId from_type,
+                     type::Type::TypeId to_type) const override {
+    return inner_cast_.SupportsTypes(from_type, to_type);
+  }
+
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    // Do the cast
+    Value ret = inner_cast_.DoCast(codegen, value, to_type);
+
+    // Return the value with the null-bit propagated from the input
+    return Value{ret.GetType(), ret.GetValue(), ret.GetLength(),
+                 value.GetNullBit()};
+  }
+
+ private:
+  // The inner (non-null-aware) cast operation
+  Type::Cast &inner_cast_;
+};
 
 //===----------------------------------------------------------------------===//
 // Boolean casting rules
@@ -67,7 +92,7 @@ struct CastBoolean : public Type::Cast {
 //===----------------------------------------------------------------------===//
 // Integer (8-, 16-, 32-, 64-bit) casting rules
 //
-// We do INTEGRAL_TYPE -> {INTEGRAL_TYPE, DECIMAL_TYPE, VARCHAR, BOOLEAN}
+// We do INTEGRAL_TYPE -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
 struct CastInteger : public Type::Cast {
@@ -123,7 +148,7 @@ struct CastInteger : public Type::Cast {
 //===----------------------------------------------------------------------===//
 // Decimal casting rules
 //
-// We do DECIMAL_TYPE -> {INTEGRAL_TYPE, DECIMAL_TYPE, VARCHAR, BOOLEAN}
+// We do DECIMAL -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
 struct CastDecimal : public Type::Cast {
@@ -152,6 +177,90 @@ struct CastDecimal : public Type::Cast {
     }
 
     // TODO: Fill me out
+    // Can't do anything else for now
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str())};
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Timestamp casting rules
+//
+// We do TIMESTAMP -> {DATE, VARCHAR}
+//===----------------------------------------------------------------------===//
+
+struct CastTimestamp : public Type::Cast {
+  bool SupportsTypes(type::Type::TypeId from_type,
+                     type::Type::TypeId to_type) const override {
+    return from_type == type::Type::TypeId::TIMESTAMP &&
+           (to_type == type::Type::TypeId::DATE ||
+            to_type == type::Type::TypeId::VARCHAR);
+  }
+
+  // Cast the given decimal value into the provided type
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+
+    // Types for the casted-to type
+    llvm::Type *val_type = nullptr, *len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
+
+    if (to_type == type::Type::TypeId::DATE) {
+      // TODO: Fix me
+      llvm::Value *date = codegen->CreateSDiv(
+          value.GetValue(),
+          codegen.Const64(type::TimestampType::kUsecsPerDate));
+
+      return Value{to_type, codegen->CreateTrunc(date, codegen.Int32Type())};
+    } else if (to_type == type::Type::VARCHAR) {
+      // TODO: Implement me
+    }
+
+    // Can't do anything else for now
+    throw NotImplementedException{StringUtil::Format(
+        "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
+        TypeIdToString(to_type).c_str())};
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Date casting rules
+//
+// We do DATE -> {TIMESTAMP, VARCHAR}
+//===----------------------------------------------------------------------===//
+
+struct CastDate : public Type::Cast {
+  bool SupportsTypes(type::Type::TypeId from_type,
+                     type::Type::TypeId to_type) const override {
+    return from_type == type::Type::TypeId::DATE &&
+           (to_type == type::Type::TypeId::TIMESTAMP ||
+            to_type == type::Type::TypeId::VARCHAR);
+  }
+
+  // Cast the given decimal value into the provided type
+  Value DoCast(CodeGen &codegen, const Value &value,
+               type::Type::TypeId to_type) const override {
+    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+
+    // Types for the casted-to type
+    llvm::Type *val_type = nullptr, *len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
+
+    if (to_type == type::Type::TypeId::TIMESTAMP) {
+      // Date is number of days since 2000, timestamp is micros since same
+
+      llvm::Value *zext_date =
+          codegen->CreateZExt(value.GetValue(), codegen.Int64Type());
+      llvm::Value *timestamp = codegen->CreateMul(
+          zext_date, codegen.Const64(type::TimestampType::kUsecsPerDate));
+
+      return Value{to_type, timestamp};
+    } else if (to_type == type::Type::VARCHAR) {
+      // TODO: Implement me
+    }
+
     // Can't do anything else for now
     throw NotImplementedException{StringUtil::Format(
         "Cannot cast %s to %s", TypeIdToString(value.GetType()).c_str(),
@@ -441,7 +550,7 @@ struct IntegerComparison : public Type::Comparison {
 struct DecimalComparison : public Type::Comparison {
   bool SupportsTypes(type::Type::TypeId left_type,
                      type::Type::TypeId right_type) const override {
-    return Type::IsNumeric(left_type) && Type::IsNumeric(right_type);
+    return Type::IsNumeric(left_type) && left_type == right_type;
   }
 
   Value DoCompareLt(CodeGen &codegen, const Value &left,
@@ -1079,6 +1188,14 @@ struct DecimalMod : public DecimalOps {
 static CastBoolean kCastBoolean;
 static CastInteger kCastInteger;
 static CastDecimal kCastDecimal;
+static CastTimestamp kCastTimestamp;
+static CastDate kCastDate;
+
+static CastWithNullPropagation kWrappedCastBoolean{kCastBoolean};
+static CastWithNullPropagation kWrappedCastInteger{kCastInteger};
+static CastWithNullPropagation kWrappedCastDecimal{kCastDecimal};
+static CastWithNullPropagation kWrappedCastTimestamp{kCastTimestamp};
+static CastWithNullPropagation kWrappedCastDate{kCastDate};
 
 static BooleanComparison kBooleanComparison;
 static IntegerComparison kIntegerComparison;
@@ -1183,14 +1300,14 @@ Type::ImplicitCastTable Type::kImplicitCastsTable = {
 Type::CastingTable Type::kCastingTable = {
     {type::Type::TypeId::INVALID, {}},
     {type::Type::TypeId::PARAMETER_OFFSET, {}},
-    {type::Type::TypeId::BOOLEAN, {&kCastBoolean}},
-    {type::Type::TypeId::TINYINT, {&kCastInteger}},
-    {type::Type::TypeId::SMALLINT, {&kCastInteger}},
-    {type::Type::TypeId::INTEGER, {&kCastInteger}},
-    {type::Type::TypeId::BIGINT, {&kCastInteger}},
-    {type::Type::TypeId::DECIMAL, {&kCastDecimal}},
-    {type::Type::TypeId::TIMESTAMP, {}},
-    {type::Type::TypeId::DATE, {}},
+    {type::Type::TypeId::BOOLEAN, {&kWrappedCastBoolean}},
+    {type::Type::TypeId::TINYINT, {&kWrappedCastInteger}},
+    {type::Type::TypeId::SMALLINT, {&kWrappedCastInteger}},
+    {type::Type::TypeId::INTEGER, {&kWrappedCastInteger}},
+    {type::Type::TypeId::BIGINT, {&kWrappedCastInteger}},
+    {type::Type::TypeId::DECIMAL, {&kWrappedCastDecimal}},
+    {type::Type::TypeId::TIMESTAMP, {&kWrappedCastTimestamp}},
+    {type::Type::TypeId::DATE, {&kWrappedCastDate}},
     {type::Type::TypeId::VARCHAR, {}},
     {type::Type::TypeId::VARBINARY, {}},
     {type::Type::TypeId::ARRAY, {}},
@@ -1295,6 +1412,17 @@ void Type::GetTypeForMaterialization(CodeGen &codegen,
   }
 }
 
+bool Type::CanImplicitlyCastTo(type::Type::TypeId from_type,
+                               type::Type::TypeId to_type) {
+  const auto &implicit_casts = kImplicitCastsTable[from_type];
+  for (auto &castable_type : implicit_casts) {
+    if (castable_type == to_type) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Value Type::GetMinValue(CodeGen &codegen, type::Type::TypeId type_id) {
   switch (type_id) {
     case type::Type::TypeId::BOOLEAN:
@@ -1311,6 +1439,8 @@ Value Type::GetMinValue(CodeGen &codegen, type::Type::TypeId type_id) {
       return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MIN)};
     case type::Type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MIN)};
+    case type::Type::TypeId::DATE:
+      return Value{type_id, codegen.Const32(type::PELOTON_DATE_MIN)};
     default: {
       auto msg = StringUtil::Format("No minimum value for type '%s'",
                                     TypeIdToString(type_id).c_str());
@@ -1335,6 +1465,8 @@ Value Type::GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id) {
       return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MAX)};
     case type::Type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MAX)};
+    case type::Type::TypeId::DATE:
+      return Value{type_id, codegen.Const64(type::PELOTON_DATE_MAX)};
     default: {
       auto msg = StringUtil::Format("No maximum value for type '%s'",
                                     TypeIdToString(type_id).c_str());
@@ -1346,25 +1478,33 @@ Value Type::GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id) {
 Value Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
   switch (type_id) {
     case type::Type::TypeId::BOOLEAN:
-      return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_NULL)};
+      return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_NULL),
+                   nullptr, codegen.ConstBool(true)};
     case type::Type::TypeId::TINYINT:
-      return Value{type_id, codegen.Const8(type::PELOTON_INT8_NULL)};
+      return Value{type_id, codegen.Const8(type::PELOTON_INT8_NULL), nullptr,
+                   codegen.ConstBool(true)};
     case type::Type::TypeId::SMALLINT:
-      return Value{type_id, codegen.Const16(type::PELOTON_INT16_NULL)};
+      return Value{type_id, codegen.Const16(type::PELOTON_INT16_NULL), nullptr,
+                   codegen.ConstBool(true)};
     case type::Type::TypeId::INTEGER:
-      return Value{type_id, codegen.Const32(type::PELOTON_INT32_NULL)};
+      return Value{type_id, codegen.Const32(type::PELOTON_INT32_NULL), nullptr,
+                   codegen.ConstBool(true)};
     case type::Type::TypeId::BIGINT:
-      return Value{type_id, codegen.Const64(type::PELOTON_INT64_NULL)};
+      return Value{type_id, codegen.Const64(type::PELOTON_INT64_NULL), nullptr,
+                   codegen.ConstBool(true)};
     case type::Type::TypeId::DECIMAL:
-      return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_NULL)};
+      return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_NULL),
+                   nullptr, codegen.ConstBool(true)};
     case type::Type::TypeId::DATE:
-      return Value{type_id, codegen.Const32(type::PELOTON_DATE_NULL)};
+      return Value{type_id, codegen.Const32(type::PELOTON_DATE_NULL), nullptr,
+                   codegen.ConstBool(true)};
     case type::Type::TypeId::TIMESTAMP:
-      return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_NULL)};
+      return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_NULL),
+                   nullptr, codegen.ConstBool(true)};
     case type::Type::TypeId::VARBINARY:
     case type::Type::TypeId::VARCHAR:
       return Value{type_id, codegen.NullPtr(codegen.CharPtrType()),
-                   codegen.Const32(0)};
+                   codegen.Const32(0), codegen.ConstBool(true)};
     default: {
       auto msg = StringUtil::Format("No null value for type '%s'",
                                     TypeIdToString(type_id).c_str());
@@ -1409,21 +1549,12 @@ const Type::Cast *Type::GetCast(type::Type::TypeId from_type,
   }
 
   // Error
-  std::string msg = StringUtil::Format("No casting rule from type %s to %s",
-                                       TypeIdToString(from_type).c_str(),
-                                       TypeIdToString(to_type).c_str());
-  throw Exception{msg};
+  throw CastException{from_type, to_type};
 }
 
 const Type::Comparison *Type::GetComparison(
     type::Type::TypeId left_type, type::Type::TypeId &left_casted_type,
     type::Type::TypeId right_type, type::Type::TypeId &right_casted_type) {
-  // Get the list of function overloads
-  const auto &iter = kComparisonTable.find(left_type);
-  PL_ASSERT(iter != kComparisonTable.end());
-
-  const auto &candidates = iter->second;
-
   // Operator resolution works as follows:
   // 1. Try to find an implementation that requires no implicit casting.
   // 2. Try to find an implementation that requires casting only the left input
@@ -1434,7 +1565,7 @@ const Type::Comparison *Type::GetComparison(
   //       casting table.
 
   for (auto &implicit_casted_left : kImplicitCastsTable[left_type]) {
-    for (const auto *cmp_func : candidates) {
+    for (const auto *cmp_func : kComparisonTable[implicit_casted_left]) {
       if (cmp_func->SupportsTypes(implicit_casted_left, right_type)) {
         left_casted_type = implicit_casted_left;
         return cmp_func;
@@ -1443,7 +1574,7 @@ const Type::Comparison *Type::GetComparison(
   }
 
   for (auto &implicit_casted_right : kImplicitCastsTable[right_type]) {
-    for (const auto *cmp_func : candidates) {
+    for (const auto *cmp_func : kComparisonTable[implicit_casted_right]) {
       if (cmp_func->SupportsTypes(left_type, implicit_casted_right)) {
         right_casted_type = implicit_casted_right;
         return cmp_func;
@@ -1462,7 +1593,6 @@ const Type::BinaryOperator *Type::GetBinaryOperator(
     OperatorId op_id, type::Type::TypeId left_type,
     type::Type::TypeId &left_casted_type, type::Type::TypeId right_type,
     type::Type::TypeId &right_casted_type) {
-  // Get the list of function overloads
   const auto &iter = kBuiltinBinaryOperatorsTable.find(op_id);
   PL_ASSERT(iter != kBuiltinBinaryOperatorsTable.end());
 
