@@ -21,6 +21,7 @@
 #include "optimizer/util.h"
 #include "storage/tuple_iterator.h"
 #include "codegen/query_cache.h"
+#include "codegen/param_loader.h"
 
 namespace peloton {
 namespace executor {
@@ -141,6 +142,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
     codegen::BufferingConsumer consumer{columns, context};
 
     codegen::Query* query = codegen::QueryCache::Instance().FindPlan(plan);
+
     if (query == nullptr) {
       LOG_DEBUG("No plan found\n");
 
@@ -154,7 +156,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
           nullptr,
           executor_context.get());
 
-      codegen::QueryCache::Instance().InsertPlan(std::move(plan),
+      codegen::QueryCache::Instance().InsertPlan(plan,
                                                  std::move(compiled_query));
     } else {
       LOG_DEBUG("Plan found\n");

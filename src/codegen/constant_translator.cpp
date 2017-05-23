@@ -25,16 +25,13 @@ ConstantTranslator::ConstantTranslator(
     : ExpressionTranslator(exp, ctx) {
   switch (exp.GetExpressionType()) {
     case ExpressionType::VALUE_CONSTANT: {
-      const type::Value &constant =
-          GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-      offset_ = ctx.StoreParam(Parameter::GetConstValParamInstance(constant));
+      offset_ = ctx.GetParamIdx(&exp);
       break;
     }
     case ExpressionType::VALUE_PARAMETER: {
       int param_idx =
           GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
-      offset_ = ctx.StoreParam(
-          Parameter::GetParamValParamInstance(param_idx, GetValueType()));
+      offset_ = ctx.GetParamIdx(param_idx);
       break;
     }
     default: {

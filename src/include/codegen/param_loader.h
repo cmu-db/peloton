@@ -13,6 +13,8 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
+#include "codegen/parameter.h"
 #include "expression/abstract_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/constant_value_expression.h"
@@ -33,63 +35,62 @@ namespace codegen {
 
 class ParamLoader {
  public:
-  static std::vector<type::Value> Load(const planner::AbstractPlan *plan);
+  static std::tuple<
+      std::unordered_map<const expression::AbstractExpression *, size_t>,
+      std::unordered_map<int, size_t>,
+      std::vector<Parameter>>
+  LoadParams(const planner::AbstractPlan *plan);
 
  private:
+  ParamLoader() : num_params_(0) {}
 
   // ============================
   // Load parameters from a plan.
   // ============================
 
-  static void Load(const planner::AbstractPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::AbstractPlan *plan);
 
-  static void Load(const planner::SeqScanPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::SeqScanPlan *plan);
 
-  static void Load(const planner::ProjectionPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::ProjectionPlan *plan);
 
-  static void Load(const planner::HashJoinPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::HashJoinPlan *plan);
 
-  static void Load(const planner::AggregatePlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::AggregatePlan *plan);
 
-  static void Load(const planner::OrderByPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::OrderByPlan *plan);
 
-  static void Load(const planner::DeletePlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::DeletePlan *plan);
 
-  static void Load(const planner::UpdatePlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::UpdatePlan *plan);
 
-  static void Load(const planner::InsertPlan *plan,
-                   std::vector<type::Value> *params);
+  void Load(const planner::InsertPlan *plan);
 
   // ===================================
   // Load parameters from an expression.
   // ===================================
 
-  static void Load(const expression::AbstractExpression *expr,
-                   std::vector<type::Value> *params);
+  void Load(const expression::AbstractExpression *expr);
 
-  static void Load(const expression::ParameterValueExpression *expr,
-                   std::vector<type::Value> *params);
+  void Load(const expression::ParameterValueExpression *expr);
 
-  static void Load(const expression::ConstantValueExpression *expr,
-                   std::vector<type::Value> *params);
+  void Load(const expression::ConstantValueExpression *expr);
 
-  static void Load(const expression::CaseExpression *expr,
-                   std::vector<type::Value> *params);
+  void Load(const expression::CaseExpression *expr);
 
   // =======================================
   // Load parameters from a projection info.
   // =======================================
 
-  static void Load(const planner::ProjectInfo *projection,
-                   std::vector<type::Value> *params);
+  void Load(const planner::ProjectInfo *projection);
+
+  size_t num_params_;
+
+  std::unordered_map<const expression::AbstractExpression *, size_t> const_ids_;
+
+  std::unordered_map<int, size_t> value_ids_;
+
+  std::vector<Parameter> params_;
 };
 
 }  // namespace codegen

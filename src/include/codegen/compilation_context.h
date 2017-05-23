@@ -65,6 +65,14 @@ class CompilationContext {
 
   uint32_t StoreParam(Parameter param) { return query_.StoreParam(param); }
 
+  uint32_t GetParamIdx(const expression::AbstractExpression *expr) {
+    return query_.GetParamIdx(expr);
+  }
+
+  uint32_t GetParamIdx(int value_id) {
+    return query_.GetParamIdx(value_id);
+  }
+
   void StoreTargetList(TargetList &target_list) { query_.StoreTargetList(target_list); }
 
   void StoreDirectList(DirectMapList &direct_list) { query_.StoreDirectList(direct_list); }

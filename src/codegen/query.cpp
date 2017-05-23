@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <tuple>
 #include "codegen/query.h"
-
+#include "codegen/param_loader.h"
 #include "catalog/catalog.h"
 #include "executor/executor_context.h"
 #include "common/macros.h"
@@ -21,7 +22,11 @@ namespace codegen {
 
 // Constructor
 Query::Query(const planner::AbstractPlan &query_plan)
-    : query_plan_(query_plan) {}
+    : query_plan_(query_plan) {
+
+  std::tie(this->param_ids_, this->value_ids_, this->params_) =
+      ParamLoader::LoadParams(&query_plan);
+}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
