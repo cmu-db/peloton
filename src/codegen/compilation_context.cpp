@@ -12,10 +12,17 @@
 
 #include "codegen/compilation_context.h"
 
+#include "codegen/barrier.h"
+#include "codegen/barrier_proxy.h"
 #include "codegen/catalog_proxy.h"
+#include "codegen/multi_thread_context.h"
+#include "codegen/multi_thread_context_proxy.h"
+#include "codegen/query_thread_pool.h"
+#include "codegen/query_thread_pool_proxy.h"
 #include "codegen/transaction_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -158,30 +165,95 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   return function_builder.GetFunction();
 }
 
+// Generate a general function for all threads
+llvm::Function *CompilationContext::GenerateInnerPlanFunction(const planner::AbstractPlan &root) {
+    // Create function definition
+    auto &code_context = query_.GetCodeContext();
+    auto &runtime_state = query_.GetRuntimeState();
+
+    auto inner_plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_inner_plan";
+    FunctionBuilder inner_function_builder{
+        code_context,
+        inner_plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()},
+          {"multiThreadContext", MultiThreadContextProxy::GetType(codegen_)->getPointerTo()}
+        }};
+
+    llvm::Value *multi_thread_context = codegen_.GetArgument(1);
+
+    // Create all local state
+    runtime_state.CreateLocalState(codegen_);
+
+    // Generate the primary plan logic
+    Produce(root);
+
+    // notify master
+    codegen_.CallFunc(MultiThreadContextProxy::GetNotifyMasterFunction(codegen_), {multi_thread_context});
+
+    // Finish the function
+    inner_function_builder.ReturnAndFinish();
+    return inner_function_builder.GetFunction();
+}
+
+
 // Generate the code for the plan() function of the query
 llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
-  // Create function definition
+
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
+  llvm::Function *inner_func = GenerateInnerPlanFunction(root);
 
   auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
   FunctionBuilder function_builder{
-      code_context,
-      plan_fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+        code_context,
+        plan_fn_name,
+        codegen_.VoidType(),
+        {
+          {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
-  // Create all local state
-  runtime_state.CreateLocalState(codegen_);
+  // Get runtime state information.
+  llvm::Value *runtime_state_ptr = codegen_.GetState();
 
-  // Generate the primary plan logic
-  Produce(root);
+  // Get thread information.
+  uint64_t nthreads;
+  if (IsMultiThreadSupported(root)) {
+    LOG_DEBUG("This plan supports multi thread feature.");
+    nthreads = QueryThreadPool::GetThreadCount();
+  } else {
+    LOG_DEBUG("This plan does not support multi thread feature.");
+    nthreads = 1;
+  }
+  llvm::Value *thread_id = codegen_.Const64(0);
+  llvm::Value *thread_count = codegen_.Const64(nthreads);
+  llvm::Value *query_thread_pool = codegen_.CallFunc(QueryThreadPoolProxy::GetGetIntanceFunction(codegen_), {});
 
-  // Finish the function
+  // Get barrier information.
+  llvm::Value *barrier = codegen_->CreateAlloca(BarrierProxy::GetType(codegen_));
+  codegen_.CallFunc(BarrierProxy::GetInitInstanceFunction(codegen_), {barrier, thread_count});
+
+  Loop loop{codegen_, codegen_->CreateICmpULT(thread_id, thread_count),
+    {
+        {"threadId", thread_id}
+    }};
+  {
+    // Assign tasks to threads
+    thread_id = loop.GetLoopVar(0);
+    llvm::Value *multi_thread_context = codegen_->CreateAlloca(MultiThreadContextProxy::GetType(codegen_));
+    codegen_.CallFunc(MultiThreadContextProxy::InitInstanceFunction(codegen_), {multi_thread_context, thread_id, thread_count, barrier});
+    codegen_.CallFunc(QueryThreadPoolProxy::GetSubmitQueryTaskFunction(codegen_, &runtime_state), {query_thread_pool, runtime_state_ptr, multi_thread_context, inner_func});
+
+    // Move to next thread id in loop.
+    thread_id = codegen_->CreateAdd(thread_id, codegen_.Const64(1));
+    loop.LoopEnd(codegen_->CreateICmpULT(thread_id, thread_count), {thread_id});
+  }
+
+  codegen_.CallFunc(BarrierProxy::GetMasterWaitFunction(codegen_), {barrier});
+  codegen_.CallFunc(BarrierProxy::GetDestroyFunction(codegen_), {barrier});
+
   function_builder.ReturnAndFinish();
-
-  // Get the function
   return function_builder.GetFunction();
 }
 
@@ -226,6 +298,28 @@ OperatorTranslator *CompilationContext::GetTranslator(
     const planner::AbstractPlan &op) const {
   auto iter = op_translators_.find(&op);
   return iter == op_translators_.end() ? nullptr : iter->second.get();
+}
+
+// Check if multi thread is supported given plan.
+bool CompilationContext::IsMultiThreadSupported(const planner::AbstractPlan &plan) {
+  LOG_DEBUG("node type: %s", PlanNodeTypeToString(plan.GetPlanNodeType()).c_str());
+  switch (plan.GetPlanNodeType()) {
+    case PlanNodeType::SEQSCAN:
+    case PlanNodeType::HASHJOIN:
+    case PlanNodeType::HASH:
+      break;
+    default:
+      return false;
+  }
+
+  // Check all children
+  for (const auto &child : plan.GetChildren()) {
+    if (!IsMultiThreadSupported(*child)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace codegen

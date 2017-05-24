@@ -30,7 +30,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
-#include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "index/index_factory.h"
 #include "planner/insert_plan.h"
@@ -91,22 +90,21 @@ void LoadTable() {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
-  for (int rowid = 0; rowid < tuple_count; rowid++) {
+  int rowid;
+  for (rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
 
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+    storage::Tuple tuple(table_schema, allocate);
 
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       auto value = type::ValueFactory::GetIntegerValue(populate_value);
-      tuple->SetValue(col_itr, value, pool.get());
+      tuple.SetValue(col_itr, value, pool.get());
     }
 
-    planner::InsertPlan node(sdbench_table.get(), std::move(tuple));
-    executor::InsertExecutor executor(&node, context.get());
-    executor.Execute();
+    ItemPointer tuple_slot_id = sdbench_table->InsertTuple(&tuple);
+    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    txn->RecordInsert(tuple_slot_id);
   }
 
   auto result = txn_manager.CommitTransaction(txn);

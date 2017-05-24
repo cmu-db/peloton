@@ -13,6 +13,7 @@
 #pragma once
 
 #include <functional>
+#include <string.h>
 
 namespace peloton {
 namespace codegen {
@@ -93,6 +94,10 @@ class OAHashTable {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  // Key size
+  uint64_t KeySize() const { return key_size_; }
+  // Value size
+  uint64_t ValueSize() const { return value_size_; }
   // The number of buckets
   uint64_t NumBuckets() const { return num_buckets_; }
   // The total number of elements in this hash-table
@@ -110,8 +115,7 @@ class OAHashTable {
 
   // This function inserts a key-value pair into the hash-table. This function
   // isn't used from actual query execution code, but is more for testing.
-  template <typename Key, typename Value>
-  void Insert(uint64_t hash, Key &k, Value &v);
+  void Insert(uint64_t hash, const char *k, const char *v);
 
   // Make room in the hash-table to store a new key-value pair in the provided
   // HashEntry with the provided hash value.
@@ -119,6 +123,9 @@ class OAHashTable {
   // Pre-condition: the given hash-entry is either free or has pre-existing data
   // with the same key as that which is to be inserted.
   char *StoreTuple(HashEntry *entry, uint64_t hash);
+
+  // Merge another OAHashTable into this.
+  void Merge(OAHashTable *other);
 
   // Clean up any resources this hash-table has.
   void Destroy();
@@ -232,42 +239,6 @@ class OAHashTable {
   // The size of the value itself
   uint64_t value_size_;
 };
-
-template <typename Key, typename Value>
-void OAHashTable::Insert(uint64_t hash, Key &k, Value &v) {
-  uint64_t bucket = hash & bucket_mask_;
-
-  uint64_t entry_int =
-      reinterpret_cast<uint64_t>(buckets_) + bucket * entry_size_;
-  while (true) {
-    HashEntry *entry = reinterpret_cast<HashEntry *>(entry_int);
-
-    // If entry is free, dump key and value
-    if (entry->IsFree()) {
-      // data points to key and data storage area
-      char *data = StoreTuple(entry, hash);
-      *reinterpret_cast<Key *>(data) = k;
-      *reinterpret_cast<Value *>(data + sizeof(Key)) = v;
-      return;
-    }
-
-    // If entry isn't free, check hash first
-    if (entry->hash == hash) {
-      // Hashes match, check key
-      if (*reinterpret_cast<Key *>(entry->data) == k) {
-        // data points to the value place only
-        char *data = StoreTuple(entry, hash);
-        *reinterpret_cast<Value *>(data) = v;
-        return;
-      }
-    }
-
-    // Continue
-    bucket = (bucket == num_buckets_) ? 0 : bucket + 1;
-    entry_int = (bucket == num_buckets_) ? reinterpret_cast<uint64_t>(buckets_)
-                                         : entry_int + entry_size_;
-  }
-}
 
 }  // namespace utils
 }  // namespace codegen

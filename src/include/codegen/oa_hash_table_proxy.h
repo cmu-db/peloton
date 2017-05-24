@@ -50,6 +50,14 @@ class OAHashTableProxy {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
+
+  //===--------------------------------------------------------------------===//
+  // The proxy for HashTable::Merge()
+  //===--------------------------------------------------------------------===//
+  struct _Merge {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
 };
 
 //===----------------------------------------------------------------------===//

@@ -43,6 +43,10 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  GetDatabase().DropTableWithOid(test_table1_id);
+  GetDatabase().DropTableWithOid(test_table2_id);
+  GetDatabase().DropTableWithOid(test_table3_id);
+  GetDatabase().DropTableWithOid(test_table4_id);
   auto result = catalog->DropDatabaseWithOid(test_db_id, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
@@ -109,7 +113,7 @@ void PelotonCodeGenTest::LoadTestTable(uint32_t table_id, uint32_t num_rows) {
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
     const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state) {
+    char *consumer_state, codegen::Query::RuntimeStats *runtime_stats) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -120,7 +124,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state);
+  compiled_query->Execute(*txn, consumer_state, runtime_stats);
 
   txn_manager.CommitTransaction(txn);
 
