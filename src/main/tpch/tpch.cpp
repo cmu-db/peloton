@@ -46,7 +46,7 @@ void ParseArguments(int argc, char **argv, Configuration &config) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hi:nsdq:", opts, &idx);
+    int c = getopt_long(argc, argv, "hi:n:s:dq:", opts, &idx);
 
     if (c == -1) break;
 
