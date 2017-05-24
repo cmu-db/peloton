@@ -16,6 +16,8 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
+#include "codegen/query_cache.h"
+#include "expression/parameter_value_expression.h"
 
 namespace peloton {
 namespace test {
@@ -26,6 +28,15 @@ expression::ConstantValueExpression *CodegenTestUtils::ConstIntExpression(
       type::ValueFactory::GetIntegerValue(val));
 }
 
+expression::ConstantValueExpression *CodegenTestUtils::ConstVarCharExpression(
+    std::string str) {
+  return new expression::ConstantValueExpression(
+      type::ValueFactory::GetVarcharValue(str));
+}
+
+expression::ParameterValueExpression *CodegenTestUtils::ParamExpression(int idx) {
+  return new expression::ParameterValueExpression(idx);
+}
 //===----------------------------------------------------------------------===//
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
@@ -50,7 +61,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
 
 // Create all the test tables, but don't load any data
 void PelotonCodeGenTest::CreateTestTables() {
-  const int tuples_per_tilegroup = 32;
+  const int tuples_per_tilegroup = 2048;
   const bool adapt_table = false;
   const bool own_schema = true;
 
@@ -109,7 +120,7 @@ void PelotonCodeGenTest::LoadTestTable(uint32_t table_id, uint32_t num_rows) {
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
     const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state) {
+    char *consumer_state, std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -117,15 +128,73 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   // Compile
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state);
+  auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
+  std::vector<type::Value> params_;
+  for (uint32_t i = 0; params != nullptr && i < params->size(); i ++) {
+    params_.emplace_back(params->at(i));
+  }
+  compiled_query->Execute(
+          *txn, consumer_state, nullptr,
+          std::unique_ptr<executor::ExecutorContext> (
+               new executor::ExecutorContext{txn, params_}).get()
+  );
   txn_manager.CommitTransaction(txn);
 
   return stats;
 }
+
+codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteWithCache(
+  const std::shared_ptr<planner::AbstractPlan> &plan, codegen::QueryResultConsumer &consumer,
+  char *consumer_state, std::vector<type::Value> *params) {
+  // Start a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  // Compile
+  codegen::QueryCompiler::CompileStats stats;
+  codegen::QueryCompiler compiler;
+
+  codegen::Query* query = codegen::QueryCache::Instance().FindPlan(std::move(plan));
+  // Run
+  if (query == nullptr) {
+    LOG_DEBUG("No plan found\n");
+
+    // Compile the query
+    auto compiled_query = compiler.Compile(*plan, consumer, &stats);
+
+    compiled_query->Execute(
+        *txn,
+        consumer_state,
+        nullptr,
+        params ? std::unique_ptr<executor::ExecutorContext>(
+            new executor::ExecutorContext{txn, *params}).get()
+               : nullptr);
+    
+    txn_manager.CommitTransaction(txn);
+
+    codegen::QueryCache::Instance().InsertPlan(plan, std::move(compiled_query));
+
+  }
+  else {
+    LOG_DEBUG("Plan found\n");
+
+    query->ReplaceConsts(plan.get());
+
+    std::unique_ptr<executor::ExecutorContext> exec_context{
+            params == nullptr ? nullptr:
+            new executor::ExecutorContext{txn, *params}};
+
+    query->Execute(*txn, consumer_state, nullptr, exec_context.get());
+
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return stats;
+}
+
 
 //===----------------------------------------------------------------------===//
 // PRINTER

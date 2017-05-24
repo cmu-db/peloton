@@ -272,7 +272,8 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
   auto &compilation_context = translator_.GetCompilationContext();
-  RowBatch batch{compilation_context, start_index, end_index, selection_vector_,
+
+  RowBatch batch{compilation_context, /* tile_group_id */ nullptr, start_index, end_index, selection_vector_,
                  false};
 
   // Add the attribute accessors for rows in this batch

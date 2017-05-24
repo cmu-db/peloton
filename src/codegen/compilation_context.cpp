@@ -14,6 +14,8 @@
 
 #include "codegen/catalog_proxy.h"
 #include "codegen/transaction_proxy.h"
+#include "codegen/update/update_runtime_proxy.h"
+#include "codegen/value_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
@@ -34,6 +36,29 @@ CompilationContext::CompilationContext(Query &query,
 
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
+
+  // Allocate char pointer and length array instances for runtime params
+  // (for parameterization)
+  char_ptr_params_state_id_ = runtime_state.RegisterState(
+      "charPtrParams", codegen_.CharPtrType()->getPointerTo());
+  char_len_params_state_id_ = runtime_state.RegisterState(
+      "charLenParams", codegen_.Int32Type()->getPointerTo());
+
+  // Allocate target & direct array instances for runtime params
+  // (for update)
+  auto *target_list_type =
+      UpdateRuntimeProxy::GetTargetType(codegen_)->getPointerTo();
+  target_list_state_id_ =
+      runtime_state.RegisterState("targetListParam", target_list_type);
+  auto *direct_list_type =
+      UpdateRuntimeProxy::GetDirectMapType(codegen_)->getPointerTo();
+  direct_list_state_id_ =
+      runtime_state.RegisterState("directListParam", direct_list_type);
+
+  auto *exec_context_type =
+      UpdateRuntimeProxy::GetExecContextType(codegen_)->getPointerTo();
+  exec_context_state_id_ =
+      runtime_state.RegisterState("execContextParam", exec_context_type);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -127,6 +152,26 @@ llvm::Value *CompilationContext::GetCatalogPtr() {
 // Get the transaction pointer from the runtime state
 llvm::Value *CompilationContext::GetTransactionPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, txn_state_id_);
+}
+
+llvm::Value *CompilationContext::GetCharPtrParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, char_ptr_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetCharLenParamPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, char_len_params_state_id_);
+};
+
+llvm::Value *CompilationContext::GetTargetListPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, target_list_state_id_);
+};
+
+llvm::Value *CompilationContext::GetDirectListPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, direct_list_state_id_);
+};
+
+llvm::Value *CompilationContext::GetExecContextPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, exec_context_state_id_);
 }
 
 // Generate code for the init() function of the query

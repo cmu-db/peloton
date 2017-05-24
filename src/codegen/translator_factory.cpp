@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "codegen/translator_factory.h"
 
 #include "codegen/arithmetic_translator.h"
@@ -17,6 +18,10 @@
 #include "codegen/comparison_translator.h"
 #include "codegen/conjunction_translator.h"
 #include "codegen/constant_translator.h"
+#include "codegen/delete/delete_translator.h"
+#include "codegen/update/update_translator.h"
+#include "codegen/insert/insert_tuples_translator.h"
+#include "codegen/insert/insert_scan_translator.h"
 #include "codegen/global_group_by_translator.h"
 #include "codegen/hash_group_by_translator.h"
 #include "codegen/hash_join_translator.h"
@@ -29,9 +34,12 @@
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
+#include "expression/parameter_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+
 #include "planner/aggregate_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
@@ -84,6 +92,31 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       translator = new OrderByTranslator(order_by, context, pipeline);
       break;
     }
+    case PlanNodeType::UPDATE: {
+      auto &update_plan = const_cast<planner::UpdatePlan &>(
+              static_cast<const planner::UpdatePlan &>(plan_node));
+      translator = new UpdateTranslator(update_plan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::DELETE: {
+      auto &delete_plan = const_cast<planner::DeletePlan &>(
+          static_cast<const planner::DeletePlan &>(plan_node));
+      translator = new DeleteTranslator(delete_plan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::INSERT: {
+      auto &insert_plan = static_cast<const planner::InsertPlan &>(plan_node);
+
+      if (insert_plan.GetChildren().size() == 1) {
+        translator = new InsertScanTranslator(insert_plan, context, pipeline);
+      } else if (insert_plan.GetChildren().size() == 0) {
+        translator = new InsertTuplesTranslator(insert_plan, context, pipeline);
+      } else {
+        throw Exception("Wrong number of children");
+      }
+
+      break;
+    }
     default: {
       throw Exception{"We don't have a translator for plan node type: " +
                       PlanNodeTypeToString(plan_node.GetPlanNodeType())};
@@ -101,10 +134,9 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     CompilationContext &context) const {
   ExpressionTranslator *translator = nullptr;
   switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_PARAMETER:
     case ExpressionType::VALUE_CONSTANT: {
-      auto &const_exp =
-          static_cast<const expression::ConstantValueExpression &>(exp);
-      translator = new ConstantTranslator(const_exp, context);
+      translator = new ConstantTranslator(exp, context);
       break;
     }
     case ExpressionType::VALUE_TUPLE: {

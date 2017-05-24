@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// query_statement.h
+// query.h
 //
-// Identification: src/include/codegen/query_statement.h
+// Identification: src/include/codegen/query.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -14,6 +14,10 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
+#include "codegen/parameter.h"
+#include "type/value.h"
+#include "executor/executor_context.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 
@@ -52,7 +56,8 @@ class Query {
   // Execute th e query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
   void Execute(concurrency::Transaction &txn, char *consumer_arg,
-               RuntimeStats *stats = nullptr);
+               RuntimeStats *stats = nullptr,
+               executor::ExecutorContext *exec_context = nullptr);
 
   // Return the query plan
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
@@ -63,11 +68,48 @@ class Query {
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
+  uint32_t StoreParam(Parameter param, int idx = -1);
+
+  uint32_t GetParamIdx(const expression::AbstractExpression *expr) {
+    auto it = this->param_ids_.find(expr);
+    PL_ASSERT(it != this->param_ids_.end());
+    return it->second;
+  }
+
+  uint32_t GetParamIdx(int value_id) {
+    auto it = this->value_ids_.find(value_id);
+    PL_ASSERT(it != this->value_ids_.end());
+    return it->second;
+  }
+
+  void ReplaceConsts(const planner::AbstractPlan *plan);
+
+  void StoreTargetList(TargetList &target_list) {
+    update_direct_list_.clear();
+    for (uint32_t i = 0; i < target_list.size(); i ++) {
+      update_target_list_.emplace_back(target_list[i]);
+    }
+  }
+
+  void StoreDirectList(DirectMapList &direct_list) {
+    update_direct_list_.clear();
+    for (uint32_t i = 0; i < direct_list.size(); i ++) {
+      update_direct_list_.emplace_back(direct_list[i]);
+    }
+  }
+
  private:
   friend class QueryCompiler;
 
   // Constructor
   Query(const planner::AbstractPlan &query_plan);
+
+  // Function for finalize parameters (for parameterization)
+  void PrepareParams(executor::ExecutorContext *exec_context);
+  // Function for loading serialized parameters into runtime state
+  void LoadParams(std::vector<std::unique_ptr<char[]>> &params,
+                  char **char_ptr_params,
+                  int32_t *char_len_params);
 
  private:
   // The query plan
@@ -84,6 +126,22 @@ class Query {
   compiled_function_t init_func_;
   compiled_function_t plan_func_;
   compiled_function_t tear_down_func_;
+
+  // The mapping from expressions to parameter IDs.
+  std::unordered_map<const expression::AbstractExpression *, size_t> param_ids_;
+
+  // The mapping from PVE ids to parameter IDs.
+  std::unordered_map<int, size_t> value_ids_;
+
+  // The information of parameters.
+  std::vector<Parameter> params_;
+
+  // All parameters in primitive form.
+  // Used for tracking ownership during exececution.
+  std::vector<std::unique_ptr<char []>> serialized_params_;
+
+  TargetList update_target_list_;
+  DirectMapList update_direct_list_;
 
  private:
   // This class cannot be copy or move-constructed

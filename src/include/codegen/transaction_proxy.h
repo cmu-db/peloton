@@ -22,7 +22,7 @@ class TransactionProxy {
  public:
   // Get the LLVM type for a transaction
   static llvm::Type *GetType(CodeGen &codegen) {
-    static const std::string kTransactionName = "peloton::Transaction";
+    static const std::string kTransactionName = "peloton::concurrency::Transaction";
     // Check if the data table type has already been registered in the current
     // codegen context
     auto transaction_type = codegen.LookupTypeByName(kTransactionName);

@@ -37,8 +37,9 @@ class ScanConsumer {
                               llvm::Value *tile_group_ptr) = 0;
 
   // Callback to process the tuples with the provided range
-  virtual void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
-                             llvm::Value *tid_end,
+  virtual void ProcessTuples(CodeGen &codegen,
+                             llvm::Value *tile_group_id,
+                             llvm::Value *tid_start, llvm::Value *tid_end,
                              TileGroup::TileGroupAccess &tile_group_access) = 0;
 
   // Callback for when iteration over the given tile group has completed

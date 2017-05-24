@@ -13,6 +13,7 @@
 #pragma once
 
 #include "codegen/expression_translator.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 
@@ -28,12 +29,18 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class ConstantTranslator : public ExpressionTranslator {
  public:
-  ConstantTranslator(const expression::ConstantValueExpression &exp,
+  ConstantTranslator(const expression::AbstractExpression &exp,
                      CompilationContext &ctx);
 
   // Produce the value that is the result of codegen-ing the expression
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
+
+  codegen::Value DeriveTypeValue(CodeGen &codegen,
+                                 RowBatch::Row &row) const;
+
+ private:
+  uint32_t offset_;
 };
 
 }  // namespace codegen

@@ -63,6 +63,20 @@ class CompilationContext {
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
 
+  uint32_t StoreParam(Parameter param) { return query_.StoreParam(param); }
+
+  uint32_t GetParamIdx(const expression::AbstractExpression *expr) {
+    return query_.GetParamIdx(expr);
+  }
+
+  uint32_t GetParamIdx(int value_id) {
+    return query_.GetParamIdx(value_id);
+  }
+
+  void StoreTargetList(TargetList &target_list) { query_.StoreTargetList(target_list); }
+
+  void StoreDirectList(DirectMapList &direct_list) { query_.StoreDirectList(direct_list); }
+
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
@@ -80,6 +94,19 @@ class CompilationContext {
 
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
+
+  // Get a pointer to the serialized param (in context of parameterization) instances
+  llvm::Value *GetCharPtrParamPtr();
+  // Get a pointer to the serialized param (in context of parameterization) instance sizes
+  llvm::Value *GetCharLenParamPtr();
+
+  // Get a pointer to the target list instance
+  llvm::Value *GetTargetListPtr();
+  // Get a pointer to the direct list instance
+  llvm::Value *GetDirectListPtr();
+
+  // Get a pointer to the executor context instance
+  llvm::Value *GetExecContextPtr();
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -118,6 +145,11 @@ class CompilationContext {
   // The ID for the catalog and transaction state
   RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
+  RuntimeState::StateID char_ptr_params_state_id_;
+  RuntimeState::StateID char_len_params_state_id_;
+  RuntimeState::StateID target_list_state_id_;
+  RuntimeState::StateID direct_list_state_id_;
+  RuntimeState::StateID exec_context_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "codegen/expression_translator.h"
+#include "type/type.h"
 
 namespace peloton {
 
@@ -32,7 +33,14 @@ class TupleValueTranslator : public ExpressionTranslator {
                        CompilationContext &context);
 
   // Return the attribute from the row
-  Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
+  codegen::Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
+
+  codegen::Value DerivePrimitiveValue(CodeGen &codegen, RowBatch::Row &row) const;
+  codegen::Value DeriveTypeValue(CodeGen &codegen, RowBatch::Row &row) const;
+
+ private:
+  uint32_t offset_;
+  CompilationContext &ctx_;
 };
 
 }  // namespace codegen

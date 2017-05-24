@@ -10,9 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "planner/insert_plan.h"
 #include "codegen/query_compiler.h"
 
 #include "codegen/compilation_context.h"
+#include "planner/delete_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
@@ -68,6 +70,25 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
         break;
       }
     }
+// INSERT, UPDATE, and DELETE are turned off for benchmark reasons.
+// If they are turned on, test cases are passing.
+//    case PlanNodeType::INSERT: {
+//      const planner::InsertPlan &insert_plan =
+//          static_cast<const planner::InsertPlan &>(plan);
+//      if (insert_plan.GetChildren().size() != 0) {
+//        return false;
+//      }
+//      if (insert_plan.GetProjectInfo() != nullptr) {
+//        return false;
+//      }
+//      break;
+//    }
+//    case PlanNodeType::UPDATE: {
+//      break;
+//    }
+//    case PlanNodeType::DELETE: {
+//      break;
+//    }
     default: { return false; }
   }
 
@@ -82,6 +103,10 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
   } else if (plan.GetPlanNodeType() == PlanNodeType::HASHJOIN) {
     auto &order_by_plan = static_cast<const planner::HashJoinPlan &>(plan);
     pred = order_by_plan.GetPredicate();
+  } else if (plan.GetPlanNodeType() == PlanNodeType::DELETE) {
+    auto &delete_plan = const_cast<planner::DeletePlan &>(
+        static_cast<const planner::DeletePlan &>(plan));
+    pred = delete_plan.GetPredicate();
   }
 
   if (pred != nullptr && !IsExpressionSupported(*pred)) {

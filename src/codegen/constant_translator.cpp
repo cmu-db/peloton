@@ -12,69 +12,100 @@
 
 #include "codegen/constant_translator.h"
 
-#include "expression/constant_value_expression.h"
-#include "type/value_peeker.h"
+#include "codegen/primitive_value_proxy.h"
+#include "codegen/value_proxy.h"
+#include "expression/parameter_value_expression.h"
 
 namespace peloton {
 namespace codegen {
 
 // Constructor
 ConstantTranslator::ConstantTranslator(
-    const expression::ConstantValueExpression &exp, CompilationContext &ctx)
-    : ExpressionTranslator(exp, ctx) {}
+    const expression::AbstractExpression &exp, CompilationContext &ctx)
+    : ExpressionTranslator(exp, ctx) {
+  switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_CONSTANT: {
+      offset_ = ctx.GetParamIdx(&exp);
+      break;
+    }
+    case ExpressionType::VALUE_PARAMETER: {
+      int param_idx =
+          GetExpressionAs<expression::ParameterValueExpression>().GetValueIdx();
+      offset_ = ctx.GetParamIdx(param_idx);
+      break;
+    }
+    default: {
+      throw Exception{
+          "Illegal instantiation for constant translator. Expression type: " +
+          ExpressionTypeToString(exp.GetExpressionType())};
+    }
+  }
+}
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
 codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
                                                RowBatch::Row &) const {
-  // Pull out the constant from the expression
-  const type::Value &constant =
-      GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-
   // Convert the value into an LLVM compile-time constant
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
-  switch (constant.GetTypeId()) {
+  auto type_id = GetValueType();
+  switch (type_id) {
     case type::Type::TypeId::TINYINT: {
-      val = codegen.Const8(type::ValuePeeker::PeekTinyInt(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetTinyInt::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::SMALLINT: {
-      val = codegen.Const16(type::ValuePeeker::PeekSmallInt(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetSmallInt::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::INTEGER: {
-      val = codegen.Const32(type::ValuePeeker::PeekInteger(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetInteger::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::BIGINT: {
-      val = codegen.Const64(type::ValuePeeker::PeekBigInt(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetBigInt::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DECIMAL: {
-      val = codegen.ConstDouble(type::ValuePeeker::PeekDouble(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetDouble::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::DATE: {
-      val = codegen.Const32(type::ValuePeeker::PeekDate(constant));
+      val =
+          codegen.CallFunc(PrimitiveValueProxy::_GetDate::GetFunction(codegen),
+                           {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::TIMESTAMP: {
-      val = codegen.Const64(type::ValuePeeker::PeekTimestamp(constant));
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetTimestamp::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
       break;
     }
     case type::Type::TypeId::VARCHAR: {
-      std::string str = type::ValuePeeker::PeekVarchar(constant);
-      // val should be a pointer type to be used in comparisions inside a PHI
-      val = codegen.ConstStringPtr(str);
-      len = codegen.Const32(str.length());
+      val = codegen.CallFunc(
+          PrimitiveValueProxy::_GetVarcharVal::GetFunction(codegen),
+          {GetCharPtrParamPtr(), codegen.Const64(offset_)});
+      len = codegen.CallFunc(
+          PrimitiveValueProxy::_GetVarcharLen::GetFunction(codegen),
+          {GetCharLenParamPtr(), codegen.Const64(offset_)});
       break;
     }
     default: {
-      throw Exception{"Unknown constant value type " +
-                      TypeIdToString(constant.GetTypeId())};
+      throw Exception{"Unknown constant value type " + TypeIdToString(type_id)};
     }
   }
-  return codegen::Value{constant.GetTypeId(), val, len};
+  return codegen::Value{type_id, val, len};
 }
 
 }  // namespace codegen

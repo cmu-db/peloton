@@ -155,7 +155,10 @@ TEST_F(UpdateTests, UpdatingOld) {
   optimizer::SimpleOptimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
-  // Create a table first
+  // ======================
+  //  Create a table first
+  // ======================
+
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER),
@@ -185,7 +188,10 @@ TEST_F(UpdateTests, UpdatingOld) {
   storage::DataTable* table =
       catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table");
 
-  // Inserting a tuple end-to-end
+  // ==============================
+  //  Inserting a tuple end-to-end
+  // ==============================
+
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
@@ -214,7 +220,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -222,7 +228,10 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
-  // Now Updating end-to-end
+  // =========================
+  //  Now Updating end-to-end
+  // =========================
+
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
@@ -241,7 +250,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -270,7 +279,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -295,7 +304,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -321,7 +330,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());

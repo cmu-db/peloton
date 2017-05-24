@@ -20,11 +20,24 @@ namespace codegen {
 
 ExpressionTranslator::ExpressionTranslator(
     const expression::AbstractExpression &expression, CompilationContext &ctx)
-    : expression_(expression) {
+    : context_(ctx), expression_(expression) {
   for (uint32_t i = 0; i < expression_.GetChildrenSize(); i++) {
-    ctx.Prepare(*expression_.GetChild(i));
+    context_.Prepare(*expression_.GetChild(i));
   }
 }
 
+CodeGen &ExpressionTranslator::GetCodeGen() const {
+  return context_.GetCodeGen();
+}
+
+llvm::Value *ExpressionTranslator::GetCharPtrParamPtr() const {
+  const auto char_ptr_params = context_.GetCharPtrParamPtr();
+  return char_ptr_params;
+};
+
+llvm::Value *ExpressionTranslator::GetCharLenParamPtr() const {
+  const auto char_len_params = context_.GetCharLenParamPtr();
+  return char_len_params;
+};
 }  // namespace codegen
 }  // namespace peloton

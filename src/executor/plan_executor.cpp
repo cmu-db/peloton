@@ -20,6 +20,8 @@
 #include "executor/executors.h"
 #include "optimizer/util.h"
 #include "storage/tuple_iterator.h"
+#include "codegen/query_cache.h"
+#include "codegen/param_loader.h"
 
 namespace peloton {
 namespace executor {
@@ -44,11 +46,12 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                        concurrency::Transaction *txn,
-                                        const std::vector<type::Value> &params,
-                                        std::vector<StatementResult> &result,
-                                        const std::vector<int> &result_format) {
+ExecuteResult PlanExecutor::ExecutePlan(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    concurrency::Transaction *txn,
+    const std::vector<type::Value> &params,
+    std::vector<StatementResult> &result,
+    const std::vector<int> &result_format) {
   ExecuteResult p_status;
   if (plan == nullptr) return p_status;
 
@@ -60,16 +63,17 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
+  // Use const std::vector<type::Value> &params to make it more elegant for
+  // network
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+        BuildExecutorContext(params, txn));
+
   if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     LOG_TRACE("Building the executor tree");
-    // Use const std::vector<type::Value> &params to make it more elegant for
-    // network
-    std::unique_ptr<executor::ExecutorContext> executor_context(
-        BuildExecutorContext(params, txn));
 
     // Build the executor tree
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
-        BuildExecutorTree(nullptr, plan, executor_context.get()));
+        BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
 
     LOG_TRACE("Initializing the executor tree");
 
@@ -129,7 +133,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     result.clear();
 
     // Bind: casting const should be removed with later refactoring executor
-    planner::AbstractPlan *planp = const_cast<planner::AbstractPlan *>(plan);
+    planner::AbstractPlan *planp = plan.get();
     planner::BindingContext context;
     planp->PerformBinding(context);
 
@@ -137,12 +141,33 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
 
-    // Compile the query
-    codegen::QueryCompiler compiler;
-    auto query = compiler.Compile(*plan, consumer);
+    codegen::Query* query = codegen::QueryCache::Instance().FindPlan(plan);
 
-    // Execute the query
-    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
+    if (query == nullptr) {
+      LOG_DEBUG("No plan found\n");
+
+      // Compile the query
+      codegen::QueryCompiler compiler;
+      auto compiled_query = compiler.Compile(*plan, consumer);
+
+      compiled_query->Execute(
+          *txn,
+          reinterpret_cast<char *>(consumer.GetState()),
+          nullptr,
+          executor_context.get());
+
+      codegen::QueryCache::Instance().InsertPlan(plan,
+                                                 std::move(compiled_query));
+    } else {
+      LOG_DEBUG("Plan found\n");
+
+      query->ReplaceConsts(plan.get());
+
+      query->Execute(*txn,
+                     reinterpret_cast<char *>(consumer.GetState()),
+                     nullptr,
+                     executor_context.get());
+    }
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
@@ -158,7 +183,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     }
 
     // This is 0 since codegen currently support SELECT only
-    p_status.m_processed = 0;
+    p_status.m_processed = executor_context->num_processed;
     p_status.m_result = ResultType::SUCCESS;
     p_status.m_result_slots = nullptr;
   }

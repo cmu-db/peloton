@@ -103,6 +103,11 @@ void UpdatePlan::BuildInitialUpdatePlan(
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
   }
 
+  column_ids.clear();
+  for (uint i = 0; i < schema_columns.size(); i++) {
+    column_ids.emplace_back(i);
+  }
+
   std::unique_ptr<const planner::ProjectInfo> project_info(
       new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
   project_info_ = std::move(project_info);
@@ -176,6 +181,21 @@ void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   auto &children = GetChildren();
   // One sequential scan
   children[0]->SetParameterValues(values);
+}
+
+void UpdatePlan::PerformBinding(BindingContext &binding_context) {
+  BindingContext input_context;
+
+  const auto &children = GetChildren();
+  PL_ASSERT(children.size() == 1);
+
+  children[0]->PerformBinding(input_context);
+
+  // Do projection (if one exists)
+  if (GetProjectInfo() != nullptr) {
+    std::vector<const BindingContext *> inputs = {&input_context};
+    GetProjectInfo()->PerformRebinding(binding_context, inputs);
+  }
 }
 
 }  // namespace planner

@@ -31,6 +31,11 @@ class Expression;
 
 namespace planner {
 
+/**
+ * @brief The @c DELETE physical plan.
+ *
+ *
+ */
 class DeletePlan : public AbstractPlan {
  public:
   DeletePlan() = delete;
