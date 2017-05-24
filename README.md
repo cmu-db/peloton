@@ -35,7 +35,7 @@ Peloton has been tested to work on the following platforms:
 
 * Ubuntu Linux 14.04+ (64-bit)
 * Fedora Linux 24+ (64-bit)
-* ~~Mac OS X 10.9+ (64-bit)
+* ~~Mac OS X 10.9+ (64-bit)~~
 
  Please note that it will not compile on 32-bit systems.
 
