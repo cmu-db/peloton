@@ -19,6 +19,8 @@
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
 
+#include "codegen/multi_thread_context_proxy.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -53,8 +55,10 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Allocate state for our hash table
-  hash_table_id_ =
-      runtime_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
+  global_hash_table_id_ = runtime_state.RegisterState(
+      "global_join", OAHashTableProxy::GetType(codegen));
+  local_hash_table_id_ = runtime_state.RegisterState(
+      "local_join", OAHashTableProxy::GetType(codegen), true);
 
   // Prepare translators for the left and right input operators
   context.Prepare(*join_.GetChild(0), left_pipeline_);
@@ -133,18 +137,36 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 
 // Initialize the hash-table instance
 void HashJoinTranslator::InitializeState() {
-  hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  hash_table_.Init(GetCodeGen(), LoadStatePtr(global_hash_table_id_));
 }
 
 // Produce!
 void HashJoinTranslator::Produce() const {
+  auto &codegen = GetCodeGen();
+
+  // Initialize the local hash table before produce.
+  llvm::Value *local_ht_ptr = LoadStateValue(local_hash_table_id_);
+  hash_table_.Init(codegen, local_ht_ptr);
+
   // Let the left child produce tuples which we materialize into the hash-table
   GetCompilationContext().Produce(*join_.GetChild(0));
+
+  // Merge to the global hash table
+  llvm::Value *multi_thread_context = codegen.GetArgument(1);
+  codegen.CallFunc(
+      MultiThreadContextProxy::GetMergeToGlobalHashTableFunction(codegen),
+      {multi_thread_context, LoadStatePtr(global_hash_table_id_),
+       local_ht_ptr});
+
+  // Wait for global hash table constructions
+  codegen.CallFunc(MultiThreadContextProxy::GetBarrierWaitFunction(codegen),
+                   {multi_thread_context});
 
   // Let the right child produce tuples, which we use to probe the hash table
   GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
 
   // That's it, we've produced all the tuples
+  hash_table_.Destroy(codegen, local_ht_ptr);
 }
 
 void HashJoinTranslator::Consume(ConsumerContext &context,
@@ -191,7 +213,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
       hashes.SetValue(codegen, p, hash_val);
 
       // Prefetch the actual hash table bucket
-      hash_table_.PrefetchBucket(codegen, LoadStatePtr(hash_table_id_),
+      hash_table_.PrefetchBucket(codegen, LoadStatePtr(global_hash_table_id_),
                                  hash_val, OAHashTable::PrefetchType::Read,
                                  OAHashTable::Locality::Medium);
 
@@ -266,7 +288,7 @@ void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
 
   // Insert tuples from the left side into the hash table
   InsertLeft insert_left{left_value_storage_, vals};
-  hash_table_.Insert(codegen, LoadStatePtr(hash_table_id_), hash, key,
+  hash_table_.Insert(codegen, LoadStateValue(local_hash_table_id_), hash, key,
                      insert_left);
 }
 
@@ -283,14 +305,15 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
   if (join_plan.GetJoinType() == JoinType::INNER) {
     // For inner joins, find all join partners
     ProbeRight probe_right{*this, context, row, key};
-    hash_table_.FindAll(GetCodeGen(), LoadStatePtr(hash_table_id_), key,
+
+    hash_table_.FindAll(GetCodeGen(), LoadStatePtr(global_hash_table_id_), key,
                         probe_right);
   }
 }
 
 // Cleanup by destroying the hash-table instance
 void HashJoinTranslator::TearDownState() {
-  hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  hash_table_.Destroy(GetCodeGen(), LoadStatePtr(global_hash_table_id_));
 }
 
 // Get the stringified name of this join

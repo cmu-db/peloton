@@ -15,8 +15,10 @@
 #include "catalog/schema.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/loop.h"
+#include "codegen/multi_thread_context_proxy.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "storage/data_table.h"
+#include "codegen/multi_thread_context.h"
 
 namespace peloton {
 namespace codegen {
@@ -71,13 +73,23 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
       codegen.Const32(table_.GetSchema()->GetColumnCount()));
 
-  // Get the number of tile groups in the given table
-  llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
+
+  llvm::Value *multi_thread_context = codegen.GetArgument(1);
+
+  // start index
+  llvm::Value *tile_group_idx =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeStartFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
+
+  // end index
+  llvm::Value *tile_group_idx_end =
+      codegen.CallFunc(MultiThreadContextProxy::GetRangeEndFunction(codegen),
+                       {multi_thread_context, num_tile_groups});
 
   // Iterate over all tile groups in the table
   Loop loop{codegen,
-            codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
+            codegen->CreateICmpULT(tile_group_idx, tile_group_idx_end),
             {{"tileGroupIdx", tile_group_idx}}};
   {
     // Get the tile group with the given tile group ID
@@ -103,7 +115,7 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
     // Move to next tile group in the table
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));
-    loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
+    loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, tile_group_idx_end),
                  {tile_group_idx});
   }
 }

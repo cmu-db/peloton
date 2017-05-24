@@ -42,22 +42,22 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     out_idx += (visibility == VisibilityType::OK);
   }
 
-  uint32_t tile_group_idx = tile_group.GetTileGroupId();
+  //  uint32_t tile_group_idx = tile_group.GetTileGroupId();
 
   // Perform a read operation for every visible tuple we found
-  uint32_t end_idx = out_idx;
-  out_idx = 0;
-  for (uint32_t idx = 0; idx < end_idx; idx++) {
-    // Construct the item location
-    ItemPointer location{tile_group_idx, selection_vector[idx]};
-
-    // Perform the read
-    bool can_read = txn_manager.PerformRead(&txn, location);
-
-    // Update the selection vector and output position
-    selection_vector[out_idx] = selection_vector[idx];
-    out_idx += static_cast<uint32_t>(can_read);
-  }
+  //  uint32_t end_idx = out_idx;
+  //  out_idx = 0;
+  //  for (uint32_t idx = 0; idx < end_idx; idx++) {
+  //    // Construct the item location
+  //    ItemPointer location{tile_group_idx, selection_vector[idx]};
+  //
+  //    // Perform the read
+  //    bool can_read = txn_manager.PerformRead(&txn, location);
+  //
+  //    // Update the selection vector and output position
+  //    selection_vector[out_idx] = selection_vector[idx];
+  //    out_idx += static_cast<uint32_t>(can_read);
+  //  }
 
   return out_idx;
 }

@@ -44,12 +44,15 @@ class OAHashTableTest : public PelotonTest {
 
   OAHashTableTest() {
     PL_MEMSET(raw_hash_table, 1, sizeof(raw_hash_table));
+    PL_MEMSET(backup_raw_hash_table, 1, sizeof(backup_raw_hash_table));
     GetHashTable().Init(sizeof(Key), sizeof(Value));
+    GetBackupHashTable().Init(sizeof(Key), sizeof(Value));
   }
 
   ~OAHashTableTest() {
     // Clean up
     GetHashTable().Destroy();
+    GetBackupHashTable().Destroy();
   }
 
   static inline uint32_t Hash(const Key &k) {
@@ -59,23 +62,33 @@ class OAHashTableTest : public PelotonTest {
     return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
   }
 
-  inline void Insert(Key k, Value v) {
-    auto &hash_table = GetHashTable();
-    hash_table.Insert(Hash(k), k, v);
+  inline void Insert(Key k, Value v) { Insert(k, v, GetHashTable()); }
+
+  inline void Insert(Key k, Value v, codegen::utils::OAHashTable &hash_table) {
+    hash_table.Insert(Hash(k), reinterpret_cast<char *>(&k),
+                      reinterpret_cast<char *>(&v));
   }
 
-  inline void Reset() {
-    GetHashTable().Destroy();
-    GetHashTable().Init(sizeof(Key), sizeof(Value));
+  inline void Reset() { Reset(GetHashTable()); }
+
+  inline void Reset(codegen::utils::OAHashTable &hash_table) {
+    hash_table.Destroy();
+    hash_table.Init(sizeof(Key), sizeof(Value));
   }
 
   codegen::utils::OAHashTable &GetHashTable() {
     return *reinterpret_cast<codegen::utils::OAHashTable *>(raw_hash_table);
   }
 
+  codegen::utils::OAHashTable &GetBackupHashTable() {
+    return *reinterpret_cast<codegen::utils::OAHashTable *>(
+               backup_raw_hash_table);
+  }
+
  private:
-  // The open-addressing hash-table instance
+  // The open-addressing hash-table instances
   int8_t raw_hash_table[sizeof(codegen::utils::OAHashTable)];
+  int8_t backup_raw_hash_table[sizeof(codegen::utils::OAHashTable)];
 };
 
 TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
@@ -130,8 +143,8 @@ TEST_F(OAHashTableTest, CanIterate) {
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = hashtable.begin(), end = hashtable.end();
-       iter != end; ++iter) {
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
     const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
     if (*iter_key == key_dup) {
       dup_count++;
@@ -143,6 +156,33 @@ TEST_F(OAHashTableTest, CanIterate) {
 
   EXPECT_EQ(to_insert + 2, i);
   EXPECT_EQ(3, dup_count);
+}
+
+TEST_F(OAHashTableTest, CanMerge) {
+  uint32_t to_insert = 50000;
+  Value v = {3, 4, 5, 6};
+
+  auto &hashtable = GetHashTable();
+  auto &backup_hashtable = GetBackupHashTable();
+
+  // Insert a bunch of unique keys
+  for (uint32_t i = 0; i < to_insert; i++) {
+    Insert({1, i}, v, hashtable);
+    Insert({1, i}, v, backup_hashtable);
+    Insert({2, i}, v, backup_hashtable);
+  }
+
+  // Merge two tables.
+  hashtable.Merge(&backup_hashtable);
+
+  // Check that we find them all
+  uint32_t i = 0;
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
+    i++;
+  }
+
+  EXPECT_EQ(to_insert * 3, i);
 }
 
 TEST_F(OAHashTableTest, CanCodegenProbeOrInsert) {}
