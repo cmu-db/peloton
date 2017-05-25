@@ -14,6 +14,7 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 
@@ -51,7 +52,8 @@ class Query {
 
   // Execute th e query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
-  void Execute(concurrency::Transaction &txn, char *consumer_arg,
+  void Execute(concurrency::Transaction &txn,
+               executor::ExecutorContext *executor_context, char *consumer_arg,
                RuntimeStats *stats = nullptr);
 
   // Return the query plan

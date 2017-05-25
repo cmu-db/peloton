@@ -60,20 +60,19 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
-  if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
-    LOG_TRACE("Building the executor tree");
-    // Use const std::vector<type::Value> &params to make it more elegant for
-    // network
-    std::unique_ptr<executor::ExecutorContext> executor_context(
+  // Use const std::vector<type::Value> &params to make it more elegant for
+  // network
+  std::unique_ptr<executor::ExecutorContext> executor_context(
         BuildExecutorContext(params, txn));
 
+  if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     // Build the executor tree
+    LOG_TRACE("Building the executor tree");
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
         BuildExecutorTree(nullptr, plan, executor_context.get()));
 
-    LOG_TRACE("Initializing the executor tree");
-
     // Initialize the executor tree
+    LOG_TRACE("Initializing the executor tree");
     status = executor_tree->Init();
 
     if (status == true) {
@@ -142,7 +141,8 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     auto query = compiler.Compile(*plan, consumer);
 
     // Execute the query
-    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
+    query->Execute(*txn, executor_context.get(),
+                   reinterpret_cast<char *>(consumer.GetState()));
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
@@ -300,88 +300,88 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PlanNodeType::SEQSCAN:
-      LOG_TRACE("Adding Sequential Scan Executer");
+      LOG_TRACE("Adding Sequential Scan Executor");
       child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::INDEXSCAN:
-      LOG_TRACE("Adding Index Scan Executer");
+      LOG_TRACE("Adding Index Scan Executor");
       child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::INSERT:
-      LOG_TRACE("Adding Insert Executer");
+      LOG_TRACE("Adding Insert Executor");
       child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::DELETE:
-      LOG_TRACE("Adding Delete Executer");
+      LOG_TRACE("Adding Delete Executor");
       child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::UPDATE:
-      LOG_TRACE("Adding Update Executer");
+      LOG_TRACE("Adding Update Executor");
       child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::LIMIT:
-      LOG_TRACE("Adding Limit Executer");
+      LOG_TRACE("Adding Limit Executor");
       child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::NESTLOOP:
-      LOG_TRACE("Adding Nested Loop Joing Executer");
+      LOG_TRACE("Adding Nested Loop Joing Executor");
       child_executor =
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::MERGEJOIN:
-      LOG_TRACE("Adding Merge Join Executer");
+      LOG_TRACE("Adding Merge Join Executor");
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::HASH:
-      LOG_TRACE("Adding Hash Executer");
+      LOG_TRACE("Adding Hash Executor");
       child_executor = new executor::HashExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::HASHJOIN:
-      LOG_TRACE("Adding Hash Join Executer");
+      LOG_TRACE("Adding Hash Join Executor");
       child_executor = new executor::HashJoinExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::PROJECTION:
-      LOG_TRACE("Adding Projection Executer");
+      LOG_TRACE("Adding Projection Executor");
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::MATERIALIZE:
-      LOG_TRACE("Adding Materialization Executer");
+      LOG_TRACE("Adding Materialization Executor");
       child_executor =
           new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::AGGREGATE_V2:
-      LOG_TRACE("Adding Aggregate Executer");
+      LOG_TRACE("Adding Aggregate Executor");
       child_executor = new executor::AggregateExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::ORDERBY:
-      LOG_TRACE("Adding Order By Executer");
+      LOG_TRACE("Adding Order By Executor");
       child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::DROP:
-      LOG_TRACE("Adding Drop Executer");
+      LOG_TRACE("Adding Drop Executor");
       child_executor = new executor::DropExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::CREATE:
-      LOG_TRACE("Adding Create Executer");
+      LOG_TRACE("Adding Create Executor");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
     case PlanNodeType::COPY:
-      LOG_TRACE("Adding Copy Executer");
+      LOG_TRACE("Adding Copy Executor");
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
     case PlanNodeType::POPULATE_INDEX:
