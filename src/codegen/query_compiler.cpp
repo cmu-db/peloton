@@ -51,6 +51,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::PROJECTION:
     case PlanNodeType::ORDERBY:
+    case PlanNodeType::DELETE:
     case PlanNodeType::AGGREGATE_V2: {
       break;
     }
@@ -67,9 +68,6 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
           parent->GetPlanNodeType() == PlanNodeType::HASHJOIN) {
         break;
       }
-    }
-    case PlanNodeType::DELETE: {
-      break;
     }
     default: { return false; }
   }

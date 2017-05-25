@@ -158,7 +158,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     }
 
     // This is 0 since codegen currently support SELECT only
-    p_status.m_processed = 0;
+    p_status.m_processed = executor_context->num_processed;
     p_status.m_result = ResultType::SUCCESS;
     p_status.m_result_slots = nullptr;
   }
