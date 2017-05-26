@@ -51,24 +51,6 @@ class DeleteTranslator : public OperatorTranslator {
                              storage::TileGroup *tile_group);
   const planner::DeletePlan &delete_plan_;
   codegen::Table table_;
-
-  //===--------------------------------------------------------------------===//
-  // A structure that proxies delete wrapper function calls
-  //===--------------------------------------------------------------------===//
-#if 0
-  struct _DeleteWrapper {
-    // return the mingled function name for function with signature
-    // peloton::codegen::DeleteTranslator::wrapper(
-    //     unsigned int,
-    //     unsigned int,
-    //     peloton::concurrency::Transaction*,
-    //     peloton::storage::DataTable*)
-    static const std::string &GetFunctionName();
-    // return the llvm function bound with the above function name.
-    // perform binding if no such function is found
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-#endif
 };
 
 }  // namespace codegen
