@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/expression/constant_value_expression.h>
 #include "planner/create_plan.h"
 
 #include "parser/create_statement.h"
@@ -38,7 +39,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   table_name = parse_tree->GetTableName();
   database_name = parse_tree->GetDatabaseName();
   std::vector<catalog::Column> columns;
-  std::vector<catalog::Constraint> column_contraints;
+  std::vector<catalog::Constraint> column_constraints;
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
@@ -55,22 +56,44 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // Check main constraints
       if (col->primary) {
         catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
-        column_contraints.push_back(constraint);
-        LOG_TRACE("Added a primary key constraint on column \"%s\"", col->name);
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a primary key constraint on column \"%s\"", col->name);
       }
 
       if (col->not_null) {
         catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
-        column_contraints.push_back(constraint);
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a not-null constraint on column \"%s\"", col->name);
+      }
+
+      if (col->unique) {
+        catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
+        column_constraints.push_back(constraint);
+        LOG_DEBUG("Added a unique constraint on column \"%s\"", col->name);
+      }
+
+      // Add the default value
+      if (col->default_value != nullptr) {
+        // Referenced from insert_plan.cpp
+        if (col->default_value->GetExpressionType() != ExpressionType::VALUE_PARAMETER) {
+          expression::ConstantValueExpression *const_expr_elem =
+            dynamic_cast<expression::ConstantValueExpression *>(col->default_value);
+
+          catalog::Constraint constraint(ConstraintType::DEFAULT, "con_default");
+          type::Value v = const_expr_elem->GetValue();
+          constraint.addDefaultValue(v);
+          column_constraints.push_back(constraint);
+          LOG_DEBUG("Added a default constraint on column \"%s\"", col->name);
+        }
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string(col->name), false);
-      for (auto con : column_contraints) {
+                                    std::string(col->name), false);
+      for (auto con : column_constraints) {
         column.AddConstraint(con);
       }
 
-      column_contraints.clear();
+      column_constraints.clear();
       columns.push_back(column);
     }
     catalog::Schema *schema = new catalog::Schema(columns);

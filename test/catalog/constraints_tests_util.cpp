@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/constraints_tests_util.h"
+#include "constraints_tests_util.h"
 
 #include <cstdlib>
 #include <ctime>
@@ -104,6 +104,17 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
           catalog::Constraint(ConstraintType::UNIQUE, unique_constraint_name));
       return column;
     } break;
+
+    case 114: {
+      auto column = catalog::Column(type::Type::INTEGER,
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
+
+      column.AddConstraint(
+          catalog::Constraint(ConstraintType::CHECK, not_null_constraint_name));
+      return column;
+    }
 
     default: {
       throw ExecutorException("Invalid column index : " +
@@ -272,6 +283,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
  *
  * @return Table generated for test.
  */
+
 storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
@@ -283,6 +295,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
 
   return table;
 }
+/
 
 }  // namespace test
 }  // namespace peloton
