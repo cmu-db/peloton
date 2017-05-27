@@ -144,7 +144,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
 
   // Something wrong with column property.
-  query = "SELECT * from test order by a + c";
+  query = "SELECT a, b, c from test order by a + c";
 
   // check for plan node type
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
