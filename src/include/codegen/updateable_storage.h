@@ -54,6 +54,13 @@ class UpdateableStorage {
   }
 
  private:
+  // Find the position in the underlying storage where the item with the
+  // provided index is.
+  // NOTE: We take signed integer output positions because we use -1 for errors
+  void FindStoragePositionFor(uint32_t item_index, int32_t &val_idx,
+                              int32_t &len_idx) const;
+
+ private:
   // The types we store in the storage area
   std::vector<type::Type::TypeId> types_;
 

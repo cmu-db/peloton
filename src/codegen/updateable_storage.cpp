@@ -12,6 +12,7 @@
 
 #include "codegen/updateable_storage.h"
 
+#include "codegen/bitmap.h"
 #include "codegen/type.h"
 
 namespace peloton {
@@ -37,9 +38,10 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   std::vector<llvm::Type *> llvm_types;
 
   // First, we prepend the NULL bitmap at the front
-  llvm::Type *null_bit = codegen.BoolType();
-  for (uint32_t i = 0; i < types_.size(); i++) {
-    llvm_types.push_back(null_bit);
+  // Put in null bytes at the front
+  uint64_t num_null_bitmap_bytes = (types_.size() + 7) / 8;
+  for (uint32_t i = 0; i < num_null_bitmap_bytes; i++) {
+    llvm_types.push_back(codegen.Int8Type());
   }
 
   // Now, add the actual types
@@ -70,49 +72,54 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   return storage_type_;
 }
 
+void UpdateableStorage::FindStoragePositionFor(uint32_t item_index,
+                                               int32_t &val_idx,
+                                               int32_t &len_idx) const {
+  // TODO: This linear search isn't great ...
+  val_idx = len_idx = -1;
+  for (uint32_t store_idx = 0; store_idx < storage_format_.size();
+       store_idx++) {
+    if (storage_format_[store_idx].index == item_index) {
+      if (storage_format_[store_idx].is_length) {
+        len_idx = store_idx;
+      } else {
+        val_idx = store_idx;
+      }
+    }
+  }
+  PL_ASSERT(val_idx >= 0);
+}
+
 // Get the value at a specific index into the storage area
 codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen, llvm::Value *ptr,
                                              uint64_t index) const {
   PL_ASSERT(storage_type_ != nullptr);
   PL_ASSERT(index < types_.size());
 
-  // TODO: This linear search isn't great ...
-  int32_t val_idx = -1, len_idx = -1;
-  for (uint32_t i = 0; i < storage_format_.size(); i++) {
-    if (storage_format_[i].index == index) {
-      if (storage_format_[i].is_length) {
-        len_idx = i;
-      } else {
-        val_idx = i;
-      }
-    }
-  }
+  int32_t val_idx, len_idx;
+  FindStoragePositionFor(index, val_idx, len_idx);
 
-  // Make sure we found something
-  PL_ASSERT(val_idx >= 0);
-
-  const uint32_t num_items = static_cast<uint32_t>(types_.size());
+  Bitmap null_bitmap{codegen, ptr, static_cast<uint32_t>(types_.size())};
+  uint64_t num_null_components = null_bitmap.NumComponents();
 
   llvm::Value *typed_ptr =
       codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
 
   // Load the value
   llvm::Value *val_addr = codegen->CreateConstInBoundsGEP2_32(
-      storage_type_, typed_ptr, 0, num_items + val_idx);
+      storage_type_, typed_ptr, 0, num_null_components + val_idx);
   llvm::Value *val = codegen->CreateLoad(val_addr);
 
   // If there is a length-component for this entry, load it too
   llvm::Value *len = nullptr;
   if (len_idx > 0) {
     llvm::Value *len_addr = codegen->CreateConstInBoundsGEP2_32(
-        storage_type_, typed_ptr, 0, num_items + len_idx);
+        storage_type_, typed_ptr, 0, num_null_components + len_idx);
     len = codegen->CreateLoad(len_addr);
   }
 
   // Load the null-indication bit
-  llvm::Value *null_addr =
-      codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, index);
-  llvm::Value *null = codegen->CreateLoad(null_addr);
+  llvm::Value *null = null_bitmap.GetBit(codegen, index);
 
   // Done
   return codegen::Value{types_[index], val, len, null};
@@ -125,41 +132,32 @@ void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *ptr,
   llvm::Value *val = nullptr, *len = nullptr, *null = nullptr;
   value.ValuesForMaterialization(codegen, val, len, null);
 
-  // TODO: This linear search isn't great ...
-  int val_idx = -1, len_idx = -1;
-  for (uint64_t i = 0; i < storage_format_.size(); i++) {
-    if (storage_format_[i].index == index) {
-      if (storage_format_[i].is_length) {
-        len_idx = i;
-      } else {
-        val_idx = i;
-      }
-    }
-  }
+  int32_t val_idx, len_idx;
+  FindStoragePositionFor(index, val_idx, len_idx);
 
   PL_ASSERT(value.GetValue()->getType() == storage_format_[val_idx].type);
 
-  const uint32_t num_items = static_cast<uint32_t>(types_.size());
+  Bitmap null_bitmap{codegen, ptr, static_cast<uint32_t>(types_.size())};
+  uint64_t num_null_components = null_bitmap.NumComponents();
 
   llvm::Value *typed_ptr =
       codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
 
   // Store the value and len at the appropriate slot
   llvm::Value *val_addr = codegen->CreateConstInBoundsGEP2_32(
-      storage_type_, typed_ptr, 0, num_items + val_idx);
+      storage_type_, typed_ptr, 0, num_null_components + val_idx);
   codegen->CreateStore(val, val_addr);
 
   // If there's a length-component, store it at the appropriate index too
   if (len != nullptr) {
     llvm::Value *len_addr = codegen->CreateConstInBoundsGEP2_32(
-        storage_type_, typed_ptr, 0, num_items + len_idx);
+        storage_type_, typed_ptr, 0, num_null_components + len_idx);
     codegen->CreateStore(len, len_addr);
   }
 
   // Write-back null-bit
-  llvm::Value *null_bit_addr =
-      codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, index);
-  codegen->CreateStore(null, null_bit_addr);
+  null_bitmap.SwitchBit(codegen, index, null);
+  null_bitmap.WriteBack(codegen);
 }
 
 }  // namespace codegen
