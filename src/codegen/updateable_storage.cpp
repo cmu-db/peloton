@@ -34,38 +34,50 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
     return storage_type_;
   }
 
-  // The LLVM type we're constructing
-  std::vector<llvm::Type *> llvm_types;
-
-  // First, we prepend the NULL bitmap at the front
-  // Put in null bytes at the front
-  uint64_t num_null_bitmap_bytes = Bitmap::NumComponentsFor(schema_.size());
-  for (uint32_t i = 0; i < num_null_bitmap_bytes; i++) {
-    llvm_types.push_back(codegen.Int8Type());
-  }
-
-  // Now, add the actual types
+  // Add tracking metadata for all data elements that will be stored
   for (uint32_t i = 0; i < schema_.size(); i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, schema_[i], val_type, len_type);
 
-    // Create an entry for the value and add the type to the struct type we're
-    // constructing
+    // Create a slot metadata entry for the value
+    // Note: The physical and logical index are the same for now. The physical
+    //       index is modified after storage format optimization (later).
     storage_format_.push_back(CompactStorage::EntryInfo{
-        val_type, static_cast<uint32_t>(llvm_types.size()), i, false,
-        codegen.SizeOf(val_type)});
-    llvm_types.push_back(val_type);
+        val_type, i, i, false, codegen.SizeOf(val_type)});
 
     // If there is a length component, add that too
     if (len_type != nullptr) {
-      // Create an entry for the length and add to the struct
       storage_format_.push_back(CompactStorage::EntryInfo{
-          len_type, static_cast<uint32_t>(llvm_types.size()), i, true,
-          codegen.SizeOf(len_type)});
-      llvm_types.push_back(len_type);
+          len_type, i, i, true, codegen.SizeOf(len_type)});
     }
   }
+
+  // Sort the entries by decreasing size. This minimizes storage overhead due to
+  // padding (potentially) added by LLVM.
+  // TODO: Does this help?
+  std::sort(storage_format_.begin(), storage_format_.end(),
+            [](const CompactStorage::EntryInfo &left,
+               const CompactStorage::EntryInfo &right) {
+              return right.num_bytes < left.num_bytes;
+            });
+
+  // Now we construct the LLVM type of this storage space. First comes bytes
+  // to manage the null bitmap. Then all the data elements.
+  std::vector<llvm::Type *> llvm_types;
+
+  uint64_t num_null_bitmap_bytes = Bitmap::NumComponentsFor(schema_.size());
+  for (uint32_t i = 0; i < num_null_bitmap_bytes; i++) {
+    llvm_types.push_back(codegen.Int8Type());
+  }
+
+  for (uint32_t i = 0; i < storage_format_.size(); i++) {
+    llvm_types.push_back(storage_format_[i].type);
+
+    // Update the physical index in the storage entry
+    storage_format_[i].physical_index = num_null_bitmap_bytes + i;
+  }
+
   // Construct the finalized types
   storage_type_ = llvm::StructType::get(codegen.GetContext(), llvm_types, true);
   storage_size_ = static_cast<uint32_t>(codegen.SizeOf(storage_type_));
