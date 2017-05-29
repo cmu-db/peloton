@@ -50,19 +50,18 @@ class UpdateableStorage {
 
   // Return the number of elements this format is configured to handle
   uint32_t GetNumElements() const {
-    return static_cast<uint32_t>(types_.size());
+    return static_cast<uint32_t>(schema_.size());
   }
 
  private:
   // Find the position in the underlying storage where the item with the
   // provided index is.
-  // NOTE: We take signed integer output positions because we use -1 for errors
   void FindStoragePositionFor(uint32_t item_index, int32_t &val_idx,
                               int32_t &len_idx) const;
 
  private:
   // The types we store in the storage area
-  std::vector<type::Type::TypeId> types_;
+  std::vector<type::Type::TypeId> schema_;
 
   // The physical storage format
   std::vector<CompactStorage::EntryInfo> storage_format_;

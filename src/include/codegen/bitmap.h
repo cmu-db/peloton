@@ -25,6 +25,7 @@ class Bitmap {
   Bitmap(CodeGen &codegen, llvm::Value *bitmap_addr, uint32_t num_bits);
 
   void SetBit(CodeGen &codegen, uint32_t bit_idx);
+
   void SwitchBit(CodeGen &codegen, uint32_t bit_idx, llvm::Value *bit_val);
 
   void ClearBit(CodeGen &codegen, uint32_t bit_idx);
@@ -34,6 +35,10 @@ class Bitmap {
   void WriteBack(CodeGen &codegen) const;
 
   uint64_t NumComponents() const { return cached_components_.size(); }
+
+  static uint64_t NumComponentsFor(uint64_t num_bits) {
+    return (num_bits + 7) / 8;
+  }
 
  private:
   // Return the component position where the given bit lives
