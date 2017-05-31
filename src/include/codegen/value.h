@@ -52,8 +52,9 @@ class Value {
   // Reify this (potentially null) value into a boolean value
   llvm::Value *ReifyBoolean(CodeGen &codegen) const;
 
-  // Check if this value is actually null
+  // Check if this value is NULL (or not NULL).
   llvm::Value *IsNull(CodeGen &codegen) const;
+  llvm::Value *IsNotNull(CodeGen &codegen) const;
 
   //===--------------------------------------------------------------------===//
   // Comparison functions
