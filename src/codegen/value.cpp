@@ -46,9 +46,14 @@ llvm::Value *Value::ReifyBoolean(CodeGen &codegen) const {
   }
 }
 
-// Return a boolean value indicating whether this value is NULL or not
+// Return a boolean value indicating whether this value is NULL
 llvm::Value *Value::IsNull(CodeGen &codegen) const {
   return (GetNullBit() != nullptr ? GetNullBit() : codegen.ConstBool(false));
+}
+
+// Return a boolean (i1) value indicating whether this value is not NULL
+llvm::Value *Value::IsNotNull(CodeGen &codegen) const {
+  return codegen->CreateNot(IsNull(codegen));
 }
 
 //===----------------------------------------------------------------------===//
