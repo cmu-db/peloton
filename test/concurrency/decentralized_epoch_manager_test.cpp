@@ -33,14 +33,15 @@ TEST_F(DecentralizedEpochManagerTests, Test) {
 
 TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset();
 
   // originally, the global epoch is 1.
-  epoch_manager.Reset(1);
+  epoch_manager.SetCurrentEpochId(1);
 
   // register a thread.
   epoch_manager.RegisterThread(0);
 
-  epoch_manager.Reset(2);
+  epoch_manager.SetCurrentEpochId(2);
 
   // create a transaction at epoch 2.
   cid_t txn_id = epoch_manager.EnterEpoch(0, TimestampType::READ);
@@ -52,7 +53,7 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
 
   EXPECT_EQ(1, tail_epoch_id);
 
-  epoch_manager.Reset(3);
+  epoch_manager.SetCurrentEpochId(3);
 
   // we should expect that the tail is 1.
   tail_epoch_id = epoch_manager.GetExpiredEpochId();
@@ -61,7 +62,7 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   
   epoch_manager.ExitEpoch(0, epoch_id);
 
-  epoch_manager.Reset(4);
+  epoch_manager.SetCurrentEpochId(4);
 
   tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
@@ -75,9 +76,10 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
 TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset();
 
   // originally, the global epoch is 1.
-  epoch_manager.Reset(1);
+  epoch_manager.SetCurrentEpochId(1);
 
   // register three threads.
   epoch_manager.RegisterThread(0);
@@ -86,7 +88,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 
   epoch_manager.RegisterThread(2); // this is an idle thread.
 
-  epoch_manager.Reset(2);
+  epoch_manager.SetCurrentEpochId(2);
 
   // create a transaction at epoch 2.
   cid_t txn_id1 = epoch_manager.EnterEpoch(0, TimestampType::READ);
@@ -98,7 +100,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 
   EXPECT_EQ(1, tail_epoch_id);
 
-  epoch_manager.Reset(3);
+  epoch_manager.SetCurrentEpochId(3);
 
   // create a transaction at epoch 3.
   cid_t txn_id2 = epoch_manager.EnterEpoch(1, TimestampType::READ);
@@ -112,7 +114,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   
   epoch_manager.ExitEpoch(0, epoch_id1);
 
-  epoch_manager.Reset(5);
+  epoch_manager.SetCurrentEpochId(5);
 
   tail_epoch_id = epoch_manager.GetExpiredEpochId();
 

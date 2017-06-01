@@ -32,6 +32,8 @@ public:
 
   virtual void Reset(const uint64_t epoch_id) = 0;
 
+  virtual void SetCurrentEpochId(const uint64_t epoch_id) = 0;
+
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) = 0;
 
   virtual void StartEpoch() = 0;
