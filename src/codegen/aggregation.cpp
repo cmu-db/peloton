@@ -19,6 +19,8 @@
 namespace peloton {
 namespace codegen {
 
+// TODO: Handle shared/duplicated aggregates
+
 //===----------------------------------------------------------------------===//
 // Setup the aggregation storage format given the aggregates the caller wants to
 // store.
@@ -26,36 +28,17 @@ namespace codegen {
 void Aggregation::Setup(
     CodeGen &codegen,
     const std::vector<planner::AggregatePlan::AggTerm> &aggregates) {
-  // Collect the types so we can configure the updateable storage's format
-  bool needs_group_count = false;
-  bool tracks_group_count = false;
-  for (uint32_t i = 0; i < aggregates.size(); i++) {
-    const auto agg_term = aggregates[i];
-    // Defense > Offense ?
-    PL_ASSERT(agg_term.agg_ai.type != type::Type::TypeId::INVALID);
-
-    needs_group_count |= agg_term.aggtype == ExpressionType::AGGREGATE_AVG;
-    tracks_group_count |=
-        agg_term.aggtype == ExpressionType::AGGREGATE_COUNT_STAR;
-  }
-
-  // Add the count(*) aggregate first, if we need to
-  if (tracks_group_count || needs_group_count) {
-    uint32_t storage_pos = storage_.AddType(type::Type::TypeId::BIGINT);
-    AggregateInfo count_agg{
-        ExpressionType::AGGREGATE_COUNT_STAR, type::Type::TypeId::BIGINT,
-        std::numeric_limits<uint32_t>::max(), storage_pos, true};
-    aggregate_infos_.push_back(count_agg);
-  }
-
   // Add the rest
   for (uint32_t source_idx = 0; source_idx < aggregates.size(); source_idx++) {
     const auto agg_term = aggregates[source_idx];
     switch (agg_term.aggtype) {
-      case ExpressionType::AGGREGATE_COUNT: {
-        // We're counting instances ... use BIGINT for the count
+      case ExpressionType::AGGREGATE_COUNT:
+      case ExpressionType::AGGREGATE_COUNT_STAR: {
+        // Add the count to the storage layout
         const auto count_type = type::Type::TypeId::BIGINT;
         uint32_t storage_pos = storage_.AddType(count_type);
+
+        // Add metadata for the count aggregate
         AggregateInfo aggregate_info{agg_term.aggtype, count_type, source_idx,
                                      storage_pos, false};
         aggregate_infos_.push_back(aggregate_info);
@@ -64,57 +47,46 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-        // Count() - to check whether there is no item at all
-        uint32_t count_storage_pos =
-            storage_.AddType(type::Type::TypeId::BIGINT);
-        AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
-                                type::Type::TypeId::BIGINT, source_idx,
-                                count_storage_pos, true};
-        aggregate_infos_.push_back(count_agg);
-
-        // Regular
+        // Add the element to the storage layout
         const auto value_type = agg_term.expression->GetValueType();
         uint32_t storage_pos = storage_.AddType(value_type);
+
+        // Add metadata for the aggregate
         AggregateInfo aggregate_info{agg_term.aggtype, value_type, source_idx,
                                      storage_pos, false};
         aggregate_infos_.push_back(aggregate_info);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
-        // We decompose averages (i.e., AVG(c)) into COUNT(c) and SUM(c)
+        // We decompose averages into separate COUNT() and SUM() components
 
         // SUM() - the type must match the type of the expression
+        // First add the sum to the storage layout
         PL_ASSERT(agg_term.expression != nullptr);
         const auto sum_type = agg_term.expression->GetValueType();
         uint32_t sum_storage_pos = storage_.AddType(sum_type);
+
+        // Add metadata about the SUM() aggregate
         AggregateInfo sum_agg{ExpressionType::AGGREGATE_SUM, sum_type,
                               source_idx, sum_storage_pos, true};
         aggregate_infos_.push_back(sum_agg);
 
         // COUNT() - can use big integer since we're counting instances
+        // First add the count to the storage layout
         uint32_t count_storage_pos =
             storage_.AddType(type::Type::TypeId::BIGINT);
+
+        // Add metadata about the COUNT() aggregate
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
                                 type::Type::TypeId::BIGINT, source_idx,
                                 count_storage_pos, true};
         aggregate_infos_.push_back(count_agg);
 
-        // AVG()
+        // AVG() - this isn't storage physically, but we need metadata about it
         // TODO: Is this always double?
         AggregateInfo avg_agg{agg_term.aggtype, type::Type::TypeId::DECIMAL,
-                              source_idx, std::numeric_limits<uint32_t>::max(),
-                              false};
+                              source_idx, source_idx, false};
         aggregate_infos_.push_back(avg_agg);
-        break;
-      }
-      case ExpressionType::AGGREGATE_COUNT_STAR: {
-        // count(*)'s are always stored in the first slot, reference that here
-        // NOTE: We've already added the count(*) to the storage format above,
-        //       don't do it here
-        PL_ASSERT(tracks_group_count);
-        AggregateInfo count_agg{agg_term.aggtype, type::Type::TypeId::BIGINT,
-                                source_idx, 0, false};
-        aggregate_infos_.push_back(count_agg);
         break;
       }
       default: {
@@ -135,7 +107,12 @@ void Aggregation::Setup(
 void Aggregation::CreateInitialValues(
     CodeGen &codegen, llvm::Value *storage_space,
     const std::vector<codegen::Value> &initial) const {
-  // TODO: Handle null
+  // The null bitmap tracker
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+
+  // Initialize bitmap to all NULLs
+  null_bitmap.InitAllNull(codegen);
+
   for (size_t i = 0; i < aggregate_infos_.size(); i++) {
     const auto &aggregate_info = aggregate_infos_[i];
     switch (aggregate_info.aggregate_type) {
@@ -144,17 +121,16 @@ void Aggregation::CreateInitialValues(
       case ExpressionType::AGGREGATE_MAX: {
         // For the above aggregations, the initial value is the attribute value
         uint32_t val_source = aggregate_info.source_index;
-        storage_.SetValueAt(codegen, storage_space,
-                            aggregate_info.storage_index, initial[val_source]);
+        storage_.SetValue(codegen, storage_space, aggregate_info.storage_index,
+                          initial[val_source], null_bitmap);
         break;
       }
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
-        // TODO: Count(col) needs to check for null values
-        // This aggregate should be moved to the front of the storage area
-        storage_.SetValueAt(
-            codegen, storage_space, aggregate_info.storage_index,
-            codegen::Value{type::Type::TypeId::BIGINT, codegen.Const64(1)});
+        // The initial value for count's are 1 (i.e., this row)
+        codegen::Value one{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        storage_.SetValue(codegen, storage_space, aggregate_info.storage_index,
+                          one, null_bitmap);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
@@ -170,82 +146,154 @@ void Aggregation::CreateInitialValues(
       }
     }
   }
+
+  // Write the final contents of the null bitmap
+  null_bitmap.WriteBack(codegen);
+}
+
+void Aggregation::DoAdvanceValue(
+    CodeGen &codegen, llvm::Value *storage_space,
+    const Aggregation::AggregateInfo &aggregate_info,
+    const codegen::Value &update) const {
+  codegen::Value next;
+  switch (aggregate_info.aggregate_type) {
+    case ExpressionType::AGGREGATE_SUM: {
+      auto curr = storage_.GetValueSkipNull(codegen, storage_space,
+                                            aggregate_info.storage_index);
+      next = curr.Add(codegen, update);
+      break;
+    }
+    case ExpressionType::AGGREGATE_MIN: {
+      auto curr = storage_.GetValueSkipNull(codegen, storage_space,
+                                            aggregate_info.storage_index);
+      next = curr.Min(codegen, update);
+      break;
+    }
+    case ExpressionType::AGGREGATE_MAX: {
+      auto curr = storage_.GetValueSkipNull(codegen, storage_space,
+                                            aggregate_info.storage_index);
+      next = curr.Max(codegen, update);
+      break;
+    }
+    case ExpressionType::AGGREGATE_COUNT: {
+      auto curr = storage_.GetValueSkipNull(codegen, storage_space,
+                                            aggregate_info.storage_index);
+      auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+      next = curr.Add(codegen, delta);
+      break;
+    }
+    case ExpressionType::AGGREGATE_COUNT_STAR: {
+      auto curr = storage_.GetValueSkipNull(codegen, storage_space,
+                                            aggregate_info.storage_index);
+      auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+      next = curr.Add(codegen, delta);
+      break;
+    }
+    case ExpressionType::AGGREGATE_AVG: {
+      // AVG() aggregates aren't physically stored
+      return;
+    }
+    default: {
+      std::string message = StringUtil::Format(
+          "Unexpected aggregate type [%s] when advancing aggregator",
+          ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
+      LOG_ERROR("%s", message.c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+    }
+  }
+
+  // Store the updated value in the appropriate slot
+  PL_ASSERT(next.GetType() != type::Type::TypeId::INVALID);
+  storage_.SetValueSkipNull(codegen, storage_space,
+                            aggregate_info.storage_index, next);
 }
 
 //===----------------------------------------------------------------------===//
-// Advance each of the aggregates stored in the provided storage space. We
-// use the storage format class to determine the location of each of the
-// aggregates. Then, depending on the type of aggregation, we advance of their
-// values, populating the provided next_vals vector with their new values.
+// Advance each of the aggregates stored in the provided storage space
 //===----------------------------------------------------------------------===//
 void Aggregation::AdvanceValues(
     CodeGen &codegen, llvm::Value *storage_space,
     const std::vector<codegen::Value> &next_vals) const {
-  // TODO: Handle null
+  // The null bitmap tracker
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+
+  // Loop over all aggregates, advancing each
   for (const auto &aggregate_info : aggregate_infos_) {
-    // Loop over all aggregates, advancing each
-    uint32_t source = aggregate_info.source_index;
-    codegen::Value next;
-    switch (aggregate_info.aggregate_type) {
-      case ExpressionType::AGGREGATE_SUM: {
-        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
-        auto curr = storage_.GetValueAt(codegen, storage_space,
-                                        aggregate_info.storage_index);
-        next = curr.Add(codegen, next_vals[source]);
-        break;
-      }
-      case ExpressionType::AGGREGATE_MIN: {
-        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
-        auto curr = storage_.GetValueAt(codegen, storage_space,
-                                        aggregate_info.storage_index);
-        next = curr.Min(codegen, next_vals[source]);
-        break;
-      }
-      case ExpressionType::AGGREGATE_MAX: {
-        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
-        auto curr = storage_.GetValueAt(codegen, storage_space,
-                                        aggregate_info.storage_index);
-        next = curr.Max(codegen, next_vals[source]);
-        break;
-      }
-      case ExpressionType::AGGREGATE_COUNT: {
-        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
-        auto curr = storage_.GetValueAt(codegen, storage_space,
-                                        aggregate_info.storage_index);
-        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
-        next = curr.Add(codegen, delta);
-        break;
-      }
-      case ExpressionType::AGGREGATE_COUNT_STAR: {
-        // COUNT(*) is always stored first with a source equal to INT_MAX. All
-        // other COUNT(*)'s refer to that one.
-        if (source != std::numeric_limits<uint32_t>::max()) {
-          continue;
-        }
-        auto curr = storage_.GetValueAt(codegen, storage_space,
-                                        aggregate_info.storage_index);
-        auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
-        next = curr.Add(codegen, delta);
-        break;
-      }
-      case ExpressionType::AGGREGATE_AVG: {
-        // AVG() aggregates aren't physically stored
-        continue;
-      }
-      default: {
-        std::string message = StringUtil::Format(
-            "Unexpected aggregate type [%s] when advancing aggregator",
-            ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
-        LOG_ERROR("%s", message.c_str());
-        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
-      }
+    if (aggregate_info.aggregate_type == ExpressionType::AGGREGATE_AVG) {
+      // AVG() aggregates are metadata only
+      continue;
     }
 
-    // StoreValue the next value in the appropriate slot
-    PL_ASSERT(next.GetType() != type::Type::TypeId::INVALID);
-    storage_.SetValueAt(codegen, storage_space, aggregate_info.storage_index,
-                        next);
+    const Value &update = next_vals[aggregate_info.source_index];
+
+    if (!null_bitmap.IsNullable(aggregate_info.storage_index) ||
+        aggregate_info.aggregate_type == ExpressionType::AGGREGATE_COUNT_STAR) {
+      // This aggregate is not nullable, generate fast path
+      DoAdvanceValue(codegen, storage_space, aggregate_info, update);
+    } else {
+      // This aggregate is NULL-able, we need to check if the update value is
+      // NULL, and whether the current value of the aggregate is NULL.
+
+      // There are two cases we handle:
+      // (1). If neither the update value or the current aggregate value are
+      //      NULL, we simple do the regular aggregation without NULL checking.
+      // (2). If the update value is not NULL, but the current aggregate **is**
+      //      NULL, then we just store this update value as if we're creating it
+      //      for the first time.
+      //
+      // If either the update value or the current aggregate are NULL, we have
+      // nothing to do.
+
+      llvm::Value *update_not_null = update.IsNotNull(codegen);
+      llvm::Value *agg_null =
+          null_bitmap.IsNull(codegen, aggregate_info.storage_index);
+
+      llvm::Value *curr_val =
+          null_bitmap.ByteFor(codegen, aggregate_info.storage_index);
+
+      If valid_update{codegen, update_not_null};
+      {
+        If agg_is_null{codegen, agg_null};
+        {
+          // (2)
+          switch (aggregate_info.aggregate_type) {
+            case ExpressionType::AGGREGATE_SUM:
+            case ExpressionType::AGGREGATE_MIN:
+            case ExpressionType::AGGREGATE_MAX: {
+              storage_.SetValue(codegen, storage_space,
+                                aggregate_info.storage_index, update,
+                                null_bitmap);
+              break;
+            }
+            case ExpressionType::AGGREGATE_COUNT: {
+              codegen::Value one{type::Type::TypeId::BIGINT,
+                                 codegen.Const64(1)};
+              storage_.SetValue(codegen, storage_space,
+                                aggregate_info.storage_index, one, null_bitmap);
+              break;
+            }
+            default: { break; }
+          }
+        }
+        agg_is_null.ElseBlock();
+        {
+          // (1)
+          DoAdvanceValue(codegen, storage_space, aggregate_info, update);
+        }
+        agg_is_null.EndIf();
+
+        // Merge the null value
+        null_bitmap.MergeValues(agg_is_null, curr_val);
+      }
+      valid_update.EndIf();
+
+      // Merge the null value
+      null_bitmap.MergeValues(valid_update, curr_val);
+    }
   }
+
+  // Write the final contents of the null bitmap
+  null_bitmap.WriteBack(codegen);
 }
 
 //===----------------------------------------------------------------------===//
@@ -261,39 +309,21 @@ void Aggregation::FinalizeValues(
   // aggregates are derived from other component aggregates.
   std::map<std::pair<uint32_t, ExpressionType>, codegen::Value> vals;
 
+  // The null bitmap tracker
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+
   for (const auto &aggregate_info : aggregate_infos_) {
     uint32_t source = aggregate_info.source_index;
     ExpressionType agg_type = aggregate_info.aggregate_type;
     switch (agg_type) {
-      case ExpressionType::AGGREGATE_COUNT: {
-        codegen::Value final_val = storage_.GetValueAt(
-            codegen, storage_space, aggregate_info.storage_index);
-        vals[std::make_pair(source, agg_type)] = final_val;
-        if (!aggregate_info.is_internal) {
-          final_vals.push_back(final_val);
-        }
-        break;
-      }
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-        codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
-        codegen::Value final_calc = storage_.GetValueAt(
-            codegen, storage_space, aggregate_info.storage_index);
+        codegen::Value final_val = storage_.GetValue(
+            codegen, storage_space, aggregate_info.storage_index, null_bitmap);
 
-        vals[std::make_pair(source, agg_type)] = final_calc;
+        vals[std::make_pair(source, agg_type)] = final_val;
         if (!aggregate_info.is_internal) {
-          // Empty check
-          codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
-          codegen::Value zero_count = count.CompareEq(codegen, zero);
-
-          codegen::Value final_null;
-          If check_count{codegen, zero_count.GetValue()};
-          {
-            final_null = Type::GetNullValue(codegen, final_calc.GetType());
-          }
-          check_count.EndIf();
-          auto final_val = check_count.BuildPHI(final_null, final_calc);
           final_vals.push_back(final_val);
         }
         break;
@@ -313,16 +343,15 @@ void Aggregation::FinalizeValues(
         final_vals.push_back(final_val);
         break;
       }
+      case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
-        if (source != std::numeric_limits<uint32_t>::max()) {
-          PL_ASSERT(!aggregate_info.is_internal);
-          uint32_t count_source = std::numeric_limits<uint32_t>::max();
-          final_vals.push_back(vals[std::make_pair(count_source, agg_type)]);
-        } else {
-          PL_ASSERT(aggregate_info.is_internal);
-          codegen::Value final_val = storage_.GetValueAt(
-              codegen, storage_space, aggregate_info.storage_index);
-          vals[std::make_pair(source, agg_type)] = final_val;
+        // COUNT(*) can never return NULL
+        codegen::Value final_val = storage_.GetValueSkipNull(
+            codegen, storage_space, aggregate_info.storage_index);
+
+        vals[std::make_pair(source, agg_type)] = final_val;
+        if (!aggregate_info.is_internal) {
+          final_vals.push_back(final_val);
         }
         break;
       }

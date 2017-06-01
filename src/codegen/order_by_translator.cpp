@@ -157,13 +157,24 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   const auto &descend_flags = plan_.GetDescendFlags();
 
   // First pull out all the values from materialized state
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format,
+                                            left_tuple};
   std::vector<codegen::Value> left_vals, right_vals;
   for (size_t idx = 0; idx < sort_keys.size(); idx++) {
     auto &sort_key_info = sort_key_info_[idx];
     uint32_t slot = sort_key_info.tuple_slot;
 
-    left_vals.push_back(storage_format.GetValueAt(codegen, left_tuple, slot));
-    right_vals.push_back(storage_format.GetValueAt(codegen, right_tuple, slot));
+    if (!null_bitmap.IsNullable(slot)) {
+      left_vals.push_back(
+          storage_format.GetValueSkipNull(codegen, left_tuple, slot));
+      right_vals.push_back(
+          storage_format.GetValueSkipNull(codegen, right_tuple, slot));
+    } else {
+      left_vals.push_back(
+          storage_format.GetValue(codegen, left_tuple, slot, null_bitmap));
+      right_vals.push_back(
+          storage_format.GetValue(codegen, right_tuple, slot, null_bitmap));
+    }
   }
 
   // TODO: The logic here should be simplified.

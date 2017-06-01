@@ -393,10 +393,10 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
 
 TEST_F(GroupByTranslatorTest, MinAndMax) {
   //
-  // SELECT MAX(a), MIN(a) FROM table;
+  // SELECT MAX(a), MIN(b) FROM table;
   //
 
-  LOG_INFO("Query: SELECT MAX(a), MIN(a) FROM table1;");
+  LOG_INFO("Query: SELECT MAX(a), MIN(b) FROM table1;");
 
   // 1) Set up projection (just a direct map)
   DirectMapList direct_map_list = {{0, {1, 0}}, {1, {1, 1}}};
