@@ -65,9 +65,7 @@ class Aggregation {
   }
 
   // Get the storage format of the aggregates this class is configured to handle
-  llvm::Type *GetAggregateStorageFormat() const {
-    return storage_.GetStorageType();
-  }
+  const UpdateableStorage &GetAggregateStorage() const { return storage_; }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -105,6 +103,12 @@ class Aggregation {
     // aggregate exists?
     bool is_internal;
   };
+
+ private:
+  // Advance the value of a specific aggregate, given its next value
+  void DoAdvanceValue(CodeGen &codegen, llvm::Value *storage_space,
+                      const AggregateInfo &aggregate_info,
+                      const codegen::Value &next) const;
 
  private:
   // The list of aggregations we handle

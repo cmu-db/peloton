@@ -352,6 +352,7 @@ Value Value::BuildPHI(
   auto type = vals[0].first.GetType();
 
   // Get the LLVM type for the values
+  llvm::Type *null_type = codegen.BoolType();
   llvm::Type *val_type = nullptr, *len_type = nullptr;
   Type::GetTypeForMaterialization(codegen, type, val_type, len_type);
   PL_ASSERT(val_type != nullptr);
@@ -361,18 +362,22 @@ Value Value::BuildPHI(
     PL_ASSERT(len_type != nullptr);
     auto *val_phi = codegen->CreatePHI(val_type, num_entries);
     auto *len_phi = codegen->CreatePHI(len_type, num_entries);
+    auto *null_phi = codegen->CreatePHI(null_type, num_entries);
     for (const auto &val_pair : vals) {
       val_phi->addIncoming(val_pair.first.GetValue(), val_pair.second);
       len_phi->addIncoming(val_pair.first.GetLength(), val_pair.second);
+      null_phi->addIncoming(val_pair.first.IsNull(codegen), val_pair.second);
     }
-    return Value{type, val_phi, len_phi};
+    return Value{type, val_phi, len_phi, null_phi};
   } else {
     PL_ASSERT(len_type == nullptr);
-    auto *phi = codegen->CreatePHI(val_type, num_entries);
+    auto *val_phi = codegen->CreatePHI(val_type, num_entries);
+    auto *null_phi = codegen->CreatePHI(null_type, num_entries);
     for (const auto &val_pair : vals) {
-      phi->addIncoming(val_pair.first.GetValue(), val_pair.second);
+      val_phi->addIncoming(val_pair.first.GetValue(), val_pair.second);
+      null_phi->addIncoming(val_pair.first.IsNull(codegen), val_pair.second);
     }
-    return Value{type, phi, nullptr};
+    return Value{type, val_phi, nullptr, null_phi};
   }
 }
 

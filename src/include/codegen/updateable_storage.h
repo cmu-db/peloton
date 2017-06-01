@@ -14,6 +14,7 @@
 
 #include "codegen/codegen.h"
 #include "codegen/compact_storage.h"
+#include "codegen/if.h"
 #include "codegen/value.h"
 
 namespace peloton {
@@ -34,13 +35,27 @@ class UpdateableStorage {
   // Construct the final LLVM type given all the types that'll be stored
   llvm::Type *Finalize(CodeGen &codegen);
 
-  // Get the value at a specific index into the storage area
-  codegen::Value GetValueAt(CodeGen &codegen, llvm::Value *area_start,
-                            uint64_t index) const;
+  // Forward declare - convenience class to handle NULL bitmaps.
+  class NullBitmap;
 
-  // Get the value at a specific index into the storage area
-  void SetValueAt(CodeGen &codegen, llvm::Value *area_start, uint64_t index,
-                  const codegen::Value &value) const;
+  // Get the value at a specific index into the storage area, ignoring whether
+  // the value is NULL or not
+  codegen::Value GetValueSkipNull(CodeGen &codegen, llvm::Value *area_start,
+                                  uint64_t index) const;
+
+  // Like GetValueIgnoreNull(), but this also reads the NULL bitmap to determine
+  // if the value is null.
+  codegen::Value GetValue(CodeGen &codegen, llvm::Value *area_start,
+                          uint64_t index, NullBitmap &null_bitmap) const;
+
+  // Set the given value at the specific index in the storage area, ignoring to
+  // update the bitmap
+  void SetValueSkipNull(CodeGen &codegen, llvm::Value *area_start,
+                        uint64_t index, const codegen::Value &value) const;
+
+  // Like SetValueIgnoreNull(), but this also updates the NULL bitmap
+  void SetValue(CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+                const codegen::Value &value, NullBitmap &null_bitmap) const;
 
   // Return the format of the storage area
   llvm::Type *GetStorageType() const { return storage_type_; }
@@ -52,6 +67,49 @@ class UpdateableStorage {
   uint32_t GetNumElements() const {
     return static_cast<uint32_t>(schema_.size());
   }
+
+ public:
+  // Convenience class to handle NULL bitmaps.
+  class NullBitmap {
+   public:
+    NullBitmap(CodeGen &codegen, const UpdateableStorage &storage,
+               llvm::Value *bitmap_ptr);
+
+    void InitAllNull(CodeGen &codegen);
+
+    // Is the attribute at the provided index NULLable?
+    bool IsNullable(uint32_t index) const;
+
+    // Get the byte component where the given bit is
+    llvm::Value *ByteFor(CodeGen &codegen, uint32_t index);
+
+    // Is the value at the provided index null?
+    llvm::Value *IsNull(CodeGen &codegen, uint32_t index);
+
+    // Set the given bit to the provided value
+    void SetNull(CodeGen &codegen, uint32_t index, llvm::Value *null_bit);
+
+    void MergeValues(If &if_clause, llvm::Value *before_if_value);
+
+    // Write all the dirty byte components
+    void WriteBack(CodeGen &codegen);
+
+   private:
+    // The storage format
+    const UpdateableStorage &storage_;
+
+    // The pointer to the bitmap
+    llvm::Value *bitmap_ptr_;
+
+    // The original and modified byte components of the bitmap.
+    std::vector<llvm::Value *> bytes_;
+
+    // Dirty bitmap
+    std::vector<bool> dirty_;
+
+    // The last byte component that was modified
+    uint32_t active_byte_pos_;
+  };
 
  private:
   // Find the position in the underlying storage where the item with the

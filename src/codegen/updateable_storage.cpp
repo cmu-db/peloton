@@ -12,7 +12,7 @@
 
 #include "codegen/updateable_storage.h"
 
-#include "codegen/bitmap.h"
+#include "codegen/if.h"
 #include "codegen/type.h"
 
 namespace peloton {
@@ -66,8 +66,8 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   // to manage the null bitmap. Then all the data elements.
   std::vector<llvm::Type *> llvm_types;
 
-  uint64_t num_null_bitmap_bytes = Bitmap::NumComponentsFor(schema_.size());
-  for (uint32_t i = 0; i < num_null_bitmap_bytes; i++) {
+  uint32_t num_null_bytes = static_cast<uint32_t>((schema_.size() + 7) >> 3);
+  for (uint32_t i = 0; i < num_null_bytes; i++) {
     llvm_types.push_back(codegen.Int8Type());
   }
 
@@ -75,7 +75,7 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
     llvm_types.push_back(storage_format_[i].type);
 
     // Update the physical index in the storage entry
-    storage_format_[i].physical_index = num_null_bitmap_bytes + i;
+    storage_format_[i].physical_index = num_null_bytes + i;
   }
 
   // Construct the finalized types
@@ -106,8 +106,9 @@ void UpdateableStorage::FindStoragePositionFor(uint32_t item_index,
 }
 
 // Get the value at a specific index into the storage area
-codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen, llvm::Value *ptr,
-                                             uint64_t index) const {
+codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
+                                                   llvm::Value *area_start,
+                                                   uint64_t index) const {
   PL_ASSERT(storage_type_ != nullptr);
   PL_ASSERT(index < schema_.size());
 
@@ -115,10 +116,8 @@ codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen, llvm::Value *ptr,
   int32_t val_idx, len_idx;
   FindStoragePositionFor(index, val_idx, len_idx);
 
-  Bitmap null_bitmap{codegen, ptr, static_cast<uint32_t>(schema_.size())};
-
   llvm::Value *typed_ptr =
-      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
+      codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
 
   // Load the value
   llvm::Value *val_addr =
@@ -133,17 +132,35 @@ codegen::Value UpdateableStorage::GetValueAt(CodeGen &codegen, llvm::Value *ptr,
     len = codegen->CreateLoad(len_addr);
   }
 
-  // Load the null-indication bit
-  llvm::Value *null = null_bitmap.GetBit(codegen, index);
-
   // Done
-  return codegen::Value{schema_[index], val, len, null};
+  return codegen::Value{schema_[index], val, len, nullptr};
+}
+
+codegen::Value UpdateableStorage::GetValue(
+    CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+    UpdateableStorage::NullBitmap &null_bitmap) const {
+  codegen::Value null_val, read_val;
+
+  If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
+  {
+    // If the index has its null-bit set, return NULL
+    null_val = Type::GetNullValue(codegen, schema_[index]);
+  }
+  val_is_null.ElseBlock();
+  {
+    // If the index doesn't have its null-bit set, read from storage
+    read_val = GetValueSkipNull(codegen, area_start, index);
+  }
+  val_is_null.EndIf();
+
+  // Merge the values
+  return val_is_null.BuildPHI(null_val, read_val);
 }
 
 // Get the value at a specific index into the storage area
-void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *ptr,
-                                   uint64_t index,
-                                   const codegen::Value &value) const {
+void UpdateableStorage::SetValueSkipNull(CodeGen &codegen, llvm::Value *ptr,
+                                         uint64_t index,
+                                         const codegen::Value &value) const {
   llvm::Value *val = nullptr, *len = nullptr, *null = nullptr;
   value.ValuesForMaterialization(codegen, val, len, null);
 
@@ -165,11 +182,128 @@ void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *ptr,
         storage_type_, typed_ptr, 0, len_idx);
     codegen->CreateStore(len, len_addr);
   }
+}
 
-  // Write-back null-bit
-  Bitmap null_bitmap{codegen, ptr, static_cast<uint32_t>(schema_.size())};
-  null_bitmap.SwitchBit(codegen, index, null);
-  null_bitmap.WriteBack(codegen);
+void UpdateableStorage::SetValue(
+    CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+    const codegen::Value &value,
+    UpdateableStorage::NullBitmap &null_bitmap) const {
+  // Set the NULL bit
+  llvm::Value *null = value.IsNull(codegen);
+  null_bitmap.SetNull(codegen, index, null);
+
+  If val_not_null{codegen, codegen->CreateNot(null)};
+  {
+    // If the value isn't NULL, write it into storage
+    SetValueSkipNull(codegen, area_start, index, value);
+  }
+  val_not_null.EndIf();
+}
+
+//===----------------------------------------------------------------------===//
+// NULL BITMAP
+//===----------------------------------------------------------------------===//
+
+UpdateableStorage::NullBitmap::NullBitmap(UNUSED_ATTRIBUTE CodeGen &codegen,
+                                          const UpdateableStorage &storage,
+                                          llvm::Value *bitmap_ptr)
+    : storage_(storage), bitmap_ptr_(bitmap_ptr) {
+  if (bitmap_ptr_->getType() != codegen.CharPtrType()) {
+    bitmap_ptr_ =
+        codegen->CreateBitOrPointerCast(bitmap_ptr_, codegen.CharPtrType());
+  }
+  uint32_t num_bytes = (storage_.GetNumElements() + 7) >> 3;
+  bytes_.resize(num_bytes, nullptr);
+  dirty_.resize(num_bytes, false);
+}
+
+void UpdateableStorage::NullBitmap::InitAllNull(CodeGen &codegen) {
+  for (uint32_t byte_pos = 0; byte_pos < bytes_.size(); byte_pos++) {
+    bytes_[byte_pos] = codegen.Const8(~0);
+  }
+  std::fill(dirty_.begin(), dirty_.end(), true);
+}
+
+bool UpdateableStorage::NullBitmap::IsNullable(uint32_t index) const {
+  // TODO: Implement me
+  (void)index;
+  //  return storage_.schema_[index].nullable;
+  return true;
+}
+
+llvm::Value *UpdateableStorage::NullBitmap::ByteFor(CodeGen &codegen,
+                                                    uint32_t index) {
+  active_byte_pos_ = index >> 3;
+
+  // Get the byte the caller wants
+  if (bytes_[active_byte_pos_] == nullptr) {
+    // Load it
+    llvm::Value *byte_addr = codegen->CreateConstInBoundsGEP1_32(
+        codegen.ByteType(), bitmap_ptr_, active_byte_pos_);
+    bytes_[active_byte_pos_] = codegen->CreateLoad(byte_addr);
+  }
+  return bytes_[active_byte_pos_];
+}
+
+llvm::Value *UpdateableStorage::NullBitmap::IsNull(CodeGen &codegen,
+                                                   uint32_t index) {
+  llvm::Value *mask = codegen.Const8(1 << (index & 7));
+  llvm::Value *masked = codegen->CreateAnd(ByteFor(codegen, index), mask);
+  return codegen->CreateICmpNE(masked, codegen.Const8(0));
+}
+
+void UpdateableStorage::NullBitmap::SetNull(CodeGen &codegen, uint32_t index,
+                                            llvm::Value *null_bit) {
+  PL_ASSERT(null_bit->getType() == codegen.BoolType());
+
+  uint32_t byte_pos = index >> 3;
+
+  // The current byte value
+  llvm::Value *byte_val = ByteFor(codegen, index);
+
+  llvm::Value *mask = codegen.Const8(1 << (index & 7));
+
+  // If we know the bit is a compile-time constant, generate specialized code
+  if (llvm::ConstantInt *const_int =
+          llvm::dyn_cast<llvm::ConstantInt>(null_bit)) {
+    if (const_int->isOne()) {
+      // Set the bit to 1
+      bytes_[byte_pos] = codegen->CreateOr(byte_val, mask);
+    } else {
+      // Set the bit to 0
+      bytes_[byte_pos] = codegen->CreateAnd(byte_val, codegen->CreateNot(mask));
+    }
+  } else {
+    // The null-bit is not a compile-time constant.
+
+    llvm::Value *cleared =
+        codegen->CreateAnd(byte_val, codegen->CreateNot(mask));
+    llvm::Value *val = codegen->CreateShl(
+        codegen->CreateZExt(null_bit, codegen.ByteType()), (index & 7));
+    bytes_[byte_pos] = codegen->CreateOr(cleared, val);
+  }
+
+  // Mark dirty
+  dirty_[byte_pos] = true;
+}
+
+void UpdateableStorage::NullBitmap::MergeValues(If &if_clause,
+                                                llvm::Value *before_if_value) {
+  PL_ASSERT(bytes_[active_byte_pos_] != nullptr);
+  bytes_[active_byte_pos_] =
+      if_clause.BuildPHI(bytes_[active_byte_pos_], before_if_value);
+}
+
+void UpdateableStorage::NullBitmap::WriteBack(CodeGen &codegen) {
+  for (uint32_t byte_pos = 0; byte_pos < bytes_.size(); byte_pos++) {
+    if (dirty_[byte_pos]) {
+      llvm::Value *byte_addr = codegen->CreateConstInBoundsGEP1_32(
+          codegen.ByteType(), bitmap_ptr_, byte_pos);
+      codegen->CreateStore(bytes_[byte_pos], byte_addr);
+    }
+  }
+  std::fill(bytes_.begin(), bytes_.end(), nullptr);
+  std::fill(dirty_.begin(), dirty_.end(), false);
 }
 
 }  // namespace codegen
