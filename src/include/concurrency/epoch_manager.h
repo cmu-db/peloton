@@ -49,9 +49,11 @@ public:
 
   virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) = 0;
 
+  virtual eid_t GetExpiredEpochId() = 0;
+
   virtual eid_t GetNextEpochId() = 0;
 
-  virtual eid_t GetExpiredEpochId() = 0;
+  virtual eid_t GetCurrentEpochId() = 0;  
 
   virtual cid_t GetExpiredCid() = 0;
 
