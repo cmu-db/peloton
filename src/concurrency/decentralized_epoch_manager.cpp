@@ -31,7 +31,7 @@ namespace concurrency {
     } else {
 
       while (true) {
-        uint64_t epoch_id = GetCurrentGlobalEpoch();
+        uint64_t epoch_id = GetCurrentEpochId();
 
         // enter the corresponding local epoch.
         bool rt = local_epochs_.at(thread_id)->EnterEpoch(epoch_id, ts_type);
