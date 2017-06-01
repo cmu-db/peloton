@@ -56,6 +56,13 @@ public:
     current_global_epoch_id_ = current_epoch_id;
     next_txn_id_ = 0;
     snapshot_global_epoch_id_ = 1;
+
+    RegisterThread(0);
+  }
+
+  virtual void SetCurrentEpochId(const uint64_t current_epoch_id) override {
+    current_global_epoch_id_ = current_epoch_id;
+    next_txn_id_ = 0;
   }
 
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) override {
