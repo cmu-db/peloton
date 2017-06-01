@@ -332,140 +332,137 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 }
 
 // The Simple Query Protocol
+// Fix mis-split bug: Previously, this function assumes there are multiple
+// queries in the string and split it by ';', which would cause one containing
+// ';' being split into multiple queries.
+// However, the multi-statement queries has been split by the psql client and
+// there is no need to split the query again.
 void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
-  std::string q_str;
-  PacketGetString(pkt, pkt->len, q_str);
+  std::string query;
+  PacketGetString(pkt, pkt->len, query);
 
-  std::vector<std::string> queries;
-  boost::split(queries, q_str, boost::is_any_of(";"));
-
-  if (queries.size() == 0) {
-    SendEmptyQueryResponse();
-    SendReadyForQuery(txn_state_);
-    return;
+  // pop out the last character if it is ';'
+  if (query.back() == ';') {
+    query.pop_back();
   }
+  boost::trim(query);
 
-  if (queries.size() == 1 && queries.at(0).empty()) {
-    SendEmptyQueryResponse();
-    SendReadyForQuery(txn_state_);
-    return;
-  }
+  if (!query.empty()) {
+    std::vector<StatementResult> result;
+    std::vector<FieldInfo> tuple_descriptor;
+    std::string error_message;
+    int rows_affected = 0;
+    std::string query_type;
 
-  for (auto query : queries) {
-    // iterate till before the empty string after the last ';'
-    if (!query.empty()) {
-      std::vector<StatementResult> result;
-      std::vector<FieldInfo> tuple_descriptor;
-      std::string error_message;
-      int rows_affected = 0;
-      std::string query_type;
+    std::stringstream stream(query);
+    stream >> query_type;
 
-      std::stringstream stream(query);
-      stream >> query_type;
+    if (query_type.compare("PREPARE") == 0) {
+      std::string statement_name;
+      stream >> statement_name;
+      std::size_t pos = query.find("AS");
+      std::string statement_query = query.substr(pos + 3);
+      boost::trim(statement_query);
 
-      if (query_type.compare("PREPARE") == 0) {
-        std::string statement_name;
-        stream >> statement_name;
-        std::size_t pos = query.find("AS");
-        std::string statement_query = query.substr(pos + 3);
-        boost::trim(statement_query);
+      // Prepare statement
+      std::shared_ptr<Statement> statement(nullptr);
 
-        // Prepare statement
-        std::shared_ptr<Statement> statement(nullptr);
+      LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
+                statement_query.c_str());
 
-        LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-                  statement_query.c_str());
-
-        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
-                                                   error_message);
-        if (statement.get() == nullptr) {
-          skipped_stmt_ = true;
-          SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          LOG_TRACE("ExecQuery Error");
-          return;
-        }
-
-        auto entry = std::make_pair(statement_name, statement);
-        statement_cache_.insert(entry);
-        for (auto table_id : statement->GetReferencedTables()) {
-          table_statement_cache_[table_id].push_back(statement.get());
-        }
-      } else if (query_type.compare("EXECUTE") == 0) {
-        std::string statement_name;
-        std::shared_ptr<Statement> statement;
-        std::vector<type::Value> param_values;
-        bool unnamed = false;
-        std::vector<std::string> tokens;
-
-        boost::split(tokens, query, boost::is_any_of("(), "));
-
-        statement_name = tokens.at(1);
-        auto statement_cache_itr = statement_cache_.find(statement_name);
-        if (statement_cache_itr != statement_cache_.end()) {
-          statement = *statement_cache_itr;
-        }
-        // Did not find statement with same name
-        else {
-          std::string error_message = "The prepared statement does not exist";
-          LOG_ERROR("%s", error_message.c_str());
-          SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
-        }
-
-        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-
-        for (std::size_t idx = 2; idx < tokens.size(); idx++) {
-          std::string param_str = tokens.at(idx);
-          boost::trim(param_str);
-          if (param_str.empty()) {
-            continue;
-          }
-          param_values.push_back(type::ValueFactory::GetVarcharValue(param_str));
-        }
-
-        if (param_values.size() > 0) {
-          statement->GetPlanTree()->SetParameterValues(&param_values);
-        }
-
-        auto status =
-            traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                             result, rows_affected, error_message, thread_id);
-
-        if (status == ResultType::SUCCESS) {
-          tuple_descriptor = std::move(statement->GetTupleDescriptor());
-        } else {
-          SendErrorResponse( 
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
-        }
-      } else {
-        // execute the query using tcop
-        auto status = traffic_cop_->ExecuteStatement(
-            query, result, tuple_descriptor, rows_affected, error_message,
-            thread_id);
-
-        // check status
-        if (status == ResultType::FAILURE) {
-          SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
-        }
+      statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
+                                                 error_message);
+      if (statement.get() == nullptr) {
+        skipped_stmt_ = true;
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        LOG_TRACE("ExecQuery Error");
+        return;
       }
 
-      // send the attribute names
-      PutTupleDescriptor(tuple_descriptor);
+      auto entry = std::make_pair(statement_name, statement);
+      statement_cache_.insert(entry);
+      for (auto table_id : statement->GetReferencedTables()) {
+        table_statement_cache_[table_id].push_back(statement.get());
+      }
+    } else if (query_type.compare("EXECUTE") == 0) {
+      std::string statement_name;
+      std::shared_ptr<Statement> statement;
+      std::vector<type::Value> param_values;
+      bool unnamed = false;
+      std::vector<std::string> tokens;
 
-      // send the result rows
-      SendDataRows(result, tuple_descriptor.size(), rows_affected);
+      boost::split(tokens, query, boost::is_any_of("(), "));
 
-      CompleteCommand(query_type, rows_affected);
-    } else if (query != queries.back()) {
-      SendEmptyQueryResponse();
-      SendReadyForQuery(NetworkTransactionStateType::IDLE);
-      return;
+      statement_name = tokens.at(1);
+      auto statement_cache_itr = statement_cache_.find(statement_name);
+      if (statement_cache_itr != statement_cache_.end()) {
+        statement = *statement_cache_itr;
+      }
+      // Did not find statement with same name
+      else {
+        std::string error_message = "The prepared statement does not exist";
+        LOG_ERROR("%s", error_message.c_str());
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        SendReadyForQuery(NetworkTransactionStateType::IDLE);
+        return;
+      }
+
+      std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+
+      for (std::size_t idx = 2; idx < tokens.size(); idx++) {
+        std::string param_str = tokens.at(idx);
+        boost::trim(param_str);
+        if (param_str.empty()) {
+          continue;
+        }
+        param_values.push_back(type::ValueFactory::GetVarcharValue(param_str));
+      }
+
+      if (param_values.size() > 0) {
+        statement->GetPlanTree()->SetParameterValues(&param_values);
+      }
+
+      auto status =
+              traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                             result, rows_affected, error_message, thread_id);
+
+      if (status == ResultType::SUCCESS) {
+        tuple_descriptor = std::move(statement->GetTupleDescriptor());
+      } else {
+        SendErrorResponse(
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        SendReadyForQuery(NetworkTransactionStateType::IDLE);
+        return;
+      }
+    } else {
+      // execute the query using tcop
+      auto status = traffic_cop_->ExecuteStatement(
+          query, result, tuple_descriptor, rows_affected, error_message,
+          thread_id);
+
+      // check status
+      if (status == ResultType::FAILURE) {
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        SendReadyForQuery(NetworkTransactionStateType::IDLE);
+        return;
+      }
     }
+
+    // send the attribute names
+    PutTupleDescriptor(tuple_descriptor);
+
+    // send the result rows
+    SendDataRows(result, tuple_descriptor.size(), rows_affected);
+
+    CompleteCommand(query_type, rows_affected);
+  //Empty Query
+  } else {
+    SendEmptyQueryResponse();
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
   }
 
   // PAVLO: 2017-01-15
