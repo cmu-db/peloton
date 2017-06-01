@@ -48,6 +48,7 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
 
     if (protocol_ == ProtocolType::TIMESTAMP_ORDERING) {
       cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::COMMIT);
+      
       txn = new Transaction(thread_id, type, read_id, commit_id);
     } else {
       txn = new Transaction(thread_id, type, read_id);
@@ -59,7 +60,6 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // - SERIALIZABLE, or 
     // - REPEATABLE_READS, or 
     // - READ_COMMITTED.
-  
     // transaction processing with decentralized epoch manager
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::READ);
     txn = new Transaction(thread_id, type, read_id); 

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-## ==============================================
-## GOAL : Check for std::cout and printf and avoid them
-## ==============================================
 import sys
 import os
 import subprocess
