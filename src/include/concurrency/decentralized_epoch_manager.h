@@ -109,11 +109,12 @@ public:
     return current_global_epoch_id_ + 1;
   }
 
+  virtual eid_t GetCurrentEpochId() override {
+    return current_global_epoch_id_.load();
+  }  
+
 private:
 
-  inline eid_t GetCurrentGlobalEpoch() {
-    return current_global_epoch_id_.load();
-  }
 
   inline uint32_t GetNextTransactionId() {
     return next_txn_id_.fetch_add(1, std::memory_order_relaxed);

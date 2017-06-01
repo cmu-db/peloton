@@ -53,7 +53,7 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
     
     auto expired_eid = epoch_manager.GetExpiredEpochId();
-    
+
     // When the DBMS has started working but it never processes any transaction,
     // we may see expired_eid == MAX_EID.
     if (expired_eid == MAX_EID) {
@@ -102,11 +102,11 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
   local_unlink_queues_[thread_id].remove_if(
     [this, &garbages, &tuple_counter, expired_eid]
         (const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
-      bool res = garbage_ctx->epoch_id_ < expired_eid;
+      bool res = garbage_ctx->epoch_id_ <= expired_eid;
       if (res == true) {
-        DeleteFromIndexes(garbage_ctx);
+        // TODO: carefully think about how to delete tuple from indexes!
+        // DeleteFromIndexes(garbage_ctx);
         // Add to the garbage map
-
         garbages.push_back(garbage_ctx);
         tuple_counter++;
       }
@@ -121,14 +121,14 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
       break;
     }
 
-    if (garbage_ctx->epoch_id_ < expired_eid) {
+    if (garbage_ctx->epoch_id_ <= expired_eid) {
 
-      // as the max timestamp of committed transactions is larger than the gc's timestamp,
-      // it means that no active transactions can read it.
-      // so we can unlink it.
-      // we need to delete all the tuples from the indexes to which it belongs
-      // as well.
-      DeleteFromIndexes(garbage_ctx);
+      // as the global expired epoch id is no less than the garbage version's epoch id,
+      // it means that no active transactions can read the version.
+      // As a result, we can delete all the tuples from the indexes to which it belongs.
+      
+      // TODO: carefully think about how to delete tuple from indexes!
+      // DeleteFromIndexes(garbage_ctx);
       // Add to the garbage map
       garbages.push_back(garbage_ctx);
       tuple_counter++;
@@ -139,7 +139,10 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
     }
   }  // end for
 
-  eid_t safe_expired_eid = concurrency::EpochManagerFactory::GetInstance().GetNextEpochId();
+  // once the current epoch id is expired, then we know all the transactions
+  // that are active at this time point will be committed/aborted.
+  // at that time point, it is safe to recycle the version.
+  eid_t safe_expired_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
 
   for(auto& item : garbages){
       reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));
@@ -158,9 +161,9 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id, const eid_t &expire
     const eid_t garbage_eid = garbage_ctx_entry->first;
     auto garbage_ctx = garbage_ctx_entry->second;
 
-    // if the timestamp of the garbage is older than the current expired_eid,
-    // recycle it
-    if (garbage_eid < expired_eid) {
+    // if the global expired epoch id is no less than the garbage version's epoch id,
+    // then recycle the garbage version
+    if (garbage_eid <= expired_eid) {
       AddToRecycleMap(garbage_ctx);
 
       // Remove from the original map
