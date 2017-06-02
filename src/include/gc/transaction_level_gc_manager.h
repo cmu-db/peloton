@@ -114,6 +114,10 @@ public:
     return recycle_queue_map_.size();
   }
 
+  int Unlink(const int &thread_id, const eid_t &expired_eid);
+
+  int Reclaim(const int &thread_id, const eid_t &expired_eid);
+
 private:
 
   inline unsigned int HashToThread(const size_t &thread_id) {
@@ -123,10 +127,6 @@ private:
   void ClearGarbage(int thread_id);
 
   void Running(const int &thread_id);
-
-  int Unlink(const int &thread_id, const eid_t &expired_eid);
-
-  int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
   void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 
