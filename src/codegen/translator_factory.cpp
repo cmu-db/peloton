@@ -17,6 +17,7 @@
 #include "codegen/comparison_translator.h"
 #include "codegen/conjunction_translator.h"
 #include "codegen/constant_translator.h"
+#include "codegen/delete_translator.h"
 #include "codegen/global_group_by_translator.h"
 #include "codegen/hash_group_by_translator.h"
 #include "codegen/hash_join_translator.h"
@@ -25,6 +26,7 @@
 #include "codegen/projection_translator.h"
 #include "codegen/table_scan_translator.h"
 #include "codegen/tuple_value_translator.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -81,6 +83,12 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::ORDERBY: {
       auto &order_by = static_cast<const planner::OrderByPlan &>(plan_node);
       translator = new OrderByTranslator(order_by, context, pipeline);
+      break;
+    }
+    case PlanNodeType::DELETE: {
+      auto &delete_plan = const_cast<planner::DeletePlan &>(
+          static_cast<const planner::DeletePlan &>(plan_node));
+      translator = new DeleteTranslator(delete_plan, context, pipeline);
       break;
     }
     default: {
@@ -141,19 +149,16 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       break;
     }
     case ExpressionType::OPERATOR_UNARY_MINUS: {
-      auto &negation_expr =
+      auto &negation_exp =
           static_cast<const expression::OperatorUnaryMinusExpression &>(exp);
-      translator = new NegationTranslator(negation_expr, context);
+      translator = new NegationTranslator(negation_exp, context);
       break;
     }
-    /*
     case ExpressionType::OPERATOR_CASE_EXPR: {
-      // TODO: Uncomment me when we have case
       auto &case_exp = static_cast<const expression::CaseExpression &>(exp);
       translator = new CaseTranslator(case_exp, context);
       break;
     }
-    */
     default: {
       throw Exception{"We don't have a translator for expression type: " +
                       ExpressionTypeToString(exp.GetExpressionType())};

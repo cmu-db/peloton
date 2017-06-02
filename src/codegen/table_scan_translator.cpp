@@ -110,8 +110,8 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
 
 // Generate the body of the vectorized scan
 void TableScanTranslator::ScanConsumer::ProcessTuples(
-    CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
-    TileGroup::TileGroupAccess &tile_group_access) {
+    CodeGen &codegen, llvm::Value *tid_start,
+    llvm::Value *tid_end, TileGroup::TileGroupAccess &tile_group_access) {
   // TODO: Should visibility check be done here or in codegen::Table/TileGroup?
 
   // 1. Filter the rows in the range [tid_start, tid_end) by txn visibility
@@ -126,8 +126,8 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(), tid_start, tid_end,
-                 selection_vector_, true};
+  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
+                 tid_end, selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
@@ -193,7 +193,8 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     Vector &selection_vector) const {
   // The batch we're filtering
   auto &compilation_ctx = translator_.GetCompilationContext();
-  RowBatch batch{compilation_ctx, tid_start, tid_end, selection_vector, true};
+  RowBatch batch{compilation_ctx, tile_group_id_, tid_start, tid_end,
+                 selection_vector, true};
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();

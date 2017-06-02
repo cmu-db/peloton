@@ -60,20 +60,19 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
-  if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
-    LOG_TRACE("Building the executor tree");
-    // Use const std::vector<type::Value> &params to make it more elegant for
-    // network
-    std::unique_ptr<executor::ExecutorContext> executor_context(
+  // Use const std::vector<type::Value> &params to make it more elegant for
+  // network
+  std::unique_ptr<executor::ExecutorContext> executor_context(
         BuildExecutorContext(params, txn));
 
+  if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     // Build the executor tree
+    LOG_TRACE("Building the executor tree");
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
         BuildExecutorTree(nullptr, plan, executor_context.get()));
 
-    LOG_TRACE("Initializing the executor tree");
-
     // Initialize the executor tree
+    LOG_TRACE("Initializing the executor tree");
     status = executor_tree->Init();
 
     if (status == true) {
@@ -142,7 +141,8 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     auto query = compiler.Compile(*plan, consumer);
 
     // Execute the query
-    query->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
+    query->Execute(*txn, executor_context.get(),
+                   reinterpret_cast<char *>(consumer.GetState()));
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
@@ -158,7 +158,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     }
 
     // This is 0 since codegen currently support SELECT only
-    p_status.m_processed = 0;
+    p_status.m_processed = executor_context->num_processed;
     p_status.m_result = ResultType::SUCCESS;
     p_status.m_result_slots = nullptr;
   }
