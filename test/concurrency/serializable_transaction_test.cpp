@@ -64,7 +64,9 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // Just scan the table
     {
+      concurrency::EpochManagerFactory::GetInstance().Reset();
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
+      
       TransactionScheduler scheduler(1, table, &txn_manager, true);
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
@@ -77,6 +79,7 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
   }
 }
 
+// test with single transaction
 TEST_F(SerializableTransactionTests, SingleTransactionTest) {
   for (auto protocol_type : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
@@ -94,6 +97,7 @@ TEST_F(SerializableTransactionTests, SingleTransactionTest) {
 
       EXPECT_EQ(10, scheduler.schedules[0].results.size());
     }
+
     // read, read, read, read, update, read, read not exist
     {
       concurrency::EpochManagerFactory::GetInstance().Reset();
@@ -172,7 +176,6 @@ TEST_F(SerializableTransactionTests, SingleTransactionTest) {
       EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
       EXPECT_EQ(3, scheduler.schedules[0].results[2]);
       EXPECT_EQ(-1, scheduler.schedules[0].results[3]);
-      // LOG_INFO("FINISH THIS");
     }
 
     // insert, delete inserted, read deleted, insert again, delete again
@@ -207,6 +210,58 @@ TEST_F(SerializableTransactionTests, SingleTransactionTest) {
     }
   }
 }
+
+// test with concurrent transactions
+TEST_F(SerializableTransactionTests, ConcurrentTransactionsTest) {
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    {
+      concurrency::EpochManagerFactory::GetInstance().Reset();
+      storage::DataTable *table = TestingTransactionUtil::CreateTable();
+      
+      TransactionScheduler scheduler(2, table, &txn_manager);
+      scheduler.Txn(0).Insert(100, 1);
+      scheduler.Txn(1).Read(100);
+      scheduler.Txn(0).Read(100);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(100);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+      
+      EXPECT_EQ(1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[1].results[0]);
+      // TODO: phantom problem. 
+      // In fact, txn 1 should not see the inserted tuple.
+      EXPECT_EQ(1, scheduler.schedules[1].results[1]);
+    }
+
+    {
+      concurrency::EpochManagerFactory::GetInstance().Reset();
+      storage::DataTable *table = TestingTransactionUtil::CreateTable();
+      
+      TransactionScheduler scheduler(2, table, &txn_manager);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+      
+      EXPECT_EQ(1, scheduler.schedules[0].results[0]);
+    }
+  }
+}
+
 
 TEST_F(SerializableTransactionTests, AbortTest) {
   for (auto protocol_type : PROTOCOL_TYPES) {
