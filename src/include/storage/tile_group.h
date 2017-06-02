@@ -107,6 +107,8 @@ class TileGroup : public Printable {
   oid_t InsertTupleFromCheckpoint(oid_t tuple_slot_id, const Tuple *tuple,
                                   cid_t commit_id);
 
+  void CompressTiles();
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
@@ -140,6 +142,8 @@ class TileGroup : public Printable {
   std::shared_ptr<Tile> GetTileReference(const oid_t tile_offset) const;
 
   oid_t GetTileId(const oid_t tile_id) const;
+
+  inline bool GetCompressionStatus() const { return compression_status; }
 
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
@@ -203,6 +207,9 @@ class TileGroup : public Printable {
 
   // set of tiles
   std::vector<std::shared_ptr<Tile>> tiles;
+
+  // compression status
+  bool compression_status;
 
   // associated tile group
   TileGroupHeader *tile_group_header;
