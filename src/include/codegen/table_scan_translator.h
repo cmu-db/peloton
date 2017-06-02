@@ -89,12 +89,14 @@ class TableScanTranslator : public OperatorTranslator {
                  Vector &selection_vector);
 
     // The callback when starting iteration over a new tile group
-    void TileGroupStart(CodeGen &, llvm::Value *tile_group_ptr) override {
+    void TileGroupStart(CodeGen &, llvm::Value *tile_group_id,
+                        llvm::Value *tile_group_ptr) override {
+      tile_group_id_ = tile_group_id;
       tile_group_ptr_ = tile_group_ptr;
     }
 
     // The code that forms the body of the scan loop
-    void ProcessTuples(CodeGen &codegen, llvm::Value *tile_group_id,
+    void ProcessTuples(CodeGen &codegen,
                        llvm::Value *tid_start, llvm::Value *tid_end,
                        TileGroup::TileGroupAccess &tile_group_access) override;
 
@@ -116,7 +118,6 @@ class TableScanTranslator : public OperatorTranslator {
     // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
     // store their TIDs in the output TID selection vector
     void FilterRowsByPredicate(CodeGen &codegen,
-                               llvm::Value *tile_group_id,
                                const TileGroup::TileGroupAccess &access,
                                llvm::Value *tid_start, llvm::Value *tid_end,
                                Vector &selection_vector) const;
@@ -130,6 +131,9 @@ class TableScanTranslator : public OperatorTranslator {
 
     // The selection vector used for vectorized scans
     Vector &selection_vector_;
+
+    // The current tile group id we're scanning over
+    llvm::Value *tile_group_id_;
 
     // The current tile group we're scanning over
     llvm::Value *tile_group_ptr_;

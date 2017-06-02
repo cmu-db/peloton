@@ -39,7 +39,6 @@ class DeleteTranslator : public OperatorTranslator {
 
   void Produce() const override;
 
-  void Consume(ConsumerContext &, RowBatch &) const override;
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
