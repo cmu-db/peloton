@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
-#include "gc/gc_manager_factory.h"
+#include "gc/transaction_level_gc_manager.h"
+#include "concurrency/epoch_manager.h"
 
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
@@ -31,67 +32,170 @@ namespace test {
 
 class TransactionLevelGCManagerTests : public PelotonTest {};
 
-TEST_F(TransactionLevelGCManagerTests, EnableTest) {
-  gc::GCManagerFactory::Configure(1);
-  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON);
+void UpdateTuple(storage::DataTable *table, const int update_num, const int total_num) {
+  srand(15721);
 
-  gc::GCManagerFactory::Configure(0);
-  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::OFF);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (int i = 0; i < update_num; i++) {
+    scheduler.Txn(0).Update(rand() % total_num, rand() % 15721);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
 }
 
-TEST_F(TransactionLevelGCManagerTests, StartGC) {
+void DeleteTuple(storage::DataTable *table, const int delete_num, const int total_num) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (int i = 0; i < delete_num; i++) {
+    scheduler.Txn(0).Delete(rand() % total_num);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
+}
+
+void SelectTuple(storage::DataTable *table, const int select_num, const int total_num) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (int i = 0; i < select_num; i++) {
+    scheduler.Txn(0).Read(rand() % total_num);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
+}
+
+TEST_F(TransactionLevelGCManagerTests, GCTest) {
+
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
 
   std::vector<std::unique_ptr<std::thread>> gc_threads;
 
   gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
 
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   
-  gc_manager.StartGC(gc_threads);
-  EXPECT_TRUE(gc_manager.GetStatus() == true);
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-  gc_manager.StopGC();
-  EXPECT_TRUE(gc_manager.GetStatus() == false);
-
-  gc::GCManagerFactory::Configure(0);
-  
-  for (auto &gc_thread : gc_threads) {
-    gc_thread->join();
-  }
-}
-
-TEST_F(TransactionLevelGCManagerTests, RegisterTableTest) {
-  gc::GCManagerFactory::Configure(1);
   auto catalog = catalog::Catalog::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(catalog->HasDatabase(db_id));
 
-  // create table
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(TESTS_TUPLES_PER_TILEGROUP, false));
+  // create a table with only one key
+  const int num_key = 1;
+  std::unique_ptr<storage::DataTable> table(
+    TestingTransactionUtil::CreateTable(num_key, "TABLE", db_id, INVALID_OID, 1234, true));
 
-  // add table into database
-  int table_oid = data_table->GetOid();
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
-  database->AddTable(data_table.get());
-
-  EXPECT_TRUE(gc::GCManagerFactory::GetInstance().GetTableCount() == 1);
-
-  database->DropTableWithOid(table_oid);
+  //===========================
+  // update a version here.
+  //===========================
+  const int update_num = 1;
+  UpdateTuple(table.get(), update_num, num_key);
   
-  EXPECT_TRUE(gc::GCManagerFactory::GetInstance().GetTableCount() == 0);
+  epoch_manager.SetCurrentEpochId(2);
 
-  data_table.release();
+  // get expired epoch id.
+  // as the current epoch id is set to 2, 
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
+  
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(3);
+
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+  
+  EXPECT_EQ(2, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(3, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(1, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  //===========================
+  // delete a version here.
+  //===========================
+  const int delete_num = 1;
+  DeleteTuple(table.get(), delete_num, num_key);
+
+  epoch_manager.SetCurrentEpochId(4);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 4, 
+  // the expected expired epoch id should be 3.
+  expired_eid = epoch_manager.GetExpiredEpochId();
+  
+  EXPECT_EQ(3, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(4, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(5);
+
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+  
+  EXPECT_EQ(4, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(5, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(1, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+  
+
+  table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
+  TestingExecutorUtil::DeleteDatabase("DATABASE");
   EXPECT_FALSE(catalog->HasDatabase(db_id));
-
-  gc::GCManagerFactory::Configure(0);
 
 }
 
