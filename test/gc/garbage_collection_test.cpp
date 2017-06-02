@@ -227,8 +227,8 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
 
   gc_manager.StartGC(gc_threads);
 
-  const int update_num = 1;
-  DeleteTuple(table.get(), update_num, num_key);
+  const int delete_num = 1;
+  DeleteTuple(table.get(), delete_num, num_key);
 
   // count garbage num
   auto old_num = GarbageNum(table.get());
