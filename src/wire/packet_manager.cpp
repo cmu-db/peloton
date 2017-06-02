@@ -445,7 +445,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       // check status
       if (status == ResultType::FAILURE) {
         SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return;
       }
@@ -458,11 +458,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
     SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
     CompleteCommand(query_type, rows_affected);
-  //Empty Query
+
+    //Empty Query when the input is like " ;"
   } else {
     SendEmptyQueryResponse();
-    SendReadyForQuery(NetworkTransactionStateType::IDLE);
-    return;
   }
 
   // PAVLO: 2017-01-15
