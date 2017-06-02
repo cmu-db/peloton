@@ -124,7 +124,7 @@ bool TransactionRuntime::PerformDelete(uint32_t tuple_id,
       // because we haven't yet put it into the write set.
       // The acquired lock is not released when the txn gets aborted, and
       // YieldOwnership() will help us release the acquired write lock.
-      txn_manager.YieldOwnership(txn, tile_group_id_retrieved, tuple_id);
+      txn_manager.YieldOwnership(txn, tile_group_header, tuple_id);
     }
     txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return false;
