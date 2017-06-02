@@ -26,7 +26,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// Transaction-Level GC Manager Tests
 //===--------------------------------------------------------------------===//
 
 class TransactionLevelGCManagerTests : public PelotonTest {};
