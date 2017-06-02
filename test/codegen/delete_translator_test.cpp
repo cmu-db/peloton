@@ -32,12 +32,10 @@ namespace test {
 
 class DeleteTranslatorTest : public PelotonCodeGenTest {
  public:
-  DeleteTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
-    LoadTestTable(TestTableId(), num_rows_to_insert);
-  }
+  DeleteTranslatorTest() : PelotonCodeGenTest() {}
 
-  size_t getCurrentTableSize() {
-    planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1}};
+  size_t getCurrentTableSize(uint32_t table_id) {
+    planner::SeqScanPlan scan{&GetTestTable(table_id), nullptr, {0, 1}};
     planner::BindingContext context;
     scan.PerformBinding(context);
 
@@ -46,24 +44,10 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
     return buffer.GetOutputTuples().size();
   }
 
-  // delete all entries in table and then repopulate it.
-  void reloadTable() {
-    std::unique_ptr<planner::DeletePlan> delete_plan{
-        new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
-    std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-        &GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
-    delete_plan->AddChild(std::move(scan));
-
-    planner::BindingContext deleteContext;
-    delete_plan->PerformBinding(deleteContext);
-
-    codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
-    CompileAndExecute(*delete_plan, buffer,
-                      reinterpret_cast<char*>(buffer.GetState()));
-    LoadTestTable(TestTableId(), num_rows_to_insert);
-  }
-
-  uint32_t TestTableId() { return test_table1_id; }
+  uint32_t TestTableId1() { return test_table1_id; }
+  uint32_t TestTableId2() { return test_table2_id; }
+  uint32_t TestTableId3() { return test_table3_id; }
+  uint32_t TestTableId4() { return test_table4_id; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
  private:
@@ -74,16 +58,18 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   //
   // DELETE FROM table;
   //
-  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
+  LoadTestTable(TestTableId1(), NumRowsInTestTable());
+
+  EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId1()).GetTupleCount());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId1()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
+      &GetTestTable(TestTableId1()), nullptr, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   LOG_DEBUG("tile group count %zu",
-            GetTestTable(TestTableId()).GetTileGroupCount());
+            GetTestTable(TestTableId1()).GetTileGroupCount());
 
   planner::BindingContext deleteContext;
   delete_plan->PerformBinding(deleteContext);
@@ -91,9 +77,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
-  EXPECT_EQ(0, getCurrentTableSize());
-
-  reloadTable();
+  EXPECT_EQ(0, getCurrentTableSize(TestTableId1()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
@@ -101,7 +85,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   // DELETE FROM table where a >= 40;
   //
 
-  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
+  LoadTestTable(TestTableId2(), NumRowsInTestTable());
+
+  EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId2()).GetTupleCount());
 
   // Setup the predicate
   auto* a_col_exp =
@@ -111,9 +97,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId2()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId()), a_gt_40, {0, 1, 2})};
+      &GetTestTable(TestTableId2()), a_gt_40, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -127,8 +113,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  EXPECT_EQ(4, getCurrentTableSize());
-  reloadTable();
+  EXPECT_EQ(4, getCurrentTableSize(TestTableId2()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
@@ -136,10 +121,11 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   // DELETE FROM table where a >= 40 and b = 21;
   //
 
+  LoadTestTable(TestTableId3(), NumRowsInTestTable());
+
+  EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId3()).GetTupleCount());
+
   // Construct the components of the predicate
-
-  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
-
   // a >= 20
   auto* a_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
@@ -159,9 +145,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
       ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId3()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId()), conj_eq, {0, 1, 2})};
+      &GetTestTable(TestTableId3()), conj_eq, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -174,8 +160,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
-  reloadTable();
+  EXPECT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize(TestTableId3()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
@@ -183,7 +168,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   // DELETE FROM table where a = b % 1;
   //
 
-  EXPECT_EQ(NumRowsInTestTable(), getCurrentTableSize());
+  LoadTestTable(TestTableId4(), NumRowsInTestTable());
+
+  EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId4()).GetTupleCount());
 
   auto* b_col_exp =
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
@@ -199,9 +186,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
       ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId4()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId()), a_eq_b_mod_1, {0, 1, 2})};
+      &GetTestTable(TestTableId4()), a_eq_b_mod_1, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -214,8 +201,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  ASSERT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize());
-  reloadTable();
+  EXPECT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize(TestTableId4()));
 }
 
 }  // namespace test

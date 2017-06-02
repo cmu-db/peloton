@@ -45,10 +45,6 @@ class DeleteTranslator : public OperatorTranslator {
  private:
   mutable llvm::Value *table_ptr_;
   mutable llvm::Value *tile_group_;
-  static bool delete_wrapper(int64_t tile_group_id, uint32_t tuple_id,
-                             concurrency::Transaction *txn,
-                             storage::DataTable *table,
-                             storage::TileGroup *tile_group);
   const planner::DeletePlan &delete_plan_;
   codegen::Table table_;
 };
