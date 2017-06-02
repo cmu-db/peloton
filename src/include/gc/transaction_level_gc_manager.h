@@ -134,7 +134,7 @@ private:
 
   void DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx);
 
-  void DeleteTupleFromIndexes(ItemPointer *indirection);
+  void DeleteTupleFromIndexes(const ItemPointer location);
 
 private:
   //===--------------------------------------------------------------------===//

@@ -253,19 +253,9 @@ void TransactionLevelGCManager::DeleteFromIndexes(
   for (auto entry : *(garbage_ctx->gc_set_.get())) {
     for (auto &element : entry.second) {
       if (element.second == true) {
-        // only old versions are stored in the gc set.
-        // so we can safely get indirection from the indirection array.
-        auto tile_group =
-            catalog::Manager::GetInstance().GetTileGroup(entry.first);
-        if (tile_group != nullptr) {
-          auto tile_group_header = catalog::Manager::GetInstance()
-                                       .GetTileGroup(entry.first)
-                                       ->GetHeader();
-          ItemPointer *indirection =
-              tile_group_header->GetIndirection(element.first);
+        ItemPointer location(entry.first, element.first);
 
-          DeleteTupleFromIndexes(indirection);
-        }
+        DeleteTupleFromIndexes(location);
       }
     }
   }
@@ -273,42 +263,84 @@ void TransactionLevelGCManager::DeleteFromIndexes(
 
 // delete a tuple from all its indexes it belongs to.
 void TransactionLevelGCManager::DeleteTupleFromIndexes(
-    ItemPointer *indirection) {
+    const ItemPointer location) {
+
+  // only old versions are stored in the gc set.
+  // so we can safely get indirection from the indirection array.
+  auto tile_group =
+      catalog::Manager::GetInstance().GetTileGroup(location.block);
+  
+  // if the corresponding tile group is deconstructed, 
+  // then do nothing.
+  if (tile_group == nullptr) {
+    return;
+  }
+
+  auto tile_group_header = catalog::Manager::GetInstance()
+                               .GetTileGroup(location.block)
+                               ->GetHeader();
+
+  ItemPointer *indirection =
+      tile_group_header->GetIndirection(location.offset);
+
   // do nothing if indirection is null
   if (indirection == nullptr) {
     return;
   }
-  LOG_TRACE("Deleting indirection %p from index", indirection);
 
-  ItemPointer location = *indirection;
+  expression::ContainerTuple<storage::TileGroup> current_tuple(
+      tile_group.get(), location.offset);
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
+  // get the version next (older) to the current version.
+  // recall that a tuple is inserted into an index only when  
+  // any change is made to the index key.
+  // Hence, we should delete a tuple from the index only if
+  // the value of the version's key field is different from
+  // that of the older version's.
+  auto older_location = tile_group_header->GetNextItemPointer(location.offset);
 
-  PL_ASSERT(tile_group != nullptr);
+  auto older_tile_group = 
+      catalog::Manager::GetInstance().GetTileGroup(older_location.block);
+
+  PL_ASSERT(older_tile_group != nullptr);
+
+  expression::ContainerTuple<storage::TileGroup> older_tuple(
+      older_tile_group.get(), older_location.offset);
+
 
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   PL_ASSERT(table != nullptr);
 
-  // construct the expired version.
-  expression::ContainerTuple<storage::TileGroup> expired_tuple(tile_group.get(),
-                                                               location.offset);
-
-  // unlink the version from all the indexes.
+  // attempt to unlink the version from all the indexes.
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
     auto index = table->GetIndex(idx);
     if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
 
-    // build key.
-    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(&expired_tuple, indexed_columns, index->GetPool());
+    bool updated = false;
+    for (auto col : indexed_columns) {
+      if (current_tuple.GetValue(col).CompareEquals(older_tuple.GetValue(col)) != type::CMP_TRUE) {
+        updated = true;
+        break;
+      }
+    }
 
-    index->DeleteEntry(key.get(), indirection);
+    // if no key field is updated, then do not delete it from index.
+    if (updated == false) {
+      continue;
+    }
+
+    // build key.
+    std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
+    current_key->SetFromTuple(&current_tuple, indexed_columns, index->GetPool());
+
+    index->DeleteEntry(current_key.get(), indirection);
   }
+
 }
 
 }  // namespace gc
 }  // namespace peloton
+
