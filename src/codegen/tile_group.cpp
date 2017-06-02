@@ -38,7 +38,6 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 // of columns in this tile group.
 //===----------------------------------------------------------------------===//
 void TileGroup::GenerateTidScan(CodeGen &codegen,
-                                llvm::Value *tile_group_id,
                                 llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 ScanConsumer &consumer) const {
@@ -55,8 +54,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen,
 
     // Call the consumer to generate the body of the scan loop
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, tile_group_id, tid, num_tuples,
-                           tile_group_access);
+    consumer.ProcessTuples(codegen, tid, num_tuples, tile_group_access);
 
     // Move to next tuple in the tile group
     tid = codegen->CreateAdd(tid, codegen.Const32(1));
@@ -67,7 +65,6 @@ void TileGroup::GenerateTidScan(CodeGen &codegen,
 // All we do here is scan over the tuples in the tile group in vectors of the
 // given size. We let the consumer do with it as it sees fit.
 void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
-                                          llvm::Value *tile_group_id,
                                           llvm::Value *tile_group_ptr,
                                           llvm::Value *column_layouts,
                                           uint32_t vector_size,
@@ -82,8 +79,8 @@ void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
 
     // Pass the vector to the consumer
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, tile_group_id, curr_range.start,
-                           curr_range.end, tile_group_access);
+    consumer.ProcessTuples(codegen, curr_range.start, curr_range.end,
+                           tile_group_access);
 
     loop.LoopEnd(codegen, {});
   }
