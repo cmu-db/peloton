@@ -56,7 +56,8 @@ public:
     current_global_epoch_id_ = current_epoch_id;
     next_txn_id_ = 0;
     snapshot_global_epoch_id_ = 1;
-
+    local_epochs_.clear();
+    
     RegisterThread(0);
   }
 
