@@ -46,7 +46,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
 
   // zero out the data
   PL_MEMSET(data, 0, header_size);
-
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
@@ -220,7 +219,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  LOG_TRACE("%s", os.str().c_str());
+  LOG_INFO("%s", os.str().c_str());
 }
 
 // this function is called only when building tile groups for aggregation

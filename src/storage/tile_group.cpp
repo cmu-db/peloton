@@ -23,6 +23,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "storage/compressed_tile.h"
 
 namespace peloton {
 namespace storage {
@@ -45,7 +46,6 @@ TileGroup::TileGroup(BackendType backend_type,
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
-
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
         tile_group_header, tile_schemas[tile_itr], this, tuple_count));
@@ -53,6 +53,7 @@ TileGroup::TileGroup(BackendType backend_type,
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
   }
+  compression_status = false;
 }
 
 TileGroup::~TileGroup() {
@@ -314,6 +315,27 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
+void TileGroup::CompressTiles() {
+  oid_t num_tiles = tiles.size();
+  for (oid_t i = 0; i < num_tiles; i++) {
+    LOG_TRACE("Compressing Tile %d in Tile Group", i);
+    Tile *old_tile = tiles[i].get();
+    std::shared_ptr<CompressedTile> new_tile(new CompressedTile(
+        backend_type, old_tile->GetHeader(), *(old_tile->GetSchema()),
+        old_tile->GetTileGroup(), old_tile->GetAllocatedTupleCount()));
+
+    new_tile->CompressTile(old_tile);
+
+    if (new_tile->IsCompressed()) {
+      tiles[i].reset();
+      tiles[i] = new_tile;
+      compression_status = true;
+    } else {
+      new_tile.reset();
+    }
+  }
+}
+
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
@@ -333,14 +355,12 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
-                         oid_t column_id) {
+void TileGroup::SetValue(type::Value &value, oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
@@ -390,7 +410,10 @@ const std::string TileGroup::GetInfo() const {
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
-      os << std::endl << (*tile);
+      os << std::endl
+         << (*tile);
+      os << std::endl
+         << "Compression Status: " << tile->IsCompressed() << std::endl;
     }
   }
 

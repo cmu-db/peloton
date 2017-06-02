@@ -140,8 +140,7 @@ ResultType TrafficCop::AbortQueryHelper() {
 ResultType TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
+    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
@@ -197,8 +196,7 @@ ResultType TrafficCop::ExecuteStatement(
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                         result, result_format,
-                                         thread_id);
+                                         result, result_format, thread_id);
       LOG_TRACE("Statement executed. Result: %s",
                 ResultTypeToString(status.m_result).c_str());
       rows_changed = status.m_processed;
@@ -235,7 +233,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                 result_format);
+                                                   result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
@@ -307,7 +305,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_DEBUG("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
       LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
@@ -444,7 +442,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
     }
     case type::Type::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64; // FIXME: Bytes???
+      field_size = 64;  // FIXME: Bytes???
       break;
     }
     default: {

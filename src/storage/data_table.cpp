@@ -61,6 +61,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
+    tuples_per_tilegroup_ = 1000;
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -100,7 +101,6 @@ DataTable::~DataTable() {
     auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
     if (tile_group_id != invalid_tile_group_id) {
-      LOG_TRACE("Dropping tile group : %u ", tile_group_id);
       // drop tile group in catalog
       catalog_manager.DropTileGroup(tile_group_id);
     }
@@ -171,14 +171,23 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  bool valid_slot = true;
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
-      tile_group->CopyTuple(tuple, free_item_pointer.offset);
+
+      if (tile_group->GetCompressionStatus() == true) {
+        valid_slot = false;
+      } else {
+        tile_group->CopyTuple(tuple, free_item_pointer.offset);
+      }
     }
-    return free_item_pointer;
+
+    if (valid_slot) {
+      return free_item_pointer;
+    }
   }
   //====================================================
 
@@ -204,16 +213,12 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
+    tile_group->CompressTiles();
     AddDefaultTileGroup(active_tile_group_id);
   }
 
-  LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
-            tile_group_count_.load(), tile_group->GetTileGroupId(),
-            tile_group.get());
-
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
-
   return location;
 }
 
@@ -227,8 +232,6 @@ ItemPointer DataTable::InsertEmptyVersion() {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
-
-  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseTupleCount(1);
   return location;

@@ -132,6 +132,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
 
   // check for plan node type
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
@@ -148,6 +149,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
 
   // check for plan node type
   select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::SEQSCAN);
@@ -200,6 +202,7 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
 
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
@@ -442,6 +445,7 @@ TEST_F(OptimizerSQLTests, UpdateSqlTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor,
       rows_changed, error_message);
+
   EXPECT_EQ("23", TestingSQLUtil::GetResultValueAsString(result, 0));
 
   // free the database just created
@@ -541,6 +545,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
+
 
 TEST_F(OptimizerSQLTests, GroupByTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
