@@ -84,18 +84,20 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     tile_group_idx = loop.GetLoopVar(0);
     llvm::Value *tile_group_ptr =
         GetTileGroup(codegen, table_ptr, tile_group_idx);
+    llvm::Value *tile_group_id =
+        tile_group_.GetTileGroupId(codegen, tile_group_ptr);
 
     // Invoke the consumer to let her know that we're starting to iterate over
     // the tile group now
-    consumer.TileGroupStart(codegen, tile_group_idx, tile_group_ptr);
+    consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
 
     // Generate the scan cover over the given tile group
     if (vector_size > 1) {
-      tile_group_.GenerateVectorizedTidScan(codegen,
-          tile_group_ptr, column_layouts, vector_size, consumer);
+      tile_group_.GenerateVectorizedTidScan(
+          codegen, tile_group_ptr, column_layouts, vector_size, consumer);
     } else {
-      tile_group_.GenerateTidScan(codegen, tile_group_ptr,
-          column_layouts, consumer);
+      tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
+                                  consumer);
     }
 
     // Invoke the consumer to let her know that we're done with this tile group

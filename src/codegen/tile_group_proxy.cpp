@@ -10,6 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tile_group_proxy.cpp
+//
+// Identification: src/codegen/tile_group_proxy.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "codegen/tile_group_proxy.h"
 
 #include "storage/tile_group.h"
@@ -45,6 +58,33 @@ const std::string& TileGroupProxy::_GetNextTupleSlot::GetFunctionName() {
 }
 
 llvm::Function* TileGroupProxy::_GetNextTupleSlot::GetFunction(
+    CodeGen& codegen) {
+  const std::string& fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function* llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  // The function hasn't been registered, let's do it now
+  auto* tile_group_type = TileGroupProxy::GetType(codegen);
+  llvm::FunctionType* fn_type = llvm::FunctionType::get(
+      codegen.Int32Type(), {tile_group_type->getPointerTo()}, false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+const std::string& TileGroupProxy::_GetTileGroupId::GetFunctionName() {
+  static const std::string kGetNextTupleSlot =
+#ifdef __APPLE__
+      "_ZNK7peloton7storage9TileGroup14GetTileGroupIdEv";
+#else
+      "_ZNK7peloton7storage9TileGroup14GetTileGroupIdEv";
+#endif
+  return kGetNextTupleSlot;
+}
+
+llvm::Function* TileGroupProxy::_GetTileGroupId::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 

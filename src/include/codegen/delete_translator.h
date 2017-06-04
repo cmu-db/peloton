@@ -29,23 +29,27 @@ class DeleteTranslator : public OperatorTranslator {
   DeleteTranslator(const planner::DeletePlan &delete_plan,
                    CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override {}
+  void InitializeState() override;
 
   void DefineAuxiliaryFunctions() override {}
 
   void TearDownState() override {}
 
-  std::string GetName() const override { return "delete"; }
+  std::string GetName() const override { return "Delete"; }
 
   void Produce() const override;
 
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
-  mutable llvm::Value *table_ptr_;
-  mutable llvm::Value *tile_group_;
+  // The delete plan
   const planner::DeletePlan &delete_plan_;
+
+  // Table accessor
   codegen::Table table_;
+
+  // The Deleter instance
+  RuntimeState::StateID deleter_state_id_;
 };
 
 }  // namespace codegen
