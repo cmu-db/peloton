@@ -1,0 +1,36 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// deleter.cpp
+//
+// Identification: src/codegen/utils/deleter.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include "codegen/deleter.h"
+
+#include "codegen/transaction_runtime.h"
+#include "storage/data_table.h"
+
+namespace peloton {
+namespace codegen {
+
+void Deleter::Init(concurrency::Transaction *txn, storage::DataTable *table) {
+  PL_ASSERT(txn != nullptr && table != nullptr);
+  txn_ = txn;
+  table_ = table;
+}
+
+void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
+  LOG_DEBUG("Deleting tuple: [%u, %u]", tile_group_id, tuple_offset);
+  
+  // Punt to TransactionRuntime that does the heavy lifting
+  TransactionRuntime::PerformDelete(*txn_, *table_, tile_group_id,
+                                    tuple_offset);
+}
+
+}  // namespace codegen
+}  // namespace peloton

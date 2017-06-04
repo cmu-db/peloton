@@ -49,6 +49,8 @@ class TileGroup {
 
   llvm::Value *GetNumTuples(CodeGen &codegen, llvm::Value *tile_group) const;
 
+  llvm::Value *GetTileGroupId(CodeGen &codegen, llvm::Value *tile_group) const;
+
  private:
   // A struct to capture enough information to perform strided accesses
   struct ColumnLayout {

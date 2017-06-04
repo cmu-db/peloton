@@ -22,10 +22,19 @@ class TileGroupProxy {
   static llvm::Type *GetType(CodeGen &codegen);
 
   //===--------------------------------------------------------------------===//
-  // LLVM wrapper/definition for storage::TileGroup::GetNextTupleSlot(...) to
-  // get the number of tuples in a tile group
+  // LLVM proxy for storage::TileGroup::GetNextTupleSlot(...)
   //===--------------------------------------------------------------------===//
   struct _GetNextTupleSlot {
+    // Get the symbol name
+    static const std::string &GetFunctionName();
+    // Get the actual function definition
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
+  //===--------------------------------------------------------------------===//
+  // LLVM proxy for storage::TileGroup::GetTileGroupId(...)
+  //===--------------------------------------------------------------------===//
+  struct _GetTileGroupId {
     // Get the symbol name
     static const std::string &GetFunctionName();
     // Get the actual function definition

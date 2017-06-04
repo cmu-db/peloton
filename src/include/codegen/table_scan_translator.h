@@ -96,8 +96,8 @@ class TableScanTranslator : public OperatorTranslator {
     }
 
     // The code that forms the body of the scan loop
-    void ProcessTuples(CodeGen &codegen,
-                       llvm::Value *tid_start, llvm::Value *tid_end,
+    void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
+                       llvm::Value *tid_end,
                        TileGroup::TileGroupAccess &tile_group_access) override;
 
     // The callback when finishing iteration over a tile group
