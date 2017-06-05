@@ -149,6 +149,19 @@ bool UpdateExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  auto executor_pool = executor_context_->GetPool();
+  auto target_table_schema = target_table_->GetSchema();
+  auto column_count = target_table_schema->GetColumnCount();
+
+  commands::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-before-update triggers!");
+      trigger_list->ExecBSUpdateTriggers();
+    }
+  }
+
   // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
@@ -157,6 +170,14 @@ bool UpdateExecutor::DExecute() {
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
+
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW)) {
+        LOG_TRACE("target table has per-row-before-update triggers!");
+        trigger_list->ExecBRUpdateTriggers();
+      }
+    }
 
     bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
                                                 physical_tuple_id);
@@ -171,7 +192,6 @@ bool UpdateExecutor::DExecute() {
     const planner::UpdatePlan &update_node = GetPlanNode<planner::UpdatePlan>();
 
     if (is_owner == true && is_written == true) {
-
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
         ret =
@@ -201,6 +221,7 @@ bool UpdateExecutor::DExecute() {
 
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
+
     }
     // if we have already got the
     // ownership
@@ -302,6 +323,29 @@ bool UpdateExecutor::DExecute() {
 
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
+
+          if (trigger_list != nullptr) {
+            LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+            if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW)) {
+              std::unique_ptr<storage::Tuple> real_old_tuple(
+                  new storage::Tuple(target_table_schema, true));
+              std::unique_ptr<storage::Tuple> real_new_tuple(
+                  new storage::Tuple(target_table_schema, true));
+              for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+                type::Value val = (old_tuple.GetValue(column_itr));
+                real_old_tuple->SetValue(column_itr, val, executor_pool);
+              }
+              for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+                type::Value val = (new_tuple.GetValue(column_itr));
+                real_new_tuple->SetValue(column_itr, val, executor_pool);
+              }
+
+              LOG_TRACE("target table has per-row-after-update triggers!");
+              trigger_list->ExecARUpdateTriggers(real_new_tuple.get(), real_old_tuple.get(), executor_context_);
+            }
+          }
+
+
         }
       } else {
 
@@ -311,6 +355,14 @@ bool UpdateExecutor::DExecute() {
                                                  ResultType::FAILURE);
         return false;
       }
+    }
+  }
+
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-after-update triggers!");
+      trigger_list->ExecASUpdateTriggers();
     }
   }
   return true;

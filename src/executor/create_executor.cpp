@@ -14,6 +14,8 @@
 #include "executor/executor_context.h"
 #include "common/logger.h"
 #include "catalog/catalog.h"
+#include "commands/trigger.h"
+#include "storage/data_table.h"
 
 #include <vector>
 
@@ -25,6 +27,7 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
   context = executor_context;
+  pool_.reset(new type::EphemeralPool());
 }
 
 // Initialize executer
@@ -83,6 +86,37 @@ bool CreateExecutor::DExecute() {
                 ResultTypeToString(current_txn->GetResult()).c_str());
     }
   }
+
+  // Check if query was for creating trigger
+  if (node.GetCreateType() == CreateType::TRIGGER) {
+    LOG_INFO("enter CreateType::TRIGGER");
+    std::string database_name = node.GetDatabaseName();
+    std::string table_name = node.GetTableName();
+    std::string trigger_name = node.GetTriggerName();
+
+    commands::Trigger newTrigger(node);
+
+    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
+    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
+
+    // durable trigger: insert the information of this trigger in the trigger catalog table
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
+    catalog::TriggerCatalog::GetInstance()->InsertTrigger(trigger_name, database_oid, table_oid,
+                    newTrigger.GetTriggerType(), newTrigger.SerializeWhen(table_oid, current_txn),
+                    newTrigger.GetFuncname(), newTrigger.GetArgs(),
+                    time_stamp, pool_.get(), current_txn);
+    // ask target table to update its trigger list variable
+    storage::DataTable *target_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name);
+    target_table->UpdateTriggerListFromCatalog(current_txn);
+
+    // hardcode SUCCESS result for current_txn
+    current_txn->SetResult(ResultType::SUCCESS);
+  }
+
   return false;
 }
 }

@@ -45,9 +45,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // TODO: Currently, the parser will parse the foreign key constraint and
       // put it into a ColumnDefinition. Later when we implement constraint
       // we may need to change this. Just skip foreign key constraint for now
-      if (col->type == parser::ColumnDefinition::FOREIGN)
-        continue;
-        
+      if (col->type == parser::ColumnDefinition::FOREIGN) continue;
+
       type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
@@ -65,7 +64,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string(col->name), false);
+                                    std::string(col->name), false);
       for (auto con : column_contraints) {
         column.AddConstraint(con);
       }
@@ -97,6 +96,27 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     index_type = parse_tree->index_type;
 
     unique = parse_tree->unique;
+  }
+  if (parse_tree->type == parse_tree->CreateType::kTrigger) {
+    create_type = CreateType::TRIGGER;
+    trigger_name = std::string(parse_tree->trigger_name);
+    if (parse_tree->trigger_when) {
+      trigger_when = parse_tree->trigger_when->Copy();
+    }
+    else {
+      trigger_when = nullptr;
+    }
+    trigger_type = parse_tree->trigger_type;
+
+    for (auto s : *(parse_tree->trigger_funcname)) {
+      trigger_funcname.push_back(s);
+    }
+    for (auto s : *(parse_tree->trigger_args)) {
+      trigger_args.push_back(s);
+    }
+    for (auto s : *(parse_tree->trigger_columns)) {
+      trigger_columns.push_back(s);
+    }
   }
   // TODO check type CreateType::kDatabase
 }

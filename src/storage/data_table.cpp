@@ -87,6 +87,10 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (size_t i = 0; i < active_indirection_array_count_; ++i) {
     AddDefaultIndirectionArray(i);
   }
+
+
+  // create a trigger list
+  trigger_list = new commands::TriggerList();
 }
 
 DataTable::~DataTable() {
@@ -115,6 +119,11 @@ DataTable::~DataTable() {
   for (auto indirection_array : active_indirection_arrays_) {
     auto oid = indirection_array->GetOid();
     catalog_manager.DropIndirectionArray(oid);
+  }
+  
+  // free memory used by trigger list
+  if (trigger_list) {
+    delete trigger_list;
   }
 
   // AbstractTable cleans up the schema
@@ -1092,6 +1101,36 @@ void DataTable::SetDefaultLayout(const column_map_type &layout) {
 column_map_type DataTable::GetDefaultLayout() const {
   return default_partition_;
 }
+
+void DataTable::AddTrigger(commands::Trigger new_trigger) {
+  trigger_list->AddTrigger(new_trigger);
+}
+
+int DataTable::GetTriggerNumber() {
+  return trigger_list->GetTriggerListSize();
+}
+
+commands::Trigger* DataTable::GetTriggerByIndex(int n) {
+  if (trigger_list->GetTriggerListSize() <= n)
+    return nullptr;
+  return trigger_list->Get(n);
+}
+
+commands::TriggerList* DataTable::GetTriggerList() {
+  if (trigger_list->GetTriggerListSize() <= 0)
+    return nullptr;
+  return trigger_list;
+}
+
+void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
+  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
+  if (trigger_list) {
+    delete trigger_list;
+  }
+  trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(database_oid, table_oid, txn);
+}
+
+
 
 }  // End storage namespace
 }  // End peloton namespace

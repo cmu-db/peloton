@@ -83,8 +83,8 @@ std::string DatePartTypeToString(DatePartType type) {
       return "YEAR";
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for DatePart value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for DatePart value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return ("INVALID");
@@ -148,7 +148,7 @@ DatePartType StringToDatePartType(const std::string& str) {
     return DatePartType::YEARS;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No DatePartType conversion from string '%s'", upper_str.c_str()));
+      "No DatePartType conversion from string '%s'", upper_str.c_str()));
   }
 }
 
@@ -175,8 +175,8 @@ std::string BackendTypeToString(BackendType type) {
       return "INVALID";
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for BackendType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for BackendType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return ("INVALID");
@@ -195,7 +195,7 @@ BackendType StringToBackendType(const std::string& str) {
     return BackendType::HDD;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No BackendType conversion from string '%s'", str.c_str()));
+      "No BackendType conversion from string '%s'", str.c_str()));
   }
   return BackendType::INVALID;
 }
@@ -241,8 +241,8 @@ std::string TypeIdToString(type::Type::TypeId type) {
       return "UDT";
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for TypeId value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for TypeId value '%d'",
+                           static_cast<int>(type)));
     }
       return "INVALID";
   }
@@ -280,7 +280,7 @@ type::Type::TypeId StringToTypeId(const std::string& str) {
     return type::Type::UDT;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No TypeId conversion from string '%s'", upper_str.c_str()));
+      "No TypeId conversion from string '%s'", upper_str.c_str()));
   }
   return type::Type::INVALID;
 }
@@ -365,8 +365,8 @@ std::string StatementTypeToString(StatementType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for StatementType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for StatementType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -402,7 +402,7 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::COPY;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No StatementType conversion from string '%s'", upper_str.c_str()));
+      "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
   return StatementType::INVALID;
 }
@@ -620,8 +620,8 @@ std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for ExpressionType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for ExpressionType value '%d'",
+        static_cast<int>(type)));
     } break;
   }
   return "INVALID";
@@ -783,7 +783,7 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::CAST;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ExpressionType conversion from string '%s'", upper_str.c_str()));
+      "No ExpressionType conversion from string '%s'", upper_str.c_str()));
   }
   return ExpressionType::INVALID;
 }
@@ -813,8 +813,8 @@ std::string IndexTypeToString(IndexType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for IndexType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for IndexType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -832,7 +832,7 @@ IndexType StringToIndexType(const std::string& str) {
     return IndexType::SKIPLIST;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No IndexType conversion from string '%s'", upper_str.c_str()));
+      "No IndexType conversion from string '%s'", upper_str.c_str()));
   }
   return IndexType::INVALID;
 }
@@ -862,8 +862,8 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for IndexConstraintType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for IndexConstraintType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -881,8 +881,8 @@ IndexConstraintType StringToIndexConstraintType(const std::string& str) {
     return IndexConstraintType::UNIQUE;
   } else {
     throw ConversionException(
-        StringUtil::Format("No IndexConstraintType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No IndexConstraintType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return IndexConstraintType::INVALID;
 }
@@ -912,8 +912,8 @@ std::string HybridScanTypeToString(HybridScanType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for HybridScanType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for HybridScanType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -931,7 +931,7 @@ HybridScanType StringToHybridScanType(const std::string& str) {
     return HybridScanType::HYBRID;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No HybridScanType conversion from string '%s'", upper_str.c_str()));
+      "No HybridScanType conversion from string '%s'", upper_str.c_str()));
   }
   return HybridScanType::INVALID;
 }
@@ -1042,8 +1042,8 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for PlanNodeType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for PlanNodeType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1113,7 +1113,7 @@ PlanNodeType StringToPlanNodeType(const std::string& str) {
     return PlanNodeType::MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
+      "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
   }
   return PlanNodeType::INVALID;
 }
@@ -1170,8 +1170,8 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for ParseNodeType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for ParseNodeType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1207,7 +1207,7 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
     return ParseNodeType::MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ParseNodeType conversion from string '%s'", upper_str.c_str()));
+      "No ParseNodeType conversion from string '%s'", upper_str.c_str()));
   }
   return ParseNodeType::INVALID;
 }
@@ -1243,8 +1243,8 @@ std::string JoinTypeToString(JoinType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for JoinType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for JoinType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1266,7 +1266,7 @@ JoinType StringToJoinType(const std::string& str) {
     return JoinType::SEMI;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No JoinType conversion from string '%s'", upper_str.c_str()));
+      "No JoinType conversion from string '%s'", upper_str.c_str()));
   }
   return JoinType::INVALID;
 }
@@ -1295,8 +1295,8 @@ std::string AggregateTypeToString(AggregateType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for AggregateType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for AggregateType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1314,8 +1314,8 @@ AggregateType StringToAggregateType(const std::string &str) {
     return AggregateType::PLAIN;
   } else {
     throw ConversionException(
-        StringUtil::Format("No AggregateType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No AggregateType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return AggregateType::INVALID;
 }
@@ -1342,8 +1342,8 @@ std::string QuantifierTypeToString(QuantifierType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for QuantifierType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for QuantifierType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "NONE";
@@ -1359,8 +1359,8 @@ QuantifierType StringToQuantifierType(const std::string& str) {
     return QuantifierType::ALL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No QuantifierType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No QuantifierType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return QuantifierType::NONE;
 }
@@ -1393,8 +1393,8 @@ std::string TableReferenceTypeToString(TableReferenceType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for TableReferenceType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for TableReferenceType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1414,8 +1414,8 @@ TableReferenceType StringToTableReferenceType(const std::string& str) {
     return TableReferenceType::CROSS_PRODUCT;
   } else {
     throw ConversionException(
-        StringUtil::Format("No TableReferenceType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No TableReferenceType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return TableReferenceType::INVALID;
 }
@@ -1442,8 +1442,8 @@ std::string InsertTypeToString(InsertType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for InsertType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for InsertType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1459,8 +1459,8 @@ InsertType StringToInsertType(const std::string &str) {
     return InsertType::SELECT;
   } else {
     throw ConversionException(
-        StringUtil::Format("No InsertType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No InsertType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return InsertType::INVALID;
 }
@@ -1490,8 +1490,8 @@ std::string PayloadTypeToString(PayloadType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for PayloadType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for PayloadType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1509,7 +1509,7 @@ PayloadType StringToPayloadType(const std::string &str) {
     return PayloadType::STOP;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No PayloadType conversion from string '%s'", upper_str.c_str()));
+      "No PayloadType conversion from string '%s'", upper_str.c_str()));
   }
   return PayloadType::INVALID;
 }
@@ -1539,8 +1539,8 @@ std::string TaskPriorityTypeToString(TaskPriorityType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for TaskPriorityType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for TaskPriorityType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1558,8 +1558,8 @@ TaskPriorityType StringToTaskPriorityType(const std::string& str) {
     return TaskPriorityType::HIGH;
   } else {
     throw ConversionException(
-        StringUtil::Format("No TaskPriorityType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No TaskPriorityType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return TaskPriorityType::INVALID;
 }
@@ -1595,8 +1595,8 @@ std::string ResultTypeToString(ResultType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for ResultType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for ResultType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1618,7 +1618,7 @@ ResultType StringToResultType(const std::string& str) {
     return ResultType::UNKNOWN;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ResultType conversion from string '%s'", upper_str.c_str()));
+      "No ResultType conversion from string '%s'", upper_str.c_str()));
   }
   return ResultType::INVALID;
 }
@@ -1663,8 +1663,8 @@ std::string ConstraintTypeToString(ConstraintType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for ConstraintType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for ConstraintType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1692,7 +1692,7 @@ ConstraintType StringToConstraintType(const std::string& str) {
     return ConstraintType::EXCLUSION;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ConstraintType conversion from string '%s'", upper_str.c_str()));
+      "No ConstraintType conversion from string '%s'", upper_str.c_str()));
   }
   return ConstraintType::INVALID;
 }
@@ -1725,8 +1725,8 @@ std::string SetOpTypeToString(SetOpType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for SetOpType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for SetOpType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1746,8 +1746,8 @@ SetOpType StringToSetOpType(const std::string& str) {
     return SetOpType::EXCEPT_ALL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No SetOpType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No SetOpType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return SetOpType::INVALID;
 }
@@ -1766,7 +1766,7 @@ std::string LoggingTypeToString(LoggingType type) {
     case LoggingType::INVALID:
       return "INVALID";
 
-    // WAL Based
+      // WAL Based
     case LoggingType::NVM_WAL:
       return "NVM_WAL";
     case LoggingType::SSD_WAL:
@@ -1774,7 +1774,7 @@ std::string LoggingTypeToString(LoggingType type) {
     case LoggingType::HDD_WAL:
       return "HDD_WAL";
 
-    // WBL Based
+      // WBL Based
     case LoggingType::NVM_WBL:
       return "NVM_WBL";
     case LoggingType::SSD_WBL:
@@ -1784,8 +1784,8 @@ std::string LoggingTypeToString(LoggingType type) {
 
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for LoggingType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for LoggingType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1809,7 +1809,7 @@ LoggingType StringToLoggingType(const std::string& str) {
     return LoggingType::HDD_WBL;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggingType conversion from string '%s'", upper_str.c_str()));
+      "No LoggingType conversion from string '%s'", upper_str.c_str()));
   }
   return LoggingType::INVALID;
 }
@@ -1839,8 +1839,8 @@ std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for LoggerMappingStrategyType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for LoggerMappingStrategyType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1858,8 +1858,8 @@ LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string& s
     return LoggerMappingStrategyType::MANUAL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No LoggerMappingStrategyType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No LoggerMappingStrategyType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return LoggerMappingStrategyType::INVALID;
 }
@@ -1883,8 +1883,8 @@ std::string CheckpointTypeToString(CheckpointType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for CheckpointType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1898,8 +1898,8 @@ CheckpointType StringToCheckpointType(const std::string& str) {
     return CheckpointType::NORMAL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No CheckpointType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No CheckpointType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return CheckpointType::INVALID;
 }
@@ -1935,8 +1935,8 @@ std::string LoggingStatusTypeToString(LoggingStatusType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for LoggingStatusType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for LoggingStatusType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1958,7 +1958,7 @@ LoggingStatusType StringToLoggingStatusType(const std::string& str) {
     return LoggingStatusType::SLEEP;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
+      "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
   }
   return LoggingStatusType::INVALID;
 }
@@ -1985,8 +1985,8 @@ std::string LoggerTypeToString(LoggerType type) {
     }
     default: {
       throw ConversionException(
-          StringUtil::Format("No string conversion for LoggerType value '%d'",
-                             static_cast<int>(type)));
+        StringUtil::Format("No string conversion for LoggerType value '%d'",
+                           static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2002,7 +2002,7 @@ LoggerType StringToLoggerType(const std::string& str) {
     return LoggerType::BACKEND;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggerType conversion from string '%s'", upper_str.c_str()));
+      "No LoggerType conversion from string '%s'", upper_str.c_str()));
   }
   return LoggerType::INVALID;
 }
@@ -2064,8 +2064,8 @@ std::string LogRecordTypeToString(LogRecordType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for LogRecordType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for LogRecordType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2107,7 +2107,7 @@ LogRecordType StringToLogRecordType(const std::string& str) {
     return LOGRECORD_TYPE_ITERATION_DELIMITER;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LogRecordType conversion from string '%s'", upper_str.c_str()));
+      "No LogRecordType conversion from string '%s'", upper_str.c_str()));
   }
   return LOGRECORD_TYPE_INVALID;
 }
@@ -2135,8 +2135,8 @@ std::string CheckpointStatusToString(CheckpointStatus type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointStatus value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for CheckpointStatus value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2156,8 +2156,8 @@ CheckpointStatus StringToCheckpointStatus(const std::string& str) {
     return CheckpointStatus::CHECKPOINTING;
   } else {
     throw ConversionException(
-        StringUtil::Format("No CheckpointStatus conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No CheckpointStatus conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return CheckpointStatus::INVALID;
 }
@@ -2199,14 +2199,14 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
       return type::Type::DECIMAL;
     default:
       throw ConversionException(StringUtil::Format(
-          "No TypeId conversion for PostgresValueType value '%d'",
-          static_cast<int>(type)));
+        "No TypeId conversion for PostgresValueType value '%d'",
+        static_cast<int>(type)));
   }
   return type::Type::INVALID;
 }
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
-    PostgresConstraintType type) {
+  PostgresConstraintType type) {
   ConstraintType constraintType = ConstraintType::INVALID;
 
   switch (type) {
@@ -2244,8 +2244,8 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
 
     default:
       throw ConversionException(StringUtil::Format(
-          "No ConstraintType conversion for PostgresConstraintType value '%d'",
-          static_cast<int>(type)));
+        "No ConstraintType conversion for PostgresConstraintType value '%d'",
+        static_cast<int>(type)));
       break;
   }
   return constraintType;
@@ -2277,8 +2277,8 @@ std::string EntityTypeToString(EntityType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for EntityType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for EntityType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2300,8 +2300,8 @@ EntityType StringToEntityType(const std::string& str) {
     return EntityType::PREPARED_STATEMENT;
   } else {
     throw ConversionException(
-        StringUtil::Format("No EntityType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No EntityType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return EntityType::INVALID;
 }
@@ -2340,8 +2340,8 @@ std::string RWTypeToString(RWType type) {
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for RWType value '%d'",
-          static_cast<int>(type)));
+        "No string conversion for RWType value '%d'",
+        static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2365,8 +2365,8 @@ RWType StringToRWType(const std::string& str) {
     return RWType::INS_DEL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No RWType conversion from string '%s'",
-                           upper_str.c_str()));
+      StringUtil::Format("No RWType conversion from string '%s'",
+                         upper_str.c_str()));
   }
   return RWType::INVALID;
 }

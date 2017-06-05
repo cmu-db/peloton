@@ -26,6 +26,10 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/trigger_catalog.h"
+#include "commands/trigger.h"
+#include "catalog/table_catalog.h"
+#include "parser/pg_trigger.h"
 
 namespace peloton {
 namespace executor {
@@ -93,6 +97,19 @@ bool DeleteExecutor::DExecute() {
   LOG_TRACE("Transaction ID: %lu",
             executor_context_->GetTransaction()->GetTransactionId());
 
+  auto executor_pool = executor_context_->GetPool();
+  auto target_table_schema = target_table_->GetSchema();
+  auto column_count = target_table_schema->GetColumnCount();
+
+  commands::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-before-delete triggers!");
+      trigger_list->ExecBSDeleteTriggers();
+    }
+  }
+
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
@@ -102,19 +119,37 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    bool is_owner = 
+    bool is_owner =
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
     bool is_written =
       transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
     PL_ASSERT((is_owner == false && is_written == true) == false);
 
+    std::unique_ptr<storage::Tuple> real_tuple(
+        new storage::Tuple(target_table_schema, true));
+    bool tuple_is_materialzed = false;
+
+    // check whether there are per-row-before-delete triggers on this table using trigger catalog
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_ROW)) {
+        expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+        // Materialize the logical tile tuple
+        for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+          type::Value val = (logical_tile_tuple.GetValue(column_itr));
+          real_tuple->SetValue(column_itr, val, executor_pool);
+        }
+        tuple_is_materialzed = true;
+        LOG_TRACE("target table has per-row-before-delete triggers!");
+        trigger_list->ExecBRDeleteTriggers(real_tuple.get(), executor_context_);
+      }
+    }
+
     if (is_owner == true && is_written == true) {
       // if the thread is the owner of the tuple, then directly update in place.
       LOG_TRACE("Thread is owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
-
     } else {
-
       bool is_ownable = is_owner ||
           transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
 
@@ -152,7 +187,6 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.PerformDelete(current_txn, old_location, new_location);
 
         executor_context_->num_processed += 1;  // deleted one
-
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
@@ -160,8 +194,31 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
     }
+
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_ROW)) {
+        if (!tuple_is_materialzed) {
+          expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+          // Materialize the logical tile tuple
+          for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+            type::Value val = (logical_tile_tuple.GetValue(column_itr));
+            real_tuple->SetValue(column_itr, val, executor_pool);
+          }
+        }
+        LOG_TRACE("target table has per-row-after-delete triggers!");
+        trigger_list->ExecARDeleteTriggers(real_tuple.get(), executor_context_);
+      }
+    }
   }
 
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-after-delete triggers!");
+      trigger_list->ExecASDeleteTriggers();
+    }
+  }
   return true;
 }
 

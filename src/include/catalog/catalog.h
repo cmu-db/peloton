@@ -18,6 +18,7 @@
 #include "catalog/index_catalog.h"
 #include "catalog/schema.h"
 #include "catalog/table_catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
