@@ -25,8 +25,12 @@ void Deleter::Init(concurrency::Transaction *txn, storage::DataTable *table) {
 }
 
 void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
-  LOG_DEBUG("Deleting tuple: [%u, %u]", tile_group_id, tuple_offset);
-  
+  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+
+  LOG_TRACE("Deleting tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
+            tile_group_id, tuple_offset, table_->GetName().c_str(),
+            table_->GetDatabaseOid(), table_->GetOid());
+
   // Punt to TransactionRuntime that does the heavy lifting
   TransactionRuntime::PerformDelete(*txn_, *table_, tile_group_id,
                                     tuple_offset);
