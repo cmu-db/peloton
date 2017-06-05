@@ -12,19 +12,9 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "catalog/catalog_defaults.h"
-#include "catalog/column_catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/schema.h"
-#include "catalog/table_catalog.h"
-#include "storage/data_table.h"
-#include "storage/database.h"
-#include "storage/table_factory.h"
-#include "storage/tuple.h"
-#include "type/abstract_pool.h"
-#include "type/ephemeral_pool.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 
@@ -32,8 +22,25 @@ namespace catalog {
 class Schema;
 }
 
+namespace concurrency {
+class Transaction;
+}
+
+namespace index {
+class Index;
+}
+
 namespace storage {
+class Database;
 class DataTable;
+class TableFactory;
+class Tuple;
+}
+
+namespace type {
+class AbstractPool;
+class ValueFactory;
+class Value;
 }
 
 namespace catalog {
@@ -178,5 +185,6 @@ class Catalog {
 
   std::mutex catalog_mutex;
 };
+
 }
 }

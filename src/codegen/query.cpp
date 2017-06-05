@@ -12,8 +12,9 @@
 
 #include "codegen/query.h"
 
-#include "catalog/catalog.h"
 #include "storage/storage_manager.h"
+#include "common/logger.h"
+#include "common/timer.h"
 
 namespace peloton {
 namespace codegen {

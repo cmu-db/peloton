@@ -18,7 +18,6 @@
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "planner/delete_plan.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {

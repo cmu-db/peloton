@@ -12,13 +12,15 @@
 
 #include <unordered_map>
 #include <string>
+
 #include "type/types.h"
+
+namespace peloton {
 
 namespace parser {
 struct TableRef;
 }
 
-namespace peloton {
 namespace binder {
 
 class BinderContext;

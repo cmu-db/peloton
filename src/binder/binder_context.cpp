@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parser/table_ref.h"
 #include "binder/binder_context.h"
+
 #include "catalog/catalog.h"
 #include "storage/storage_manager.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
 namespace binder {

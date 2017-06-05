@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -17,6 +16,8 @@
 #include <string>
 
 #include "planner/abstract_plan.h"
+#include "planner/abstract_scan_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/populate_index_plan.h"
 #include "util/string_util.h"
 
@@ -109,5 +110,6 @@ class PlanUtil {
     }
   }
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton
