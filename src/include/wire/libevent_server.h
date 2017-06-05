@@ -24,11 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>
 #include <vector>
 
 #include <sys/file.h>
-#include <fstream>
 
 #include "common/exception.h"
 #include "common/logger.h"
