@@ -12,29 +12,31 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "executor/delete_executor.h"
-#include "executor/executor_context.h"
-#include "executor/index_scan_executor.h"
-#include "executor/seq_scan_executor.h"
-#include "executor/insert_executor.h"
-#include "expression/comparison_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "index/index_factory.h"
-#include "planner/delete_plan.h"
-#include "planner/index_scan_plan.h"
-#include "planner/insert_plan.h"
-#include "storage/data_table.h"
-#include "storage/database.h"
-#include "storage/table_factory.h"
-#include "storage/tuple.h"
-#include "type/types.h"
-#include "type/value_factory.h"
 
 namespace peloton {
+
+namespace concurrency {
+class Transaction;
+}
+
+namespace executor {
+class LogicalTile;
+}
+
+namespace expression {
+class AbstractExpression;
+}
+
+namespace storage {
+class Database;
+class DataTable;
+class Tuple;
+}
+
 namespace catalog {
 
 class AbstractCatalog {
@@ -75,8 +77,9 @@ class AbstractCatalog {
                 IndexConstraintType index_constraint);
 
   //===--------------------------------------------------------------------===//
-  // Memebers
+  // Members
   //===--------------------------------------------------------------------===//
+
   // Maximum column name size for catalog schemas
   static const size_t max_name_size = 32;
 

@@ -27,6 +27,7 @@
 #include "expression/parameter_value_expression.h"
 #include "expression/string_functions.h"
 #include "expression/tuple_value_expression.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace expression {

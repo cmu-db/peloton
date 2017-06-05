@@ -17,7 +17,9 @@
 
 namespace peloton {
 
-namespace parser {}
+namespace parser {
+struct SQLStatement;
+}
 
 namespace optimizer {
 class OperatorExpression;
