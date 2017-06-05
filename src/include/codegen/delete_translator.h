@@ -4,7 +4,7 @@
 //
 // delete_translator.h
 //
-// Identification: src/include/codegen/delete/delete_translator.h
+// Identification: src/include/codegen/delete_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
