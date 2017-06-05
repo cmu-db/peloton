@@ -11,10 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-
-#include "catalog/catalog.h"
 #include "codegen/codegen_test_util.h"
+
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 
@@ -25,8 +23,7 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
  public:
   DeleteTranslatorTest() : PelotonCodeGenTest() {}
 
-  // We need this to get a transactionally consistent idea of the table size
-  size_t GetCurrentTableSize(uint32_t table_id) {
+  size_t GetCurrentTableSize(TableId table_id) {
     planner::SeqScanPlan scan{&GetTestTable(table_id), nullptr, {0, 1}};
     planner::BindingContext context;
     scan.PerformBinding(context);
@@ -36,10 +33,10 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
     return buffer.GetOutputTuples().size();
   }
 
-  uint32_t TestTableId1() { return test_table1_id; }
-  uint32_t TestTableId2() { return test_table2_id; }
-  uint32_t TestTableId3() { return test_table3_id; }
-  uint32_t TestTableId4() { return test_table4_id; }
+  TableId TestTableId1() { return TableId::_1; }
+  TableId TestTableId2() { return TableId::_2; }
+  TableId TestTableId3() { return TableId::_3; }
+  TableId TestTableId4() { return TableId::_4; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
  private:
@@ -82,16 +79,13 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId2()).GetTupleCount());
 
   // Setup the predicate
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
-  auto* a_gt_40 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+  auto a_gt_40 =
+      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId2()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId2()), a_gt_40, {0, 1, 2})};
+      &GetTestTable(TestTableId2()), a_gt_40.release(), {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
@@ -119,22 +113,16 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
 
   // Construct the components of the predicate
   // a >= 20
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
-  auto* a_gt_20 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
+  auto a_gt_20 =
+      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // b = 21
-  auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_21_exp = CodegenTestUtils::ConstIntExpression(21);
-  auto* b_eq_21 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
+  auto b_eq_21 =
+      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
   auto* conj_eq = new expression::ConjunctionExpression(
-      ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
+      ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId3()), nullptr)};
@@ -164,23 +152,21 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
 
   EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId4()).GetTupleCount());
 
-  auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
-  auto* b_mod_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
-      const_1_exp);
+  auto b_col_exp = ColRefExpr(type::Type::TypeId::INTEGER, 1);
+  auto const_1_exp = ConstIntExpr(1);
+  auto b_mod_1 = std::unique_ptr<expression::AbstractExpression>{
+      new expression::OperatorExpression(
+          ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL,
+          b_col_exp.release(), const_1_exp.release())};
 
   // a = b % 1
-  auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* a_eq_b_mod_1 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
+  auto a_eq_b_mod_1 =
+      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), std::move(b_mod_1));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId4()), nullptr)};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
-      &GetTestTable(TestTableId4()), a_eq_b_mod_1, {0, 1, 2})};
+      &GetTestTable(TestTableId4()), a_eq_b_mod_1.release(), {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
 
   // Do binding
