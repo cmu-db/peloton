@@ -189,6 +189,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
     storage::DataTable *table =
         dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
     PL_ASSERT(table != nullptr);
+    bool compression_status = tile_group->GetCompressionStatus();
 
     oid_t table_id = table->GetOid();
 
@@ -201,8 +202,9 @@ void TransactionLevelGCManager::AddToRecycleMap(
       if (ResetTuple(location) == false) {
         continue;
       }
-      // if the entry for table_id exists.
-      if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      // if tile_group is uncompressed & the entry for table_id exists.
+      if ((!compression_status) &&
+          (recycle_queue_map_.find(table_id) != recycle_queue_map_.end())) {
         recycle_queue_map_[table_id]->Enqueue(location);
       }
     }
