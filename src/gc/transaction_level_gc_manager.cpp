@@ -100,7 +100,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-    [this, &garbages, &tuple_counter, expired_eid]
+    [&garbages, &tuple_counter, expired_eid]
         (const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
       bool res = garbage_ctx->epoch_id_ <= expired_eid;
       if (res == true) {
