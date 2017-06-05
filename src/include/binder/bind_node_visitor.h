@@ -20,6 +20,11 @@
 
 
 namespace peloton {
+
+namespace parser {
+struct SQLStatement;
+}  // namespace parser
+
 namespace binder {
 
 class BindNodeVisitor : public SqlNodeVisitor {
