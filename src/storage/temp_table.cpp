@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
@@ -12,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/temp_table.h"
+
+#include <sstream>
 
 #include "catalog/schema.h"
 #include "common/exception.h"
@@ -127,6 +128,12 @@ oid_t TempTable::AddDefaultTileGroup() {
             tile_group->GetInfo().c_str());
 
   return tile_group_id;
+}
+
+std::string TempTable::GetName() const {
+  std::ostringstream os;
+  os << "TEMP_TABLE[" << table_oid << "]";
+  return (os.str());
 }
 
 }  // End storage namespace

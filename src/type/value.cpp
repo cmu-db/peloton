@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "type/value.h"
-#include "common/logger.h"
 
+#include <sstream>
+
+#include "common/logger.h"
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
 #include "type/numeric_type.h"

@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -80,41 +79,39 @@ class TempTable : public AbstractTable {
       const oid_t &tile_group_id) const;
 
   // Number of TileGroups that the table has
-  inline size_t GetTileGroupCount() const { return (tile_groups_.size()); }
+  inline size_t GetTileGroupCount() const override {
+    return tile_groups_.size();
+  }
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  std::string GetName() const {
-    std::ostringstream os;
-    os << "TEMP_TABLE[" << table_oid << "]";
-    return (os.str());
-  }
+  std::string GetName() const override;
 
-  inline bool HasPrimaryKey() const { return (false); }
+  inline bool HasPrimaryKey() const override { return (false); }
 
-  inline bool HasUniqueConstraints() const { return (false); }
+  inline bool HasUniqueConstraints() const override { return (false); }
 
-  inline bool HasForeignKeys() const { return (false); }
+  inline bool HasForeignKeys() const override { return (false); }
 
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
 
-  inline void IncreaseTupleCount(const size_t &amount) {
+  inline void IncreaseTupleCount(const size_t &amount) override {
     number_of_tuples_ += amount;
   }
 
-  inline void DecreaseTupleCount(const size_t &amount) {
+  inline void DecreaseTupleCount(const size_t &amount) override {
     number_of_tuples_ -= amount;
   }
 
-  inline void SetTupleCount(const size_t &num_tuples) {
+  inline void SetTupleCount(const size_t &num_tuples) override {
     number_of_tuples_ = num_tuples;
   }
 
-  inline size_t GetTupleCount() const { return (number_of_tuples_); }
+  inline size_t GetTupleCount() const override { return number_of_tuples_; }
 
  protected:
   //===--------------------------------------------------------------------===//
