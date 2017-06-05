@@ -4,7 +4,7 @@
 //
 // delete_translator.cpp
 //
-// Identification: src/codegen/delete/delete_translator.cpp
+// Identification: src/codegen/delete_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -20,10 +20,6 @@
 
 namespace peloton {
 namespace codegen {
-
-//===----------------------------------------------------------------------===//
-// DELETE TRANSLATOR
-//===----------------------------------------------------------------------===//
 
 DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
                                    CompilationContext &context,
