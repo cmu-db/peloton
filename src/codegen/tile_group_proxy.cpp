@@ -10,19 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// tile_group_proxy.cpp
-//
-// Identification: src/codegen/tile_group_proxy.cpp
-//
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
 #include "codegen/tile_group_proxy.h"
 
 #include "storage/tile_group.h"
