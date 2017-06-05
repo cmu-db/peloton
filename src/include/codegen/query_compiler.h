@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "codegen/query.h"
-#include "codegen/query_result_consumer.h"
-
 #include <atomic>
 #include <memory>
+
+#include "codegen/query.h"
+#include "codegen/query_result_consumer.h"
 
 namespace peloton {
 
