@@ -68,7 +68,7 @@ public:
     return gc_manager;
   }
 
-  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) {
+  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) override {
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
     gc_threads.resize(gc_thread_count_);
