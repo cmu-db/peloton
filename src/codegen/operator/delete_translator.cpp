@@ -13,7 +13,6 @@
 #include "codegen/operator/delete_translator.h"
 
 #include "codegen/proxy/catalog_proxy.h"
-#include "codegen/deleter.h"
 #include "codegen/proxy/deleter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "planner/delete_plan.h"

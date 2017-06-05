@@ -16,10 +16,8 @@
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
-#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/drop_executor.h"
-#include "planner/drop_plan.h"
-#include "planner/plan_util.h"
 
 namespace peloton {
 namespace test {
