@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <vector>
+
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
-
-#include <vector>
 
 namespace peloton {
 

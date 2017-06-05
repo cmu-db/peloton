@@ -16,6 +16,7 @@
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "storage/table_factory.h"
 
 namespace peloton {
