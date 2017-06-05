@@ -15,10 +15,17 @@
 #include "codegen/compilation_context.h"
 #include "codegen/pipeline.h"
 #include "codegen/table.h"
-#include "planner/delete_plan.h"
-#include "storage/tile_group.h"
 
 namespace peloton {
+
+namespace planner {
+class DeletePlan;
+}  // namespace planner
+
+namespace storage {
+class TileGroup;
+}  // namespace storage
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//

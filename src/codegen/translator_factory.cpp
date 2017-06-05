@@ -34,6 +34,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/aggregate_expression.h"
 #include "planner/aggregate_plan.h"
+#include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
