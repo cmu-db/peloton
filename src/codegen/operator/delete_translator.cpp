@@ -12,8 +12,8 @@
 
 #include "codegen/operator/delete_translator.h"
 
-#include "include/codegen/proxy/catalog_proxy.h"
-#include "include/codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/catalog_proxy.h"
+#include "codegen/transaction_runtime_proxy.h"
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
@@ -23,54 +23,54 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
+      table_ptr_(nullptr),
       delete_plan_(delete_plan),
       table_(*delete_plan_.GetTable()) {
   // Also create the translator for our child.
   context.Prepare(*delete_plan.GetChild(0), pipeline);
-
-  // Register the deleter
-  deleter_state_id_ = context.GetRuntimeState().RegisterState(
-      "deleter", DeleterProxy::GetType(GetCodeGen()));
-}
-
-void DeleteTranslator::InitializeState() {
-  auto &codegen = GetCodeGen();
-
-  // The transaction pointer
-  llvm::Value *txn_ptr = GetCompilationContext().GetTransactionPtr();
-
-  // Get the table pointer
-  storage::DataTable *table = delete_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-      {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
-       codegen.Const32(table->GetOid())});
-
-  // Call Deleter.Init(txn, table)
-  llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  std::vector<llvm::Value *> args = {deleter, txn_ptr, table_ptr};
-  codegen.CallFunc(DeleterProxy::_Init::GetFunction(codegen), args);
 }
 
 void DeleteTranslator::Produce() const {
-  // Call Produce() on our child (a scan), to produce the tuples we'll delete
-  GetCompilationContext().Produce(*delete_plan_.GetChild(0));
+  auto &compilation_context = GetCompilationContext();
+
+  // the child of delete executor will be a scan. call produce function
+  // of the child to produce the scanning result
+  compilation_context.Produce(*delete_plan_.GetChild(0));
 }
 
-void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+/**
+ * @brief Generate code that deals with each tuple.
+ *
+ * @param context The parent consumers.
+ * @param row A reference of the code-gen'ed "current row" value.
+ */
+void DeleteTranslator::Consume(ConsumerContext &context,
+                               RowBatch::Row &row) const {
+  auto &compilation_context = this->GetCompilationContext();
+  auto &codegen = context.GetCodeGen();
+  llvm::Value *txn = compilation_context.GetTransactionPtr();
 
-  // Call Deleter::Delete(tile_group_id, tuple_offset)
-  auto *deleter = LoadStatePtr(deleter_state_id_);
-  auto args = {deleter, row.GetTileGroupID(), row.GetTID(codegen)};
-  auto *delete_func = DeleterProxy::_Delete::GetFunction(codegen);
-  codegen.CallFunc(delete_func, args);
+  if (table_ptr_ == nullptr) {
+    storage::DataTable *table = delete_plan_.GetTable();
+    table_ptr_ = codegen.CallFunc(
+        CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+        {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+         codegen.Const32(table->GetOid())});
+  }
 
-  // Increase processing count
-  auto *processed_func =
-      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen);
-  codegen.CallFunc(processed_func,
-                   {GetCompilationContext().GetExecutorContextPtr()});
+  auto tuple_id = row.GetTID(codegen);
+  auto tile_group_id = row.GetBatch().GetTileGroupID();
+  auto tile_group = table_.GetTileGroup(codegen, table_ptr_, tile_group_id);
+
+  // Delete a tuple with tuple_id
+  codegen.CallFunc(
+      TransactionRuntimeProxy::_PerformDelete::GetFunction(codegen),
+      {tuple_id, txn, table_ptr_, tile_group});
+
+  // Increase number of tuples by one
+  codegen.CallFunc(
+      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen),
+      {compilation_context.GetExecutorContextPtr()});
 }
 
 }  // namespace codegen
