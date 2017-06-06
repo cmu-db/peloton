@@ -4,7 +4,7 @@
 //
 // constant_translator.h
 //
-// Identification: src/include/codegen/constant_translator.h
+// Identification: src/include/codegen/expression/constant_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

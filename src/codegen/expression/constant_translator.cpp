@@ -4,13 +4,13 @@
 //
 // constant_translator.cpp
 //
-// Identification: src/codegen/constant_translator.cpp
+// Identification: src/codegen/expression/constant_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/constant_translator.h"
+#include "codegen/expression/constant_translator.h"
 
 #include "expression/constant_value_expression.h"
 #include "type/value_peeker.h"

@@ -4,7 +4,7 @@
 //
 // arithmetic_translator.h
 //
-// Identification: src/include/codegen/arithmetic_translator.h
+// Identification: src/include/codegen/expression/arithmetic_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

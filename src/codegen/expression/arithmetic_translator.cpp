@@ -4,13 +4,13 @@
 //
 // arithmetic_translator.cpp
 //
-// Identification: src/codegen/arithmetic_translator.cpp
+// Identification: src/codegen/expression/arithmetic_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/arithmetic_translator.h"
+#include "codegen/expression/arithmetic_translator.h"
 
 #include "expression/operator_expression.h"
 

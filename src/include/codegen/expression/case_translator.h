@@ -4,7 +4,7 @@
 //
 // case_translator.h
 //
-// Identification: src/include/codegen/case_translator.h
+// Identification: src/include/codegen/expression/case_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

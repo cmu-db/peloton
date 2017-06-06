@@ -14,7 +14,7 @@
 
 #include "codegen/if.h"
 #include "codegen/oa_hash_table_proxy.h"
-#include "codegen/tuple_value_translator.h"
+#include "include/codegen/expression/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"

@@ -4,13 +4,13 @@
 //
 // tuple_value_translator.cpp
 //
-// Identification: src/codegen/tuple_value_translator.cpp
+// Identification: src/codegen/expression/tuple_value_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/tuple_value_translator.h"
+#include "codegen/expression/tuple_value_translator.h"
 
 #include "expression/tuple_value_expression.h"
 

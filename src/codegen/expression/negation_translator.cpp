@@ -4,13 +4,13 @@
 //
 // negation_translator.cpp
 //
-// Identification: src/codegen/negation_translator.cpp
+// Identification: src/codegen/expression/negation_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/negation_translator.h"
+#include "codegen/expression/negation_translator.h"
 
 #include "expression/operator_expression.h"
 

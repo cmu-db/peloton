@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// comparison_translator.h
+// tuple_value_translator.h
 //
-// Identification: src/include/codegen/comparison_translator.h
+// Identification: src/include/codegen/expression/tuple_value_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,29 +12,27 @@
 
 #pragma once
 
-#include "codegen/compilation_context.h"
 #include "codegen/expression_translator.h"
 
 namespace peloton {
 
 namespace expression {
-class ComparisonExpression;
+class TupleValueExpression;
 }  // namespace expression
 
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A translator of comparison expressions.
+// A translator for expressions that access a specific attribute in a tuple
 //===----------------------------------------------------------------------===//
-class ComparisonTranslator : public ExpressionTranslator {
+class TupleValueTranslator : public ExpressionTranslator {
  public:
   // Constructor
-  ComparisonTranslator(const expression::ComparisonExpression &comparison,
+  TupleValueTranslator(const expression::TupleValueExpression &tve_expr,
                        CompilationContext &context);
 
-  // Produce the result of performing the comparison of left and right values
-  codegen::Value DeriveValue(CodeGen &codegen,
-                             RowBatch::Row &row) const override;
+  // Return the attribute from the row
+  Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
 };
 
 }  // namespace codegen

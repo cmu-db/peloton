@@ -4,13 +4,13 @@
 //
 // conjunction_translator.cpp
 //
-// Identification: src/codegen/conjunction_translator.cpp
+// Identification: src/codegen/expression/conjunction_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/conjunction_translator.h"
+#include "codegen/expression/conjunction_translator.h"
 
 #include "expression/conjunction_expression.h"
 

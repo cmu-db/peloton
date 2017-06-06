@@ -4,16 +4,15 @@
 //
 // case_translator.cpp
 //
-// Identification: src/codegen/case_translator.cpp
+// Identification: src/codegen/expression/case_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/case_translator.h"
+#include "codegen/expression/case_translator.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/expression_translator.h"
 #include "codegen/if.h"
 #include "codegen/type.h"
 
