@@ -13,9 +13,9 @@
 #include "codegen/oa_hash_table.h"
 
 #include "codegen/hash.h"
-#include "include/codegen/util/if.h"
-#include "include/codegen/util/loop.h"
-#include "include/codegen/proxy/oa_hash_table_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/util/loop.h"
+#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/vectorized_loop.h"
 #include "codegen/util/oa_hash_table.h"
 
@@ -32,7 +32,7 @@ const planner::AttributeInfo OAHashTable::kHashAI{type::Type::TypeId::INTEGER,
 //===----------------------------------------------------------------------===//
 // CONSTRUCTORS
 //===----------------------------------------------------------------------===//
-
+    
 OAHashTable::OAHashTable() {
   // This constructor shouldn't generally be used at all, but there are
   // cases when the key-type is not known at construction time.

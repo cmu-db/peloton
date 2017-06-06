@@ -12,10 +12,10 @@
 
 #include "codegen/cc_hash_table.h"
 
-#include "include/codegen/proxy/cc_hash_table_proxy.h"
+#include "codegen/proxy/cc_hash_table_proxy.h"
 #include "codegen/hash.h"
-#include "include/codegen/util/if.h"
-#include "include/codegen/util/loop.h"
+#include "codegen/util/if.h"
+#include "codegen/util/loop.h"
 #include "common/exception.h"
 
 namespace peloton {

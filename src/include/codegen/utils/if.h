@@ -17,7 +17,6 @@
 
 namespace peloton {
 namespace codegen {
-namespace util {
 
 //===----------------------------------------------------------------------===//
 // A utility class to help code-generate if-then-else constructs in LLVM IR
@@ -60,6 +59,5 @@ class If {
   llvm::BranchInst *branch_;
 };
 
-}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

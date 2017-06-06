@@ -13,10 +13,9 @@
 #include "common/harness.h"
 
 #include "codegen/function_builder.h"
-#include "include/codegen/util/if.h"
-#include "include/codegen/util/loop.h"
-#include "include/codegen/proxy/runtime_functions_proxy.h"
-
+#include "codegen/util/if.h"
+#include "codegen/util/loop.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/codegen_test_util.h"
 
 namespace peloton {

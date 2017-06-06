@@ -12,8 +12,8 @@
 
 #include "codegen/type.h"
 
-#include "include/codegen/util/if.h"
-#include "include/codegen/proxy/values_runtime_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "type/value.h"
 
 namespace peloton {

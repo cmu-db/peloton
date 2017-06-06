@@ -4,7 +4,7 @@
 //
 // varlen.h
 //
-// Identification: src/include/codegen/varlen.h
+// Identification: src/codegen/varlen.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -13,9 +13,9 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "include/codegen/util/if.h"
-#include "include/codegen/proxy/runtime_functions_proxy.h"
-#include "include/codegen/proxy/varlen_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/varlen_proxy.h"
 
 namespace peloton {
 namespace codegen {

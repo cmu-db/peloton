@@ -4,7 +4,7 @@
 //
 // vectorized_loop.h
 //
-// Identification: src/include/codegen/vectorized_loop.h
+// Identification: src/codegen/vectorized_loop.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "include/codegen/util/loop.h"
+#include "codegen/util/loop.h"
 
 namespace peloton {
 namespace codegen {

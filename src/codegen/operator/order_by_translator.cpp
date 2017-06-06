@@ -12,9 +12,9 @@
 
 #include "codegen/operator/order_by_translator.h"
 
-#include "include/codegen/util/if.h"
-#include "include/codegen/proxy/runtime_functions_proxy.h"
-#include "include/codegen/proxy/sorter_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/sorter_proxy.h"
 #include "common/logger.h"
 #include "planner/order_by_plan.h"
 
