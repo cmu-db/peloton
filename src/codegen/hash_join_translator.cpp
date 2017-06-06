@@ -12,9 +12,9 @@
 
 #include "codegen/hash_join_translator.h"
 
-#include "include/codegen/util/if.h"
-#include "include/codegen/proxy/oa_hash_table_proxy.h"
-#include "include/codegen/expression/tuple_value_translator.h"
+#include "codegen/util/if.h"
+#include "codegen/proxy/oa_hash_table_proxy.h"
+#include "codegen/expression/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
