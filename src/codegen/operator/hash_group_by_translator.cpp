@@ -4,17 +4,17 @@
 //
 // hash_group_by_translator.cpp
 //
-// Identification: src/codegen/hash_group_by_translator.cpp
+// Identification: src/codegen/operator/hash_group_by_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/hash_group_by_translator.h"
+#include "codegen/operator/hash_group_by_translator.h"
 
 #include "codegen/if.h"
 #include "codegen/oa_hash_table_proxy.h"
-#include "codegen/projection_translator.h"
+#include "include/codegen/operator/projection_translator.h"
 #include "codegen/vectorized_loop.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"

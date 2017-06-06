@@ -4,13 +4,13 @@
 //
 // projection_translator.cpp
 //
-// Identification: src/codegen/projection_translator.cpp
+// Identification: src/codegen/operator/projection_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/projection_translator.h"
+#include "codegen/operator/projection_translator.h"
 
 #include "common/logger.h"
 #include "planner/projection_plan.h"

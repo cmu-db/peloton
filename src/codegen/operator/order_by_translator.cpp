@@ -4,13 +4,13 @@
 //
 // order_by_translator.cpp
 //
-// Identification: src/codegen/order_by_translator.cpp
+// Identification: src/codegen/operator/order_by_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/order_by_translator.h"
+#include "codegen/operator/order_by_translator.h"
 
 #include "codegen/if.h"
 #include "codegen/runtime_functions_proxy.h"

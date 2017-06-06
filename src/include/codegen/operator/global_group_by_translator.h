@@ -4,7 +4,7 @@
 //
 // global_group_by_translator.h
 //
-// Identification: src/include/codegen/global_group_by_translator.h
+// Identification: src/include/codegen/operator/global_group_by_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

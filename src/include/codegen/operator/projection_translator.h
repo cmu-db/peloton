@@ -4,7 +4,7 @@
 //
 // projection_translator.h
 //
-// Identification: src/include/codegen/projection_translator.h
+// Identification: src/include/codegen/operator/projection_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // hash_group_by_translator.h
 //
-// Identification: src/include/codegen/hash_group_by_translator.h
+// Identification: src/include/codegen/operator/hash_group_by_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

@@ -4,17 +4,16 @@
 //
 // global_group_by_translator.cpp
 //
-// Identification: src/codegen/global_group_by_translator.cpp
+// Identification: src/codegen/operator/global_group_by_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/global_group_by_translator.h"
+#include "codegen/operator/global_group_by_translator.h"
 
 #include "codegen/if.h"
 #include "common/logger.h"
-#include "planner/aggregate_plan.h"
 
 namespace peloton {
 namespace codegen {
