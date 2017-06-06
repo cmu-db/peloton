@@ -37,6 +37,9 @@
 #include "wire/libevent_thread.h"
 #include "wire/packet_manager.h"
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #define QUEUE_SIZE 100
 #define MASTER_THREAD_ID -1
 
@@ -153,6 +156,8 @@ class LibeventSocket {
   struct event *event = nullptr;  // libevent handle
   short event_flags;              // event flags mask
 
+  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
+
   LibeventThread *thread;          // reference to the libevent thread
   PacketManager pkt_manager;       // Stores state for this socket
   ConnState state = CONN_INVALID;  // Initial state of connection
@@ -227,6 +232,10 @@ struct LibeventServer {
 
   uint64_t port_;             // port number
   size_t max_connections_;    // maximum number of connections
+
+  std::string private_key_file_;
+  std::string certificate_file_;
+
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
   std::shared_ptr<LibeventThread> master_thread_;
@@ -238,6 +247,7 @@ struct LibeventServer {
 
  public:
   static int recent_connfd;
+  static SSL_CTX *ssl_context;
 
  public:
   LibeventServer();
