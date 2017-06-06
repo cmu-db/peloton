@@ -419,7 +419,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
                                          concurrency::Transaction *transaction,
                                          ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
-  // Transaform the target list into a hash set
+  // Transform the target list into a hash set
   // when attempting to perform insertion to a secondary index,
   // we must check whether the updated column is a secondary index column.
   // insertion happens only if the updated column is a secondary index column.

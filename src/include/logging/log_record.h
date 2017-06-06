@@ -4,42 +4,16 @@
 //
 // log_record.h
 //
-// Identification: src/include/logging/log_record.h
+// Identification: src/logging/log_record.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
-/* The following entry types are distinguished:
- *
- * Possible Log Entries:
- *
- *     Transaction Record :
- *       - LogRecordType         : enum
- *     - HEADER
- *       - Header length         : int
- *       - Transaction Id        : txn_id_t
- *
- *     Tuple Record :
- *       - LogRecordType         : enum
- *     -HEADER
- *       - Header length         : int
- *       - Database Oid          : oid_t
- *       - Table Oid             : oid_t
- *       - Transaction Id        : txn_id_t
- *       - Inserted Location     : ItemPointer
- *       - Deleted Location      : ItemPointer
- *     -BODY
- *       - Body length           : int
- *       - Data                  : void*
-*/
-
 #pragma once
 
 #include "type/types.h"
-#include "type/serializer.h"
-#include "type/serializeio.h"
+#include "common/item_pointer.h"
 
 namespace peloton {
 namespace logging {
@@ -49,34 +23,63 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class LogRecord {
- public:
-  LogRecord(LogRecordType log_record_type, cid_t cid)
-      : log_record_type(log_record_type), cid(cid) {
-    PL_ASSERT(log_record_type != LOGRECORD_TYPE_INVALID);
-  }
+  friend class LogRecordFactory;
+private:
+  LogRecord(LogRecordType log_type, const ItemPointer &pos, 
+            const eid_t epoch_id, const cid_t commit_id)
+    : log_record_type_(log_type), 
+      tuple_pos_(pos), 
+      eid_(epoch_id), 
+      cid_(commit_id) {}
 
+public:
   virtual ~LogRecord() {}
 
-  LogRecordType GetType() const { return log_record_type; }
+  inline LogRecordType GetType() const { return log_record_type_; }
 
-  cid_t GetTransactionId() const { return cid; }
+  inline void SetItemPointer(const ItemPointer &pos) { tuple_pos_ = pos; }
 
-  virtual bool Serialize(CopySerializeOutput &output) = 0;
+  inline void SetEpochId(const eid_t epoch_id) { eid_ = epoch_id; }
 
-  char *GetMessage(void) const { return message; }
+  inline void SetCommitId(const cid_t commit_id) { cid_ = commit_id; }
 
-  size_t GetMessageLength(void) const { return message_length; }
+  inline const ItemPointer &GetItemPointer() { return tuple_pos_; }
 
- protected:
-  LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
+  inline eid_t GetEpochId() { return eid_; }
 
-  cid_t cid;
+  inline cid_t GetCommitId() { return cid_; }
 
-  // serialized message
-  char *message = nullptr;
+private:
+  LogRecordType log_record_type_;
 
-  // length of the message
-  size_t message_length = 0;
+  ItemPointer tuple_pos_;
+
+  eid_t eid_;
+
+  cid_t cid_;
+};
+
+
+class LogRecordFactory {
+public:
+  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos) {
+    PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT || 
+              log_type == LogRecordType::TUPLE_DELETE || 
+              log_type == LogRecordType::TUPLE_UPDATE);
+    return LogRecord(log_type, pos, INVALID_EID, INVALID_CID);
+  }
+
+  static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
+    PL_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN || 
+              log_type == LogRecordType::TRANSACTION_COMMIT);
+    return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_EID, commit_id);
+  }
+
+  static LogRecord CreateEpochRecord(const LogRecordType log_type, const eid_t epoch_id) {
+    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN || 
+              log_type == LogRecordType::EPOCH_END);
+    return LogRecord(log_type, INVALID_ITEMPOINTER, epoch_id, INVALID_CID);
+  }
 };
 
 }  // namespace logging

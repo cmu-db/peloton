@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// gc_test.cpp
+// garbage_collection_test.cpp
 //
-// Identification: test/gc/gc_test.cpp
+// Identification: test/gc/garbage_collection_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,53 +28,46 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// Garbage Collection Tests
 //===--------------------------------------------------------------------===//
 
 class GarbageCollectionTests : public PelotonTest {};
 
-int UpdateTuple(storage::DataTable *table, const int scale, const int num_key,
-const int num_txn) {
+void UpdateTuple(storage::DataTable *table, const int update_num, const int total_num) {
   srand(15721);
 
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  TransactionScheduler scheduler(num_txn, table, &txn_manager);
-  scheduler.SetConcurrent(true);
-  for (int i = 0; i < num_txn; i++) {
-    for (int j = 0; j < scale; j++) {
-      // randomly select two uniq keys
-      int key1 = rand() % num_key;
-      int key2 = rand() % num_key;
-      int delta = rand() % 1000;
-      
-      // Store substracted value
-      scheduler.Txn(i).ReadStore(key1, -delta);
-      scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-      // Store increased value
-      scheduler.Txn(i).ReadStore(key2, delta);
-      scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
-    }
-    scheduler.Txn(i).Commit();
-  }
-  scheduler.Run();
-
-  // stats
-  int nabort = 0;
-  for (auto &schedule : scheduler.schedules) {
-    if (schedule.txn_result == ResultType::ABORTED) nabort += 1;
-  }
-  LOG_INFO("Abort: %d out of %d", nabort, num_txn);
-  return num_txn - nabort;
-}
-
-
-void SelectTuple(storage::DataTable *table, const int num_key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  for (int i = 0; i < num_key; i++) {
-    scheduler.Txn(0).Read(i);
+  for (int i = 0; i < update_num; i++) {
+    scheduler.Txn(0).Update(rand() % total_num, rand() % 15721);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
+}
+
+void DeleteTuple(storage::DataTable *table, const int delete_num, const int total_num) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (int i = 0; i < delete_num; i++) {
+    scheduler.Txn(0).Delete(rand() % total_num);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
+}
+
+void SelectTuple(storage::DataTable *table, const int select_num, const int total_num) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (int i = 0; i < select_num; i++) {
+    scheduler.Txn(0).Read(rand() % total_num);
   }
   scheduler.Txn(0).Commit();
   scheduler.Run();
@@ -104,7 +97,7 @@ int GarbageNum(storage::DataTable *table) {
     }
   }
 
-  LOG_INFO("old version num %d", old_num);
+  LOG_INFO("old version num = %d", old_num);
   return old_num;
 }
 
@@ -115,88 +108,190 @@ int RecycledNum(storage::DataTable *table) {
   while(!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
     count++;
 
+  LOG_INFO("recycled version num = %d", count);
   return count;
 }
 
 
-TEST_F(GarbageCollectionTests, SimpleTest) {
+TEST_F(GarbageCollectionTests, UpdateTest) {
+
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
 
   std::vector<std::unique_ptr<std::thread>> gc_threads;
 
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
 
-  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  epoch_manager.Reset(1);
   
   auto catalog = catalog::Catalog::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  auto database = TestingExecutorUtil::InitializeDatabase("UPDATE_DB");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(catalog->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "TEST_TABLE", db_id, INVALID_OID, 1234, true));
+    TestingTransactionUtil::CreateTable(num_key, "UPDATE_TABLE", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
   gc_manager.StartGC(gc_threads);
 
-  // update this key 1 times, using only one thread
-  const int scale = 1;
-  const int thread_num = 1;
-  auto succ_num = UpdateTuple(table.get(), scale, num_key, thread_num);
-
-  // transaction must be committed
-  EXPECT_EQ(succ_num, 1);
+  const int update_num = 1;
+  UpdateTuple(table.get(), update_num, num_key);
 
   // count garbage num
   auto old_num = GarbageNum(table.get());
 
+  auto recycle_num = RecycledNum(table.get());
+
   // there should be only one garbage
   // generated by the last update
-  EXPECT_EQ(old_num, 1);
+  EXPECT_EQ(1, old_num);
+  // nothing is recycled yet.
+  EXPECT_EQ(0, recycle_num);
   
-  for (size_t i = 2; i < 12; ++i) {
-    epoch_manager.Reset(i);
-    SelectTuple(table.get(), num_key);  
-  }
+  epoch_manager.SetCurrentEpochId(2);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 2, 
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
   
-  // sleep a while for gc to finish its job
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  // sleep a while for gc to unlink expired version.
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  for (size_t i = 12; i < 22; ++i) {
-    epoch_manager.Reset(i);
-    SelectTuple(table.get(), num_key);  
-  }
+  old_num = GarbageNum(table.get());
 
-  // sleep a while for gc to finish its job
+  recycle_num = RecycledNum(table.get());
+
+  EXPECT_EQ(1, old_num);
+
+  EXPECT_EQ(0, recycle_num);
+
+  epoch_manager.SetCurrentEpochId(3);
+
+  // sleep a while for gc to recycle expired version.
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   // there should be no garbage
   old_num = GarbageNum(table.get());
-  EXPECT_EQ(old_num, 0);
+
+  recycle_num = RecycledNum(table.get());
+
+  EXPECT_EQ(0, old_num);
 
   // there should be 1 tuple recycled
-  EXPECT_EQ(1, RecycledNum(table.get()));
+  EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
 
   table.release();
   
   // DROP!
-  TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
+  TestingExecutorUtil::DeleteDatabase("UPDATE_DB");
   EXPECT_FALSE(catalog->HasDatabase(db_id));
-
-  gc::GCManagerFactory::Configure(0);
 
   for (auto &gc_thread : gc_threads) {
     gc_thread->join();
   }
 }
 
+TEST_F(GarbageCollectionTests, DeleteTest) {
+
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+  
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  // create database
+  auto database = TestingExecutorUtil::InitializeDatabase("DELETE_DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  // create a table with only one key
+  const int num_key = 1;
+  std::unique_ptr<storage::DataTable> table(
+    TestingTransactionUtil::CreateTable(num_key, "DELETE_TABLE", db_id, INVALID_OID, 1234, true));
+
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+
+  gc_manager.StartGC(gc_threads);
+
+  const int delete_num = 1;
+  DeleteTuple(table.get(), delete_num, num_key);
+
+  // count garbage num
+  auto old_num = GarbageNum(table.get());
+
+  auto recycle_num = RecycledNum(table.get());
+
+  // there should be only one garbage
+  // generated by the last update
+  EXPECT_EQ(1, old_num);
+  // nothing is recycled yet.
+  EXPECT_EQ(0, recycle_num);
+  
+  epoch_manager.SetCurrentEpochId(2);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 2, 
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
+  
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  // sleep a while for gc to unlink expired version.
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  old_num = GarbageNum(table.get());
+
+  recycle_num = RecycledNum(table.get());
+
+  EXPECT_EQ(1, old_num);
+
+  EXPECT_EQ(0, recycle_num);
+
+  epoch_manager.SetCurrentEpochId(3);
+
+  // sleep a while for gc to recycle expired version.
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  // there should be no garbage
+  old_num = GarbageNum(table.get());
+
+  recycle_num = RecycledNum(table.get());
+
+  EXPECT_EQ(0, old_num);
+
+  // there should be 1 tuple recycled
+  EXPECT_EQ(2, recycle_num);
+
+  gc_manager.StopGC();
+
+  table.release();
+  
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("DELETE_DB");
+  EXPECT_FALSE(catalog->HasDatabase(db_id));
+
+  for (auto &gc_thread : gc_threads) {
+    gc_thread->join();
+  }
+}
 
 }  // End test namespace
 }  // End peloton namespace

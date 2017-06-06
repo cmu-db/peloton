@@ -12,19 +12,21 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <memory>
 #include <vector>
+#include <thread>
 
+#include "common/item_pointer.h"
 #include "common/logger.h"
-#include "logging/checkpoint.h"
-
-extern peloton::CheckpointType peloton_checkpoint_mode;
+#include "common/macros.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace logging {
 
-class Checkpoint;
+//===--------------------------------------------------------------------===//
+// checkpoint Manager
+//===--------------------------------------------------------------------===//
 
 class CheckpointManager {
  public:
@@ -33,74 +35,35 @@ class CheckpointManager {
   CheckpointManager(CheckpointManager &&) = delete;
   CheckpointManager &operator=(CheckpointManager &&) = delete;
 
-  // global singleton
-  static CheckpointManager &GetInstance(void);
+  CheckpointManager() : is_running_(false) {}
 
-  void WaitForModeTransition(CheckpointStatus checkpoint_status, bool is_equal);
+  virtual ~CheckpointManager() {}
 
-  // start standby mode for checkpointers
-  void StartStandbyMode();
-
-  // Check whether the checkpointer is in checkpointing mode
-  inline bool IsInCheckpointingMode() {
-    return (checkpoint_status_ == CheckpointStatus::CHECKPOINTING);
+  static CheckpointManager &GetInstance() {
+    static CheckpointManager checkpoint_manager;
+    return checkpoint_manager;
   }
 
-  // start recovery mode for checkpointers
-  void StartRecoveryMode();
+  virtual void Reset() { is_running_ = false; }
 
-  // Checkpoint status
-  void SetCheckpointStatus(CheckpointStatus checkpoint_status);
+  // Get status of whether logging threads are running or not
+  bool GetStatus() { return this->is_running_; }
 
-  CheckpointStatus GetCheckpointStatus();
+  virtual void StartCheckpointing(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
 
-  // get a checkpointer by index
-  Checkpoint *GetCheckpointer(unsigned int idx);
+  virtual void StartCheckpointing() {}
 
-  // initialize a list of checkpointers
-  void InitCheckpointers();
+  virtual void StopCheckpointing() {}
 
-  // configuration
-  void Configure(CheckpointType checkpoint_type,
-                 bool disable_file_access = false, int num_checkpointers = 1) {
-    checkpoint_type_ = checkpoint_type;
-    disable_file_access_ = disable_file_access;
-    num_checkpointers_ = num_checkpointers;
-  }
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  // remove all checkpointers
-  void DestroyCheckpointers();
+  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  void SetRecoveredCid(cid_t recovered_cid);
+  virtual size_t GetTableCount() { return 0; }
 
-  cid_t GetRecoveredCid();
-
- private:
-  CheckpointManager();
-  ~CheckpointManager() {}
-
-  // static configurations for logging
-  CheckpointType checkpoint_type_ = CheckpointType::INVALID;
-
-  // mainly used for testing
-  bool disable_file_access_ = false;
-
-  // to be used in the future
-  unsigned int num_checkpointers_ = 1;
-
-  // the status of checkpoint manager
-  CheckpointStatus checkpoint_status_ = CheckpointStatus::INVALID;
-
-  cid_t recovered_cid_ = 0;
-
-  // used for multiple checkpointer
-  // std::atomic<unsigned int> status_change_count_;
-
-  // To synch the status
-  std::mutex checkpoint_status_mutex_;
-  std::condition_variable checkpoint_status_cv_;
-
-  std::vector<std::unique_ptr<Checkpoint>> checkpointers_;
+ protected:
+  volatile bool is_running_;
 };
-}
-}
+
+}  // namespace logging
+}  // namespace peloton

@@ -11,50 +11,23 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "logging/log_buffer.h"
-#include "logging/log_manager.h"
-#include "common/logger.h"
 #include "common/macros.h"
-
-#include <cstring>
+#include "logging/log_buffer.h"
 
 namespace peloton {
 namespace logging {
 
-//===--------------------------------------------------------------------===//
-// Log Buffer
-//===--------------------------------------------------------------------===//
-LogBuffer::LogBuffer(BackendLogger *backend_logger)
-    : backend_logger_(backend_logger) {
-  capacity_ = LogManager::GetInstance().GetLogBufferCapacity();
-  elastic_data_.reset(new char[capacity_]);
-}
-
-bool LogBuffer::WriteRecord(LogRecord *record) {
-  bool success = WriteData(record->GetMessage(), record->GetMessageLength());
-  return success;
-}
-
-void LogBuffer::ResetData() { size_ = 0; }
-
-// Internal Methods
-bool LogBuffer::WriteData(char *data, size_t len) {
-  // Not enough space
-  while (len + size_ > capacity_) {
-    if (size_ == 0) {
-      // double log buffer capacity for empty buffer
-      capacity_ *= 2;
-      elastic_data_.reset(new char[capacity_]);
-    } else {
-      return false;
-    }
+bool LogBuffer::WriteData(const char *data, size_t len) {
+  if (unlikely_branch(size_ + len > log_buffer_capacity_)) {
+    return false;
+  } else {
+    PL_ASSERT(data);
+    PL_ASSERT(len);
+    PL_MEMCPY(data_ + size_, data, len);
+    size_ += len;
+    return true;
   }
-  PL_ASSERT(data);
-  PL_ASSERT(len);
-  PL_MEMCPY(elastic_data_.get() + size_, data, len);
-  size_ += len;
-  return true;
 }
 
-}  // namespace logging
-}  // namespace peloton
+}
+}
