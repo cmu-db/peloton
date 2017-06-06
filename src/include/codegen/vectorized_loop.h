@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "codegen/loop.h"
+#include "include/codegen/utils/loop.h"
 
 namespace peloton {
 namespace codegen {

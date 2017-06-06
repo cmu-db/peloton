@@ -12,7 +12,7 @@
 
 #include "codegen/operator/global_group_by_translator.h"
 
-#include "codegen/if.h"
+#include "include/codegen/utils/if.h"
 #include "common/logger.h"
 
 namespace peloton {

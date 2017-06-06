@@ -12,7 +12,7 @@
 
 #include "codegen/type.h"
 
-#include "codegen/if.h"
+#include "include/codegen/utils/if.h"
 #include "codegen/values_runtime_proxy.h"
 #include "type/value.h"
 

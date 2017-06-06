@@ -12,7 +12,7 @@
 
 #include "codegen/operator/order_by_translator.h"
 
-#include "codegen/if.h"
+#include "include/codegen/utils/if.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/sorter_proxy.h"
 #include "common/logger.h"

@@ -12,7 +12,7 @@
 
 #include "codegen/aggregation.h"
 
-#include "codegen/if.h"
+#include "include/codegen/utils/if.h"
 #include "codegen/type.h"
 #include "common/logger.h"
 

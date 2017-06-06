@@ -13,8 +13,8 @@
 #include "common/harness.h"
 
 #include "codegen/function_builder.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
+#include "include/codegen/utils/if.h"
+#include "include/codegen/utils/loop.h"
 #include "codegen/runtime_functions_proxy.h"
 
 #include "codegen/codegen_test_util.h"
