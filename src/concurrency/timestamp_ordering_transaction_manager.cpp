@@ -18,8 +18,6 @@
 #include "common/platform.h"
 #include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
-#include "logging/log_manager.h"
-#include "logging/records/transaction_record.h"
 
 namespace peloton {
 namespace concurrency {
@@ -85,10 +83,6 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t thread_id) {
-
-  auto &log_manager = logging::LogManager::GetInstance();
-  log_manager.PrepareLogging();
-
   Transaction *txn = nullptr;
 
   // transaction processing with centralized epoch manager
@@ -126,26 +120,6 @@ void TimestampOrderingTransactionManager::EndTransaction(
   EpochManagerFactory::GetInstance().ExitEpoch(
     current_txn->GetThreadId(), 
     current_txn->GetBeginCommitId());
-
-
-  // logging logic
-  auto &log_manager = logging::LogManager::GetInstance();
-
-  if (current_txn->GetResult() == ResultType::SUCCESS) {
-    if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
-    }
-    // Log the transaction's commit
-    // For time stamp ordering, every transaction only has one timestamp
-    log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
-  } else {
-    if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
-    }
-    log_manager.DoneLogging();
-  }
 
   delete current_txn;
   current_txn = nullptr;
@@ -767,12 +741,10 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   }
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::LogManager::GetInstance();
-
+  
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
-  log_manager.LogBeginTransaction(end_commit_id);
-
+  
   auto &rw_set = current_txn->GetReadWriteSet();
 
   auto gc_set = current_txn->GetGCSetPtr();
@@ -830,10 +802,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // add to gc set.
         gc_set->operator[](tile_group_id)[tuple_slot] = false;
 
-        // add to log manager
-        log_manager.LogUpdate(
-            end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
-
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -865,10 +833,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // recycle new version (which is an empty version), do not delete from index
         gc_set->operator[](new_version.block)[new_version.offset] = false;
 
-        // add to log manager
-        log_manager.LogDelete(end_commit_id,
-                              ItemPointer(tile_group_id, tuple_slot));
-
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
@@ -882,10 +846,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // nothing to be added to gc set.
-
-        // add to log manager
-        log_manager.LogInsert(end_commit_id,
-                              ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==

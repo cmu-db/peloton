@@ -797,25 +797,119 @@ std::ostream &operator<<(std::ostream &os, const SetOpType &type);
 // Logging + Recovery Types
 //===--------------------------------------------------------------------===//
 
-// AAA_BBB
-// Data stored in AAA
-// Log stored in BBB
 enum class LoggingType {
   INVALID = INVALID_TYPE_ID,
-
-  // Based on write behind logging
-  NVM_WBL = 1,
-  SSD_WBL = 2,
-  HDD_WBL = 3,
-
-  // Based on write ahead logging
-  NVM_WAL = 4,
-  SSD_WAL = 5,
-  HDD_WAL = 6,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
 };
-std::string LoggingTypeToString(LoggingType type);
-LoggingType StringToLoggingType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggingType &type);
+
+
+enum class CheckpointingType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
+};
+
+// // AAA_BBB
+// // Data stored in AAA
+// // Log stored in BBB
+// enum class LoggingType {
+//   INVALID = INVALID_TYPE_ID,
+
+//   // Based on write behind logging
+//   NVM_WBL = 1,
+//   SSD_WBL = 2,
+//   HDD_WBL = 3,
+
+//   // Based on write ahead logging
+//   NVM_WAL = 4,
+//   SSD_WAL = 5,
+//   HDD_WAL = 6,
+// };
+// std::string LoggingTypeToString(LoggingType type);
+// LoggingType StringToLoggingType(const std::string &str);
+// std::ostream &operator<<(std::ostream &os, const LoggingType &type);
+
+// enum class CheckpointType {
+//   INVALID = INVALID_TYPE_ID,
+//   NORMAL = 1,
+// };
+// std::string CheckpointTypeToString(CheckpointType type);
+// CheckpointType StringToCheckpointType(const std::string &str);
+// std::ostream &operator<<(std::ostream &os, const CheckpointType &type);
+
+// enum ReplicationType {
+//   ASYNC_REPLICATION,
+//   SYNC_REPLICATION,
+//   SEMISYNC_REPLICATION
+// };
+
+// enum class LoggingStatusType {
+//   INVALID = INVALID_TYPE_ID,
+//   STANDBY = 1,
+//   RECOVERY = 2,
+//   LOGGING = 3,
+//   TERMINATE = 4,
+//   SLEEP = 5
+// };
+// std::string LoggingStatusTypeToString(LoggingStatusType type);
+// LoggingStatusType StringToLoggingStatusType(const std::string &str);
+// std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type);
+
+// enum class LoggerType {
+//   INVALID = INVALID_TYPE_ID,
+//   FRONTEND = 1,
+//   BACKEND = 2
+// };
+// std::string LoggerTypeToString(LoggerType type);
+// LoggerType StringToLoggerType(const std::string &str);
+// std::ostream& operator<<(std::ostream& os, const LoggerType& type);
+
+// enum LogRecordType {
+//   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
+
+//   // Transaction-related records
+//   LOGRECORD_TYPE_TRANSACTION_BEGIN = 1,
+//   LOGRECORD_TYPE_TRANSACTION_COMMIT = 2,
+//   LOGRECORD_TYPE_TRANSACTION_END = 3,
+//   LOGRECORD_TYPE_TRANSACTION_ABORT = 4,
+//   LOGRECORD_TYPE_TRANSACTION_DONE = 5,
+
+//   // Generic dml records
+//   LOGRECORD_TYPE_TUPLE_INSERT = 11,
+//   LOGRECORD_TYPE_TUPLE_DELETE = 12,
+//   LOGRECORD_TYPE_TUPLE_UPDATE = 13,
+
+//   // DML records for Write ahead logging
+//   LOGRECORD_TYPE_WAL_TUPLE_INSERT = 21,
+//   LOGRECORD_TYPE_WAL_TUPLE_DELETE = 22,
+//   LOGRECORD_TYPE_WAL_TUPLE_UPDATE = 23,
+
+//   // DML records for Write behind logging
+//   LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
+//   LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
+//   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
+
+//   // Record for delimiting transactions
+//   // includes max persistent commit_id
+//   LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
+// };
+// std::string LogRecordTypeToString(LogRecordType type);
+// LogRecordType StringToLogRecordType(const std::string &str);
+
+// enum class CheckpointStatus {
+//   INVALID = INVALID_TYPE_ID,
+//   STANDBY = 1,
+//   RECOVERY = 2,
+//   DONE_RECOVERY = 3,
+//   CHECKPOINTING = 4,
+// };
+// std::string CheckpointStatusToString(CheckpointStatus type);
+// CheckpointStatus StringToCheckpointStatus(const std::string &str);
+// std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
+
+
+
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -836,80 +930,6 @@ LoggerMappingStrategyType StringToLoggerMappingStrategyType(
     const std::string &str);
 std::ostream &operator<<(std::ostream &os,
                          const LoggerMappingStrategyType &type);
-
-enum class CheckpointType {
-  INVALID = INVALID_TYPE_ID,
-  NORMAL = 1,
-};
-std::string CheckpointTypeToString(CheckpointType type);
-CheckpointType StringToCheckpointType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointType &type);
-
-enum ReplicationType {
-  ASYNC_REPLICATION,
-  SYNC_REPLICATION,
-  SEMISYNC_REPLICATION
-};
-
-enum class LoggingStatusType {
-  INVALID = INVALID_TYPE_ID,
-  STANDBY = 1,
-  RECOVERY = 2,
-  LOGGING = 3,
-  TERMINATE = 4,
-  SLEEP = 5
-};
-std::string LoggingStatusTypeToString(LoggingStatusType type);
-LoggingStatusType StringToLoggingStatusType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggingStatusType &type);
-
-enum class LoggerType { INVALID = INVALID_TYPE_ID, FRONTEND = 1, BACKEND = 2 };
-std::string LoggerTypeToString(LoggerType type);
-LoggerType StringToLoggerType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggerType &type);
-
-enum LogRecordType {
-  LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
-
-  // Transaction-related records
-  LOGRECORD_TYPE_TRANSACTION_BEGIN = 1,
-  LOGRECORD_TYPE_TRANSACTION_COMMIT = 2,
-  LOGRECORD_TYPE_TRANSACTION_END = 3,
-  LOGRECORD_TYPE_TRANSACTION_ABORT = 4,
-  LOGRECORD_TYPE_TRANSACTION_DONE = 5,
-
-  // Generic dml records
-  LOGRECORD_TYPE_TUPLE_INSERT = 11,
-  LOGRECORD_TYPE_TUPLE_DELETE = 12,
-  LOGRECORD_TYPE_TUPLE_UPDATE = 13,
-
-  // DML records for Write ahead logging
-  LOGRECORD_TYPE_WAL_TUPLE_INSERT = 21,
-  LOGRECORD_TYPE_WAL_TUPLE_DELETE = 22,
-  LOGRECORD_TYPE_WAL_TUPLE_UPDATE = 23,
-
-  // DML records for Write behind logging
-  LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
-  LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
-  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
-
-  // Record for delimiting transactions
-  // includes max persistent commit_id
-  LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
-};
-std::string LogRecordTypeToString(LogRecordType type);
-LogRecordType StringToLogRecordType(const std::string &str);
-
-enum class CheckpointStatus {
-  INVALID = INVALID_TYPE_ID,
-  STANDBY = 1,
-  RECOVERY = 2,
-  DONE_RECOVERY = 3,
-  CHECKPOINTING = 4,
-};
-std::string CheckpointStatusToString(CheckpointStatus type);
-CheckpointStatus StringToCheckpointStatus(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
