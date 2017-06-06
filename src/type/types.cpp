@@ -2164,6 +2164,73 @@ std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
   return os;
 }
 
+
+std::string LogRecordTypeToString(LogRecordType type) {
+  switch (type) {
+    case LogRecordType::INVALID: {
+      return "INVALID";
+    }
+    case LogRecordType::TRANSACTION_BEGIN: {
+      return "TRANSACTION_BEGIN";
+    }
+    case LogRecordType::TRANSACTION_COMMIT: {
+      return "TRANSACTION_COMMIT";
+    }
+    case LogRecordType::TUPLE_INSERT: {
+      return "TUPLE_INSERT";
+    }
+    case LogRecordType::TUPLE_DELETE: {
+      return "TUPLE_DELETE";
+    }
+    case LogRecordType::TUPLE_UPDATE: {
+      return "TUPLE_UPDATE";
+    }
+    case LogRecordType::EPOCH_BEGIN: {
+      return "EPOCH_BEGIN";
+    }
+    case LogRecordType::EPOCH_END: {
+      return "EPOCH_END";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for LogRecordType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+LogRecordType StringToLogRecordType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return LogRecordType::INVALID;
+  } else if (upper_str == "TRANSACTION_BEGIN") {
+    return LogRecordType::TRANSACTION_BEGIN;
+  } else if (upper_str == "TRANSACTION_COMMIT") {
+    return LogRecordType::TRANSACTION_COMMIT;
+  } else if (upper_str == "TUPLE_INSERT") {
+    return LogRecordType::TUPLE_INSERT;
+  } else if (upper_str == "TUPLE_DELETE") {
+    return LogRecordType::TUPLE_DELETE;
+  } else if (upper_str == "TUPLE_UPDATE") {
+    return LogRecordType::TUPLE_UPDATE;
+  } else if (upper_str == "EPOCH_BEGIN") {
+    return LogRecordType::EPOCH_BEGIN;
+  } else if (upper_str == "EPOCH_END") {
+    return LogRecordType::EPOCH_END;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No LogRecordType conversion from string '%s'", upper_str.c_str()));
+  }
+  return LogRecordType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LogRecordType& type) {
+  os << LogRecordTypeToString(type);
+  return os;
+}
+
+
 //===--------------------------------------------------------------------===//
 // CheckpointingType - String Utilities
 //===--------------------------------------------------------------------===//

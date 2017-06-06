@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
 #include "concurrency/testing_transaction_util.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {
@@ -610,12 +610,8 @@ void PhantomTest() {
 // Can't pass this test!
 void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-<<<<<<< HEAD
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
-=======
   storage::DataTable *table = 
       TestingTransactionUtil::CreateTable();
->>>>>>> recover select for update test
 
   {
     // Prepare
@@ -623,7 +619,8 @@ void WriteSkewTest() {
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[0].txn_result);
   }
   {
     // the database has tuple (0, 0), (1, 1)
@@ -645,7 +642,8 @@ void WriteSkewTest() {
 
     scheduler.Run();
 
-    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[2].txn_result);
     // Can't all success
     if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
         ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
@@ -657,12 +655,8 @@ void WriteSkewTest() {
 
 void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-<<<<<<< HEAD
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
-=======
   storage::DataTable *table = 
       TestingTransactionUtil::CreateTable();
->>>>>>> recover select for update test
   {
     TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
@@ -687,12 +681,8 @@ void ReadSkewTest() {
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-<<<<<<< HEAD
-  storage::DataTable *table = TestingTransactionUtil::CreateTable();
-=======
   storage::DataTable *table = 
       TestingTransactionUtil::CreateTable();
->>>>>>> recover select for update test
   int current_batch_key = 10000;
   {
     TransactionScheduler scheduler(1, table, &txn_manager);
@@ -701,7 +691,8 @@ void SIAnomalyTest1() {
     scheduler.Txn(0).Update(100, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[0].txn_result);
   }
   {
     TransactionScheduler scheduler(4, table, &txn_manager);

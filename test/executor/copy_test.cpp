@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -129,7 +128,7 @@ TEST_F(CopyTests, Copying) {
     status = root_executor->Execute();
   }
 
-  // Check the number of bytes written
+  // Check the number of bypes written
   EXPECT_EQ(copy_executor->GetTotalBytesWritten(), num_bytes_to_write);
   txn_manager.CommitTransaction(txn);
 

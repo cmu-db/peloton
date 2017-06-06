@@ -47,7 +47,7 @@ class LogicalLogManager : public LogManager {
   LogicalLogManager(LogicalLogManager &&) = delete;
   LogicalLogManager &operator=(LogicalLogManager &&) = delete;
 
-  LogicalLogManager(int thread_count) : logger_thread_count_(thread_count) {}
+  LogicalLogManager(const int thread_count) : logger_thread_count_(thread_count) {}
 
   virtual ~LogicalLogManager() {}
 

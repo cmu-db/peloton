@@ -49,15 +49,14 @@ bool CopyExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
 
-  // bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
-  //                                                     file_handle_, "w");
+  bool success = InitFileHandle(node.file_path.c_str(), "w");
 
-  // if (success == false) {
-  //   throw ExecutorException("Failed to create file " + node.file_path +
-  //                           ". Try absolute path and make sure you have the "
-  //                           "permission to access this file.");
-  //   return false;
-  // }
+  if (success == false) {
+    throw ExecutorException("Failed to create file " + node.file_path +
+                            ". Try absolute path and make sure you have the "
+                            "permission to access this file.");
+    return false;
+  }
   LOG_DEBUG("Created target copy output file: %s", node.file_path.c_str());
 
   // Whether we're copying the parameters which require deserialization
@@ -77,10 +76,10 @@ bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
     file_handle_.file = file;
   }
 
-  // also, get the descriptor
+  // get the descriptor
   auto fd = fileno(file);
   if (fd == INVALID_FILE_DESCRIPTOR) {
-    LOG_ERROR("checkpoint_file_fd_ is -1");
+    LOG_ERROR("file fd is -1");
     return false;
   } else {
     file_handle_.fd = fd;
@@ -295,7 +294,7 @@ bool CopyExecutor::DExecute() {
   }
   LOG_INFO("Done copying all logical tiles");
   FlushBuffer();
-  // logging::LoggingUtil::FFlushFsync(file_handle_);
+  FFlushFsync();
   // Sync and close
   fclose(file_handle_.file);
 
