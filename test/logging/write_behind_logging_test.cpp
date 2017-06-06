@@ -62,7 +62,6 @@
 // }
 // */
 
-
 // int SeqScanCount(storage::DataTable *table,
 //                  const std::vector<oid_t> &column_ids,
 //                  expression::AbstractExpression *predicate) {

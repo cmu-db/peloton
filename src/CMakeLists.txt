@@ -84,7 +84,7 @@ target_link_libraries(tpch peloton)
 # --[ link to jemalloc
 set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
-set(EXE_LIST peloton-bin ycsb tpcc sdbench) 
+set(EXE_LIST peloton-bin ycsb tpcc sdbench tpch)
 foreach(exe_name ${EXE_LIST})
     target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
     set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})

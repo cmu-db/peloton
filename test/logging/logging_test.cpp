@@ -10,10 +10,10 @@
 // //
 // //===----------------------------------------------------------------------===//
 
-// #include "executor/testing_executor_util.h"
-// #include "logging/testing_logging_util.h"
 // #include "catalog/catalog.h"
 // #include "common/harness.h"
+// #include "executor/testing_executor_util.h"
+// #include "logging/testing_logging_util.h"
 
 // #include "concurrency/transaction_manager_factory.h"
 // #include "executor/logical_tile_factory.h"
@@ -42,7 +42,8 @@
 // class LoggingTests : public PelotonTest {};
 
 // TEST_F(LoggingTests, BasicLoggingTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -70,7 +71,8 @@
 // }
 
 // TEST_F(LoggingTests, AllCommittedTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -99,7 +101,8 @@
 // }
 
 // TEST_F(LoggingTests, LaggardTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -138,7 +141,8 @@
 // }
 
 // TEST_F(LoggingTests, FastLoggerTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -182,7 +186,8 @@
 // }
 
 // TEST_F(LoggingTests, BothPreparingTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -235,7 +240,8 @@
 // }
 
 // TEST_F(LoggingTests, TwoRoundTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -276,7 +282,8 @@
 // }
 
 // TEST_F(LoggingTests, InsertUpdateDeleteTest) {
-//   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(1));
+//   std::unique_ptr<storage::DataTable> table(
+//       TestingExecutorUtil::CreateTable(1));
 
 //   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -322,10 +329,11 @@
 //   log_manager.DropFrontendLoggers();
 //   log_manager.SetLoggingStatus(LoggingStatusType::INVALID);
 //   // just start, write a few records and exit
-//   catalog::Schema *table_schema = new catalog::Schema(
-//       {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-//        TestingExecutorUtil::GetColumnInfo(2),
-//        TestingExecutorUtil::GetColumnInfo(3)});
+//   catalog::Schema *table_schema =
+//       new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+//                            TestingExecutorUtil::GetColumnInfo(1),
+//                            TestingExecutorUtil::GetColumnInfo(2),
+//                            TestingExecutorUtil::GetColumnInfo(3)});
 //   std::string table_name("TEST_TABLE");
 
 //   // Create table.
@@ -334,10 +342,10 @@
 //   storage::DataTable *table = storage::TableFactory::GetDataTable(
 //       12345, 123456, table_schema, table_name, 1, own_schema, adapt_table);
 
-//   storage::Database test_db(12345);
-//   test_db.AddTable(table);
+//   storage::Database *test_db = new storage::Database(12345);
+//   test_db->AddTable(table);
 //   auto catalog = catalog::Catalog::GetInstance();
-//   catalog->AddDatabase(&test_db);
+//   catalog->AddDatabase(test_db);
 //   concurrency::TransactionManager &txn_manager =
 //       concurrency::TransactionManagerFactory::GetInstance();
 //   auto txn = txn_manager.BeginTransaction();
@@ -373,3 +381,4 @@
 
 // }  // End test namespace
 // }  // End peloton namespace
+// >>>>>>> master

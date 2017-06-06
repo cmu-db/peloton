@@ -28,7 +28,7 @@ class LogicalCheckpointManager : public CheckpointManager {
   LogicalCheckpointManager(LogicalCheckpointManager &&) = delete;
   LogicalCheckpointManager &operator=(LogicalCheckpointManager &&) = delete;
 
-  LogicalCheckpointManager(int thread_count) : checkpointer_thread_count_(thread_count) {}
+  LogicalCheckpointManager(const int thread_count) : checkpointer_thread_count_(thread_count) {}
 
   virtual ~LogicalCheckpointManager() {}
 
