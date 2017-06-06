@@ -33,6 +33,7 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/analyze_plan.h"
 #include "binder/bind_node_visitor.h"
 
 using std::vector;
@@ -142,6 +143,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           new planner::CreatePlan((parser::CreateStatement *)tree));
       ddl_plan = move(create_plan);
     } break;
+
+    case StatementType::ANALYZE: {
+      LOG_TRACE("Adding Analyze plan...");
+      unique_ptr<planner::AbstractPlan> analyze_plan(
+        new planner::AnalyzePlan((parser::AnalyzeStatement *)tree));
+      ddl_plan = move(analyze_plan);
+    } break;
+
     default:
       is_ddl_stmt = false;
   }
@@ -234,20 +243,20 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
   vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
       move(DeriveChildProperties(gexpr, requirements));
-  
+
   size_t num_property_pairs = output_input_property_pairs.size();
 
   auto child_group_ids = gexpr->GetChildGroupIDs();
-  
+
   for (size_t pair_offset = 0; pair_offset < num_property_pairs;
        ++pair_offset) {
     auto output_properties = output_input_property_pairs[pair_offset].first;
     const auto &input_properties_list =
         output_input_property_pairs[pair_offset].second;
-    
+
     vector<shared_ptr<Stats>> best_child_stats;
     vector<double> best_child_costs;
-    for (size_t i = 0; i < child_group_ids.size(); ++i) { 
+    for (size_t i = 0; i < child_group_ids.size(); ++i) {
       GroupID child_group_id = child_group_ids[i];
       const PropertySet &input_properties = input_properties_list[i];
       // Optimize child
@@ -264,7 +273,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       best_child_stats.push_back(best_expression->GetStats(input_properties));
       best_child_costs.push_back(best_expression->GetCost(input_properties));
     }
-    
+
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
     DeriveCostAndStats(gexpr, output_properties, input_properties_list,
@@ -350,7 +359,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-  
+
   auto child_stats = vector<shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = vector<double>();

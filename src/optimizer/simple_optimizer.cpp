@@ -28,6 +28,7 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/analyze_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
@@ -78,6 +79,13 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
           new planner::DropPlan((parser::DropStatement*)parse_tree2));
       child_plan = std::move(child_DropPlan);
+    } break;
+
+    case StatementType::ANALYZE: {
+      LOG_TRACE("Adding Analyze plan...");
+      std::unique_ptr<planner::AbstractPlan> child_AnalyzePlan(
+          new planner::AnalyzePlan((parser::AnalyzeStatement*)parse_tree2));
+      child_plan = std::move(child_AnalyzePlan);
     } break;
 
     case StatementType::CREATE: {

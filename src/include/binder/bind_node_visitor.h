@@ -39,6 +39,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(const parser::TransactionStatement *) override;
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
+  void Visit(const parser::AnalyzeStatement *) override;
 
   //  void Visit(expression::ComparisonExpression* expr) override;
   //  void Visit(expression::AggregateExpression* expr) override;

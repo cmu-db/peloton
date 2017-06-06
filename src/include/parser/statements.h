@@ -18,6 +18,7 @@
 #include "create_statement.h"
 #include "delete_statement.h"
 #include "drop_statement.h"
+#include "analyze_statement.h"
 #include "execute_statement.h"
 #include "insert_statement.h"
 #include "prepare_statement.h"
