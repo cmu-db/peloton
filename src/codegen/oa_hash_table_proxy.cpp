@@ -67,9 +67,9 @@ llvm::Type *OAHashTableProxy::GetType(CodeGen &codegen) {
 const std::string &OAHashTableProxy::_Init::GetFunctionName() {
   static const std::string kInitFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11OAHashTable4InitEmmm";
+      "_ZN7peloton7codegen4util11OAHashTable4InitEmmm";
 #else
-      "_ZN7peloton7codegen5utils11OAHashTable4InitEmmm";
+      "_ZN7peloton7codegen4util11OAHashTable4InitEmmm";
 #endif
   return kInitFnName;
 }
@@ -111,9 +111,9 @@ llvm::Function *OAHashTableProxy::_Init::GetFunction(CodeGen &codegen) {
 const std::string &OAHashTableProxy::_Destroy::GetFunctionName() {
   static const std::string kStoreTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11OAHashTable7DestroyEv";
+      "_ZN7peloton7codegen4util11OAHashTable7DestroyEv";
 #else
-      "_ZN7peloton7codegen5utils11OAHashTable7DestroyEv";
+      "_ZN7peloton7codegen4util11OAHashTable7DestroyEv";
 #endif
   return kStoreTupleFnName;
 }
@@ -142,9 +142,9 @@ llvm::Function *OAHashTableProxy::_Destroy::GetFunction(CodeGen &codegen) {
 const std::string &OAHashTableProxy::_StoreTuple::GetFunctionName() {
   static const std::string kStoreTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
+      "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
 #else
-      "_ZN7peloton7codegen5utils11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
+      "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
 #endif
   return kStoreTupleFnName;
 }

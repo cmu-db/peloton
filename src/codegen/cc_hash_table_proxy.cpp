@@ -43,9 +43,9 @@ llvm::Type *CCHashTableProxy::GetType(CodeGen &codegen) {
 const std::string &CCHashTableProxy::_Init::GetFunctionName() {
   static const std::string kInitFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11CCHashTable4InitEv";
+      "_ZN7peloton7codegen4util11CCHashTable4InitEv";
 #else
-      "_ZN7peloton7codegen5utils11CCHashTable4InitEv";
+      "_ZN7peloton7codegen4util11CCHashTable4InitEv";
 #endif
   return kInitFnName;
 }
@@ -73,9 +73,9 @@ llvm::Function *CCHashTableProxy::_Init::GetFunction(CodeGen &codegen) {
 const std::string &CCHashTableProxy::_Destroy::GetFunctionName() {
   static const std::string kStoreTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11CCHashTable7DestroyEv";
+      "_ZN7peloton7codegen4util11CCHashTable7DestroyEv";
 #else
-      "_ZN7peloton7codegen5utils11CCHashTable7DestroyEv";
+      "_ZN7peloton7codegen4util11CCHashTable7DestroyEv";
 #endif
   return kStoreTupleFnName;
 }
@@ -103,9 +103,9 @@ llvm::Function *CCHashTableProxy::_Destroy::GetFunction(CodeGen &codegen) {
 const std::string &CCHashTableProxy::_StoreTuple::GetFunctionName() {
   static const std::string kStoreTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils11CCHashTable10StoreTupleEmj";
+      "_ZN7peloton7codegen4util11CCHashTable10StoreTupleEmj";
 #else
-      "_ZN7peloton7codegen5utils11CCHashTable10StoreTupleEmj";
+      "_ZN7peloton7codegen4util11CCHashTable10StoreTupleEmj";
 #endif
   return kStoreTupleFnName;
 }

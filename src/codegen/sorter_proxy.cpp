@@ -61,9 +61,9 @@ llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
 const std::string &SorterProxy::_Init::GetFunctionName() {
   static const std::string kInitFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils6Sorter4InitEPFiPKvS4_Ej";
+      "_ZN7peloton7codegen4util6Sorter4InitEPFiPKvS4_Ej";
 #else
-      "_ZN7peloton7codegen5utils6Sorter4InitEPFiPKvS4_Ej";
+      "_ZN7peloton7codegen4util6Sorter4InitEPFiPKvS4_Ej";
 #endif
   return kInitFnName;
 }
@@ -103,9 +103,9 @@ llvm::Function *SorterProxy::_Init::GetFunction(CodeGen &codegen) {
 const std::string &SorterProxy::_StoreInputTuple::GetFunctionName() {
   static const std::string kStoreInputTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils6Sorter15StoreInputTupleEv";
+      "_ZN7peloton7codegen4util6Sorter15StoreInputTupleEv";
 #else
-      "_ZN7peloton7codegen5utils6Sorter15StoreInputTupleEv";
+      "_ZN7peloton7codegen4util6Sorter15StoreInputTupleEv";
 #endif
   return kStoreInputTupleFnName;
 }
@@ -135,9 +135,9 @@ llvm::Function *SorterProxy::_StoreInputTuple::GetFunction(CodeGen &codegen) {
 const std::string &SorterProxy::_Sort::GetFunctionName() {
   static const std::string kSortFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils6Sorter4SortEv";
+      "_ZN7peloton7codegen4util6Sorter4SortEv";
 #else
-      "_ZN7peloton7codegen5utils6Sorter4SortEv";
+      "_ZN7peloton7codegen4util6Sorter4SortEv";
 #endif
   return kSortFnName;
 }
@@ -167,9 +167,9 @@ llvm::Function *SorterProxy::_Sort::GetFunction(CodeGen &codegen) {
 const std::string &SorterProxy::_Destroy::GetFunctionName() {
   static const std::string kDestroyFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen5utils6Sorter7DestroyEv";
+      "_ZN7peloton7codegen4util6Sorter7DestroyEv";
 #else
-      "_ZN7peloton7codegen5utils6Sorter7DestroyEv";
+      "_ZN7peloton7codegen4util6Sorter7DestroyEv";
 #endif
   return kDestroyFnName;
 }
