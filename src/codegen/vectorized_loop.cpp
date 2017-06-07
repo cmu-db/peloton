@@ -19,7 +19,7 @@ namespace codegen {
 
 VectorizedLoop::VectorizedLoop(CodeGen &codegen, llvm::Value *num_elements,
                                uint32_t vector_size,
-                               const std::vector<Loop::LoopVariable> &loop_vars)
+                               const std::vector<util::Loop::LoopVariable> &loop_vars)
     : num_elements_(
           codegen->CreateZExtOrBitCast(num_elements, codegen.Int32Type())),
       loop_(InitLoop(codegen, num_elements_, loop_vars)),
@@ -56,14 +56,14 @@ void VectorizedLoop::LoopEnd(CodeGen &codegen,
   ended_ = true;
 }
 
-Loop VectorizedLoop::InitLoop(CodeGen &codegen, llvm::Value *num_elements,
-                              const std::vector<Loop::LoopVariable> loop_vars) {
+util::Loop VectorizedLoop::InitLoop(CodeGen &codegen, llvm::Value *num_elements,
+                              const std::vector<util::Loop::LoopVariable> loop_vars) {
   llvm::Value *start = codegen.Const32(0);
-  std::vector<Loop::LoopVariable> all_loop_vars = {{"start", start}};
+  std::vector<util::Loop::LoopVariable> all_loop_vars = {{"start", start}};
   all_loop_vars.insert(all_loop_vars.end(), loop_vars.begin(), loop_vars.end());
 
   llvm::Value *loop_cond = codegen->CreateICmpULT(start, num_elements);
-  return Loop{codegen, loop_cond, all_loop_vars};
+  return util::Loop{codegen, loop_cond, all_loop_vars};
 }
 
 void VectorizedLoop::CollectFinalLoopVariables(

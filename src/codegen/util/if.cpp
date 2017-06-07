@@ -16,6 +16,7 @@
 
 namespace peloton {
 namespace codegen {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // Constructor. We create two BB's, one "then" BB that appears right after the
@@ -100,5 +101,6 @@ llvm::Value *If::BuildPHI(llvm::Value *v1, llvm::Value *v2) {
   return phi;
 }
 
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

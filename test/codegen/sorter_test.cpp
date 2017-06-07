@@ -89,7 +89,7 @@ class SorterTest : public PelotonTest {
   }
 
   // The sorter instance
-  codegen::utils::Sorter sorter;
+  codegen::util::Sorter sorter;
 };
 
 TEST_F(SorterTest, CanSortTuples) {

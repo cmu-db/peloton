@@ -75,7 +75,7 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index, SorterAccess &access) const {
-      Loop loop{codegen,
+      util::Loop loop{codegen,
                 codegen->CreateICmpULT(start_index, end_index),
                 {{"start", start_index}}};
       {

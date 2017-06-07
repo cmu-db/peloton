@@ -44,7 +44,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 
   // Iterate from 0 -> num_tuples in batches of batch_size
   llvm::Value *tid = codegen.Const32(0);
-  Loop tile_group_loop{
+  util::Loop tile_group_loop{
       codegen, codegen->CreateICmpULT(tid, num_tuples), {{"tid", tid}}};
   {
     tid = tile_group_loop.GetLoopVar(0);

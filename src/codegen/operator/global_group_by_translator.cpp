@@ -116,7 +116,7 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 
   // Check if the buffer has been initialized. If not, create the initial values
   // and otherwise, advance the aggregates
-  If uninitialized{codegen,
+  util::If uninitialized{codegen,
                    codegen->CreateICmpEQ(codegen.Const8(0),
                                          codegen->CreateLoad(initialized))};
   {

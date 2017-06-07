@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // This is a closed-addressing hash-table data structure that employs a dynamic

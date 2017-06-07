@@ -45,7 +45,7 @@ TEST_F(IfTest, TestIfOnly) {
 
     codegen::Value va(type::Type::TypeId::INTEGER);
     codegen::Value vb(type::Type::TypeId::INTEGER);
-    codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
+    codegen::util::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
       va = {type::Type::TypeId::INTEGER, cg.Const32(1)};
     }
@@ -97,7 +97,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
       code_context, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
-    codegen::Loop loop{cg,
+    codegen::util::Loop loop{cg,
                        cg->CreateICmpULT(cg.Const32(0), param_a),
                        {{"i", cg.Const32(0)}, {"x", cg.Const32(0)}}};
     {
@@ -107,7 +107,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
       auto *divisible_by_two = cg->CreateURem(i, cg.Const32(2));
 
       llvm::Value *new_x = nullptr;
-      codegen::If pred{cg, cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
+      codegen::util::If pred{cg, cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
       {
         new_x = cg->CreateAdd(x, cg.Const32(1));
       }
@@ -157,11 +157,11 @@ TEST_F(IfTest, ComplexNestedIf) {
 
     codegen::Value vab(type::Type::TypeId::INTEGER);
     codegen::Value vc(type::Type::TypeId::INTEGER);
-    codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
+    codegen::util::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
       codegen::Value va(type::Type::TypeId::INTEGER);
       codegen::Value vb(type::Type::TypeId::INTEGER);
-      codegen::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
+      codegen::util::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
       { va = {type::Type::TypeId::INTEGER, cg.Const32(-1)}; }
       cond2.ElseBlock();
       { vb = {type::Type::TypeId::INTEGER, cg.Const32(0)}; }

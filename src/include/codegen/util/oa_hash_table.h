@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // This is the primary hash-table data structure used for aggregations and hash

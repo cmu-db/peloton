@@ -76,7 +76,7 @@ void Table::DoGenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
   // Iterate over all tile groups in the table
-  Loop loop{codegen,
+  util::Loop loop{codegen,
             codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
             {{"tileGroupIdx", tile_group_idx}}};
   {

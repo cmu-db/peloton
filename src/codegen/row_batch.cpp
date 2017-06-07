@@ -233,10 +233,10 @@ void RowBatch::Iterate(CodeGen &codegen, RowBatch::IterateCallback &cb) {
   llvm::Value *end = GetNumValidRows(codegen);
 
   // Generating the loop
-  std::vector<Loop::LoopVariable> loop_vars = {
+  std::vector<util::Loop::LoopVariable> loop_vars = {
       {"readIdx", start}, {"writeIdx", codegen.Const32(0)}};
   llvm::Value *loop_cond = codegen->CreateICmpULT(start, end);
-  Loop batch_loop{codegen, loop_cond, loop_vars};
+  util::Loop batch_loop{codegen, loop_cond, loop_vars};
   {
     // Pull out loop vars for convenience
     auto *batch_pos = batch_loop.GetLoopVar(0);

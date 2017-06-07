@@ -17,7 +17,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // A class than enables the storage and sorting of arbitrarily sized tuples.

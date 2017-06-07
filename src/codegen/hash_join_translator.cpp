@@ -170,7 +170,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    util::Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =
@@ -201,9 +201,9 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
     }
 
     p = codegen.Const32(0);
-    std::vector<Loop::LoopVariable> loop_vars = {
+    std::vector<util::Loop::LoopVariable> loop_vars = {
         {"p", p}, {"writeIdx", iter_instance.write_pos}};
-    Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
+    util::Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
     {
       p = process_loop.GetLoopVar(0);
       llvm::Value *write_pos = process_loop.GetLoopVar(1);
@@ -404,7 +404,7 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
     auto valid_rod = row_.DeriveValue(codegen, *predicate);
-    If is_valid_row{codegen, valid_rod.GetValue()};
+    util::If is_valid_row{codegen, valid_rod.GetValue()};
     {
       // Send row up to the parent
       context_.Consume(row_);

@@ -288,7 +288,7 @@ void Aggregation::FinalizeValues(
           codegen::Value zero_count = count.CompareEq(codegen, zero);
 
           codegen::Value final_null;
-          If check_count{codegen, zero_count.GetValue()};
+          util::If check_count{codegen, zero_count.GetValue()};
           {
             final_null = Type::GetNullValue(codegen, final_calc.GetType());
           }

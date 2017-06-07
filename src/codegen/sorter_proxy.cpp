@@ -39,7 +39,7 @@ llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
 
   // Ensure function pointers work
   static_assert(
-      sizeof(codegen::utils::Sorter::ComparisonFunction) == sizeof(char *),
+      sizeof(codegen::util::Sorter::ComparisonFunction) == sizeof(char *),
       "Function pointer size is messed up.");
 
   // Sorter type doesn't exist in module, construct it now

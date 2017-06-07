@@ -812,7 +812,7 @@ struct IntegerDiv : public Type::BinaryOperator {
         on_error == Value::OnError::ReturnNull) {
       // Get the default value for the types
       llvm::Value *default_val = nullptr, *division_result = nullptr;
-      If is_div0{codegen, div0.GetValue()};
+      util::If is_div0{codegen, div0.GetValue()};
       {
         if (on_error == Value::OnError::ReturnDefault) {
           default_val =
@@ -878,7 +878,7 @@ struct IntegerMod : public Type::BinaryOperator {
         on_error == Value::OnError::ReturnNull) {
       // Get the default value for the types
       llvm::Value *default_val = nullptr, *division_result = nullptr;
-      If is_div0{codegen, div0.GetValue()};
+      util::If is_div0{codegen, div0.GetValue()};
       {
         if (on_error == Value::OnError::ReturnDefault) {
           default_val =
@@ -976,7 +976,7 @@ struct DecimalDiv : public Type::BinaryOperator {
         on_error == Value::OnError::ReturnNull) {
       // Get the default value for the types
       llvm::Value *default_val = nullptr, *division_result = nullptr;
-      If is_div0{codegen, div0.GetValue()};
+      util::If is_div0{codegen, div0.GetValue()};
       {
         if (on_error == Value::OnError::ReturnDefault) {
           default_val =

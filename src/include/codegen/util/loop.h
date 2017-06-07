@@ -18,6 +18,7 @@
 
 namespace peloton {
 namespace codegen {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // A utility class to help generate loops in LLVM IR
@@ -62,5 +63,6 @@ class Loop {
   std::vector<llvm::PHINode *> phi_nodes_;
 };
 
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

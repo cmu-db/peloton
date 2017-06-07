@@ -69,13 +69,13 @@ class OAHashTableTest : public PelotonTest {
     GetHashTable().Init(sizeof(Key), sizeof(Value));
   }
 
-  codegen::utils::OAHashTable &GetHashTable() {
-    return *reinterpret_cast<codegen::utils::OAHashTable *>(raw_hash_table);
+  codegen::util::OAHashTable &GetHashTable() {
+    return *reinterpret_cast<codegen::util::OAHashTable *>(raw_hash_table);
   }
 
  private:
   // The open-addressing hash-table instance
-  int8_t raw_hash_table[sizeof(codegen::utils::OAHashTable)];
+  int8_t raw_hash_table[sizeof(codegen::util::OAHashTable)];
 };
 
 TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
@@ -190,7 +190,7 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
 
     for (uint32_t b = 0; b < num_runs; b++) {
       std::unordered_map<Key, Value, Hasher> ht{
-          codegen::utils::OAHashTable::kDefaultInitialSize};
+          codegen::util::OAHashTable::kDefaultInitialSize};
 
       Timer<std::ratio<1, 1000>> timer;
       timer.Start();

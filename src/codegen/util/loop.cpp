@@ -14,6 +14,7 @@
 
 namespace peloton {
 namespace codegen {
+namespace util {
 
 // Constructor
 Loop::Loop(CodeGen &cg, llvm::Value *start_condition,
@@ -75,5 +76,6 @@ void Loop::CollectFinalLoopVariables(std::vector<llvm::Value *> &loop_vals) {
   }
 }
 
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

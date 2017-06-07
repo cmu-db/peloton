@@ -17,7 +17,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 // TODO: worry about growing the table
 

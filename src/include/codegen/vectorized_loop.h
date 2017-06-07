@@ -36,7 +36,7 @@ class VectorizedLoop {
   // Constructor
   VectorizedLoop(CodeGen &codegen, llvm::Value *num_elements,
                  uint32_t vector_size,
-                 const std::vector<Loop::LoopVariable> &loop_vars);
+                 const std::vector<util::Loop::LoopVariable> &loop_vars);
 
   // Destructor
   ~VectorizedLoop();
@@ -55,8 +55,8 @@ class VectorizedLoop {
 
  private:
   // Helper function to initialize the loop
-  Loop InitLoop(CodeGen &codegen, llvm::Value *num_elements,
-                const std::vector<Loop::LoopVariable> loop_vars);
+  util::Loop InitLoop(CodeGen &codegen, llvm::Value *num_elements,
+                const std::vector<util::Loop::LoopVariable> loop_vars);
 
  private:
   // The number of elements to iterate over
@@ -64,7 +64,7 @@ class VectorizedLoop {
 
   // The loop and whether it has been ended. We track completion to be on the
   // safe side, throwing an assertion exception if not
-  Loop loop_;
+  util::Loop loop_;
   bool ended_;
 
   // The size of vectors we use during iteration

@@ -19,7 +19,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 // This is an estimation about how many tuples there are in the hash table when
 // one is first created. We use, by default, 8K elements. This should be

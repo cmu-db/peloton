@@ -20,7 +20,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 // Constructor doesn't create the buffer space.  The buffer will be created
 // upon initialization.

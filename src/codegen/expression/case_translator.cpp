@@ -50,7 +50,7 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
   codegen::Value ret;
   for (uint32_t i = 0; i < expr.GetWhenClauseSize(); i++) {
     codegen::Value cond = row.DeriveValue(codegen, *expr.GetWhenClauseCond(i));
-    If when{codegen, cond.GetValue(), "case" + std::to_string(i)};
+    util::If when{codegen, cond.GetValue(), "case" + std::to_string(i)};
     {
       ret = row.DeriveValue(codegen, *expr.GetWhenClauseResult(i));
       branch_vals.emplace_back(ret, codegen->GetInsertBlock());
