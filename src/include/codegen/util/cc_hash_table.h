@@ -116,6 +116,6 @@ class CCHashTable {
   uint64_t num_elements_;
 };
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

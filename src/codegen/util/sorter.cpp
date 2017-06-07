@@ -161,6 +161,6 @@ Sorter::Iterator Sorter::end() {
   return Sorter::Iterator{buffer_pos_, tuple_size_};
 }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

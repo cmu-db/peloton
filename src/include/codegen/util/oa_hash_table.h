@@ -269,6 +269,6 @@ void OAHashTable::Insert(uint64_t hash, Key &k, Value &v) {
   }
 }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

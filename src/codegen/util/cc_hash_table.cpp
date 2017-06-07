@@ -169,6 +169,6 @@ bool CCHashTable::iterator::operator!=(const CCHashTable::iterator& rhs) {
 //===----------------------------------------------------------------------===//
 const char* CCHashTable::iterator::operator*() { return curr_->data; }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

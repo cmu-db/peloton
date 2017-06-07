@@ -124,6 +124,6 @@ class Sorter {
   ComparisonFunction cmp_func_;
 };
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

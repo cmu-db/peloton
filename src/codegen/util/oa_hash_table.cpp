@@ -464,6 +464,6 @@ void OAHashTable::Iterator::NextEntry() {
   }
 }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton
