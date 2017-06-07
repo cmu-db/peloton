@@ -13,7 +13,7 @@
 #include "codegen/expression/case_translator.h"
 
 #include "codegen/compilation_context.h"
-#include "include/codegen/utils/if.h"
+#include "include/codegen/util/if.h"
 #include "codegen/type.h"
 
 namespace peloton {

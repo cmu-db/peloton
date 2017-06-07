@@ -16,7 +16,7 @@
 
 #include "murmur3/MurmurHash3.h"
 
-#include "codegen/utils/oa_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
 #include "common/timer.h"
 
 namespace peloton {

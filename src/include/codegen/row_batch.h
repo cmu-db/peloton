@@ -15,7 +15,7 @@
 #include <unordered_map>
 
 #include "codegen/codegen.h"
-#include "include/codegen/utils/loop.h"
+#include "include/codegen/util/loop.h"
 #include "codegen/value.h"
 #include "codegen/vector.h"
 #include "planner/attribute_info.h"

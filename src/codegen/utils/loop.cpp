@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/utils/loop.h"
+#include "include/codegen/util/loop.h"
 
 namespace peloton {
 namespace codegen {

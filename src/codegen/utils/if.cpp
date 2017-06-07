@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/utils/if.h"
+#include "include/codegen/util/if.h"
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 

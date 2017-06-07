@@ -14,8 +14,8 @@
 
 #include "include/codegen/proxy/cc_hash_table_proxy.h"
 #include "codegen/hash.h"
-#include "include/codegen/utils/if.h"
-#include "include/codegen/utils/loop.h"
+#include "include/codegen/util/if.h"
+#include "include/codegen/util/loop.h"
 #include "common/exception.h"
 
 namespace peloton {

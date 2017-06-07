@@ -4,7 +4,7 @@
 //
 // sorter.h
 //
-// Identification: src/include/codegen/utils/sorter.h
+// Identification: src/include/codegen/util/sorter.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

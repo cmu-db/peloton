@@ -12,7 +12,7 @@
 
 #include "codegen/hash_join_translator.h"
 
-#include "include/codegen/utils/if.h"
+#include "include/codegen/util/if.h"
 #include "include/codegen/proxy/oa_hash_table_proxy.h"
 #include "include/codegen/expression/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"

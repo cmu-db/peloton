@@ -13,11 +13,11 @@
 #include "codegen/oa_hash_table.h"
 
 #include "codegen/hash.h"
-#include "include/codegen/utils/if.h"
-#include "include/codegen/utils/loop.h"
+#include "include/codegen/util/if.h"
+#include "include/codegen/util/loop.h"
 #include "include/codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/vectorized_loop.h"
-#include "codegen/utils/oa_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
 
 namespace peloton {
 namespace codegen {

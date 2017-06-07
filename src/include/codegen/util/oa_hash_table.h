@@ -4,7 +4,7 @@
 //
 // oa_hash_table.h
 //
-// Identification: src/include/codegen/utils/oa_hash_table.h
+// Identification: src/include/codegen/util/oa_hash_table.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

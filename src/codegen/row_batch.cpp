@@ -13,7 +13,7 @@
 #include "codegen/row_batch.h"
 
 #include "codegen/compilation_context.h"
-#include "include/codegen/utils/if.h"
+#include "include/codegen/util/if.h"
 #include "codegen/vectorized_loop.h"
 #include "common/exception.h"
 #include "common/logger.h"

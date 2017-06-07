@@ -13,8 +13,8 @@
 #include "codegen/tile_group.h"
 
 #include "catalog/schema.h"
-#include "include/codegen/utils/if.h"
-#include "include/codegen/utils/loop.h"
+#include "include/codegen/util/if.h"
+#include "include/codegen/util/loop.h"
 #include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/scan_consumer.h"
 #include "include/codegen/proxy/tile_group_proxy.h"

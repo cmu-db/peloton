@@ -4,13 +4,13 @@
 //
 // sorter.cpp
 //
-// Identification: src/codegen/utils/sorter.cpp
+// Identification: src/codegen/util/sorter.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/utils/sorter.h"
+#include "codegen/util/sorter.h"
 
 #include <cstring>
 

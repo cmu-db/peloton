@@ -14,7 +14,7 @@
 
 #include "common/harness.h"
 #include "common/timer.h"
-#include "codegen/utils/sorter.h"
+#include "codegen/util/sorter.h"
 
 namespace peloton {
 namespace test {
