@@ -13,9 +13,9 @@
 #include "codegen/table.h"
 
 #include "catalog/schema.h"
-#include "codegen/data_table_proxy.h"
+#include "include/codegen/proxy/data_table_proxy.h"
 #include "include/codegen/utils/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "storage/data_table.h"
 
 namespace peloton {

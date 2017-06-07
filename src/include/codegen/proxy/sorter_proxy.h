@@ -19,11 +19,11 @@ namespace codegen {
 
 class SorterProxy {
  public:
-  // Get the LLVM type for peloton::codegen::utils::Sorter
+  // Get the LLVM type for peloton::codegen::util::Sorter
   static llvm::Type *GetType(CodeGen &codegen);
 
   //===--------------------------------------------------------------------===//
-  // The proxy for codegen::utils::Sorter::Init()
+  // The proxy for codegen::util::Sorter::Init()
   //===--------------------------------------------------------------------===//
   struct _Init {
     static const std::string &GetFunctionName();
@@ -31,7 +31,7 @@ class SorterProxy {
   };
 
   //===--------------------------------------------------------------------===//
-  // The proxy for codegen::utils::Sorter::StoreInputTuple()
+  // The proxy for codegen::util::Sorter::StoreInputTuple()
   //===--------------------------------------------------------------------===//
   struct _StoreInputTuple {
     static const std::string &GetFunctionName();
@@ -39,7 +39,7 @@ class SorterProxy {
   };
 
   //===--------------------------------------------------------------------===//
-  // The proxy for codegen::utils::Sorter::Sort()
+  // The proxy for codegen::util::Sorter::Sort()
   //===--------------------------------------------------------------------===//
   struct _Sort {
     static const std::string &GetFunctionName();
@@ -47,7 +47,7 @@ class SorterProxy {
   };
 
   //===--------------------------------------------------------------------===//
-  // The proxy for codegen::utils::Sorter::Destroy()
+  // The proxy for codegen::util::Sorter::Destroy()
   //===--------------------------------------------------------------------===//
   struct _Destroy {
     static const std::string &GetFunctionName();

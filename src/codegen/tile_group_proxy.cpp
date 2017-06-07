@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/tile_group_proxy.h"
+#include "include/codegen/proxy/tile_group_proxy.h"
 
 #include "storage/tile_group.h"
 

@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/sorter_proxy.h"
+#include "include/codegen/proxy/sorter_proxy.h"
 #include "codegen/utils/sorter.h"
 
 namespace peloton {
 namespace codegen {
 
 llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
-  static const std::string kSorterTypeName = "peloton::codegen::utils::Sorter";
+  static const std::string kSorterTypeName = "peloton::codegen::util::Sorter";
 
   auto *sorter_type = codegen.LookupTypeByName(kSorterTypeName);
   if (sorter_type != nullptr) {
@@ -29,10 +29,10 @@ llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
   /*
   static const uint32_t sorter_size =
       sizeof(char *) + sizeof(char *) + sizeof(char *) + sizeof(uint32_t) +
-      sizeof(utils::Sorter::ComparisonFunction) +
+      sizeof(util::Sorter::ComparisonFunction) +
       sizeof(storage::StorageManager *);
   static_assert(
-      sorter_size == sizeof(utils::Sorter),
+      sorter_size == sizeof(util::Sorter),
       "The LLVM memory layout of Sorter doesn't match the pre-compiled "
       "version. Did you forget to update codegen/sorter_proxy.h?");
   */
@@ -56,7 +56,7 @@ llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
 }
 
 //===--------------------------------------------------------------------===//
-// The proxy for codegen::utils::Sorter::Init()
+// The proxy for codegen::util::Sorter::Init()
 //===--------------------------------------------------------------------===//
 const std::string &SorterProxy::_Init::GetFunctionName() {
   static const std::string kInitFnName =
@@ -85,7 +85,7 @@ llvm::Function *SorterProxy::_Init::GetFunction(CodeGen &codegen) {
       false);
 
   // We need to create a function type whose signature matches
-  // codegen::utils::Sorter::Init(...). It should match:
+  // codegen::util::Sorter::Init(...). It should match:
   //
   // void Init(Sorter *, int(*)(void *, void *), uint32_t)
 
@@ -98,7 +98,7 @@ llvm::Function *SorterProxy::_Init::GetFunction(CodeGen &codegen) {
 }
 
 //===--------------------------------------------------------------------===//
-// The proxy for codegen::utils::Sorter::StoreInputTuple()
+// The proxy for codegen::util::Sorter::StoreInputTuple()
 //===--------------------------------------------------------------------===//
 const std::string &SorterProxy::_StoreInputTuple::GetFunctionName() {
   static const std::string kStoreInputTupleFnName =
@@ -121,7 +121,7 @@ llvm::Function *SorterProxy::_StoreInputTuple::GetFunction(CodeGen &codegen) {
 
   // The function hasn't been registered, let's do it now ...
   // We need to create a function type whose signature matches
-  // codegen::utils::Sorter::StoreInputTuple(...)
+  // codegen::util::Sorter::StoreInputTuple(...)
   std::vector<llvm::Type *> fn_args = {
       SorterProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =
@@ -130,7 +130,7 @@ llvm::Function *SorterProxy::_StoreInputTuple::GetFunction(CodeGen &codegen) {
 }
 
 //===--------------------------------------------------------------------===//
-// The proxy for codegen::utils::Sorter::Sort()
+// The proxy for codegen::util::Sorter::Sort()
 //===--------------------------------------------------------------------===//
 const std::string &SorterProxy::_Sort::GetFunctionName() {
   static const std::string kSortFnName =
@@ -153,7 +153,7 @@ llvm::Function *SorterProxy::_Sort::GetFunction(CodeGen &codegen) {
 
   // The function hasn't been registered, let's do it now ...
   // We need to create a function type whose signature matches
-  // codegen::utils::Sorter::Sort(...)
+  // codegen::util::Sorter::Sort(...)
   std::vector<llvm::Type *> fn_args = {
       SorterProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =
@@ -162,7 +162,7 @@ llvm::Function *SorterProxy::_Sort::GetFunction(CodeGen &codegen) {
 }
 
 //===--------------------------------------------------------------------===//
-// The proxy for codegen::utils::Sorter::Destroy()
+// The proxy for codegen::util::Sorter::Destroy()
 //===--------------------------------------------------------------------===//
 const std::string &SorterProxy::_Destroy::GetFunctionName() {
   static const std::string kDestroyFnName =
@@ -185,7 +185,7 @@ llvm::Function *SorterProxy::_Destroy::GetFunction(CodeGen &codegen) {
 
   // The function hasn't been registered, let's do it now ...
   // We need to create a function type whose signature matches
-  // codegen::utils::Sorter::Destroy(...)
+  // codegen::util::Sorter::Destroy(...)
   std::vector<llvm::Type *> fn_args = {
       SorterProxy::GetType(codegen)->getPointerTo()};
   llvm::FunctionType *fn_type =

@@ -12,8 +12,8 @@
 
 #include "codegen/buffering_consumer.h"
 
-#include "codegen/values_runtime_proxy.h"
-#include "codegen/value_proxy.h"
+#include "include/codegen/proxy/values_runtime_proxy.h"
+#include "include/codegen/proxy/value_proxy.h"
 #include "common/logger.h"
 #include "planner/binding_context.h"
 

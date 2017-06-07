@@ -14,8 +14,8 @@
 
 #include "codegen/codegen.h"
 #include "include/codegen/utils/if.h"
-#include "codegen/runtime_functions_proxy.h"
-#include "codegen/varlen_proxy.h"
+#include "include/codegen/proxy/runtime_functions_proxy.h"
+#include "include/codegen/proxy/varlen_proxy.h"
 
 namespace peloton {
 namespace codegen {

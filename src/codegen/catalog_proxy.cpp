@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/catalog_proxy.h"
+#include "include/codegen/proxy/catalog_proxy.h"
 
 #include "catalog/catalog.h"
-#include "codegen/data_table_proxy.h"
+#include "include/codegen/proxy/data_table_proxy.h"
 
 namespace peloton {
 namespace codegen {

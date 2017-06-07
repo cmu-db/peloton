@@ -13,7 +13,7 @@
 #include "codegen/sorter.h"
 
 #include "include/codegen/utils/loop.h"
-#include "codegen/sorter_proxy.h"
+#include "include/codegen/proxy/sorter_proxy.h"
 #include "codegen/vectorized_loop.h"
 #include "codegen/vector.h"
 
@@ -35,7 +35,7 @@ Sorter::Sorter(CodeGen &codegen,
   storage_format_.Finalize(codegen);
 }
 
-// Just make a call to utils::Sorter::Init(...)
+// Just make a call to util::Sorter::Init(...)
 void Sorter::Init(CodeGen &codegen, llvm::Value *sorter_ptr,
                   llvm::Value *comparison_func) const {
   auto *tuple_size = codegen.Const32(storage_format_.GetStorageSize());
@@ -57,7 +57,7 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
   }
 }
 
-// Just make a call to utils::Sorter::Sort(...). This actually sorts the data
+// Just make a call to util::Sorter::Sort(...). This actually sorts the data
 // that has been inserted into the sorter instance.
 void Sorter::Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const {
   auto *sort_func = SorterProxy::_Sort::GetFunction(codegen);
@@ -134,14 +134,14 @@ void Sorter::VectorizedIterate(
   }
 }
 
-// Just make a call to utils::Sorter::Destroy(...)
+// Just make a call to util::Sorter::Destroy(...)
 void Sorter::Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const {
   codegen.CallFunc(SorterProxy::_Destroy::GetFunction(codegen), {sorter_ptr});
 }
 
 llvm::Value *Sorter::GetNumberOfStoredTuples(CodeGen &codegen,
                                              llvm::Value *sorter_ptr) const {
-  // TODO: utils::Sorter has a function to handle this ...
+  // TODO: util::Sorter has a function to handle this ...
   llvm::Value *start_pos = GetStartPosition(codegen, sorter_ptr);
   llvm::Value *end_pos = GetEndPosition(codegen, sorter_ptr);
   llvm::Value *tuple_size =

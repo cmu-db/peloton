@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/cc_hash_table_proxy.h"
+#include "include/codegen/proxy/cc_hash_table_proxy.h"
 
 namespace peloton {
 namespace codegen {

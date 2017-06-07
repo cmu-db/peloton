@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"

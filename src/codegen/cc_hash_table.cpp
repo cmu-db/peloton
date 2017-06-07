@@ -12,7 +12,7 @@
 
 #include "codegen/cc_hash_table.h"
 
-#include "codegen/cc_hash_table_proxy.h"
+#include "include/codegen/proxy/cc_hash_table_proxy.h"
 #include "codegen/hash.h"
 #include "include/codegen/utils/if.h"
 #include "include/codegen/utils/loop.h"

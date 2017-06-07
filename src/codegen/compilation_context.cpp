@@ -12,9 +12,9 @@
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/catalog_proxy.h"
-#include "codegen/transaction_proxy.h"
-#include "codegen/executor_context_proxy.h"
+#include "include/codegen/proxy/catalog_proxy.h"
+#include "include/codegen/proxy/transaction_proxy.h"
+#include "include/codegen/proxy/executor_context_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 

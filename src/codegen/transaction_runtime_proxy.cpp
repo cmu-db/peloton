@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/transaction_runtime_proxy.h"
+#include "include/codegen/proxy/transaction_runtime_proxy.h"
 
-#include "codegen/executor_context_proxy.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/tile_group_proxy.h"
-#include "codegen/transaction_proxy.h"
-#include "codegen/value_proxy.h"
+#include "include/codegen/proxy/executor_context_proxy.h"
+#include "include/codegen/proxy/data_table_proxy.h"
+#include "include/codegen/proxy/tile_group_proxy.h"
+#include "include/codegen/proxy/transaction_proxy.h"
+#include "include/codegen/proxy/value_proxy.h"
 
 namespace peloton {
 namespace codegen {
