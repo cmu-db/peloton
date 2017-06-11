@@ -29,6 +29,10 @@ void Statement::ParseQueryType(const std::string& query_string,
                                std::string& query_type) {
   std::stringstream stream(query_string);
   stream >> query_type;
+	if (query_type.back() == ';') {
+		query_type = query_type.substr(0, query_type.length() - 1);
+	}
+	boost::to_upper(query_type);
 }
 
 std::vector<FieldInfo> Statement::GetTupleDescriptor() const {
