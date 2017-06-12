@@ -34,6 +34,7 @@
 #include "expression/aggregate_expression.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -86,9 +87,13 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       break;
     }
     case PlanNodeType::DELETE: {
-      auto &delete_plan = const_cast<planner::DeletePlan &>(
-          static_cast<const planner::DeletePlan &>(plan_node));
+      auto &delete_plan = static_cast<const planner::DeletePlan &>(plan_node);
       translator = new DeleteTranslator(delete_plan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::INSERT: {
+      auto &insert_plan = static_cast<const planner::InsertPlan &>(plan_node);
+      translator = new InsertTranslator(insert_plan, context, pipeline);
       break;
     }
     default: {

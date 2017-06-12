@@ -22,7 +22,7 @@ namespace peloton {
 namespace planner {
 
 InsertPlan::InsertPlan(storage::DataTable *table, oid_t bulk_insert_count)
-    : target_table_(table), bulk_insert_count(bulk_insert_count) {}
+    : target_table_(table), bulk_insert_count_(bulk_insert_count) {}
 
 // This constructor takes in a project info
 InsertPlan::InsertPlan(
@@ -31,22 +31,25 @@ InsertPlan::InsertPlan(
     oid_t bulk_insert_count)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      bulk_insert_count(bulk_insert_count) {}
+      bulk_insert_count_(bulk_insert_count) {
+  LOG_TRACE("Creating an Insert Plan with a projection");
+}
 
 // This constructor takes in a tuple
 InsertPlan::InsertPlan(storage::DataTable *table,
                        std::unique_ptr<storage::Tuple> &&tuple,
                        oid_t bulk_insert_count)
-    : target_table_(table), bulk_insert_count(bulk_insert_count) {
+    : target_table_(table), bulk_insert_count_(bulk_insert_count) {
+  LOG_TRACE("Creating an Insert Plan for one tuple");
   tuples_.push_back(std::move(tuple));
-  LOG_TRACE("Creating an Insert Plan");
 }
 
 InsertPlan::InsertPlan(
     storage::DataTable *table, const std::vector<std::string> *columns,
     const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
         insert_values)
-    : bulk_insert_count(insert_values->size()) {
+    : bulk_insert_count_(insert_values->size()) {
+  LOG_TRACE("Creating an Insert Plan with multiple expressions");
 
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
   params_value_type_.reset(new std::vector<type::TypeId>);
