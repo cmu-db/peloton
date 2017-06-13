@@ -74,11 +74,10 @@ void InsertTranslator::Produce() const {
     for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
 
       // Convert the tuple address to the LLVM pointer value
-      auto tuple = insert_plan_.GetTuple(i);
-      llvm::Constant *tuple_ptr_intval = llvm::ConstantInt::get(
-          codegen.Int64Type(), (uint64_t)tuple);
-      llvm::Value *tuple_ptr = llvm::ConstantExpr::getIntToPtr(tuple_ptr_intval,
-          llvm::PointerType::getUnqual(TupleProxy::GetType(codegen)));
+      auto *tuple = insert_plan_.GetTuple(i);
+      auto *tuple_int = codegen.Const64((int64_t)tuple);
+      llvm::Value *tuple_ptr = codegen->CreateIntToPtr(tuple_int,
+          TupleProxy::GetType(codegen)->getPointerTo());
  
       // Perform insert tuples set in the inserter
       auto *insert_func = InserterProxy::_Insert::GetFunction(codegen);
