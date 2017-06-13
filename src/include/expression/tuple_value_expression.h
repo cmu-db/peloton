@@ -29,21 +29,21 @@ namespace expression {
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
-      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
+      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::TypeId::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
         col_name_(col_name),
         ai_(nullptr) {}
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
-      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
+      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::TypeId::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
         table_name_(StringUtil::Lower(table_name)),
         col_name_(col_name),
         ai_(nullptr) {}
 
-  TupleValueExpression(type::Type::TypeId type_id, const int tuple_idx,
+  TupleValueExpression(type::TypeId type_id, const int tuple_idx,
                        const int value_idx)
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type_id),
         value_idx_(value_idx),
@@ -62,14 +62,14 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   // TODO: Delete this when TransformExpression is completely depracated
-  void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
+  void SetTupleValueExpressionParams(type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
     return_value_type_ = type_id;
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
-
-  inline void SetValueType(type::Type::TypeId type_id) {
+  
+  inline void SetValueType(type::TypeId type_id) {
     return_value_type_ = type_id;
   }
 

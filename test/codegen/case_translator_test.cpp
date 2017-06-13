@@ -46,7 +46,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
 
   // Make one When condition
   auto when_a_eq_10 =
-      CmpEqExpr(ColRefExpr(type::Type::INTEGER, 0), ConstIntExpr(10));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
   clauses.push_back(expression::CaseExpression::WhenClause{
@@ -54,7 +54,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(
-      type::Type::INTEGER, clauses, ConstIntExpr(0));
+      type::TypeId::INTEGER, clauses, ConstIntExpr(0));
 
   // Setup a projection
   DirectMapList direct_map_list = {{0, {0, 0}}};
@@ -112,9 +112,9 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
 
   // Make the when conditions
   auto when_a_eq_10 =
-      CmpEqExpr(ColRefExpr(type::Type::INTEGER, 0), ConstIntExpr(10));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
   auto when_a_eq_20 =
-      CmpEqExpr(ColRefExpr(type::Type::INTEGER, 0), ConstIntExpr(20));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
   clauses.emplace_back(std::move(when_a_eq_10), std::move(ConstIntExpr(1)));
@@ -122,7 +122,7 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(
-      type::Type::INTEGER, clauses, ConstIntExpr(0));
+      type::TypeId::INTEGER, clauses, ConstIntExpr(0));
 
   // Setup a projection
   DirectMapList direct_map_list = {{0, {0, 0}}};

@@ -23,19 +23,19 @@ namespace type {
 
 #define INT_COMPARE_FUNC(OP) \
   switch (right.GetTypeId()) { \
-    case Type::TINYINT: \
+    case TypeId::TINYINT: \
       return GetCmpBool(left.value_.integer OP right.GetAs<int8_t>()); \
-    case Type::SMALLINT: \
+    case TypeId::SMALLINT: \
       return GetCmpBool(left.value_.integer OP right.GetAs<int16_t>()); \
-    case Type::INTEGER: \
-    case Type::PARAMETER_OFFSET: \
+    case TypeId::INTEGER: \
+    case TypeId::PARAMETER_OFFSET: \
       return GetCmpBool(left.value_.integer OP right.GetAs<int32_t>()); \
-  case Type::BIGINT: \
+  case TypeId::BIGINT: \
     return GetCmpBool(left.value_.integer OP right.GetAs<int64_t>()); \
-  case Type::DECIMAL: \
+  case TypeId::DECIMAL: \
     return GetCmpBool(left.value_.integer OP right.GetAs<double>()); \
-  case Type::VARCHAR: { \
-    auto r_value = right.CastAs(Type::INTEGER); \
+  case TypeId::VARCHAR: { \
+    auto r_value = right.CastAs(TypeId::INTEGER); \
     return GetCmpBool(left.value_.integer OP r_value.GetAs<int32_t>()); \
   } \
   default: \
@@ -44,20 +44,20 @@ namespace type {
 
 #define INT_MODIFY_FUNC(METHOD, OP) \
   switch (right.GetTypeId()) { \
-    case Type::TINYINT: \
+    case TypeId::TINYINT: \
       return METHOD<int32_t, int8_t>(left, right); \
-    case Type::SMALLINT: \
+    case TypeId::SMALLINT: \
       return METHOD<int32_t, int16_t>(left, right); \
-    case Type::INTEGER: \
-    case Type::PARAMETER_OFFSET: \
+    case TypeId::INTEGER: \
+    case TypeId::PARAMETER_OFFSET: \
       return METHOD<int32_t, int32_t>(left, right); \
-    case Type::BIGINT: \
+    case TypeId::BIGINT: \
       return METHOD<int32_t, int64_t>(left, right); \
-    case Type::DECIMAL: \
+    case TypeId::DECIMAL: \
       return ValueFactory::GetDecimalValue( \
                 left.value_.integer OP right.GetAs<double>()); \
-    case Type::VARCHAR: { \
-      auto r_value = right.CastAs(Type::INTEGER); \
+    case TypeId::VARCHAR: { \
+      auto r_value = right.CastAs(TypeId::INTEGER); \
       return METHOD<int32_t, int32_t>(left, r_value); \
     } \
     default: \
@@ -135,20 +135,20 @@ Value IntegerType::Modulo(const Value& left, const Value &right) const {
   }
 
   switch (right.GetTypeId()) {
-  case Type::TINYINT:
+  case TypeId::TINYINT:
     return ModuloValue<int32_t, int8_t>(left, right);
-  case Type::SMALLINT:
+  case TypeId::SMALLINT:
     return ModuloValue<int32_t, int16_t>(left, right);
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
+  case TypeId::INTEGER:
+  case TypeId::PARAMETER_OFFSET:
     return ModuloValue<int32_t, int32_t>(left, right);
-  case Type::BIGINT:
+  case TypeId::BIGINT:
     return ModuloValue<int32_t, int64_t>(left, right);
-  case Type::DECIMAL:
+  case TypeId::DECIMAL:
     return ValueFactory::GetDecimalValue(
         ValMod(left.value_.integer, right.GetAs<double>()));
-  case Type::VARCHAR: {
-      auto r_value = right.CastAs(Type::INTEGER);
+  case TypeId::VARCHAR: {
+      auto r_value = right.CastAs(TypeId::INTEGER);
       return ModuloValue<int32_t, int32_t>(left, r_value);
   }
   default:
@@ -174,14 +174,14 @@ Value IntegerType::Sqrt(const Value& val) const {
 Value IntegerType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
 
   switch (right.GetTypeId()) {
-  case Type::TINYINT:
-  case Type::SMALLINT:
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET:
+  case TypeId::TINYINT:
+  case TypeId::SMALLINT:
+  case TypeId::INTEGER:
+  case TypeId::PARAMETER_OFFSET:
     return ValueFactory::GetIntegerValue((int32_t) PELOTON_INT32_NULL);
-  case Type::BIGINT:
+  case TypeId::BIGINT:
     return ValueFactory::GetBigIntValue((int64_t) PELOTON_INT64_NULL);
-  case Type::DECIMAL:
+  case TypeId::DECIMAL:
     return ValueFactory::GetDecimalValue((double) PELOTON_DECIMAL_NULL);
   default:
     break;
@@ -314,10 +314,10 @@ Value IntegerType::Copy(const Value& val) const {
   return Value(val.GetTypeId(), val.value_.integer);
 }
 
-Value IntegerType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value IntegerType::CastAs(const Value& val, const TypeId type_id) const {
 
   switch (type_id) {
-  case Type::TINYINT: {
+  case TypeId::TINYINT: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     if (val.GetAs<int32_t>() > PELOTON_INT8_MAX ||
         val.GetAs<int32_t>() < PELOTON_INT8_MIN)
@@ -325,7 +325,7 @@ Value IntegerType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
     return ValueFactory::GetTinyIntValue((int8_t) val.GetAs<int32_t>());
   }
-  case Type::SMALLINT: {
+  case TypeId::SMALLINT: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     if (val.GetAs<int32_t>() > PELOTON_INT16_MAX  ||
         val.GetAs<int32_t>() < PELOTON_INT16_MIN)
@@ -333,20 +333,20 @@ Value IntegerType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
     return ValueFactory::GetSmallIntValue((int16_t) val.GetAs<int32_t>());
   }
-  case Type::INTEGER:
-  case Type::PARAMETER_OFFSET: {
+  case TypeId::INTEGER:
+  case TypeId::PARAMETER_OFFSET: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return Value(type_id, (int32_t) val.GetAs<int32_t>());
   }
-  case Type::BIGINT: {
+  case TypeId::BIGINT: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetBigIntValue((int64_t) val.GetAs<int32_t>());
   }
-  case Type::DECIMAL: {
+  case TypeId::DECIMAL: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetDecimalValue((double) val.GetAs<int32_t>());
   }
-  case Type::VARCHAR:
+  case TypeId::VARCHAR:
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetVarcharValue(val.ToString());
   default:

@@ -74,7 +74,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 
   // Prepare the grouping expressions
   // TODO: We need to handle grouping keys that are expressions (i.e., prepare)
-  std::vector<type::Type::TypeId> key_type;
+  std::vector<type::TypeId> key_type;
   const auto &grouping_ais = group_by_.GetGroupbyAIs();
   for (const auto *grouping_ai : grouping_ais) {
     key_type.push_back(grouping_ai->type);
@@ -185,7 +185,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
       RowBatch::OutputTracker tracker{batch.GetSelectionVector(), write_pos};
       RowBatch::Row row = batch.GetRowAt(read_pos, &tracker);
 
-      codegen::Value row_hash{type::Type::TypeId::INTEGER,
+      codegen::Value row_hash{type::TypeId::INTEGER,
                               hashes.GetValue(codegen, p)};
       row.RegisterAttributeValue(&OAHashTable::kHashAI, row_hash);
 

@@ -40,12 +40,12 @@ namespace test {
 
 storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
   value_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
@@ -88,12 +88,12 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
 
 storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
 
   // Create the table
@@ -152,10 +152,10 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
     oid_t index_oid, bool need_primary_index) {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
 
   // Create the table
@@ -245,7 +245,7 @@ bool TestingTransactionUtil::ExecuteInsert(
 expression::ComparisonExpression *TestingTransactionUtil::MakePredicate(
     int id) {
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression(
@@ -401,7 +401,7 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
   // Predicate
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression(
@@ -430,7 +430,7 @@ bool TestingTransactionUtil::ExecuteScan(concurrency::Transaction *transaction,
 
   // Predicate, WHERE `id`>=id1
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(id));
 

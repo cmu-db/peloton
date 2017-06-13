@@ -34,35 +34,35 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
   switch (constant.GetTypeId()) {
-    case type::Type::TypeId::TINYINT: {
+    case type::TypeId::TINYINT: {
       val = codegen.Const8(type::ValuePeeker::PeekTinyInt(constant));
       break;
     }
-    case type::Type::TypeId::SMALLINT: {
+    case type::TypeId::SMALLINT: {
       val = codegen.Const16(type::ValuePeeker::PeekSmallInt(constant));
       break;
     }
-    case type::Type::TypeId::INTEGER: {
+    case type::TypeId::INTEGER: {
       val = codegen.Const32(type::ValuePeeker::PeekInteger(constant));
       break;
     }
-    case type::Type::TypeId::BIGINT: {
+    case type::TypeId::BIGINT: {
       val = codegen.Const64(type::ValuePeeker::PeekBigInt(constant));
       break;
     }
-    case type::Type::TypeId::DECIMAL: {
+    case type::TypeId::DECIMAL: {
       val = codegen.ConstDouble(type::ValuePeeker::PeekDouble(constant));
       break;
     }
-    case type::Type::TypeId::DATE: {
+    case type::TypeId::DATE: {
       val = codegen.Const32(type::ValuePeeker::PeekDate(constant));
       break;
     }
-    case type::Type::TypeId::TIMESTAMP: {
+    case type::TypeId::TIMESTAMP: {
       val = codegen.Const64(type::ValuePeeker::PeekTimestamp(constant));
       break;
     }
-    case type::Type::TypeId::VARCHAR: {
+    case type::TypeId::VARCHAR: {
       std::string str = type::ValuePeeker::PeekVarchar(constant);
       // val should be a pointer type to be used in comparisions inside a PHI
       val = codegen.ConstStringPtr(str);

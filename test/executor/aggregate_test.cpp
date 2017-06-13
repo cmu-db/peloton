@@ -173,7 +173,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
       ExpressionType::AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1));
   agg_terms.push_back(sumb);
 
@@ -274,11 +274,11 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
       ExpressionType::AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1));
   planner::AggregatePlan::AggTerm maxc(
       ExpressionType::AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumb);
   agg_terms.push_back(maxc);
@@ -381,22 +381,22 @@ TEST_F(AggregateTests, MinMaxTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm minB(
       ExpressionType::AGGREGATE_MIN,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm maxB(
       ExpressionType::AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm minC(
       ExpressionType::AGGREGATE_MIN,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
                                                     2),
       false);
   planner::AggregatePlan::AggTerm maxC(
       ExpressionType::AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
                                                     2),
       false);
   agg_terms.push_back(minB);
@@ -589,7 +589,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumC(
       ExpressionType::AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumC);
 
@@ -678,12 +678,12 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm countB(
       ExpressionType::AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
       ExpressionType::AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
   agg_terms.push_back(countB);
@@ -787,17 +787,17 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumA(
       ExpressionType::AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     0),
       false);
   planner::AggregatePlan::AggTerm countB(
       ExpressionType::AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
       ExpressionType::AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
   agg_terms.push_back(sumA);

@@ -76,13 +76,13 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
 
   // Left and right hash keys
   std::vector<AbstractExprPtr> left_hash_keys;
-  left_hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
+  left_hash_keys.emplace_back(ColRefExpr(type::TypeId::INTEGER, 0));
 
   std::vector<AbstractExprPtr> right_hash_keys;
-  right_hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
+  right_hash_keys.emplace_back(ColRefExpr(type::TypeId::INTEGER, 0));
 
   std::vector<AbstractExprPtr> hash_keys;
-  hash_keys.emplace_back(ColRefExpr(type::Type::TypeId::INTEGER, 0));
+  hash_keys.emplace_back(ColRefExpr(type::TypeId::INTEGER, 0));
 
   // Finally, the fucking join node
   std::unique_ptr<planner::HashJoinPlan> hj_plan{
@@ -118,7 +118,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   // The output has the join columns (that should match) in positions 0 and 1
   for (const auto &tuple : results) {
     type::Value v0 = tuple.GetValue(0);
-    EXPECT_EQ(type::Type::TypeId::INTEGER, v0.GetTypeId());
+    EXPECT_EQ(type::TypeId::INTEGER, v0.GetTypeId());
 
     LOG_DEBUG("=====> Output: %s", tuple.GetInfo().c_str());
 

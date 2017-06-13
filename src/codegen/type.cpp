@@ -29,13 +29,13 @@ class CastWithNullPropagation : public Type::Cast {
  public:
   CastWithNullPropagation(Type::Cast &inner_cast) : inner_cast_(inner_cast) {}
 
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
     return inner_cast_.SupportsTypes(from_type, to_type);
   }
 
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     // Do the cast
     Value ret = inner_cast_.DoCast(codegen, value, to_type);
 
@@ -57,24 +57,24 @@ class CastWithNullPropagation : public Type::Cast {
 //===----------------------------------------------------------------------===//
 
 struct CastBoolean : public Type::Cast {
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
-    return from_type == type::Type::TypeId::BOOLEAN &&
-           (to_type == type::Type::TypeId::INTEGER ||
-            to_type == type::Type::TypeId::VARCHAR);
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
+    return from_type == type::TypeId::BOOLEAN &&
+           (to_type == type::TypeId::INTEGER ||
+            to_type == type::TypeId::VARCHAR);
   }
 
   // Cast the boolean value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     // This function only does boolean -> int casting
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
-    if (to_type == type::Type::TypeId::INTEGER) {
+    if (to_type == type::TypeId::INTEGER) {
       // Any integral value requires a zero-extension
       return Value{to_type,
                    codegen->CreateZExt(value.GetValue(), codegen.Int32Type())};
-    } else if (to_type == type::Type::TypeId::VARCHAR) {
+    } else if (to_type == type::TypeId::VARCHAR) {
       // Convert this boolean (unsigned int) into a string
       llvm::Value *str_val = codegen->CreateSelect(
           value.GetValue(), codegen.ConstString("T"), codegen.ConstString("F"));
@@ -96,24 +96,24 @@ struct CastBoolean : public Type::Cast {
 //===----------------------------------------------------------------------===//
 
 struct CastInteger : public Type::Cast {
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
     return Type::IsIntegral(from_type) &&
            (Type::IsIntegral(to_type) || Type::IsNumeric(to_type) ||
-            to_type == type::Type::TypeId::VARCHAR ||
-            to_type == type::Type::TypeId::BOOLEAN);
+            to_type == type::TypeId::VARCHAR ||
+            to_type == type::TypeId::BOOLEAN);
   }
 
   // Cast the given integer value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Types for the casted-to type
     llvm::Type *val_type = nullptr, *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
 
-    if (to_type == type::Type::TypeId::BOOLEAN || Type::IsIntegral(to_type)) {
+    if (to_type == type::TypeId::BOOLEAN || Type::IsIntegral(to_type)) {
       // For integral casts, we need to either truncate or sign-extend
       uint32_t curr_size = Type::GetFixedSizeForType(value.GetType());
       uint32_t target_size = Type::GetFixedSizeForType(to_type);
@@ -133,7 +133,7 @@ struct CastInteger : public Type::Cast {
 
       // We're done
       return Value{to_type, res};
-    } else if (to_type == type::Type::TypeId::VARCHAR) {
+    } else if (to_type == type::TypeId::VARCHAR) {
       // TODO: Implement me
     }
 
@@ -152,17 +152,17 @@ struct CastInteger : public Type::Cast {
 //===----------------------------------------------------------------------===//
 
 struct CastDecimal : public Type::Cast {
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
     return Type::IsNumeric(from_type) &&
            (Type::IsIntegral(to_type) || Type::IsNumeric(to_type) ||
-            to_type == type::Type::TypeId::VARCHAR ||
-            to_type == type::Type::TypeId::BOOLEAN);
+            to_type == type::TypeId::VARCHAR ||
+            to_type == type::TypeId::BOOLEAN);
   }
 
   // Cast the given decimal value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Types for the casted-to type
@@ -172,7 +172,7 @@ struct CastDecimal : public Type::Cast {
     if (Type::IsIntegral(to_type)) {
       // Just convert it
       return Value{to_type, codegen->CreateFPToSI(value.GetValue(), val_type)};
-    } else if (to_type == type::Type::VARCHAR) {
+    } else if (to_type == type::TypeId::VARCHAR) {
       // TODO: Implement me
     }
 
@@ -191,30 +191,30 @@ struct CastDecimal : public Type::Cast {
 //===----------------------------------------------------------------------===//
 
 struct CastTimestamp : public Type::Cast {
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
-    return from_type == type::Type::TypeId::TIMESTAMP &&
-           (to_type == type::Type::TypeId::DATE ||
-            to_type == type::Type::TypeId::VARCHAR);
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
+    return from_type == type::TypeId::TIMESTAMP &&
+           (to_type == type::TypeId::DATE ||
+            to_type == type::TypeId::VARCHAR);
   }
 
   // Cast the given decimal value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Types for the casted-to type
     llvm::Type *val_type = nullptr, *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
 
-    if (to_type == type::Type::TypeId::DATE) {
+    if (to_type == type::TypeId::DATE) {
       // TODO: Fix me
       llvm::Value *date = codegen->CreateSDiv(
           value.GetValue(),
           codegen.Const64(type::TimestampType::kUsecsPerDate));
 
       return Value{to_type, codegen->CreateTrunc(date, codegen.Int32Type())};
-    } else if (to_type == type::Type::VARCHAR) {
+    } else if (to_type == type::TypeId::VARCHAR) {
       // TODO: Implement me
     }
 
@@ -232,23 +232,23 @@ struct CastTimestamp : public Type::Cast {
 //===----------------------------------------------------------------------===//
 
 struct CastDate : public Type::Cast {
-  bool SupportsTypes(type::Type::TypeId from_type,
-                     type::Type::TypeId to_type) const override {
-    return from_type == type::Type::TypeId::DATE &&
-           (to_type == type::Type::TypeId::TIMESTAMP ||
-            to_type == type::Type::TypeId::VARCHAR);
+  bool SupportsTypes(type::TypeId from_type,
+                     type::TypeId to_type) const override {
+    return from_type == type::TypeId::DATE &&
+           (to_type == type::TypeId::TIMESTAMP ||
+            to_type == type::TypeId::VARCHAR);
   }
 
   // Cast the given decimal value into the provided type
   Value DoCast(CodeGen &codegen, const Value &value,
-               type::Type::TypeId to_type) const override {
+               type::TypeId to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Types for the casted-to type
     llvm::Type *val_type = nullptr, *len_type = nullptr;
     Type::GetTypeForMaterialization(codegen, to_type, val_type, len_type);
 
-    if (to_type == type::Type::TypeId::TIMESTAMP) {
+    if (to_type == type::TypeId::TIMESTAMP) {
       // Date is number of days since 2000, timestamp is micros since same
 
       llvm::Value *zext_date =
@@ -257,7 +257,7 @@ struct CastDate : public Type::Cast {
           zext_date, codegen.Const64(type::TimestampType::kUsecsPerDate));
 
       return Value{to_type, timestamp};
-    } else if (to_type == type::Type::VARCHAR) {
+    } else if (to_type == type::TypeId::VARCHAR) {
       // TODO: Implement me
     }
 
@@ -299,8 +299,8 @@ class ComparisonWithNullPropagation : public Type::Comparison {
   ComparisonWithNullPropagation(Type::Comparison &inner_comparison)
       : inner_comparison_(inner_comparison) {}
 
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return inner_comparison_.SupportsTypes(left_type, right_type);
   }
 
@@ -352,13 +352,13 @@ class ComparisonWithNullPropagation : public Type::Comparison {
 //
 // Boolean comparisons can only compare two boolean types. So the assumption for
 // all the functions is that the types of both the left and right argument are
-// type::Type::TypeId::BOOLEAN.
+// type::TypeId::BOOLEAN.
 //===----------------------------------------------------------------------===//
 
 struct BooleanComparison : public Type::Comparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return left_type == type::Type::TypeId::BOOLEAN && left_type == right_type;
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
+    return left_type == type::TypeId::BOOLEAN && left_type == right_type;
   }
 
   Value DoCompareLt(CodeGen &codegen, const Value &left,
@@ -438,8 +438,8 @@ struct BooleanComparison : public Type::Comparison {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // For boolean sorting, we convert 1-bit boolean values into a 32-bit number
-    Value casted_left = left.CastTo(codegen, type::Type::TypeId::INTEGER);
-    Value casted_right = right.CastTo(codegen, type::Type::TypeId::INTEGER);
+    Value casted_left = left.CastTo(codegen, type::TypeId::INTEGER);
+    Value casted_right = right.CastTo(codegen, type::TypeId::INTEGER);
 
     return casted_left.Sub(codegen, casted_right);
   }
@@ -453,8 +453,8 @@ struct BooleanComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct IntegerComparison : public Type::Comparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return Type::IsIntegral(left_type) && left_type == right_type;
   }
 
@@ -468,7 +468,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpSLT(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareLte(CodeGen &codegen, const Value &left,
@@ -480,7 +480,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpSLE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareEq(CodeGen &codegen, const Value &left,
@@ -492,7 +492,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpEQ(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareNe(CodeGen &codegen, const Value &left,
@@ -504,7 +504,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpNE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGt(CodeGen &codegen, const Value &left,
@@ -516,7 +516,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpSGT(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGte(CodeGen &codegen, const Value &left,
@@ -528,7 +528,7 @@ struct IntegerComparison : public Type::Comparison {
         codegen->CreateICmpSGE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoComparisonForSort(CodeGen &codegen, const Value &left,
@@ -536,7 +536,7 @@ struct IntegerComparison : public Type::Comparison {
     // For integer comparisons, just subtract left from right and cast the
     // result to a 32-bit value
     Value sub_result = left.Sub(codegen, right);
-    return sub_result.CastTo(codegen, type::Type::TypeId::INTEGER);
+    return sub_result.CastTo(codegen, type::TypeId::INTEGER);
   }
 };
 
@@ -548,8 +548,8 @@ struct IntegerComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct DecimalComparison : public Type::Comparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return Type::IsNumeric(left_type) && left_type == right_type;
   }
 
@@ -562,7 +562,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpULT(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareLte(CodeGen &codegen, const Value &left,
@@ -574,7 +574,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpULE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareEq(CodeGen &codegen, const Value &left,
@@ -586,7 +586,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpUEQ(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareNe(CodeGen &codegen, const Value &left,
@@ -598,7 +598,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpUNE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGt(CodeGen &codegen, const Value &left,
@@ -610,7 +610,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpUGT(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGte(CodeGen &codegen, const Value &left,
@@ -622,7 +622,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFCmpUGE(left.GetValue(), right.GetValue());
 
     // Return the result
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoComparisonForSort(CodeGen &codegen, const Value &left,
@@ -637,7 +637,7 @@ struct DecimalComparison : public Type::Comparison {
         codegen->CreateFPToSI(result.GetValue(), codegen.Int32Type());
 
     // Return the result for sorting
-    return Value{type::Type::TypeId::INTEGER, casted_result};
+    return Value{type::TypeId::INTEGER, casted_result};
   }
 };
 
@@ -649,8 +649,8 @@ struct DecimalComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct VarlenComparison : public Type::Comparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return Type::IsVariableLength(left_type) && left_type == right_type;
   }
 
@@ -679,7 +679,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpSLT(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareLte(CodeGen &codegen, const Value &left,
@@ -693,7 +693,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpSLE(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareEq(CodeGen &codegen, const Value &left,
@@ -707,7 +707,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpEQ(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareNe(CodeGen &codegen, const Value &left,
@@ -721,7 +721,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpNE(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGt(CodeGen &codegen, const Value &left,
@@ -735,7 +735,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpSGT(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoCompareGte(CodeGen &codegen, const Value &left,
@@ -749,7 +749,7 @@ struct VarlenComparison : public Type::Comparison {
     result = codegen->CreateICmpSGE(result, codegen.Const32(0));
 
     // Return the comparison
-    return Value{type::Type::TypeId::BOOLEAN, result};
+    return Value{type::TypeId::BOOLEAN, result};
   }
 
   Value DoComparisonForSort(CodeGen &codegen, const Value &left,
@@ -760,7 +760,7 @@ struct VarlenComparison : public Type::Comparison {
     llvm::Value *result = CallCompareStrings(codegen, left, right);
 
     // Return the comparison
-    return Value{type::Type::TypeId::INTEGER, result};
+    return Value{type::TypeId::INTEGER, result};
   }
 };
 
@@ -771,9 +771,9 @@ struct VarlenComparison : public Type::Comparison {
 //===----------------------------------------------------------------------===//
 
 struct TimestampComparison : public IntegerComparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return left_type == type::Type::TypeId::TIMESTAMP &&
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
+    return left_type == type::TypeId::TIMESTAMP &&
            left_type == right_type;
   }
 };
@@ -785,9 +785,9 @@ struct TimestampComparison : public IntegerComparison {
 //===----------------------------------------------------------------------===//
 
 struct DateComparison : public IntegerComparison {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
-    return left_type == type::Type::TypeId::DATE && left_type == right_type;
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
+    return left_type == type::TypeId::DATE && left_type == right_type;
   }
 };
 
@@ -807,13 +807,13 @@ struct BinaryOperatorWithNullPropagation : public Type::BinaryOperator {
   BinaryOperatorWithNullPropagation(Type::BinaryOperator &inner_op)
       : inner_op_(inner_op) {}
 
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return inner_op_.SupportsTypes(left_type, right_type);
   }
 
-  type::Type::TypeId ResultType(type::Type::TypeId left_type,
-                                type::Type::TypeId right_type) const override {
+  type::TypeId ResultType(type::TypeId left_type,
+                                type::TypeId right_type) const override {
     return inner_op_.ResultType(left_type, right_type);
   }
 
@@ -862,14 +862,14 @@ struct BinaryOperatorWithNullPropagation : public Type::BinaryOperator {
 //===----------------------------------------------------------------------===//
 
 struct IntegerOps : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return Type::IsIntegral(left_type) && left_type == right_type;
   }
 
-  type::Type::TypeId ResultType(type::Type::TypeId left_type,
-                                type::Type::TypeId right_type) const override {
-    return static_cast<type::Type::TypeId>(std::max(
+  type::TypeId ResultType(type::TypeId left_type,
+                                type::TypeId right_type) const override {
+    return static_cast<type::TypeId>(std::max(
         static_cast<uint32_t>(left_type), static_cast<uint32_t>(right_type)));
   }
 };
@@ -938,7 +938,7 @@ struct IntegerDiv : public IntegerOps {
 
     // First, check if the divisor is zero
     codegen::Value div0 = right.CompareEq(
-        codegen, Value{type::Type::TypeId::INTEGER, codegen.Const32(0)});
+        codegen, Value{type::TypeId::INTEGER, codegen.Const32(0)});
 
     // Check if the caller cares about division-by-zero errors
 
@@ -985,7 +985,7 @@ struct IntegerMod : public IntegerOps {
 
     // First, check if the divisor is zero
     codegen::Value div0 = right.CompareEq(
-        codegen, Value{type::Type::TypeId::INTEGER, codegen.Const32(0)});
+        codegen, Value{type::TypeId::INTEGER, codegen.Const32(0)});
 
     // Check if the caller cares about division-by-zero errors
 
@@ -1037,15 +1037,15 @@ struct IntegerMod : public IntegerOps {
 //===----------------------------------------------------------------------===//
 
 struct DecimalOps : public Type::BinaryOperator {
-  bool SupportsTypes(type::Type::TypeId left_type,
-                     type::Type::TypeId right_type) const override {
+  bool SupportsTypes(type::TypeId left_type,
+                     type::TypeId right_type) const override {
     return Type::IsNumeric(left_type) && left_type == right_type;
   }
 
-  type::Type::TypeId ResultType(
-      UNUSED_ATTRIBUTE type::Type::TypeId left_type,
-      UNUSED_ATTRIBUTE type::Type::TypeId right_type) const override {
-    return type::Type::TypeId::DECIMAL;
+  type::TypeId ResultType(
+      UNUSED_ATTRIBUTE type::TypeId left_type,
+      UNUSED_ATTRIBUTE type::TypeId right_type) const override {
+    return type::TypeId::DECIMAL;
   }
 };
 
@@ -1059,7 +1059,7 @@ struct DecimalAdd : public DecimalOps {
         codegen->CreateFAdd(left.GetValue(), right.GetValue());
 
     // Return result
-    return Value{type::Type::TypeId::DECIMAL, result};
+    return Value{type::TypeId::DECIMAL, result};
   }
 };
 
@@ -1073,7 +1073,7 @@ struct DecimalSub : public DecimalOps {
         codegen->CreateFSub(left.GetValue(), right.GetValue());
 
     // Return result
-    return Value{type::Type::TypeId::DECIMAL, result};
+    return Value{type::TypeId::DECIMAL, result};
   }
 };
 
@@ -1087,7 +1087,7 @@ struct DecimalMul : public DecimalOps {
         codegen->CreateFMul(left.GetValue(), right.GetValue());
 
     // Return result
-    return Value{type::Type::TypeId::DECIMAL, result};
+    return Value{type::TypeId::DECIMAL, result};
   }
 };
 
@@ -1097,7 +1097,7 @@ struct DecimalDiv : public DecimalOps {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
-    codegen::Value zero{type::Type::TypeId::DECIMAL, codegen.ConstDouble(0.0)};
+    codegen::Value zero{type::TypeId::DECIMAL, codegen.ConstDouble(0.0)};
     codegen::Value div0 = right.CompareEq(codegen, zero);
 
     llvm::Value *result = nullptr;
@@ -1132,7 +1132,7 @@ struct DecimalDiv : public DecimalOps {
     }
 
     // Return result
-    return Value{type::Type::TypeId::DECIMAL, result};
+    return Value{type::TypeId::DECIMAL, result};
   }
 };
 
@@ -1142,7 +1142,7 @@ struct DecimalMod : public DecimalOps {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
-    codegen::Value zero{type::Type::TypeId::DECIMAL, codegen.ConstDouble(0.0)};
+    codegen::Value zero{type::TypeId::DECIMAL, codegen.ConstDouble(0.0)};
     codegen::Value div0 = right.CompareEq(codegen, zero);
 
     llvm::Value *result = nullptr;
@@ -1177,7 +1177,7 @@ struct DecimalMod : public DecimalOps {
     }
 
     // Return result
-    return Value{type::Type::TypeId::DECIMAL, result};
+    return Value{type::TypeId::DECIMAL, result};
   }
 };
 
@@ -1246,87 +1246,87 @@ const std::string Type::kOpNames[] = {"Negation", "Abs", "Add", "Sub",
 
 Type::ImplicitCastTable Type::kImplicitCastsTable = {
     // INVALID Casts ...
-    {type::Type::TypeId::INVALID, {}},
-    {type::Type::TypeId::PARAMETER_OFFSET, {}},
+    {type::TypeId::INVALID, {}},
+    {type::TypeId::PARAMETER_OFFSET, {}},
 
     // Boolean's can only be implicitly casted to integers
-    {type::Type::TypeId::BOOLEAN, {type::Type::TypeId::BOOLEAN}},
+    {type::TypeId::BOOLEAN, {type::TypeId::BOOLEAN}},
 
     // Tinyint's can be implicitly casted to any of the integral types
-    {type::Type::TypeId::TINYINT,
-     {type::Type::TypeId::TINYINT, type::Type::TypeId::SMALLINT,
-      type::Type::TypeId::INTEGER, type::Type::TypeId::BIGINT,
-      type::Type::TypeId::DECIMAL}},
+    {type::TypeId::TINYINT,
+     {type::TypeId::TINYINT, type::TypeId::SMALLINT,
+      type::TypeId::INTEGER, type::TypeId::BIGINT,
+      type::TypeId::DECIMAL}},
 
     // Smallints's can be implicitly casted to any of the integral types
-    {type::Type::TypeId::SMALLINT,
-     {type::Type::TypeId::SMALLINT, type::Type::TypeId::INTEGER,
-      type::Type::TypeId::BIGINT, type::Type::TypeId::DECIMAL}},
+    {type::TypeId::SMALLINT,
+     {type::TypeId::SMALLINT, type::TypeId::INTEGER,
+      type::TypeId::BIGINT, type::TypeId::DECIMAL}},
 
     // Integers's can be implicitly casted to any of the integral types
-    {type::Type::TypeId::INTEGER,
-     {type::Type::TypeId::INTEGER, type::Type::TypeId::BIGINT,
-      type::Type::TypeId::DECIMAL}},
+    {type::TypeId::INTEGER,
+     {type::TypeId::INTEGER, type::TypeId::BIGINT,
+      type::TypeId::DECIMAL}},
 
     // Tinyint's can be implicitly casted to any of the integral types
-    {type::Type::TypeId::BIGINT,
-     {type::Type::TypeId::BIGINT, type::Type::TypeId::DECIMAL}},
+    {type::TypeId::BIGINT,
+     {type::TypeId::BIGINT, type::TypeId::DECIMAL}},
 
     // Decimal's can be implicitly casted to any of the integral types
-    {type::Type::TypeId::DECIMAL, {type::Type::TypeId::DECIMAL}},
+    {type::TypeId::DECIMAL, {type::TypeId::DECIMAL}},
 
     // Timestamp's can only be implicitly casted to DATE
-    {type::Type::TypeId::TIMESTAMP,
-     {type::Type::TypeId::TIMESTAMP, type::Type::TypeId::DATE}},
+    {type::TypeId::TIMESTAMP,
+     {type::TypeId::TIMESTAMP, type::TypeId::DATE}},
 
     // Date's can only be implicitly casted to TIMESTAMP
-    {type::Type::TypeId::DATE,
-     {type::Type::TypeId::DATE, type::Type::TypeId::TIMESTAMP}},
+    {type::TypeId::DATE,
+     {type::TypeId::DATE, type::TypeId::TIMESTAMP}},
 
     // Varchars's can only be implicitly casted to itself
-    {type::Type::TypeId::VARCHAR, {type::Type::TypeId::VARCHAR}},
+    {type::TypeId::VARCHAR, {type::TypeId::VARCHAR}},
 
     // VARBINARY's can only be implicitly casted to itself
-    {type::Type::TypeId::VARBINARY, {type::Type::TypeId::VARBINARY}},
+    {type::TypeId::VARBINARY, {type::TypeId::VARBINARY}},
 
     // ARRAY's can only be implicitly casted to itself
-    {type::Type::TypeId::VARBINARY, {type::Type::TypeId::ARRAY}},
+    {type::TypeId::VARBINARY, {type::TypeId::ARRAY}},
 
     // UDT's define their own casting
-    {type::Type::TypeId::UDT, {}},
+    {type::TypeId::UDT, {}},
 };
 
 Type::CastingTable Type::kCastingTable = {
-    {type::Type::TypeId::INVALID, {}},
-    {type::Type::TypeId::PARAMETER_OFFSET, {}},
-    {type::Type::TypeId::BOOLEAN, {&kWrappedCastBoolean}},
-    {type::Type::TypeId::TINYINT, {&kWrappedCastInteger}},
-    {type::Type::TypeId::SMALLINT, {&kWrappedCastInteger}},
-    {type::Type::TypeId::INTEGER, {&kWrappedCastInteger}},
-    {type::Type::TypeId::BIGINT, {&kWrappedCastInteger}},
-    {type::Type::TypeId::DECIMAL, {&kWrappedCastDecimal}},
-    {type::Type::TypeId::TIMESTAMP, {&kWrappedCastTimestamp}},
-    {type::Type::TypeId::DATE, {&kWrappedCastDate}},
-    {type::Type::TypeId::VARCHAR, {}},
-    {type::Type::TypeId::VARBINARY, {}},
-    {type::Type::TypeId::ARRAY, {}},
-    {type::Type::TypeId::UDT, {}}};
+    {type::TypeId::INVALID, {}},
+    {type::TypeId::PARAMETER_OFFSET, {}},
+    {type::TypeId::BOOLEAN, {&kWrappedCastBoolean}},
+    {type::TypeId::TINYINT, {&kWrappedCastInteger}},
+    {type::TypeId::SMALLINT, {&kWrappedCastInteger}},
+    {type::TypeId::INTEGER, {&kWrappedCastInteger}},
+    {type::TypeId::BIGINT, {&kWrappedCastInteger}},
+    {type::TypeId::DECIMAL, {&kWrappedCastDecimal}},
+    {type::TypeId::TIMESTAMP, {&kWrappedCastTimestamp}},
+    {type::TypeId::DATE, {&kWrappedCastDate}},
+    {type::TypeId::VARCHAR, {}},
+    {type::TypeId::VARBINARY, {}},
+    {type::TypeId::ARRAY, {}},
+    {type::TypeId::UDT, {}}};
 
 Type::ComparisonTable Type::kComparisonTable = {
-    {type::Type::TypeId::INVALID, {}},
-    {type::Type::TypeId::PARAMETER_OFFSET, {}},
-    {type::Type::TypeId::BOOLEAN, {&kWrappedBooleanComparison}},
-    {type::Type::TypeId::TINYINT, {&kWrappedIntegerComparison}},
-    {type::Type::TypeId::SMALLINT, {&kWrappedIntegerComparison}},
-    {type::Type::TypeId::INTEGER, {&kWrappedIntegerComparison}},
-    {type::Type::TypeId::BIGINT, {&kWrappedIntegerComparison}},
-    {type::Type::TypeId::DECIMAL, {&kWrappedDecimalComparison}},
-    {type::Type::TypeId::TIMESTAMP, {&kWrappedTimestampComparison}},
-    {type::Type::TypeId::DATE, {&kWrappedDateComparison}},
-    {type::Type::TypeId::VARCHAR, {&kWrappedVarlenComparison}},
-    {type::Type::TypeId::VARBINARY, {}},
-    {type::Type::TypeId::ARRAY, {}},
-    {type::Type::TypeId::UDT, {}}};
+    {type::TypeId::INVALID, {}},
+    {type::TypeId::PARAMETER_OFFSET, {}},
+    {type::TypeId::BOOLEAN, {&kWrappedBooleanComparison}},
+    {type::TypeId::TINYINT, {&kWrappedIntegerComparison}},
+    {type::TypeId::SMALLINT, {&kWrappedIntegerComparison}},
+    {type::TypeId::INTEGER, {&kWrappedIntegerComparison}},
+    {type::TypeId::BIGINT, {&kWrappedIntegerComparison}},
+    {type::TypeId::DECIMAL, {&kWrappedDecimalComparison}},
+    {type::TypeId::TIMESTAMP, {&kWrappedTimestampComparison}},
+    {type::TypeId::DATE, {&kWrappedDateComparison}},
+    {type::TypeId::VARCHAR, {&kWrappedVarlenComparison}},
+    {type::TypeId::VARBINARY, {}},
+    {type::TypeId::ARRAY, {}},
+    {type::TypeId::UDT, {}}};
 
 Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
     {Type::OperatorId::Add, {&kWrappedIntegerAdd, &kWrappedDecimalAdd}},
@@ -1336,22 +1336,22 @@ Type::BinaryOperatorTable Type::kBuiltinBinaryOperatorsTable = {
     {Type::OperatorId::Mod, {&kWrappedIntegerMod, &kWrappedDecimalMod}}};
 
 // Get the number of bytes needed to store the given type
-uint32_t Type::GetFixedSizeForType(type::Type::TypeId type_id) {
+uint32_t Type::GetFixedSizeForType(type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::BOOLEAN:
+    case type::TypeId::TINYINT:
       return 1;
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       return 2;
-    case type::Type::TypeId::INTEGER:
-    case type::Type::TypeId::DATE:
+    case type::TypeId::INTEGER:
+    case type::TypeId::DATE:
       return 4;
-    case type::Type::TypeId::BIGINT:
-    case type::Type::TypeId::DECIMAL:
-    case type::Type::TypeId::TIMESTAMP:
-    case type::Type::TypeId::VARCHAR:
-    case type::Type::TypeId::VARBINARY:
-    case type::Type::TypeId::ARRAY:
+    case type::TypeId::BIGINT:
+    case type::TypeId::DECIMAL:
+    case type::TypeId::TIMESTAMP:
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
+    case type::TypeId::ARRAY:
       return 8;
     default:
       break;
@@ -1361,12 +1361,12 @@ uint32_t Type::GetFixedSizeForType(type::Type::TypeId type_id) {
   throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
 }
 
-bool Type::IsIntegral(type::Type::TypeId type_id) {
+bool Type::IsIntegral(type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::TINYINT:
-    case type::Type::TypeId::SMALLINT:
-    case type::Type::TypeId::INTEGER:
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::TINYINT:
+    case type::TypeId::SMALLINT:
+    case type::TypeId::INTEGER:
+    case type::TypeId::BIGINT:
       return true;
     default:
       return false;
@@ -1374,33 +1374,33 @@ bool Type::IsIntegral(type::Type::TypeId type_id) {
 }
 
 void Type::GetTypeForMaterialization(CodeGen &codegen,
-                                     type::Type::TypeId type_id,
+                                     type::TypeId type_id,
                                      llvm::Type *&val_type,
                                      llvm::Type *&len_type) {
-  PL_ASSERT(type_id != type::Type::TypeId::INVALID);
+  PL_ASSERT(type_id != type::TypeId::INVALID);
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       val_type = codegen.BoolType();
       break;
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::TINYINT:
       val_type = codegen.Int8Type();
       break;
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       val_type = codegen.Int16Type();
       break;
-    case type::Type::TypeId::DATE:
-    case type::Type::TypeId::INTEGER:
+    case type::TypeId::DATE:
+    case type::TypeId::INTEGER:
       val_type = codegen.Int32Type();
       break;
-    case type::Type::TypeId::TIMESTAMP:
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::TIMESTAMP:
+    case type::TypeId::BIGINT:
       val_type = codegen.Int64Type();
       break;
-    case type::Type::TypeId::DECIMAL:
+    case type::TypeId::DECIMAL:
       val_type = codegen.DoubleType();
       break;
-    case type::Type::TypeId::VARBINARY:
-    case type::Type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
+    case type::TypeId::VARCHAR:
       val_type = codegen.CharPtrType();
       len_type = codegen.Int32Type();
       break;
@@ -1411,8 +1411,8 @@ void Type::GetTypeForMaterialization(CodeGen &codegen,
   }
 }
 
-bool Type::CanImplicitlyCastTo(type::Type::TypeId from_type,
-                               type::Type::TypeId to_type) {
+bool Type::CanImplicitlyCastTo(type::TypeId from_type,
+                               type::TypeId to_type) {
   const auto &implicit_casts = kImplicitCastsTable[from_type];
   for (auto &castable_type : implicit_casts) {
     if (castable_type == to_type) {
@@ -1422,23 +1422,23 @@ bool Type::CanImplicitlyCastTo(type::Type::TypeId from_type,
   return false;
 }
 
-Value Type::GetMinValue(CodeGen &codegen, type::Type::TypeId type_id) {
+Value Type::GetMinValue(CodeGen &codegen, type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_MIN)};
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::TINYINT:
       return Value{type_id, codegen.Const8(type::PELOTON_INT8_MIN)};
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       return Value{type_id, codegen.Const16(type::PELOTON_INT16_MIN)};
-    case type::Type::TypeId::INTEGER:
+    case type::TypeId::INTEGER:
       return Value{type_id, codegen.Const32(type::PELOTON_INT32_MIN)};
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::BIGINT:
       return Value{type_id, codegen.Const64(type::PELOTON_INT64_MIN)};
-    case type::Type::TypeId::DECIMAL:
+    case type::TypeId::DECIMAL:
       return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MIN)};
-    case type::Type::TypeId::TIMESTAMP:
+    case type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MIN)};
-    case type::Type::TypeId::DATE:
+    case type::TypeId::DATE:
       return Value{type_id, codegen.Const32(type::PELOTON_DATE_MIN)};
     default: {
       auto msg = StringUtil::Format("No minimum value for type '%s'",
@@ -1448,23 +1448,23 @@ Value Type::GetMinValue(CodeGen &codegen, type::Type::TypeId type_id) {
   }
 }
 
-Value Type::GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id) {
+Value Type::GetMaxValue(CodeGen &codegen, type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_MAX)};
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::TINYINT:
       return Value{type_id, codegen.Const8(type::PELOTON_INT8_MAX)};
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       return Value{type_id, codegen.Const16(type::PELOTON_INT16_MAX)};
-    case type::Type::TypeId::INTEGER:
+    case type::TypeId::INTEGER:
       return Value{type_id, codegen.Const32(type::PELOTON_INT32_MAX)};
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::BIGINT:
       return Value{type_id, codegen.Const64(type::PELOTON_INT64_MAX)};
-    case type::Type::TypeId::DECIMAL:
+    case type::TypeId::DECIMAL:
       return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_MAX)};
-    case type::Type::TypeId::TIMESTAMP:
+    case type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_MAX)};
-    case type::Type::TypeId::DATE:
+    case type::TypeId::DATE:
       return Value{type_id, codegen.Const64(type::PELOTON_DATE_MAX)};
     default: {
       auto msg = StringUtil::Format("No maximum value for type '%s'",
@@ -1474,34 +1474,34 @@ Value Type::GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id) {
   }
 }
 
-Value Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
+Value Type::GetNullValue(CodeGen &codegen, type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       return Value{type_id, codegen.ConstBool(type::PELOTON_BOOLEAN_NULL),
                    nullptr, codegen.ConstBool(true)};
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::TINYINT:
       return Value{type_id, codegen.Const8(type::PELOTON_INT8_NULL), nullptr,
                    codegen.ConstBool(true)};
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       return Value{type_id, codegen.Const16(type::PELOTON_INT16_NULL), nullptr,
                    codegen.ConstBool(true)};
-    case type::Type::TypeId::INTEGER:
+    case type::TypeId::INTEGER:
       return Value{type_id, codegen.Const32(type::PELOTON_INT32_NULL), nullptr,
                    codegen.ConstBool(true)};
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::BIGINT:
       return Value{type_id, codegen.Const64(type::PELOTON_INT64_NULL), nullptr,
                    codegen.ConstBool(true)};
-    case type::Type::TypeId::DECIMAL:
+    case type::TypeId::DECIMAL:
       return Value{type_id, codegen.ConstDouble(type::PELOTON_DECIMAL_NULL),
                    nullptr, codegen.ConstBool(true)};
-    case type::Type::TypeId::DATE:
+    case type::TypeId::DATE:
       return Value{type_id, codegen.Const32(type::PELOTON_DATE_NULL), nullptr,
                    codegen.ConstBool(true)};
-    case type::Type::TypeId::TIMESTAMP:
+    case type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(type::PELOTON_TIMESTAMP_NULL),
                    nullptr, codegen.ConstBool(true)};
-    case type::Type::TypeId::VARBINARY:
-    case type::Type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
+    case type::TypeId::VARCHAR:
       return Value{type_id, codegen.NullPtr(codegen.CharPtrType()),
                    codegen.Const32(0), codegen.ConstBool(true)};
     default: {
@@ -1512,23 +1512,23 @@ Value Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
   }
 }
 
-Value Type::GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id) {
+Value Type::GetDefaultValue(CodeGen &codegen, type::TypeId type_id) {
   switch (type_id) {
-    case type::Type::TypeId::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       return Value{type_id, codegen.ConstBool(false)};
-    case type::Type::TypeId::TINYINT:
+    case type::TypeId::TINYINT:
       return Value{type_id, codegen.Const8(0)};
-    case type::Type::TypeId::SMALLINT:
+    case type::TypeId::SMALLINT:
       return Value{type_id, codegen.Const16(0)};
-    case type::Type::TypeId::INTEGER:
+    case type::TypeId::INTEGER:
       return Value{type_id, codegen.Const32(0)};
-    case type::Type::TypeId::BIGINT:
+    case type::TypeId::BIGINT:
       return Value{type_id, codegen.Const64(0)};
-    case type::Type::TypeId::DECIMAL:
+    case type::TypeId::DECIMAL:
       return Value{type_id, codegen.ConstDouble(0.0)};
-    case type::Type::TypeId::DATE:
+    case type::TypeId::DATE:
       return Value{type_id, codegen.Const32(0)};
-    case type::Type::TypeId::TIMESTAMP:
+    case type::TypeId::TIMESTAMP:
       return Value{type_id, codegen.Const64(0)};
     default: {
       auto msg = StringUtil::Format("No default value for type '%s'",
@@ -1538,8 +1538,8 @@ Value Type::GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id) {
   }
 }
 
-const Type::Cast *Type::GetCast(type::Type::TypeId from_type,
-                                type::Type::TypeId to_type) {
+const Type::Cast *Type::GetCast(type::TypeId from_type,
+                                type::TypeId to_type) {
   const auto &casting_impls = kCastingTable[from_type];
   for (const auto &cast_impl : casting_impls) {
     if (cast_impl->SupportsTypes(from_type, to_type)) {
@@ -1552,8 +1552,8 @@ const Type::Cast *Type::GetCast(type::Type::TypeId from_type,
 }
 
 const Type::Comparison *Type::GetComparison(
-    type::Type::TypeId left_type, type::Type::TypeId &left_casted_type,
-    type::Type::TypeId right_type, type::Type::TypeId &right_casted_type) {
+    type::TypeId left_type, type::TypeId &left_casted_type,
+    type::TypeId right_type, type::TypeId &right_casted_type) {
   // Operator resolution works as follows:
   // 1. Try to find an implementation that requires no implicit casting.
   // 2. Try to find an implementation that requires casting only the left input
@@ -1589,9 +1589,9 @@ const Type::Comparison *Type::GetComparison(
 }
 
 const Type::BinaryOperator *Type::GetBinaryOperator(
-    OperatorId op_id, type::Type::TypeId left_type,
-    type::Type::TypeId &left_casted_type, type::Type::TypeId right_type,
-    type::Type::TypeId &right_casted_type) {
+    OperatorId op_id, type::TypeId left_type,
+    type::TypeId &left_casted_type, type::TypeId right_type,
+    type::TypeId &right_casted_type) {
   const auto &iter = kBuiltinBinaryOperatorsTable.find(op_id);
   PL_ASSERT(iter != kBuiltinBinaryOperatorsTable.end());
 

@@ -218,7 +218,7 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
     // Reify the boolean value since it may be NULL
-    PL_ASSERT(valid_row.GetType() == type::Type::TypeId::BOOLEAN);
+    PL_ASSERT(valid_row.GetType() == type::TypeId::BOOLEAN);
     llvm::Value *bool_val = valid_row.ReifyBoolean(codegen);
 
     // Set the validity of the row

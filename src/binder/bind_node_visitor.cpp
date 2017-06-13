@@ -125,7 +125,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     std::transform(col_name.begin(), col_name.end(), col_name.begin(),
                    ::tolower);
 
-    type::Type::TypeId value_type;
+    type::TypeId value_type;
     // Table name not specified in the expression
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,

@@ -31,20 +31,20 @@ namespace peloton {
 namespace type {
 
 Type* Type::kTypes[] = {
-    new Type(Type::INVALID),
-    new IntegerType(Type::PARAMETER_OFFSET),
+    new Type(TypeId::INVALID),
+    new IntegerType(TypeId::PARAMETER_OFFSET),
     new BooleanType(),
     new TinyintType(),
     new SmallintType(),
-    new IntegerType(Type::INTEGER),
+    new IntegerType(TypeId::INTEGER),
     new BigintType(),
     new DecimalType(),
     new TimestampType(),
     new DateType(),  // not yet implemented
-    new VarlenType(Type::VARCHAR),
-    new VarlenType(Type::VARBINARY),
+    new VarlenType(TypeId::VARCHAR),
+    new VarlenType(TypeId::VARBINARY),
     new ArrayType(),
-    new Type(Type::UDT),  // not yet implemented
+    new Type(TypeId::UDT),  // not yet implemented
 };
 
 // Get the size of this data type in bytes
@@ -360,7 +360,7 @@ Value Type::Copy(const Value& val UNUSED_ATTRIBUTE) const {
 }
 
 Value Type::CastAs(const Value& val UNUSED_ATTRIBUTE,
-                   const Type::TypeId type_id UNUSED_ATTRIBUTE) const {
+                   const TypeId type_id UNUSED_ATTRIBUTE) const {
   std::string msg = StringUtil::Format("CastAs not implemented for type '%s'",
                                        TypeIdToString(type_id_).c_str());
   throw peloton::NotImplementedException(msg);
@@ -397,7 +397,7 @@ Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE,
   throw peloton::NotImplementedException(msg);
 }
 
-Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const {
+TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const {
   return type_id_;
 }
 

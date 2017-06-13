@@ -59,7 +59,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto table_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
   table_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
@@ -67,43 +67,43 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "column_name", false);
+      catalog::Column(type::TypeId::VARCHAR, max_name_size, "column_name", false);
   column_name_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
   column_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "column_id", true);
   column_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_offset_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "column_offset", true);
   column_offset_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_type_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "column_type", false);
+      catalog::Column(type::TypeId::VARCHAR, max_name_size, "column_type", false);
   column_type_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto is_inlined_column = catalog::Column(
-      type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "is_inlined", true);
   is_inlined_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto is_primary_column = catalog::Column(
-      type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "is_primary", true);
   is_primary_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto is_not_null_column = catalog::Column(
-      type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "is_not_null", true);
   is_not_null_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
@@ -118,7 +118,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
 
 bool ColumnCatalog::InsertColumn(
     oid_t table_oid, const std::string &column_name, oid_t column_id,
-    oid_t column_offset, type::Type::TypeId column_type, bool is_inlined,
+    oid_t column_offset, type::TypeId column_type, bool is_inlined,
     const std::vector<Constraint> &constraints, type::AbstractPool *pool,
     concurrency::Transaction *txn) {
   // Create the tuple first
@@ -278,7 +278,7 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_id,
   return column_name;
 }
 
-type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
+type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
                                                 std::string column_name,
                                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // column_type
@@ -291,7 +291,7 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  type::Type::TypeId column_type = type::Type::TypeId::INVALID;
+  type::TypeId column_type = type::TypeId::INVALID;
   PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
@@ -299,14 +299,14 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       column_type =
           (*result_tiles)[0]
               ->GetValue(0, 0)
-              .GetAs<type::Type::TypeId>();  // After projection left 1 column
+              .GetAs<type::TypeId>();  // After projection left 1 column
     }
   }
 
   return column_type;
 }
 
-type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
+type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
                                                 oid_t column_id,
                                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // column_type
@@ -318,7 +318,7 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  type::Type::TypeId column_type = type::Type::TypeId::INVALID;
+  type::TypeId column_type = type::TypeId::INVALID;
   PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
@@ -326,7 +326,7 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       column_type =
           (*result_tiles)[0]
               ->GetValue(0, 0)
-              .GetAs<type::Type::TypeId>();  // After projection left 1 column
+              .GetAs<type::TypeId>();  // After projection left 1 column
     }
   }
 

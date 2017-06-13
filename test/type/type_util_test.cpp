@@ -29,10 +29,10 @@ class TypeUtilTests : public PelotonTest {};
 
 catalog::Schema* TypeUtilTestsGenerateSchema() {
   // Construct Tuple Schema
-  std::vector<type::Type::TypeId> col_types = {
-      type::Type::BOOLEAN,   type::Type::TINYINT, type::Type::SMALLINT,
-      type::Type::INTEGER,   type::Type::BIGINT,  type::Type::DECIMAL,
-      type::Type::TIMESTAMP, type::Type::VARCHAR};
+  std::vector<type::TypeId> col_types = {
+      type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
+      type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
+      type::TypeId::TIMESTAMP, type::TypeId::VARCHAR};
   std::vector<catalog::Column> column_list;
   const int num_cols = (int)col_types.size();
   const char column_char = 'A';
@@ -42,7 +42,7 @@ catalog::Schema* TypeUtilTestsGenerateSchema() {
 
     bool inlined = true;
     int length = type::Type::GetTypeSize(col_types[i]);
-    if (col_types[i] == type::Type::VARCHAR) {
+    if (col_types[i] == type::TypeId::VARCHAR) {
       inlined = false;
       length = 32;
     }
@@ -64,40 +64,40 @@ std::shared_ptr<storage::Tuple> TypeUtilTestsHelper(catalog::Schema* schema,
     int val = (10 * i) + tuple_id;
     auto col_type = schema->GetColumn(i).GetType();
     switch (col_type) {
-      case type::Type::BOOLEAN: {
+      case type::TypeId::BOOLEAN: {
         bool boolVal = (tuple_id == 0);
         tuple->SetValue(i, type::ValueFactory::GetBooleanValue(boolVal), pool);
         break;
       }
-      case type::Type::TINYINT: {
+      case type::TypeId::TINYINT: {
         tuple->SetValue(i, type::ValueFactory::GetTinyIntValue(val), pool);
         break;
       }
-      case type::Type::SMALLINT: {
+      case type::TypeId::SMALLINT: {
         tuple->SetValue(i, type::ValueFactory::GetSmallIntValue(val), pool);
         break;
       }
-      case type::Type::INTEGER: {
+      case type::TypeId::INTEGER: {
         tuple->SetValue(i, type::ValueFactory::GetIntegerValue(val), pool);
         break;
       }
-      case type::Type::BIGINT: {
+      case type::TypeId::BIGINT: {
         tuple->SetValue(i, type::ValueFactory::GetBigIntValue(val), pool);
         break;
       }
-      case type::Type::DECIMAL: {
+      case type::TypeId::DECIMAL: {
         tuple->SetValue(
             i, type::ValueFactory::GetDecimalValue(static_cast<double>(val)),
             pool);
         break;
       }
-      case type::Type::TIMESTAMP: {
+      case type::TypeId::TIMESTAMP: {
         tuple->SetValue(i, type::ValueFactory::GetTimestampValue(
                                static_cast<uint64_t>(val)),
                         pool);
         break;
       }
-      case type::Type::VARCHAR: {
+      case type::TypeId::VARCHAR: {
         std::ostringstream os;
         os << "TupleID=" << tuple_id << "::";
         for (int j = 0; j < 10; j++) {

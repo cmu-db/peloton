@@ -22,7 +22,7 @@ class IntegerType : public IntegerParentType {
  public:
   ~IntegerType() {}
 
-  IntegerType(Type::TypeId type);
+  IntegerType(TypeId type);
 
   // Other mathematical functions
   Value Add(const Value& left, const Value &right) const override;
@@ -40,7 +40,7 @@ class IntegerType : public IntegerParentType {
   CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
   CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const TypeId type_id) const override;
 
   // Debug
   std::string ToString(const Value& val) const override;

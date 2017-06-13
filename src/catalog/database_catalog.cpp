@@ -53,7 +53,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
 
   auto database_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
   database_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
@@ -61,7 +61,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
-      type::Type::VARCHAR, max_name_size, "database_name", false);
+      type::TypeId::VARCHAR, max_name_size, "database_name", false);
   database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 

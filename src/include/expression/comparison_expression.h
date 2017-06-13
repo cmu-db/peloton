@@ -29,11 +29,11 @@ class ComparisonExpression : public AbstractExpression {
   ~ComparisonExpression() {}
 
   ComparisonExpression(ExpressionType type)
-      : AbstractExpression(type, type::Type::BOOLEAN) {}
+      : AbstractExpression(type, type::TypeId::BOOLEAN) {}
 
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
-      : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, type::TypeId::BOOLEAN, left, right) {}
 
   type::Value Evaluate(
       const AbstractTuple *tuple1,

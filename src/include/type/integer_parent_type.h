@@ -44,7 +44,7 @@ class IntegerParentType : public NumericType {
   virtual CmpBool CompareGreaterThan(const Value& left, const Value &right) const override = 0;
   virtual CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override = 0;
 
-  virtual Value CastAs(const Value& val, const Type::TypeId type_id) const override = 0;
+  virtual Value CastAs(const Value& val, const TypeId type_id) const override = 0;
 
   // Integer types are always inlined
   bool IsInlined(const Value&) const override { return true; }

@@ -61,7 +61,7 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
 
   auto index_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_oid", true);
   index_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
@@ -69,36 +69,36 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "index_name", false);
+      catalog::Column(type::TypeId::VARCHAR, max_name_size, "index_name", false);
   index_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto table_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_type_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_type", true);
   index_type_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_constraint_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_constraint", true);
   index_constraint_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto unique_keys = catalog::Column(
-      type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "unique_keys", true);
   unique_keys.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto indexed_attributes_column = catalog::Column(
-      type::Type::VARCHAR, max_name_size, "indexed_attributes", false);
+      type::TypeId::VARCHAR, max_name_size, "indexed_attributes", false);
   indexed_attributes_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(

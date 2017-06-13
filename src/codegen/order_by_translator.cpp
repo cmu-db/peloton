@@ -48,7 +48,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // the storage slot for every sort key.
 
   // The format of the tuple that is materialized in the sorter
-  std::vector<type::Type::TypeId> tuple_desc;
+  std::vector<type::TypeId> tuple_desc;
 
   // The mapping of column IDs to its position in the sorted tuple
   std::unordered_map<oid_t, uint32_t> col_id_map;
@@ -191,7 +191,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   }
 
   // Do the remaining comparisons using cheaper options
-  const codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
+  const codegen::Value zero{type::TypeId::INTEGER, codegen.Const32(0)};
   for (size_t idx = 1; idx < sort_keys.size(); idx++) {
     codegen::Value comp_result;
     if (!descend_flags[idx]) {
@@ -204,7 +204,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
     // forward the comparison result of the previous attributes
     auto prev_zero = result.CompareEq(codegen, zero);
     result = codegen::Value{
-        type::Type::TypeId::INTEGER,
+        type::TypeId::INTEGER,
         codegen->CreateSelect(prev_zero.GetValue(), comp_result.GetValue(),
                               result.GetValue())};
   }

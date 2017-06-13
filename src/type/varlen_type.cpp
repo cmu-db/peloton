@@ -26,13 +26,13 @@ namespace type {
   uint32_t len1 = GetLength(left) - 1; \
   const char *str2; \
   uint32_t len2; \
-  if (right.GetTypeId() == Type::VARCHAR) { \
+  if (right.GetTypeId() == TypeId::VARCHAR) { \
     str2 = right.GetData(); \
     len2 = GetLength(right) - 1; \
     return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
                                                str2, len2) OP 0); \
   } else { \
-    auto r_value = right.CastAs(Type::VARCHAR); \
+    auto r_value = right.CastAs(TypeId::VARCHAR); \
     str2 = r_value.GetData(); \
     len2 = GetLength(r_value) - 1; \
     return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
@@ -154,7 +154,7 @@ std::string VarlenType::ToString(const Value &val) const {
   if (len == 0) {
     return "";
   }
-  if (GetTypeId() == Type::VARBINARY) return std::string(GetData(val), len);
+  if (GetTypeId() == TypeId::VARBINARY) return std::string(GetData(val), len);
   return std::string(GetData(val), len - 1);
 }
 
@@ -216,24 +216,24 @@ Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 
 Value VarlenType::Copy(const Value &val) const { return Value(val); }
 
-Value VarlenType::CastAs(const Value &val, const Type::TypeId type_id) const {
+Value VarlenType::CastAs(const Value &val, const TypeId type_id) const {
   switch (type_id) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       return ValueFactory::CastAsBoolean(val);
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       return ValueFactory::CastAsTinyInt(val);
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       return ValueFactory::CastAsSmallInt(val);
-    case Type::INTEGER:
+    case TypeId::INTEGER:
       return ValueFactory::CastAsInteger(val);
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       return ValueFactory::CastAsBigInt(val);
-    case Type::DECIMAL:
+    case TypeId::DECIMAL:
       return ValueFactory::CastAsDecimal(val);
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       return ValueFactory::CastAsTimestamp(val);
-    case Type::VARCHAR:
-    case Type::VARBINARY:
+    case TypeId::VARCHAR:
+    case TypeId::VARBINARY:
       return val.Copy();
     default:
       break;

@@ -22,7 +22,7 @@ namespace catalog {
 
 // Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(
-    const std::vector<type::Type::TypeId> &column_types,
+    const std::vector<type::TypeId> &column_types,
     const std::vector<oid_t> &column_lengths,
     const std::vector<std::string> &column_names,
     const std::vector<bool> &is_inlined) {
@@ -57,7 +57,7 @@ Schema::Schema(const std::vector<Column> &columns)
     : length(0), tuple_is_inlined(false) {
   oid_t column_count = columns.size();
 
-  std::vector<type::Type::TypeId> column_types;
+  std::vector<type::TypeId> column_types;
   std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
   std::vector<bool> is_inlined;

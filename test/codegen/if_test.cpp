@@ -43,15 +43,15 @@ TEST_F(IfTest, TestIfOnly) {
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
-    codegen::Value va(type::Type::TypeId::INTEGER);
-    codegen::Value vb(type::Type::TypeId::INTEGER);
+    codegen::Value va(type::TypeId::INTEGER);
+    codegen::Value vb(type::TypeId::INTEGER);
     codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
-      va = {type::Type::TypeId::INTEGER, cg.Const32(1)};
+      va = {type::TypeId::INTEGER, cg.Const32(1)};
     }
     cond.ElseBlock();
     {
-      vb = {type::Type::TypeId::INTEGER, cg.Const32(0)};
+      vb = {type::TypeId::INTEGER, cg.Const32(0)};
     }
     cond.EndIf();
     func.ReturnAndFinish(cond.BuildPHI(va, vb).GetValue());
@@ -155,21 +155,21 @@ TEST_F(IfTest, ComplexNestedIf) {
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
-    codegen::Value vab(type::Type::TypeId::INTEGER);
-    codegen::Value vc(type::Type::TypeId::INTEGER);
+    codegen::Value vab(type::TypeId::INTEGER);
+    codegen::Value vc(type::TypeId::INTEGER);
     codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
-      codegen::Value va(type::Type::TypeId::INTEGER);
-      codegen::Value vb(type::Type::TypeId::INTEGER);
+      codegen::Value va(type::TypeId::INTEGER);
+      codegen::Value vb(type::TypeId::INTEGER);
       codegen::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
-      { va = {type::Type::TypeId::INTEGER, cg.Const32(-1)}; }
+      { va = {type::TypeId::INTEGER, cg.Const32(-1)}; }
       cond2.ElseBlock();
-      { vb = {type::Type::TypeId::INTEGER, cg.Const32(0)}; }
+      { vb = {type::TypeId::INTEGER, cg.Const32(0)}; }
       cond2.EndIf();
       vab = cond2.BuildPHI(va, vb);
     }
     cond.ElseBlock();
-    { vc = {type::Type::TypeId::INTEGER, cg.Const32(1)}; }
+    { vc = {type::TypeId::INTEGER, cg.Const32(1)}; }
     cond.EndIf();
     func.ReturnAndFinish(cond.BuildPHI(vab, vc).GetValue());
   }

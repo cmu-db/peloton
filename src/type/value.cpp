@@ -27,8 +27,8 @@ Value::Value(const Value &other) {
   size_ = other.size_;
   manage_data_ = other.manage_data_;
   switch (type_id_) {
-    case Type::VARCHAR:
-    case Type::VARBINARY:
+    case TypeId::VARCHAR:
+    case TypeId::VARBINARY:
       if (size_.len == PELOTON_VALUE_NULL) {
         value_.varlen = nullptr;
       } else {
@@ -55,35 +55,35 @@ Value &Value::operator=(Value other) {
 // ARRAY is implemented in the header to ease template creation
 
 // BOOLEAN and TINYINT
-Value::Value(Type::TypeId type, int8_t i) : Value(type) {
+Value::Value(TypeId type, int8_t i) : Value(type) {
   switch (type) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       value_.boolean = i;
       size_.len =
           (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       value_.tinyint = i;
       size_.len =
           (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       value_.smallint = i;
       size_.len =
           (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::INTEGER:
-    case Type::PARAMETER_OFFSET:
+    case TypeId::INTEGER:
+    case TypeId::PARAMETER_OFFSET:
       value_.integer = i;
       size_.len =
           (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       value_.bigint = i;
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
@@ -98,35 +98,35 @@ Value::Value(Type::TypeId type, int8_t i) : Value(type) {
 }
 
 // SMALLINT
-Value::Value(Type::TypeId type, int16_t i) : Value(type) {
+Value::Value(TypeId type, int16_t i) : Value(type) {
   switch (type) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       value_.boolean = i;
       size_.len =
           (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       value_.tinyint = i;
       size_.len =
           (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       value_.smallint = i;
       size_.len =
           (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::INTEGER:
-    case Type::PARAMETER_OFFSET:
+    case TypeId::INTEGER:
+    case TypeId::PARAMETER_OFFSET:
       value_.integer = i;
       size_.len =
           (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       value_.bigint = i;
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
@@ -141,39 +141,39 @@ Value::Value(Type::TypeId type, int16_t i) : Value(type) {
 }
 
 // INTEGER and PARAMETER_OFFSET
-Value::Value(Type::TypeId type, int32_t i) : Value(type) {
+Value::Value(TypeId type, int32_t i) : Value(type) {
   switch (type) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       value_.boolean = i;
       size_.len =
           (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       value_.tinyint = i;
       size_.len =
           (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       value_.smallint = i;
       size_.len =
           (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::INTEGER:
-    case Type::PARAMETER_OFFSET:
+    case TypeId::INTEGER:
+    case TypeId::PARAMETER_OFFSET:
       value_.integer = i;
       size_.len =
           (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       value_.bigint = i;
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::DATE:
+    case TypeId::DATE:
       value_.date = i;
       size_.len = (value_.date == PELOTON_DATE_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
@@ -189,35 +189,35 @@ Value::Value(Type::TypeId type, int32_t i) : Value(type) {
 }
 
 // BIGINT and TIMESTAMP
-Value::Value(Type::TypeId type, int64_t i) : Value(type) {
+Value::Value(TypeId type, int64_t i) : Value(type) {
   switch (type) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       value_.boolean = i;
       size_.len =
           (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       value_.tinyint = i;
       size_.len =
           (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       value_.smallint = i;
       size_.len =
           (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::INTEGER:
-    case Type::PARAMETER_OFFSET:
+    case TypeId::INTEGER:
+    case TypeId::PARAMETER_OFFSET:
       value_.integer = i;
       size_.len =
           (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       value_.bigint = i;
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
@@ -232,14 +232,14 @@ Value::Value(Type::TypeId type, int64_t i) : Value(type) {
 }
 
 // BIGINT
-Value::Value(Type::TypeId type, uint64_t i) : Value(type) {
+Value::Value(TypeId type, uint64_t i) : Value(type) {
   switch (type) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       value_.boolean = i;
       size_.len =
           (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
@@ -254,9 +254,9 @@ Value::Value(Type::TypeId type, uint64_t i) : Value(type) {
 }
 
 // DECIMAL
-Value::Value(Type::TypeId type, double d) : Value(type) {
+Value::Value(TypeId type, double d) : Value(type) {
   switch (type) {
-    case Type::DECIMAL:
+    case TypeId::DECIMAL:
       value_.decimal = d;
       size_.len =
           (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
@@ -270,9 +270,9 @@ Value::Value(Type::TypeId type, double d) : Value(type) {
   }
 }
 
-Value::Value(Type::TypeId type, float f) : Value(type) {
+Value::Value(TypeId type, float f) : Value(type) {
   switch (type) {
-    case Type::DECIMAL:
+    case TypeId::DECIMAL:
       value_.decimal = f;
       size_.len =
           (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
@@ -287,12 +287,12 @@ Value::Value(Type::TypeId type, float f) : Value(type) {
 }
 
 // VARCHAR and VARBINARY
-Value::Value(Type::TypeId type, const char *data, uint32_t len,
+Value::Value(TypeId type, const char *data, uint32_t len,
              bool manage_data)
     : Value(type) {
   switch (type) {
-    case Type::VARCHAR:
-    case Type::VARBINARY:
+    case TypeId::VARCHAR:
+    case TypeId::VARBINARY:
       if (data == nullptr) {
         value_.varlen = nullptr;
         size_.len = PELOTON_VALUE_NULL;
@@ -320,13 +320,13 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len,
   }
 }
 
-Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
+Value::Value(TypeId type, const std::string &data) : Value(type) {
   switch (type) {
-    case Type::VARCHAR:
-    case Type::VARBINARY: {
+    case TypeId::VARCHAR:
+    case TypeId::VARBINARY: {
       manage_data_ = true;
       // TODO: How to represent a null string here?
-      uint32_t len = data.length() + (type == Type::VARCHAR);
+      uint32_t len = data.length() + (type == TypeId::VARCHAR);
       value_.varlen = new char[len];
       PL_ASSERT(value_.varlen != nullptr);
       size_.len = len;
@@ -342,12 +342,12 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
   }
 }
 
-Value::Value() : Value(Type::INVALID) {}
+Value::Value() : Value(TypeId::INVALID) {}
 
 Value::~Value() {
   switch (type_id_) {
-    case Type::VARBINARY:
-    case Type::VARCHAR:
+    case TypeId::VARBINARY:
+    case TypeId::VARCHAR:
       if (manage_data_) {
         delete[] value_.varlen;
       }
@@ -360,7 +360,7 @@ Value::~Value() {
 const std::string Value::GetInfo() const {
   std::ostringstream os;
   os << TypeIdToString(type_id_);
-  if (type_id_ == Type::VARBINARY || type_id_ == Type::VARCHAR) {
+  if (type_id_ == TypeId::VARBINARY || type_id_ == TypeId::VARCHAR) {
     os << "[" << GetLength() << "]";
   }
   os << "(" << ToString() << ")";
@@ -372,40 +372,40 @@ bool Value::CheckComparable(const Value &o) const {
             TypeIdToString(GetTypeId()).c_str(),
             TypeIdToString(o.GetTypeId()).c_str());
   switch (GetTypeId()) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       switch (o.GetTypeId()) {
-        case Type::BOOLEAN:
-        case Type::VARCHAR:
+        case TypeId::BOOLEAN:
+        case TypeId::VARCHAR:
           return (true);
         default:break;
       } // SWITCH
       break;
-    case Type::TINYINT:
-    case Type::SMALLINT:
-    case Type::INTEGER:
-    case Type::BIGINT:
-    case Type::DECIMAL:
+    case TypeId::TINYINT:
+    case TypeId::SMALLINT:
+    case TypeId::INTEGER:
+    case TypeId::BIGINT:
+    case TypeId::DECIMAL:
       switch (o.GetTypeId()) {
-        case Type::TINYINT:
-        case Type::SMALLINT:
-        case Type::INTEGER:
-        case Type::BIGINT:
-        case Type::DECIMAL:
-        case Type::VARCHAR:
+        case TypeId::TINYINT:
+        case TypeId::SMALLINT:
+        case TypeId::INTEGER:
+        case TypeId::BIGINT:
+        case TypeId::DECIMAL:
+        case TypeId::VARCHAR:
           return true;
         default:
           break;
       } // SWITCH
       break;
-    case Type::VARCHAR:
+    case TypeId::VARCHAR:
       // Anything can be cast to a string!
       return true;
       break;
-    case Type::VARBINARY:
-      if (o.GetTypeId() == Type::VARBINARY) return true;
+    case TypeId::VARBINARY:
+      if (o.GetTypeId() == TypeId::VARBINARY) return true;
       break;
-    case Type::TIMESTAMP:
-      if (o.GetTypeId() == Type::TIMESTAMP) return true;
+    case TypeId::TIMESTAMP:
+      if (o.GetTypeId() == TypeId::TIMESTAMP) return true;
       break;
     default:
       break;
@@ -415,11 +415,11 @@ bool Value::CheckComparable(const Value &o) const {
 
 bool Value::CheckInteger() const {
   switch (GetTypeId()) {
-    case Type::TINYINT:
-    case Type::SMALLINT:
-    case Type::INTEGER:
-    case Type::BIGINT:
-    case Type::PARAMETER_OFFSET:
+    case TypeId::TINYINT:
+    case TypeId::SMALLINT:
+    case TypeId::INTEGER:
+    case TypeId::BIGINT:
+    case TypeId::PARAMETER_OFFSET:
       return true;
     default:
       break;

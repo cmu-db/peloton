@@ -22,7 +22,7 @@ namespace codegen {
 // Add the given type to the storage format. We return the index that this value
 // can be found it (i.e., which index to pass into Get() to get the value)
 //===----------------------------------------------------------------------===//
-uint32_t UpdateableStorage::AddType(type::Type::TypeId type) {
+uint32_t UpdateableStorage::AddType(type::TypeId type) {
   PL_ASSERT(storage_type_ == nullptr);
   schema_.push_back(type);
   return static_cast<uint32_t>(schema_.size() - 1);

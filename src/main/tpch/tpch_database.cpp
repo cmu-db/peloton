@@ -152,24 +152,24 @@ uint32_t TPCHDatabase::CodeForMktSegment(const std::string mktsegment) const {
 //===----------------------------------------------------------------------===//
 
 void TPCHDatabase::CreateCustomerTable() const {
-  catalog::Column c_custkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column c_custkey = {type::TypeId::INTEGER, kIntSize,
                                "c_custkey", true};
-  catalog::Column c_name = {type::Type::TypeId::VARCHAR, 25, "c_name", false};
-  catalog::Column c_address = {type::Type::TypeId::VARCHAR, 40, "c_address",
+  catalog::Column c_name = {type::TypeId::VARCHAR, 25, "c_name", false};
+  catalog::Column c_address = {type::TypeId::VARCHAR, 40, "c_address",
                                false};
-  catalog::Column c_nationkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column c_nationkey = {type::TypeId::INTEGER, kIntSize,
                                  "c_nationkey", true};
-  catalog::Column c_phone = {type::Type::TypeId::VARCHAR, 15, "c_phone", false};
-  catalog::Column c_acctbal = {type::Type::TypeId::DECIMAL, kDecimalSize,
+  catalog::Column c_phone = {type::TypeId::VARCHAR, 15, "c_phone", false};
+  catalog::Column c_acctbal = {type::TypeId::DECIMAL, kDecimalSize,
                                "c_acctbal", true};
   catalog::Column c_mktsegment;
   if (config_.dictionary_encode) {
-    c_mktsegment = {type::Type::TypeId::INTEGER, kIntSize, "c_mktsegment",
+    c_mktsegment = {type::TypeId::INTEGER, kIntSize, "c_mktsegment",
                     true};
   } else {
-    c_mktsegment = {type::Type::TypeId::VARCHAR, 10, "c_mktsegment", true};
+    c_mktsegment = {type::TypeId::VARCHAR, 10, "c_mktsegment", true};
   }
-  catalog::Column c_comment = {type::Type::TypeId::VARCHAR, 117, "c_comment",
+  catalog::Column c_comment = {type::TypeId::VARCHAR, 117, "c_comment",
                                false};
 
   auto customer_cols = {c_custkey, c_name,    c_address,    c_nationkey,
@@ -192,35 +192,35 @@ void TPCHDatabase::CreateCustomerTable() const {
 
 void TPCHDatabase::CreateLineitemTable() const {
   // Define columns
-  catalog::Column l_orderkey = {type::Type::TypeId::INTEGER, kIntSize, "l_orderkey"};
-  catalog::Column l_partkey = {type::Type::TypeId::INTEGER, kIntSize, "l_partkey"};
-  catalog::Column l_suppkey = {type::Type::TypeId::INTEGER, kIntSize, "l_suppkey"};
-  catalog::Column l_linenumber = {type::Type::TypeId::INTEGER, kIntSize, "l_linenumber"};
-  catalog::Column l_quantity = {type::Type::TypeId::INTEGER, kIntSize, "l_quantity"};
-  catalog::Column l_extendedprice = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice"};
-  catalog::Column l_discount = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_discount"};
-  catalog::Column l_tax = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_tax"};
+  catalog::Column l_orderkey = {type::TypeId::INTEGER, kIntSize, "l_orderkey"};
+  catalog::Column l_partkey = {type::TypeId::INTEGER, kIntSize, "l_partkey"};
+  catalog::Column l_suppkey = {type::TypeId::INTEGER, kIntSize, "l_suppkey"};
+  catalog::Column l_linenumber = {type::TypeId::INTEGER, kIntSize, "l_linenumber"};
+  catalog::Column l_quantity = {type::TypeId::INTEGER, kIntSize, "l_quantity"};
+  catalog::Column l_extendedprice = {type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice"};
+  catalog::Column l_discount = {type::TypeId::DECIMAL, kDecimalSize, "l_discount"};
+  catalog::Column l_tax = {type::TypeId::DECIMAL, kDecimalSize, "l_tax"};
 
   catalog::Column l_returnflag;
   if (config_.dictionary_encode) {
-    l_returnflag = {type::Type::TypeId::INTEGER, kIntSize, "l_returnflag"};
+    l_returnflag = {type::TypeId::INTEGER, kIntSize, "l_returnflag"};
   } else {
-    l_returnflag = {type::Type::TypeId::VARCHAR, 1, "l_returnflag"};
+    l_returnflag = {type::TypeId::VARCHAR, 1, "l_returnflag"};
   };
 
   catalog::Column l_linestatus;
   if (config_.dictionary_encode) {
-    l_linestatus = {type::Type::TypeId::INTEGER, kIntSize, "l_linestatus"};
+    l_linestatus = {type::TypeId::INTEGER, kIntSize, "l_linestatus"};
   } else {
-    l_linestatus = {type::Type::TypeId::VARCHAR, 1, "l_returnflag"};
+    l_linestatus = {type::TypeId::VARCHAR, 1, "l_returnflag"};
   }
 
-  catalog::Column l_shipdate = {type::Type::TypeId::DATE, kDateSize, "l_shipdate"};
-  catalog::Column l_commitdate = {type::Type::TypeId::DATE, kDateSize, "l_commitdate"};
-  catalog::Column l_receiptdate = {type::Type::TypeId::DATE, kDateSize, "l_receiptdate"};
-  catalog::Column l_shipinstruct = {type::Type::TypeId::INTEGER, kIntSize, "l_shipinstruct"};
-  catalog::Column l_shipmode = {type::Type::TypeId::INTEGER, kIntSize, "l_shipmode"};
-  catalog::Column l_comment = {type::Type::TypeId::VARCHAR, 44, "l_comment"};
+  catalog::Column l_shipdate = {type::TypeId::DATE, kDateSize, "l_shipdate"};
+  catalog::Column l_commitdate = {type::TypeId::DATE, kDateSize, "l_commitdate"};
+  catalog::Column l_receiptdate = {type::TypeId::DATE, kDateSize, "l_receiptdate"};
+  catalog::Column l_shipinstruct = {type::TypeId::INTEGER, kIntSize, "l_shipinstruct"};
+  catalog::Column l_shipmode = {type::TypeId::INTEGER, kIntSize, "l_shipmode"};
+  catalog::Column l_comment = {type::TypeId::VARCHAR, 44, "l_comment"};
 
   auto lineitem_cols = {
       l_orderkey,    l_partkey,       l_suppkey,  l_linenumber,
@@ -244,13 +244,13 @@ void TPCHDatabase::CreateLineitemTable() const {
 }
 
 void TPCHDatabase::CreateNationTable() const {
-  catalog::Column n_nationkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column n_nationkey = {type::TypeId::INTEGER, kIntSize,
                                  "n_nationkey", true};
-  catalog::Column n_name = {type::Type::TypeId::VARCHAR, 25, "n_name", false};
-  catalog::Column n_regionKey = {type::Type::TypeId::INTEGER, kIntSize, "n_regionkey",
+  catalog::Column n_name = {type::TypeId::VARCHAR, 25, "n_name", false};
+  catalog::Column n_regionKey = {type::TypeId::INTEGER, kIntSize, "n_regionkey",
                                  true};
 
-  catalog::Column n_comment = {type::Type::TypeId::VARCHAR, 152, "n_comment",
+  catalog::Column n_comment = {type::TypeId::VARCHAR, 152, "n_comment",
                                false};
 
   // Create the schema
@@ -269,22 +269,22 @@ void TPCHDatabase::CreateNationTable() const {
 }
 
 void TPCHDatabase::CreateOrdersTable() const {
-  catalog::Column o_orderkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column o_orderkey = {type::TypeId::INTEGER, kIntSize,
                                 "o_orderkey", true};
-  catalog::Column o_custkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column o_custkey = {type::TypeId::INTEGER, kIntSize,
                                "o_custkey", true};
-  catalog::Column o_orderstatus = {type::Type::TypeId::VARCHAR, 1,
+  catalog::Column o_orderstatus = {type::TypeId::VARCHAR, 1,
                                    "o_orderstatus", true};
-  catalog::Column o_totalprice = {type::Type::TypeId::DECIMAL, kDecimalSize,
+  catalog::Column o_totalprice = {type::TypeId::DECIMAL, kDecimalSize,
                                   "o_totalprice", true};
-  catalog::Column o_orderdate = {type::Type::TypeId::DATE, kDateSize,
+  catalog::Column o_orderdate = {type::TypeId::DATE, kDateSize,
                                  "o_orderdate", true};
-  catalog::Column o_orderpriority = {type::Type::TypeId::VARCHAR, 15,
+  catalog::Column o_orderpriority = {type::TypeId::VARCHAR, 15,
                                      "o_orderpriority", false};
-  catalog::Column o_clerk = {type::Type::TypeId::VARCHAR, 15, "o_clerk", false};
-  catalog::Column o_shippriority = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column o_clerk = {type::TypeId::VARCHAR, 15, "o_clerk", false};
+  catalog::Column o_shippriority = {type::TypeId::INTEGER, kIntSize,
                                     "o_shippriority", true};
-  catalog::Column o_comment = {type::Type::TypeId::VARCHAR, 79, "o_comment",
+  catalog::Column o_comment = {type::TypeId::VARCHAR, 79, "o_comment",
                                true};
 
   // Create the schema
@@ -306,32 +306,32 @@ void TPCHDatabase::CreateOrdersTable() const {
 }
 
 void TPCHDatabase::CreatePartTable() const {
-  catalog::Column p_parkey = {type::Type::TypeId::INTEGER, kIntSize,
+  catalog::Column p_parkey = {type::TypeId::INTEGER, kIntSize,
                               "p_partkey", true};
-  catalog::Column p_name = {type::Type::TypeId::VARCHAR, 55, "p_name", false};
-  catalog::Column p_mfgr = {type::Type::TypeId::VARCHAR, 25, "p_mfgr", false};
+  catalog::Column p_name = {type::TypeId::VARCHAR, 55, "p_name", false};
+  catalog::Column p_mfgr = {type::TypeId::VARCHAR, 25, "p_mfgr", false};
 
   catalog::Column p_brand;
   if (config_.dictionary_encode) {
-    p_brand = {type::Type::TypeId::INTEGER, kIntSize, "p_brand", true};
+    p_brand = {type::TypeId::INTEGER, kIntSize, "p_brand", true};
   } else {
-    p_brand = {type::Type::TypeId::VARCHAR, 10, "p_brand", true};
+    p_brand = {type::TypeId::VARCHAR, 10, "p_brand", true};
   }
 
-  catalog::Column p_type = {type::Type::TypeId::VARCHAR, 25, "p_type", true};
-  catalog::Column p_size = {type::Type::TypeId::INTEGER, kIntSize, "p_size",
+  catalog::Column p_type = {type::TypeId::VARCHAR, 25, "p_type", true};
+  catalog::Column p_size = {type::TypeId::INTEGER, kIntSize, "p_size",
                             true};
 
   catalog::Column p_container;
   if (config_.dictionary_encode) {
-    p_container = {type::Type::TypeId::INTEGER, kIntSize, "p_container", true};
+    p_container = {type::TypeId::INTEGER, kIntSize, "p_container", true};
   } else {
-    p_container = {type::Type::TypeId::VARCHAR, 10, "p_container", true};
+    p_container = {type::TypeId::VARCHAR, 10, "p_container", true};
   }
 
-  catalog::Column p_retailprice = {type::Type::TypeId::DECIMAL, kDecimalSize,
+  catalog::Column p_retailprice = {type::TypeId::DECIMAL, kDecimalSize,
                                    "p_retailprice", true};
-  catalog::Column p_comment = {type::Type::TypeId::VARCHAR, 23, "p_comment",
+  catalog::Column p_comment = {type::TypeId::VARCHAR, 23, "p_comment",
                                false};
 
   // Create the schema

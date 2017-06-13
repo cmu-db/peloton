@@ -23,7 +23,7 @@ class ValueIntegrityTest : public PelotonCodeGenTest {};
 // function divides a constant value with the value of the argument. After
 // JITing the function, we test the division by passing in a zero value divisor.
 template <typename CType>
-void DivideByZeroTest(type::Type::TypeId data_type, ExpressionType op) {
+void DivideByZeroTest(type::TypeId data_type, ExpressionType op) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen{code_context};
 
@@ -67,7 +67,7 @@ void DivideByZeroTest(type::Type::TypeId data_type, ExpressionType op) {
 }
 
 template <typename CType>
-void OverflowTest(type::Type::TypeId data_type, ExpressionType op) {
+void OverflowTest(type::TypeId data_type, ExpressionType op) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen{code_context};
 
@@ -107,10 +107,10 @@ void OverflowTest(type::Type::TypeId data_type, ExpressionType op) {
         auto *const_min_exp = ConstIntExpr(INT32_MIN).release();
         auto *const_one_exp = ConstIntExpr(1).release();
         auto *a_sub_one = new expression::OperatorExpression(
-            ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
+            ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER,
             a_col_exp, const_one_exp);
         a_op_lim = new expression::OperatorExpression(
-            exp_type, type::Type::TypeId::INTEGER, const_min_exp, a_sub_one);
+            exp_type, type::TypeId::INTEGER, const_min_exp, a_sub_one);
         break;
       }
       */
@@ -137,10 +137,10 @@ TEST_F(ValueIntegrityTest, IntegerOverflow) {
                            ExpressionType::OPERATOR_PLUS,
                            ExpressionType::OPERATOR_MULTIPLY};
   for (auto op : overflowable_ops) {
-    OverflowTest<int8_t>(type::Type::TypeId::TINYINT, op);
-    OverflowTest<int16_t>(type::Type::TypeId::SMALLINT, op);
-    OverflowTest<int32_t>(type::Type::TypeId::INTEGER, op);
-    OverflowTest<int64_t>(type::Type::TypeId::BIGINT, op);
+    OverflowTest<int8_t>(type::TypeId::TINYINT, op);
+    OverflowTest<int16_t>(type::TypeId::SMALLINT, op);
+    OverflowTest<int32_t>(type::TypeId::INTEGER, op);
+    OverflowTest<int64_t>(type::TypeId::BIGINT, op);
   }
 }
 
@@ -148,10 +148,10 @@ TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
   auto div0_ops = {ExpressionType::OPERATOR_DIVIDE,
                    ExpressionType::OPERATOR_MOD};
   for (auto op : div0_ops) {
-    DivideByZeroTest<int8_t>(type::Type::TypeId::TINYINT, op);
-    DivideByZeroTest<int16_t>(type::Type::TypeId::SMALLINT, op);
-    DivideByZeroTest<int32_t>(type::Type::TypeId::INTEGER, op);
-    DivideByZeroTest<int64_t>(type::Type::TypeId::BIGINT, op);
+    DivideByZeroTest<int8_t>(type::TypeId::TINYINT, op);
+    DivideByZeroTest<int16_t>(type::TypeId::SMALLINT, op);
+    DivideByZeroTest<int32_t>(type::TypeId::INTEGER, op);
+    DivideByZeroTest<int64_t>(type::TypeId::BIGINT, op);
   }
 }
 

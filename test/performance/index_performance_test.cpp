@@ -42,17 +42,17 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
 
-  catalog::Column column1(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                           true);
-  catalog::Column column2(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+  catalog::Column column2(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "B",
                           true);
-  catalog::Column column3(type::Type::DECIMAL,
-                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
+  catalog::Column column3(type::TypeId::DECIMAL,
+                          type::Type::GetTypeSize(type::TypeId::DECIMAL), "C",
                           true);
-  catalog::Column column4(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
+  catalog::Column column4(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "D",
                           true);
 
   columns.push_back(column1);

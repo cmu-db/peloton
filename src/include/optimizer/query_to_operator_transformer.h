@@ -59,7 +59,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   std::unordered_set<std::string> table_alias_set_;
 
   // For expr nodes
-  type::Type::TypeId output_type;
+  type::TypeId output_type;
   int output_size;
   bool output_inlined;
 };

@@ -25,7 +25,7 @@ namespace gc {
 void GCManager::CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id) {
     oid_t tile_count = tg->tile_count;
     oid_t tile_col_count;
-    type::Type::TypeId type_id;
+    type::TypeId type_id;
     char *tuple_location;
     char *field_location;
     char *varlen_ptr;
@@ -40,7 +40,7 @@ void GCManager::CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple
         for (oid_t tile_col_itr = 0; tile_col_itr < tile_col_count; ++tile_col_itr) {
             type_id = schema.GetType(tile_col_itr);
 
-              if ((type_id != type::Type::TypeId::VARCHAR && type_id != type::Type::TypeId::VARBINARY)
+              if ((type_id != type::TypeId::VARCHAR && type_id != type::TypeId::VARBINARY)
                              || (schema.IsInlined(tile_col_itr) == true)) {
                 // Not of varlen type, or is inlined, skip
                   continue;

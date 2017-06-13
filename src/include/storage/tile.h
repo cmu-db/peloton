@@ -93,7 +93,7 @@ class Tile : public Printable {
    * By amortizing schema lookups
    */
   type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                           const type::Type::TypeId column_type,
+                           const type::TypeId column_type,
                            const bool is_inlined);
 
   /**

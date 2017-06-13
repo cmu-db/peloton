@@ -46,13 +46,13 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   bool is_inlined = true;
 
   // Create the columns
-  static const uint32_t int_size = type::Type::GetTypeSize(type::Type::INTEGER);
-  static const uint32_t dec_size = type::Type::GetTypeSize(type::Type::DECIMAL);
+  static const uint32_t int_size = type::Type::GetTypeSize(type::TypeId::INTEGER);
+  static const uint32_t dec_size = type::Type::GetTypeSize(type::TypeId::DECIMAL);
   std::vector<catalog::Column> cols = {
-      catalog::Column{type::Type::INTEGER, int_size, "COL_A", is_inlined},
-      catalog::Column{type::Type::INTEGER, int_size, "COL_B", is_inlined},
-      catalog::Column{type::Type::DECIMAL, dec_size, "COL_C", is_inlined},
-      catalog::Column{type::Type::VARCHAR, 25, "COL_D", !is_inlined}};
+      catalog::Column{type::TypeId::INTEGER, int_size, "COL_A", is_inlined},
+      catalog::Column{type::TypeId::INTEGER, int_size, "COL_B", is_inlined},
+      catalog::Column{type::TypeId::DECIMAL, dec_size, "COL_C", is_inlined},
+      catalog::Column{type::TypeId::VARCHAR, 25, "COL_D", !is_inlined}};
 
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
@@ -185,7 +185,7 @@ PelotonCodeGenTest::ConstDecimalExpr(double val) {
 }
 
 std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::ColRefExpr(
-    type::Type::TypeId type, uint32_t col_id) {
+    type::TypeId type, uint32_t col_id) {
   auto *expr = new expression::TupleValueExpression(type, 0, col_id);
   return std::unique_ptr<expression::AbstractExpression>{expr};
 }
@@ -246,26 +246,26 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
     }
     first = false;
     codegen::Value val = row.DeriveValue(codegen, ai);
-    assert(val.GetType() != type::Type::TypeId::INVALID);
+    assert(val.GetType() != type::TypeId::INVALID);
     switch (val.GetType()) {
-      case type::Type::TypeId::BOOLEAN:
-      case type::Type::TypeId::TINYINT:
-      case type::Type::TypeId::SMALLINT:
-      case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER: {
+      case type::TypeId::BOOLEAN:
+      case type::TypeId::TINYINT:
+      case type::TypeId::SMALLINT:
+      case type::TypeId::DATE:
+      case type::TypeId::INTEGER: {
         format.append("%d");
         break;
       }
-      case type::Type::TypeId::TIMESTAMP:
-      case type::Type::TypeId::BIGINT: {
+      case type::TypeId::TIMESTAMP:
+      case type::TypeId::BIGINT: {
         format.append("%ld");
         break;
       }
-      case type::Type::TypeId::DECIMAL: {
+      case type::TypeId::DECIMAL: {
         format.append("%lf");
         break;
       }
-      case type::Type::TypeId::VARCHAR: {
+      case type::TypeId::VARCHAR: {
         cols.push_back(val.GetLength());
         format.append("'%.*s'");
         break;

@@ -27,11 +27,11 @@ class TupleSchemaTests : public PelotonTest {};
 TEST_F(TupleSchemaTests, ColumnInfoTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
 
   columns.push_back(column1);
@@ -48,13 +48,13 @@ TEST_F(TupleSchemaTests, ColumnInfoTest) {
 TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
-  catalog::Column column4(type::Type::VARCHAR, 24, "D", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 24, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -116,13 +116,13 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
 TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
-  catalog::Column column4(type::Type::VARCHAR, 24, "D", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 24, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);

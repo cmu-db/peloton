@@ -28,14 +28,14 @@ class CaseExpression : public AbstractExpression {
   using AbsExprPtr = std::unique_ptr<AbstractExpression>;
   using WhenClause = std::pair<AbsExprPtr,AbsExprPtr>;
 
-  CaseExpression(type::Type::TypeId type_id,
+  CaseExpression(type::TypeId type_id,
                  std::vector<WhenClause> &when_clauses,
                  AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
         clauses_(std::move(when_clauses)),
         default_expr_(std::move(default_expr)) {}
 
-  CaseExpression(type::Type::TypeId type_id, AbsExprPtr argument,
+  CaseExpression(type::TypeId type_id, AbsExprPtr argument,
                  std::vector<WhenClause> &when_clauses,
                  AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),

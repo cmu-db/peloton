@@ -67,7 +67,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
 
   // Setup the predicate
   std::unique_ptr<expression::AbstractExpression> a_gt_20 =
-      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
+      CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // Setup the scan plan node
   auto &table = GetTestTable(TestTableId());
@@ -99,7 +99,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
 
   // Setup the predicate
   std::unique_ptr<expression::AbstractExpression> b_lt_20 =
-      CmpLtExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(20));
+      CmpLtExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(20));
 
   // Setup the scan plan node
   auto &table = GetTestTable(TestTableId());
@@ -143,7 +143,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
 
   // 1) Setup the predicate
   std::unique_ptr<expression::AbstractExpression> a_gt_40 =
-      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(40));
+      CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   // 2) Setup the scan plan node
   auto &table = GetTestTable(TestTableId());
@@ -173,11 +173,11 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
 
   // a >= 20
   std::unique_ptr<expression::AbstractExpression> a_gt_20 =
-      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
+      CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // b = 21
   std::unique_ptr<expression::AbstractExpression> b_eq_21 =
-      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(21));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
   auto *conj_eq = new expression::ConjunctionExpression(
@@ -214,15 +214,15 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
 
   // a + 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* const_1_exp = ConstIntExpr(1).release();
   auto* a_plus_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
+      ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, a_col_exp,
       const_1_exp);
 
   // b = a + 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* b_eq_a_plus_1 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_1);
 
@@ -254,16 +254,16 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
 
   // a + b
   auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* b_rhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* a_plus_b = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
+      ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, a_col_exp,
       b_rhs_col_exp);
 
   // b = a + b
   auto* b_lhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* b_eq_a_plus_b = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, a_plus_b);
 
@@ -295,15 +295,15 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
 
   // b - 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* const_1_exp = ConstIntExpr(1).release();
   auto* b_minus_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER, b_col_exp,
+      ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER, b_col_exp,
       const_1_exp);
 
   // a = b - 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* a_eq_b_minus_1 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_col_exp, b_minus_1);
 
@@ -335,16 +335,16 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
 
   // b - a
   auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* b_rhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* b_minus_a = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
+      ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER,
       b_rhs_col_exp, a_col_exp);
 
   // b = b - a
   auto* b_lhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* b_eq_b_minus_a = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, b_minus_a);
 
@@ -376,15 +376,15 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
 
   // a / 1
   auto* a_rhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* const_1_exp = ConstIntExpr(2).release();
   auto* a_div_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::INTEGER,
+      ExpressionType::OPERATOR_DIVIDE, type::TypeId::INTEGER,
       a_rhs_col_exp, const_1_exp);
 
   // a = a / 1
   auto* a_lhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* a_eq_a_div_1 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_div_1);
 
@@ -417,16 +417,16 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
 
   // a * b
   auto* a_rhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* a_mul_b = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
       a_rhs_col_exp, b_col_exp);
 
   // a = a * b
   auto* a_lhs_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* a_eq_a_mul_b = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_mul_b);
 
@@ -458,15 +458,15 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
 
   // b % 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* const_1_exp = ConstIntExpr(1).release();
   auto* b_mod_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
+      ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL, b_col_exp,
       const_1_exp);
 
   // a = b % 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* a_eq_b_mod_1 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
 

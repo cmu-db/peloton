@@ -29,8 +29,8 @@ void Column::SetLength(oid_t column_length) {
 
 void Column::SetInlined() {
   switch (column_type) {
-    case type::Type::VARCHAR:
-    case type::Type::VARBINARY:
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
       break;  // No change of inlined setting
 
     default:

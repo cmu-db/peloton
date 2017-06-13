@@ -47,9 +47,9 @@ struct FunctionData {
   // name of the function
   std::string func_name_;
   // type of input arguments
-  std::vector<type::Type::TypeId> argument_types_;
+  std::vector<type::TypeId> argument_types_;
   // funtion's return type
-  type::Type::TypeId return_type_;
+  type::TypeId return_type_;
   // pointer to the funtion
   type::Value (*func_ptr_)(const std::vector<type::Value> &);
 };
@@ -190,8 +190,8 @@ class Catalog {
   void InitializeFunctions();
 
   void AddFunction(const std::string &name,
-                   const std::vector<type::Type::TypeId> &argument_types,
-                   const type::Type::TypeId return_type,
+                   const std::vector<type::TypeId> &argument_types,
+                   const type::TypeId return_type,
                    type::Value (*func_ptr)(const std::vector<type::Value> &));
 
   const FunctionData GetFunction(const std::string &name);

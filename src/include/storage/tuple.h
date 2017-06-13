@@ -137,7 +137,7 @@ class Tuple : public AbstractTuple {
   inline bool IsNull() const { return tuple_data_ == NULL; }
 
   // Get the type of a particular column in the tuple
-  inline type::Type::TypeId GetType(int column_id) const {
+  inline type::TypeId GetType(int column_id) const {
     return tuple_schema_->GetType(column_id);
   }
 

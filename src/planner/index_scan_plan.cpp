@@ -94,7 +94,7 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (unsigned int i = 0; i < values_.size(); ++i) {
     auto value = values_[i];
     auto column_id = key_column_ids_[i];
-    if (value.GetTypeId() == type::Type::PARAMETER_OFFSET) {
+    if (value.GetTypeId() == type::TypeId::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
       values_[i] =
           (values->at(offset))

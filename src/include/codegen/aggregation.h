@@ -90,7 +90,7 @@ class Aggregation {
     ExpressionType aggregate_type;
 
     // The SQL (data) type of the aggregate
-    type::Type::TypeId type;
+    type::TypeId type;
 
     // The position in the original (ordered) list of aggregates that this
     // aggregate is stored

@@ -28,11 +28,11 @@ class Column : public Printable {
   friend class Constraint;
 
  public:
-  Column() : column_type(type::Type::INVALID), fixed_length(INVALID_OID) {
+  Column() : column_type(type::TypeId::INVALID), fixed_length(INVALID_OID) {
     // Nothing to see...
   }
 
-  Column(type::Type::TypeId value_type, oid_t column_length,
+  Column(type::TypeId value_type, oid_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID)
       : column_type(value_type),
@@ -75,7 +75,7 @@ class Column : public Printable {
 
   oid_t GetVariableLength() const { return variable_length; }
 
-  inline type::Type::TypeId GetType() const { return column_type; }
+  inline type::TypeId GetType() const { return column_type; }
 
   inline bool IsInlined() const { return is_inlined; }
 
@@ -110,7 +110,7 @@ class Column : public Printable {
 
  private:
   // value type of column
-  type::Type::TypeId column_type;  //  = type::Type::INVALID;
+  type::TypeId column_type;  //  = type::TypeId::INVALID;
 
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column

@@ -83,7 +83,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column = catalog::Column(
-          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -93,7 +93,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column = catalog::Column(
-          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -103,7 +103,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column = catalog::Column(
-          type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+          type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -112,7 +112,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(type::Type::VARCHAR, 25,  // Column length.
+      auto column = catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
                                     "COL_D", !is_inlined);    // inlined.
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -444,10 +444,10 @@ std::unique_ptr<storage::Tuple> TestingExecutorUtil::GetNullTuple(
     storage::DataTable *table, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  auto val1 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-  auto val2 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-  auto val3 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-  auto val4 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  auto val1 = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  auto val2 = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  auto val3 = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  auto val4 = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);
   tuple->SetValue(2, val3, pool);

@@ -35,7 +35,7 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         // Add the count to the storage layout
-        const auto count_type = type::Type::TypeId::BIGINT;
+        const auto count_type = type::TypeId::BIGINT;
         uint32_t storage_pos = storage_.AddType(count_type);
 
         // Add metadata for the count aggregate
@@ -74,17 +74,17 @@ void Aggregation::Setup(
         // COUNT() - can use big integer since we're counting instances
         // First add the count to the storage layout
         uint32_t count_storage_pos =
-            storage_.AddType(type::Type::TypeId::BIGINT);
+            storage_.AddType(type::TypeId::BIGINT);
 
         // Add metadata about the COUNT() aggregate
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
-                                type::Type::TypeId::BIGINT, source_idx,
+                                type::TypeId::BIGINT, source_idx,
                                 count_storage_pos, true};
         aggregate_infos_.push_back(count_agg);
 
         // AVG() - this isn't storage physically, but we need metadata about it
         // TODO: Is this always double?
-        AggregateInfo avg_agg{agg_term.aggtype, type::Type::TypeId::DECIMAL,
+        AggregateInfo avg_agg{agg_term.aggtype, type::TypeId::DECIMAL,
                               source_idx, source_idx, false};
         aggregate_infos_.push_back(avg_agg);
         break;
@@ -128,7 +128,7 @@ void Aggregation::CreateInitialValues(
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         // The initial value for count's are 1 (i.e., this row)
-        codegen::Value one{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+        codegen::Value one{type::TypeId::BIGINT, codegen.Const64(1)};
         storage_.SetValue(codegen, storage_space, aggregate_info.storage_index,
                           one, null_bitmap);
         break;
@@ -178,14 +178,14 @@ void Aggregation::DoAdvanceValue(
     case ExpressionType::AGGREGATE_COUNT: {
       auto curr = storage_.GetValueSkipNull(codegen, storage_space,
                                             aggregate_info.storage_index);
-      auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+      auto delta = Value{type::TypeId::BIGINT, codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       auto curr = storage_.GetValueSkipNull(codegen, storage_space,
                                             aggregate_info.storage_index);
-      auto delta = Value{type::Type::TypeId::BIGINT, codegen.Const64(1)};
+      auto delta = Value{type::TypeId::BIGINT, codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
@@ -203,7 +203,7 @@ void Aggregation::DoAdvanceValue(
   }
 
   // Store the updated value in the appropriate slot
-  PL_ASSERT(next.GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(next.GetType() != type::TypeId::INVALID);
   storage_.SetValueSkipNull(codegen, storage_space,
                             aggregate_info.storage_index, next);
 }
@@ -266,7 +266,7 @@ void Aggregation::AdvanceValues(
               break;
             }
             case ExpressionType::AGGREGATE_COUNT: {
-              codegen::Value one{type::Type::TypeId::BIGINT,
+              codegen::Value one{type::TypeId::BIGINT,
                                  codegen.Const64(1)};
               storage_.SetValue(codegen, storage_space,
                                 aggregate_info.storage_index, one, null_bitmap);
@@ -331,10 +331,10 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
         codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
-        count = count.CastTo(codegen, type::Type::TypeId::DECIMAL);
+        count = count.CastTo(codegen, type::TypeId::DECIMAL);
 
         codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
-        sum = sum.CastTo(codegen, type::Type::TypeId::DECIMAL);
+        sum = sum.CastTo(codegen, type::TypeId::DECIMAL);
 
         codegen::Value final_val =
             sum.Div(codegen, count, Value::OnError::ReturnNull);

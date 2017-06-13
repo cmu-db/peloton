@@ -68,7 +68,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  type::Value array_bool = type::Value(type::Type::ARRAY, vec_bool, type::Type::BOOLEAN);
+  type::Value array_bool = type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_bool.GetElementAt(i);
     EXPECT_EQ(bool(ele.GetAs<int8_t>()), vec_bool[i]);
@@ -78,7 +78,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  type::Value array_tinyint = type::Value(type::Type::ARRAY, vec_tinyint, type::Type::TINYINT);
+  type::Value array_tinyint = type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_tinyint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int8_t>(), vec_tinyint[i]);
@@ -88,7 +88,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  type::Value array_smallint = type::Value(type::Type::ARRAY, vec_smallint, type::Type::SMALLINT);
+  type::Value array_smallint = type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_smallint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int16_t>(), vec_smallint[i]);
@@ -98,7 +98,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);
+  type::Value array_integer = type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_integer.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int32_t>(), vec_integer[i]);
@@ -108,7 +108,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  type::Value array_bigint = type::Value(type::Type::ARRAY, vec_bigint, type::Type::BIGINT);
+  type::Value array_bigint = type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_bigint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int64_t>(), vec_bigint[i]);
@@ -118,7 +118,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM_DECIMAL());
   }
-  type::Value array_decimal = type::Value(type::Type::ARRAY, vec_decimal, type::Type::DECIMAL);
+  type::Value array_decimal = type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_decimal.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<double>(), vec_decimal[i]);
@@ -128,7 +128,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  type::Value array_varchar = type::Value(type::Type::ARRAY, vec_varchar, type::Type::VARCHAR);
+  type::Value array_varchar = type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_varchar.GetElementAt(i);
     EXPECT_EQ((ele).GetData(), vec_varchar[i]);
@@ -143,7 +143,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  type::Value array_bool = type::Value(type::Type::ARRAY, vec_bool, type::Type::BOOLEAN);
+  type::Value array_bool = type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_bool.InList(type::ValueFactory::GetBooleanValue(vec_bool[i]));
@@ -154,7 +154,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  type::Value array_tinyint = type::Value(type::Type::ARRAY, vec_tinyint, type::Type::TINYINT);
+  type::Value array_tinyint = type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_tinyint.InList(type::ValueFactory::GetTinyIntValue(vec_tinyint[i]));
@@ -174,7 +174,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  type::Value array_smallint = type::Value(type::Type::ARRAY, vec_smallint, type::Type::SMALLINT);
+  type::Value array_smallint = type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_smallint.InList(type::ValueFactory::GetSmallIntValue(vec_smallint[i]));
@@ -195,7 +195,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);
+  type::Value array_integer = type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_integer.InList(type::ValueFactory::GetIntegerValue(vec_integer[i]));
@@ -215,7 +215,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  type::Value array_bigint = type::Value(type::Type::ARRAY, vec_bigint, type::Type::BIGINT);
+  type::Value array_bigint = type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_bigint.InList(type::ValueFactory::GetBigIntValue(vec_bigint[i]));
@@ -235,7 +235,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM64());
   }
-  type::Value array_decimal = type::Value(type::Type::ARRAY, vec_decimal, type::Type::DECIMAL);
+  type::Value array_decimal = type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_decimal.InList(type::ValueFactory::GetDecimalValue(vec_decimal[i]));
@@ -255,7 +255,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  type::Value array_varchar = type::Value(type::Type::ARRAY, vec_varchar, type::Type::VARCHAR);
+  type::Value array_varchar = type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_varchar.InList(type::ValueFactory::GetVarcharValue(vec_varchar[i]));

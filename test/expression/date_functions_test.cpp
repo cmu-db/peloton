@@ -65,7 +65,7 @@ TEST_F(DateFunctionsTests, NullExtractTest) {
   std::vector<type::Value> args = {
       type::ValueFactory::GetIntegerValue(
           static_cast<int>(DatePartType::MINUTE)),
-      type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP)};
+      type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP)};
   auto result = expression::DateFunctions::Extract(args);
   EXPECT_TRUE(result.IsNull());
 }

@@ -54,7 +54,7 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
                     oid_t column_id, oid_t column_offset,
-                    type::Type::TypeId column_type, bool is_inlined,
+                    type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
                     type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
@@ -70,9 +70,9 @@ class ColumnCatalog : public AbstractCatalog {
                     concurrency::Transaction *txn);
   std::string GetColumnName(oid_t table_oid, oid_t column_id,
                             concurrency::Transaction *txn);
-  type::Type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
+  type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
                                    concurrency::Transaction *txn);
-  type::Type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
+  type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
                                    concurrency::Transaction *txn);
 
  private:

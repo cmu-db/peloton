@@ -25,10 +25,10 @@ namespace test {
 
 class ValueTests : public PelotonTest {};
 
-const std::vector<type::Type::TypeId> valueTestTypes = {
-    type::Type::BOOLEAN,   type::Type::TINYINT, type::Type::SMALLINT,
-    type::Type::INTEGER,   type::Type::BIGINT,  type::Type::DECIMAL,
-    type::Type::TIMESTAMP, type::Type::VARCHAR};
+const std::vector<type::TypeId> valueTestTypes = {
+    type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
+    type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
+    type::TypeId::TIMESTAMP, type::TypeId::VARCHAR};
 
 TEST_F(ValueTests, HashTest) {
   for (auto col_type : valueTestTypes) {
@@ -36,7 +36,7 @@ TEST_F(ValueTests, HashTest) {
     auto minVal = type::Type::GetMinValue(col_type);
 
     // Special case for VARCHAR
-    if (col_type == type::Type::VARCHAR) {
+    if (col_type == type::TypeId::VARCHAR) {
       maxVal = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
       minVal = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
     }

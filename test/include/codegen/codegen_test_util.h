@@ -75,7 +75,7 @@ class PelotonCodeGenTest : public PelotonTest {
   std::unique_ptr<expression::AbstractExpression> ConstDecimalExpr(double val);
 
   std::unique_ptr<expression::AbstractExpression> ColRefExpr(
-      type::Type::TypeId type, uint32_t col_id);
+      type::TypeId type, uint32_t col_id);
 
   std::unique_ptr<expression::AbstractExpression> CmpExpr(
       ExpressionType cmp_type,

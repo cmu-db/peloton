@@ -67,9 +67,9 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(num_params);
 
-  auto val3 = type::ValueFactory::GetNullValueByType(type::Type::VARBINARY);
-  auto val4 = type::ValueFactory::GetNullValueByType(type::Type::VARBINARY);
-  auto val5 = type::ValueFactory::GetNullValueByType(type::Type::VARBINARY);
+  auto val3 = type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY);
+  auto val4 = type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY);
+  auto val5 = type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY);
 
   if (num_params != 0) {
     val3 =

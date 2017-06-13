@@ -28,7 +28,7 @@ class ConjunctionExpression : public AbstractExpression {
 
   ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
-      : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, type::TypeId::BOOLEAN, left, right) {}
 
   type::Value Evaluate(
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,

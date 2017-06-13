@@ -141,9 +141,9 @@ expression::AbstractExpression *CreatePredicate(
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
     tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(
-                                  type::Type::INTEGER, 0, 0)
+                                  type::TypeId::INTEGER, 0, 0)
                             : expression::ExpressionUtil::TupleValueFactory(
-                                  type::Type::VARCHAR, 0, 3);
+                                  type::TypeId::VARCHAR, 0, 3);
 
     // Second, create constant value expression.
     expression::AbstractExpression *constant_value_expr;

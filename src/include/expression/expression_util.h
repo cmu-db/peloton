@@ -193,7 +193,7 @@ class ExpressionUtil {
     return expression;
   }
 
-  static AbstractExpression *TupleValueFactory(type::Type::TypeId value_type,
+  static AbstractExpression *TupleValueFactory(type::TypeId value_type,
                                                const int tuple_idx,
                                                const int value_idx) {
     return new TupleValueExpression(value_type, tuple_idx, value_idx);
@@ -216,14 +216,14 @@ class ExpressionUtil {
   }
 
   static AbstractExpression *OperatorFactory(ExpressionType type,
-                                             type::Type::TypeId value_type,
+                                             type::TypeId value_type,
                                              AbstractExpression *left,
                                              AbstractExpression *right) {
     return new OperatorExpression(type, value_type, left, right);
   }
 
   static AbstractExpression *OperatorFactory(
-      ExpressionType type, type::Type::TypeId value_type,
+      ExpressionType type, type::TypeId value_type,
       AbstractExpression *expr1, AbstractExpression *expr2,
       UNUSED_ATTRIBUTE AbstractExpression *expr3,
       UNUSED_ATTRIBUTE AbstractExpression *expr4) {
@@ -304,7 +304,7 @@ class ExpressionUtil {
   static void GetInfo(const AbstractExpression *expr, std::ostringstream &os,
                       std::string spacer) {
     ExpressionType etype = expr->GetExpressionType();
-    type::Type::TypeId vtype = expr->GetValueType();
+    type::TypeId vtype = expr->GetValueType();
 
     // Basic Information
     os << spacer << "+ " << ExpressionTypeToString(etype) << "::"
@@ -710,7 +710,7 @@ class ExpressionUtil {
     }
     // if this is a column, we need to find if it is exists in the schema
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
-        expr->GetValueType() == type::Type::INVALID) {
+        expr->GetValueType() == type::TypeId::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
       oid_t col_id = -1;
       oid_t index = -1;

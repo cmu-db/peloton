@@ -44,7 +44,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 
       // VALUE #0
       if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
-        val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+        val0 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
         expected_null = true;
       } else {
         val0 = type::ValueFactory::GetTimestampValue(
@@ -53,7 +53,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 
       // VALUE #1
       if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
-        val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+        val1 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
         expected_null = true;
       } else {
         val1 = type::ValueFactory::GetTimestampValue(
@@ -111,7 +111,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 }
 
 TEST_F(TimestampValueTests, NullToStringTest) {
-  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
 
   EXPECT_EQ(valNull.ToString(), "timestamp_null");
 }
@@ -125,14 +125,14 @@ TEST_F(TimestampValueTests, HashTest) {
 
   for (int i = 0; i < 2; i++) {
     if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
-      val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+      val0 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
     } else {
       val0 = type::ValueFactory::GetTimestampValue(
           static_cast<uint64_t>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
       if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
-        val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+        val1 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
       } else {
         val1 = type::ValueFactory::GetTimestampValue(
             static_cast<uint64_t>(values[j]));
@@ -161,24 +161,24 @@ TEST_F(TimestampValueTests, CopyTest) {
 TEST_F(TimestampValueTests, CastTest) {
   type::Value result;
 
-  auto strNull = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+  auto strNull = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
 
-  result = valNull.CastAs(type::Type::TIMESTAMP);
+  result = valNull.CastAs(type::TypeId::TIMESTAMP);
   EXPECT_TRUE(result.IsNull());
   EXPECT_EQ(result.CompareEquals(valNull) == type::CMP_NULL, true);
   EXPECT_EQ(result.GetTypeId(), valNull.GetTypeId());
 
-  result = valNull.CastAs(type::Type::VARCHAR);
+  result = valNull.CastAs(type::TypeId::VARCHAR);
   EXPECT_TRUE(result.IsNull());
   EXPECT_EQ(result.CompareEquals(strNull) == type::CMP_NULL, true);
   EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
 
-  EXPECT_THROW(valNull.CastAs(type::Type::BOOLEAN), peloton::Exception);
+  EXPECT_THROW(valNull.CastAs(type::TypeId::BOOLEAN), peloton::Exception);
 
   auto valValid =
       type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
-  result = valValid.CastAs(type::Type::VARCHAR);
+  result = valValid.CastAs(type::TypeId::VARCHAR);
   EXPECT_FALSE(result.IsNull());
 }
 
