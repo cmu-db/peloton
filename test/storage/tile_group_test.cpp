@@ -40,13 +40,13 @@ TEST_F(TileGroupTests, BasicTest) {
 
   // SCHEMA
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
-  catalog::Column column4(type::Type::VARCHAR, 25, "D", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -176,13 +176,13 @@ TEST_F(TileGroupTests, StressTest) {
   std::vector<catalog::Schema> schemas;
 
   // SCHEMA
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
-  catalog::Column column4(type::Type::VARCHAR, 50, "D", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 50, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -241,13 +241,13 @@ TEST_F(TileGroupTests, StressTest) {
 //  std::vector<catalog::Schema> schemas;
 //
 //  // SCHEMA
-//  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+//  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "A", true);
-//  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+//  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "B", true);
-//  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+//  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
 //                          "C", true);
-//  catalog::Column column4(type::Type::VARCHAR, 50, "D", false);
+//  catalog::Column column4(type::TypeId::VARCHAR, 50, "D", false);
 //
 //  columns.push_back(column1);
 //  columns.push_back(column2);
@@ -353,14 +353,14 @@ TEST_F(TileGroupTests, TileCopyTest) {
   std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Schema> schemas;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
+  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
                           "C", true);
-  catalog::Column column4(type::Type::VARCHAR, 25, "D", false);
-  catalog::Column column5(type::Type::VARCHAR, 25, "E", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 25, "D", false);
+  catalog::Column column5(type::TypeId::VARCHAR, 25, "E", false);
 
   columns.push_back(column1);
   columns.push_back(column2);

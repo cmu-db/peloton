@@ -219,10 +219,10 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto const_val = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(ExpressionType::OPERATOR_PLUS,
-                                                  type::Type::INTEGER,
+                                                  type::TypeId::INTEGER,
                                                   tuple_value_expr, const_val);
 
   planner::DerivedAttribute attribute;

@@ -80,7 +80,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
 
   // Setup the predicate
   auto a_gt_40 =
-      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(40));
+      CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId2()), nullptr)};
@@ -114,11 +114,11 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   // Construct the components of the predicate
   // a >= 20
   auto a_gt_20 =
-      CmpGteExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), ConstIntExpr(20));
+      CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // b = 21
   auto b_eq_21 =
-      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 1), ConstIntExpr(21));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
   auto* conj_eq = new expression::ConjunctionExpression(
@@ -152,16 +152,16 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
 
   EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId4()).GetTupleCount());
 
-  auto b_col_exp = ColRefExpr(type::Type::TypeId::INTEGER, 1);
+  auto b_col_exp = ColRefExpr(type::TypeId::INTEGER, 1);
   auto const_1_exp = ConstIntExpr(1);
   auto b_mod_1 = std::unique_ptr<expression::AbstractExpression>{
       new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL,
+          ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL,
           b_col_exp.release(), const_1_exp.release())};
 
   // a = b % 1
   auto a_eq_b_mod_1 =
-      CmpEqExpr(ColRefExpr(type::Type::TypeId::INTEGER, 0), std::move(b_mod_1));
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), std::move(b_mod_1));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
       new planner::DeletePlan(&GetTestTable(TestTableId4()), nullptr)};

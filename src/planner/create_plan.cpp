@@ -48,7 +48,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       if (col->type == parser::ColumnDefinition::FOREIGN)
         continue;
         
-      type::Type::TypeId val = col->GetValueType(col->type);
+      type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
 

@@ -23,7 +23,7 @@ namespace type {
 // operations on its value.
 class NumericType : public Type {
  public:
-  NumericType(Type::TypeId type) : Type(type) {}
+  NumericType(TypeId type) : Type(type) {}
   virtual ~NumericType() = 0;
 
   // Other mathematical functions

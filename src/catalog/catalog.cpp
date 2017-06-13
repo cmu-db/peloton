@@ -852,8 +852,8 @@ storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
 
 void Catalog::AddFunction(
     const std::string &name,
-    const std::vector<type::Type::TypeId> &argument_types,
-    const type::Type::TypeId return_type,
+    const std::vector<type::TypeId> &argument_types,
+    const type::TypeId return_type,
     type::Value (*func_ptr)(const std::vector<type::Value> &)) {
   PL_ASSERT(functions_.count(name) == 0);
   functions_[name] = FunctionData{name, argument_types, return_type, func_ptr};
@@ -874,38 +874,38 @@ void Catalog::InitializeFunctions() {
   /**
    * string functions
    */
-  AddFunction("ascii", {type::Type::VARCHAR}, type::Type::INTEGER,
+  AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
               expression::StringFunctions::Ascii);
-  AddFunction("chr", {type::Type::INTEGER}, type::Type::VARCHAR,
+  AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
   AddFunction("substr",
-              {type::Type::VARCHAR, type::Type::INTEGER, type::Type::INTEGER},
-              type::Type::VARCHAR, expression::StringFunctions::Substr);
-  AddFunction("concat", {type::Type::VARCHAR, type::Type::VARCHAR},
-              type::Type::VARCHAR, expression::StringFunctions::Concat);
-  AddFunction("char_length", {type::Type::VARCHAR}, type::Type::INTEGER,
+              {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::Concat);
+  AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
               expression::StringFunctions::CharLength);
-  AddFunction("octet_length", {type::Type::VARCHAR}, type::Type::INTEGER,
+  AddFunction("octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
               expression::StringFunctions::OctetLength);
-  AddFunction("repeat", {type::Type::VARCHAR, type::Type::INTEGER},
-              type::Type::VARCHAR, expression::StringFunctions::Repeat);
+  AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
+              type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
   AddFunction("replace",
-              {type::Type::VARCHAR, type::Type::VARCHAR, type::Type::VARCHAR},
-              type::Type::VARCHAR, expression::StringFunctions::Replace);
-  AddFunction("ltrim", {type::Type::VARCHAR, type::Type::VARCHAR},
-              type::Type::VARCHAR, expression::StringFunctions::LTrim);
-  AddFunction("rtrim", {type::Type::VARCHAR, type::Type::VARCHAR},
-              type::Type::VARCHAR, expression::StringFunctions::RTrim);
-  AddFunction("btrim", {type::Type::VARCHAR, type::Type::VARCHAR},
-              type::Type::VARCHAR, expression::StringFunctions::BTrim);
-  AddFunction("sqrt", {type::Type::DECIMAL}, type::Type::DECIMAL,
+              {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
+  AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::RTrim);
+  AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::BTrim);
+  AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
               expression::DecimalFunctions::Sqrt);
 
   /**
    * date functions
    */
-  AddFunction("extract", {type::Type::INTEGER, type::Type::TIMESTAMP},
-              type::Type::DECIMAL, expression::DateFunctions::Extract);
+  AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+              type::TypeId::DECIMAL, expression::DateFunctions::Extract);
 }
 }
 }

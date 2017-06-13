@@ -103,7 +103,7 @@ void CheckGreaterThan(type::Value &v1, type::Value &v2) {
 
 // Compare two integers
 template<class T1, class T2>
-void CheckCompare1(T1 x, T2 y, type::Type::TypeId xtype, type::Type::TypeId ytype) {
+void CheckCompare1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   type::Value v1 = type::Value(xtype, x);
   type::Value v2 = type::Value(ytype, y);
   if (x == y)
@@ -116,7 +116,7 @@ void CheckCompare1(T1 x, T2 y, type::Type::TypeId xtype, type::Type::TypeId ytyp
 
 // Compare integer and decimal
 template<class T>
-void CheckCompare2(T x, double y, type::Type::TypeId xtype) {
+void CheckCompare2(T x, double y, type::TypeId xtype) {
   type::Value v1 = type::Value(xtype, x);
   type::Value v2 = type::ValueFactory::GetDecimalValue(y);
   if (x == y)
@@ -129,7 +129,7 @@ void CheckCompare2(T x, double y, type::Type::TypeId xtype) {
 
 // Compare decimal and integer
 template<class T>
-void CheckCompare3(double x, T y, type::Type::TypeId ytype) {
+void CheckCompare3(double x, T y, type::TypeId ytype) {
   type::Value v1 = type::ValueFactory::GetDecimalValue(x);
   type::Value v2 = type::Value(ytype, y);
   if (x == y)
@@ -154,7 +154,7 @@ void CheckCompare4(double x, double y) {
 
 // Compare number with varchar
 template<class T>
-void CheckCompare5(T x, T y, type::Type::TypeId xtype) {
+void CheckCompare5(T x, T y, type::TypeId xtype) {
   type::Value v1 = type::Value(xtype, x);
   type::Value v2 = type::ValueFactory::GetVarcharValue(type::Value(xtype, y).ToString());
   if (x == y)
@@ -172,8 +172,8 @@ inline double ValMod(double x, double y) {
 
 // Check the operations of two integers
 template<class T1, class T2>
-void CheckMath1(T1 x, T2 y, type::Type::TypeId xtype, type::Type::TypeId ytype) {
-  type::Type::TypeId maxtype = xtype > ytype? xtype : ytype;
+void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
+  type::TypeId maxtype = xtype > ytype? xtype : ytype;
   type::Value v1;
   type::Value v2;
   // Test x + y
@@ -273,7 +273,7 @@ void CheckMath1(T1 x, T2 y, type::Type::TypeId xtype, type::Type::TypeId ytype) 
 
 // Check the operations of an integer and a decimal
 template<class T>
-void CheckMath2(T x, double y, type::Type::TypeId xtype) {
+void CheckMath2(T x, double y, type::TypeId xtype) {
   type::Value v1, v2;
   v1 = type::Value(xtype, x).Add(type::ValueFactory::GetDecimalValue(y));
   v2 = type::ValueFactory::GetDecimalValue(x + y);
@@ -310,7 +310,7 @@ void CheckMath2(T x, double y, type::Type::TypeId xtype) {
 
 // Check the operations of a decimal and an integer
 template<class T>
-void CheckMath3(double x, T y, type::Type::TypeId ytype) {
+void CheckMath3(double x, T y, type::TypeId ytype) {
   type::Value v1, v2;
 
   v1 = type::ValueFactory::GetDecimalValue(x).Add(type::Value(ytype, y));
@@ -395,77 +395,77 @@ void CheckMath4(double x, double y) {
 TEST_F(NumericValueTests, TinyIntComparisonTest) {
   std::srand(SEED);
   for (int i = 0; i < TEST_NUM; i++) {
-    CheckCompare1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::Type::TINYINT, type::Type::TINYINT);
-    CheckCompare1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::Type::TINYINT, type::Type::SMALLINT);
-    CheckCompare1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::Type::TINYINT, type::Type::INTEGER);
-    CheckCompare1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::Type::TINYINT, type::Type::BIGINT);
-    CheckCompare2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::Type::TINYINT);
-    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
+    CheckCompare1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::TypeId::TINYINT, type::TypeId::TINYINT);
+    CheckCompare1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::TypeId::TINYINT, type::TypeId::SMALLINT);
+    CheckCompare1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::TypeId::TINYINT, type::TypeId::INTEGER);
+    CheckCompare1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::TypeId::TINYINT, type::TypeId::BIGINT);
+    CheckCompare2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::TypeId::TINYINT);
+    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::TypeId::TINYINT);
 
     int8_t v0 = RANDOM8();
     int8_t v1 = v0 + 1;
     int8_t v2 = v0 - 1;
-    CheckCompare5<int8_t>(v0, v0, type::Type::TINYINT);
-    CheckCompare5<int8_t>(v0, v1, type::Type::TINYINT);
-    CheckCompare5<int8_t>(v0, v2, type::Type::TINYINT);
+    CheckCompare5<int8_t>(v0, v0, type::TypeId::TINYINT);
+    CheckCompare5<int8_t>(v0, v1, type::TypeId::TINYINT);
+    CheckCompare5<int8_t>(v0, v2, type::TypeId::TINYINT);
   }
 }
 
 TEST_F(NumericValueTests, SmallIntComparisonTest) {
   std::srand(SEED);
   for (int i = 0; i < TEST_NUM; i++) {
-    CheckCompare1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::Type::SMALLINT, type::Type::TINYINT);
-    CheckCompare1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::Type::SMALLINT, type::Type::SMALLINT);
-    CheckCompare1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::Type::SMALLINT, type::Type::INTEGER);
-    CheckCompare1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::Type::SMALLINT, type::Type::BIGINT);
-    CheckCompare2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::Type::SMALLINT);
-    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
+    CheckCompare1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::TypeId::SMALLINT, type::TypeId::TINYINT);
+    CheckCompare1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::TypeId::SMALLINT, type::TypeId::SMALLINT);
+    CheckCompare1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::TypeId::SMALLINT, type::TypeId::INTEGER);
+    CheckCompare1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::TypeId::SMALLINT, type::TypeId::BIGINT);
+    CheckCompare2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::TypeId::SMALLINT);
+    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::TypeId::SMALLINT);
 
     int16_t v0 = RANDOM16();
     int16_t v1 = v0 + 1;
     int16_t v2 = v0 - 1;
-    CheckCompare5<int16_t>(v0, v0, type::Type::SMALLINT);
-    CheckCompare5<int16_t>(v0, v1, type::Type::SMALLINT);
-    CheckCompare5<int16_t>(v0, v2, type::Type::SMALLINT);
+    CheckCompare5<int16_t>(v0, v0, type::TypeId::SMALLINT);
+    CheckCompare5<int16_t>(v0, v1, type::TypeId::SMALLINT);
+    CheckCompare5<int16_t>(v0, v2, type::TypeId::SMALLINT);
   }
 }
 
 TEST_F(NumericValueTests, IntComparisonTest) {
   std::srand(SEED);
   for (int i = 0; i < TEST_NUM; i++) {
-    CheckCompare1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::Type::INTEGER, type::Type::TINYINT);
-    CheckCompare1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::Type::INTEGER, type::Type::SMALLINT);
-    CheckCompare1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::Type::INTEGER, type::Type::INTEGER);
-    CheckCompare1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::Type::INTEGER, type::Type::BIGINT);
-    CheckCompare2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::Type::INTEGER);
-    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
+    CheckCompare1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::TypeId::INTEGER, type::TypeId::TINYINT);
+    CheckCompare1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::TypeId::INTEGER, type::TypeId::SMALLINT);
+    CheckCompare1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::TypeId::INTEGER, type::TypeId::INTEGER);
+    CheckCompare1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::TypeId::INTEGER, type::TypeId::BIGINT);
+    CheckCompare2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::TypeId::INTEGER);
+    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::TypeId::INTEGER);
 
     int32_t v0 = RANDOM32();
     int32_t v1 = v0 + 1;
     int32_t v2 = v0 - 1;
-    CheckCompare5<int32_t>(v0, v0, type::Type::INTEGER);
-    CheckCompare5<int32_t>(v0, v1, type::Type::INTEGER);
-    CheckCompare5<int32_t>(v0, v2, type::Type::INTEGER);
+    CheckCompare5<int32_t>(v0, v0, type::TypeId::INTEGER);
+    CheckCompare5<int32_t>(v0, v1, type::TypeId::INTEGER);
+    CheckCompare5<int32_t>(v0, v2, type::TypeId::INTEGER);
   }
 }
 
 TEST_F(NumericValueTests, BigIntComparisonTest) {
   std::srand(SEED);
   for (int i = 0; i < TEST_NUM; i++) {
-    CheckCompare1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::Type::BIGINT, type::Type::TINYINT);
-    CheckCompare1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::Type::BIGINT, type::Type::SMALLINT);
-    CheckCompare1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::Type::BIGINT, type::Type::INTEGER);
-    CheckCompare1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::Type::BIGINT, type::Type::BIGINT);
-    CheckCompare2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::Type::BIGINT);
-    CheckCompare3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::Type::BIGINT);
+    CheckCompare1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::TypeId::BIGINT, type::TypeId::TINYINT);
+    CheckCompare1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::TypeId::BIGINT, type::TypeId::SMALLINT);
+    CheckCompare1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::TypeId::BIGINT, type::TypeId::INTEGER);
+    CheckCompare1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::TypeId::BIGINT, type::TypeId::BIGINT);
+    CheckCompare2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::TypeId::BIGINT);
+    CheckCompare3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::TypeId::BIGINT);
     CheckCompare4(RANDOM_DECIMAL(), RANDOM_DECIMAL());
 
     int64_t v0 = RANDOM64();
     int64_t v1 = v0 + 1;
     int64_t v2 = v0 - 1;
-    CheckCompare5<int64_t>(v0, v0, type::Type::BIGINT);
-    CheckCompare5<int64_t>(v0, v1, type::Type::BIGINT);
-    CheckCompare5<int64_t>(v0, v2, type::Type::BIGINT);
+    CheckCompare5<int64_t>(v0, v0, type::TypeId::BIGINT);
+    CheckCompare5<int64_t>(v0, v1, type::TypeId::BIGINT);
+    CheckCompare5<int64_t>(v0, v2, type::TypeId::BIGINT);
   }
 }
 
@@ -475,34 +475,34 @@ TEST_F(NumericValueTests, MathTest) {
   // Generate two values v1 and v2
   // Check type::Value(v1) op type::Value(v2) == type::Value(v1 op v2);
   for (int i = 0; i < TEST_NUM; i++) {
-    CheckMath1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::Type::TINYINT, type::Type::TINYINT);
-    CheckMath1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::Type::TINYINT, type::Type::SMALLINT);
-    CheckMath1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::Type::TINYINT, type::Type::INTEGER);
-    CheckMath1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::Type::TINYINT, type::Type::BIGINT);
-    CheckMath2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::Type::TINYINT);
+    CheckMath1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::TypeId::TINYINT, type::TypeId::TINYINT);
+    CheckMath1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::TypeId::TINYINT, type::TypeId::SMALLINT);
+    CheckMath1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::TypeId::TINYINT, type::TypeId::INTEGER);
+    CheckMath1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::TypeId::TINYINT, type::TypeId::BIGINT);
+    CheckMath2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::TypeId::TINYINT);
 
-    CheckMath1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::Type::SMALLINT, type::Type::TINYINT);
-    CheckMath1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::Type::SMALLINT, type::Type::SMALLINT);
-    CheckMath1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::Type::SMALLINT, type::Type::INTEGER);
-    CheckMath1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::Type::SMALLINT, type::Type::BIGINT);
-    CheckMath2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::Type::SMALLINT);
+    CheckMath1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::TypeId::SMALLINT, type::TypeId::TINYINT);
+    CheckMath1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::TypeId::SMALLINT, type::TypeId::SMALLINT);
+    CheckMath1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::TypeId::SMALLINT, type::TypeId::INTEGER);
+    CheckMath1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::TypeId::SMALLINT, type::TypeId::BIGINT);
+    CheckMath2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::TypeId::SMALLINT);
 
-    CheckMath1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::Type::INTEGER, type::Type::TINYINT);
-    CheckMath1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::Type::INTEGER, type::Type::SMALLINT);
-    CheckMath1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::Type::INTEGER, type::Type::INTEGER);
-    CheckMath1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::Type::BIGINT, type::Type::BIGINT);
-    CheckMath2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::Type::INTEGER);
+    CheckMath1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::TypeId::INTEGER, type::TypeId::TINYINT);
+    CheckMath1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::TypeId::INTEGER, type::TypeId::SMALLINT);
+    CheckMath1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::TypeId::INTEGER, type::TypeId::INTEGER);
+    CheckMath1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::TypeId::BIGINT, type::TypeId::BIGINT);
+    CheckMath2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::TypeId::INTEGER);
 
-    CheckMath1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::Type::BIGINT, type::Type::TINYINT);
-    CheckMath1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::Type::BIGINT, type::Type::SMALLINT);
-    CheckMath1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::Type::BIGINT, type::Type::INTEGER);
-    CheckMath1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::Type::BIGINT, type::Type::BIGINT);
-    CheckMath2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::Type::BIGINT);
+    CheckMath1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::TypeId::BIGINT, type::TypeId::TINYINT);
+    CheckMath1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::TypeId::BIGINT, type::TypeId::SMALLINT);
+    CheckMath1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::TypeId::BIGINT, type::TypeId::INTEGER);
+    CheckMath1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::TypeId::BIGINT, type::TypeId::BIGINT);
+    CheckMath2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::TypeId::BIGINT);
 
-    CheckMath3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
-    CheckMath3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
-    CheckMath3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
-    CheckMath3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::Type::BIGINT);
+    CheckMath3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::TypeId::TINYINT);
+    CheckMath3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::TypeId::SMALLINT);
+    CheckMath3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::TypeId::INTEGER);
+    CheckMath3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::TypeId::BIGINT);
     CheckMath4(RANDOM_DECIMAL(), RANDOM_DECIMAL());
   }
 }
@@ -511,28 +511,28 @@ TEST_F(NumericValueTests, IsZeroTest) {
   type::Value v1, v2;
 
   v1 = type::ValueFactory::GetTinyIntValue(0);
-  v2 = type::ValueFactory::GetZeroValueByType(type::Type::TINYINT);
+  v2 = type::ValueFactory::GetZeroValueByType(type::TypeId::TINYINT);
   EXPECT_TRUE(v1.IsZero());
   EXPECT_FALSE(v1.IsNull());
   EXPECT_TRUE(v2.IsZero());
   CheckEqual(v1, v2);
 
   v1 = type::ValueFactory::GetSmallIntValue(0);
-  v2 = type::ValueFactory::GetZeroValueByType(type::Type::SMALLINT);
+  v2 = type::ValueFactory::GetZeroValueByType(type::TypeId::SMALLINT);
   EXPECT_TRUE(v1.IsZero());
   EXPECT_FALSE(v1.IsNull());
   EXPECT_TRUE(v2.IsZero());
   CheckEqual(v1, v2);
 
   v1 = type::ValueFactory::GetIntegerValue(0);
-  v2 = type::ValueFactory::GetZeroValueByType(type::Type::INTEGER);
+  v2 = type::ValueFactory::GetZeroValueByType(type::TypeId::INTEGER);
   EXPECT_TRUE(v1.IsZero());
   EXPECT_FALSE(v1.IsNull());
   EXPECT_TRUE(v2.IsZero());
   CheckEqual(v1, v2);
 
   v1 = type::ValueFactory::GetBigIntValue(0);
-  v2 = type::ValueFactory::GetZeroValueByType(type::Type::BIGINT);
+  v2 = type::ValueFactory::GetZeroValueByType(type::TypeId::BIGINT);
   EXPECT_TRUE(v1.IsZero());
   EXPECT_FALSE(v1.IsNull());
   EXPECT_TRUE(v2.IsZero());
@@ -564,13 +564,13 @@ TEST_F(NumericValueTests, SqrtTest) {
 
 TEST_F(NumericValueTests, CastAsTest) {
 
-  std::vector<type::Type::TypeId> types = {
-      type::Type::TINYINT,
-      type::Type::SMALLINT,
-      type::Type::INTEGER,
-      type::Type::BIGINT,
-      type::Type::DECIMAL,
-      type::Type::VARCHAR,
+  std::vector<type::TypeId> types = {
+      type::TypeId::TINYINT,
+      type::TypeId::SMALLINT,
+      type::TypeId::INTEGER,
+      type::TypeId::BIGINT,
+      type::TypeId::DECIMAL,
+      type::TypeId::VARCHAR,
   };
 
   for (int i = type::PELOTON_INT8_MIN; i <= type::PELOTON_INT8_MAX; i++) {
@@ -578,22 +578,22 @@ TEST_F(NumericValueTests, CastAsTest) {
       type::Value v1;
 
       switch (t1) {
-        case type::Type::TINYINT:
+        case type::TypeId::TINYINT:
           v1 = type::ValueFactory::GetTinyIntValue(i);
           break;
-        case type::Type::SMALLINT:
+        case type::TypeId::SMALLINT:
           v1 = type::ValueFactory::GetSmallIntValue(i);
           break;
-        case type::Type::INTEGER:
+        case type::TypeId::INTEGER:
           v1 = type::ValueFactory::GetIntegerValue(i);
           break;
-        case type::Type::BIGINT:
+        case type::TypeId::BIGINT:
           v1 = type::ValueFactory::GetBigIntValue(i);
           break;
-        case type::Type::DECIMAL:
+        case type::TypeId::DECIMAL:
           v1 = type::ValueFactory::GetDecimalValue((double)i);
           break;
-        case type::Type::VARCHAR:
+        case type::TypeId::VARCHAR:
           v1 = type::ValueFactory::GetVarcharValue(
                     type::ValueFactory::GetSmallIntValue(i).ToString());
           break;
@@ -617,34 +617,34 @@ TEST_F(NumericValueTests, CastAsTest) {
 TEST_F(NumericValueTests, DivideByZeroTest) {
   std::srand(SEED);
 
-  CheckMath1<int8_t, int8_t>(RANDOM8(), 0, type::Type::TINYINT, type::Type::TINYINT);
-  CheckMath1<int8_t, int16_t>(RANDOM8(), 0, type::Type::TINYINT, type::Type::SMALLINT);
-  CheckMath1<int8_t, int32_t>(RANDOM8(), 0, type::Type::TINYINT, type::Type::INTEGER);
-  CheckMath1<int8_t, int64_t>(RANDOM8(), 0, type::Type::TINYINT, type::Type::BIGINT);
-  CheckMath2<int8_t>(RANDOM8(), 0, type::Type::TINYINT);
+  CheckMath1<int8_t, int8_t>(RANDOM8(), 0, type::TypeId::TINYINT, type::TypeId::TINYINT);
+  CheckMath1<int8_t, int16_t>(RANDOM8(), 0, type::TypeId::TINYINT, type::TypeId::SMALLINT);
+  CheckMath1<int8_t, int32_t>(RANDOM8(), 0, type::TypeId::TINYINT, type::TypeId::INTEGER);
+  CheckMath1<int8_t, int64_t>(RANDOM8(), 0, type::TypeId::TINYINT, type::TypeId::BIGINT);
+  CheckMath2<int8_t>(RANDOM8(), 0, type::TypeId::TINYINT);
 
-  CheckMath1<int16_t, int8_t>(RANDOM16(), 0, type::Type::SMALLINT, type::Type::TINYINT);
-  CheckMath1<int16_t, int16_t>(RANDOM16(), 0, type::Type::SMALLINT, type::Type::SMALLINT);
-  CheckMath1<int16_t, int32_t>(RANDOM16(), 0, type::Type::SMALLINT, type::Type::INTEGER);
-  CheckMath1<int16_t, int64_t>(RANDOM16(), 0, type::Type::SMALLINT, type::Type::BIGINT);
-  CheckMath2<int16_t>(RANDOM16(), 0, type::Type::SMALLINT);
+  CheckMath1<int16_t, int8_t>(RANDOM16(), 0, type::TypeId::SMALLINT, type::TypeId::TINYINT);
+  CheckMath1<int16_t, int16_t>(RANDOM16(), 0, type::TypeId::SMALLINT, type::TypeId::SMALLINT);
+  CheckMath1<int16_t, int32_t>(RANDOM16(), 0, type::TypeId::SMALLINT, type::TypeId::INTEGER);
+  CheckMath1<int16_t, int64_t>(RANDOM16(), 0, type::TypeId::SMALLINT, type::TypeId::BIGINT);
+  CheckMath2<int16_t>(RANDOM16(), 0, type::TypeId::SMALLINT);
 
-  CheckMath1<int32_t, int8_t>(RANDOM32(), 0, type::Type::INTEGER, type::Type::TINYINT);
-  CheckMath1<int32_t, int16_t>(RANDOM32(), 0, type::Type::INTEGER, type::Type::SMALLINT);
-  CheckMath1<int32_t, int32_t>(RANDOM32(), 0, type::Type::INTEGER, type::Type::INTEGER);
-  CheckMath1<int32_t, int64_t>(RANDOM32(), 0, type::Type::BIGINT, type::Type::BIGINT);
-  CheckMath2<int32_t>(RANDOM32(), 0, type::Type::INTEGER);
+  CheckMath1<int32_t, int8_t>(RANDOM32(), 0, type::TypeId::INTEGER, type::TypeId::TINYINT);
+  CheckMath1<int32_t, int16_t>(RANDOM32(), 0, type::TypeId::INTEGER, type::TypeId::SMALLINT);
+  CheckMath1<int32_t, int32_t>(RANDOM32(), 0, type::TypeId::INTEGER, type::TypeId::INTEGER);
+  CheckMath1<int32_t, int64_t>(RANDOM32(), 0, type::TypeId::BIGINT, type::TypeId::BIGINT);
+  CheckMath2<int32_t>(RANDOM32(), 0, type::TypeId::INTEGER);
 
-  CheckMath1<int64_t, int8_t>(RANDOM64(), 0, type::Type::BIGINT, type::Type::TINYINT);
-  CheckMath1<int64_t, int16_t>(RANDOM64(), 0, type::Type::BIGINT, type::Type::SMALLINT);
-  CheckMath1<int64_t, int32_t>(RANDOM64(), 0, type::Type::BIGINT, type::Type::INTEGER);
-  CheckMath1<int64_t, int64_t>(RANDOM64(), 0, type::Type::BIGINT, type::Type::BIGINT);
-  CheckMath2<int64_t>(RANDOM64(), 0, type::Type::BIGINT);
+  CheckMath1<int64_t, int8_t>(RANDOM64(), 0, type::TypeId::BIGINT, type::TypeId::TINYINT);
+  CheckMath1<int64_t, int16_t>(RANDOM64(), 0, type::TypeId::BIGINT, type::TypeId::SMALLINT);
+  CheckMath1<int64_t, int32_t>(RANDOM64(), 0, type::TypeId::BIGINT, type::TypeId::INTEGER);
+  CheckMath1<int64_t, int64_t>(RANDOM64(), 0, type::TypeId::BIGINT, type::TypeId::BIGINT);
+  CheckMath2<int64_t>(RANDOM64(), 0, type::TypeId::BIGINT);
 
-  CheckMath3<int8_t>(RANDOM_DECIMAL(), 0, type::Type::TINYINT);
-  CheckMath3<int16_t>(RANDOM_DECIMAL(), 0, type::Type::SMALLINT);
-  CheckMath3<int32_t>(RANDOM_DECIMAL(), 0, type::Type::INTEGER);
-  CheckMath3<int64_t>(RANDOM_DECIMAL(), 0, type::Type::BIGINT);
+  CheckMath3<int8_t>(RANDOM_DECIMAL(), 0, type::TypeId::TINYINT);
+  CheckMath3<int16_t>(RANDOM_DECIMAL(), 0, type::TypeId::SMALLINT);
+  CheckMath3<int32_t>(RANDOM_DECIMAL(), 0, type::TypeId::INTEGER);
+  CheckMath3<int64_t>(RANDOM_DECIMAL(), 0, type::TypeId::BIGINT);
   CheckMath4(RANDOM_DECIMAL(), 0);
 }
 

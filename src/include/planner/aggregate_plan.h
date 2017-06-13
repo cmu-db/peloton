@@ -40,7 +40,7 @@ class AggregatePlan : public AbstractPlan {
             bool distinct = false)
         : aggtype(et), expression(expr), distinct(distinct) {}
 
-    type::Type::TypeId GetValueType() const { return agg_ai.type; }
+    type::TypeId GetValueType() const { return agg_ai.type; }
 
     bool IsNullable() const { return agg_ai.nullable; }
 

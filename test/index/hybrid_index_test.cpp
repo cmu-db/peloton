@@ -77,8 +77,8 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    auto column = catalog::Column(type::Type::INTEGER,
-                                  type::Type::GetTypeSize(type::Type::INTEGER),
+    auto column = catalog::Column(type::TypeId::INTEGER,
+                                  type::Type::GetTypeSize(type::TypeId::INTEGER),
                                   std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
@@ -158,7 +158,7 @@ expression::AbstractExpression *GetPredicate() {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
 
   // Second, create constant value expression.
   auto constant_value_left =
@@ -174,7 +174,7 @@ expression::AbstractExpression *GetPredicate() {
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
 
   auto constant_value_right =
       type::ValueFactory::GetIntegerValue(tuple_end_offset);

@@ -38,12 +38,12 @@ class Type {
     virtual ~Cast() {}
 
     // Does this cast support casting from the given type to the given type?
-    virtual bool SupportsTypes(type::Type::TypeId from_type,
-                               type::Type::TypeId to_type) const = 0;
+    virtual bool SupportsTypes(type::TypeId from_type,
+                               type::TypeId to_type) const = 0;
 
     // Perform the cast on the given value to the provided type
     virtual Value DoCast(CodeGen &codegen, const Value &value,
-                         type::Type::TypeId to_type) const = 0;
+                         type::TypeId to_type) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -55,8 +55,8 @@ class Type {
 
     // Does this instance support comparison of the values of the given left and
     // right SQL types?
-    virtual bool SupportsTypes(type::Type::TypeId left_type,
-                               type::Type::TypeId right_type) const = 0;
+    virtual bool SupportsTypes(type::TypeId left_type,
+                               type::TypeId right_type) const = 0;
 
     // Main comparison operators
     virtual Value DoCompareLt(CodeGen &codegen, const Value &left,
@@ -105,12 +105,12 @@ class Type {
     virtual ~UnaryOperator() {}
 
     // Does this unary operator support values of the given type?
-    virtual bool SupportsType(type::Type::TypeId type_id) const = 0;
+    virtual bool SupportsType(type::TypeId type_id) const = 0;
 
     // What is the SQL type of the result of applying the unary operator on a
     // value of the provided type?
-    virtual type::Type::TypeId ResultType(
-        type::Type::TypeId val_type) const = 0;
+    virtual type::TypeId ResultType(
+        type::TypeId val_type) const = 0;
 
     // Apply the operator on the given value
     virtual Value DoWork(CodeGen &codegen, const Value &val) const = 0;
@@ -122,13 +122,13 @@ class Type {
   struct BinaryOperator {
     virtual ~BinaryOperator() {}
     // Does this binary operator support the two provided input types?
-    virtual bool SupportsTypes(type::Type::TypeId left_type,
-                               type::Type::TypeId right_type) const = 0;
+    virtual bool SupportsTypes(type::TypeId left_type,
+                               type::TypeId right_type) const = 0;
 
     // What is the SQL type of the result of applying the binary operator on the
     // provided left and right value types?
-    virtual type::Type::TypeId ResultType(
-        type::Type::TypeId left_type, type::Type::TypeId right_type) const = 0;
+    virtual type::TypeId ResultType(
+        type::TypeId left_type, type::TypeId right_type) const = 0;
 
     // Execute the actual operator
     virtual Value DoWork(CodeGen &codegen, const Value &left,
@@ -140,54 +140,54 @@ class Type {
   //===--------------------------------------------------------------------===//
 
   // Get the storage size in bytes of the given type
-  static uint32_t GetFixedSizeForType(type::Type::TypeId type_id);
+  static uint32_t GetFixedSizeForType(type::TypeId type_id);
 
   // Is the given type variable length?
-  static bool IsVariableLength(type::Type::TypeId type_id) {
-    return type_id == type::Type::TypeId::VARCHAR ||
-           type_id == type::Type::TypeId::VARBINARY;
+  static bool IsVariableLength(type::TypeId type_id) {
+    return type_id == type::TypeId::VARCHAR ||
+           type_id == type::TypeId::VARBINARY;
   }
 
   // Is the given type an integral type (i.e., tinyint to bigint)
-  static bool IsIntegral(type::Type::TypeId type_id);
+  static bool IsIntegral(type::TypeId type_id);
 
   // Is the given type a numeric (real, decimal, numeric etc.)
-  static bool IsNumeric(type::Type::TypeId type_id) {
-    return type_id == type::Type::TypeId::DECIMAL;
+  static bool IsNumeric(type::TypeId type_id) {
+    return type_id == type::TypeId::DECIMAL;
   }
 
   // Can values of the provided type be implicitly casted into a value of the
   // other provided type?
-  static bool CanImplicitlyCastTo(type::Type::TypeId from_type,
-                                  type::Type::TypeId to_type);
+  static bool CanImplicitlyCastTo(type::TypeId from_type,
+                                  type::TypeId to_type);
 
   // Get the min, max, null, and default value for the given type
-  static Value GetMinValue(CodeGen &codegen, type::Type::TypeId type_id);
-  static Value GetMaxValue(CodeGen &codegen, type::Type::TypeId type_id);
-  static Value GetNullValue(CodeGen &codegen, type::Type::TypeId type_id);
-  static Value GetDefaultValue(CodeGen &codegen, type::Type::TypeId type_id);
+  static Value GetMinValue(CodeGen &codegen, type::TypeId type_id);
+  static Value GetMaxValue(CodeGen &codegen, type::TypeId type_id);
+  static Value GetNullValue(CodeGen &codegen, type::TypeId type_id);
+  static Value GetDefaultValue(CodeGen &codegen, type::TypeId type_id);
 
   // Get the LLVM types used to materialize a SQL value of the given type
   static void GetTypeForMaterialization(CodeGen &codegen,
-                                        type::Type::TypeId type_id,
+                                        type::TypeId type_id,
                                         llvm::Type *&val_type,
                                         llvm::Type *&len_type);
 
   // Lookup comparison handler for the given type
-  static const Cast *GetCast(type::Type::TypeId from_type,
-                             type::Type::TypeId to_type);
+  static const Cast *GetCast(type::TypeId from_type,
+                             type::TypeId to_type);
 
   // Lookup comparison handler for the given type
-  static const Comparison *GetComparison(type::Type::TypeId left_type,
-                                         type::Type::TypeId &left_casted_type,
-                                         type::Type::TypeId right_type,
-                                         type::Type::TypeId &right_casted_type);
+  static const Comparison *GetComparison(type::TypeId left_type,
+                                         type::TypeId &left_casted_type,
+                                         type::TypeId right_type,
+                                         type::TypeId &right_casted_type);
 
   // Lookup the given binary operator that works on the left and right types
   static const BinaryOperator *GetBinaryOperator(
-      OperatorId op_id, type::Type::TypeId left_type,
-      type::Type::TypeId &left_casted_type, type::Type::TypeId right_type,
-      type::Type::TypeId &right_casted_type);
+      OperatorId op_id, type::TypeId left_type,
+      type::TypeId &left_casted_type, type::TypeId right_type,
+      type::TypeId &right_casted_type);
 
  private:
   struct OperatorIdHasher {
@@ -196,14 +196,14 @@ class Type {
     }
   };
 
-  typedef std::unordered_map<type::Type::TypeId,
-                             std::vector<type::Type::TypeId>,
+  typedef std::unordered_map<type::TypeId,
+                             std::vector<type::TypeId>,
                              type::Type::TypeIdHasher> ImplicitCastTable;
 
-  typedef std::unordered_map<type::Type::TypeId, std::vector<const Cast *>,
+  typedef std::unordered_map<type::TypeId, std::vector<const Cast *>,
                              type::Type::TypeIdHasher> CastingTable;
 
-  typedef std::unordered_map<type::Type::TypeId,
+  typedef std::unordered_map<type::TypeId,
                              std::vector<const Comparison *>,
                              type::Type::TypeIdHasher> ComparisonTable;
 

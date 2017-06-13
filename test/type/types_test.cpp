@@ -103,14 +103,14 @@ TEST_F(TypesTests, BackendTypeTest) {
 }
 
 TEST_F(TypesTests, TypeIdTest) {
-  std::vector<type::Type::TypeId> list = {
-      type::Type::INVALID,   type::Type::PARAMETER_OFFSET,
-      type::Type::BOOLEAN,   type::Type::TINYINT,
-      type::Type::SMALLINT,  type::Type::INTEGER,
-      type::Type::BIGINT,    type::Type::DECIMAL,
-      type::Type::TIMESTAMP, type::Type::DATE,
-      type::Type::VARCHAR,   type::Type::VARBINARY,
-      type::Type::ARRAY,     type::Type::UDT};
+  std::vector<type::TypeId> list = {
+      type::TypeId::INVALID,   type::TypeId::PARAMETER_OFFSET,
+      type::TypeId::BOOLEAN,   type::TypeId::TINYINT,
+      type::TypeId::SMALLINT,  type::TypeId::INTEGER,
+      type::TypeId::BIGINT,    type::TypeId::DECIMAL,
+      type::TypeId::TIMESTAMP, type::TypeId::DATE,
+      type::TypeId::VARCHAR,   type::TypeId::VARBINARY,
+      type::TypeId::ARRAY,     type::TypeId::UDT};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -124,7 +124,7 @@ TEST_F(TypesTests, TypeIdTest) {
   // Then make sure that we can't cast garbage
   std::string invalid("JoyIsDangerous");
   EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
-  EXPECT_THROW(peloton::TypeIdToString(static_cast<type::Type::TypeId>(-99999)),
+  EXPECT_THROW(peloton::TypeIdToString(static_cast<type::TypeId>(-99999)),
                peloton::Exception);
 }
 

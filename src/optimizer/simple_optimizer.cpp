@@ -397,8 +397,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   ExpressionType::AGGREGATE_AVG) {
                 // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
-                    type::Type::DECIMAL,
-                    type::Type::GetTypeSize(type::Type::DECIMAL),
+                    type::TypeId::DECIMAL,
+                    type::Type::GetTypeSize(type::TypeId::DECIMAL),
                     "COL_" + std::to_string(col_cntr_id++), true);
 
                 output_schema_columns.push_back(column);
@@ -443,8 +443,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                         outer_pair.second.first, outer_pair.second.second);
 
               auto column = catalog::Column(
-                  type::Type::INTEGER,
-                  type::Type::GetTypeSize(type::Type::INTEGER),
+                  type::TypeId::INTEGER,
+                  type::Type::GetTypeSize(type::TypeId::INTEGER),
                   "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                            // used only when
                                                            // there is no AS
@@ -1128,7 +1128,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   nested_join_plan_node->AddChild(std::move(stock_scan_node));
 
   expression::TupleValueExpression* left_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
 
   planner::AggregatePlan::AggTerm agg_term(
       ParserExpressionNameToExpressionType("count"), left_table_attr_1, 1);
@@ -1151,8 +1151,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   expression::AbstractExpression* having = nullptr;
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
-  auto column = catalog::Column(type::Type::INTEGER,
-                                type::Type::GetTypeSize(type::Type::INTEGER),
+  auto column = catalog::Column(type::TypeId::INTEGER,
+                                type::Type::GetTypeSize(type::TypeId::INTEGER),
                                 "COL_0",  // COL_A should be
                                           // used only when
                                           // there is no AS
@@ -1194,8 +1194,8 @@ std::unique_ptr<const planner::ProjectInfo> CreateHackProjection() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
-  auto column = catalog::Column(type::Type::INTEGER,
-                                type::Type::GetTypeSize(type::Type::INTEGER),
+  auto column = catalog::Column(type::TypeId::INTEGER,
+                                type::Type::GetTypeSize(type::TypeId::INTEGER),
                                 "S_I_ID", 1);
 
   column.AddConstraint(

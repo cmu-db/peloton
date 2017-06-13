@@ -114,7 +114,7 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_id < schema.GetColumnCount());
 
-  const type::Type::TypeId column_type = schema.GetType(column_id);
+  const type::TypeId column_type = schema.GetType(column_id);
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + schema.GetOffset(column_id);
@@ -131,7 +131,7 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
 // column offset is the actual offset of the column within the tuple slot
 type::Value Tile::GetValueFast(const oid_t tuple_offset,
                                  const size_t column_offset,
-                                 const type::Type::TypeId column_type,
+                                 const type::TypeId column_type,
                                  const bool is_inlined) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_offset < schema.GetLength());
@@ -323,7 +323,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Write an array of column types as bytes
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    type::Type::TypeId type = schema.GetType(column_itr);
+    type::TypeId type = schema.GetType(column_itr);
     output.WriteByte(static_cast<int8_t>(type));
   }
 
@@ -412,12 +412,12 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input,
 
   // Store the following information so that we can provide them to the user on
   // failure
-  type::Type::TypeId types[column_count];
+  type::TypeId types[column_count];
   std::vector<std::string> names;
 
   // Skip the column types
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    types[column_itr] = (type::Type::TypeId)input.ReadEnumInSingleByte();
+    types[column_itr] = (type::TypeId)input.ReadEnumInSingleByte();
   }
 
   // Skip the column names

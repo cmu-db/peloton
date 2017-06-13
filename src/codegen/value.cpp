@@ -24,9 +24,9 @@
 namespace peloton {
 namespace codegen {
 
-Value::Value() : Value(type::Type::TypeId::INVALID) {}
+Value::Value() : Value(type::TypeId::INVALID) {}
 
-Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
+Value::Value(type::TypeId type, llvm::Value *val, llvm::Value *length,
              llvm::Value *null)
     : type_(type), value_(val), length_(length), null_(null) {}
 
@@ -35,7 +35,7 @@ Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
 //===----------------------------------------------------------------------===//
 
 llvm::Value *Value::ReifyBoolean(CodeGen &codegen) const {
-  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
   llvm::Value *null_bit = GetNullBit();
   if (null_bit == nullptr) {
     return GetValue();
@@ -60,7 +60,7 @@ llvm::Value *Value::IsNotNull(CodeGen &codegen) const {
 // COMPARISONS
 //===----------------------------------------------------------------------===//
 
-Value Value::CastTo(CodeGen &codegen, type::Type::TypeId to_type) const {
+Value Value::CastTo(CodeGen &codegen, type::TypeId to_type) const {
   // If the type we're casting to is the type of the value, we're done
   if (GetType() == to_type) {
     return *this;
@@ -72,8 +72,8 @@ Value Value::CastTo(CodeGen &codegen, type::Type::TypeId to_type) const {
 }
 
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -85,8 +85,8 @@ Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -98,8 +98,8 @@ Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -111,8 +111,8 @@ Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -124,8 +124,8 @@ Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -137,8 +137,8 @@ Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -150,8 +150,8 @@ Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   const auto *comparison =
       Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
@@ -188,8 +188,8 @@ Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
 
 // Addition
 Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   auto *add_op = Type::GetBinaryOperator(
       Type::OperatorId::Add, GetType(), left_cast, other.GetType(), right_cast);
@@ -202,8 +202,8 @@ Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
 
 // Subtraction
 Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   auto *sub_op = Type::GetBinaryOperator(
       Type::OperatorId::Sub, GetType(), left_cast, other.GetType(), right_cast);
@@ -216,8 +216,8 @@ Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
 
 // Multiplication
 Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   auto *mul_op = Type::GetBinaryOperator(
       Type::OperatorId::Mul, GetType(), left_cast, other.GetType(), right_cast);
@@ -230,8 +230,8 @@ Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
 
 // Division
 Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   auto *div_op = Type::GetBinaryOperator(
       Type::OperatorId::Div, GetType(), left_cast, other.GetType(), right_cast);
@@ -244,8 +244,8 @@ Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
 
 // Modulus
 Value Value::Mod(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::Type::TypeId left_cast = GetType();
-  type::Type::TypeId right_cast = other.GetType();
+  type::TypeId left_cast = GetType();
+  type::TypeId right_cast = other.GetType();
 
   auto *mod_op = Type::GetBinaryOperator(
       Type::OperatorId::Mod, GetType(), left_cast, other.GetType(), right_cast);
@@ -292,7 +292,7 @@ Value Value::Max(CodeGen &codegen, const Value &other) const {
 
 // Logical AND
 Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
-  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
   PL_ASSERT(GetType() == other.GetType());
 
   return Value{GetType(), codegen->CreateAnd(GetValue(), other.GetValue())};
@@ -300,7 +300,7 @@ Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
 
 // Logical OR
 Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
-  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
   PL_ASSERT(GetType() == other.GetType());
 
   return Value{GetType(), codegen->CreateOr(GetValue(), other.GetValue())};
@@ -311,8 +311,8 @@ Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
 //===----------------------------------------------------------------------===//
 void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
   val = GetValue();
-  if (GetType() == type::Type::TypeId::VARCHAR ||
-      GetType() == type::Type::TypeId::VARBINARY) {
+  if (GetType() == type::TypeId::VARCHAR ||
+      GetType() == type::TypeId::VARBINARY) {
     len = GetLength();
   } else {
     len = nullptr;
@@ -325,17 +325,17 @@ void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
 void Value::ValuesForMaterialization(CodeGen &codegen, llvm::Value *&val,
                                      llvm::Value *&len,
                                      llvm::Value *&null) const {
-  PL_ASSERT(type_ != type::Type::TypeId::INVALID);
+  PL_ASSERT(type_ != type::TypeId::INVALID);
   val = GetValue();
-  len = GetType() == type::Type::TypeId::VARCHAR ? GetLength() : nullptr;
+  len = GetType() == type::TypeId::VARCHAR ? GetLength() : nullptr;
   null = IsNull(codegen);
 }
 
 // Return the value that can be
-Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
+Value Value::ValueFromMaterialization(type::TypeId type, llvm::Value *val,
                                       llvm::Value *len, llvm::Value *null) {
-  PL_ASSERT(type != type::Type::TypeId::INVALID);
-  return Value{type, val, (type == type::Type::TypeId::VARCHAR ? len : nullptr),
+  PL_ASSERT(type != type::TypeId::INVALID);
+  return Value{type, val, (type == type::TypeId::VARCHAR ? len : nullptr),
                null};
 }
 

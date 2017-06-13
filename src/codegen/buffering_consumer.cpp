@@ -114,51 +114,51 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     val = val_is_null.BuildPHI(null_val, val);
 
     switch (val.GetType()) {
-      case type::Type::TypeId::TINYINT: {
+      case type::TypeId::TINYINT: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputTinyInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::SMALLINT: {
+      case type::TypeId::SMALLINT: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER: {
+      case type::TypeId::DATE:
+      case type::TypeId::INTEGER: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputInteger::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::TIMESTAMP: {
+      case type::TypeId::TIMESTAMP: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputTimestamp::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::BIGINT: {
+      case type::TypeId::BIGINT: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::DECIMAL: {
+      case type::TypeId::DECIMAL: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case type::Type::TypeId::VARBINARY: {
+      case type::TypeId::VARBINARY: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue(),
              val.GetLength()});
         break;
       }
-      case type::Type::TypeId::VARCHAR: {
+      case type::TypeId::VARCHAR: {
         codegen.CallFunc(
             ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue(),

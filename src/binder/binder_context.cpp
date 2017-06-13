@@ -47,7 +47,7 @@ void BinderContext::AddTable(const std::string db_name,
 bool BinderContext::GetColumnPosTuple(
     std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
-    type::Type::TypeId& value_type) {
+    type::TypeId& value_type) {
   auto db_id = std::get<0>(table_id_tuple);
   auto table_id = std::get<1>(table_id_tuple);
   auto schema = catalog::Catalog::GetInstance()
@@ -63,7 +63,7 @@ bool BinderContext::GetColumnPosTuple(
 bool BinderContext::GetColumnPosTuple(
     std::shared_ptr<BinderContext> current_context, std::string& col_name,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, std::string& table_alias,
-    type::Type::TypeId& value_type) {
+    type::TypeId& value_type) {
   bool find_matched = false;
   while (current_context != nullptr && !find_matched) {
     for (auto entry : current_context->table_alias_map) {

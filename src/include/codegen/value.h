@@ -27,7 +27,7 @@ class Value {
  public:
   // Constructor that provides the type and the value
   Value();
-  Value(type::Type::TypeId type, llvm::Value *value = nullptr,
+  Value(type::TypeId type, llvm::Value *value = nullptr,
         llvm::Value *length = nullptr, llvm::Value *is_null = nullptr);
 
   //===--------------------------------------------------------------------===//
@@ -35,7 +35,7 @@ class Value {
   //===--------------------------------------------------------------------===//
 
   // Get the SQL type
-  type::Type::TypeId GetType() const { return type_; }
+  type::TypeId GetType() const { return type_; }
 
   // Get the LLVM value
   llvm::Value *GetValue() const { return value_; }
@@ -59,7 +59,7 @@ class Value {
   //===--------------------------------------------------------------------===//
   // Comparison functions
   //===--------------------------------------------------------------------===//
-  Value CastTo(CodeGen &codegen, type::Type::TypeId to_type) const;
+  Value CastTo(CodeGen &codegen, type::TypeId to_type) const;
 
   Value CompareEq(CodeGen &codegen, const Value &other) const;
   Value CompareNe(CodeGen &codegen, const Value &other) const;
@@ -120,7 +120,7 @@ class Value {
 
   // Return a value that can be constructed from the provided type and value
   // registers
-  static Value ValueFromMaterialization(type::Type::TypeId type,
+  static Value ValueFromMaterialization(type::TypeId type,
                                         llvm::Value *val, llvm::Value *len,
                                         llvm::Value *null);
 
@@ -134,7 +134,7 @@ class Value {
 
  private:
   // The SQL type
-  type::Type::TypeId type_;
+  type::TypeId type_;
 
   // The value
   llvm::Value *value_;

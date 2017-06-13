@@ -63,11 +63,11 @@ TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

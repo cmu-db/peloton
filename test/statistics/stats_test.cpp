@@ -124,13 +124,13 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   // Create database, table and index
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column = catalog::Column(
-      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

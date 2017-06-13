@@ -114,7 +114,7 @@ class JoinExprParse : public AbstractParse {
       case JOIN_SEMI:  // IN+Subquery is JOIN_SEMI
         return JoinType::SEMI;
       default:
-        return JoinType::INVALID;
+        return JoinTypeId::INVALID;
     }
   }
   */

@@ -130,7 +130,7 @@ DEFINE_bool(codegen,
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
-// peloton::LoggingType peloton_logging_mode = peloton::LoggingType::INVALID;
+// peloton::LoggingType peloton_logging_mode = peloton::LoggingTypeId::INVALID;
 
 // GC mode
 peloton::GarbageCollectionType peloton_gc_mode;

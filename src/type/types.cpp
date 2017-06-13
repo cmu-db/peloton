@@ -209,35 +209,35 @@ std::ostream& operator<<(std::ostream& os, const BackendType& type) {
 // Value <--> String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string TypeIdToString(type::Type::TypeId type) {
+std::string TypeIdToString(type::TypeId type) {
   switch (type) {
-    case type::Type::INVALID:
+    case type::TypeId::INVALID:
       return "INVALID";
-    case type::Type::PARAMETER_OFFSET:
+    case type::TypeId::PARAMETER_OFFSET:
       return "PARAMETER_OFFSET";
-    case type::Type::BOOLEAN:
+    case type::TypeId::BOOLEAN:
       return "BOOLEAN";
-    case type::Type::TINYINT:
+    case type::TypeId::TINYINT:
       return "TINYINT";
-    case type::Type::SMALLINT:
+    case type::TypeId::SMALLINT:
       return "SMALLINT";
-    case type::Type::INTEGER:
+    case type::TypeId::INTEGER:
       return "INTEGER";
-    case type::Type::BIGINT:
+    case type::TypeId::BIGINT:
       return "BIGINT";
-    case type::Type::DECIMAL:
+    case type::TypeId::DECIMAL:
       return "DECIMAL";
-    case type::Type::TIMESTAMP:
+    case type::TypeId::TIMESTAMP:
       return "TIMESTAMP";
-    case type::Type::DATE:
+    case type::TypeId::DATE:
       return "DATE";
-    case type::Type::VARCHAR:
+    case type::TypeId::VARCHAR:
       return "VARCHAR";
-    case type::Type::VARBINARY:
+    case type::TypeId::VARBINARY:
       return "VARBINARY";
-    case type::Type::ARRAY:
+    case type::TypeId::ARRAY:
       return "ARRAY";
-    case type::Type::UDT:
+    case type::TypeId::UDT:
       return "UDT";
     default: {
       throw ConversionException(
@@ -248,41 +248,41 @@ std::string TypeIdToString(type::Type::TypeId type) {
   }
 }
 
-type::Type::TypeId StringToTypeId(const std::string& str) {
+type::TypeId StringToTypeId(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return type::Type::INVALID;
+    return type::TypeId::INVALID;
   } else if (upper_str == "PARAMETER_OFFSET") {
-    return type::Type::PARAMETER_OFFSET;
+    return type::TypeId::PARAMETER_OFFSET;
   } else if (upper_str == "BOOLEAN") {
-    return type::Type::BOOLEAN;
+    return type::TypeId::BOOLEAN;
   } else if (upper_str == "TINYINT") {
-    return type::Type::TINYINT;
+    return type::TypeId::TINYINT;
   } else if (upper_str == "SMALLINT") {
-    return type::Type::SMALLINT;
+    return type::TypeId::SMALLINT;
   } else if (upper_str == "INTEGER") {
-    return type::Type::INTEGER;
+    return type::TypeId::INTEGER;
   } else if (upper_str == "BIGINT") {
-    return type::Type::BIGINT;
+    return type::TypeId::BIGINT;
   } else if (upper_str == "DECIMAL") {
-    return type::Type::DECIMAL;
+    return type::TypeId::DECIMAL;
   } else if (upper_str == "TIMESTAMP") {
-    return type::Type::TIMESTAMP;
+    return type::TypeId::TIMESTAMP;
   } else if (upper_str == "DATE") {
-    return type::Type::DATE;
+    return type::TypeId::DATE;
   } else if (upper_str == "VARCHAR") {
-    return type::Type::VARCHAR;
+    return type::TypeId::VARCHAR;
   } else if (upper_str == "VARBINARY") {
-    return type::Type::VARBINARY;
+    return type::TypeId::VARBINARY;
   } else if (upper_str == "ARRAY") {
-    return type::Type::ARRAY;
+    return type::TypeId::ARRAY;
   } else if (upper_str == "UDT") {
-    return type::Type::UDT;
+    return type::TypeId::UDT;
   } else {
     throw ConversionException(StringUtil::Format(
         "No TypeId conversion from string '%s'", upper_str.c_str()));
   }
-  return type::Type::INVALID;
+  return type::TypeId::INVALID;
 }
 
 /** takes in 0-F, returns 0-15 */
@@ -2288,42 +2288,42 @@ std::ostream& operator<<(std::ostream& os, const CheckpointingType& type) {
 
 
 
-type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
+type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
     case PostgresValueType::BOOLEAN:
-      return type::Type::BOOLEAN;
+      return type::TypeId::BOOLEAN;
 
     case PostgresValueType::SMALLINT:
-      return type::Type::SMALLINT;
+      return type::TypeId::SMALLINT;
     case PostgresValueType::INTEGER:
-      return type::Type::INTEGER;
+      return type::TypeId::INTEGER;
     case PostgresValueType::BIGINT:
-      return type::Type::BIGINT;
+      return type::TypeId::BIGINT;
     case PostgresValueType::REAL:
-      return type::Type::DECIMAL;
+      return type::TypeId::DECIMAL;
     case PostgresValueType::DOUBLE:
-      return type::Type::DECIMAL;
+      return type::TypeId::DECIMAL;
 
     case PostgresValueType::BPCHAR:
     case PostgresValueType::BPCHAR2:
     case PostgresValueType::VARCHAR:
     case PostgresValueType::VARCHAR2:
     case PostgresValueType::TEXT:
-      return type::Type::VARCHAR;
+      return type::TypeId::VARCHAR;
 
     case PostgresValueType::DATE:
     case PostgresValueType::TIMESTAMPS:
     case PostgresValueType::TIMESTAMPS2:
-      return type::Type::TIMESTAMP;
+      return type::TypeId::TIMESTAMP;
 
     case PostgresValueType::DECIMAL:
-      return type::Type::DECIMAL;
+      return type::TypeId::DECIMAL;
     default:
       throw ConversionException(StringUtil::Format(
           "No TypeId conversion for PostgresValueType value '%d'",
           static_cast<int>(type)));
   }
-  return type::Type::INVALID;
+  return type::TypeId::INVALID;
 }
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(

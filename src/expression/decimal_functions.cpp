@@ -21,7 +21,7 @@ namespace expression {
 type::Value DecimalFunctions::Sqrt(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   return args[0].Sqrt();
 }

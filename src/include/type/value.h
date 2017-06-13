@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <cfloat>
-#include <climits>
 #include <cstdint>
 #include <vector>
 
@@ -21,6 +19,7 @@
 #include "common/macros.h"
 #include "common/printable.h"
 
+#include "type/limits.h"
 #include "type/serializeio.h"
 #include "type/type.h"
 
@@ -28,46 +27,6 @@ namespace peloton {
 namespace type {
 
 class Type;
-
-static const double DBL_LOWEST = std::numeric_limits<double>::lowest();
-static const double FLT_LOWEST = std::numeric_limits<float>::lowest();
-
-static const int8_t PELOTON_INT8_MIN = (SCHAR_MIN + 1);
-static const int16_t PELOTON_INT16_MIN = (SHRT_MIN + 1);
-static const int32_t PELOTON_INT32_MIN = (INT_MIN + 1);
-static const int64_t PELOTON_INT64_MIN = (LLONG_MIN + 1);
-static const double PELOTON_DECIMAL_MIN = FLT_LOWEST;
-static const uint64_t PELOTON_TIMESTAMP_MIN = 0;
-static const uint32_t PELOTON_DATE_MIN = 0;
-static const int8_t PELOTON_BOOLEAN_MIN = 0;
-
-static const int8_t PELOTON_INT8_MAX = SCHAR_MAX;
-static const int16_t PELOTON_INT16_MAX = SHRT_MAX;
-static const int32_t PELOTON_INT32_MAX = INT_MAX;
-static const int64_t PELOTON_INT64_MAX = LLONG_MAX;
-static const uint64_t PELOTON_UINT64_MAX = ULLONG_MAX - 1;
-static const double PELOTON_DECIMAL_MAX = DBL_MAX;
-static const uint64_t PELOTON_TIMESTAMP_MAX = 11231999986399999999U;
-static const uint64_t PELOTON_DATE_MAX = INT_MAX;
-static const int8_t PELOTON_BOOLEAN_MAX = 1;
-
-static const uint32_t PELOTON_VALUE_NULL = UINT_MAX;
-static const int8_t PELOTON_INT8_NULL = SCHAR_MIN;
-static const int16_t PELOTON_INT16_NULL = SHRT_MIN;
-static const int32_t PELOTON_INT32_NULL = INT_MIN;
-static const int64_t PELOTON_INT64_NULL = LLONG_MIN;
-static const uint64_t PELOTON_DATE_NULL = 0;
-static const uint64_t PELOTON_TIMESTAMP_NULL = ULLONG_MAX;
-static const double PELOTON_DECIMAL_NULL = DBL_LOWEST;
-static const int8_t PELOTON_BOOLEAN_NULL = SCHAR_MIN;
-
-static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
-
-// Use to make TEXT type as the alias of VARCHAR(TEXT_MAX_LENGTH)
-static const uint32_t PELOTON_TEXT_MAX_LEN= 1000000000;
-
-// Objects (i.e., VARCHAR) with length prefix of -1 are NULL
-#define OBJECTLENGTH_NULL -1
 
 inline CmpBool GetCmpBool(bool boolean) {
   return boolean ? CMP_TRUE : CMP_FALSE;
@@ -83,35 +42,34 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const Type::TypeId type) : manage_data_(false), type_id_(type) {
+  Value(const TypeId type) : manage_data_(false), type_id_(type) {
     size_.len = PELOTON_VALUE_NULL;
   }
 
   // ARRAY values
   template <class T>
-  Value(Type::TypeId type, const std::vector<T> &vals,
-        Type::TypeId element_type);
+  Value(TypeId type, const std::vector<T> &vals, TypeId element_type);
 
   // BOOLEAN and TINYINT
-  Value(Type::TypeId type, int8_t val);
+  Value(TypeId type, int8_t val);
 
   // DECIMAL
-  Value(Type::TypeId type, double d);
-  Value(Type::TypeId type, float f);
+  Value(TypeId type, double d);
+  Value(TypeId type, float f);
 
   // SMALLINT
-  Value(Type::TypeId type, int16_t i);
+  Value(TypeId type, int16_t i);
   // INTEGER and PARAMETER_OFFSET
-  Value(Type::TypeId type, int32_t i);
+  Value(TypeId type, int32_t i);
   // BIGINT
-  Value(Type::TypeId type, int64_t i);
+  Value(TypeId type, int64_t i);
 
   // TIMESTAMP
-  Value(Type::TypeId type, uint64_t i);
+  Value(TypeId type, uint64_t i);
 
   // VARCHAR and VARBINARY
-  Value(Type::TypeId type, const char *data, uint32_t len, bool manage_data);
-  Value(Type::TypeId type, const std::string &data);
+  Value(TypeId type, const char *data, uint32_t len, bool manage_data);
+  Value(TypeId type, const std::string &data);
 
  public:
   Value();
@@ -130,7 +88,7 @@ class Value : public Printable {
   Value &operator=(Value other);
 
   // Get the type of this value
-  inline Type::TypeId GetTypeId() const { return type_id_; }
+  inline TypeId GetTypeId() const { return type_id_; }
   const std::string GetInfo() const override;
 
   // Comparison functions
@@ -216,12 +174,12 @@ class Value : public Printable {
   bool CheckComparable(const Value &o) const;
 
   inline bool IsTrue() const {
-    PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 1);
   }
 
   inline bool IsFalse() const {
-    PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 0);
   }
 
@@ -254,15 +212,13 @@ class Value : public Printable {
   }
 
   // Deserialize a value of the given type from the given storage space.
-  inline static Value DeserializeFrom(const char *storage,
-                                      const Type::TypeId type_id,
+  inline static Value DeserializeFrom(const char *storage, const TypeId type_id,
                                       const bool inlined,
                                       AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
   }
 
-  inline static Value DeserializeFrom(SerializeInput &in,
-                                      const Type::TypeId type_id,
+  inline static Value DeserializeFrom(SerializeInput &in, const TypeId type_id,
                                       AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
   }
@@ -272,11 +228,12 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->GetData(*this);
   }
 
-  // Access the raw variable length data from a pointer pointed to a tuple storage
-  inline static char *GetDataFromStorage(Type::TypeId type_id, char *storage) {
+  // Access the raw variable length data from a pointer pointed to a tuple
+  // storage
+  inline static char *GetDataFromStorage(TypeId type_id, char *storage) {
     switch (type_id) {
-      case Type::VARCHAR:
-      case Type::VARBINARY: {
+      case TypeId::VARCHAR:
+      case TypeId::VARBINARY: {
         return Type::GetInstance(type_id)->GetData(storage);
       }
       default:
@@ -298,7 +255,7 @@ class Value : public Printable {
   // Create a copy of this value
   inline Value Copy() const { return Type::GetInstance(type_id_)->Copy(*this); }
 
-  inline Value CastAs(const Type::TypeId type_id) const {
+  inline Value CastAs(const TypeId type_id) const {
     return Type::GetInstance(type_id_)->CastAs(*this, type_id);
   }
 
@@ -307,7 +264,7 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->GetElementAt(*this, idx);
   }
 
-  inline Type::TypeId GetElementType() const {
+  inline TypeId GetElementType() const {
     return Type::GetInstance(type_id_)->GetElementType(*this);
   }
 
@@ -374,23 +331,22 @@ class Value : public Printable {
 
   union {
     uint32_t len;
-    Type::TypeId elem_type_id;
+    TypeId elem_type_id;
   } size_;
 
   bool manage_data_;
   // TODO: Pack allocated flag with the type id
   // The data type
-  Type::TypeId type_id_;
+  TypeId type_id_;
 };
 
 // ARRAY here to ease creation of templates
 // TODO: Fix the representation for a null array
 template <class T>
-Value::Value(Type::TypeId type, const std::vector<T> &vals,
-             Type::TypeId element_type)
-    : Value(Type::ARRAY) {
+Value::Value(TypeId type, const std::vector<T> &vals, TypeId element_type)
+    : Value(TypeId::ARRAY) {
   switch (type) {
-    case Type::ARRAY:
+    case TypeId::ARRAY:
       value_.array = (char *)&vals;
       size_.elem_type_id = element_type;
       break;

@@ -55,8 +55,8 @@ TEST_F(MaskedTupleTests, BasicTest) {
   for (int i = 0; i < NUM_COLUMNS; i++) {
     std::ostringstream os;
     os << static_cast<char>((int)column_char + i);
-    catalog::Column column(type::Type::INTEGER,
-                           type::Type::GetTypeSize(type::Type::INTEGER),
+    catalog::Column column(type::TypeId::INTEGER,
+                           type::Type::GetTypeSize(type::TypeId::INTEGER),
                            os.str(), true);
     column_list.push_back(column);
     key_attrs.push_back(i);

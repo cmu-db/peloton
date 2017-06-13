@@ -79,7 +79,7 @@ class TrafficCop {
       parser::SQLStatement *select_stmt);
 
   FieldInfo GetColumnFieldForValueType(std::string column_name,
-                                       type::Type::TypeId column_type);
+                                       type::TypeId column_type);
 
   FieldInfo GetColumnFieldForAggregates(std::string name,
                                         ExpressionType expr_type);

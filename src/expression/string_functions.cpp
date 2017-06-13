@@ -24,7 +24,7 @@ namespace expression {
 type::Value StringFunctions::Ascii(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
   std::string str = args[0].ToString();
   int32_t val = str[0];
@@ -35,7 +35,7 @@ type::Value StringFunctions::Ascii(const std::vector<type::Value>& args) {
 type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   int32_t val = args[0].GetAs<int32_t>();
   std::string str(1, char(static_cast<char>(val)));
@@ -46,7 +46,7 @@ type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
 type::Value StringFunctions::Substr(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args[0].ToString();
   int32_t from = args[1].GetAs<int32_t>() - 1;
@@ -58,7 +58,7 @@ type::Value StringFunctions::Substr(const std::vector<type::Value>& args) {
 type::Value StringFunctions::CharLength(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
   std::string str = args[0].ToString();
   int32_t len = str.length();
@@ -69,7 +69,7 @@ type::Value StringFunctions::CharLength(const std::vector<type::Value>& args) {
 type::Value StringFunctions::Concat(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args[0].ToString() + args[1].ToString();
   return (type::ValueFactory::GetVarcharValue(str));
@@ -87,7 +87,7 @@ type::Value StringFunctions::OctetLength(const std::vector<type::Value>& args) {
 type::Value StringFunctions::Repeat(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args[0].ToString();
   int32_t num = args[1].GetAs<int32_t>();
@@ -102,7 +102,7 @@ type::Value StringFunctions::Repeat(const std::vector<type::Value>& args) {
 type::Value StringFunctions::Replace(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args[0].ToString();
   std::string from = args[1].ToString();
@@ -120,7 +120,7 @@ type::Value StringFunctions::Replace(const std::vector<type::Value>& args) {
 type::Value StringFunctions::LTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args[0].ToString();
   std::string from = args[1].ToString();
@@ -140,7 +140,7 @@ type::Value StringFunctions::LTrim(const std::vector<type::Value>& args) {
 type::Value StringFunctions::RTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();
@@ -162,7 +162,7 @@ type::Value StringFunctions::RTrim(const std::vector<type::Value>& args) {
 type::Value StringFunctions::BTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();

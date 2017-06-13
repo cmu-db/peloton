@@ -36,7 +36,7 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
   type::Value result;
 
   if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
-    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+    return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
 
   uint32_t micro = timestamp % 1000000;
@@ -138,7 +138,7 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       break;
     }
     default: {
-      result = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+      result = type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
     }
   };
 

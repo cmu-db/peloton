@@ -46,13 +46,13 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
       term_exp->PerformBinding({&input_context});
       term.agg_ai.nullable = term_exp->IsNullable();
       if (term.aggtype == ExpressionType::AGGREGATE_AVG) {
-        term.agg_ai.type = type::Type::TypeId::DECIMAL;
+        term.agg_ai.type = type::TypeId::DECIMAL;
       } else {
         term.agg_ai.type = term_exp->GetValueType();
       }
     } else {
       PL_ASSERT(term.aggtype == ExpressionType::AGGREGATE_COUNT_STAR);
-      term.agg_ai.type = type::Type::TypeId::BIGINT;
+      term.agg_ai.type = type::TypeId::BIGINT;
     }
   }
 

@@ -40,23 +40,23 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   auto shipdate_gte = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_GREATERTHANOREQUALTO,
-          new expression::TupleValueExpression(type::Type::TypeId::DATE, 0, 10),
+          new expression::TupleValueExpression(type::TypeId::DATE, 0, 10),
           new expression::ConstantValueExpression(
               type::ValueFactory::GetDateValue(_1997_01_01)))};
 
   auto shipdate_lt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::DATE, 0, 10),
+          new expression::TupleValueExpression(type::TypeId::DATE, 0, 10),
           new expression::ConstantValueExpression(
               type::ValueFactory::GetDateValue(_1998_01_01)))};
 
   auto discount_gt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_GREATERTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 6),
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 6),
           new expression::OperatorExpression(
-              ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
+              ExpressionType::OPERATOR_MINUS, type::TypeId::DECIMAL,
               new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.07)),
               new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.01))
           )
@@ -66,9 +66,9 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   auto discount_lt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 6),
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 6),
           new expression::OperatorExpression(
-              ExpressionType::OPERATOR_PLUS, type::Type::TypeId::DECIMAL,
+              ExpressionType::OPERATOR_PLUS, type::TypeId::DECIMAL,
               new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.07)),
               new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.01))
           )
@@ -78,7 +78,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   auto quantity_lt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 4),
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 4),
           new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(24))
       )
   };
@@ -109,14 +109,14 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   planner::AggregatePlan::AggTerm revenue_agg{
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 0),
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 1))};
-  revenue_agg.agg_ai.type = type::Type::TypeId::DECIMAL;
+          ExpressionType::OPERATOR_MULTIPLY, type::TypeId::DECIMAL,
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 0),
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1))};
+  revenue_agg.agg_ai.type = type::TypeId::DECIMAL;
 
   auto output_schema =
       std::shared_ptr<const catalog::Schema>{new catalog::Schema(
-          {{type::Type::TypeId::DECIMAL, kDecimalSize, "revenue"}})};
+          {{type::TypeId::DECIMAL, kDecimalSize, "revenue"}})};
 
   DirectMapList dml = {{0, {1, 0}}};
 

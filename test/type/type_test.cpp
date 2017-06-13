@@ -27,16 +27,16 @@ namespace test {
 
 class TypeTests : public PelotonTest {};
 
-const std::vector<type::Type::TypeId> typeTestTypes = {
-    type::Type::BOOLEAN,   type::Type::TINYINT, type::Type::SMALLINT,
-    type::Type::INTEGER,   type::Type::BIGINT,  type::Type::DECIMAL,
-    type::Type::TIMESTAMP,
-    // type::Type::VARCHAR
+const std::vector<type::TypeId> typeTestTypes = {
+    type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
+    type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
+    type::TypeId::TIMESTAMP,
+    // type::TypeId::VARCHAR
 };
 
 TEST_F(TypeTests, InvalidTypeTest) {
   // First get the INVALID type instance
-  type::Type::TypeId type_id = type::Type::INVALID;
+  type::TypeId type_id = type::TypeId::INVALID;
   auto t = type::Type::GetInstance(type_id);
   EXPECT_NE(nullptr, t);
   EXPECT_EQ(type_id, t->GetTypeId());
@@ -49,8 +49,8 @@ TEST_F(TypeTests, InvalidTypeTest) {
   EXPECT_THROW(type::Type::GetMaxValue(type_id), peloton::Exception);
 
   // All of the Compare methods for an invalid type should throw exceptions too
-  auto v0 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
-  auto v1 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  auto v0 = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  auto v1 = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   EXPECT_THROW(t->CompareEquals(v0, v1), peloton::NotImplementedException);
   EXPECT_THROW(t->CompareNotEquals(v0, v1), peloton::NotImplementedException);
   EXPECT_THROW(t->CompareLessThan(v0, v1), peloton::NotImplementedException);

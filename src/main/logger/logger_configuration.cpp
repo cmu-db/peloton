@@ -59,7 +59,7 @@
 //     {NULL, 0, NULL, 0}};
 
 // static void ValidateLoggingType(const configuration& state) {
-//   if (state.logging_type <= LoggingType::INVALID) {
+//   if (state.logging_type <= LoggingTypeId::INVALID) {
 //     LOG_ERROR("Invalid logging_type :: %d", static_cast<int>(state.logging_type));
 //     exit(EXIT_FAILURE);
 //   }
@@ -232,7 +232,7 @@
 //   state.nvm_latency = 0;
 //   state.pcommit_latency = 0;
 //   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
-//   state.checkpoint_type = CheckpointType::INVALID;
+//   state.checkpoint_type = CheckpointTypeId::INVALID;
 
 //   // YCSB Default Values
 //   ycsb::state.index = IndexType::BWTREE;

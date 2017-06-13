@@ -45,7 +45,7 @@ class VarlenType : public Type {
   virtual Value Min(const Value& left, const Value &right) const override;
   virtual Value Max(const Value& left, const Value &right) const override;
 
-  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const TypeId type_id) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value&) const override { return false; }

@@ -33,7 +33,7 @@ Value NegationTranslator::DeriveValue(CodeGen &codegen,
   codegen::Value child_value =
       row.DeriveValue(codegen, *negation_expr.GetChild(0));
 
-  codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
+  codegen::Value zero{type::TypeId::INTEGER, codegen.Const32(0)};
 
   return zero.Sub(codegen, child_value);
 }

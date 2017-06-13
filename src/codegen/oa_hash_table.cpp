@@ -26,7 +26,7 @@ namespace codegen {
 uint32_t OAHashTable::kDefaultGroupPrefetchSize = 10;
 
 // The global attribute information instance used to populate a row's hash value
-const planner::AttributeInfo OAHashTable::kHashAI{type::Type::TypeId::INTEGER,
+const planner::AttributeInfo OAHashTable::kHashAI{type::TypeId::INTEGER,
                                                   false, 0, "hash"};
 
 //===----------------------------------------------------------------------===//
@@ -39,7 +39,7 @@ OAHashTable::OAHashTable() {
 }
 
 OAHashTable::OAHashTable(CodeGen &codegen,
-                         const std::vector<type::Type::TypeId> &key_type,
+                         const std::vector<type::TypeId> &key_type,
                          uint64_t value_size)
     : value_size_(value_size) {
   key_storage_.Setup(codegen, key_type);

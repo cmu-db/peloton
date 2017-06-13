@@ -24,7 +24,7 @@ namespace planner {
 // Describes an attribute that is passed around in the query plan
 struct AttributeInfo {
   // The actual type of this attribute (smallint, integer, varchar etc.)
-  type::Type::TypeId type;
+  type::TypeId type;
   // Is this attribute nullable (i.e., can it take on a null value)
   bool nullable;
   // The ID of the attribute

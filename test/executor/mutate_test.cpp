@@ -116,7 +116,7 @@ void UpdateTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 < 70
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(70));
@@ -158,7 +158,7 @@ void DeleteTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(60));
@@ -401,7 +401,7 @@ TEST_F(MutateTests, UpdateTest) {
 
   // ATTR = 23.5
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::DECIMAL, 0, 2);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(23.5));

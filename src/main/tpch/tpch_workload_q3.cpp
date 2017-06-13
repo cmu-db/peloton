@@ -44,19 +44,19 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   auto orderdate_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHANOREQUALTO,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 4),
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 4),
           new expression::ConstantValueExpression(type::ValueFactory::GetDateValue(_1995_03_10)))};
 
   auto mktsegment_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_EQUAL,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 6),
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 6),
           new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(machinery)))};
 
   auto shipdate_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_GREATERTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 10),
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 10),
           new expression::ConstantValueExpression(type::ValueFactory::GetDateValue(_1995_03_10)))};
 
   //////////////////////////////////////////////////////////////////////////////
@@ -84,10 +84,10 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   std::unique_ptr<const planner::ProjectInfo> order_project_info{
       new planner::ProjectInfo(TargetList{}, std::move(order_dm))};
   auto order_schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
-      {{type::Type::TypeId::INTEGER, kIntSize, "o_custkey", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
-       {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
+      {{type::TypeId::INTEGER, kIntSize, "o_custkey", true},
+       {type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
+       {type::TypeId::DATE, kDateSize, "o_orderdate", true},
+       {type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
   std::unique_ptr<planner::AbstractPlan> order_projection{
       new planner::ProjectionPlan(std::move(order_project_info), order_schema)};
 
@@ -97,7 +97,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0));
 
   std::unique_ptr<planner::AbstractPlan> customer_hash_plan{new planner::HashPlan(hash_keys)};
 
@@ -114,17 +114,17 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
       TargetList{}, std::move(direct_map_list))};
 
   auto schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
-      {{type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
-       {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
+      {{type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
+       {type::TypeId::DATE, kDateSize, "o_orderdate", true},
+       {type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> left_hash_keys;
   left_hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1));
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> right_hash_keys;
   right_hash_keys.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 0));
 
   std::unique_ptr<planner::AbstractPlan> cust_order_hj_plan{new planner::HashJoinPlan(
       JoinType::INNER, nullptr, std::move(projection),
@@ -136,7 +136,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys2;
   hash_keys2.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0));
 
   std::unique_ptr<planner::AbstractPlan> cust_order_hash_plan{new planner::HashPlan(hash_keys2)};
 
@@ -156,20 +156,20 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
       TargetList{}, std::move(dm_ol))};
 
   auto ol_schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
-      {{type::Type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
-       {type::Type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice", true},
-       {type::Type::TypeId::DECIMAL, kDecimalSize, "l_discount", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
-       {type::Type::TypeId::DATE, kDateSize, "o_shipddate", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
+      {{type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
+       {type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice", true},
+       {type::TypeId::DECIMAL, kDecimalSize, "l_discount", true},
+       {type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
+       {type::TypeId::DATE, kDateSize, "o_shipddate", true},
+       {type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> left_hash_keys2;
   left_hash_keys2.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1));
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> right_hash_keys2;
   right_hash_keys2.emplace_back(
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 0));
 
   std::unique_ptr<planner::AbstractPlan> hj_plan2{new planner::HashJoinPlan(
       JoinType::INNER, nullptr, std::move(projection2),
@@ -181,21 +181,21 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   planner::AggregatePlan::AggTerm agg1{
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression{
-          ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
-          new expression::TupleValueExpression{type::Type::TypeId::DECIMAL, 0, 1},
+          ExpressionType::OPERATOR_MULTIPLY, type::TypeId::DECIMAL,
+          new expression::TupleValueExpression{type::TypeId::DECIMAL, 0, 1},
           new expression::OperatorExpression{
-              ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
+              ExpressionType::OPERATOR_MINUS, type::TypeId::DECIMAL,
               new expression::ConstantValueExpression{type::ValueFactory::GetDecimalValue(1.0)},
-              new expression::TupleValueExpression{type::Type::TypeId::DECIMAL, 0, 2}
+              new expression::TupleValueExpression{type::TypeId::DECIMAL, 0, 2}
           }
       }
   };
   auto agg_out_schema = std::shared_ptr<const catalog::Schema>{
       new catalog::Schema{
-          {{type::Type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
-           {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
-           {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "revenue", true}}
+          {{type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
+           {type::TypeId::DATE, kDateSize, "o_orderdate", true},
+           {type::TypeId::INTEGER, kIntSize, "o_shippriority", true},
+           {type::TypeId::DECIMAL, kDecimalSize, "revenue", true}}
       }
   };
 

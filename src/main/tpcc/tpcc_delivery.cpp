@@ -478,13 +478,13 @@ bool RunDelivery(const size_t &thread_id){
     // Expressions
     // Tuple value expression
     auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::Type::INTEGER, 0, COL_IDX_C_BALANCE);
+      type::TypeId::INTEGER, 0, COL_IDX_C_BALANCE);
     // Constant value expression
     auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      ExpressionType::OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
+      ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, tuple_val_expr, constant_val_expr);
 
     planner::DerivedAttribute c_balance;
     c_balance.expr = plus_operator_expr;

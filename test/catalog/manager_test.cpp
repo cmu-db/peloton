@@ -41,7 +41,7 @@ void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
   std::vector<catalog::Column> columns;
 
   // SCHEMA
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
   columns.push_back(column1);
 

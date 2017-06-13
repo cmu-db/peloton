@@ -112,7 +112,7 @@ class AbstractExpression : public Printable {
 
   inline ExpressionType GetExpressionType() const { return exp_type_; }
 
-  inline type::Type::TypeId GetValueType() const { return return_value_type_; }
+  inline type::TypeId GetValueType() const { return return_value_type_; }
 
   // Attribute binding
   virtual void PerformBinding(
@@ -192,10 +192,10 @@ class AbstractExpression : public Printable {
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type,
-                     type::Type::TypeId return_value_type)
+                     type::TypeId return_value_type)
       : exp_type_(exp_type), return_value_type_(return_value_type) {}
   AbstractExpression(ExpressionType exp_type,
-                     type::Type::TypeId return_value_type,
+                     type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right)
       : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!
@@ -218,7 +218,7 @@ class AbstractExpression : public Printable {
   }
 
   ExpressionType exp_type_ = ExpressionType::INVALID;
-  type::Type::TypeId return_value_type_ = type::Type::INVALID;
+  type::TypeId return_value_type_ = type::TypeId::INVALID;
 
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 

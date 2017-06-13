@@ -59,7 +59,7 @@ class TimestampType : public Type {
   // Create a copy of this value
   Value Copy(const Value& val) const override;
 
-  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const TypeId type_id) const override;
 };
 
 }  // namespace peloton

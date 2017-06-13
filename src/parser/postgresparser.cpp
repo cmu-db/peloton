@@ -427,7 +427,7 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
       break;
     case T_Null:
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+          type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER));
       break;
     default:
       throw NotImplementedException(

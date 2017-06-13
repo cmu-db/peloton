@@ -20,7 +20,7 @@ namespace peloton {
 namespace type {
 
 TimestampType::TimestampType()
-  : Type(Type::TIMESTAMP) {
+  : Type(TypeId::TIMESTAMP) {
 }
 
 CmpBool TimestampType::CompareEquals(const Value& left, const Value &right) const {
@@ -155,11 +155,11 @@ Value TimestampType::Copy(const Value& val) const {
   return Value(val);
 }
 
-Value TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value TimestampType::CastAs(const Value& val, const TypeId type_id) const {
   switch (type_id) {
-    case Type::TIMESTAMP:
+    case TypeId::TIMESTAMP:
       return Copy(val);
-    case Type::VARCHAR:
+    case TypeId::VARCHAR:
       if (val.IsNull())
         return ValueFactory::GetVarcharValue(nullptr, 0);
       return ValueFactory::GetVarcharValue(val.ToString());

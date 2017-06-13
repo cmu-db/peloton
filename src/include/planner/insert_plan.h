@@ -97,7 +97,7 @@ class InsertPlan : public AbstractPlan {
       parameter_vector_;
 
   // Parameter values
-  std::unique_ptr<std::vector<type::Type::TypeId>> params_value_type_;
+  std::unique_ptr<std::vector<type::TypeId>> params_value_type_;
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;

@@ -70,21 +70,21 @@ void CreateYCSBDatabase() {
   std::vector<catalog::Column> columns;
 
   auto column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
   if (state.string_mode == true) {
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         auto column =
-            catalog::Column(type::Type::VARCHAR, 100,
+            catalog::Column(type::TypeId::VARCHAR, 100,
                             "FIELD" + std::to_string(col_itr), is_inlined);
         columns.push_back(column);
     }
   } else {
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         auto column =
-            catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+            catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                             "FIELD" + std::to_string(col_itr), is_inlined);
         columns.push_back(column);
     }

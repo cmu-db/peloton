@@ -17,7 +17,7 @@
 namespace peloton {
 namespace type {
 
-DateType::DateType() : Type(Type::DATE) {}
+DateType::DateType() : Type(TypeId::DATE) {}
 
 CmpBool DateType::CompareEquals(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
@@ -134,11 +134,11 @@ Value DateType::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
 // Create a copy of this value
 Value DateType::Copy(const Value& val) const { return Value(val); }
 
-Value DateType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value DateType::CastAs(const Value& val, const TypeId type_id) const {
   switch (type_id) {
-    case Type::DATE:
+    case TypeId::DATE:
       return Copy(val);
-    case Type::VARCHAR:
+    case TypeId::VARCHAR:
       if (val.IsNull()) return ValueFactory::GetVarcharValue(nullptr, 0);
       return ValueFactory::GetVarcharValue(val.ToString());
     default:

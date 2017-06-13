@@ -55,9 +55,9 @@ class JoinTests : public PelotonTest {};
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
   auto left =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 1);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 1);
   auto right =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 1, 1);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
@@ -406,9 +406,9 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
 
   // Construct predicate
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 0);
 
   std::unique_ptr<const expression::AbstractExpression> predicate(
       new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
@@ -695,7 +695,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
     case PlanNodeType::HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
-          new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 1);
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           hash_keys;
@@ -705,13 +705,13 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
           left_hash_keys;
       left_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::Type::INTEGER, 0, 1)});
+              new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1)});
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           right_hash_keys;
       right_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::Type::INTEGER, 1, 1)});
+              new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 1)});
 
       // Create hash plan node
       planner::HashPlan hash_plan_node(hash_keys);

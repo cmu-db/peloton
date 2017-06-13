@@ -30,7 +30,7 @@ class UpdateableStorage {
 
   // Add the given type to the storage format. We return the index that this
   // value can be found it (i.e., the index to pass into Get() to get the value)
-  uint32_t AddType(type::Type::TypeId type);
+  uint32_t AddType(type::TypeId type);
 
   // Construct the final LLVM type given all the types that'll be stored
   llvm::Type *Finalize(CodeGen &codegen);
@@ -119,7 +119,7 @@ class UpdateableStorage {
 
  private:
   // The types we store in the storage area
-  std::vector<type::Type::TypeId> schema_;
+  std::vector<type::TypeId> schema_;
 
   // The physical storage format
   std::vector<CompactStorage::EntryInfo> storage_format_;

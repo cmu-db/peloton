@@ -208,8 +208,8 @@ class CastException : public Exception {
   CastException() = delete;
 
  public:
-  CastException(const type::Type::TypeId origType,
-                const type::Type::TypeId newType)
+  CastException(const type::TypeId origType,
+                const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " can't be cast as " +
                       TypeIdToString(newType)) {}
@@ -220,8 +220,8 @@ class ValueOutOfRangeException : public Exception {
 
  public:
   ValueOutOfRangeException(const int64_t value,
-                           const type::Type::TypeId origType,
-                           const type::Type::TypeId newType)
+                           const type::TypeId origType,
+                           const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string((intmax_t)value) +
@@ -230,8 +230,8 @@ class ValueOutOfRangeException : public Exception {
                       TypeIdToString(newType)) {}
 
   ValueOutOfRangeException(const double value,
-                           const type::Type::TypeId origType,
-                           const type::Type::TypeId newType)
+                           const type::TypeId origType,
+                           const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string(value) +
@@ -268,8 +268,8 @@ class TypeMismatchException : public Exception {
   TypeMismatchException() = delete;
 
  public:
-  TypeMismatchException(std::string msg, const type::Type::TypeId type_1,
-                        const type::Type::TypeId type_2)
+  TypeMismatchException(std::string msg, const type::TypeId type_1,
+                        const type::TypeId type_2)
       : Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
                   "Type " + TypeIdToString(type_1) + " does not match with " +
                       TypeIdToString(type_2) + msg) {}
@@ -311,7 +311,7 @@ class IncompatibleTypeException : public Exception {
   IncompatibleTypeException(int type, std::string msg)
       : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
                   "Incompatible type " +
-                      TypeIdToString(static_cast<type::Type::TypeId>(type)) +
+                      TypeIdToString(static_cast<type::TypeId>(type)) +
                       msg) {}
 };
 

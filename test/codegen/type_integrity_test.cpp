@@ -19,66 +19,66 @@ namespace test {
 class TypeIntegrityTest : public PelotonCodeGenTest {};
 
 TEST_F(TypeIntegrityTest, ImplicitCastTest) {
-  type::Type::TypeId input_type;
+  type::TypeId input_type;
 
   // Tinyint's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::TINYINT;
+  input_type = type::TypeId::TINYINT;
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::TINYINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::TINYINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::SMALLINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::SMALLINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::INTEGER));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::BIGINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::DECIMAL));
 
   // Small's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::SMALLINT;
+  input_type = type::TypeId::SMALLINT;
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::SMALLINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::SMALLINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::INTEGER));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::BIGINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::DECIMAL));
 
   // Integer's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::INTEGER;
+  input_type = type::TypeId::INTEGER;
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::INTEGER));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::INTEGER));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::BIGINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::DECIMAL));
 
   // Integer's can be implicitly casted to any higher-bit integer type
-  input_type = type::Type::BIGINT;
+  input_type = type::TypeId::BIGINT;
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::BIGINT));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::BIGINT));
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::DECIMAL));
 
   // Decimal's can only be casted to itself
-  input_type = type::Type::DECIMAL;
+  input_type = type::TypeId::DECIMAL;
   EXPECT_TRUE(
-      codegen::Type::CanImplicitlyCastTo(input_type, type::Type::DECIMAL));
+      codegen::Type::CanImplicitlyCastTo(input_type, type::TypeId::DECIMAL));
 }
 
 // This test performs checks that comparisons between every possible pair of
 // (the most important) input types are possible through potentially implicitly
 // casting the inputs.
 TEST_F(TypeIntegrityTest, ComparisonWithImplicitCastTest) {
-  const auto types_to_test = {type::Type::BOOLEAN,  type::Type::TINYINT,
-                              type::Type::SMALLINT, type::Type::INTEGER,
-                              type::Type::BIGINT,   type::Type::DECIMAL,
-                              type::Type::DATE,     type::Type::TIMESTAMP};
+  const auto types_to_test = {type::TypeId::BOOLEAN,  type::TypeId::TINYINT,
+                              type::TypeId::SMALLINT, type::TypeId::INTEGER,
+                              type::TypeId::BIGINT,   type::TypeId::DECIMAL,
+                              type::TypeId::DATE,     type::TypeId::TIMESTAMP};
 
   for (auto left_type : types_to_test) {
     for (auto right_type : types_to_test) {
-      type::Type::TypeId type_to_cast_left, type_to_cast_right;
+      type::TypeId type_to_cast_left, type_to_cast_right;
       const codegen::Type::Comparison *result;
       if (codegen::Type::CanImplicitlyCastTo(left_type, right_type) ||
           codegen::Type::CanImplicitlyCastTo(right_type, left_type)) {
@@ -107,19 +107,19 @@ TEST_F(TypeIntegrityTest, MathOpWithImplicitCastTest) {
       codegen::Type::OperatorId::Mul, codegen::Type::OperatorId::Div,
       codegen::Type::OperatorId::Mod};
 
-  const auto types_to_test = {type::Type::BOOLEAN,  type::Type::TINYINT,
-                              type::Type::SMALLINT, type::Type::INTEGER,
-                              type::Type::BIGINT,   type::Type::DECIMAL,
-                              type::Type::DATE,     type::Type::TIMESTAMP};
+  const auto types_to_test = {type::TypeId::BOOLEAN,  type::TypeId::TINYINT,
+                              type::TypeId::SMALLINT, type::TypeId::INTEGER,
+                              type::TypeId::BIGINT,   type::TypeId::DECIMAL,
+                              type::TypeId::DATE,     type::TypeId::TIMESTAMP};
 
-  const auto IsNumber = [](type::Type::TypeId t) {
+  const auto IsNumber = [](type::TypeId t) {
     return codegen::Type::IsIntegral(t) || codegen::Type::IsNumeric(t);
   };
 
   for (auto left_type : types_to_test) {
     for (auto right_type : types_to_test) {
       for (auto bin_op : binary_ops) {
-        type::Type::TypeId type_to_cast_left, type_to_cast_right;
+        type::TypeId type_to_cast_left, type_to_cast_right;
         const codegen::Type::BinaryOperator *result;
         if (IsNumber(left_type) && IsNumber(right_type)) {
           // If the types are implicitly cast-able to one or the other, the

@@ -26,7 +26,7 @@ class BooleanValueTests : public PelotonTest {};
 TEST_F(BooleanValueTests, BasicTest) {
   auto valTrue = type::ValueFactory::GetBooleanValue(true);
   auto valFalse = type::ValueFactory::GetBooleanValue(false);
-  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
 
   EXPECT_TRUE(valTrue.IsTrue());
   EXPECT_FALSE(valTrue.IsFalse());
@@ -62,7 +62,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
       // VALUE #0
       if (values[i] == type::PELOTON_BOOLEAN_NULL) {
-        val0 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+        val0 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
         expected_null = true;
       } else {
         val0 =
@@ -71,7 +71,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
       // VALUE #1
       if (values[j] == type::PELOTON_BOOLEAN_NULL) {
-        val1 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+        val1 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
         expected_null = true;
       } else {
         val1 =
@@ -151,13 +151,13 @@ TEST_F(BooleanValueTests, HashTest) {
 
   for (int i = 0; i < 2; i++) {
     if (values[i] == type::PELOTON_BOOLEAN_NULL) {
-      val0 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+      val0 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
     } else {
       val0 = type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
       if (values[j] == type::PELOTON_BOOLEAN_NULL) {
-        val1 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+        val1 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
       } else {
         val1 =
             type::ValueFactory::GetBooleanValue(static_cast<bool>(values[j]));
@@ -182,7 +182,7 @@ TEST_F(BooleanValueTests, CastTest) {
   auto valTrue0 = type::ValueFactory::GetVarcharValue("TrUe");
   result = type::ValueFactory::CastAsBoolean(valTrue0);
   EXPECT_TRUE(result.IsTrue());
-  result = valTrue0.CastAs(type::Type::BOOLEAN);
+  result = valTrue0.CastAs(type::TypeId::BOOLEAN);
   EXPECT_TRUE(result.IsTrue());
 
   auto valTrue1 = type::ValueFactory::GetVarcharValue("1");
@@ -196,7 +196,7 @@ TEST_F(BooleanValueTests, CastTest) {
   auto valFalse0 = type::ValueFactory::GetVarcharValue("FaLsE");
   result = type::ValueFactory::CastAsBoolean(valFalse0);
   EXPECT_TRUE(result.IsFalse());
-  result = valFalse0.CastAs(type::Type::BOOLEAN);
+  result = valFalse0.CastAs(type::TypeId::BOOLEAN);
   EXPECT_TRUE(result.IsFalse());
 
   auto valFalse1 = type::ValueFactory::GetVarcharValue("0");

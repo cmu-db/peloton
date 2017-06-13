@@ -63,7 +63,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Prepare the expressions that produce the build-size keys
   join.GetLeftHashKeys(left_key_exprs_);
 
-  std::vector<type::Type::TypeId> left_key_type;
+  std::vector<type::TypeId> left_key_type;
   for (const auto *left_key : left_key_exprs_) {
     // Prepare the expression for translation
     context.Prepare(*left_key);
@@ -74,7 +74,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Prepare the expressions that produce the probe-side keys
   join.GetRightHashKeys(right_key_exprs_);
 
-  std::vector<type::Type::TypeId> right_key_type;
+  std::vector<type::TypeId> right_key_type;
   for (const auto *right_key : right_key_exprs_) {
     // Prepare the expression for translation
     context.Prepare(*right_key);
@@ -109,7 +109,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Construct the format of the left side
-  std::vector<type::Type::TypeId> left_value_types;
+  std::vector<type::TypeId> left_value_types;
   for (const auto *left_val_ai : left_val_ais_) {
     left_value_types.push_back(left_val_ai->type);
   }
@@ -212,7 +212,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
       RowBatch::OutputTracker tracker{batch.GetSelectionVector(), write_pos};
       RowBatch::Row row = batch.GetRowAt(read_pos, &tracker);
 
-      codegen::Value row_hash{type::Type::TypeId::INTEGER,
+      codegen::Value row_hash{type::TypeId::INTEGER,
                               hashes.GetValue(codegen, p)};
       row.RegisterAttributeValue(&OAHashTable::kHashAI, row_hash);
 

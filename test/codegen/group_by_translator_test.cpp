@@ -47,18 +47,18 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // 2) Setup the aggregations
   // For count(*) just use a TVE
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::BIGINT;
+  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                           {type::Type::TypeId::BIGINT, 8, "COUNT_A"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                           {type::TypeId::BIGINT, 8, "COUNT_A"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -108,19 +108,19 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   // 2) Setup the aggregations
   // For count(*) just use a TVE
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::BIGINT;
+  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0, 1};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                           {type::Type::TypeId::INTEGER, 4, "COL_B"},
-                           {type::Type::TypeId::BIGINT, 8, "COUNT_*"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                           {type::TypeId::INTEGER, 4, "COL_B"},
+                           {type::TypeId::BIGINT, 8, "COUNT_*"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -170,18 +170,18 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
 
   // 2) Setup the average over 'b'
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::DECIMAL;
+  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                           {type::Type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                           {type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -224,22 +224,22 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
 
   // 2) Setup the average over 'b'
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::DECIMAL;
+  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                           {type::Type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                           {type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
 
   // 5) The predicate on the average aggregate
   auto *x_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 1, 0);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 1, 0);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
   std::unique_ptr<expression::AbstractExpression> x_gt_50{
@@ -287,18 +287,18 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // 2) Setup the average over 'b'
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::DECIMAL;
+  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                           {type::Type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                           {type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -307,7 +307,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // 6) The predicate on the grouping column
   auto *a_exp =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto *const_50 = ConstIntExpr(50).release();
   auto *a_gt_50 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_GREATERTHAN, a_exp, const_50);
@@ -350,17 +350,17 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   // 2) Setup the aggregations
   // For count(*) just use a TVE
   auto *tve_expr =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::BIGINT;
+  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) No grouping
   std::vector<oid_t> gb_cols = {};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::BIGINT, 8, "COUNT_A"}})};
+      new catalog::Schema({{type::TypeId::BIGINT, 8, "COUNT_A"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -405,22 +405,22 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
 
   // 2) Setup MAX() aggregation on column 'a' and MIN() on 'b'
   auto *a_col =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto *b_col =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_MAX, a_col},
       {ExpressionType::AGGREGATE_MIN, b_col}};
-  agg_terms[0].agg_ai.type = type::Type::TypeId::INTEGER;
-  agg_terms[1].agg_ai.type = type::Type::TypeId::INTEGER;
+  agg_terms[0].agg_ai.type = type::TypeId::INTEGER;
+  agg_terms[1].agg_ai.type = type::TypeId::INTEGER;
 
   // 3) No grouping
   std::vector<oid_t> gb_cols = {};
 
   // 4) The output schema
   std::shared_ptr<const catalog::Schema> output_schema{
-      new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "MAX_A"},
-                           {type::Type::TypeId::INTEGER, 4, "MIN_B"}})};
+      new catalog::Schema({{type::TypeId::INTEGER, 4, "MAX_A"},
+                           {type::TypeId::INTEGER, 4, "MIN_B"}})};
 
   // 5) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(

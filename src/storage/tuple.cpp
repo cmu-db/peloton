@@ -35,7 +35,7 @@ Tuple::~Tuple() {
 type::Value Tuple::GetValue(oid_t column_id) const {
   PL_ASSERT(tuple_schema_);
   PL_ASSERT(tuple_data_);
-  const type::Type::TypeId column_type = tuple_schema_->GetType(column_id);
+  const type::TypeId column_type = tuple_schema_->GetType(column_id);
   const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema_->IsInlined(column_id);
   return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
@@ -44,7 +44,7 @@ type::Value Tuple::GetValue(oid_t column_id) const {
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
                      type::AbstractPool *data_pool) {
-  const type::Type::TypeId type = tuple_schema_->GetType(column_offset);
+  const type::TypeId type = tuple_schema_->GetType(column_offset);
   LOG_TRACE("c offset: %d; using pool: %p", column_offset, data_pool);
 
   const bool is_inlined = tuple_schema_->IsInlined(column_offset);
@@ -119,24 +119,24 @@ size_t Tuple::ExportSerializationSize() const {
 
   for (int column_itr = 0; column_itr < column_count; ++column_itr) {
     switch (GetType(column_itr)) {
-      case type::Type::TINYINT:
-      case type::Type::SMALLINT:
-      case type::Type::INTEGER:
-      case type::Type::BIGINT:
-      case type::Type::TIMESTAMP:
-      case type::Type::DECIMAL:
+      case type::TypeId::TINYINT:
+      case type::TypeId::SMALLINT:
+      case type::TypeId::INTEGER:
+      case type::TypeId::BIGINT:
+      case type::TypeId::TIMESTAMP:
+      case type::TypeId::DECIMAL:
         // case type::Type::DOUBLE:
         bytes += sizeof(int64_t);
         break;
 
-      // case type::Type::DECIMAL:
+      // case type::TypeId::DECIMAL:
       // Decimals serialized in ascii as
       // 32 bits of length + max prec digits + radix pt + sign
       // bytes += sizeof(int32_t) + Value::kMaxDecPrec + 1 + 1;
       // break;
 
-      case type::Type::VARCHAR:
-      case type::Type::VARBINARY:
+      case type::TypeId::VARCHAR:
+      case type::TypeId::VARBINARY:
         // 32 bit length preceding value and
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
@@ -163,8 +163,8 @@ size_t Tuple::GetUninlinedMemorySize() const {
   if (tuple_schema_->IsInlined() == false) {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
-      if ((GetType(column_itr) == type::Type::VARCHAR ||
-           (GetType(column_itr) == type::Type::VARBINARY)) &&
+      if ((GetType(column_itr) == type::TypeId::VARCHAR ||
+           (GetType(column_itr) == type::TypeId::VARBINARY)) &&
           !tuple_schema_->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) + GetValue(column_itr).GetLength());

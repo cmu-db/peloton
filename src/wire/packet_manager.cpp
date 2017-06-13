@@ -782,11 +782,11 @@ size_t PacketManager::ReadParamValue(
         // TEXT mode
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
-            std::make_pair(type::Type::VARCHAR, param_str);
+            std::make_pair(type::TypeId::VARCHAR, param_str);
         if ((unsigned int)param_idx >= param_types.size() ||
             PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
-                type::Type::VARCHAR) {
+                type::TypeId::VARCHAR) {
           param_values[param_idx] =
               type::ValueFactory::GetVarcharValue(param_str);
         } else {
@@ -795,7 +795,7 @@ size_t PacketManager::ReadParamValue(
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
+        PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       } else {
         // BINARY mode
         switch (static_cast<PostgresValueType>(param_types[param_idx])) {
@@ -805,7 +805,7 @@ size_t PacketManager::ReadParamValue(
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
-                std::make_pair(type::Type::INTEGER, std::to_string(int_val));
+                std::make_pair(type::TypeId::INTEGER, std::to_string(int_val));
             param_values[param_idx] =
                 type::ValueFactory::GetIntegerValue(int_val).Copy();
             break;
@@ -816,7 +816,7 @@ size_t PacketManager::ReadParamValue(
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
-                std::make_pair(type::Type::BIGINT, std::to_string(int_val));
+                std::make_pair(type::TypeId::BIGINT, std::to_string(int_val));
             param_values[param_idx] =
                 type::ValueFactory::GetBigIntValue(int_val).Copy();
             break;
@@ -829,14 +829,14 @@ size_t PacketManager::ReadParamValue(
             }
             PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters[param_idx] =
-                std::make_pair(type::Type::DECIMAL, std::to_string(float_val));
+                std::make_pair(type::TypeId::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
                 type::ValueFactory::GetDecimalValue(float_val).Copy();
             break;
           }
           case PostgresValueType::VARBINARY: {
             bind_parameters[param_idx] = std::make_pair(
-                type::Type::VARBINARY,
+                type::TypeId::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
             param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
                 &param[0], param_len, true);
@@ -847,7 +847,7 @@ size_t PacketManager::ReadParamValue(
             break;
           }
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
+        PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       }
     }
   }

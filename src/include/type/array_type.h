@@ -26,13 +26,13 @@ class ValueFactory;
 
 class ArrayType : public Type {
  public:
-  ArrayType(): Type(Type::ARRAY){}
+  ArrayType(): Type(TypeId::ARRAY){}
   ~ArrayType() {}
 
   // Get the element at a given index in this array
   Value GetElementAt(const Value& val, uint64_t idx) const;
 
-  Type::TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const;
+  TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const;
 
   // Does this value exist in this array?
   Value InList(const Value& list, const Value &object) const;
@@ -44,7 +44,7 @@ class ArrayType : public Type {
   CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
   CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const TypeId type_id) const override;
 
   bool IsInlined(const Value& val UNUSED_ATTRIBUTE) const override { return false; }
   std::string ToString(const Value& val UNUSED_ATTRIBUTE) const override { return ""; }

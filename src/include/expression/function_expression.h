@@ -35,8 +35,8 @@ class FunctionExpression : public AbstractExpression {
   }
 
   FunctionExpression(type::Value (*func_ptr)(const std::vector<type::Value>&),
-                     type::Type::TypeId return_type,
-                     const std::vector<type::Type::TypeId>& arg_types,
+                     type::TypeId return_type,
+                     const std::vector<type::TypeId>& arg_types,
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION, return_type),
         func_ptr_(func_ptr) {
@@ -48,8 +48,8 @@ class FunctionExpression : public AbstractExpression {
 
   void SetFunctionExpressionParameters(
       type::Value (*func_ptr)(const std::vector<type::Value>&),
-      type::Type::TypeId val_type,
-      const std::vector<type::Type::TypeId>& arg_types) {
+      type::TypeId val_type,
+      const std::vector<type::TypeId>& arg_types) {
     func_ptr_ = func_ptr;
     return_value_type_ = val_type;
     CheckChildrenTypes(arg_types, children_, func_name_);
@@ -93,7 +93,7 @@ class FunctionExpression : public AbstractExpression {
 
   // throws an exception if children return unexpected types
   static void CheckChildrenTypes(
-      const std::vector<type::Type::TypeId>& arg_types,
+      const std::vector<type::TypeId>& arg_types,
       const std::vector<std::unique_ptr<AbstractExpression>>& children,
       const std::string& func_name) {
     if (arg_types.size() != children.size()) {
