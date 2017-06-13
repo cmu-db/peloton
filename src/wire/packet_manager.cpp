@@ -459,7 +459,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
     CompleteCommand(query_type, rows_affected);
 
-    //Empty Query when the input is like " ;"
+  // handle the case when the string is "  ;"
   } else {
     SendEmptyQueryResponse();
   }
