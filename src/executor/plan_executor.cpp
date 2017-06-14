@@ -13,6 +13,7 @@
 #include "executor/plan_executor.h"
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "common/logger.h"
@@ -137,13 +138,21 @@ ExecuteResult PlanExecutor::ExecutePlan(
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
 
-    // Compile the query
-    codegen::QueryCompiler compiler;
-    auto query = compiler.Compile(*plan, consumer);
+    auto *query_cached = codegen::QueryCache::Instance().Find(plan);
+    if (query_cached == nullptr) {
+      codegen::QueryCompiler compiler;
+      auto query = compiler.Compile(*plan, consumer);
 
-    // Execute the query
-    query->Execute(*txn, executor_context.get(),
-                   reinterpret_cast<char *>(consumer.GetState()));
+      query->Execute(*txn, executor_context.get(),
+                     reinterpret_cast<char *>(consumer.GetState()));
+
+      codegen::QueryCache::Instance().Add(std::move(plan), std::move(query));
+    }
+    else {
+      LOG_DEBUG("Executing the cached query");
+      query_cached->Execute(*txn, executor_context.get(),
+                            reinterpret_cast<char *>(consumer.GetState()));
+    }
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
