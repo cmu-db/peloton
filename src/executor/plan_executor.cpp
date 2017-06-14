@@ -13,6 +13,7 @@
 #include "executor/plan_executor.h"
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
