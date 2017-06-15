@@ -76,6 +76,8 @@ class AggregatePlan : public AbstractPlan {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  bool IsGlobal() const { return GetGroupbyColIds().empty(); }
+
   const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;
   }
