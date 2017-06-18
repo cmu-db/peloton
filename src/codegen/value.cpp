@@ -15,40 +15,28 @@
 #include <list>
 #include <queue>
 
-#include "codegen/if.h"
-#include "codegen/runtime_functions_proxy.h"
-#include "codegen/type.h"
-
-#include "type/value.h"
+#include "codegen/type/type_system.h"
 
 namespace peloton {
 namespace codegen {
 
-Value::Value() : Value(type::TypeId::INVALID) {}
+Value::Value() : Value(type::Type{peloton::type::TypeId::INVALID, false}) {}
 
-Value::Value(type::TypeId type, llvm::Value *val, llvm::Value *length,
+Value::Value(const type::Type &type, llvm::Value *val, llvm::Value *length,
              llvm::Value *null)
-    : type_(type), value_(val), length_(length), null_(null) {}
-
-//===----------------------------------------------------------------------===//
-// Utility functions
-//===----------------------------------------------------------------------===//
-
-llvm::Value *Value::ReifyBoolean(CodeGen &codegen) const {
-  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
-  llvm::Value *null_bit = GetNullBit();
-  if (null_bit == nullptr) {
-    return GetValue();
-  } else {
-    // The value is nullable, need to check the null bit
-    return codegen->CreateSelect(null_bit, codegen.ConstBool(false),
-                                 GetValue());
-  }
+    : type_(type), value_(val), length_(length), null_(null) {
+  // If the value is NULL-able, it better have an accompanying NULL bit
+  PL_ASSERT(!type_.nullable || null_ != nullptr);
 }
 
 // Return a boolean value indicating whether this value is NULL
 llvm::Value *Value::IsNull(CodeGen &codegen) const {
-  return (GetNullBit() != nullptr ? GetNullBit() : codegen.ConstBool(false));
+  if (IsNullable()) {
+    PL_ASSERT(null_ != nullptr);
+    return null_;
+  } else {
+    return codegen.ConstBool(false);
+  }
 }
 
 // Return a boolean (i1) value indicating whether this value is not NULL
@@ -60,107 +48,73 @@ llvm::Value *Value::IsNotNull(CodeGen &codegen) const {
 // COMPARISONS
 //===----------------------------------------------------------------------===//
 
-Value Value::CastTo(CodeGen &codegen, type::TypeId to_type) const {
+Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
   // If the type we're casting to is the type of the value, we're done
   if (GetType() == to_type) {
     return *this;
   }
 
   // Do the explicit cast
-  const auto *cast = Type::GetCast(GetType(), to_type);
-  return cast->DoCast(codegen, *this, to_type);
+  const auto *cast = type::TypeSystem::GetCast(GetType(), to_type);
+
+  if (IsNullable()) {
+    // We need to handle NULL's during casting
+    type::TypeSystem::CastWithNullPropagation null_aware_cast{*cast};
+    return null_aware_cast.DoCast(codegen, *this, to_type);
+  } else {
+    // No NULL, just do the cast
+    PL_ASSERT(!to_type.nullable);
+    return cast->DoCast(codegen, *this, to_type);
+  }
 }
 
+#define DO_COMPARE(OP)                                                     \
+  type::Type left_cast = GetType();                                        \
+  type::Type right_cast = other.GetType();                                 \
+                                                                           \
+  const auto *comparison = type::TypeSystem::GetComparison(                \
+      GetType(), left_cast, other.GetType(), right_cast);                  \
+                                                                           \
+  Value left = CastTo(codegen, left_cast);                                 \
+  Value right = other.CastTo(codegen, right_cast);                         \
+                                                                           \
+  if (!left.IsNullable() && !right.IsNullable()) {                         \
+    return comparison->Do##OP(codegen, left, right);                       \
+  } else {                                                                 \
+    type::TypeSystem::ComparisonWithNullPropagation null_aware_comparison{ \
+        *comparison};                                                      \
+    return null_aware_comparison.Do##OP(codegen, left, right);             \
+  }
+
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareEq(codegen, left, right);
+  DO_COMPARE(CompareEq);
 }
 
 Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareNe(codegen, left, right);
+  DO_COMPARE(CompareNe);
 }
 
 Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareLt(codegen, left, right);
+  DO_COMPARE(CompareLt);
 }
 
 Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareLte(codegen, left, right);
+  DO_COMPARE(CompareLte);
 }
 
 Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareGt(codegen, left, right);
+  DO_COMPARE(CompareGt);
 }
 
 Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoCompareGte(codegen, left, right);
+  DO_COMPARE(CompareGte);
 }
 
 Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  const auto *comparison =
-      Type::GetComparison(GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return comparison->DoComparisonForSort(codegen, left, right);
+  DO_COMPARE(ComparisonForSort);
 }
+
+#undef DO_COMPARE
 
 // Check that all the values from the left and equal to all the values in right
 Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
@@ -186,75 +140,75 @@ Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
 // ARITHMETIC OPERATIONS
 //===----------------------------------------------------------------------===//
 
+Value ExecBinaryOp(CodeGen &codegen, type::TypeSystem::OperatorId op_id,
+                   const Value &left, const Value &right,
+                   Value::OnError on_error) {
+  type::Type left_target_type = left.GetType();
+  type::Type right_target_type = right.GetType();
+
+  auto *binary_op = type::TypeSystem::GetBinaryOperator(
+      op_id, left.GetType(), left_target_type, right.GetType(),
+      right_target_type);
+
+  Value casted_left = left.CastTo(codegen, left_target_type);
+  Value casted_right = right.CastTo(codegen, right_target_type);
+
+  // Check if we need to do a NULL-aware binary operation invocation
+  if (!casted_left.IsNullable() && !casted_right.IsNullable()) {
+    // Nope
+    return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
+  } else {
+    // One of the inputs are NULL
+    type::TypeSystem::BinaryOperatorWithNullPropagation null_aware_bin_op{
+        *binary_op};
+    return null_aware_bin_op.DoWork(codegen, casted_left, casted_right,
+                                    on_error);
+  }
+}
+
 // Addition
 Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  auto *add_op = Type::GetBinaryOperator(
-      Type::OperatorId::Add, GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return add_op->DoWork(codegen, left, right, on_error);
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Add, *this, other,
+                      on_error);
 }
 
 // Subtraction
 Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  auto *sub_op = Type::GetBinaryOperator(
-      Type::OperatorId::Sub, GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return sub_op->DoWork(codegen, left, right, on_error);
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Sub, *this, other,
+                      on_error);
 }
 
 // Multiplication
 Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  auto *mul_op = Type::GetBinaryOperator(
-      Type::OperatorId::Mul, GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return mul_op->DoWork(codegen, left, right, on_error);
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Mul, *this, other,
+                      on_error);
 }
 
 // Division
 Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  auto *div_op = Type::GetBinaryOperator(
-      Type::OperatorId::Div, GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return div_op->DoWork(codegen, left, right, on_error);
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Div, *this, other,
+                      on_error);
 }
 
 // Modulus
 Value Value::Mod(CodeGen &codegen, const Value &other, OnError on_error) const {
-  type::TypeId left_cast = GetType();
-  type::TypeId right_cast = other.GetType();
-
-  auto *mod_op = Type::GetBinaryOperator(
-      Type::OperatorId::Mod, GetType(), left_cast, other.GetType(), right_cast);
-
-  Value left = CastTo(codegen, left_cast);
-  Value right = other.CastTo(codegen, right_cast);
-
-  return mod_op->DoWork(codegen, left, right, on_error);
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Mod, *this, other,
+                      on_error);
 }
+
+// Logical AND
+Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::LogicalAnd, *this,
+                      other, OnError::Exception);
+}
+
+// Logical OR
+Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
+  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::LogicalOr, *this,
+                      other, OnError::Exception);
+}
+
+// TODO: Min/Max need to handle NULL
 
 // Mathematical minimum
 Value Value::Min(CodeGen &codegen, const Value &other) const {
@@ -265,7 +219,7 @@ Value Value::Min(CodeGen &codegen, const Value &other) const {
   llvm::Value *val =
       codegen->CreateSelect(is_lt.GetValue(), GetValue(), other.GetValue());
   llvm::Value *len = nullptr;
-  if (Type::IsVariableLength(GetType())) {
+  if (GetType().GetSqlType().IsVariableLength()) {
     len =
         codegen->CreateSelect(is_lt.GetValue(), GetLength(), other.GetLength());
   }
@@ -281,42 +235,20 @@ Value Value::Max(CodeGen &codegen, const Value &other) const {
   llvm::Value *val =
       codegen->CreateSelect(is_gt.GetValue(), GetValue(), other.GetValue());
   llvm::Value *len = nullptr;
-  if (Type::IsVariableLength(GetType())) {
+  if (GetType().GetSqlType().IsVariableLength()) {
     len =
         codegen->CreateSelect(is_gt.GetValue(), GetLength(), other.GetLength());
   }
   return Value{GetType(), val, len};
 }
 
-// TODO: AND and OR need to handle NULL
-
-// Logical AND
-Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
-  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
-  PL_ASSERT(GetType() == other.GetType());
-
-  return Value{GetType(), codegen->CreateAnd(GetValue(), other.GetValue())};
-}
-
-// Logical OR
-Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
-  PL_ASSERT(GetType() == type::TypeId::BOOLEAN);
-  PL_ASSERT(GetType() == other.GetType());
-
-  return Value{GetType(), codegen->CreateOr(GetValue(), other.GetValue())};
-}
-
 //===----------------------------------------------------------------------===//
 // Generate a hash for the given value
 //===----------------------------------------------------------------------===//
 void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
+  PL_ASSERT(GetType().type_id != peloton::type::TypeId::INVALID);
   val = GetValue();
-  if (GetType() == type::TypeId::VARCHAR ||
-      GetType() == type::TypeId::VARBINARY) {
-    len = GetLength();
-  } else {
-    len = nullptr;
-  }
+  len = GetType().GetSqlType().IsVariableLength() ? GetLength() : nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -325,18 +257,19 @@ void Value::ValuesForHash(llvm::Value *&val, llvm::Value *&len) const {
 void Value::ValuesForMaterialization(CodeGen &codegen, llvm::Value *&val,
                                      llvm::Value *&len,
                                      llvm::Value *&null) const {
-  PL_ASSERT(type_ != type::TypeId::INVALID);
+  PL_ASSERT(GetType().type_id != peloton::type::TypeId::INVALID);
   val = GetValue();
-  len = GetType() == type::TypeId::VARCHAR ? GetLength() : nullptr;
+  len = GetType().GetSqlType().IsVariableLength() ? GetLength() : nullptr;
   null = IsNull(codegen);
 }
 
 // Return the value that can be
-Value Value::ValueFromMaterialization(type::TypeId type, llvm::Value *val,
+Value Value::ValueFromMaterialization(const type::Type &type, llvm::Value *val,
                                       llvm::Value *len, llvm::Value *null) {
-  PL_ASSERT(type != type::TypeId::INVALID);
-  return Value{type, val, (type == type::TypeId::VARCHAR ? len : nullptr),
-               null};
+  PL_ASSERT(type.type_id != peloton::type::TypeId::INVALID);
+  return Value{type, val,
+               (type.GetSqlType().IsVariableLength() ? len : nullptr),
+               (type.nullable ? null : nullptr)};
 }
 
 // Build a new value that combines values arriving from different BB's into a
@@ -344,21 +277,21 @@ Value Value::ValueFromMaterialization(type::TypeId type, llvm::Value *val,
 Value Value::BuildPHI(
     CodeGen &codegen,
     const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals) {
-  PL_ASSERT(vals.size() > 0);
   uint32_t num_entries = static_cast<uint32_t>(vals.size());
 
   // The SQL type of the values that we merge here
   // TODO: Need to make sure all incoming types are unifyable
-  auto type = vals[0].first.GetType();
+  const type::Type &type = vals[0].first.GetType();
+  const type::SqlType &sql_type = type.GetSqlType();
 
   // Get the LLVM type for the values
   llvm::Type *null_type = codegen.BoolType();
   llvm::Type *val_type = nullptr, *len_type = nullptr;
-  Type::GetTypeForMaterialization(codegen, type, val_type, len_type);
+  sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
   PL_ASSERT(val_type != nullptr);
 
   // Do the merge depending on the type
-  if (Type::IsVariableLength(type)) {
+  if (sql_type.IsVariableLength()) {
     PL_ASSERT(len_type != nullptr);
     auto *val_phi = codegen->CreatePHI(val_type, num_entries);
     auto *len_phi = codegen->CreatePHI(len_type, num_entries);

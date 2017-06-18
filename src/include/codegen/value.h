@@ -13,7 +13,7 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/type.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -27,7 +27,7 @@ class Value {
  public:
   // Constructor that provides the type and the value
   Value();
-  Value(type::TypeId type, llvm::Value *value = nullptr,
+  Value(const type::Type &type, llvm::Value *value = nullptr,
         llvm::Value *length = nullptr, llvm::Value *is_null = nullptr);
 
   //===--------------------------------------------------------------------===//
@@ -35,7 +35,12 @@ class Value {
   //===--------------------------------------------------------------------===//
 
   // Get the SQL type
-  type::TypeId GetType() const { return type_; }
+  const type::Type &GetType() const { return type_; }
+
+  // Get the type system for this value's type
+  const type::TypeSystem &GetTypeSystem() const {
+    return GetType().GetTypeSystem();
+  }
 
   // Get the LLVM value
   llvm::Value *GetValue() const { return value_; }
@@ -43,14 +48,8 @@ class Value {
   // Get the length of the varchar (if it is one)
   llvm::Value *GetLength() const { return length_; }
 
-  // Get the null indicator value
-  llvm::Value *GetNullBit() const { return null_; }
-
   // Is this value nullable?
-  bool IsNullable() const { return GetNullBit() != nullptr; }
-
-  // Reify this (potentially null) value into a boolean value
-  llvm::Value *ReifyBoolean(CodeGen &codegen) const;
+  bool IsNullable() const { return GetType().nullable; }
 
   // Check if this value is NULL (or not NULL).
   llvm::Value *IsNull(CodeGen &codegen) const;
@@ -59,7 +58,7 @@ class Value {
   //===--------------------------------------------------------------------===//
   // Comparison functions
   //===--------------------------------------------------------------------===//
-  Value CastTo(CodeGen &codegen, type::TypeId to_type) const;
+  Value CastTo(CodeGen &codegen, const type::Type &to_type) const;
 
   Value CompareEq(CodeGen &codegen, const Value &other) const;
   Value CompareNe(CodeGen &codegen, const Value &other) const;
@@ -82,7 +81,7 @@ class Value {
   // Mathematical functions
   //===--------------------------------------------------------------------===//
 
-  enum class OnError : uint32_t { ReturnDefault, ReturnNull, Exception };
+  enum class OnError : uint32_t { ReturnNull, Exception };
 
   Value Add(CodeGen &codegen, const Value &other,
             const OnError on_error = OnError::Exception) const;
@@ -110,6 +109,13 @@ class Value {
       CodeGen &codegen,
       const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals);
 
+  /*
+  Value CallUnary(CodeGen &codegen,
+                  type::TypeSystem::OperatorId operator_id) const;
+  Value CallBinary(CodeGen &codegen, type::TypeSystem::OperatorId operator_id,
+                   const Value &other) const;
+  */
+
   //===--------------------------------------------------------------------===//
   // Materialization helpers
   //===--------------------------------------------------------------------===//
@@ -120,7 +126,7 @@ class Value {
 
   // Return a value that can be constructed from the provided type and value
   // registers
-  static Value ValueFromMaterialization(type::TypeId type,
+  static Value ValueFromMaterialization(const type::Type &type,
                                         llvm::Value *val, llvm::Value *len,
                                         llvm::Value *null);
 
@@ -134,7 +140,7 @@ class Value {
 
  private:
   // The SQL type
-  type::TypeId type_;
+  type::Type type_;
 
   // The value
   llvm::Value *value_;

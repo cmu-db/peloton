@@ -83,9 +83,7 @@ void UpdatePlan::BuildInitialUpdatePlan(
     expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
                                                     update_expr);
 
-    planner::DerivedAttribute attribute;
-    attribute.expr = update_expr;
-    attribute.attribute_info.type = update_expr->GetValueType();
+    planner::DerivedAttribute attribute{update_expr};
     attribute.attribute_info.name = update->column;
     tlist.emplace_back(col_id, attribute);
   }

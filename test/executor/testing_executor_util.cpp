@@ -33,6 +33,7 @@
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
 #include "storage/tuple.h"
+#include "type/abstract_pool.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

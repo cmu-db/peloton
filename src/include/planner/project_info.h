@@ -42,6 +42,10 @@ namespace planner {
 struct DerivedAttribute {
   AttributeInfo attribute_info;
   const expression::AbstractExpression *expr;
+
+  DerivedAttribute(const expression::AbstractExpression *_expr) : expr(_expr) {
+    attribute_info.type = expr->ResultType();
+  }
 };
 
 class ProjectInfo {
@@ -80,8 +84,7 @@ class ProjectInfo {
     std::vector<Target> new_target_list;
     for (const Target &target : target_list_) {
       new_target_list.emplace_back(
-          target.first, DerivedAttribute{target.second.attribute_info,
-                                         target.second.expr->Copy()});
+          target.first, DerivedAttribute{target.second.expr->Copy()});
     }
 
     std::vector<DirectMap> new_map_list;

@@ -16,7 +16,7 @@
 
 #include "codegen/codegen.h"
 #include "codegen/value.h"
-#include "type/type.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -36,7 +36,7 @@ class CompactStorage {
 
   // Setup this storage to store the given types (in the specified order)
   llvm::Type *Setup(CodeGen &codegen,
-                    const std::vector<type::TypeId> &types);
+                    const std::vector<type::Type> &types);
 
   // Store the given values into the provided storage area
   llvm::Value *StoreValues(CodeGen &codegen, llvm::Value *area_start,
@@ -76,7 +76,7 @@ class CompactStorage {
 
  private:
   // The SQL types we store
-  std::vector<type::TypeId> schema_;
+  std::vector<type::Type> schema_;
 
   // The schema of the storage
   std::vector<CompactStorage::EntryInfo> storage_format_;

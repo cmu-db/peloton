@@ -246,8 +246,8 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
     }
     first = false;
     codegen::Value val = row.DeriveValue(codegen, ai);
-    assert(val.GetType() != type::TypeId::INVALID);
-    switch (val.GetType()) {
+    PL_ASSERT(val.GetType().type_id != peloton::type::TypeId::INVALID);
+    switch (val.GetType().type_id) {
       case type::TypeId::BOOLEAN:
       case type::TypeId::TINYINT:
       case type::TypeId::SMALLINT:

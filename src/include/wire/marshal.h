@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "common/logger.h"
+#include "common/macros.h"
 #include "type/types.h"
 
 #define BUFFER_INIT_SIZE 100

@@ -18,10 +18,10 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/scan_callback.h"
 #include "codegen/tile_group_proxy.h"
-#include "codegen/type.h"
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
 #include "codegen/vectorized_loop.h"
+#include "codegen/type/boolean_type.h"
 
 namespace peloton {
 namespace codegen {
@@ -125,11 +125,13 @@ codegen::Value TileGroup::LoadColumn(
   llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
 
   // Column metadata
+  bool is_nullable = schema_.AllowNull(layout.col_id);
   const auto &column = schema_.GetColumn(layout.col_id);
+  const auto &sql_type = type::SqlType::LookupType(column.GetType());
 
   // Check if it's a string or numeric value
-  if (Type::IsVariableLength(column.GetType())) {
-    if (schema_.AllowNull(layout.col_id)) {
+  if (sql_type.IsVariableLength()) {
+    if (is_nullable) {
       codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
                                        is_null);
     } else {
@@ -139,18 +141,23 @@ codegen::Value TileGroup::LoadColumn(
   } else {
     // Get the LLVM type of the column
     llvm::Type *col_type = nullptr, *col_len_type = nullptr;
-    Type::GetTypeForMaterialization(codegen, column.GetType(), col_type,
-                                    col_len_type);
+    sql_type.GetTypeForMaterialization(codegen, col_type, col_len_type);
     PL_ASSERT(col_type != nullptr && col_len_type == nullptr);
 
     val = codegen->CreateLoad(col_type, col_address);
 
-    if (schema_.AllowNull(layout.col_id)) {
-      codegen::Value tmp{column.GetType(), val};
-      codegen::Value null_val = Type::GetNullValue(codegen, column.GetType());
-      is_null = null_val.CompareEq(codegen, tmp).GetValue();
+    if (is_nullable) {
+      // To check for NULL, we need to perform a comparison between the value we
+      // just read from the table with the NULL value for the column's type. We
+      // need to be careful that the runtime type of both values is not NULL to
+      // bypass the type system's NULL checking logic.
+      auto val_tmp = codegen::Value{sql_type, val};
+      auto null_val = codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
+      auto val_is_null = val_tmp.CompareEq(codegen, null_val);
+      PL_ASSERT(!val_is_null.IsNullable());
+      PL_ASSERT(val_is_null.GetType() == type::Boolean::Instance());
+      is_null = val_is_null.GetValue();
     }
-    PL_ASSERT(val != nullptr);
   }
 
   // Names
@@ -159,7 +166,8 @@ codegen::Value TileGroup::LoadColumn(
   if (is_null != nullptr) is_null->setName(column.GetName() + ".null");
 
   // Return the value
-  return codegen::Value{column.GetType(), val, length, is_null};
+  auto type = type::Type{column.GetType(), is_nullable};
+  return codegen::Value{type, val, length, is_null};
 }
 
 //===----------------------------------------------------------------------===//

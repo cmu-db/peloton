@@ -17,6 +17,7 @@
 #include "codegen/loop.h"
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/vectorized_loop.h"
+#include "codegen/type/integer_type.h"
 #include "codegen/utils/oa_hash_table.h"
 
 namespace peloton {
@@ -26,8 +27,8 @@ namespace codegen {
 uint32_t OAHashTable::kDefaultGroupPrefetchSize = 10;
 
 // The global attribute information instance used to populate a row's hash value
-const planner::AttributeInfo OAHashTable::kHashAI{type::TypeId::INTEGER,
-                                                  false, 0, "hash"};
+const planner::AttributeInfo OAHashTable::kHashAI{type::Integer::Instance(), 0,
+                                                  "hash"};
 
 //===----------------------------------------------------------------------===//
 // CONSTRUCTORS
@@ -39,14 +40,14 @@ OAHashTable::OAHashTable() {
 }
 
 OAHashTable::OAHashTable(CodeGen &codegen,
-                         const std::vector<type::TypeId> &key_type,
+                         const std::vector<type::Type> &key_type,
                          uint64_t value_size)
     : value_size_(value_size) {
   key_storage_.Setup(codegen, key_type);
 
   // Configure the size of each HashEntry
   hash_entry_size_ = sizeof(utils::OAHashTable::HashEntry) +
-      key_storage_.MaxStorageSize() + value_size_;
+                     key_storage_.MaxStorageSize() + value_size_;
 }
 
 llvm::Value *OAHashTable::HashKey(

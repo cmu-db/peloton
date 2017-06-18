@@ -14,6 +14,8 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#include "codegen/type/boolean_type.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -34,6 +36,9 @@ If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
   branch_ = cg_->CreateCondBr(if_condition, then_bb_, merge_bb_);
   cg_->SetInsertPoint(then_bb_);
 }
+
+If::If(CodeGen &cg, const codegen::Value if_condition, std::string name)
+    : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
 void If::EndIf(llvm::BasicBlock *end_bb) {
   if (end_bb != nullptr) {

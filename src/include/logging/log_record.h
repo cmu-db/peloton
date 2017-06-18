@@ -14,6 +14,7 @@
 
 #include "type/types.h"
 #include "common/item_pointer.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace logging {

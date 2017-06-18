@@ -12,8 +12,6 @@
 
 #include "codegen/compact_storage.h"
 
-#include "codegen/type.h"
-
 namespace peloton {
 namespace codegen {
 
@@ -106,7 +104,7 @@ class BitmapReader {
 // Setup
 //===----------------------------------------------------------------------===//
 llvm::Type *CompactStorage::Setup(
-    CodeGen &codegen, const std::vector<type::TypeId> &types) {
+    CodeGen &codegen, const std::vector<type::Type> &types) {
   // Return the constructed type if the compact storage has already been set up
   if (storage_type_ != nullptr) {
     return storage_type_;
@@ -117,9 +115,11 @@ llvm::Type *CompactStorage::Setup(
 
   // Add tracking metadata for all data elements that will be stored
   for (uint32_t i = 0; i < schema_.size(); i++) {
+    const auto &sql_type = schema_[i].GetSqlType();
+
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
-    Type::GetTypeForMaterialization(codegen, schema_[i], val_type, len_type);
+    sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
 
     // Create a slot metadata entry for the value
     // Note: The physical and logical index are the same for now. The physical

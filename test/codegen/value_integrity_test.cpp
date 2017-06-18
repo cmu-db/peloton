@@ -10,9 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/type.h"
-
 #include "codegen/codegen_test_util.h"
+
+#include "codegen/type/type.h"
+#include "codegen/type/tinyint_type.h"
+#include "codegen/type/smallint_type.h"
+#include "codegen/type/integer_type.h"
+#include "codegen/type/bigint_type.h"
 
 namespace peloton {
 namespace test {
@@ -23,18 +27,19 @@ class ValueIntegrityTest : public PelotonCodeGenTest {};
 // function divides a constant value with the value of the argument. After
 // JITing the function, we test the division by passing in a zero value divisor.
 template <typename CType>
-void DivideByZeroTest(type::TypeId data_type, ExpressionType op) {
+void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen{code_context};
 
+  const auto &sql_type = data_type.GetSqlType();
+
   llvm::Type *llvm_type = nullptr, *llvm_len_type = nullptr;
-  codegen::Type::GetTypeForMaterialization(codegen, data_type, llvm_type,
-                                           llvm_len_type);
+  sql_type.GetTypeForMaterialization(codegen, llvm_type, llvm_len_type);
 
   codegen::FunctionBuilder function{
       code_context, "test", codegen.VoidType(), {{"arg", llvm_type}}};
   {
-    codegen::Value a = codegen::Type::GetMaxValue(codegen, data_type);
+    codegen::Value a = sql_type.GetMaxValue(codegen);
     codegen::Value divisor{data_type, function.GetArgumentByPosition(0)};
     codegen::Value res;
     switch (op) {
@@ -67,13 +72,14 @@ void DivideByZeroTest(type::TypeId data_type, ExpressionType op) {
 }
 
 template <typename CType>
-void OverflowTest(type::TypeId data_type, ExpressionType op) {
+void OverflowTest(const codegen::type::Type &data_type, ExpressionType op) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen{code_context};
 
+  const auto &sql_type = data_type.GetSqlType();
+
   llvm::Type *llvm_type = nullptr, *llvm_len_type = nullptr;
-  codegen::Type::GetTypeForMaterialization(codegen, data_type, llvm_type,
-                                           llvm_len_type);
+  sql_type.GetTypeForMaterialization(codegen, llvm_type, llvm_len_type);
 
   codegen::FunctionBuilder function{
       code_context, "test", codegen.VoidType(), {{"arg", llvm_type}}};
@@ -83,19 +89,19 @@ void OverflowTest(type::TypeId data_type, ExpressionType op) {
     switch (op) {
       case ExpressionType::OPERATOR_PLUS: {
         // initial + MAX_FOR_TYPE
-        codegen::Value next = codegen::Type::GetMaxValue(codegen, data_type);
+        codegen::Value next = sql_type.GetMaxValue(codegen);
         res = next.Add(codegen, initial);
         break;
       }
       case ExpressionType::OPERATOR_MINUS: {
         // a - MIN_FOR_TYPE
-        codegen::Value next = codegen::Type::GetMinValue(codegen, data_type);
+        codegen::Value next = sql_type.GetMinValue(codegen);
         res = initial.Sub(codegen, next);
         break;
       }
       case ExpressionType::OPERATOR_MULTIPLY: {
         // a * INT32_MAX
-        codegen::Value next = codegen::Type::GetMaxValue(codegen, data_type);
+        codegen::Value next = sql_type.GetMaxValue(codegen);
         res = initial.Mul(codegen, next);
         break;
       }
@@ -137,10 +143,10 @@ TEST_F(ValueIntegrityTest, IntegerOverflow) {
                            ExpressionType::OPERATOR_PLUS,
                            ExpressionType::OPERATOR_MULTIPLY};
   for (auto op : overflowable_ops) {
-    OverflowTest<int8_t>(type::TypeId::TINYINT, op);
-    OverflowTest<int16_t>(type::TypeId::SMALLINT, op);
-    OverflowTest<int32_t>(type::TypeId::INTEGER, op);
-    OverflowTest<int64_t>(type::TypeId::BIGINT, op);
+    OverflowTest<int8_t>(codegen::type::TinyInt::Instance(), op);
+    OverflowTest<int16_t>(codegen::type::SmallInt::Instance(), op);
+    OverflowTest<int32_t>(codegen::type::Integer::Instance(), op);
+    OverflowTest<int64_t>(codegen::type::BigInt::Instance(), op);
   }
 }
 
@@ -148,10 +154,10 @@ TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
   auto div0_ops = {ExpressionType::OPERATOR_DIVIDE,
                    ExpressionType::OPERATOR_MOD};
   for (auto op : div0_ops) {
-    DivideByZeroTest<int8_t>(type::TypeId::TINYINT, op);
-    DivideByZeroTest<int16_t>(type::TypeId::SMALLINT, op);
-    DivideByZeroTest<int32_t>(type::TypeId::INTEGER, op);
-    DivideByZeroTest<int64_t>(type::TypeId::BIGINT, op);
+    DivideByZeroTest<int8_t>(codegen::type::TinyInt::Instance(), op);
+    DivideByZeroTest<int16_t>(codegen::type::SmallInt::Instance(), op);
+    DivideByZeroTest<int32_t>(codegen::type::Integer::Instance(), op);
+    DivideByZeroTest<int64_t>(codegen::type::BigInt::Instance(), op);
   }
 }
 

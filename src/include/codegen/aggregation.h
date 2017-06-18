@@ -24,27 +24,28 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 // This class is responsible for handling the logic around performing
-// aggregations.  We setup/initialize it with the aggregations we want to
-// handle, then invoke the CreateInitialValues() function to store the initial
-// aggregate values into the provided storage space.  Subsequent calls to
-// AdvanceValues(...) will generate the code to advance each of the aggregates
-// and store them in the correct location in the provided storage space.
+// aggregations. Users first setup the aggregation (through Setup()) with all
+// the aggregates they wish calculate. Next, callers provided the initial values
+// of all the aggregates using a call to CreateInitialValues(). Each update to
+// the set of aggregates is made through AdvanceValues(), with updated values
+// for each aggregate. When done, a final call to FinalizeValues() is made to
+// collect all the final aggregate values.
 //
-// It is important to note that the ordering of aggregates must be consistent
-// for all uses of an Aggregation instance after Setup(). This means that if a
-// SUM(..) aggregate exists at position four during Setup(..), then position
-// four of the vector provided to AdvanceValues(..) should contain the value
-// for how far to advance the summation.
+// Note: the ordering of aggregates and values must be consistent with the
+//       ordering provided during Setup().
 //===----------------------------------------------------------------------===//
 class Aggregation {
  public:
-  // Setup this guy to handle the aggregates in the provided vector
+  // Setup the aggregation to handle the provided aggregates
   void Setup(CodeGen &codegen,
-             const std::vector<planner::AggregatePlan::AggTerm> &agg_terms);
+             const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
+             bool is_global);
 
-  // StoreValue the initial values for all aggregates into the provided storage
-  // space. The size of the storage space _must_ be at least as the return
-  // value of GetAggregatesStorageSize().
+  // Store the initial values of the aggregates into the provided storage space.
+  void CreateInitialGlobalValues(CodeGen &codegen,
+                                 llvm::Value *storage_space) const;
+
+  // Store the initial values of the aggregates into the provided storage space.
   void CreateInitialValues(CodeGen &codegen, llvm::Value *storage_space,
                            const std::vector<codegen::Value> &initial) const;
 
@@ -54,7 +55,7 @@ class Aggregation {
                      const std::vector<codegen::Value> &next) const;
 
   // Compute the final values of all the aggregates stored in the provided
-  // storage space, putting them into the final_vals vector
+  // storage space, inserting them into the provided output vector.
   void FinalizeValues(CodeGen &codegen, llvm::Value *storage_space,
                       std::vector<codegen::Value> &final_vals) const;
 
@@ -68,6 +69,9 @@ class Aggregation {
   const UpdateableStorage &GetAggregateStorage() const { return storage_; }
 
  private:
+
+  bool IsGlobal() const { return is_global_; }
+
   //===--------------------------------------------------------------------===//
   // Little struct to map the aggregates we physically store to the higher level
   // aggregates. It is possible that the number of aggregate information structs
@@ -90,7 +94,7 @@ class Aggregation {
     ExpressionType aggregate_type;
 
     // The SQL (data) type of the aggregate
-    type::TypeId type;
+    const type::Type &type;
 
     // The position in the original (ordered) list of aggregates that this
     // aggregate is stored
@@ -111,6 +115,9 @@ class Aggregation {
                       const codegen::Value &next) const;
 
  private:
+  // Is this a global aggregation?
+  bool is_global_;
+
   // The list of aggregations we handle
   std::vector<AggregateInfo> aggregate_infos_;
 

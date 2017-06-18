@@ -13,7 +13,6 @@
 #include "codegen/updateable_storage.h"
 
 #include "codegen/if.h"
-#include "codegen/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -22,7 +21,7 @@ namespace codegen {
 // Add the given type to the storage format. We return the index that this value
 // can be found it (i.e., which index to pass into Get() to get the value)
 //===----------------------------------------------------------------------===//
-uint32_t UpdateableStorage::AddType(type::TypeId type) {
+uint32_t UpdateableStorage::AddType(const type::Type &type) {
   PL_ASSERT(storage_type_ == nullptr);
   schema_.push_back(type);
   return static_cast<uint32_t>(schema_.size() - 1);
@@ -36,9 +35,11 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
 
   // Add tracking metadata for all data elements that will be stored
   for (uint32_t i = 0; i < schema_.size(); i++) {
+    const auto &sql_type = schema_[i].GetSqlType();
+
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
-    Type::GetTypeForMaterialization(codegen, schema_[i], val_type, len_type);
+    sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
 
     // Create a slot metadata entry for the value
     // Note: The physical and logical index are the same for now. The physical
@@ -133,7 +134,8 @@ codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
   }
 
   // Done
-  return codegen::Value{schema_[index], val, len, nullptr};
+  auto type = schema_[index].AsNonNullable();
+  return codegen::Value{type, val, len, nullptr};
 }
 
 codegen::Value UpdateableStorage::GetValue(
@@ -144,7 +146,8 @@ codegen::Value UpdateableStorage::GetValue(
   If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
   {
     // If the index has its null-bit set, return NULL
-    null_val = Type::GetNullValue(codegen, schema_[index]);
+    const auto &type = schema_[index];
+    null_val = type.GetSqlType().GetNullValue(codegen);
   }
   val_is_null.ElseBlock();
   {
@@ -204,7 +207,7 @@ void UpdateableStorage::SetValue(
 // NULL BITMAP
 //===----------------------------------------------------------------------===//
 
-UpdateableStorage::NullBitmap::NullBitmap(UNUSED_ATTRIBUTE CodeGen &codegen,
+UpdateableStorage::NullBitmap::NullBitmap(CodeGen &codegen,
                                           const UpdateableStorage &storage,
                                           llvm::Value *bitmap_ptr)
     : storage_(storage), bitmap_ptr_(bitmap_ptr) {
@@ -225,10 +228,8 @@ void UpdateableStorage::NullBitmap::InitAllNull(CodeGen &codegen) {
 }
 
 bool UpdateableStorage::NullBitmap::IsNullable(uint32_t index) const {
-  // TODO: Implement me
-  (void)index;
-  //  return storage_.schema_[index].nullable;
-  return true;
+  const auto &type = storage_.schema_[index];
+  return type.nullable;
 }
 
 llvm::Value *UpdateableStorage::NullBitmap::ByteFor(CodeGen &codegen,

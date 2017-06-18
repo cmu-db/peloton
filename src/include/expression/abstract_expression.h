@@ -28,6 +28,12 @@ class AbstractTuple;
 class SqlNodeVisitor;
 enum class ExpressionType;
 
+namespace codegen {
+namespace type {
+class Type;
+}  // namespace type
+}  // namespace codegen
+
 namespace executor {
 class ExecutorContext;
 }
@@ -66,27 +72,9 @@ class AbstractExpression : public Printable {
    * Return true if this expression or any descendent has a value that should be
    * substituted with a parameter.
    */
-  virtual bool HasParameter() const {
-    for (auto &child : children_) {
-      if (child->HasParameter()) {
-        return true;
-      }
-    }
-    return false;
-  }
+  virtual bool HasParameter() const;
 
-  bool IsNullable() const {
-    // An expression produces a nullable value iff at least one of its input
-    // attributes is null ... I think
-    std::unordered_set<const planner::AttributeInfo *> used_attributes;
-    GetUsedAttributes(used_attributes);
-    for (const auto *ai : used_attributes) {
-      if (ai->nullable) {
-        return true;
-      }
-    }
-    return false;
-  }
+  bool IsNullable() const;
 
   const AbstractExpression *GetChild(int index) const {
     return GetModifiableChild(index);
@@ -110,19 +98,15 @@ class AbstractExpression : public Printable {
 
   /** accessors */
 
-  inline ExpressionType GetExpressionType() const { return exp_type_; }
+  ExpressionType GetExpressionType() const { return exp_type_; }
 
-  inline type::TypeId GetValueType() const { return return_value_type_; }
+  type::TypeId GetValueType() const { return return_value_type_; }
+
+  codegen::type::Type ResultType() const;
 
   // Attribute binding
   virtual void PerformBinding(
-      const std::vector<const planner::BindingContext *> &binding_contexts) {
-    // Most expressions don't need attribute binding, except for those
-    // that actually reference table attributes (i.e., TVE)
-    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
-      children_[i]->PerformBinding(binding_contexts);
-    }
-  }
+      const std::vector<const planner::BindingContext *> &binding_contexts);
 
   // Is this expression computable using SIMD instructions?
   virtual bool IsSIMDable() const {
@@ -136,11 +120,7 @@ class AbstractExpression : public Printable {
 
   // Get all the attributes this expression uses
   virtual void GetUsedAttributes(
-      std::unordered_set<const planner::AttributeInfo *> &attributes) const {
-    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
-      children_[i]->GetUsedAttributes(attributes);
-    }
-  }
+      std::unordered_set<const planner::AttributeInfo *> &attributes) const;
 
   virtual void DeduceExpressionType() {}
 
@@ -154,11 +134,6 @@ class AbstractExpression : public Printable {
   virtual hash_t Hash() const;
 
   virtual AbstractExpression *Copy() const = 0;
-
-  inline AbstractExpression *CopyUtil(
-      const AbstractExpression *expression) const {
-    return (expression == nullptr) ? nullptr : expression->Copy();
-  }
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
@@ -191,11 +166,9 @@ class AbstractExpression : public Printable {
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type,
-                     type::TypeId return_value_type)
+  AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type)
       : exp_type_(exp_type), return_value_type_(return_value_type) {}
-  AbstractExpression(ExpressionType exp_type,
-                     type::TypeId return_value_type,
+  AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right)
       : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!

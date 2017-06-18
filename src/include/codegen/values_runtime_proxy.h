@@ -19,6 +19,11 @@ namespace codegen {
 
 class ValuesRuntimeProxy {
  public:
+  struct _OutputBoolean {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
   // The proxy around ValuesRuntime::OutputTinyInt()
   struct _OutputTinyInt {
     static const std::string &GetFunctionName();

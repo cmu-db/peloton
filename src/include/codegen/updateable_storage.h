@@ -14,11 +14,12 @@
 
 #include "codegen/codegen.h"
 #include "codegen/compact_storage.h"
-#include "codegen/if.h"
 #include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
+
+class If;
 
 //===----------------------------------------------------------------------===//
 // A storage area where slots can be updated.
@@ -30,7 +31,7 @@ class UpdateableStorage {
 
   // Add the given type to the storage format. We return the index that this
   // value can be found it (i.e., the index to pass into Get() to get the value)
-  uint32_t AddType(type::TypeId type);
+  uint32_t AddType(const type::Type &type);
 
   // Construct the final LLVM type given all the types that'll be stored
   llvm::Type *Finalize(CodeGen &codegen);
@@ -119,7 +120,7 @@ class UpdateableStorage {
 
  private:
   // The types we store in the storage area
-  std::vector<type::TypeId> schema_;
+  std::vector<type::Type> schema_;
 
   // The physical storage format
   std::vector<CompactStorage::EntryInfo> storage_format_;

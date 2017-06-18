@@ -33,7 +33,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   context.Prepare(*plan_.GetChild(0), child_pipeline_);
 
   // Prepare all the aggregating expressions
-  auto &aggregates = plan_.GetUniqueAggTerms();
+  const auto &aggregates = plan_.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
       context.Prepare(*agg_term.expression);
@@ -41,7 +41,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   }
 
   // Setup the aggregation handler with the terms we use for aggregation
-  aggregation_.Setup(context.GetCodeGen(), aggregates);
+  aggregation_.Setup(context.GetCodeGen(), aggregates, true);
 
   // Create the materialization buffer where we aggregate things
   auto &codegen = GetCodeGen();
@@ -65,15 +65,11 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 void GlobalGroupByTranslator::Produce() const {
   auto &codegen = GetCodeGen();
 
-  // Initialize NULL bitmap for aggregation
+  // Initialize aggregation for global aggregation
   auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
-  UpdateableStorage::NullBitmap null_bitmap{
-      codegen, aggregation_.GetAggregateStorage(), mat_buffer};
-  null_bitmap.InitAllNull(codegen);
-  null_bitmap.WriteBack(codegen);
+  aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
 
-  // Let the child produce tuples that we aggregate in our materialization
-  // buffer (in Consume())
+  // Let the child produce tuples that we'll aggregate
   GetCompilationContext().Produce(*plan_.GetChild(0));
 
   // Deserialize the finalized aggregate attribute values from the buffer
@@ -88,6 +84,7 @@ void GlobalGroupByTranslator::Produce() const {
     buffer_accessors.emplace_back(aggregate_vals, i);
   }
 
+  // Create a row-batch of one row, place all the attributes into the row
   Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
   RowBatch batch{GetCompilationContext(), codegen.Const32(0),
                  codegen.Const32(1), v, false};
