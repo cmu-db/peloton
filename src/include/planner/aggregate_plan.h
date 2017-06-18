@@ -37,16 +37,9 @@ class AggregatePlan : public AbstractPlan {
     AttributeInfo agg_ai;
 
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
-            bool distinct = false)
-        : aggtype(et), expression(expr), distinct(distinct) {}
+            bool distinct = false);
 
-    type::TypeId GetValueType() const { return agg_ai.type; }
-
-    bool IsNullable() const { return agg_ai.nullable; }
-
-    AggTerm Copy() const {
-      return AggTerm(aggtype, expression->Copy(), distinct);
-    }
+    AggTerm Copy() const;
   };
 
   AggregatePlan(

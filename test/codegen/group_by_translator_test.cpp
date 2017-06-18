@@ -37,7 +37,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // SELECT a, count(*) FROM table GROUP BY a;
   //
 
-  LOG_INFO("Query: SELECT a, count(*) FROM table1 GROUP BY a;");
+  LOG_INFO("Query: SELECT a, COUNT(*) FROM table1 GROUP BY a;");
 
   // 1) Set up projection (just a direct map)
   DirectMapList direct_map_list = {{0, {0, 0}}, {1, {1, 0}}};
@@ -50,7 +50,6 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
@@ -98,7 +97,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   // SELECT a, b, count(*) FROM table GROUP BY a, b;
   //
 
-  LOG_INFO("Query: SELECT a, b, count(*) FROM table1 GROUP BY a, b;");
+  LOG_INFO("Query: SELECT a, b, COUNT(*) FROM table1 GROUP BY a, b;");
 
   // 1) Set up projection (just a direct map)
   DirectMapList direct_map_list = {{0, {0, 0}}, {1, {0, 1}}, {2, {1, 0}}};
@@ -111,7 +110,6 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0, 1};
@@ -161,7 +159,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   // SELECT a, avg(b) FROM table GROUP BY a;
   //
 
-  LOG_INFO("Query: SELECT a, avg(b) FROM table1 GROUP BY a;");
+  LOG_INFO("Query: SELECT a, AVG(b) FROM table1 GROUP BY a;");
 
   // 1) Set up projection (just a direct map)
   DirectMapList direct_map_list = {{0, {0, 0}}, {1, {1, 0}}};
@@ -173,7 +171,6 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
@@ -227,7 +224,6 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
@@ -290,7 +286,6 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_AVG, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::DECIMAL;
 
   // 3) The grouping column
   std::vector<oid_t> gb_cols = {0};
@@ -353,7 +348,6 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_COUNT_STAR, tve_expr}};
-  agg_terms[0].agg_ai.type = type::TypeId::BIGINT;
 
   // 3) No grouping
   std::vector<oid_t> gb_cols = {};
@@ -411,8 +405,6 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
       {ExpressionType::AGGREGATE_MAX, a_col},
       {ExpressionType::AGGREGATE_MIN, b_col}};
-  agg_terms[0].agg_ai.type = type::TypeId::INTEGER;
-  agg_terms[1].agg_ai.type = type::TypeId::INTEGER;
 
   // 3) No grouping
   std::vector<oid_t> gb_cols = {};
@@ -447,6 +439,10 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   // There should only be a single output row
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
+
+  fprintf(stderr, "max: %s, min: %s\n",
+          results[0].GetValue(0).ToString().c_str(),
+          results[0].GetValue(1).ToString().c_str());
 
   // The values of column 'a' are equal to the (zero-indexed) row ID * 10. The
   // maximum row ID is equal to # inserted - 1. Therefore:

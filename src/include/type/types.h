@@ -17,13 +17,14 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "configuration/configuration.h"
-#include "type/type.h"
+#include "type/type_id.h"
 
 namespace peloton {
 

@@ -13,7 +13,8 @@
 #include "codegen/aggregation.h"
 
 #include "codegen/if.h"
-#include "codegen/type.h"
+#include "codegen/type/bigint_type.h"
+#include "codegen/type/decimal_type.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -27,7 +28,10 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 void Aggregation::Setup(
     CodeGen &codegen,
-    const std::vector<planner::AggregatePlan::AggTerm> &aggregates) {
+    const std::vector<planner::AggregatePlan::AggTerm> &aggregates,
+    bool is_global) {
+  is_global_ = is_global;
+
   // Add the rest
   for (uint32_t source_idx = 0; source_idx < aggregates.size(); source_idx++) {
     const auto agg_term = aggregates[source_idx];
@@ -35,7 +39,7 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         // Add the count to the storage layout
-        const auto count_type = type::TypeId::BIGINT;
+        auto count_type = type::Type{type::BigInt::Instance()};
         uint32_t storage_pos = storage_.AddType(count_type);
 
         // Add metadata for the count aggregate
@@ -48,7 +52,7 @@ void Aggregation::Setup(
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
         // Add the element to the storage layout
-        const auto value_type = agg_term.expression->GetValueType();
+        const auto value_type = agg_term.expression->ResultType();
         uint32_t storage_pos = storage_.AddType(value_type);
 
         // Add metadata for the aggregate
@@ -63,7 +67,7 @@ void Aggregation::Setup(
         // SUM() - the type must match the type of the expression
         // First add the sum to the storage layout
         PL_ASSERT(agg_term.expression != nullptr);
-        const auto sum_type = agg_term.expression->GetValueType();
+        const auto sum_type = agg_term.expression->ResultType();
         uint32_t sum_storage_pos = storage_.AddType(sum_type);
 
         // Add metadata about the SUM() aggregate
@@ -73,18 +77,16 @@ void Aggregation::Setup(
 
         // COUNT() - can use big integer since we're counting instances
         // First add the count to the storage layout
-        uint32_t count_storage_pos =
-            storage_.AddType(type::TypeId::BIGINT);
+        uint32_t count_storage_pos = storage_.AddType(type::BigInt::Instance());
 
         // Add metadata about the COUNT() aggregate
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
-                                type::TypeId::BIGINT, source_idx,
+                                type::BigInt::Instance(), source_idx,
                                 count_storage_pos, true};
         aggregate_infos_.push_back(count_agg);
 
         // AVG() - this isn't storage physically, but we need metadata about it
-        // TODO: Is this always double?
-        AggregateInfo avg_agg{agg_term.aggtype, type::TypeId::DECIMAL,
+        AggregateInfo avg_agg{agg_term.aggtype, type::Decimal::Instance(),
                               source_idx, source_idx, false};
         aggregate_infos_.push_back(avg_agg);
         break;
@@ -103,10 +105,21 @@ void Aggregation::Setup(
   storage_.Finalize(codegen);
 }
 
+void Aggregation::CreateInitialGlobalValues(CodeGen &codegen,
+                                            llvm::Value *storage_space) const {
+  PL_ASSERT(IsGlobal());
+  auto null_bitmap = UpdateableStorage::NullBitmap{
+      codegen, GetAggregateStorage(), storage_space};
+  null_bitmap.InitAllNull(codegen);
+  null_bitmap.WriteBack(codegen);
+}
+
 // Create the initial values of all aggregates based on the the provided values
 void Aggregation::CreateInitialValues(
     CodeGen &codegen, llvm::Value *storage_space,
     const std::vector<codegen::Value> &initial) const {
+  PL_ASSERT(!IsGlobal());
+
   // The null bitmap tracker
   UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
 
@@ -128,7 +141,7 @@ void Aggregation::CreateInitialValues(
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         // The initial value for count's are 1 (i.e., this row)
-        codegen::Value one{type::TypeId::BIGINT, codegen.Const64(1)};
+        auto one = codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
         storage_.SetValue(codegen, storage_space, aggregate_info.storage_index,
                           one, null_bitmap);
         break;
@@ -178,14 +191,14 @@ void Aggregation::DoAdvanceValue(
     case ExpressionType::AGGREGATE_COUNT: {
       auto curr = storage_.GetValueSkipNull(codegen, storage_space,
                                             aggregate_info.storage_index);
-      auto delta = Value{type::TypeId::BIGINT, codegen.Const64(1)};
+      auto delta = Value{type::BigInt::Instance(), codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       auto curr = storage_.GetValueSkipNull(codegen, storage_space,
                                             aggregate_info.storage_index);
-      auto delta = Value{type::TypeId::BIGINT, codegen.Const64(1)};
+      auto delta = Value{type::BigInt::Instance(), codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
@@ -203,7 +216,7 @@ void Aggregation::DoAdvanceValue(
   }
 
   // Store the updated value in the appropriate slot
-  PL_ASSERT(next.GetType() != type::TypeId::INVALID);
+  PL_ASSERT(next.GetType().type_id != peloton::type::TypeId::INVALID);
   storage_.SetValueSkipNull(codegen, storage_space,
                             aggregate_info.storage_index, next);
 }
@@ -226,8 +239,11 @@ void Aggregation::AdvanceValues(
 
     const Value &update = next_vals[aggregate_info.source_index];
 
-    if (!null_bitmap.IsNullable(aggregate_info.storage_index) ||
-        aggregate_info.aggregate_type == ExpressionType::AGGREGATE_COUNT_STAR) {
+    bool is_nullable = null_bitmap.IsNullable(aggregate_info.storage_index);
+    bool is_count =
+        aggregate_info.aggregate_type == ExpressionType::AGGREGATE_COUNT ||
+        aggregate_info.aggregate_type == ExpressionType::AGGREGATE_COUNT_STAR;
+    if (is_count || (!is_nullable && !IsGlobal())) {
       // This aggregate is not nullable, generate fast path
       DoAdvanceValue(codegen, storage_space, aggregate_info, update);
     } else {
@@ -266,8 +282,7 @@ void Aggregation::AdvanceValues(
               break;
             }
             case ExpressionType::AGGREGATE_COUNT: {
-              codegen::Value one{type::TypeId::BIGINT,
-                                 codegen.Const64(1)};
+              codegen::Value one{type::BigInt::Instance(), codegen.Const64(1)};
               storage_.SetValue(codegen, storage_space,
                                 aggregate_info.storage_index, one, null_bitmap);
               break;
@@ -319,8 +334,16 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-        codegen::Value final_val = storage_.GetValue(
-            codegen, storage_space, aggregate_info.storage_index, null_bitmap);
+        codegen::Value final_val;
+        if (null_bitmap.IsNullable(aggregate_info.storage_index) ||
+            IsGlobal()) {
+          final_val =
+              storage_.GetValue(codegen, storage_space,
+                                aggregate_info.storage_index, null_bitmap);
+        } else {
+          final_val = storage_.GetValueSkipNull(codegen, storage_space,
+                                                aggregate_info.storage_index);
+        }
 
         vals[std::make_pair(source, agg_type)] = final_val;
         if (!aggregate_info.is_internal) {
@@ -331,10 +354,10 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
         codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
-        count = count.CastTo(codegen, type::TypeId::DECIMAL);
+        count = count.CastTo(codegen, type::Decimal::Instance());
 
         codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
-        sum = sum.CastTo(codegen, type::TypeId::DECIMAL);
+        sum = sum.CastTo(codegen, type::Decimal::Instance());
 
         codegen::Value final_val =
             sum.Div(codegen, count, Value::OnError::ReturnNull);

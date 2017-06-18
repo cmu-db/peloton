@@ -15,6 +15,7 @@
 #include "codegen/if.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/sorter_proxy.h"
+#include "codegen/type/integer_type.h"
 #include "common/logger.h"
 #include "planner/order_by_plan.h"
 
@@ -48,7 +49,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // the storage slot for every sort key.
 
   // The format of the tuple that is materialized in the sorter
-  std::vector<type::TypeId> tuple_desc;
+  std::vector<type::Type> tuple_desc;
 
   // The mapping of column IDs to its position in the sorted tuple
   std::unordered_map<oid_t, uint32_t> col_id_map;
@@ -59,7 +60,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   for (uint32_t i = 0; i < output_ais.size(); i++) {
     const auto *ai = output_ais[i];
     LOG_DEBUG("Adding output column %p (%s) to format @ %u", ai,
-              TypeIdToString(ai->type).c_str(), i);
+              TypeIdToString(ai->type.type_id).c_str(), i);
     tuple_desc.push_back(ai->type);
     col_id_map.insert(std::make_pair(output_col_ids[i], i));
   }
@@ -82,11 +83,11 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 
     if (iter != col_id_map.end()) {
       LOG_DEBUG("Sort column %p (%s) references output column @ %u", ai,
-                TypeIdToString(ai->type).c_str(), iter->second);
+                TypeIdToString(ai->type.type_id).c_str(), iter->second);
       sort_key_info = {ai, true, iter->second};
     } else {
       LOG_DEBUG("Adding sort column %p (%s) to tuple format @ %u", ai,
-                TypeIdToString(ai->type).c_str(),
+                TypeIdToString(ai->type.type_id).c_str(),
                 static_cast<uint32_t>(tuple_desc.size()));
       tuple_desc.push_back(ai->type);
       sort_key_info = {ai, false, static_cast<uint32_t>(tuple_desc.size() - 1)};
@@ -191,7 +192,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   }
 
   // Do the remaining comparisons using cheaper options
-  const codegen::Value zero{type::TypeId::INTEGER, codegen.Const32(0)};
+  auto zero = codegen::Value{type::Integer::Instance(), codegen.Const32(0)};
   for (size_t idx = 1; idx < sort_keys.size(); idx++) {
     codegen::Value comp_result;
     if (!descend_flags[idx]) {
@@ -204,7 +205,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
     // forward the comparison result of the previous attributes
     auto prev_zero = result.CompareEq(codegen, zero);
     result = codegen::Value{
-        type::TypeId::INTEGER,
+        type::Integer::Instance(),
         codegen->CreateSelect(prev_zero.GetValue(), comp_result.GetValue(),
                               result.GetValue())};
   }

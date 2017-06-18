@@ -16,8 +16,8 @@
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/projection_translator.h"
 #include "codegen/vectorized_loop.h"
+#include "codegen/type/integer_type.h"
 #include "common/logger.h"
-#include "planner/aggregate_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -74,7 +74,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 
   // Prepare the grouping expressions
   // TODO: We need to handle grouping keys that are expressions (i.e., prepare)
-  std::vector<type::TypeId> key_type;
+  std::vector<type::Type> key_type;
   const auto &grouping_ais = group_by_.GetGroupbyAIs();
   for (const auto *grouping_ai : grouping_ais) {
     key_type.push_back(grouping_ai->type);
@@ -96,7 +96,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   }
 
   // Setup the aggregation logic for this group by
-  aggregation_.Setup(codegen, aggregates);
+  aggregation_.Setup(codegen, aggregates, false);
 
   // Create the hash table
   hash_table_ =
@@ -185,7 +185,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
       RowBatch::OutputTracker tracker{batch.GetSelectionVector(), write_pos};
       RowBatch::Row row = batch.GetRowAt(read_pos, &tracker);
 
-      codegen::Value row_hash{type::TypeId::INTEGER,
+      codegen::Value row_hash{type::Integer::Instance(),
                               hashes.GetValue(codegen, p)};
       row.RegisterAttributeValue(&OAHashTable::kHashAI, row_hash);
 
@@ -373,8 +373,9 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      If is_valid_row{codegen, valid_row.GetValue()};
+      If is_valid_row{codegen, valid_row};
       {
+        // The row is valid, send along the pipeline
         context.Consume(row);
       }
       is_valid_row.EndIf();

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "common/macros.h"
 #include "type/types.h"
 
 namespace peloton {

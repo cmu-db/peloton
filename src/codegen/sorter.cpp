@@ -26,7 +26,7 @@ Sorter::Sorter() {
 }
 
 Sorter::Sorter(CodeGen &codegen,
-               const std::vector<type::TypeId> &row_desc) {
+               const std::vector<type::Type> &row_desc) {
   // Configure the storage format using the provided row description
   for (const auto &value_type : row_desc) {
     storage_format_.AddType(value_type);

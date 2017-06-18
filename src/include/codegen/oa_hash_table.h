@@ -59,7 +59,7 @@ class OAHashTable : public HashTable {
  public:
   // Constructor
   OAHashTable();
-  OAHashTable(CodeGen &codegen, const std::vector<type::TypeId> &key_type,
+  OAHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type,
               uint64_t value_size);
 
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;

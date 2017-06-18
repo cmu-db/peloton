@@ -211,9 +211,7 @@ TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     type::Value value = (tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    planner::DerivedAttribute attribute;
-    attribute.expr = expression;
-    attribute.attribute_info.type = expression->GetValueType();
+    planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
   }
 
@@ -342,9 +340,7 @@ bool TestingTransactionUtil::ExecuteUpdate(
   DirectMapList direct_map_list;
 
   auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
   target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
@@ -385,9 +381,7 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   DirectMapList direct_map_list;
 
   auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
   target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 

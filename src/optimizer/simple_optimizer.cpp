@@ -239,9 +239,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             }
             // otherwise we need to evaluate the expression
             else {
-              planner::DerivedAttribute attribute;
-              attribute.expr = expr->Copy();
-              attribute.attribute_info.type = attribute.expr->GetValueType();
+              planner::DerivedAttribute attribute{expr->Copy()};
               tl.push_back(Target(i, attribute));
               columns.push_back(
                   catalog::Column(expr->GetValueType(),
@@ -1314,9 +1312,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
       }
       // Function Ref
       else {
-        planner::DerivedAttribute attribute;
-        attribute.expr = expr->Copy();
-        attribute.attribute_info.type = attribute.expr->GetValueType();
+        planner::DerivedAttribute attribute{expr->Copy()};
         tl.push_back(Target(i, attribute));
         output_table_columns.push_back(catalog::Column(
             expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),

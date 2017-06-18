@@ -30,7 +30,7 @@ class ValueProxy {
 
     // Type isnt cached, create it
     auto* opaque_arr_type =
-        codegen.VectorType(codegen.Int8Type(), sizeof(type::Value));
+        codegen.VectorType(codegen.Int8Type(), sizeof(peloton::type::Value));
     return llvm::StructType::create(codegen.GetContext(), {opaque_arr_type},
                                     kValueTypeName);
   }

@@ -94,9 +94,8 @@ void UpdateTuple(storage::DataTable *table,
   TargetList target_list;
   DirectMapList direct_map_list;
 
-  planner::DerivedAttribute attribute;
-  attribute.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  attribute.attribute_info.type = attribute.expr->GetValueType();
+  planner::DerivedAttribute attribute{
+      expression::ExpressionUtil::ConstantValueFactory(update_val)};
   target_list.emplace_back(2, attribute);
 
   LOG_TRACE("%u", target_list.at(0).first);
@@ -217,8 +216,7 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  }
-  catch (ConstraintException &ce) {
+  } catch (ConstraintException &ce) {
     LOG_ERROR("%s", ce.what());
   }
 
@@ -302,8 +300,9 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);

@@ -59,9 +59,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   // Setup a projection
   DirectMapList direct_map_list = {{0, {0, 0}}};
   TargetList target_list;
-  planner::DerivedAttribute attribute;
-  attribute.expr = case_expr;
-  attribute.attribute_info.type = case_expr->GetValueType();
+  planner::DerivedAttribute attribute{case_expr};
   Target target = std::make_pair(1, attribute);
   target_list.push_back(target);
   std::unique_ptr<planner::ProjectInfo> proj_info{new planner::ProjectInfo(
@@ -127,9 +125,7 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
   // Setup a projection
   DirectMapList direct_map_list = {{0, {0, 0}}};
   TargetList target_list;
-  planner::DerivedAttribute attribute;
-  attribute.expr = case_expr;
-  attribute.attribute_info.type = case_expr->GetValueType();
+  planner::DerivedAttribute attribute{case_expr};
   Target target = std::make_pair(1, attribute);
   target_list.push_back(target);
   std::unique_ptr<planner::ProjectInfo> proj_info{new planner::ProjectInfo(

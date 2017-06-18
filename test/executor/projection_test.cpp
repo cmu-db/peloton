@@ -225,9 +225,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
                                                   type::TypeId::INTEGER,
                                                   tuple_value_expr, const_val);
 
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
 
   Target target = std::make_pair(1, attribute);
   target_list.push_back(target);

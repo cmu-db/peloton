@@ -24,46 +24,48 @@ ConstantTranslator::ConstantTranslator(
     : ExpressionTranslator(exp, ctx) {}
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
-codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
-                                               RowBatch::Row &) const {
+codegen::Value ConstantTranslator::DeriveValue(
+    CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) const {
   // Pull out the constant from the expression
-  const type::Value &constant =
+  const peloton::type::Value &constant =
       GetExpressionAs<expression::ConstantValueExpression>().GetValue();
 
   // Convert the value into an LLVM compile-time constant
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
   switch (constant.GetTypeId()) {
-    case type::TypeId::TINYINT: {
-      val = codegen.Const8(type::ValuePeeker::PeekTinyInt(constant));
+    case peloton::type::TypeId::TINYINT: {
+      val = codegen.Const8(peloton::type::ValuePeeker::PeekTinyInt(constant));
       break;
     }
-    case type::TypeId::SMALLINT: {
-      val = codegen.Const16(type::ValuePeeker::PeekSmallInt(constant));
+    case peloton::type::TypeId::SMALLINT: {
+      val = codegen.Const16(peloton::type::ValuePeeker::PeekSmallInt(constant));
       break;
     }
-    case type::TypeId::INTEGER: {
-      val = codegen.Const32(type::ValuePeeker::PeekInteger(constant));
+    case peloton::type::TypeId::INTEGER: {
+      val = codegen.Const32(peloton::type::ValuePeeker::PeekInteger(constant));
       break;
     }
-    case type::TypeId::BIGINT: {
-      val = codegen.Const64(type::ValuePeeker::PeekBigInt(constant));
+    case peloton::type::TypeId::BIGINT: {
+      val = codegen.Const64(peloton::type::ValuePeeker::PeekBigInt(constant));
       break;
     }
-    case type::TypeId::DECIMAL: {
-      val = codegen.ConstDouble(type::ValuePeeker::PeekDouble(constant));
+    case peloton::type::TypeId::DECIMAL: {
+      val =
+          codegen.ConstDouble(peloton::type::ValuePeeker::PeekDouble(constant));
       break;
     }
-    case type::TypeId::DATE: {
-      val = codegen.Const32(type::ValuePeeker::PeekDate(constant));
+    case peloton::type::TypeId::DATE: {
+      val = codegen.Const32(peloton::type::ValuePeeker::PeekDate(constant));
       break;
     }
-    case type::TypeId::TIMESTAMP: {
-      val = codegen.Const64(type::ValuePeeker::PeekTimestamp(constant));
+    case peloton::type::TypeId::TIMESTAMP: {
+      val =
+          codegen.Const64(peloton::type::ValuePeeker::PeekTimestamp(constant));
       break;
     }
-    case type::TypeId::VARCHAR: {
-      std::string str = type::ValuePeeker::PeekVarchar(constant);
+    case peloton::type::TypeId::VARCHAR: {
+      std::string str = peloton::type::ValuePeeker::PeekVarchar(constant);
       // val should be a pointer type to be used in comparisions inside a PHI
       val = codegen.ConstStringPtr(str);
       len = codegen.Const32(str.length());
@@ -74,7 +76,8 @@ codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
                       TypeIdToString(constant.GetTypeId())};
     }
   }
-  return codegen::Value{constant.GetTypeId(), val, len};
+  return codegen::Value{type::SqlType::LookupType(constant.GetTypeId()), val,
+                        len, nullptr};
 }
 
 }  // namespace codegen

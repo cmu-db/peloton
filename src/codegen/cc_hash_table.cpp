@@ -35,7 +35,7 @@ CCHashTable::CCHashTable() {
 // Constructor
 //===----------------------------------------------------------------------===//
 CCHashTable::CCHashTable(CodeGen &codegen,
-                         const std::vector<type::TypeId> &key_type) {
+                         const std::vector<type::Type> &key_type) {
   key_storage_.Setup(codegen, key_type);
 }
 

@@ -15,6 +15,7 @@
 #include "codegen/if.h"
 #include "codegen/catalog_proxy.h"
 #include "codegen/transaction_runtime_proxy.h"
+#include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 
@@ -218,8 +219,8 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
     // Reify the boolean value since it may be NULL
-    PL_ASSERT(valid_row.GetType() == type::TypeId::BOOLEAN);
-    llvm::Value *bool_val = valid_row.ReifyBoolean(codegen);
+    PL_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
+    llvm::Value *bool_val = type::Boolean::Instance().Reify(codegen, valid_row);
 
     // Set the validity of the row
     row.SetValidity(codegen, bool_val);
