@@ -25,7 +25,13 @@ class TypeSystem;
 
 //===----------------------------------------------------------------------===//
 // A type represents the runtime type of an attribute. It combines the notions
-// of an underlying SQL type and nullability.
+// of an underlying SQL type and nullability. The codegen component uses this
+// compile-time information to optimize the code-generation process.
+//
+// Types also carry SQL-type-specific information in the AuxInfo member struct.
+// For example, DECIMAL/NUMERIC types also carry the precision and scale of the
+// number at runtime. For variable-length fields, it will carry the length of
+// the data element. This information is needed during code generation.
 //===----------------------------------------------------------------------===//
 struct Type {
   // The actual SQL type
@@ -49,18 +55,24 @@ struct Type {
   // Extra type information
   AuxInfo aux_info;
 
+  // Simple constructors
   Type();
   Type(peloton::type::TypeId type_id, bool nullable);
   Type(const SqlType &sql_type, bool nullable = false);
 
+  // Equality check
   bool operator==(const Type &other) const;
 
+  // Get the SQL type of this runtime type
   const SqlType &GetSqlType() const;
 
+  // Get the SQL type-system of the SQL type of this runtime type
   const TypeSystem &GetTypeSystem() const;
 
+  // Get this type, but as NULL-able
   Type AsNullable() const;
 
+  // Get this type, but as non-NULL-able
   Type AsNonNullable() const;
 };
 

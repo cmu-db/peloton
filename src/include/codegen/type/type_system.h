@@ -33,9 +33,11 @@ class Type;
 // component. In reality, there is tremendous overlap with the Peloton type
 // system. In the future, this class should replace that one ...
 //
-// This class implements an operator table very similar to Postgres. The main
-// difference is that we break up operators into four categories: casting,
-// comparison, unary, and binary operators.
+// This class implements an operator table similar in spirit to Postgres. In
+// Peloton, operators are categorized as casting, comparison, unary or binary
+// operators. Every SQL type configures a TypeSystem with supported operators.
+// As in Postgres, each operator can be configured to be overriden by a user-
+// provided implementation.
 //===----------------------------------------------------------------------===//
 class TypeSystem {
  public:
