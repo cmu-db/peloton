@@ -393,7 +393,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   // Compile and execute
   CompileAndExecuteCache(agg_plan1, buffer1,
-                             reinterpret_cast<char*>(buffer1.GetState()));
+                         reinterpret_cast<char*>(buffer1.GetState()));
   // Check results
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(results1.size(), 59);
@@ -401,7 +401,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(agg_plan2, buffer2,
-                             reinterpret_cast<char*>(buffer2.GetState()));
+                         reinterpret_cast<char*>(buffer2.GetState()));
 
   const auto& results2 = buffer2.GetOutputTuples();
   EXPECT_EQ(results2.size(), 59);
