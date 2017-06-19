@@ -20,10 +20,10 @@ namespace peloton {
 namespace codegen {
 // Query cache implementation that maps an AbstractPlan with a CodeGen query
 // using LRU eviction policy. The cache is implemented as a singleton.
-// Potential enhancements:
+// Potential future enhancements:
 //   1) Apply other interesting eviction policies
 //     e.g. Keep some heavy compilation workloads by mixing policies
-//   2) Use some heauristic measure for keeping them in cache
+//   2) Manually keep some of the compiled results in the cache
 //   3) Configure the cache size
 //   4) Persistency may increase the performance when rebooted
 class QueryCache {

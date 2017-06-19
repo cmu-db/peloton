@@ -47,8 +47,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 ExecuteResult PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
-    concurrency::Transaction *txn,
-    const std::vector<type::Value> &params,
+    concurrency::Transaction *txn, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result,
     const std::vector<int> &result_format) {
   ExecuteResult p_status;
