@@ -14,6 +14,7 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/if.h"
+#include "codegen/type/sql_type.h"
 
 namespace peloton {
 namespace codegen {

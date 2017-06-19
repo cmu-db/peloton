@@ -172,7 +172,7 @@ Type TypeSystem::BinaryOperatorWithNullPropagation::ResultType(
 
 Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
     CodeGen &codegen, const Value &left, const Value &right,
-    Value::OnError on_error) const {
+    OnError on_error) const {
   PL_ASSERT(left.IsNullable() || right.IsNullable());
 
   // One of the inputs is nullable, compute the null bit first
@@ -193,11 +193,6 @@ Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
   is_null.EndIf();
   return is_null.BuildPHI(null_val, ret_val);
 }
-
-// String representation of all binary operators
-const std::string TypeSystem::kOpNames[] = {
-    "Negation", "Abs", "Add",         "Sub",       "Mul",
-    "Div",      "Mod", "Logical And", "Logical Or"};
 
 TypeSystem::TypeSystem(
     const std::vector<peloton::type::TypeId> &implicit_cast_table,
@@ -283,7 +278,7 @@ const TypeSystem::Comparison *TypeSystem::GetComparison(
 }
 
 const TypeSystem::UnaryOperator *TypeSystem::GetUnaryOperator(
-    TypeSystem::OperatorId op_id, const Type &input_type) {
+    OperatorId op_id, const Type &input_type) {
   const auto &type_system = input_type.GetTypeSystem();
   for (const auto &unary_op_info : type_system.unary_op_table_) {
     // Is this the operation we want? If not, keep looking ...
@@ -356,7 +351,7 @@ const TypeSystem::BinaryOperator *TypeSystem::GetBinaryOperator(
   // Error
   std::string msg =
       StringUtil::Format("No compatible '%s' operator for input types: %s, %s",
-                         kOpNames[static_cast<uint32_t>(op_id)].c_str(),
+                         OperatorIdToString(op_id).c_str(),
                          TypeIdToString(left_type.type_id).c_str(),
                          TypeIdToString(right_type.type_id).c_str());
   throw Exception{msg};

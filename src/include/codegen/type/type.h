@@ -14,13 +14,14 @@
 
 #include <cstdint>
 
-#include "codegen/type/sql_type.h"
+#include "type/type_id.h"
 
 namespace peloton {
 namespace codegen {
 namespace type {
 
 class SqlType;
+class TypeSystem;
 
 //===----------------------------------------------------------------------===//
 // A type represents the runtime type of an attribute. It combines the notions

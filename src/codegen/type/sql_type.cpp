@@ -12,6 +12,7 @@
 
 #include "codegen/type/sql_type.h"
 
+#include "codegen/value.h"
 #include "codegen/type/array_type.h"
 #include "codegen/type/bigint_type.h"
 #include "codegen/type/boolean_type.h"

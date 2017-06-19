@@ -2530,4 +2530,30 @@ std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
   }
 }
 
+std::string OperatorIdToString(OperatorId op_id) {
+  switch (op_id) {
+    case OperatorId::Negation:
+      return "Negation";
+    case OperatorId::Abs:
+      return "Abs";
+    case OperatorId::Add:
+      return "Add";
+    case OperatorId::Sub:
+      return "Sub";
+    case OperatorId::Mul:
+      return "Mul";
+    case OperatorId::Div:
+      return "Div";
+    case OperatorId::Mod:
+      return "Mod";
+    case OperatorId::LogicalAnd:
+      return "LogicalAnd";
+    case OperatorId::LogicalOr:
+      return "LogicalOr";
+    default: {
+      throw Exception{StringUtil::Format("Invalid operator ID: %u", op_id)};
+    }
+  }
+}
+
 }  // End peloton namespace

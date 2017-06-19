@@ -31,11 +31,8 @@ Value NegationTranslator::DeriveValue(CodeGen &codegen,
   const auto &negation_expr =
       GetExpressionAs<expression::OperatorUnaryMinusExpression>();
   auto child_value = row.DeriveValue(codegen, *negation_expr.GetChild(0));
-  //  return child_value.CallUnary(codegen,
-  //  type::TypeSystem::OperatorId::Negation);
-  const auto &type_system = child_value.GetTypeSystem();
-  const auto *negation_op = type_system.GetUnaryOperator(
-      type::TypeSystem::OperatorId::Negation, child_value.GetType());
+  const auto *negation_op = codegen::type::TypeSystem::GetUnaryOperator(
+      OperatorId::Negation, child_value.GetType());
   return negation_op->DoWork(codegen, child_value);
 }
 

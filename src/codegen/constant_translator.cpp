@@ -12,6 +12,7 @@
 
 #include "codegen/constant_translator.h"
 
+#include "codegen/type/sql_type.h"
 #include "expression/constant_value_expression.h"
 #include "type/value_peeker.h"
 

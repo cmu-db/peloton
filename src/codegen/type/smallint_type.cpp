@@ -13,9 +13,12 @@
 #include "codegen/type/smallint_type.h"
 
 #include "codegen/if.h"
+#include "codegen/value.h"
+#include "codegen/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
+#include "type/limits.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -199,7 +202,7 @@ struct Add : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do addition
@@ -207,7 +210,7 @@ struct Add : public TypeSystem::BinaryOperator {
     llvm::Value *result = codegen.CallAddWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == Value::OnError::Exception) {
+    if (on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -230,7 +233,7 @@ struct Sub : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do subtraction
@@ -238,7 +241,7 @@ struct Sub : public TypeSystem::BinaryOperator {
     llvm::Value *result = codegen.CallSubWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == Value::OnError::Exception) {
+    if (on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -261,7 +264,7 @@ struct Mul : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do multiplication
@@ -269,7 +272,7 @@ struct Mul : public TypeSystem::BinaryOperator {
     llvm::Value *result = codegen.CallMulWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == Value::OnError::Exception) {
+    if (on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -292,7 +295,7 @@ struct Div : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -302,7 +305,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     auto result = Value{SmallInt::Instance()};
 
-    if (on_error == Value::OnError::ReturnNull) {
+    if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       If is_div0{codegen, div0};
       {
@@ -321,7 +324,7 @@ struct Div : public TypeSystem::BinaryOperator {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == Value::OnError::Exception) {
+    } else if (on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -349,7 +352,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -359,7 +362,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     auto result = Value{SmallInt::Instance()};
 
-    if (on_error == Value::OnError::ReturnNull) {
+    if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       If is_div0{codegen, div0};
       {
@@ -378,7 +381,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == Value::OnError::Exception) {
+    } else if (on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -420,7 +423,7 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 // Unary operators
 static Negate kNegOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {TypeSystem::OperatorId::Negation, kNegOp}};
+    {OperatorId::Negation, kNegOp}};
 
 // Binary operations
 static Add kAddOp;
@@ -429,11 +432,11 @@ static Mul kMulOp;
 static Div kDivOp;
 static Modulo kModuloOp;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {TypeSystem::OperatorId::Add, true, peloton::type::TypeId::SMALLINT, kAddOp},
-    {TypeSystem::OperatorId::Sub, true, peloton::type::TypeId::SMALLINT, kSubOp},
-    {TypeSystem::OperatorId::Mul, true, peloton::type::TypeId::SMALLINT, kMulOp},
-    {TypeSystem::OperatorId::Div, true, peloton::type::TypeId::SMALLINT, kDivOp},
-    {TypeSystem::OperatorId::Mod, true, peloton::type::TypeId::SMALLINT, kModuloOp}};
+    {OperatorId::Add, true, peloton::type::TypeId::SMALLINT, kAddOp},
+    {OperatorId::Sub, true, peloton::type::TypeId::SMALLINT, kSubOp},
+    {OperatorId::Mul, true, peloton::type::TypeId::SMALLINT, kMulOp},
+    {OperatorId::Div, true, peloton::type::TypeId::SMALLINT, kDivOp},
+    {OperatorId::Mod, true, peloton::type::TypeId::SMALLINT, kModuloOp}};
 
 }  // anonymous namespace
 
@@ -443,6 +446,33 @@ SmallInt::SmallInt()
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
+
+Value SmallInt::GetMinValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MIN);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value SmallInt::GetMaxValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MAX);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value SmallInt::GetNullValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_NULL);
+  return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
+}
+
+void SmallInt::GetTypeForMaterialization(CodeGen &codegen,
+                                         llvm::Type *&val_type,
+                                         llvm::Type *&len_type) const {
+  val_type = codegen.Int16Type();
+  len_type = nullptr;
+}
+
+llvm::Function *SmallInt::GetOutputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen);
+}
 
 }  // namespace type
 }  // namespace codegen

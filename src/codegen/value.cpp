@@ -16,6 +16,7 @@
 #include <queue>
 
 #include "codegen/type/type_system.h"
+#include "codegen/type/sql_type.h"
 
 namespace peloton {
 namespace codegen {
@@ -140,9 +141,8 @@ Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
 // ARITHMETIC OPERATIONS
 //===----------------------------------------------------------------------===//
 
-Value ExecBinaryOp(CodeGen &codegen, type::TypeSystem::OperatorId op_id,
-                   const Value &left, const Value &right,
-                   Value::OnError on_error) {
+Value ExecBinaryOp(CodeGen &codegen, OperatorId op_id, const Value &left,
+                   const Value &right, OnError on_error) {
   type::Type left_target_type = left.GetType();
   type::Type right_target_type = right.GetType();
 
@@ -168,44 +168,39 @@ Value ExecBinaryOp(CodeGen &codegen, type::TypeSystem::OperatorId op_id,
 
 // Addition
 Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Add, *this, other,
-                      on_error);
+  return ExecBinaryOp(codegen, OperatorId::Add, *this, other, on_error);
 }
 
 // Subtraction
 Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Sub, *this, other,
-                      on_error);
+  return ExecBinaryOp(codegen, OperatorId::Sub, *this, other, on_error);
 }
 
 // Multiplication
 Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Mul, *this, other,
-                      on_error);
+  return ExecBinaryOp(codegen, OperatorId::Mul, *this, other, on_error);
 }
 
 // Division
 Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Div, *this, other,
-                      on_error);
+  return ExecBinaryOp(codegen, OperatorId::Div, *this, other, on_error);
 }
 
 // Modulus
 Value Value::Mod(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::Mod, *this, other,
-                      on_error);
+  return ExecBinaryOp(codegen, OperatorId::Mod, *this, other, on_error);
 }
 
 // Logical AND
 Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::LogicalAnd, *this,
-                      other, OnError::Exception);
+  return ExecBinaryOp(codegen, OperatorId::LogicalAnd, *this, other,
+                      OnError::Exception);
 }
 
 // Logical OR
 Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
-  return ExecBinaryOp(codegen, type::TypeSystem::OperatorId::LogicalOr, *this,
-                      other, OnError::Exception);
+  return ExecBinaryOp(codegen, OperatorId::LogicalOr, *this, other,
+                      OnError::Exception);
 }
 
 // TODO: Min/Max need to handle NULL

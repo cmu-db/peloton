@@ -959,6 +959,22 @@ enum MetricType {
   PROCESSOR_METRIC = 10,
 };
 
+// All builtin operators we currently support
+enum class OperatorId : uint32_t {
+  Negation = 0,
+  Abs,
+  Add,
+  Sub,
+  Mul,
+  Div,
+  Mod,
+  LogicalAnd,
+  LogicalOr,
+};
+std::string OperatorIdToString(OperatorId op_id);
+
+enum class OnError : uint32_t { ReturnNull, Exception };
+
 static const int INVALID_FILE_DESCRIPTOR = -1;
 
 // ------------------------------------------------------------------

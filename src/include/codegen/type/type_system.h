@@ -12,13 +12,19 @@
 
 #pragma once
 
-#include <unordered_map>
+#include <string>
+#include <vector>
 
 #include "codegen/type/type.h"
-#include "codegen/value.h"
+#include "common/macros.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
+
+class CodeGen;
+class Value;
+
 namespace type {
 
 //===----------------------------------------------------------------------===//
@@ -159,20 +165,6 @@ class TypeSystem {
     const Comparison &comparison;
   };
 
-  // All builtin operators we currently support
-  enum class OperatorId : uint32_t {
-    Negation = 0,
-    Abs,
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
-    LogicalAnd,
-    LogicalOr,
-  };
-  static const std::string kOpNames[];
-
   //===--------------------------------------------------------------------===//
   // A unary operator (i.e., an operator that accepts a single argument)
   //===--------------------------------------------------------------------===//
@@ -234,7 +226,7 @@ class TypeSystem {
 
     // Execute the actual operator
     virtual Value DoWork(CodeGen &codegen, const Value &left,
-                         const Value &right, Value::OnError on_error) const = 0;
+                         const Value &right, OnError on_error) const = 0;
   };
 
   struct BinaryOperatorWithNullPropagation : public BinaryOperator {
@@ -250,7 +242,7 @@ class TypeSystem {
                     const Type &right_type) const override;
 
     Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-                 Value::OnError on_error) const override;
+                 OnError on_error) const override;
 
    private:
     const BinaryOperator &inner_op_;

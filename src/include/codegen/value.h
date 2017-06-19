@@ -14,6 +14,8 @@
 
 #include "codegen/codegen.h"
 #include "codegen/type/type.h"
+#include "codegen/type/type_system.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
@@ -80,8 +82,6 @@ class Value {
   //===--------------------------------------------------------------------===//
   // Mathematical functions
   //===--------------------------------------------------------------------===//
-
-  enum class OnError : uint32_t { ReturnNull, Exception };
 
   Value Add(CodeGen &codegen, const Value &other,
             const OnError on_error = OnError::Exception) const;

@@ -12,8 +12,12 @@
 
 #include "codegen/type/boolean_type.h"
 
+#include "codegen/value.h"
+#include "codegen/values_runtime_proxy.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/varchar_type.h"
+#include "common/exception.h"
+#include "type/limits.h"
 
 namespace peloton {
 namespace codegen {
@@ -175,7 +179,7 @@ struct LogicalAnd : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE Value::OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     auto *raw_val = codegen->CreateAnd(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
@@ -195,7 +199,7 @@ struct LogicalOr : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE Value::OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     auto *raw_val = codegen->CreateOr(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
@@ -224,8 +228,8 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 static LogicalAnd kLogicalAnd;
 static LogicalOr kLogicalOr;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {TypeSystem::OperatorId::LogicalAnd, false, peloton::type::TypeId::INVALID, kLogicalAnd},
-    {TypeSystem::OperatorId::LogicalOr, false, peloton::type::TypeId::INVALID, kLogicalOr}};
+    {OperatorId::LogicalAnd, false, peloton::type::TypeId::INVALID, kLogicalAnd},
+    {OperatorId::LogicalOr, false, peloton::type::TypeId::INVALID, kLogicalOr}};
 
 }  // anonymous namespace
 
@@ -235,6 +239,54 @@ Boolean::Boolean()
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
+
+Value Boolean::GetMinValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MIN);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value Boolean::GetMaxValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MAX);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value Boolean::GetNullValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_NULL);
+  return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
+}
+
+void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
+                                        llvm::Type *&len_type) const {
+  val_type = codegen.BoolType();
+  len_type = nullptr;
+}
+
+llvm::Function *Boolean::GetOutputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return ValuesRuntimeProxy::_OutputBoolean::GetFunction(codegen);
+}
+
+// This method reifies a NULL-able boolean value, thanks to the weird-ass
+// three-valued logic in SQL. The logic adheres to the table below:
+//
+//   INPUT | OUTPUT
+// +-------+--------+
+// | false | false  |
+// +-------+--------+
+// | null  | false  |
+// +-------+--------+
+// | true  | true   |
+// +-------+--------+
+//
+llvm::Value *Boolean::Reify(CodeGen &codegen, const Value &bool_val) const {
+  if (!bool_val.IsNullable()) {
+    return bool_val.GetValue();
+  } else {
+    return codegen->CreateSelect(bool_val.IsNull(codegen),
+                                 codegen.ConstBool(false),
+                                 bool_val.GetValue());
+  }
+}
 
 }  // namespace type
 }  // namespace codegen
