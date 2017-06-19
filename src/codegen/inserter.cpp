@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/inserter.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "codegen/transaction_runtime.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 #include "type/ephemeral_pool.h"
@@ -38,16 +38,9 @@ type::AbstractPool *Inserter::GetPool() { return pool_.get(); }
 void Inserter::InsertTuple() { Insert(tuple_.get()); }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
-  auto *txn_mgr = &concurrency::TransactionManagerFactory::GetInstance();
+  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
 
-  ItemPointer *index_entry_ptr = nullptr;
-  ItemPointer location = table_->InsertTuple(tuple, txn_, &index_entry_ptr);
-  if (location.block == INVALID_OID) {
-    txn_mgr->SetTransactionResult(txn_, ResultType::FAILURE);
-  }
-  else {
-    txn_mgr->PerformInsert(txn_, location, index_entry_ptr);
-  }
+  TransactionRuntime::PerformInsert(*txn_, *table_, tuple);
 }
 
 void Inserter::Destroy() {
