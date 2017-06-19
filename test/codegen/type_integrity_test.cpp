@@ -119,11 +119,8 @@ TEST_F(TypeIntegrityTest, ComparisonWithImplicitCastTest) {
 
 // TODO: This test only does math ops. We need a generic way to test binary ops.
 TEST_F(TypeIntegrityTest, MathOpWithImplicitCastTest) {
-  const auto binary_ops = {codegen::type::TypeSystem::OperatorId::Add,
-                           codegen::type::TypeSystem::OperatorId::Sub,
-                           codegen::type::TypeSystem::OperatorId::Mul,
-                           codegen::type::TypeSystem::OperatorId::Div,
-                           codegen::type::TypeSystem::OperatorId::Mod};
+  const auto binary_ops = {OperatorId::Add, OperatorId::Sub, OperatorId::Mul,
+                           OperatorId::Div, OperatorId::Mod};
 
   const std::vector<codegen::type::Type> types_to_test = {
       codegen::type::Boolean::Instance(),

@@ -141,65 +141,40 @@ Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
 // ARITHMETIC OPERATIONS
 //===----------------------------------------------------------------------===//
 
-Value ExecBinaryOp(CodeGen &codegen, OperatorId op_id, const Value &left,
-                   const Value &right, OnError on_error) {
-  type::Type left_target_type = left.GetType();
-  type::Type right_target_type = right.GetType();
-
-  auto *binary_op = type::TypeSystem::GetBinaryOperator(
-      op_id, left.GetType(), left_target_type, right.GetType(),
-      right_target_type);
-
-  Value casted_left = left.CastTo(codegen, left_target_type);
-  Value casted_right = right.CastTo(codegen, right_target_type);
-
-  // Check if we need to do a NULL-aware binary operation invocation
-  if (!casted_left.IsNullable() && !casted_right.IsNullable()) {
-    // Nope
-    return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
-  } else {
-    // One of the inputs are NULL
-    type::TypeSystem::BinaryOperatorWithNullPropagation null_aware_bin_op{
-        *binary_op};
-    return null_aware_bin_op.DoWork(codegen, casted_left, casted_right,
-                                    on_error);
-  }
-}
-
 // Addition
 Value Value::Add(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, OperatorId::Add, *this, other, on_error);
+  return CallBinaryOp(codegen, OperatorId::Add, other, on_error);
 }
 
 // Subtraction
 Value Value::Sub(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, OperatorId::Sub, *this, other, on_error);
+  return CallBinaryOp(codegen, OperatorId::Sub, other, on_error);
 }
 
 // Multiplication
 Value Value::Mul(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, OperatorId::Mul, *this, other, on_error);
+  return CallBinaryOp(codegen, OperatorId::Mul, other, on_error);
 }
 
 // Division
 Value Value::Div(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, OperatorId::Div, *this, other, on_error);
+  return CallBinaryOp(codegen, OperatorId::Div, other, on_error);
 }
 
 // Modulus
 Value Value::Mod(CodeGen &codegen, const Value &other, OnError on_error) const {
-  return ExecBinaryOp(codegen, OperatorId::Mod, *this, other, on_error);
+  return CallBinaryOp(codegen, OperatorId::Mod, other, on_error);
 }
 
 // Logical AND
 Value Value::LogicalAnd(CodeGen &codegen, const Value &other) const {
-  return ExecBinaryOp(codegen, OperatorId::LogicalAnd, *this, other,
+  return CallBinaryOp(codegen, OperatorId::LogicalAnd, other,
                       OnError::Exception);
 }
 
 // Logical OR
 Value Value::LogicalOr(CodeGen &codegen, const Value &other) const {
-  return ExecBinaryOp(codegen, OperatorId::LogicalOr, *this, other,
+  return CallBinaryOp(codegen, OperatorId::LogicalOr, other,
                       OnError::Exception);
 }
 
@@ -306,6 +281,41 @@ Value Value::BuildPHI(
       null_phi->addIncoming(val_pair.first.IsNull(codegen), val_pair.second);
     }
     return Value{type, val_phi, nullptr, null_phi};
+  }
+}
+
+Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
+  auto *unary_op = type::TypeSystem::GetUnaryOperator(op_id, GetType());
+  if (!IsNullable()) {
+    return unary_op->DoWork(codegen, *this);
+  } else {
+    type::TypeSystem::UnaryOperatorWithNullPropagation null_aware_unary_op{
+        *unary_op};
+    return null_aware_unary_op.DoWork(codegen, *this);
+  }
+}
+
+Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
+                          const Value &other, OnError on_error) const {
+  type::Type left_target_type = GetType();
+  type::Type right_target_type = other.GetType();
+
+  auto *binary_op = type::TypeSystem::GetBinaryOperator(
+      op_id, GetType(), left_target_type, other.GetType(), right_target_type);
+
+  Value casted_left = CastTo(codegen, left_target_type);
+  Value casted_right = other.CastTo(codegen, right_target_type);
+
+  // Check if we need to do a NULL-aware binary operation invocation
+  if (!casted_left.IsNullable() && !casted_right.IsNullable()) {
+    // Nope
+    return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
+  } else {
+    // One of the inputs are NULL
+    type::TypeSystem::BinaryOperatorWithNullPropagation null_aware_bin_op{
+        *binary_op};
+    return null_aware_bin_op.DoWork(codegen, casted_left, casted_right,
+                                    on_error);
   }
 }
 

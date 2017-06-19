@@ -109,12 +109,10 @@ class Value {
       CodeGen &codegen,
       const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals);
 
-  /*
-  Value CallUnary(CodeGen &codegen,
-                  type::TypeSystem::OperatorId operator_id) const;
-  Value CallBinary(CodeGen &codegen, type::TypeSystem::OperatorId operator_id,
-                   const Value &other) const;
-  */
+  // Invoke generic unary and binary functions with a given ID
+  Value CallUnaryOp(CodeGen &codegen, OperatorId op_id) const;
+  Value CallBinaryOp(CodeGen &codegen, OperatorId op_id, const Value &other,
+                     OnError on_error) const;
 
   //===--------------------------------------------------------------------===//
   // Materialization helpers
