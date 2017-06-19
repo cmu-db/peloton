@@ -196,7 +196,7 @@ ResultType TrafficCop::ExecuteStatement(
     else if (statement->GetQueryType() == "ROLLBACK")
       return AbortQueryHelper();
     else {
-      auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+      auto status = ExecuteStatementPlan(statement->GetPlanTree(), params,
                                          result, result_format,
                                          thread_id);
       LOG_TRACE("Statement executed. Result: %s",
@@ -211,8 +211,10 @@ ResultType TrafficCop::ExecuteStatement(
 }
 
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format,
+    std::shared_ptr<planner::AbstractPlan> plan,
+    const std::vector<type::Value> &params,
+    std::vector<StatementResult> &result,
+    const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;

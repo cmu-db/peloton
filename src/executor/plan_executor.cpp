@@ -13,6 +13,7 @@
 #include "executor/plan_executor.h"
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "common/logger.h"
@@ -44,11 +45,11 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                        concurrency::Transaction *txn,
-                                        const std::vector<type::Value> &params,
-                                        std::vector<StatementResult> &result,
-                                        const std::vector<int> &result_format) {
+ExecuteResult PlanExecutor::ExecutePlan(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    concurrency::Transaction *txn, const std::vector<type::Value> &params,
+    std::vector<StatementResult> &result,
+    const std::vector<int> &result_format) {
   ExecuteResult p_status;
   if (plan == nullptr) return p_status;
 
@@ -69,7 +70,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     // Build the executor tree
     LOG_TRACE("Building the executor tree");
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
-        BuildExecutorTree(nullptr, plan, executor_context.get()));
+        BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
 
     // Initialize the executor tree
     LOG_TRACE("Initializing the executor tree");
@@ -127,22 +128,30 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
     result.clear();
 
-    // Bind: casting const should be removed with later refactoring executor
-    planner::AbstractPlan *planp = const_cast<planner::AbstractPlan *>(plan);
+    // Perform binding
     planner::BindingContext context;
-    planp->PerformBinding(context);
+    plan->PerformBinding(context);
 
+    // Prepare output buffer
     std::vector<oid_t> columns;
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
 
-    // Compile the query
-    codegen::QueryCompiler compiler;
-    auto query = compiler.Compile(*plan, consumer);
+    auto *query_cached = codegen::QueryCache::Instance().Find(plan);
+    if (query_cached == nullptr) {
+      codegen::QueryCompiler compiler;
+      auto query = compiler.Compile(*plan, consumer);
 
-    // Execute the query
-    query->Execute(*txn, executor_context.get(),
-                   reinterpret_cast<char *>(consumer.GetState()));
+      query->Execute(*txn, executor_context.get(),
+                     reinterpret_cast<char *>(consumer.GetState()));
+
+      codegen::QueryCache::Instance().Add(std::move(plan), std::move(query));
+    }
+    else {
+      LOG_DEBUG("Executing the cached query");
+      query_cached->Execute(*txn, executor_context.get(),
+                            reinterpret_cast<char *>(consumer.GetState()));
+    }
 
     // Iterate over results
     const auto &results = consumer.GetOutputTuples();
