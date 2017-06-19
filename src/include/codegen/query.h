@@ -14,13 +14,16 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
-#include "executor/executor_context.h"
 
 namespace peloton {
 
 namespace concurrency {
 class Transaction;
 }  // namespace concurrency
+
+namespace executor {
+class ExecutorContext;
+}  // namespace executor
 
 namespace planner {
 class AbstractPlan;

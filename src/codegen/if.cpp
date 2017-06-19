@@ -14,6 +14,7 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
 
 namespace peloton {
@@ -23,7 +24,7 @@ namespace codegen {
 // Constructor. We create two BB's, one "then" BB that appears right after the
 // conditional branch
 //===----------------------------------------------------------------------===//
-If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
+If::If(CodeGen &cg, llvm::Value *if_condition, const std::string &name)
     : cg_(cg),
       fn_(cg_->GetInsertBlock()->getParent()),
       last_bb_in_then_(nullptr),
@@ -37,7 +38,7 @@ If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
   cg_->SetInsertPoint(then_bb_);
 }
 
-If::If(CodeGen &cg, const Value &if_condition, std::string name)
+If::If(CodeGen &cg, const Value &if_condition, const std::string &name)
     : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
 void If::EndIf(llvm::BasicBlock *end_bb) {
@@ -63,7 +64,7 @@ void If::EndIf(llvm::BasicBlock *end_bb) {
   cg_->SetInsertPoint(merge_bb_);
 }
 
-void If::ElseBlock(std::string name) {
+void If::ElseBlock(const std::string &name) {
   // Create an unconditional branch from where we are (from the 'then' branch)
   // to the merging block
   cg_->CreateBr(merge_bb_);

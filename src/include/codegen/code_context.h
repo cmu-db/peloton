@@ -14,10 +14,8 @@
 
 #include <string>
 
-//#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LegacyPassManager.h"
-//#include "llvm/IR/LLVMContext.h"
 
 #include "common/macros.h"
 
