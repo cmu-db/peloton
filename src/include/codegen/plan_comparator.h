@@ -19,6 +19,7 @@
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/projection_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
@@ -49,6 +50,8 @@ class PlanComparator {
                            const planner::InsertPlan &);
   static int CompareOrderBy(const planner::OrderByPlan &,
                             const planner::OrderByPlan &);
+  static int CompareProjection(const planner::ProjectionPlan &,
+                               const planner::ProjectionPlan &);
   static int CompareSeqScan(const planner::SeqScanPlan &,
                             const planner::SeqScanPlan &);
   static int CompareUpdate(const planner::UpdatePlan &,
