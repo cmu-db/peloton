@@ -277,7 +277,6 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
   return res;
 }
 
-
 // This function takes in the Case Expression of a Postgres SelectStmt
 // parsenode and transfers it into Peloton AbstractExpression.
 expression::AbstractExpression* PostgresParser::CaseExprTransform(
@@ -313,11 +312,11 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
 
   // Build Case Expression
   return arg_expr != nullptr ?
-         new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
-                                        expression::CaseExpression::AbsExprPtr(arg_expr),
-                                        clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
-         new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
-                                        clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          expression::CaseExpression::AbsExprPtr(arg_expr),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
+      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
 }
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
