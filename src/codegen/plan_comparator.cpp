@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/plan_comparator.h"
+#include "expression/case_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -32,6 +33,9 @@ int PlanComparator::Compare(const planner::AbstractPlan &A,
     case PlanNodeType::SEQSCAN:
       return CompareSeqScan((planner::SeqScanPlan &)A,
                             (planner::SeqScanPlan &)B);
+    case PlanNodeType::PROJECTION:
+      return CompareProjection((planner::ProjectionPlan &)A,
+                               (planner::ProjectionPlan &)B);
     case PlanNodeType::ORDERBY:
       return CompareOrderBy((planner::OrderByPlan &)A,
                             (planner::OrderByPlan &)B);
@@ -47,6 +51,8 @@ int PlanComparator::Compare(const planner::AbstractPlan &A,
       return CompareInsert((planner::InsertPlan &)A, (planner::InsertPlan &)B);
     case PlanNodeType::DELETE:
       return CompareDelete((planner::DeletePlan &)A, (planner::DeletePlan &)B);
+    case PlanNodeType::UPDATE:
+      return CompareUpdate((planner::UpdatePlan &)A, (planner::UpdatePlan &)B);
     default:
       throw Exception{"We do not support the plan node type: " +
           PlanNodeTypeToString(nodeTypeA)};
@@ -96,6 +102,41 @@ int PlanComparator::CompareSeqScan(const planner::SeqScanPlan &A,
   if (is_for_update_A != is_for_update_B) {
     LOG_TRACE("Is_for_update flag is not equal");
     return (is_for_update_A < is_for_update_B) ? -1 : 1;
+  }
+  return CompareChildren(A, B);
+}
+
+//===----------------------------------------------------------------------===//
+// Compare function for ProjectionPlan
+// Return: A < B: -1, A = B: 0, A > B: 1
+//===----------------------------------------------------------------------===//
+int PlanComparator::CompareProjection(const planner::ProjectionPlan &A,
+                                      const planner::ProjectionPlan &B) {
+  // compare proj_info
+  int project_info_comp = CompareProjectInfo(A.GetProjectInfo(),
+                                             B.GetProjectInfo());
+  if (project_info_comp != 0) {
+    return project_info_comp;
+  }
+
+  // compare proj_schema
+  int schema_comp = CompareSchema(*A.GetSchema(), *B.GetSchema());
+  if (schema_comp != 0) {
+    return schema_comp;
+  }
+
+  // compare column_ids
+  size_t column_id_count_A = A.GetColumnIds().size();
+  size_t column_id_count_B = B.GetColumnIds().size();
+  if (column_id_count_A != column_id_count_B)
+    return (column_id_count_A < column_id_count_B) ? -1 : 1;
+  for (size_t it = 0; it < column_id_count_A; it++) {
+    oid_t col_id_A = A.GetColumnIds()[it];
+    oid_t col_id_B = B.GetColumnIds()[it];
+    if (col_id_A != col_id_B) {
+      LOG_TRACE("Column ids are not equal");
+      return (col_id_A < col_id_B) ? -1 : 1;
+    }
   }
   return CompareChildren(A, B);
 }
@@ -305,6 +346,23 @@ int PlanComparator::CompareDelete(const planner::DeletePlan &A,
 }
 
 //===----------------------------------------------------------------------===//
+// Compare function for UpdatePlan
+// Return: A < B: -1, A = B: 0, A > B: 1
+//===----------------------------------------------------------------------===//
+int PlanComparator::CompareUpdate(const planner::UpdatePlan &A,
+                                  const planner::UpdatePlan &B) {
+  if (A.GetTable() != B.GetTable())
+    return (A.GetTable() < B.GetTable()) ? -1 : 1;
+  int ret = PlanComparator::CompareProjectInfo(A.GetProjectInfo(),
+                                               B.GetProjectInfo());
+  if (ret != 0) return ret;
+  if (A.GetUpdatePrimaryKey() != B.GetUpdatePrimaryKey())
+    return (A.GetUpdatePrimaryKey() < B.GetUpdatePrimaryKey()) ? -1 : 1;
+
+  return CompareChildren(A, B);
+}
+
+//===----------------------------------------------------------------------===//
 // Compare two plans' children
 //===----------------------------------------------------------------------===//
 int PlanComparator::CompareChildren(const planner::AbstractPlan &A,
@@ -493,6 +551,26 @@ int ExpressionComparator::Compare(const expression::AbstractExpression *A,
       if (A->distinct_ != B->distinct_)
         return (A->distinct_ < B->distinct_) ? -1 : 1;
       return CompareChildren(A, B);
+    }
+    case ExpressionType::OPERATOR_CASE_EXPR: {
+      expression::CaseExpression *ptr_A = (expression::CaseExpression *)A;
+      expression::CaseExpression *ptr_B = (expression::CaseExpression *)B;
+      if (ptr_A->GetWhenClauseSize() != ptr_B->GetWhenClauseSize())
+        return (ptr_A->GetWhenClauseSize() < ptr_B->GetWhenClauseSize()) ?
+                   -1 : 1;
+      for (size_t i; i < ptr_A->GetWhenClauseSize(); i++) {
+        auto cond = ExpressionComparator::Compare(ptr_A->GetWhenClauseCond(i),
+                                                  ptr_B->GetWhenClauseCond(i));
+        if (cond != 0)
+          return cond;
+
+        auto res = ExpressionComparator::Compare(ptr_A->GetWhenClauseResult(i),
+                                                 ptr_B->GetWhenClauseResult(i));
+        if (res != 0)
+          return res;
+      }
+      return ExpressionComparator::Compare(ptr_A->GetDefault(),
+                                           ptr_B->GetDefault());
     }
     case ExpressionType::CONJUNCTION_AND:
     case ExpressionType::CONJUNCTION_OR:
