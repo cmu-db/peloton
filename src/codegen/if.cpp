@@ -37,7 +37,7 @@ If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
   cg_->SetInsertPoint(then_bb_);
 }
 
-If::If(CodeGen &cg, const codegen::Value if_condition, std::string name)
+If::If(CodeGen &cg, const Value &if_condition, std::string name)
     : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
 void If::EndIf(llvm::BasicBlock *end_bb) {
@@ -83,17 +83,17 @@ void If::ElseBlock(std::string name) {
   cg_->SetInsertPoint(else_bb_);
 }
 
-codegen::Value If::BuildPHI(codegen::Value v1, codegen::Value v2) {
+Value If::BuildPHI(const Value &v1, const Value &v2) {
   if (cg_->GetInsertBlock() != merge_bb_) {
     // The if hasn't been ended, end it now
     EndIf();
   }
   PL_ASSERT(v1.GetType() == v2.GetType());
-  std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> vals = {
+  std::vector<std::pair<Value, llvm::BasicBlock *>> vals = {
       {v1, last_bb_in_then_},
       {v2,
        last_bb_in_else_ != nullptr ? last_bb_in_else_ : branch_->getParent()}};
-  return codegen::Value::BuildPHI(cg_, vals);
+  return Value::BuildPHI(cg_, vals);
 }
 
 llvm::Value *If::BuildPHI(llvm::Value *v1, llvm::Value *v2) {

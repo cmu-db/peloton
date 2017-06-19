@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 
-#include "codegen/type/type.h"
 #include "common/macros.h"
 #include "type/types.h"
 
@@ -26,6 +25,8 @@ class CodeGen;
 class Value;
 
 namespace type {
+
+class Type;
 
 //===----------------------------------------------------------------------===//
 // This class contains all the type-system functionality for the codegen
