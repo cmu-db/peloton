@@ -37,6 +37,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class TransactionRuntime {
  public:
+
   // Perform a read operation for all tuples in the given tile group with IDs
   // in the range [tid_start, tid_end) in the context of the given transaction
   static uint32_t PerformVectorizedRead(concurrency::Transaction &txn,
@@ -48,6 +49,11 @@ class TransactionRuntime {
   static bool PerformDelete(concurrency::Transaction &txn,
                             storage::DataTable &table, uint32_t tile_group_id,
                             uint32_t tuple_offset);
+
+  // Perform an insert operation
+  static bool PerformInsert(concurrency::Transaction &txn,
+                            storage::DataTable &table,
+                            const storage::Tuple *tuple);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
   // Add other stuff for Insert/Update/Delete
