@@ -111,6 +111,8 @@ class OperatorExpression : public AbstractExpression {
       : AbstractExpression(other),
         nulltesttype_(other.nulltesttype_) {}
  private:
+  // nulltesttype_ is to indicate if the operator is
+  // OPERATOR_IS_NULL or is not null.
   NullTestType nulltesttype_;
 };
 

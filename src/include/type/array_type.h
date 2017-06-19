@@ -65,7 +65,7 @@ class ArrayType : public Type {
     return val.value_.array;
   }
 
-  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
+  Value Copy(const Value& val) const override {
     switch (val.GetElementType()) {
       case INTEGER: {
         Value result = Value(Type::ARRAY,*(std::vector<int32_t>*)GetData(val),Type::INTEGER);

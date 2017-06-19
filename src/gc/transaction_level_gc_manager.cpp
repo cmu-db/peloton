@@ -139,7 +139,6 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
   for (auto &item : garbages) {
     reclaim_maps_[thread_id].insert(std::make_pair(safe_max_cid, item));
   }
-  //LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
   return tuple_counter;
 }
 
@@ -167,7 +166,6 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
       break;
     }
   }
-  //LOG_TRACE("Marked %d txn contexts as recycled", gc_counter);
   return gc_counter;
 }
 

@@ -16,6 +16,7 @@
 #include <include/parser/pg_list.h>
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -270,11 +271,55 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
 // a Peloton tuple value expression.
 expression::AbstractExpression* PostgresParser::ParamRefTransform(
     ParamRef* root) {
-   LOG_ERROR("Parameter number: %d", root->number);
+   LOG_INFO("Parameter number: %d", root->number);
   expression::AbstractExpression* res =
       new expression::ParameterValueExpression(root->number - 1);
   return res;
 }
+
+
+// This function takes in the Case Expression of a Postgres SelectStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::CaseExprTransform(
+    CaseExpr* root) {
+
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  // Transform the CASE argument
+  auto arg_expr = ExprTransform(reinterpret_cast<Node*>(root->arg));
+
+  // Transform the WHEN conditions
+  std::vector<expression::CaseExpression::WhenClause> clauses;
+  for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+
+    CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
+
+    // When condition
+    auto when_expr = ExprTransform(reinterpret_cast<Node*>(w->expr));;
+
+    // Result
+    auto result_expr = ExprTransform(reinterpret_cast<Node*>(w->result));
+
+    // Build When Clause and add it to the list
+    clauses.push_back(expression::CaseExpression::WhenClause(
+        expression::CaseExpression::AbsExprPtr(when_expr),
+        expression::CaseExpression::AbsExprPtr(result_expr)));
+  }
+
+  // Transform the default result
+  auto defresult_expr = ExprTransform(reinterpret_cast<Node*>(root->defresult));
+
+  // Build Case Expression
+  return arg_expr != nullptr ?
+         new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+                                        expression::CaseExpression::AbsExprPtr(arg_expr),
+                                        clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
+         new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
+                                        clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+}
+
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
 parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
@@ -357,29 +402,22 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   expression::AbstractExpression* result = nullptr;
   switch (val.type) {
     case T_Integer: {
-      LOG_DEBUG("T_Integer\n");
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetIntegerValue((int32_t) val.val.ival));
       break;
     }
     case T_String: {
-      LOG_DEBUG("T_String\n");
-
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
       break;
     }
     case T_Float: {
-      LOG_DEBUG("T_Float\n");
-
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetDecimalValue(
                       std::stod(std::string(val.val.str))));
       break;
     }
     case T_Null: {
-      LOG_DEBUG("T_Null\n");
-
       result = new expression::ConstantValueExpression(
               type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
       break;
@@ -547,6 +585,9 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
       expr = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
       break;
     }
+    case T_CaseExpr: {
+      expr = CaseExprTransform(reinterpret_cast<CaseExpr*>(node));
+      break;
     case T_NullTest: {
       expr = NullTestTransform(reinterpret_cast<NullTest*>(node));
       break;
@@ -562,8 +603,6 @@ expression::AbstractExpression* PostgresParser::  ExprTransform(Node* node) {
   }
   return expr;
 }
-
-
 
 // This function takes in a Postgres A_Expr parsenode and transfers
 // it into Peloton AbstractExpression.
@@ -604,7 +643,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   catch(NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
-        StringUtil::Format("Exception thrown in right expr right expr:\n%s", e.what()));
+        StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
   }
 
 

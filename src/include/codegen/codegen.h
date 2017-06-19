@@ -85,12 +85,9 @@ class CodeGen {
   llvm::Constant *NullPtr(llvm::PointerType *type) const {
     return llvm::ConstantPointerNull::get(type);
   }
-//  llvm::Constant *ConstVector(llvm::Type *elemtype, std::vector<elemtype> vector,
-//                              uint32_t num_elements) const {
-//    llvm::Constant *Const
-//    ArrayRef<Constant *> V = new ArrayRef<Constant *> (vector,num_elements);
-//    return llvm::ConstantVector::get(V);
-//  }
+  // Wrapper for pointer for constant string
+  llvm::Value *ConstStringPtr(const std::string s) const;
+
   // Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
                         const std::vector<llvm::Value *> &args) const;
