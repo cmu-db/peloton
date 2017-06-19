@@ -38,6 +38,7 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
+#include "type/types.h"
 
 
 // Logging mode
@@ -513,7 +514,7 @@ void CreateCustomerTable() {
 
   index_metadata = new index::IndexMetadata(
       "customer_skey", customer_table_skey_index_oid, customer_table_oid,
-      tpcc_database_oid, state.index, IndexConstraintTypeId::INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
@@ -786,7 +787,7 @@ void CreateOrdersTable() {
 
   index_metadata = new index::IndexMetadata(
       "orders_skey", orders_table_skey_index_oid, orders_table_oid,
-      tpcc_database_oid, state.index, IndexConstraintTypeId::INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
@@ -952,7 +953,7 @@ void CreateOrderLineTable() {
 
   index_metadata = new index::IndexMetadata(
       "order_line_skey", order_line_table_skey_index_oid, order_line_table_oid,
-      tpcc_database_oid, state.index, IndexConstraintTypeId::INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(

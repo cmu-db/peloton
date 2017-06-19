@@ -1033,9 +1033,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
         type::TypeId::INTEGER, 0, update_attr);
     auto minus_value_expression =
         new expression::OperatorUnaryMinusExpression(tuple_value_expression);
-    planner::DerivedAttribute attribute;
-    attribute.expr = minus_value_expression;
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{minus_value_expression};
     target_list.emplace_back(update_attr, attribute);
   }
 
@@ -1118,9 +1116,7 @@ static void InsertHelper() {
   for (oid_t col_id = 0; col_id <= state.attribute_count; col_id++) {
     auto expression =
         expression::ExpressionUtil::ConstantValueFactory(insert_val);
-    planner::DerivedAttribute attribute;
-    attribute.expr = expression;
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
     column_ids.push_back(col_id);
   }
