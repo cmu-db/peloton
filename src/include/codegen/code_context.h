@@ -14,14 +14,16 @@
 
 #include <string>
 
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
+//#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "llvm/IR/LLVMContext.h"
+//#include "llvm/IR/LLVMContext.h"
 
 #include "common/macros.h"
 
 namespace llvm {
+class ExecutionEngine;
+class LLVMContext;
 class Module;
 }  // namespace llvm
 
@@ -42,6 +44,7 @@ class CodeContext {
 
  public:
   CodeContext();
+  ~CodeContext();
 
   // Return the pointer to the LLVM function in this module given its name
   llvm::Function *GetFunction(const std::string &fn_name) const;
