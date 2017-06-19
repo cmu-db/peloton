@@ -251,7 +251,7 @@ TEST_F(ExpressionTests, SimpleCase) {
 
   // EXPRESSION
   auto tup_val_exp = new expression::TupleValueExpression(type::Type::INTEGER,
-                                                          0, 0);
+      0, 0);
   auto const_val_exp_1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(1));
   auto const_val_exp_2 = new expression::ConstantValueExpression(
@@ -260,7 +260,7 @@ TEST_F(ExpressionTests, SimpleCase) {
       type::ValueFactory::GetIntegerValue(3));
   auto *when_cond =
       new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
-                                           tup_val_exp, const_val_exp_1);
+          tup_val_exp, const_val_exp_1);
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
   clauses.push_back(expression::CaseExpression::WhenClause(
@@ -269,8 +269,8 @@ TEST_F(ExpressionTests, SimpleCase) {
 
   std::unique_ptr<expression::CaseExpression> case_expression(
       new expression::CaseExpression(
-          type::Type::INTEGER, clauses,
-          expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
+      type::Type::INTEGER, clauses,
+      expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
   // TUPLE
   std::vector<catalog::Column> columns;
@@ -307,7 +307,7 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
   // CASE WHEN i=1 THEN 2 ELSE 3 END
   // EXPRESSION
   auto tup_val_exp = new expression::TupleValueExpression(type::Type::INTEGER,
-                                                          0, 0);
+      0, 0);
   auto const_val_exp_1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(1));
   auto const_val_exp_2 = new expression::ConstantValueExpression(
@@ -317,7 +317,7 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
 
   auto *when_cond =
       new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
-                                           tup_val_exp, const_val_exp_1);
+          tup_val_exp, const_val_exp_1);
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
   clauses.push_back(expression::CaseExpression::WhenClause(
@@ -326,7 +326,7 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
 
   std::unique_ptr<expression::CaseExpression> o_case_expression(
       new expression::CaseExpression(type::Type::INTEGER, clauses,
-                                     expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
+          expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
   std::unique_ptr<expression::CaseExpression> case_expression(
       dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy()));
@@ -367,7 +367,7 @@ TEST_F(ExpressionTests, SimpleCaseWithDefault) {
 
   // EXPRESSION
   auto tup_val_exp = new expression::TupleValueExpression(type::Type::INTEGER,
-                                                          0, 0);
+      0, 0);
   auto const_val_exp_1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(1));
   auto const_val_exp_2 = new expression::ConstantValueExpression(
@@ -382,8 +382,8 @@ TEST_F(ExpressionTests, SimpleCaseWithDefault) {
 
   std::unique_ptr<expression::CaseExpression> case_expression(
       new expression::CaseExpression(type::Type::INTEGER,
-                                     expression::CaseExpression::AbsExprPtr(tup_val_exp),
-                                     clauses, expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
+      expression::CaseExpression::AbsExprPtr(tup_val_exp),
+      clauses, expression::CaseExpression::AbsExprPtr(const_val_exp_3)));
 
   // TUPLE
   std::vector<catalog::Column> columns;
