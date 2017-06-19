@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// varchar_type.cpp
+// varbinary_type.cpp
 //
-// Identification: src/codegen/type/varchar_type.cpp
+// Identification: src/codegen/type/varbinary_type.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/type/varchar_type.h"
+#include "codegen/type/varbinary_type.h"
 
 #include "codegen/value.h"
 #include "codegen/values_runtime_proxy.h"
@@ -25,11 +25,20 @@ namespace type {
 
 namespace {
 
+///===--------------------------------------------------------------------===///
+///
+/// All right, this VARBINARY type is a giant hack. I admit it. It's copy-pasta
+/// of VARCHAR. But, we don't have much support for it in the system overall, so
+/// I'll leave the minimum required functionality here. When we start
+/// implementing VARBINARY stuff, we will need to modify this.
+///
+///===--------------------------------------------------------------------===///
+
 // Comparison
-struct CompareVarchar : public TypeSystem::Comparison {
+struct CompareVarbinary : public TypeSystem::Comparison {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
-    return left_type.GetSqlType() == Varchar::Instance() &&
+    return left_type.GetSqlType() == Varbinary::Instance() &&
            left_type == right_type;
   }
 
@@ -149,15 +158,15 @@ struct CompareVarchar : public TypeSystem::Comparison {
 
 // The list of types a SQL varchar type can be implicitly casted to
 const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
-    peloton::type::TypeId::VARCHAR};
+    peloton::type::TypeId::VARBINARY};
 
 // Explicit casting rules
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
 
 // Comparison operations
-static CompareVarchar kCompareVarchar;
+static CompareVarbinary kCompareVarbinary;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {false, kCompareVarchar}};
+    {false, kCompareVarbinary}};
 
 // Unary operators
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
@@ -171,36 +180,36 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 // TINYINT TYPE CONFIGURATION
 //===----------------------------------------------------------------------===//
 
-// Initialize the TINYINT SQL type with the configured type system
-Varchar::Varchar()
-    : SqlType(peloton::type::TypeId::VARCHAR),
+// Initialize the VARBINARY/BLOB SQL type with the configured type system
+Varbinary::Varbinary()
+    : SqlType(peloton::type::TypeId::VARBINARY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
 
-Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
-  throw Exception{"The VARCHAR type does not have a minimum value ..."};
+Value Varbinary::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"The VARBINARY type does not have a minimum value ..."};
 }
 
-Value Varchar::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
-  throw Exception{"The VARCHAR type does not have a maximum value ..."};
+Value Varbinary::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"The VARBINARY type does not have a maximum value ..."};
 }
 
-Value Varchar::GetNullValue(CodeGen &codegen) const {
+Value Varbinary::GetNullValue(CodeGen &codegen) const {
   return Value{Type{TypeId(), true}, codegen.NullPtr(codegen.CharPtrType()),
                codegen.Const32(0), codegen.ConstBool(true)};
 }
 
-void Varchar::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
+void Varbinary::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.CharPtrType();
   len_type = codegen.Int32Type();
 }
 
-llvm::Function *Varchar::GetOutputFunction(
+llvm::Function *Varbinary::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
   // TODO: We should use the length information in the type?
-  return ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen);
+  return ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen);
 }
 
 }  // namespace type
