@@ -514,25 +514,7 @@ int ExpressionComparator::Compare(const expression::AbstractExpression *A,
       // compare column_name
       if (ptr_A->GetColumnName() != ptr_B->GetColumnName())
         return ptr_A->GetColumnName().compare(ptr_B->GetColumnName());
-      // compare attribute_info
-      if (ptr_A->GetAttributeRef() != nullptr &&
-          ptr_B->GetAttributeRef() != nullptr) {
-        if (ptr_A->GetAttributeRef()->type != ptr_B->GetAttributeRef()->type)
-          return (ptr_A->GetAttributeRef()->type <
-                  ptr_B->GetAttributeRef()->type)
-                     ? -1
-                     : 1;
-        if (ptr_A->GetAttributeRef()->attribute_id !=
-            ptr_B->GetAttributeRef()->attribute_id)
-          return (ptr_A->GetAttributeRef()->attribute_id <
-                  ptr_B->GetAttributeRef()->attribute_id)
-                     ? -1
-                     : 1;
-      } else if (ptr_A->GetAttributeRef() != nullptr ||
-                 ptr_B->GetAttributeRef() != nullptr) {
-        return (ptr_A->GetAttributeRef() == nullptr) ? -1 : 1;
-      }
-
+      // Note that we do not compare Attribute Information
       break;
     }
     case ExpressionType::VALUE_PARAMETER: {
