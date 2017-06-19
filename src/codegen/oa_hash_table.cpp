@@ -12,6 +12,8 @@
 
 #include "codegen/oa_hash_table.h"
 
+#include "llvm/IR/Intrinsics.h"
+
 #include "codegen/hash.h"
 #include "codegen/if.h"
 #include "codegen/loop.h"

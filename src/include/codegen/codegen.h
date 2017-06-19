@@ -14,15 +14,6 @@
 
 #include <string>
 
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/TypeBuilder.h"
-#include "llvm/IR/Verifier.h"
-
 #include "codegen/code_context.h"
 #include "codegen/function_builder.h"
 
@@ -121,9 +112,7 @@ class CodeGen {
   llvm::Function *RegisterFunction(const std::string &fn_name,
                                    llvm::FunctionType *fn_type);
 
-  llvm::Type *LookupTypeByName(const std::string &name) const {
-    return GetModule().getTypeByName(name);
-  }
+  llvm::Type *LookupTypeByName(const std::string &name) const;
 
   // Get the runtime state function argument
   llvm::Value *GetState() const { return &*GetFunction()->arg_begin(); }
