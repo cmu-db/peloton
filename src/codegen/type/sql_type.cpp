@@ -22,6 +22,7 @@
 #include "codegen/type/smallint_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/type/tinyint_type.h"
+#include "codegen/type/varbinary_type.h"
 #include "codegen/type/varchar_type.h"
 #include "common/exception.h"
 
@@ -85,7 +86,7 @@ static const SqlType *kTypeTable[] = {
     &Timestamp::Instance(),  // The timestamp type (8 byte)
     &Date::Instance(),       // The date type (4 byte)
     &Varchar::Instance(),    // The varchar type
-    &Invalid::Instance(),    // The varbinary type
+    &Varbinary::Instance(),  // The varbinary type
     &Array::Instance(),      // The array type
     &Invalid::Instance()     // A user-defined type
 };

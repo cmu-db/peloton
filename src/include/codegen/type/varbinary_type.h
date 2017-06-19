@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// varchar_type.h
+// varbinary_type.h
 //
-// Identification: src/include/codegen/type/varchar_type.h
+// Identification: src/include/codegen/type/varbinary_type.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -20,7 +20,7 @@ namespace peloton {
 namespace codegen {
 namespace type {
 
-class Varchar : public SqlType, public Singleton<Varchar> {
+class Varbinary : public SqlType, public Singleton<Varbinary> {
  public:
   bool IsVariableLength() const override { return true; }
 
@@ -39,12 +39,12 @@ class Varchar : public SqlType, public Singleton<Varchar> {
   const TypeSystem &GetTypeSystem() const override { return type_system_; }
 
  private:
-  friend class Singleton<Varchar>;
+  friend class Singleton<Varbinary>;
 
-  Varchar();
+  Varbinary();
 
  private:
-  // The boolean type's type-system
+  // The blob type's type-system
   TypeSystem type_system_;
 };
 
