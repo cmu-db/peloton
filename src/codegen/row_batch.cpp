@@ -12,6 +12,8 @@
 
 #include "codegen/row_batch.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 #include "codegen/compilation_context.h"
 #include "codegen/if.h"
 #include "codegen/vectorized_loop.h"

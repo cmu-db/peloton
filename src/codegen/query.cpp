@@ -13,7 +13,6 @@
 #include "codegen/query.h"
 
 #include "catalog/catalog.h"
-#include "common/macros.h"
 
 namespace peloton {
 namespace codegen {

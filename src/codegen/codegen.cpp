@@ -13,6 +13,9 @@
 #include "codegen/codegen.h"
 
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 
@@ -211,6 +214,10 @@ llvm::Function *CodeGen::RegisterFunction(const std::string &fn_name,
   auto *fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage,
                                     fn_name, &module);
   return fn;
+}
+
+llvm::Type *CodeGen::LookupTypeByName(const std::string &name) const {
+  return GetModule().getTypeByName(name);
 }
 
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {

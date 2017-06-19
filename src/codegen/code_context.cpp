@@ -85,6 +85,20 @@ CodeContext::CodeContext()
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
 }
 
+// Return the pointer to the LLVM function in this module given its name
+llvm::Function *CodeContext::GetFunction(const std::string &fn_name) const {
+  return module_->getFunction(fn_name);
+}
+
+// Get a pointer to the JITed function of the given type
+void *CodeContext::GetFunctionPointer(llvm::Function *fn) const {
+  return jit_engine_->getPointerToFunction(fn);
+}
+
+const llvm::DataLayout &CodeContext::GetDataLayout() const {
+  return module_->getDataLayout();
+}
+
 //===----------------------------------------------------------------------===//
 // JIT the code contained within after optimizing it
 //===----------------------------------------------------------------------===//
