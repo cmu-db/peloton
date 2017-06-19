@@ -13,6 +13,7 @@
 #include "codegen/type/type_system.h"
 
 #include "codegen/if.h"
+#include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
 #include "common/exception.h"
 #include "util/string_util.h"
