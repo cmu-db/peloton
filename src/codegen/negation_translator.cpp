@@ -30,10 +30,8 @@ Value NegationTranslator::DeriveValue(CodeGen &codegen,
                                       RowBatch::Row &row) const {
   const auto &negation_expr =
       GetExpressionAs<expression::OperatorUnaryMinusExpression>();
-  auto child_value = row.DeriveValue(codegen, *negation_expr.GetChild(0));
-  const auto *negation_op = codegen::type::TypeSystem::GetUnaryOperator(
-      OperatorId::Negation, child_value.GetType());
-  return negation_op->DoWork(codegen, child_value);
+  Value child_value = row.DeriveValue(codegen, *negation_expr.GetChild(0));
+  return child_value.CallUnaryOp(codegen, OperatorId::Negation);
 }
 
 }  // namespace codegen
