@@ -85,6 +85,12 @@ CodeContext::CodeContext()
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
 }
 
+CodeContext::~CodeContext() {
+  // We need this empty constructor because we delcared a std::unique_ptr<>
+  // on llvm::ExecutionEngine and llvm::LLVMContext that are forward-declared
+  // in the header file. To make this compile, this destructor needs to exist.
+}
+
 // Return the pointer to the LLVM function in this module given its name
 llvm::Function *CodeContext::GetFunction(const std::string &fn_name) const {
   return module_->getFunction(fn_name);
