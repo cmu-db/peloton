@@ -13,9 +13,12 @@
 #include "codegen/type/decimal_type.h"
 
 #include "codegen/if.h"
+#include "codegen/value.h"
+#include "codegen/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
+#include "type/limits.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -170,7 +173,7 @@ struct Add : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE Value::OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFAdd(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -191,7 +194,7 @@ struct Sub : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE Value::OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFSub(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -212,7 +215,7 @@ struct Mul : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE Value::OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFMul(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -233,7 +236,7 @@ struct Div : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -244,7 +247,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     auto result = Value{Decimal::Instance()};
 
-    if (on_error == Value::OnError::ReturnNull) {
+    if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       If is_div0{codegen, div0};
       {
@@ -262,7 +265,7 @@ struct Div : public TypeSystem::BinaryOperator {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == Value::OnError::Exception) {
+    } else if (on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -290,7 +293,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               Value::OnError on_error) const override {
+               OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -301,7 +304,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     auto result = Value{Decimal::Instance()};
 
-    if (on_error == Value::OnError::ReturnNull) {
+    if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       If is_div0{codegen, div0};
       {
@@ -319,7 +322,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == Value::OnError::Exception) {
+    } else if (on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -359,7 +362,7 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 // Unary operators
 static Negate kNegOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {TypeSystem::OperatorId::Negation, kNegOp}};
+    {OperatorId::Negation, kNegOp}};
 
 // Binary operations
 static Add kAddOp;
@@ -368,11 +371,11 @@ static Mul kMulOp;
 static Div kDivOp;
 static Modulo kModuloOp;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {TypeSystem::OperatorId::Add, true, peloton::type::TypeId::DECIMAL, kAddOp},
-    {TypeSystem::OperatorId::Sub, true, peloton::type::TypeId::DECIMAL, kSubOp},
-    {TypeSystem::OperatorId::Mul, true, peloton::type::TypeId::DECIMAL, kMulOp},
-    {TypeSystem::OperatorId::Div, true, peloton::type::TypeId::DECIMAL, kDivOp},
-    {TypeSystem::OperatorId::Mod, true, peloton::type::TypeId::DECIMAL, kModuloOp}};
+    {OperatorId::Add, true, peloton::type::TypeId::DECIMAL, kAddOp},
+    {OperatorId::Sub, true, peloton::type::TypeId::DECIMAL, kSubOp},
+    {OperatorId::Mul, true, peloton::type::TypeId::DECIMAL, kMulOp},
+    {OperatorId::Div, true, peloton::type::TypeId::DECIMAL, kDivOp},
+    {OperatorId::Mod, true, peloton::type::TypeId::DECIMAL, kModuloOp}};
 
 
 }  // anonymous namespace
@@ -387,6 +390,33 @@ Decimal::Decimal()
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
+
+Value Decimal::GetMinValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MIN);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value Decimal::GetMaxValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MAX);
+  return Value{*this, raw_val, nullptr, nullptr};
+}
+
+Value Decimal::GetNullValue(CodeGen &codegen) const {
+  auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_NULL);
+  return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
+}
+
+void Decimal::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
+                                        llvm::Type *&len_type) const {
+  val_type = codegen.DoubleType();
+  len_type = nullptr;
+}
+
+llvm::Function *Decimal::GetOutputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  // TODO: We should be using the precision/scale in the output function
+  return ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen);
+}
 
 }  // namespace type
 }  // namespace codegen

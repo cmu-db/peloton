@@ -359,8 +359,7 @@ void Aggregation::FinalizeValues(
         codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
         sum = sum.CastTo(codegen, type::Decimal::Instance());
 
-        codegen::Value final_val =
-            sum.Div(codegen, count, Value::OnError::ReturnNull);
+        codegen::Value final_val = sum.Div(codegen, count, OnError::ReturnNull);
 
         vals[std::make_pair(source, agg_type)] = final_val;
         final_vals.push_back(final_val);

@@ -12,12 +12,9 @@
 
 #pragma once
 
-#include "codegen/value.h"
-#include "codegen/values_runtime_proxy.h"
 #include "codegen/type/sql_type.h"
 #include "codegen/type/type_system.h"
 #include "common/singleton.h"
-#include "type/limits.h"
 
 namespace peloton {
 namespace codegen {
@@ -27,32 +24,17 @@ class SmallInt : public SqlType, public Singleton<SmallInt> {
  public:
   bool IsVariableLength() const override { return false; }
 
-  Value GetMinValue(CodeGen &codegen) const override {
-    auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MIN);
-    return Value{*this, raw_val, nullptr, nullptr};
-  }
+  Value GetMinValue(CodeGen &codegen) const override;
 
-  Value GetMaxValue(CodeGen &codegen) const override {
-    auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MAX);
-    return Value{*this, raw_val, nullptr, nullptr};
-  }
+  Value GetMaxValue(CodeGen &codegen) const override;
 
-  Value GetNullValue(CodeGen &codegen) const override {
-    auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_NULL);
-    return Value{Type{TypeId(), true}, raw_val, nullptr,
-                 codegen.ConstBool(true)};
-  }
+  Value GetNullValue(CodeGen &codegen) const override;
 
   void GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
-                                 llvm::Type *&len_type) const override {
-    val_type = codegen.Int16Type();
-    len_type = nullptr;
-  }
+                                 llvm::Type *&len_type) const override;
 
-  llvm::Function *GetOutputFunction(
-      CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const override {
-    return ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen);
-  }
+  llvm::Function *GetOutputFunction(CodeGen &codegen,
+                                    const Type &type) const override;
 
   const TypeSystem &GetTypeSystem() const override { return type_system_; }
 

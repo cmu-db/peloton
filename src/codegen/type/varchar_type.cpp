@@ -12,9 +12,12 @@
 
 #include "codegen/type/varchar_type.h"
 
+#include "codegen/value.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
+#include "common/exception.h"
+#include "type/limits.h"
 
 namespace peloton {
 namespace codegen {
@@ -174,6 +177,31 @@ Varchar::Varchar()
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
+
+Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"Varchars don't have minimum values ...."};
+}
+
+Value Varchar::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"Varchars don't have maximum values ...."};
+}
+
+Value Varchar::GetNullValue(CodeGen &codegen) const {
+  return Value{Type{TypeId(), true}, codegen.NullPtr(codegen.CharPtrType()),
+               codegen.Const32(0), codegen.ConstBool(true)};
+}
+
+void Varchar::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
+                                        llvm::Type *&len_type) const {
+  val_type = codegen.CharPtrType();
+  len_type = codegen.Int32Type();
+}
+
+llvm::Function *Varchar::GetOutputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  // TODO: We should use the length information in the type?
+  return ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen);
+}
 
 }  // namespace type
 }  // namespace codegen

@@ -12,6 +12,9 @@
 
 #include "codegen/type/array_type.h"
 
+#include "codegen/value.h"
+#include "common/exception.h"
+
 namespace peloton {
 namespace codegen {
 namespace type {
@@ -47,6 +50,33 @@ Array::Array()
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable) {}
+
+Value Array::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"Arrays don't have minimum values ...."};
+}
+
+Value Array::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"Arrays don't have maximum values ...."};
+}
+
+Value Array::GetNullValue(CodeGen &codegen) const {
+  return Value{*this, codegen.NullPtr(codegen.CharPtrType()),
+               codegen.Const32(0), codegen.ConstBool(true)};
+}
+
+void Array::GetTypeForMaterialization(
+    UNUSED_ATTRIBUTE CodeGen &codegen, UNUSED_ATTRIBUTE llvm::Type *&val_type,
+    UNUSED_ATTRIBUTE llvm::Type *&len_type) const {
+  // TODO
+  throw NotImplementedException{
+      "Arrays currently do not have a materialization format. Fix me."};
+}
+
+llvm::Function *Array::GetOutputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"Array's can't be output ... for now ..."};
+}
 
 }  // namespace type
 }  // namespace codegen
