@@ -146,9 +146,8 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
             std::string update_raw_value(100, 'a');
             type::Value update_val = type::ValueFactory::GetVarcharValue(update_raw_value).Copy();
 
-            planner::DerivedAttribute attr;
-            attr.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-            attr.attribute_info.type = attr.expr->GetValueType();
+            planner::DerivedAttribute attr{
+                expression::ExpressionUtil::ConstantValueFactory(update_val)};
             target_list.emplace_back(col_itr, attr);
 
           } else {
@@ -156,9 +155,8 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
             int update_raw_value = 1;
             type::Value update_val = type::ValueFactory::GetIntegerValue(update_raw_value).Copy();
 
-            planner::DerivedAttribute attr;
-            attr.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-            attr.attribute_info.type = attr.expr->GetValueType();
+            planner::DerivedAttribute attr{
+                expression::ExpressionUtil::ConstantValueFactory(update_val)};
             target_list.emplace_back(col_itr, attr);
           }
         }
