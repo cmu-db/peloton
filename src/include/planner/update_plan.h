@@ -53,6 +53,8 @@ class UpdatePlan : public AbstractPlan {
         new UpdatePlan(target_table_, project_info_->Copy()));
   }
 
+  void PerformBinding(BindingContext &binding_context) override;
+
  private:
   storage::DataTable *target_table_;
 

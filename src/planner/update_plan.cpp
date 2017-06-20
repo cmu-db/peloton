@@ -43,5 +43,20 @@ void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
+void UpdatePlan::PerformBinding(BindingContext &binding_context) {
+  BindingContext input_context;
+
+  const auto &children = GetChildren();
+  PL_ASSERT(children.size() == 1);
+
+  children[0]->PerformBinding(input_context);
+
+  // Do projection (if one exists)
+  if (GetProjectInfo() != nullptr) {
+    std::vector<const BindingContext *> inputs = {&input_context};
+    GetProjectInfo()->PerformRebinding(binding_context, inputs);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton
