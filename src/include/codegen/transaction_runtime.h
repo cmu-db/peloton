@@ -49,6 +49,17 @@ class TransactionRuntime {
                             storage::DataTable &table, uint32_t tile_group_id,
                             uint32_t tuple_offset);
 
+  // Perform an update operation
+  static bool PerformUpdate(concurrency::Transaction &txn,
+                            storage::DataTable &table,
+                            storage::TileGroup *tile_group,
+                            uint32_t tuple_offset, uint32_t *col_ids,
+                            type::Value *target_vals, bool update_primary_key,
+                            Target *target_vector, uint32_t target_vector_size, 
+                            DirectMap *direct_map_vector,
+                            uint32_t direct_map_size,
+                            executor::ExecutorContext *executor_context);
+
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
 };
 
