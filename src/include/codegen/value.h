@@ -14,7 +14,6 @@
 
 #include "codegen/codegen.h"
 #include "codegen/type/type.h"
-#include "codegen/type/type_system.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -38,11 +37,6 @@ class Value {
 
   // Get the SQL type
   const type::Type &GetType() const { return type_; }
-
-  // Get the type system for this value's type
-  const type::TypeSystem &GetTypeSystem() const {
-    return GetType().GetTypeSystem();
-  }
 
   // Get the LLVM value
   llvm::Value *GetValue() const { return value_; }

@@ -161,9 +161,6 @@ class TypeSystem {
   };
 
   struct ComparisonInfo {
-    // Does the operation support implicit casting of inputs?
-    bool implicit_casting;
-
     // The operation
     const Comparison &comparison;
   };
@@ -254,12 +251,6 @@ class TypeSystem {
   struct BinaryOpInfo {
     // The ID of the operation
     OperatorId op_id;
-
-    // Does the operation support implicit casting of inputs?
-    bool implicit_casting;
-
-    // The target type of the inputs, if implicit casting is supported
-    peloton::type::TypeId input_types;
 
     // The operation
     const BinaryOperator &binary_operation;
