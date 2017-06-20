@@ -157,7 +157,7 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
 // Comparison operations
 static CompareVarchar kCompareVarchar;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {false, kCompareVarchar}};
+    {kCompareVarchar}};
 
 // Unary operators
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};

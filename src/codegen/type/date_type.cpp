@@ -119,7 +119,7 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
 
 static CompareDate kCompareDate;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {true, kCompareDate}};
+    {kCompareDate}};
 
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};

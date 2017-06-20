@@ -357,7 +357,7 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
 // Comparison operations
 static CompareDecimal kCompareDecimal;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {true, kCompareDecimal}};
+    {kCompareDecimal}};
 
 // Unary operators
 static Negate kNegOp;
@@ -371,11 +371,11 @@ static Mul kMulOp;
 static Div kDivOp;
 static Modulo kModuloOp;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Add, true, peloton::type::TypeId::DECIMAL, kAddOp},
-    {OperatorId::Sub, true, peloton::type::TypeId::DECIMAL, kSubOp},
-    {OperatorId::Mul, true, peloton::type::TypeId::DECIMAL, kMulOp},
-    {OperatorId::Div, true, peloton::type::TypeId::DECIMAL, kDivOp},
-    {OperatorId::Mod, true, peloton::type::TypeId::DECIMAL, kModuloOp}};
+    {OperatorId::Add, kAddOp},
+    {OperatorId::Sub, kSubOp},
+    {OperatorId::Mul, kMulOp},
+    {OperatorId::Div, kDivOp},
+    {OperatorId::Mod, kModuloOp}};
 
 
 }  // anonymous namespace

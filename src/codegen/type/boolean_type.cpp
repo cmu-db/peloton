@@ -221,15 +221,15 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
 
 static CompareBoolean kCompareBoolean;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {true, kCompareBoolean}};
+    {kCompareBoolean}};
 
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 
 static LogicalAnd kLogicalAnd;
 static LogicalOr kLogicalOr;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::LogicalAnd, false, peloton::type::TypeId::INVALID, kLogicalAnd},
-    {OperatorId::LogicalOr, false, peloton::type::TypeId::INVALID, kLogicalOr}};
+    {OperatorId::LogicalAnd, kLogicalAnd},
+    {OperatorId::LogicalOr, kLogicalOr}};
 
 }  // anonymous namespace
 
