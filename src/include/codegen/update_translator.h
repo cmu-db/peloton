@@ -28,7 +28,7 @@ class UpdateTranslator : public OperatorTranslator {
   UpdateTranslator(const planner::UpdatePlan &plan, CompilationContext &context,
                    Pipeline &pipeline);
 
-  // No state initialization
+  // State initialization
   void InitializeState() override;
 
   // No helper functions
@@ -47,7 +47,6 @@ class UpdateTranslator : public OperatorTranslator {
   std::string GetName() const override { return "Update"; }
 
  private:
-  // Set target value
   void SetTargetValue(llvm::Value *target_val_vec, llvm::Value *target_id,
                       type::Type::TypeId type, llvm::Value *value,
                       llvm::Value *length) const;

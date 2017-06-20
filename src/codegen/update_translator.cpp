@@ -113,14 +113,14 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   llvm::Value *tile_group_ptr =
       codegen_table.GetTileGroup(codegen, table_ptr, row.GetTileGroupID());
 
-  // vector for collecting col ids that are targeted to update
+  // Vector for collecting col ids that are targeted to update
   const auto *project_info = update_plan_.GetProjectInfo();
   auto target_list = project_info->GetTargetList();
   uint32_t column_num = (uint32_t)target_list.size();
   Vector column_ids{LoadStateValue(column_id_vec_id_), column_num,
                     codegen.Int64Type()};
 
-  // vector for collecting results from executing target list
+  // Vector for collecting results from executing target list
   llvm::Value *target_vals = LoadStateValue(target_val_vec_id_);
 
   /* Loop for collecting target col ids and corresponding derived values */
@@ -139,7 +139,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto column_ids_ptr = column_ids.GetVectorPtr();
   auto *executor_context = context.GetExecutorContextPtr();
 
-  // Update
+  // Finally, update!
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
   auto *update_func = UpdaterProxy::_Update::GetFunction(codegen);
   codegen.CallFunc(update_func, {updater, tile_group_ptr, row.GetTID(codegen),
