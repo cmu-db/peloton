@@ -665,6 +665,22 @@ StatementType StringToStatementType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const StatementType &type);
 
 //===--------------------------------------------------------------------===//
+// Query Types
+//===--------------------------------------------------------------------===//
+
+enum class QueryType {
+  QUERY_BEGIN,                // begin query
+  QUERY_COMMIT,               // commit query
+  QUERY_ROLLBACK,             // rollback query
+  QUERY_INSERT,               // insert query
+  QUERY_SET,                  // set query
+  QUERY_SHOW,                 // show query
+  QUERY_PREPARE,	      // prepare query
+  QUERY_EXECUTE, 	      // execute query
+  QUERY_OTHER,                // other queries
+};
+
+//===--------------------------------------------------------------------===//
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
 
