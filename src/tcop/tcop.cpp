@@ -188,19 +188,21 @@ ResultType TrafficCop::ExecuteStatement(
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
-    if (statement->GetQueryType() == "BEGIN")
-      return BeginQueryHelper(thread_id);
-    else if (statement->GetQueryType() == "COMMIT")
-      return CommitQueryHelper();
-    else if (statement->GetQueryType() == "ROLLBACK")
-      return AbortQueryHelper();
-    else {
-      auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                         result, result_format, thread_id);
-      LOG_TRACE("Statement executed. Result: %s",
-                ResultTypeToString(status.m_result).c_str());
-      rows_changed = status.m_processed;
-      return status.m_result;
+    switch(statement->GetQueryType()) {
+      case QueryType::QUERY_BEGIN:
+        return BeginQueryHelper(thread_id);
+      case QueryType::QUERY_COMMIT:
+        return CommitQueryHelper();
+      case QueryType::QUERY_ROLLBACK:
+        return AbortQueryHelper();
+      default:
+        auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+                                           result, result_format,
+                                           thread_id);
+        LOG_TRACE("Statement executed. Result: %s",
+                  ResultTypeToString(status.m_result).c_str());
+        rows_changed = status.m_processed;
+        return status.m_result;
     }
   } catch (Exception &e) {
     error_message = e.what();

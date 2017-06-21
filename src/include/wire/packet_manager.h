@@ -131,7 +131,7 @@ class PacketManager {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type, int rows);
+  void CompleteCommand(const std::string& query_type_string, const QueryType& query_type, int rows);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse();
@@ -146,7 +146,7 @@ class PacketManager {
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
    * This function helps filtering out the execution for such cases
    */
-  bool HardcodedExecuteFilter(std::string query_type);
+  bool HardcodedExecuteFilter(QueryType query_type);
 
   /* Execute a Simple query protocol message */
   void ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
@@ -182,7 +182,7 @@ class PacketManager {
   // state to mang skipped queries
   bool skipped_stmt_ = false;
   std::string skipped_query_string_;
-  std::string skipped_query_type_;
+  QueryType skipped_query_type_;
 
   // Statement cache
   // StatementName -> Statement
