@@ -36,9 +36,9 @@ struct DropStatement : TableRefStatement {
       : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
   virtual ~DropStatement() {
-      delete[] database_name;
-      delete[] index_name;
-      delete[] prep_stmt;
+    delete[] database_name;
+    delete[] index_name;
+    delete[] prep_stmt;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

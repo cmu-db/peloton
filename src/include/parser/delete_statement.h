@@ -31,8 +31,8 @@ struct DeleteStatement : SQLStatement {
         table_ref(nullptr), expr(nullptr) {};
 
   virtual ~DeleteStatement() {
-	  delete table_ref;
-      delete expr;
+	delete table_ref;
+    delete expr;
   }
 
   std::string GetTableName() const {

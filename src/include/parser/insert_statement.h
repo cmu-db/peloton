@@ -35,7 +35,7 @@ struct InsertStatement : SQLStatement {
   virtual ~InsertStatement() {
     if (columns != nullptr) {
       for (auto col : *columns) {
-          delete[] col;
+        delete[] col;
       }
       delete columns;
     }
