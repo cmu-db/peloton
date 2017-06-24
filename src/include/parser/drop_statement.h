@@ -36,17 +36,9 @@ struct DropStatement : TableRefStatement {
       : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
   virtual ~DropStatement() {
-    if (database_name != nullptr) {
       delete[] database_name;
-    }
-
-    if (index_name != nullptr) {
       delete[] index_name;
-    }
-
-    if (prep_stmt != nullptr) {
       delete[] prep_stmt;
-    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

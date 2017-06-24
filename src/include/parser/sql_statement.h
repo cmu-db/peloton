@@ -31,10 +31,8 @@ namespace parser {
 
 struct TableInfo {
   ~TableInfo() {
-    if (table_name != nullptr)
-      delete[] table_name;
-    if (database_name != nullptr)
-      delete[] database_name;
+    delete[] table_name;
+    delete[] database_name;
   }
   char* table_name = nullptr;
   ;
@@ -67,9 +65,7 @@ class TableRefStatement : public SQLStatement {
   TableRefStatement(StatementType type) : SQLStatement(type) {}
 
   virtual ~TableRefStatement() {
-    if (table_info_ != nullptr) {
-      delete table_info_;
-    }
+    delete table_info_;
   }
 
   virtual inline std::string GetTableName() const { return table_info_->table_name; }

@@ -73,8 +73,7 @@ struct GroupByDescription {
       for (auto col : *columns) delete col;
       delete columns;
     }
-    if (having != nullptr)
-      delete having;
+    delete having;
   }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
@@ -103,10 +102,8 @@ struct SelectStatement : SQLStatement {
         is_for_update(false){};
 
   virtual ~SelectStatement() {
-    if (from_table != nullptr) {
-      delete from_table;
-    }
-
+    delete from_table;
+	  
     if (select_list != nullptr) {
       for (auto expr : *select_list) {
         delete expr;
@@ -114,25 +111,15 @@ struct SelectStatement : SQLStatement {
       delete select_list;
     }
 
-    if (where_clause != nullptr) {
-      delete where_clause;
-    }
+    delete where_clause;
 
-    if (group_by != nullptr) {
-      delete group_by;
-    }
+    delete group_by;
 
-    if (union_select != nullptr) {
-      delete union_select;
-    }
+    delete union_select;
 
-    if (order != nullptr) {
-      delete order;
-    }
+    delete order;
 
-    if (limit != nullptr) {
-      delete limit;
-    }
+    delete limit;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

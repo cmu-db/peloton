@@ -35,9 +35,7 @@ struct InsertStatement : SQLStatement {
   virtual ~InsertStatement() {
     if (columns != nullptr) {
       for (auto col : *columns) {
-        if (col != nullptr) {
           delete[] col;
-        }
       }
       delete columns;
     }
@@ -47,22 +45,16 @@ struct InsertStatement : SQLStatement {
         for (auto *expr : *tuple) {
           // Why?
 //          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
-            if (expr != nullptr) {
-              delete expr;
-            }
+          delete expr;
         }
         delete tuple;
       }
       delete insert_values;
     }
 
-    if (select != nullptr) {
-      delete select;
-    }
+    delete select;
 
-    if (table_ref_ != nullptr) {
-      delete table_ref_;
-    }
+    delete table_ref_;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }

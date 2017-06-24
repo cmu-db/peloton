@@ -30,12 +30,8 @@ class UpdateClause {
   expression::AbstractExpression* value;
 
   ~UpdateClause() {
-    if (column != nullptr) {
-      delete[] column;
-    }
-    if (value != nullptr) {
-      delete value;
-    }
+    delete[] column;
+    delete value;
   }
 
   UpdateClause* Copy() {
@@ -62,22 +58,16 @@ struct UpdateStatement : SQLStatement {
         where(NULL) {}
 
   virtual ~UpdateStatement() {
-    if (table != nullptr) {
-      delete table;
-    }
+    delete table;
 
     if (updates != nullptr) {
       for (auto clause : *updates) {
-        if (clause != nullptr) {
-          delete clause;
-        }
+        delete clause;
       }
       delete updates;
     }
 
-    if (where != nullptr) {
-      delete where;
-    }
+    delete where;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

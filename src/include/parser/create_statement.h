@@ -90,12 +90,9 @@ struct ColumnDefinition {
       delete foreign_key_sink;
     }
     delete[] name;
-    if (table_info_ != nullptr)
-      delete table_info_;
-    if (default_value != nullptr)
-      delete default_value;
-    if (check_expression != nullptr)
-      delete check_expression;
+    delete table_info_;
+    delete default_value;
+    delete check_expression;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {
@@ -205,12 +202,8 @@ struct CreateStatement : TableRefStatement {
       delete index_attrs;
     }
 
-    if (index_name != nullptr) {
-      delete[] (index_name);
-    }
-    if (database_name != nullptr) {
-      delete[] (database_name);
-    }
+    delete[] index_name;
+    delete[] database_name;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
