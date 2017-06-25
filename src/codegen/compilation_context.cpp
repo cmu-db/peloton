@@ -14,6 +14,7 @@
 
 #include "codegen/catalog_proxy.h"
 #include "codegen/transaction_proxy.h"
+#include "codegen/executor_context_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
@@ -34,6 +35,11 @@ CompilationContext::CompilationContext(Query &query,
 
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
+
+  auto *executor_context_type =
+      ExecutorContextProxy::GetType(codegen_)->getPointerTo();
+  executor_context_state_id_ =
+      runtime_state.RegisterState("executorContext", executor_context_type);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -127,6 +133,10 @@ llvm::Value *CompilationContext::GetCatalogPtr() {
 // Get the transaction pointer from the runtime state
 llvm::Value *CompilationContext::GetTransactionPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, txn_state_id_);
+}
+
+llvm::Value *CompilationContext::GetExecutorContextPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, executor_context_state_id_);
 }
 
 // Generate code for the init() function of the query

@@ -51,6 +51,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::PROJECTION:
     case PlanNodeType::ORDERBY:
+    case PlanNodeType::DELETE:
     case PlanNodeType::AGGREGATE_V2: {
       break;
     }
@@ -73,15 +74,25 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
 
   // Check the predicate is compilable
   const expression::AbstractExpression *pred = nullptr;
-  if (plan.GetPlanNodeType() == PlanNodeType::SEQSCAN) {
-    auto &scan_plan = static_cast<const planner::SeqScanPlan &>(plan);
-    pred = scan_plan.GetPredicate();
-  } else if (plan.GetPlanNodeType() == PlanNodeType::AGGREGATE_V2) {
-    auto &order_by_plan = static_cast<const planner::AggregatePlan &>(plan);
-    pred = order_by_plan.GetPredicate();
-  } else if (plan.GetPlanNodeType() == PlanNodeType::HASHJOIN) {
-    auto &order_by_plan = static_cast<const planner::HashJoinPlan &>(plan);
-    pred = order_by_plan.GetPredicate();
+  switch (plan.GetPlanNodeType()) {
+    case PlanNodeType::SEQSCAN: {
+      auto &scan_plan = static_cast<const planner::SeqScanPlan &>(plan);
+      pred = scan_plan.GetPredicate();
+      break;
+    }
+    case PlanNodeType::AGGREGATE_V2: {
+      auto &agg_plan = static_cast<const planner::AggregatePlan &>(plan);
+      pred = agg_plan.GetPredicate();
+      break;
+    }
+    case PlanNodeType::HASHJOIN: {
+      auto &hj_plan = static_cast<const planner::HashJoinPlan &>(plan);
+      pred = hj_plan.GetPredicate();
+      break;
+    }
+    default: {
+      break;
+    }
   }
 
   if (pred != nullptr && !IsExpressionSupported(*pred)) {

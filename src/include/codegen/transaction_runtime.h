@@ -14,6 +14,13 @@
 
 #include <cstdint>
 
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/container_tuple.h"
+#include "catalog/manager.h"
+#include "executor/executor_context.h"
+#include "storage/tuple.h"
+
 namespace peloton {
 
 namespace concurrency {
@@ -39,6 +46,13 @@ class TransactionRuntime {
                                         uint32_t tid_start, uint32_t tid_end,
                                         uint32_t *selection_vector);
 
+  // Perform a delete operation: see more descriptions in the .cpp file
+  static bool PerformDelete(
+                            uint32_t tuple_id, concurrency::Transaction *txn,
+                            storage::DataTable *table,
+                            storage::TileGroup *tile_group);
+
+  static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
   // Add other stuff for Insert/Update/Delete
 
 };

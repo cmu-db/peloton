@@ -34,29 +34,51 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  
-  Transaction() { 
-    Init(INVALID_CID, 0, false); 
+  Transaction(const size_t thread_id,
+              const IsolationLevelType isolation,
+              const cid_t &read_id) {
+    Init(thread_id, isolation, read_id);
   }
 
-  Transaction(const cid_t &begin_cid, const size_t thread_id, bool ro = false) {
-    Init(begin_cid, thread_id, ro);
+  Transaction(const size_t thread_id,
+              const IsolationLevelType isolation,
+              const cid_t &read_id, 
+              const cid_t &commit_id) {
+    Init(thread_id, isolation, read_id, commit_id);
   }
 
   ~Transaction() {}
 
  private:
 
-  void Init(const cid_t &begin_cid, const size_t thread_id, const bool readonly) {
-    txn_id_ = begin_cid;
-    begin_cid_ = begin_cid;
-    thread_id_ = thread_id;
-    
-    declared_readonly_ = readonly;
+  void Init(const size_t thread_id, 
+            const IsolationLevelType isolation, 
+            const cid_t &read_id) {
+    Init(thread_id, isolation, read_id, read_id);
+  }
 
-    end_cid_ = MAX_CID;
+  void Init(const size_t thread_id, 
+            const IsolationLevelType isolation, 
+            const cid_t &read_id, 
+            const cid_t &commit_id) {
+    read_id_ = read_id;
+
+    // commit id can be set at a transaction's commit phase.
+    commit_id_ = commit_id;
+
+    // set txn_id to commit_id.
+    txn_id_ = commit_id_;
+
+    epoch_id_ = read_id_ >> 32;
+
+    thread_id_ = thread_id;
+
+    isolation_level_ = isolation;
+
     is_written_ = false;
+    
     insert_count_ = 0;
+    
     gc_set_.reset(new GCSet());
   }
 
@@ -70,11 +92,13 @@ class Transaction : public Printable {
 
   inline txn_id_t GetTransactionId() const { return txn_id_; }
 
-  inline cid_t GetBeginCommitId() const { return begin_cid_; }
+  inline cid_t GetReadId() const { return read_id_; }
 
-  inline cid_t GetEndCommitId() const { return end_cid_; }
+  inline cid_t GetCommitId() const { return commit_id_; }
 
-  inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
+  inline eid_t GetEpochId() const { return epoch_id_; }
+
+  inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   void RecordRead(const ItemPointer &);
 
@@ -88,6 +112,20 @@ class Transaction : public Printable {
   bool RecordDelete(const ItemPointer &);
 
   RWType GetRWType(const ItemPointer &);
+
+  bool IsInRWSet(const ItemPointer &location) {
+
+    oid_t tile_group_id = location.block;
+    oid_t tuple_id = location.offset;
+
+    if (rw_set_.find(tile_group_id) != rw_set_.end() &&
+        rw_set_.at(tile_group_id).find(tuple_id) !=
+            rw_set_.at(tile_group_id).end()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
@@ -110,8 +148,9 @@ class Transaction : public Printable {
     return is_written_ == false && insert_count_ == 0;
   }
 
-  inline bool IsDeclaredReadOnly() const { return declared_readonly_; }
-
+  inline IsolationLevelType GetIsolationLevel() const {
+    return isolation_level_;
+  }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -124,11 +163,17 @@ class Transaction : public Printable {
   // thread id
   size_t thread_id_;
 
-  // start commit id
-  cid_t begin_cid_;
+  // read id
+  // this id determines which tuple versions the transaction can access.
+  cid_t read_id_;
 
-  // end commit id
-  cid_t end_cid_;
+  // commit id
+  // this id determines the id attached to the tuple version written by the transaction.
+  cid_t commit_id_;
+
+  // epoch id can be extracted from read id.
+  // GC manager uses this id to check whether a version is still visible.
+  eid_t epoch_id_;
 
   ReadWriteSet rw_set_;
 
@@ -136,12 +181,13 @@ class Transaction : public Printable {
   std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
-  ResultType result_ = peloton::ResultType::SUCCESS;
+  ResultType result_ = ResultType::SUCCESS;
 
   bool is_written_;
   size_t insert_count_;
 
-  bool declared_readonly_;
+  IsolationLevelType isolation_level_;
+
 };
 
 }  // End concurrency namespace

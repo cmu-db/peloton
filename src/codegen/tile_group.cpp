@@ -37,7 +37,8 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 // ColumnLayoutInfo structs are, which we need to acquire the layout information
 // of columns in this tile group.
 //===----------------------------------------------------------------------===//
-void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
+void TileGroup::GenerateTidScan(CodeGen &codegen,
+                                llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 ScanConsumer &consumer) const {
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);

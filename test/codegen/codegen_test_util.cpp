@@ -120,10 +120,12 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn, consumer_state);
+  compiled_query->Execute(*txn,
+                          std::unique_ptr<executor::ExecutorContext> (
+                             new executor::ExecutorContext{txn}).get(),
+                          consumer_state);
 
   txn_manager.CommitTransaction(txn);
-
   return stats;
 }
 

@@ -2,29 +2,22 @@
 //
 //                         Peloton
 //
-// logger.cpp
+// checkpoint_manager_factory.cpp
 //
-// Identification: src/logging/logger.cpp
+// Identification: src/logging/checkpoint_manager_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 
-#include "logging/logger.h"
+#include "logging/checkpoint_manager_factory.h"
 
 namespace peloton {
 namespace logging {
 
-/**
- * @brief Return the logging type
- */
-LoggingType Logger::GetLoggingType() const { return logging_type; }
+CheckpointingType CheckpointManagerFactory::checkpointing_type_ = CheckpointingType::ON;
+int CheckpointManagerFactory::checkpointing_thread_count_ = 1;
 
-/**
- * @brief Return the logger type
- */
-LoggerType Logger::GetLoggerType() const { return logger_type; }
-
-}  // namespace logging
+}  // namespace gc
 }  // namespace peloton

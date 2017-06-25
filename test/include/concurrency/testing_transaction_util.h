@@ -16,17 +16,17 @@
  * These utilities are used to construct test cases for transaction and
  * concurrency control related tests. It makes you be able to describe the
  * schedule of each transaction (when to do what), i.e. you can describe the
- * serilized orders of each operation among the transactions.
+ * serialized orders of each operation among the transactions.
  *
  * To schedule a txn tests, you need a TransactionScheduler (scheduler). Then
  * write the schedule in the following way: scheduler.Txn(n).ACTION(args)
  * scheduler.Txn(0).Insert(0, 1);
  * scheduler.Txn(0).Read(0);
  * scheduler.Commit();
- *  => Notice that this order will be the serial order to excute the operaions
+ *  => Notice that this order will be the serial order to execute the operations
  *
  * There's a CreateTable() method, it will create a table with two columns:
- * key and value, and a primiary index on the key column. The table is pre-
+ * key and value, and a primary index on the key column. The table is pre-
  * populated with the following tuples:
  * (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0),(9, 0)
  *
@@ -40,13 +40,13 @@
  * *            *key*, will scan a value of -1
  * * ReadStore(key, modify): Read value with key *key* from DB, and store the
  * *                         (result+*modify*) temporarily, the stored value
- * *                         can be further refered as TXN_STORED_VALUE in
+ * *                         can be further referred as TXN_STORED_VALUE in
  * *                         any above operations.
  * * Commit(): Commit the txn
  * * Abort(): Abort the txn
  *
  * Then, run the schedules by scheduler.Run(), it will schedule the txns to
- * execute corresponding opersions.
+ * execute corresponding operations.
  * The results of executing Run() can be fetched from
  * scheduler.schedules[TXN_ID].results[]. It will store the results from Read()
  * and Scan(), in the order they executed. The txn result (SUCCESS, FAILURE)
@@ -123,11 +123,11 @@ class TestingTransactionUtil {
       oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = TEST_TABLE_OID,
       oid_t index_oid = 1234, bool need_primary_index = false);
 
-  // Create the same table as CreateTable with primary key constrainst on id and
+  // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value
   static storage::DataTable *CreatePrimaryKeyUniqueKeyTable();
 
-  // Create the same table with combined primary key constrainst on (id, value)
+  // Create the same table with combined primary key constraints on (id, value)
   static storage::DataTable *CreateCombinedPrimaryKeyTable();
 
   static bool ExecuteInsert(concurrency::Transaction *txn,
@@ -240,7 +240,7 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        txn = txn_manager->BeginReadonlyTransaction();
+        txn = txn_manager->BeginTransaction(IsolationLevelType::READ_ONLY);
       } else {
         txn = txn_manager->BeginTransaction();
       }

@@ -26,7 +26,9 @@ Query::Query(const planner::AbstractPlan &query_plan)
 // This really involves calling the init(), plan() and tearDown() functions, in
 // that order. We also need to correctly handle cases where _any_ of those
 // functions throw exceptions.
-void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
+void Query::Execute(concurrency::Transaction &txn,
+                    executor::ExecutorContext *executor_context,
+                    char *consumer_arg,
                     RuntimeStats *stats) {
   CodeGen codegen{GetCodeContext()};
 
@@ -47,6 +49,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   struct FunctionArguments {
     concurrency::Transaction *txn;
     catalog::Catalog *catalog;
+    executor::ExecutorContext *executor_context;
     char *consumer_arg;
     char rest[0];
   } PACKED;
@@ -55,6 +58,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
   func_args->txn = &txn;
   func_args->catalog = catalog::Catalog::GetInstance();
+  func_args->executor_context = executor_context;
   func_args->consumer_arg = consumer_arg;
 
   // Timer

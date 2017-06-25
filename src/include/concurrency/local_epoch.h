@@ -20,6 +20,7 @@
 #include <functional>
 #include <cstdint>
 
+#include "type/types.h"
 #include "common/platform.h"
 
 namespace peloton {
@@ -49,21 +50,19 @@ class LocalEpoch {
 
 public:
   LocalEpoch(const size_t thread_id) : 
-    epoch_lower_bound_(UINT64_MAX), 
+    epoch_id_lower_bound_(UINT64_MAX), 
     thread_id_(thread_id) {}
 
-  bool EnterEpoch(const uint64_t epoch_id);
+  bool EnterEpoch(const eid_t epoch_id, const TimestampType ts_type);
 
-  void EnterEpochRO(const uint64_t epoch_id);
-
-  void ExitEpoch(const uint64_t epoch_id);
+  void ExitEpoch(const eid_t epoch_id);
   
-  uint64_t GetMaxCommittedEpochId(const uint64_t current_epoch_id);
+  uint64_t GetExpiredEpochId(const uint64_t current_epoch_id);
 
 private:
   Spinlock epoch_lock_;
   
-  uint64_t epoch_lower_bound_;
+  uint64_t epoch_id_lower_bound_;
 
   size_t thread_id_;
   
