@@ -155,10 +155,10 @@ bool NestedLoopJoinExecutor::DExecute() {
 
             // Join predicate is false. Skip pair and continue.
             if (eval.IsFalse()) {
-              LOG_INFO("Not math join predicate");
+              LOG_TRACE("Not math join predicate");
               continue;
             }
-            LOG_INFO("Find a tuple with join predicate");
+            LOG_TRACE("Find a tuple with join predicate");
           }
           pos_lists_builder.AddRow(left_tile_row_itr_, right_tile_row_itr);
         }  // Outer loop of NLJ
