@@ -56,7 +56,7 @@ void SetupTables() {
     auto parse_tree = parser.BuildParseTree(sql);
     statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree));
     auto status = traffic_cop.ExecuteStatementPlan(
-        statement->GetPlanTree().get(), params, result, result_format);
+        statement->GetPlanTree(), params, result, result_format);
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());
   }
