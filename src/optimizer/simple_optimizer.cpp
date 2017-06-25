@@ -70,7 +70,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   // One to one Mapping
   auto stmt_type = parse_tree->GetStatements().at(0)->GetType();
 
-  auto parse_tree2 = parse_tree->GetStatements().at(0);
+  auto parse_tree2 = parse_tree->GetStatements().at(0).get();
 
   switch (stmt_type) {
     case StatementType::DROP: {
@@ -117,7 +117,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto agg_type = AggregateType::PLAIN;  // default aggregator
       std::vector<oid_t> group_by_columns;
       bool order_plan_added = false;
-      auto group_by = select_stmt->group_by;
+      auto group_by = select_stmt->group_by.get();
       expression::AbstractExpression* having = nullptr;
 
       // The HACK to make the join in tpcc work. This is written by Joy Arulraj
@@ -153,8 +153,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // Preparing the group by columns
       if (group_by != NULL) {
         LOG_TRACE("Found GROUP BY");
-        for (auto elem : *group_by->columns) {
-          auto tuple_elem = (expression::TupleValueExpression*)elem;
+        for (auto elem = group_by->columns->begin(); elem != group_by->columns->end(); ++elem) {
+          auto tuple_elem = (expression::TupleValueExpression*)elem->get();
           std::string col_name(tuple_elem->GetColumnName());
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
@@ -162,19 +162,19 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         // Having Expression needs to be prepared
         // Currently it's mostly ParserExpression
         // Needs to be prepared
-        having = group_by->having;
+        having = group_by->having.get();
       }
 
       std::vector<oid_t> column_ids;
       auto& schema = *target_table->GetSchema();
-      auto predicate = select_stmt->where_clause;
+      auto predicate = select_stmt->where_clause.get();
       bool needs_projection = false;
       expression::ExpressionUtil::TransformExpression(&schema, predicate);
       bool is_star = (*select_stmt->getSelectList())[0]->GetExpressionType() ==
                      ExpressionType::STAR;
 
-      for (auto col : *select_stmt->select_list) {
-        expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
+      for (auto col = select_stmt->select_list->begin(); col != select_stmt->select_list->end(); ++col) {
+        expression::ExpressionUtil::TransformExpression(column_ids, col->get(), schema,
                                                         needs_projection);
       }
 
@@ -190,9 +190,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       // Check if there are any aggregate functions
       bool agg_flag = false;
-      for (auto expr : *select_stmt->getSelectList()) {
+      for (auto expr = select_stmt->getSelectList()->begin(); expr != select_stmt->getSelectList()->end(); ++expr) {
         if (expression::ExpressionUtil::IsAggregateExpression(
-                expr->GetExpressionType())) {
+              (*expr)->GetExpressionType())) {
           LOG_TRACE("Query has aggregate functions");
           agg_flag = true;
           break;
@@ -218,7 +218,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           std::vector<catalog::Column> columns;
           const catalog::Schema* table_schema = target_table->GetSchema();
           for (int i = 0; i < (int)select_list.size(); i++) {
-            auto expr = select_list[i];
+            auto expr = select_list[i].get();
             // if the root of the expression is a column value we can
             // just do a direct mapping
             if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
@@ -282,10 +282,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               hash_keys.emplace_back(key);
             }
           } else {
-            for (auto col : *select_stmt->select_list) {
+            for (auto col = select_stmt->select_list->begin(); col != select_stmt->select_list->end(); ++col) {
               // Copy column for handling of unique_ptr
-              auto copy_col = col->Copy();
-              hash_keys.emplace_back(copy_col);
+              auto copy_col = (*col)->Copy();
+              hash_keys.emplace_back(std::unique_ptr<const expression::AbstractExpression>(copy_col));
             }
           }
           // Create hash plan node
@@ -346,14 +346,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         oid_t new_col_id = 0;
         oid_t agg_id = 0;
         int col_cntr_id = 0;
-        for (auto expr : *select_stmt->getSelectList()) {
+        for (auto expr = select_stmt->getSelectList()->begin(); expr != select_stmt->getSelectList()->end(); ++expr) {
           LOG_TRACE("Expression type in Select: %s",
                     ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
           // If an aggregate function is found
           if (expression::ExpressionUtil::IsAggregateExpression(
-                  expr->GetExpressionType())) {
-            auto agg_expr = (expression::AggregateExpression*)expr;
+              (*expr)->GetExpressionType())) {
+            auto agg_expr = (expression::AggregateExpression*)expr->get();
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
                 ExpressionTypeToString(expr->GetExpressionType()).c_str());
@@ -455,7 +455,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           else {
             // There are columns in the query
             agg_type = AggregateType::HASH;
-            std::string col_name(expr->GetExpressionName());
+            std::string col_name((*expr)->GetExpressionName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
             std::pair<oid_t, oid_t> inner_pair = std::make_pair(0, old_col_id);
@@ -513,8 +513,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               insertStmt->GetDatabaseName(), insertStmt->GetTableName());
 
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::InsertPlan(target_table, insertStmt->columns,
-                                  insertStmt->insert_values));
+          new planner::InsertPlan(target_table, insertStmt->columns.get(),
+                                  insertStmt->insert_values.get()));
 
       child_plan = std::move(child_InsertPlan);
     } break;
@@ -539,12 +539,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           (parser::DeleteStatement*)parse_tree2;
       auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
           deleteStmt->GetDatabaseName(), deleteStmt->GetTableName());
-      if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
+      if (CheckIndexSearchable(target_table, deleteStmt->expr.get(), key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
         auto predicate =
             expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-                deleteStmt->expr, target_table->GetIndex(index_id));
+                deleteStmt->expr.get(), target_table->GetIndex(index_id));
 
         // Create delete plan
         std::unique_ptr<planner::DeletePlan> child_DeletePlan(
@@ -571,7 +571,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       } else {
         // Create delete plan
         std::unique_ptr<planner::DeletePlan> child_DeletePlan(
-            new planner::DeletePlan(target_table, deleteStmt->expr));
+            new planner::DeletePlan(target_table, deleteStmt->expr.get()));
 
         // Create sequential scan plan
         expression::AbstractExpression* scan_expr =
@@ -606,11 +606,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           updateStmt->table->GetDatabaseName(),
           updateStmt->table->GetTableName());
 
-      auto update_clauses = updateStmt->updates;
+      auto update_clauses = updateStmt->updates.get();
 
-      for (auto clause : *update_clauses) {
-        auto clause_expr = clause->value;
-        auto columnID = target_table->GetSchema()->GetColumnID(clause->column);
+      for (auto clause = update_clauses->begin(); clause != update_clauses->end(); ++clause) {
+        auto clause_expr = (*clause)->value.get();
+        auto columnID = target_table->GetSchema()->GetColumnID((*clause)->column.get());
         auto column = target_table->GetSchema()->GetColumn(columnID);
 
         if (clause_expr->GetExpressionType() ==
@@ -622,8 +622,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           auto value_expression =
               new expression::ConstantValueExpression(value);
 
-          delete clause->value;
-          clause->value = value_expression;
+          (*clause)->value.reset(value_expression);
 
         } else {
           for (unsigned int child_index = 0;
@@ -644,23 +643,23 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         }
       }
 
-      if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
+      if (CheckIndexSearchable(target_table, updateStmt->where.get(), key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
         // TODO: This is a HACK... Because of the gross way the update plan
         // constructor is written, I have to temporarily store the pointer of
         // the where clause in the update statement and then copy is back. This
         // will be gone after we refactor the UpdatePlan to the correct way.
-        auto old_predicate = updateStmt->where;
-        updateStmt->where =
-            expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-                updateStmt->where, target_table->GetIndex(index_id));
+        auto old_predicate = updateStmt->where.release();
+        updateStmt->where.reset(expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+                old_predicate, target_table->GetIndex(index_id)));
 
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
                                     values, index_id));
-        updateStmt->where = old_predicate;
+        updateStmt->where.release();
+        updateStmt->where.reset(old_predicate);
 
         child_plan = std::move(child_UpdatePlan);
 
@@ -713,7 +712,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
   }
 
   std::unique_ptr<planner::AbstractPlan> copy_plan(
-      new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
+      new planner::CopyPlan(copy_stmt->file_path.get(), deserialize_parameters));
 
   // Next, generate a dummy select * plan for target table
   // Hard code star expression
@@ -721,15 +720,14 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
 
   // Push star expression to list
   auto select_list =
-      new std::vector<peloton::expression::AbstractExpression*>();
-  select_list->push_back(star_expr);
+      new std::vector<std::unique_ptr<expression::AbstractExpression>>();
+  select_list->push_back(std::unique_ptr<expression::AbstractExpression>(star_expr));
 
   // Construct select stmt
   std::unique_ptr<parser::SelectStatement> select_stmt(
       new parser::SelectStatement());
-  select_stmt->from_table = copy_stmt->cpy_table;
-  copy_stmt->cpy_table = nullptr;
-  select_stmt->select_list = select_list;
+  select_stmt->from_table = std::move(copy_stmt->cpy_table);
+  select_stmt->select_list.reset(select_list);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       select_stmt->from_table->GetDatabaseName(), table_name);
@@ -1145,9 +1143,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
 
   agg_plan->AddChild(std::move(nested_join_plan_node));
 
-  for (auto col : *statement->select_list) {
-    expression::ExpressionUtil::TransformExpression(
-        (catalog::Schema*)stock_table->GetSchema(), col);
+  for (auto col = statement->select_list->begin(); col != statement->select_list->end(); ++col) {
+    expression::ExpressionUtil::TransformExpression(stock_table->GetSchema(), col->get());
   }
 
   return std::move(agg_plan);
@@ -1256,13 +1253,13 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 
   // SELECT col1, col2, fun1, ... FROM A JOIN B
   else {
-    for (auto expr : select_list) {
-      expression::ExpressionUtil::TransformExpression(schemas, expr);
+    for (auto expr = select_list.begin(); expr != select_list.end(); ++expr) {
+      expression::ExpressionUtil::TransformExpression(schemas, expr->get());
 
-      auto expr_type = expr->GetExpressionType();
+      auto expr_type = (*expr)->GetExpressionType();
       // Column experssion
       if (expr_type == ExpressionType::VALUE_TUPLE) {
-        auto tup_expr = (expression::TupleValueExpression*)expr;
+        auto tup_expr = (expression::TupleValueExpression*)expr->get();
         oid_t old_col_id = -1;
         catalog::Column column;
 
@@ -1292,11 +1289,11 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
       // Function Ref
       else {
         planner::DerivedAttribute attribute;
-        attribute.expr = expr->Copy();
+        attribute.expr = (*expr)->Copy();
         attribute.attribute_info.type = attribute.expr->GetValueType();
         tl.push_back(Target(i, attribute));
         output_table_columns.push_back(catalog::Column(
-            expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+            (*expr)->GetValueType(), type::Type::GetTypeSize((*expr)->GetValueType()),
             "expr" + std::to_string(i)));
       }
       i++;

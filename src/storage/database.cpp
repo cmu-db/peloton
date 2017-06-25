@@ -29,7 +29,7 @@ Database::~Database() {
   // Clean up all the tables
   LOG_TRACE("Deleting tables from database");
   for (auto table : tables) {
-    if (table != nullptr) delete table;
+    delete table;
   }
 
   LOG_TRACE("Finish deleting tables from database");

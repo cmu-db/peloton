@@ -36,9 +36,7 @@ class DeletePlan : public AbstractPlan {
   DeletePlan() = delete;
 
   ~DeletePlan() {
-    if (expr_ != nullptr) {
-      delete expr_;
-    }
+    delete expr_;
   }
 
   explicit DeletePlan(storage::DataTable *table, bool truncate);
