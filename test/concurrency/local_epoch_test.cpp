@@ -43,51 +43,51 @@ TEST_F(LocalEpochTests, TransactionTest) {
   concurrency::LocalEpoch local_epoch(0);
   
   // a transaction enters epoch 10
-  bool rt = local_epoch.EnterEpoch(10);
+  bool rt = local_epoch.EnterEpoch(10, TimestampType::READ);
   EXPECT_EQ(rt, true);
 
-  uint64_t max_eid = local_epoch.GetMaxCommittedEpochId(11);
+  uint64_t max_eid = local_epoch.GetExpiredEpochId(11);
   EXPECT_EQ(max_eid, 9);
   
   // a transaction enters epoch 15
-  rt = local_epoch.EnterEpoch(15);
+  rt = local_epoch.EnterEpoch(15, TimestampType::READ);
   EXPECT_EQ(rt, true);
   
-  max_eid = local_epoch.GetMaxCommittedEpochId(18);
+  max_eid = local_epoch.GetExpiredEpochId(18);
   EXPECT_EQ(max_eid, 9);
   
   // now only one transaction left
   local_epoch.ExitEpoch(10);
 
-  max_eid = local_epoch.GetMaxCommittedEpochId(19);
+  max_eid = local_epoch.GetExpiredEpochId(19);
   EXPECT_EQ(max_eid, 14);
 
   // now the lower bound is 14.
   // a transaction at epoch 12 must be rejected.
-  rt = local_epoch.EnterEpoch(12);
+  rt = local_epoch.EnterEpoch(12, TimestampType::READ);
   EXPECT_EQ(rt, false);
 
   // a read-only transaction can always succeed.
-  local_epoch.EnterEpochRO(12);
+  local_epoch.EnterEpoch(12, TimestampType::SNAPSHOT_READ);
   
   // consequently, the lower bound is dropped.
-  max_eid = local_epoch.GetMaxCommittedEpochId(20);
+  max_eid = local_epoch.GetExpiredEpochId(20);
   EXPECT_EQ(max_eid, 11);
 
   local_epoch.ExitEpoch(12);
   
   // now the lower bound is returned to 14.
-  max_eid = local_epoch.GetMaxCommittedEpochId(21);
+  max_eid = local_epoch.GetExpiredEpochId(21);
   EXPECT_EQ(max_eid, 14);
 
   local_epoch.ExitEpoch(15);
 
   // the last transaction has left.
   // then max_eid should be 25 - 1.
-  max_eid = local_epoch.GetMaxCommittedEpochId(25);
+  max_eid = local_epoch.GetExpiredEpochId(25);
   EXPECT_EQ(max_eid, 24);
 
-  max_eid = local_epoch.GetMaxCommittedEpochId(30);
+  max_eid = local_epoch.GetExpiredEpochId(30);
   EXPECT_EQ(max_eid, 29);
 }
 

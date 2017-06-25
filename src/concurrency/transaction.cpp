@@ -39,11 +39,11 @@ namespace concurrency {
  *         i  |       |     d
  *  (init)-->-+---> Insert ---> Ins_Del (final)
  *
- *    r: read
+ *    r : read
  *    ro: read_own
- *    u: update
- *    d: delete
- *    i: insert
+ *    u : update
+ *    d : delete
+ *    i : insert
  */
 
 RWType Transaction::GetRWType(const ItemPointer &location) {
@@ -66,9 +66,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  if (rw_set_.find(tile_group_id) != rw_set_.end() &&
-      rw_set_.at(tile_group_id).find(tuple_id) !=
-          rw_set_.at(tile_group_id).end()) {
+  if (IsInRWSet(location)) {
     PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RWType::DELETE &&
               rw_set_.at(tile_group_id).at(tuple_id) != RWType::INS_DEL);
     return;
@@ -81,9 +79,7 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  if (rw_set_.find(tile_group_id) != rw_set_.end() &&
-      rw_set_.at(tile_group_id).find(tuple_id) !=
-      rw_set_.at(tile_group_id).end()) {
+  if (IsInRWSet(location)) {
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ) {
       type = RWType::READ_OWN;
@@ -99,10 +95,8 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
 void Transaction::RecordUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-
-  if (rw_set_.find(tile_group_id) != rw_set_.end() &&
-      rw_set_.at(tile_group_id).find(tuple_id) !=
-          rw_set_.at(tile_group_id).end()) {
+  
+  if (IsInRWSet(location)) {
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
       type = RWType::UPDATE;
@@ -122,16 +116,17 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     PL_ASSERT(false);
+  } else {
+    // consider select_for_udpate case.
+    rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
   }
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-
-  if (rw_set_.find(tile_group_id) != rw_set_.end() &&
-      rw_set_.at(tile_group_id).find(tuple_id) !=
-          rw_set_.at(tile_group_id).end()) {
+  
+  if (IsInRWSet(location)) {
     PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
@@ -144,9 +139,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  if (rw_set_.find(tile_group_id) != rw_set_.end() &&
-      rw_set_.at(tile_group_id).find(tuple_id) !=
-          rw_set_.at(tile_group_id).end()) {
+  if (IsInRWSet(location)) {
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
       type = RWType::DELETE;
@@ -172,7 +165,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
     }
     PL_ASSERT(false);
   } else {
-    PL_ASSERT(false);
+    rw_set_[tile_group_id][tuple_id] = RWType::DELETE;
   }
   return false;
 }
@@ -181,8 +174,8 @@ const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id_
-     << " Begin Commit ID : " << std::setw(4) << begin_cid_
-     << " End Commit ID : " << std::setw(4) << end_cid_
+     << " Read ID : " << std::setw(4) << read_id_
+     << " Commit ID : " << std::setw(4) << commit_id_
      << " Result : " << result_;
 
   return os.str();

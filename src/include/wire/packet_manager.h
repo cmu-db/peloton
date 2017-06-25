@@ -40,8 +40,14 @@ class PacketManager {
 
   ~PacketManager();
 
-  /* Startup packet processing logic */
-  bool ProcessStartupPacket(InputPacket* pkt);
+  /* Routine to deal with the first packet from the client */
+  int ProcessInitialPacket(InputPacket* pkt);
+
+  /* Routine to deal with general Startup message */
+  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
+
+  /* Routine to deal with SSL request message */
+  bool ProcessSSLRequestPacket(InputPacket *pkt);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
@@ -95,6 +101,7 @@ class PacketManager {
 
   // has the startup packet been received for this connection
   bool is_started = false;
+  bool ssl_sent = false;
 
   // Should we send the buffered packets right away?
   bool force_flush = false;

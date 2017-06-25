@@ -129,6 +129,39 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
                                   "444", "4", "0", "555"},
            false);
+  
+  // Something wrong with column property.
+  query = "SELECT a, b, c from test order by a + c";
+   
+  // check for plan node type
+  auto select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
+  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+  //            PlanNodeType::ORDERBY);
+
+  // test order by
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  // Should be: 11, 22
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+  query = "SELECT a from test order by c desc";
+
+  // check for plan node type
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
+  //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+  //            PlanNodeType::ORDERBY);
+
+  // test order by
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
 
   // Testing predicate
   TestUtil("SELECT c, b from test where a=1", {"333", "22"}, false);

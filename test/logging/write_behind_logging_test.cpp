@@ -62,30 +62,30 @@
 // }
 // */
 
-// // int SeqScanCount(storage::DataTable *table,
-// //                  const std::vector<oid_t> &column_ids,
-// //                  expression::AbstractExpression *predicate) {
-// //   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-// //   auto txn = txn_manager.BeginTransaction();
-// //   std::unique_ptr<executor::ExecutorContext> context(
-// //       new executor::ExecutorContext(txn));
+// int SeqScanCount(storage::DataTable *table,
+//                  const std::vector<oid_t> &column_ids,
+//                  expression::AbstractExpression *predicate) {
+//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//   auto txn = txn_manager.BeginTransaction();
+//   std::unique_ptr<executor::ExecutorContext> context(
+//       new executor::ExecutorContext(txn));
 
-// //   planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-// //   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+//   planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+//   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
-// //   EXPECT_TRUE(seq_scan_executor.Init());
-// //   auto tuple_cnt = 0;
+//   EXPECT_TRUE(seq_scan_executor.Init());
+//   auto tuple_cnt = 0;
 
-// //   while (seq_scan_executor.Execute()) {
-// //     std::unique_ptr<executor::LogicalTile> result_logical_tile(
-// //         seq_scan_executor.GetOutput());
-// //     tuple_cnt += result_logical_tile->GetTupleCount();
-// //   }
+//   while (seq_scan_executor.Execute()) {
+//     std::unique_ptr<executor::LogicalTile> result_logical_tile(
+//         seq_scan_executor.GetOutput());
+//     tuple_cnt += result_logical_tile->GetTupleCount();
+//   }
 
-// //   txn_manager.CommitTransaction(txn);
+//   txn_manager.CommitTransaction(txn);
 
-// //   return tuple_cnt;
-// // }
+//   return tuple_cnt;
+// }
 
 // //check the visibility
 // // TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {

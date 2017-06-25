@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # Determine OS platform
 UNAME=$(uname | tr "[:upper:]" "[:lower:]")
@@ -63,7 +63,14 @@ function install_package() {
 ## UBUNTU
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
-    sudo apt-get --ignore-missing -y install \
+    # Fix for LLVM-3.7 on Ubuntu 14.04
+    if [ "$DISTRO_VER" == "14.04" ]; then
+        sudo add-apt-repository 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+        sudo apt-get update
+    fi
+
+    sudo apt-get --force-yes --ignore-missing -y install \
         git \
         g++ \
         cmake \

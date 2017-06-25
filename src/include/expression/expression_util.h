@@ -18,6 +18,7 @@
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "expression/aggregate_expression.h"
+#include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
@@ -766,6 +767,17 @@ class ExpressionUtil {
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
     }
+
+    // Handle case expressions
+    if (expr->GetExpressionType() == ExpressionType::OPERATOR_CASE_EXPR) {
+      auto case_expr = (expression::CaseExpression *)expr;
+      for (int i = 0; i < (int)case_expr->GetWhenClauseSize(); i++) {
+        TransformExpression(column_mapping, column_ids,
+                            case_expr->GetWhenClauseCond(i), schemas,
+                            needs_projection, find_columns);
+      }
+    }
+
     // make sure the return types for expressions are set correctly
     // this is useful in operator expressions
     expr->DeduceExpressionType();

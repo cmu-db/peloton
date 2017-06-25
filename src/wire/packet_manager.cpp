@@ -29,7 +29,9 @@
 #include "type/value_factory.h"
 #include "wire/marshal.h"
 
+#define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
+#define UNUSED(x) (void)(x)
 
 namespace peloton {
 namespace wire {
@@ -123,15 +125,41 @@ void PacketManager::MakeHardcodedParameterStatus(
   PacketPutString(response.get(), kv.second);
   responses.push_back(std::move(response));
 }
+
 /*
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
+int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
+  LOG_INFO("protocol version: %d", proto_version);
+  bool res;
+  int res_base = 0;
+  // TODO: consider more about return value
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    res = ProcessSSLRequestPacket(pkt);
+    if (!res)
+      res_base = 0;
+    else
+      res_base = -1;
+  }
+  else {
+    res = ProcessStartupPacket(pkt, proto_version);
+    if (!res)
+      res_base = 0;
+    else
+      res_base = 1;
+  }
+
+  return res_base;
+}
+
+bool PacketManager::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+  std::string token, value;
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
@@ -179,6 +207,16 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
   // we need to send the response right away
   force_flush = true;
 
+  return true;
+}
+
+bool PacketManager::ProcessSSLRequestPacket(InputPacket *pkt) {
+  UNUSED(pkt);
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  // TODO: consider more about a proper response
+  response->msg_type = NetworkMessageType::SSL_YES;
+  responses.push_back(std::move(response));
+  force_flush = true;
   return true;
 }
 
@@ -319,18 +357,101 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
-      int rows_affected;
+      int rows_affected = 0;
+      std::string query_type;
 
-      // execute the query using tcop
-      auto status = traffic_cop_->ExecuteStatement(
-          query, result, tuple_descriptor, rows_affected, error_message,
-          thread_id);
+      std::stringstream stream(query);
+      stream >> query_type;
 
-      // check status
-      if (status == ResultType::FAILURE) {
-        SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-        break;
+      if (query_type.compare("PREPARE") == 0) {
+        std::string statement_name;
+        stream >> statement_name;
+        std::size_t pos = query.find("AS");
+        std::string statement_query = query.substr(pos + 3);
+        boost::trim(statement_query);
+
+        // Prepare statement
+        std::shared_ptr<Statement> statement(nullptr);
+
+        LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
+                  statement_query.c_str());
+
+        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
+                                                   error_message);
+        if (statement.get() == nullptr) {
+          skipped_stmt_ = true;
+          SendErrorResponse(
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          LOG_TRACE("ExecQuery Error");
+          return;
+        }
+
+        auto entry = std::make_pair(statement_name, statement);
+        statement_cache_.insert(entry);
+        for (auto table_id : statement->GetReferencedTables()) {
+          table_statement_cache_[table_id].push_back(statement.get());
+        }
+      } else if (query_type.compare("EXECUTE") == 0) {
+        std::string statement_name;
+        std::shared_ptr<Statement> statement;
+        std::vector<type::Value> param_values;
+        bool unnamed = false;
+        std::vector<std::string> tokens;
+
+        boost::split(tokens, query, boost::is_any_of("(), "));
+
+        statement_name = tokens.at(1);
+        auto statement_cache_itr = statement_cache_.find(statement_name);
+        if (statement_cache_itr != statement_cache_.end()) {
+          statement = *statement_cache_itr;
+        }
+        // Did not find statement with same name
+        else {
+          std::string error_message = "The prepared statement does not exist";
+          LOG_ERROR("%s", error_message.c_str());
+          SendErrorResponse(
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          break;
+        }
+
+        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+
+        for (std::size_t idx = 2; idx < tokens.size(); idx++) {
+          std::string param_str = tokens.at(idx);
+          boost::trim(param_str);
+          if (param_str.empty()) {
+            continue;
+          }
+          param_values.push_back(type::ValueFactory::GetVarcharValue(param_str));
+        }
+
+        if (param_values.size() > 0) {
+          statement->GetPlanTree()->SetParameterValues(&param_values);
+        }
+
+        auto status =
+            traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                             result, rows_affected, error_message, thread_id);
+
+        if (status == ResultType::SUCCESS) {
+          tuple_descriptor = std::move(statement->GetTupleDescriptor());
+        } else {
+          SendErrorResponse( 
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          break;
+        }
+      } else {
+        // execute the query using tcop
+        auto status = traffic_cop_->ExecuteStatement(
+            query, result, tuple_descriptor, rows_affected, error_message,
+            thread_id);
+
+        // check status
+        if (status == ResultType::FAILURE) {
+          SendErrorResponse(
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          break;
+        }
       }
 
       // send the attribute names
@@ -339,8 +460,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       // send the result rows
       SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
-      // TODO: should change to query_type
-      CompleteCommand(query, rows_affected);
+      CompleteCommand(query_type, rows_affected);
     } else if (query != queries.back()) {
       SendEmptyQueryResponse();
       SendReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -991,3 +1111,4 @@ void PacketManager::Reset() {
 
 }  // End wire namespace
 }  // End peloton namespace
+

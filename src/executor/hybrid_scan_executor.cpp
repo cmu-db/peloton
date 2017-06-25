@@ -409,7 +409,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
         // there must exist a visible version.
         assert(tuple_location.IsNull() == false);
 
-        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+        cid_t max_committed_cid = transaction_manager.GetExpiredCid();
 
         // check whether older version is garbage.
         if (old_end_cid < max_committed_cid) {

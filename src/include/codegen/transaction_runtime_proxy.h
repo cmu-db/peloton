@@ -24,6 +24,18 @@ class TransactionRuntimeProxy {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
+
+  // The proxy around TransactionRuntime::PerformDelete()
+  struct _PerformDelete {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
+  // The proxy around TransactionRuntime::IncreaseNumProcessed()
+  struct _IncreaseNumProcessed {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
 };
 
 }  // namepsace codegen
