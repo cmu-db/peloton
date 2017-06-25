@@ -229,12 +229,17 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
       children_expr_map.push_back(move(child_expr_map));
     }
   }
-  LOG_INFO("Children map: %ld", children_expr_map.size());
+  
+#ifdef LOG_DEBUG_ENABLED
+  LOG_DEBUG("Children map: %ld", children_expr_map.size());
   for (auto map : children_expr_map) {
     for (auto iter : map) {
-      LOG_INFO("%d", iter.second);
+      LOG_DEBUG("%d", iter.second);
     }
   }
+#endif
+  
+  
   // Derive root plan
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
