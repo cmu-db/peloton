@@ -178,7 +178,7 @@ WriteState LibeventSocket::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
     auto pkt = pkt_manager.responses[next_response_].get();
-    LOG_INFO("To send packet with type: %c", static_cast<char>(pkt->msg_type));
+    LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WRITE_NOT_READY || result == WRITE_ERROR) return result;
