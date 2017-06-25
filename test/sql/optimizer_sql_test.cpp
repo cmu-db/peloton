@@ -131,7 +131,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
            false);
   
   // Something wrong with column property.
-  query = "SELECT a, b, c from test order by a + c";
+  string query = "SELECT a, b, c from test order by a + c";
    
   // check for plan node type
   auto select_plan =
