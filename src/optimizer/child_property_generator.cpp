@@ -398,7 +398,7 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
     // the table alias.
     PL_ASSERT(child_groups_.size() == 2);
     auto &left_table_alias = child_groups_[0]->GetTableAliases();
-    auto &right_table_alias = child_groups_[1]->GetTableAliases();
+    UNUSED_ATTRIBUTE auto &right_table_alias = child_groups_[1]->GetTableAliases();
 
     for (auto child_col : child_cols) {
       auto tv_expr = (expression::TupleValueExpression *) child_col.get();
