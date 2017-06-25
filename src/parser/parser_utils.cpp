@@ -147,22 +147,23 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
 void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
   inprint("SelectStatement", num_indent);
   inprint("-> Fields:", num_indent + 1);
-  for (expression::AbstractExpression* expr : *(stmt->select_list))
-    GetExpressionInfo(expr, num_indent + 2);
+  for (auto expr = stmt->select_list->begin(); expr != stmt->select_list->end(); ++expr) {
+    GetExpressionInfo(expr->get(), num_indent + 2);
+  }
 
   inprint("-> Sources:", num_indent + 1);
   if (stmt->from_table != NULL) {
-    PrintTableRefInfo(stmt->from_table, num_indent + 2);
+    PrintTableRefInfo(stmt->from_table.get(), num_indent + 2);
   }
 
   if (stmt->where_clause != NULL) {
     inprint("-> Search Conditions:", num_indent + 1);
-    GetExpressionInfo(stmt->where_clause, num_indent + 2);
+    GetExpressionInfo(stmt->where_clause.get(), num_indent + 2);
   }
 
   if (stmt->union_select != NULL) {
     inprint("-> Union:", num_indent + 1);
-    GetSelectStatementInfo(stmt->union_select, num_indent + 2);
+    GetSelectStatementInfo(stmt->union_select.get(), num_indent + 2);
   }
 
   if (stmt->order != NULL) {
@@ -180,8 +181,8 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
 
   if (stmt->group_by != NULL) {
     inprint("-> GroupBy:", num_indent + 1);
-    for (auto column : *(stmt->group_by->columns)) {
-      inprint(column->GetInfo().data(), num_indent + 2);
+    for (auto column = stmt->group_by->columns->begin(); column != stmt->group_by->columns->end(); ++column) {
+      inprint((*column)->GetInfo().data(), num_indent + 2);
     }
     if (stmt->group_by->having) {
       inprint(stmt->group_by->having->GetInfo().data(), num_indent + 2);
@@ -200,35 +201,43 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprintU(stmt->type, num_indent + 1);
 
   if (stmt->type == CreateStatement::CreateType::kIndex) {
-    inprint(stmt->index_name, num_indent + 1);
+    inprint(stmt->index_name.get(), num_indent + 1);
     std::cout << indent(num_indent);
     printf("INDEX : table : %s unique : %d attrs : ",
            stmt->GetTableName().c_str(), stmt->unique);
-    for (auto key : *(stmt->index_attrs)) printf("%s ", key);
+    for (auto key = stmt->index_attrs->begin(); key != stmt->index_attrs->end(); ++key) {
+      printf("%s ", (*key).get());
+    }
     printf("\n");
   } else if (stmt->type == CreateStatement::CreateType::kTable) {
     inprint(stmt->GetTableName().c_str(), num_indent + 1);
   }
 
   if (stmt->columns != nullptr) {
-    for (ColumnDefinition* col : *(stmt->columns)) {
+    for (auto col = stmt->columns->begin(); col != stmt->columns->end(); ++col) {
       std::cout << indent(num_indent);
-      if (col->type == ColumnDefinition::DataType::PRIMARY) {
+      if ((*col)->type == ColumnDefinition::DataType::PRIMARY) {
         printf("-> PRIMARY KEY : ");
-        for (auto key : *(col->primary_key)) printf("%s ", key);
+        for (auto key = (*col)->primary_key->begin(); key != (*col)->primary_key->end(); ++key) {
+          printf("%s ", (*key).get());
+        }
         printf("\n");
-      } else if (col->type == ColumnDefinition::DataType::FOREIGN) {
-        printf("-> FOREIGN KEY : References %s Source : ", col->name);
-        for (auto key : *(col->foreign_key_source)) printf("%s ", key);
+      } else if ((*col)->type == ColumnDefinition::DataType::FOREIGN) {
+        printf("-> FOREIGN KEY : References %s Source : ", (*col)->name.get());
+        for (auto key = (*col)->foreign_key_source->begin(); key != (*col)->foreign_key_source->end(); ++key) {
+          printf("%s ", (*key).get());
+        }
         printf("Sink : ");
-        for (auto key : *(col->foreign_key_sink)) printf("%s ", key);
+        for (auto key = (*col)->foreign_key_sink->begin(); key != (*col)->foreign_key_sink->end(); ++key) {
+          printf("%s ", (*key).get());
+        }
         printf("\n");
       } else {
         printf(
             "-> COLUMN REF : %s %d not null : %d primary : %d unique %d varlen "
             "%lu \n",
-            col->name, col->type, col->not_null, col->primary, col->unique,
-            col->varlen);
+            (*col)->name.get(), (*col)->type, (*col)->not_null, (*col)->primary, (*col)->unique,
+            (*col)->varlen);
       }
     }
   }
@@ -239,22 +248,22 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   inprint(stmt->GetTableName().c_str(), num_indent + 1);
   if (stmt->columns != NULL) {
     inprint("-> Columns", num_indent + 1);
-    for (char* col_name : *stmt->columns) {
-      inprint(col_name, num_indent + 2);
+    for (auto col_name = stmt->columns->begin(); col_name != stmt->columns->end(); ++col_name) {
+      inprint(col_name->get(), num_indent + 2);
     }
   }
   switch (stmt->type) {
     case InsertType::VALUES:
       inprint("-> Values", num_indent + 1);
-      for (auto value_item : *stmt->insert_values) {
+      for (auto value_item = stmt->insert_values->begin(); value_item != stmt->insert_values->end(); ++stmt) {
         // TODO this is a debugging method which is currently unused.
-        for (expression::AbstractExpression* expr : *value_item) {
-          GetExpressionInfo(expr, num_indent + 2);
+        for (auto expr = (*value_item)->begin(); expr != (*value_item)->end(); ++expr) {
+          GetExpressionInfo(expr->get(), num_indent + 2);
         }
       }
       break;
     case InsertType::SELECT:
-      GetSelectStatementInfo(stmt->select, num_indent + 1);
+      GetSelectStatementInfo(stmt->select.get(), num_indent + 1);
       break;
     default:
       break;

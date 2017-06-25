@@ -50,19 +50,19 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   if (op->group_by != nullptr) {
     // Make copies of groupby columns
     vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-    for (auto col : *op->group_by->columns)
-      group_by_cols.emplace_back(col->Copy());
+    for (auto col = op->group_by->columns->begin(); col != op->group_by->columns->end(); ++op)
+      group_by_cols.emplace_back((*col)->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
-        LogicalGroupBy::make(move(group_by_cols), op->group_by->having));
+        LogicalGroupBy::make(move(group_by_cols), op->group_by->having.get()));
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
   } else {
     // Check plain aggregation
     bool aggregation = false;
     bool non_aggregation = false;
-    for (auto expr : *op->getSelectList()) {
+    for (auto expr = op->getSelectList()->begin(); expr != op->getSelectList()->end(); ++expr) {
       if (expression::ExpressionUtil::IsAggregateExpression(
-              expr->GetExpressionType()))
+            (*expr)->GetExpressionType()))
         aggregation = true;
       else
         non_aggregation = true;
@@ -196,7 +196,7 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
                                                         op->GetTableName());
 
   auto insert_expr = std::make_shared<OperatorExpression>(
-      LogicalInsert::make(target_table, op->columns, op->insert_values));
+      LogicalInsert::make(target_table, op->columns.get(), op->insert_values.get()));
 
   output_expr = insert_expr;
 }
@@ -225,7 +225,7 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
 
   auto update_expr =
       std::make_shared<OperatorExpression>(
-          LogicalUpdate::make(target_table, *op->updates));
+          LogicalUpdate::make(target_table, op->updates.get()));
 
   auto table_scan = std::make_shared<OperatorExpression>(
       LogicalGet::make(target_table, op->table->GetTableName()));

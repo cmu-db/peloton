@@ -29,12 +29,9 @@ namespace parser {
  */
 struct PrepareStatement : SQLStatement {
   PrepareStatement()
-      : SQLStatement(StatementType::PREPARE), name(NULL), query(NULL) {}
+      : SQLStatement(StatementType::PREPARE), name(nullptr), query(nullptr) {}
 
-  virtual ~PrepareStatement() {
-    delete query;
-    delete[] name;
-  }
+  virtual ~PrepareStatement() {}
 
   /**
    * @param vector of placeholders that the parser found
@@ -66,8 +63,8 @@ struct PrepareStatement : SQLStatement {
     v->Visit(this);
   }
 
-  char* name;
-  SQLStatementList* query;
+  std::unique_ptr<char[]> name;
+  std::unique_ptr<SQLStatementList> query;
   std::vector<std::unique_ptr<expression::ParameterValueExpression>>
       placeholders;
 };

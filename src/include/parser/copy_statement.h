@@ -27,25 +27,22 @@ namespace parser {
 struct CopyStatement : SQLStatement {
   CopyStatement(CopyType type)
       : SQLStatement(StatementType::COPY),
-        cpy_table(NULL),
+        cpy_table(nullptr),
         type(type),
-        file_path(NULL),
+        file_path(nullptr),
         delimiter(','){};
 
-  virtual ~CopyStatement() {
-    delete[] file_path;
-    delete cpy_table;
-  }
+  virtual ~CopyStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
-  TableRef* cpy_table;
+  std::unique_ptr<TableRef> cpy_table;
 
   CopyType type;
 
-  char* file_path;
+  std::unique_ptr<char[]> file_path;
   char delimiter;
 };
 

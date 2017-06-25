@@ -66,20 +66,14 @@ struct LimitDescription {
  * @struct GroupByDescription
  */
 struct GroupByDescription {
-  GroupByDescription() : columns(NULL), having(NULL) {}
+  GroupByDescription() : columns(nullptr), having(nullptr) {}
 
-  ~GroupByDescription() {
-    if (columns != nullptr) {
-      for (auto col : *columns) delete col;
-      delete columns;
-    }
-    delete having;
-  }
+  ~GroupByDescription() {}
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
-  std::vector<expression::AbstractExpression*>* columns;
-  expression::AbstractExpression* having;
+  std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>> columns;
+  std::unique_ptr<expression::AbstractExpression> having;
 };
 
 /**
@@ -91,55 +85,36 @@ struct GroupByDescription {
 struct SelectStatement : SQLStatement {
   SelectStatement()
       : SQLStatement(StatementType::SELECT),
-        from_table(NULL),
+        from_table(nullptr),
         select_distinct(false),
-        select_list(NULL),
-        where_clause(NULL),
-        group_by(NULL),
-        union_select(NULL),
-        order(NULL),
-        limit(NULL),
+        select_list(nullptr),
+        where_clause(nullptr),
+        group_by(nullptr),
+        union_select(nullptr),
+        order(nullptr),
+        limit(nullptr),
         is_for_update(false){};
 
-  virtual ~SelectStatement() {
-    delete from_table;
-	  
-    if (select_list != nullptr) {
-      for (auto expr : *select_list) {
-        delete expr;
-      }
-      delete select_list;
-    }
-
-    delete where_clause;
-
-    delete group_by;
-
-    delete union_select;
-
-    delete order;
-
-    delete limit;
-  }
+  virtual ~SelectStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
-  TableRef* from_table;
+  std::unique_ptr<TableRef> from_table;
   bool select_distinct;
-  std::vector<expression::AbstractExpression*>* select_list;
-  expression::AbstractExpression* where_clause;
-  GroupByDescription* group_by;
+  std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>> select_list;
+  std::unique_ptr<expression::AbstractExpression> where_clause;
+  std::unique_ptr<GroupByDescription> group_by;
 
-  SelectStatement* union_select;
-  OrderDescription* order;
-  LimitDescription* limit;
+  std::unique_ptr<SelectStatement> union_select;
+  std::unique_ptr<OrderDescription> order;
+  std::unique_ptr<LimitDescription> limit;
   bool is_for_update;
 
  public:
-  const std::vector<expression::AbstractExpression*>* getSelectList() const {
-    return select_list;
+  const std::vector<std::unique_ptr<expression::AbstractExpression>>* getSelectList() const {
+    return select_list.get();
   }
 };
 

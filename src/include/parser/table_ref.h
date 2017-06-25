@@ -61,7 +61,7 @@ struct TableRef {
     if (table_info_ == nullptr || table_info_->database_name == nullptr) {
       return DEFAULT_DB_NAME;
     }
-    return table_info_->database_name;
+    return table_info_->database_name.get();
   }
 
   // Get the name of the table
@@ -69,10 +69,10 @@ struct TableRef {
     if (alias != NULL)
       return alias;
     else
-      return table_info_->table_name;
+      return table_info_->table_name.get();
   }
 
-  inline const char* GetTableName() const { return table_info_->table_name; }
+  inline const char* GetTableName() const { return table_info_->table_name.get(); }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };

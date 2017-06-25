@@ -139,8 +139,8 @@ Operator LogicalLimit::make(int64_t limit, int64_t offset) {
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
-    storage::DataTable *target_table, std::vector<char *> *columns,
-    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+    storage::DataTable *target_table, std::vector<std::unique_ptr<char[]>> *columns,
+    std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *
         values) {
   LogicalInsert *insert_op = new LogicalInsert;
   insert_op->target_table = target_table;
@@ -163,7 +163,7 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -296,8 +296,8 @@ Operator PhysicalOuterHashJoin::make() {
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsert::make(
-    storage::DataTable *target_table, std::vector<char *> *columns,
-    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+    storage::DataTable *target_table, std::vector<std::unique_ptr<char[]>> *columns,
+    std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *
         values) {
   PhysicalInsert *insert_op = new PhysicalInsert;
   insert_op->target_table = target_table;
@@ -320,7 +320,7 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     storage::DataTable *target_table,
-    std::vector<peloton::parser::UpdateClause*> updates) {
+    std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;

@@ -296,10 +296,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    for (auto stmt : sql_stmt->GetStatements()) {
+    for (auto stmt = sql_stmt->GetStatements().begin(); stmt != sql_stmt->GetStatements().end(); ++stmt) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt);
+      if ((*stmt)->GetType() == StatementType::SELECT) {
+        auto tuple_descriptor = GenerateTupleDescriptor(stmt->get());
         statement->SetTupleDescriptor(tuple_descriptor);
       }
       break;
@@ -377,9 +377,9 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   }
 
   int count = 0;
-  for (auto expr : *select_stmt->select_list) {
+  for (auto expr = select_stmt->select_list->begin(); expr != select_stmt->select_list->end(); ++expr) {
     count++;
-    if (expr->GetExpressionType() == ExpressionType::STAR) {
+    if ((*expr)->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {
         // Get the columns of the table
         auto &table_columns = target_table->GetSchema()->GetColumns();
@@ -390,15 +390,15 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
       }
     } else {
       std::string col_name;
-      if (expr->alias.empty()) {
-        col_name = expr->expr_name_.empty()
+      if ((*expr)->alias.empty()) {
+        col_name = (*expr)->expr_name_.empty()
                        ? std::string("expr") + std::to_string(count)
-                       : expr->expr_name_;
+                       : (*expr)->expr_name_;
       } else {
-        col_name = expr->alias;
+        col_name = (*expr)->alias;
       }
       tuple_descriptor.push_back(
-          GetColumnFieldForValueType(col_name, expr->GetValueType()));
+          GetColumnFieldForValueType(col_name, (*expr)->GetValueType()));
     }
   }
 

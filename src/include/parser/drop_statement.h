@@ -35,20 +35,16 @@ struct DropStatement : TableRefStatement {
   DropStatement(EntityType type)
       : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
-  virtual ~DropStatement() {
-    delete[] database_name;
-    delete[] index_name;
-    delete[] prep_stmt;
-  }
+  virtual ~DropStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
   EntityType type;
-  char* database_name = nullptr;
-  char* index_name = nullptr;
-  char* prep_stmt = nullptr;
+  std::unique_ptr<char[]> database_name = nullptr;
+  std::unique_ptr<char[]> index_name = nullptr;
+  std::unique_ptr<char[]> prep_stmt = nullptr;
   bool missing;
 };
 
