@@ -69,8 +69,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
     context.Prepare(*left_key);
 
     // Collect the key types
-    auto type = type::Type{left_key->GetValueType(), left_key->IsNullable()};
-    left_key_type.push_back(type);
+    left_key_type.push_back(left_key->ResultType());
   }
 
   // Prepare the expressions that produce the probe-side keys
@@ -82,8 +81,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
     context.Prepare(*right_key);
 
     // Collect the key types
-    auto type = type::Type{right_key->GetValueType(), right_key->IsNullable()};
-    right_key_type.push_back(type);
+    right_key_type.push_back(right_key->ResultType());
   }
 
   // Prepare the predicate
