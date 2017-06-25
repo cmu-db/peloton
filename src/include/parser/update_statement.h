@@ -54,7 +54,9 @@ struct UpdateStatement : SQLStatement {
         updates(nullptr),
         where(nullptr) {}
 
-  virtual ~UpdateStatement() {}
+  virtual ~UpdateStatement() {
+    printf("Destory UpdateStatement\n");
+  }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);

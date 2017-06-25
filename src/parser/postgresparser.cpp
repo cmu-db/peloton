@@ -90,20 +90,18 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
 
   // Check the type of left arg and right arg before transform
   if (root->larg->type == T_RangeVar) {
-    result->left = RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg));
+    result->left.reset(RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg)));
   } else if (root->larg->type == T_RangeSubselect) {
-    result->left =
-        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg));
+    result->left.reset(RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg)));
   } else {
     delete result;
     throw NotImplementedException(StringUtil::Format(
           "Join arg type %d not supported yet...\n", root->larg->type));
   }
   if (root->rarg->type == T_RangeVar) {
-    result->right = RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg));
+    result->right.reset(RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg)));
   } else if (root->rarg->type == T_RangeSubselect) {
-    result->right =
-        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg));
+    result->right.reset(RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg)));
   } else {
     delete result;
     throw NotImplementedException(StringUtil::Format(
@@ -114,13 +112,11 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   // transform the quals, depends on AExprTranform and BoolExprTransform
   switch (root->quals->type) {
     case T_A_Expr: {
-      result->condition =
-          AExprTransform(reinterpret_cast<A_Expr*>(root->quals));
+      result->condition.reset(AExprTransform(reinterpret_cast<A_Expr*>(root->quals)));
       break;
     }
     case T_BoolExpr: {
-      result->condition =
-          BoolExprTransform(reinterpret_cast<BoolExpr*>(root->quals));
+      result->condition.reset(BoolExprTransform(reinterpret_cast<BoolExpr*>(root->quals)));
       break;
     }
     default: {
@@ -137,15 +133,15 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
 parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
   parser::TableRef* result =
       new parser::TableRef(StringToTableReferenceType("name"));
-  result->table_info_ = new parser::TableInfo();
+  result->table_info_.reset(new parser::TableInfo());
 
   if (root->schemaname) {
-    result->schema = cstrdup(root->schemaname);
+    result->schema.reset(cstrdup(root->schemaname));
     result->table_info_->database_name.reset(cstrdup(root->schemaname));
   }
 
   // parse alias
-  result->alias = AliasTransform(root->alias);
+  result->alias.reset(AliasTransform(root->alias));
 
   if (root->relname) {
     result->table_info_->table_name.reset(cstrdup(root->relname));
@@ -164,7 +160,7 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
   auto result = new parser::TableRef(StringToTableReferenceType("select"));
   result->select = reinterpret_cast<parser::SelectStatement*>(
       SelectTransform(reinterpret_cast<SelectStmt*>(root->subquery)));
-  result->alias = AliasTransform(root->alias);
+  result->alias.reset(AliasTransform(root->alias));
   if (result->select == nullptr) {
     delete result;
     result = nullptr;
@@ -182,18 +178,16 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
   Node* node;
   if (root->length > 1) {
     result = new TableRef(StringToTableReferenceType("CROSS_PRODUCT"));
-    result->list = new std::vector<TableRef*>();
+    result->list.reset(new std::vector<std::unique_ptr<TableRef>>());
     for (auto cell = root->head; cell != nullptr; cell = cell->next) {
       node = reinterpret_cast<Node*>(cell->data.ptr_value);
       switch (node->type) {
         case T_RangeVar: {
-          result->list->push_back(
-              RangeVarTransform(reinterpret_cast<RangeVar*>(node)));
+          result->list->push_back(std::unique_ptr<TableRef>(RangeVarTransform(reinterpret_cast<RangeVar*>(node))));
           break;
         }
         case T_RangeSubselect: {
-          result->list->push_back(
-              RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node)));
+          result->list->push_back(std::unique_ptr<TableRef>(RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node))));
           break;
         }
         default: {
@@ -213,7 +207,7 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
     }
     case T_JoinExpr: {
       result = new parser::TableRef(StringToTableReferenceType("join"));
-      result->join = JoinTransform(reinterpret_cast<JoinExpr*>(node));
+      result->join.reset(JoinTransform(reinterpret_cast<JoinExpr*>(node)));
       if (result->join == nullptr) {
         delete result;
         result = nullptr;

@@ -60,7 +60,7 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
     node->join->Accept(this);
   // Multiple tables
   else if (node->list != nullptr) {
-    for (parser::TableRef *table : *(node->list)) table->Accept(this);
+    for (auto table = node->list->begin(); table != node->list->end(); ++table) (*table)->Accept(this);
   }
   // Single table
   else {

@@ -50,7 +50,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   if (op->group_by != nullptr) {
     // Make copies of groupby columns
     vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-    for (auto col = op->group_by->columns->begin(); col != op->group_by->columns->end(); ++op)
+    for (auto col = op->group_by->columns->begin(); col != op->group_by->columns->end(); ++col)
       group_by_cols.emplace_back((*col)->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
         LogicalGroupBy::make(move(group_by_cols), op->group_by->having.get()));
@@ -111,27 +111,27 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
   switch (node->type) {
     case JoinType::INNER: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(node->condition));
+          LogicalInnerJoin::make(node->condition.get()));
       break;
     }
     case JoinType::OUTER: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalOuterJoin::make(node->condition));
+          LogicalOuterJoin::make(node->condition.get()));
       break;
     }
     case JoinType::LEFT: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalLeftJoin::make(node->condition));
+          LogicalLeftJoin::make(node->condition.get()));
       break;
     }
     case JoinType::RIGHT: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalRightJoin::make(node->condition));
+          LogicalRightJoin::make(node->condition.get()));
       break;
     }
     case JoinType::SEMI: {
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalSemiJoin::make(node->condition));
+          LogicalSemiJoin::make(node->condition.get()));
       break;
     }
     default:
@@ -155,7 +155,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
     std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
 
     // Construct join sequences with Cartesian products
-    for (parser::TableRef *table : *(node->list)) {
+    for (auto table = node->list->begin(); table != node->list->end(); ++table) {
       if (join_expr == nullptr) {
         join_expr =
             std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -165,7 +165,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
         next_join_expr->PushChild(join_expr);
         join_expr = next_join_expr;
       }
-      table->Accept(this);
+      (*table)->Accept(this);
       join_expr->PushChild(output_expr);
     }
     output_expr = join_expr;
@@ -173,7 +173,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   // Single table
   else {
     if (node->list != nullptr && node->list->size() == 1)
-      node = node->list->at(0);
+      node = node->list->at(0).get();
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
             node->GetDatabaseName(), node->GetTableName());

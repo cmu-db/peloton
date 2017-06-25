@@ -658,6 +658,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
                                     values, index_id));
+        updateStmt->where.release();
         updateStmt->where.reset(old_predicate);
 
         child_plan = std::move(child_UpdatePlan);

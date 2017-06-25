@@ -65,15 +65,15 @@ void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
     case TableReferenceType::JOIN:
       inprint("-> Join Table", num_indent);
       inprint("-> Left", num_indent + 1);
-      PrintTableRefInfo(table->join->left, num_indent + 2);
+      PrintTableRefInfo(table->join->left.get(), num_indent + 2);
       inprint("-> Right", num_indent + 1);
-      PrintTableRefInfo(table->join->right, num_indent + 2);
+      PrintTableRefInfo(table->join->right.get(), num_indent + 2);
       inprint("-> Join Condition", num_indent + 1);
-      GetExpressionInfo(table->join->condition, num_indent + 2);
+      GetExpressionInfo(table->join->condition.get(), num_indent + 2);
       break;
 
     case TableReferenceType::CROSS_PRODUCT:
-      for (TableRef* tbl : *table->list) PrintTableRefInfo(tbl, num_indent);
+      for (auto tbl = table->list->begin(); tbl != table->list->end(); ++tbl) PrintTableRefInfo(tbl->get(), num_indent);
       break;
 
     case TableReferenceType::INVALID:
@@ -84,7 +84,7 @@ void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
 
   if (table->alias != NULL) {
     inprint("Alias", num_indent + 1);
-    inprint(table->alias, num_indent + 2);
+    inprint(table->alias.get(), num_indent + 2);
   }
 }
 
@@ -255,7 +255,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   switch (stmt->type) {
     case InsertType::VALUES:
       inprint("-> Values", num_indent + 1);
-      for (auto value_item = stmt->insert_values->begin(); value_item != stmt->insert_values->end(); ++stmt) {
+      for (auto value_item = stmt->insert_values->begin(); value_item != stmt->insert_values->end(); ++value_item) {
         // TODO this is a debugging method which is currently unused.
         for (auto expr = (*value_item)->begin(); expr != (*value_item)->end(); ++expr) {
           GetExpressionInfo(expr->get(), num_indent + 2);

@@ -78,7 +78,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   auto parse_tree = parser.BuildParseTree(selectSQL);
   auto selectStmt =
-      dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0));
+      dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
 
   oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
@@ -90,11 +90,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check select_list
   LOG_INFO("Checking select list");
   auto tupleExpr =
-      (expression::TupleValueExpression*)(*selectStmt->select_list)[0];
+      (expression::TupleValueExpression*)(*selectStmt->select_list)[0].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   EXPECT_EQ(type::Type::TypeId::INTEGER, tupleExpr->GetValueType());
-  tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1];
+  tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   EXPECT_EQ(type::Type::TypeId::VARCHAR, tupleExpr->GetValueType());
@@ -120,11 +120,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check Group By and Having
   LOG_INFO("Checking group by");
   tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0);
+      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0).get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1);
+      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1).get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   tupleExpr =
@@ -143,7 +143,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor());
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
+  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
   try {
     binder->BindNameToNode(selectStmt);
     EXPECT_TRUE(false);
@@ -155,7 +155,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor());
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
+  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
   LOG_INFO("Checking where clause");
   tupleExpr =
@@ -170,13 +170,13 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor());
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
+  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
   tupleExpr =
-      (expression::TupleValueExpression*)(selectStmt->select_list->at(0));
+      (expression::TupleValueExpression*)(selectStmt->select_list->at(0).get());
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));
   tupleExpr =
-      (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
+      (expression::TupleValueExpression*)(selectStmt->select_list->at(1).get());
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
@@ -203,7 +203,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt =
-      dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));
+      dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(deleteStmt);
 
   LOG_INFO("Checking first condition in where clause");

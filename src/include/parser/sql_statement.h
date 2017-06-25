@@ -88,7 +88,9 @@ class SQLStatementList : public Printable {
     AddStatement(stmt);
   };
 
-  virtual ~SQLStatementList() {}
+  virtual ~SQLStatementList() {
+    free((char*)parser_msg);
+  }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(std::unique_ptr<SQLStatement>(stmt)); }
 
@@ -103,7 +105,7 @@ class SQLStatementList : public Printable {
 
   std::vector<std::unique_ptr<SQLStatement>> statements;
   bool is_valid;
-  std::unique_ptr<const char[]> parser_msg;
+  const char* parser_msg;
   int error_line;
   int error_col;
 };
