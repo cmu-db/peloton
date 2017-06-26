@@ -31,6 +31,9 @@ type::Value TupleValueExpression::Evaluate(
 
 hash_t TupleValueExpression::Hash() const {
   hash_t hash = HashUtil::Hash(&exp_type_);
+  if (!table_name_.empty())
+    hash = HashUtil::CombineHashes(
+        hash, HashUtil::HashBytes(table_name_.c_str(), table_name_.length()));
   hash = HashUtil::CombineHashes(hash,
                                  HashUtil::Hash(&(std::get<0>(bound_obj_id_))));
   hash = HashUtil::CombineHashes(hash,

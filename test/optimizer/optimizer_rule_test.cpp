@@ -57,7 +57,7 @@ TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   // Setup rule
   InnerJoinCommutativity rule;
 
-  EXPECT_TRUE(rule.Check(join));
+  EXPECT_TRUE(rule.Check(join, nullptr));
 
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
   rule.Transform(join, outputs);

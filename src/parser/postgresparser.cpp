@@ -94,20 +94,31 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   } else if (root->larg->type == T_RangeSubselect) {
     result->left =
         RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg));
+  } else if (root->larg->type == T_JoinExpr) {
+    TableRef *l_table_ref = new TableRef(TableReferenceType::JOIN);
+    l_table_ref->join =
+        JoinTransform(reinterpret_cast<JoinExpr*>(root->larg));
+    result->left = l_table_ref;
   } else {
     delete result;
     throw NotImplementedException(StringUtil::Format(
-          "Join arg type %d not supported yet...\n", root->larg->type));
+        "Join arg type %d not supported yet...\n", root->larg->type));
   }
   if (root->rarg->type == T_RangeVar) {
     result->right = RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg));
   } else if (root->rarg->type == T_RangeSubselect) {
-    result->right =
+    result->right = 
         RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg));
+  } else if (root->rarg->type == T_JoinExpr) {
+
+    TableRef *r_table_ref = new TableRef(TableReferenceType::JOIN);
+    r_table_ref->join =
+        JoinTransform(reinterpret_cast<JoinExpr*>(root->rarg));
+    result->right = r_table_ref;
   } else {
     delete result;
     throw NotImplementedException(StringUtil::Format(
-          "Join arg type %d not supported yet...\n", root->larg->type));
+        "Join arg type %d not supported yet...\n", root->larg->type));
     return nullptr;
   }
 
@@ -178,6 +189,7 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
+  if (root == nullptr) return nullptr;
   parser::TableRef* result = nullptr;
   Node* node;
   if (root->length > 1) {
@@ -198,7 +210,7 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
         }
         default: {
           throw NotImplementedException(StringUtil::Format(
-          "From Type %d not supported yet...", node->type));
+              "From Type %d not supported yet...", node->type));
         }
       }
     }
@@ -225,8 +237,8 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
       break;
     }
     default: {
-      throw NotImplementedException(StringUtil::Format(
-          "From Type %d not supported yet...", node->type));
+      throw NotImplementedException(
+          StringUtil::Format("From Type %d not supported yet...", node->type));
     }
   }
 
@@ -387,8 +399,8 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
       }
       exprs->push_back(expr);
     } else {
-      throw NotImplementedException(StringUtil::Format(
-          "ORDER BY list member type %d\n", temp->type));
+      throw NotImplementedException(
+          StringUtil::Format("ORDER BY list member type %d\n", temp->type));
     }
   }
   result->exprs = exprs;
@@ -418,8 +430,8 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
           type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
       break;
     default:
-      throw NotImplementedException(StringUtil::Format(
-          "Value type %d not supported yet...\n", val.type));
+      throw NotImplementedException(
+          StringUtil::Format("Value type %d not supported yet...\n", val.type));
   }
   return result;
 }
@@ -433,13 +445,14 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = nullptr;
-  std::string fun_name =
-      StringUtil::Lower(
-          (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str);
+  std::string fun_name = StringUtil::Lower(
+      (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))
+          ->val.str);
 
   if (!IsAggregateFunction(fun_name)) {
     // Normal functions (i.e. built-in functions or UDFs)
-    fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))->val.str;
+    fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))
+                   ->val.str;
     std::vector<expression::AbstractExpression*> children;
     for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
       auto expr_node = (Node*) cell->data.ptr_value;
@@ -453,16 +466,15 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
       }
       children.push_back(child_expr);
     }
-    result = new expression::FunctionExpression(
-        fun_name.c_str(), children);
-  }
-  else {
+    result = new expression::FunctionExpression(fun_name.c_str(), children);
+  } else {
     // Aggregate function
     auto agg_fun_type = StringToExpressionType("AGGREGATE_" + fun_name);
     if (root->agg_star) {
-      expression::AbstractExpression *children = new expression::StarExpression();
-      result = new expression::AggregateExpression(
-          agg_fun_type, false, children);
+      expression::AbstractExpression* children =
+          new expression::StarExpression();
+      result =
+          new expression::AggregateExpression(agg_fun_type, false, children);
     } else {
       if (root->args->length < 2) {
         // auto children_expr_list = TargetTransform(root->args);
@@ -475,8 +487,8 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
           throw NotImplementedException(
               StringUtil::Format("Exception thrown in aggregation function:\n%s", e.what()));
         }
-        result = new expression::AggregateExpression(
-            agg_fun_type, root->agg_distinct, child);
+        result = new expression::AggregateExpression(agg_fun_type,
+                                                     root->agg_distinct, child);
       } else {
         throw NotImplementedException(
             "Aggregation over multiple columns not supported yet...\n");
@@ -617,8 +629,8 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     target_type = StringToExpressionType("COMPARE_DISTINCT_FROM");
   }
   if (target_type == ExpressionType::INVALID) {
-    throw NotImplementedException(StringUtil::Format(
-          "COMPARE type %s not supported yet...\n", name));
+    throw NotImplementedException(
+        StringUtil::Format("COMPARE type %s not supported yet...\n", name));
   }
 
   expression::AbstractExpression* left_expr = nullptr;
@@ -642,7 +654,7 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
 
 
   int type_id = static_cast<int>(target_type);
-  if (type_id <= 4) {
+  if (type_id <= 6) {
     result = new expression::OperatorExpression(
         target_type, StringToTypeId("INVALID"), left_expr, right_expr);
   } else if (((10 <= type_id) && (type_id <= 17)) || (type_id == 20)) {
@@ -712,8 +724,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
   } else if (strcmp(name, "varbinary") == 0) {
     data_type = ColumnDefinition::DataType::VARBINARY;
   } else {
-    throw NotImplementedException(StringUtil::Format(
-        "Column DataType %s not supported yet...\n", name));
+    throw NotImplementedException(
+        StringUtil::Format("Column DataType %s not supported yet...\n", name));
   }
 
   // Transform Varchar len
@@ -724,9 +736,9 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     if (node->type == T_A_Const) {
       if (reinterpret_cast<A_Const*>(node)->val.type != T_Integer) {
         delete result;
-        throw NotImplementedException(StringUtil::Format(
-          "typmods of type %d not supported yet...\n",
-                  reinterpret_cast<A_Const*>(node)->val.type));
+        throw NotImplementedException(
+            StringUtil::Format("typmods of type %d not supported yet...\n",
+                               reinterpret_cast<A_Const*>(node)->val.type));
       }
       result->varlen =
           static_cast<size_t>(reinterpret_cast<A_Const*>(node)->val.val.ival);
@@ -756,14 +768,17 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->table_info_->table_name = cstrdup(constraint->pktable->relname);
         // Reference column
         if (constraint->pk_attrs != nullptr)
-          for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
-               attr_cell = attr_cell->next) {
-            value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+          for (auto attr_cell = constraint->pk_attrs->head;
+               attr_cell != nullptr; attr_cell = attr_cell->next) {
+            value* attr_val =
+                reinterpret_cast<value*>(attr_cell->data.ptr_value);
             result->foreign_key_sink->push_back(cstrdup(attr_val->val.str));
           }
         // Action type
-        result->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
-        result->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        result->foreign_key_delete_action =
+            CharToActionType(constraint->fk_del_action);
+        result->foreign_key_update_action =
+            CharToActionType(constraint->fk_upd_action);
         // Match type
         result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
       }
@@ -850,15 +865,17 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         // Update Reference Table
         col->table_info_->table_name = cstrdup(constraint->pktable->relname);
         // Action type
-        col->foreign_key_delete_action = CharToActionType(constraint->fk_del_action);
-        col->foreign_key_update_action = CharToActionType(constraint->fk_upd_action);
+        col->foreign_key_delete_action =
+            CharToActionType(constraint->fk_del_action);
+        col->foreign_key_update_action =
+            CharToActionType(constraint->fk_upd_action);
         // Match type
         col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
 
         result->columns->push_back(col);
       } else {
         throw NotImplementedException(StringUtil::Format(
-          "Constraint of type %d not supported yet", node->type));
+            "Constraint of type %d not supported yet", node->type));
       }
     } else {
       delete result->table_info_;
@@ -1004,11 +1021,11 @@ PostgresParser::ValueListsTransform(List* root) {
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
       else if (expr->type == T_A_Const)
         cur_result->push_back(ConstTransform((A_Const*)expr));
-      else if (expr->type == T_SetToDefault){
+      else if (expr->type == T_SetToDefault) {
         // TODO handle default type
         // add corresponding expression for
         // default to cur_result
-        cur_result->push_back(nullptr); 
+        cur_result->push_back(nullptr);
       }
     }
     result->push_back(cur_result);
@@ -1127,7 +1144,7 @@ parser::TransactionStatement* PostgresParser::TransactionTransform(
     return new parser::TransactionStatement(TransactionStatement::kRollback);
   } else {
     throw NotImplementedException(StringUtil::Format(
-          "Commmand type %d not supported yet.\n", root->kind));
+        "Commmand type %d not supported yet.\n", root->kind));
   }
 }
 
@@ -1232,8 +1249,7 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
 }
 
 // Call postgres's parser and start transforming it into Peloton's parse tree
-parser::SQLStatementList* PostgresParser::ParseSQLString(
-    const char* text) {
+parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto ctx = pg_query_parse_init();
   auto result = pg_query_parse(text);
   if (result.error) {
@@ -1247,7 +1263,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   }
 
   // DEBUG only. Comment this out in release mode
-//  print_pg_parse_tree(result.tree);
+  //   print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
@@ -1264,7 +1280,7 @@ PostgresParser& PostgresParser::GetInstance() {
   static PostgresParser parser;
   return parser;
 }
-  
+
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);

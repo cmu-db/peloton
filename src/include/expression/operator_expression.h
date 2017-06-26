@@ -72,7 +72,11 @@ class OperatorExpression : public AbstractExpression {
     // if we are a decimal or int we should take the highest type id of both
     // children
     // This relies on a particular order in types.h
-    auto type =
+    if (exp_type_ == ExpressionType::OPERATOR_NOT) {
+      return_value_type_ = type::Type::BOOLEAN;
+      return;
+    }
+      auto type =
         std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
     PL_ASSERT(type <= type::Type::DECIMAL);
     return_value_type_ = type;

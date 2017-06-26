@@ -32,6 +32,7 @@
 #include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/aggregate_expression.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
