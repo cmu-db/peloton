@@ -137,4 +137,14 @@ namespace peloton {
   DISALLOW_COPY(cname); \
   DISALLOW_MOVE(cname);
 
+//===----------------------------------------------------------------------===//
+// LLVM version checking macros
+//===----------------------------------------------------------------------===//
+
+#define LLVM_VERSION_GE(major, minor) \
+  (LLVM_VERSION_MAJOR >= (major) && LLVM_VERSION_MINOR >= (minor))
+
+#define LLVM_VERSION_EQ(major, minor) \
+  (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR == (minor))
+
 }  // End peloton namespace
