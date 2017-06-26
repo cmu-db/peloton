@@ -44,6 +44,9 @@ class ProjectionExecutor : public AbstractExecutor {
 
   /** @brief Schema of projected tuples. */
   const catalog::Schema *schema_ = nullptr;
+
+  /** @brief Flag to indicate whether the execution has finished for SELECT without FROM */
+  bool finished_ = false;
 };
 
 } /* namespace executor */

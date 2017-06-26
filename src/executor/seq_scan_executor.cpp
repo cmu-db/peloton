@@ -18,10 +18,15 @@
 #include <numeric>
 
 #include "type/types.h"
+#include "type/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/conjunction_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/comparison_expression.h"
 #include "common/container_tuple.h"
 #include "planner/create_plan.h"
 #include "storage/data_table.h"
@@ -58,6 +63,8 @@ bool SeqScanExecutor::DInit() {
 
   current_tile_group_offset_ = START_OID;
 
+  old_predicate_ = predicate_;
+
   if (target_table_ != nullptr) {
     table_tile_group_count_ = target_table_->GetTileGroupCount();
 
@@ -78,8 +85,8 @@ bool SeqScanExecutor::DExecute() {
 
   // Scanning over a logical tile.
   if (children_.size() == 1 &&
-      //There will be a child node on the create index scenario,
-      //but we don't want to use this execution flow
+      // There will be a child node on the create index scenario,
+      // but we don't want to use this execution flow
       !(GetRawNode()->GetChildren().size() > 0 &&
         GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
             PlanNodeType::CREATE &&
@@ -119,16 +126,16 @@ bool SeqScanExecutor::DExecute() {
   }
   // Scanning a table
   else if (children_.size() == 0 ||
-           //If we are creating an index, there will be a child
+           // If we are creating an index, there will be a child
            (children_.size() == 1 &&
-            //This check is only needed to pass seq_scan_test
-            //unless it is possible to add a executor child
-            //without a corresponding plan.
+            // This check is only needed to pass seq_scan_test
+            // unless it is possible to add a executor child
+            // without a corresponding plan.
             GetRawNode()->GetChildren().size() > 0 &&
-            //Check if the plan is what we actually expect.
+            // Check if the plan is what we actually expect.
             GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
                 PlanNodeType::CREATE &&
-            //If it is, confirm it is for indexes
+            // If it is, confirm it is for indexes
             ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
                     ->GetCreateType() == CreateType::INDEX)) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
@@ -137,9 +144,9 @@ bool SeqScanExecutor::DExecute() {
     PL_ASSERT(column_ids_.size() > 0);
     if (children_.size() > 0 && !index_done_) {
       children_[0]->Execute();
-      //This stops continuous executions due to
-      //a parent and avoids multiple creations
-      //of the same index.
+      // This stops continuous executions due to
+      // a parent and avoids multiple creations
+      // of the same index.
       index_done_ = true;
     }
     
@@ -220,5 +227,81 @@ bool SeqScanExecutor::DExecute() {
   return false;
 }
 
+// Update Predicate expression
+// this is used in the NLJoin executor
+void SeqScanExecutor::UpdatePredicate(const std::vector<oid_t> &column_ids,
+                                      const std::vector<type::Value> &values) {
+  std::vector<oid_t> predicate_column_ids;
+
+  PL_ASSERT(column_ids.size() <= column_ids_.size());
+
+  // columns_ids is the column id
+  // in the join executor, should
+  // convert to the column id in the
+  // seq scan executor
+  for (auto column_id : column_ids) {
+    predicate_column_ids.push_back(column_ids_[column_id]);
+  }
+
+  expression::AbstractExpression *new_predicate =
+      values.size() != 0 ? ColumnsValuesToExpr(predicate_column_ids, values, 0)
+                         : nullptr;
+
+  // combine with original predicate
+  if (old_predicate_ != nullptr) {
+    expression::AbstractExpression *lexpr = new_predicate,
+                                   *rexpr = old_predicate_->Copy();
+
+    new_predicate = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, lexpr, rexpr);
+  }
+
+  // Currently a hack that prevent memory leak
+  // we should eventually make prediate_ a unique_ptr
+  new_predicate_.reset(new_predicate);
+  predicate_ = new_predicate;
+}
+
+// Transfer a list of equality predicate
+// to a expression tree
+expression::AbstractExpression *SeqScanExecutor::ColumnsValuesToExpr(
+    const std::vector<oid_t> &predicate_column_ids,
+    const std::vector<type::Value> &values, size_t idx) {
+  if (idx + 1 == predicate_column_ids.size())
+    return ColumnValueToCmpExpr(predicate_column_ids[idx], values[idx]);
+
+  // recursively build the expression tree
+  expression::AbstractExpression *lexpr = ColumnValueToCmpExpr(
+                                     predicate_column_ids[idx], values[idx]),
+                                 *rexpr = ColumnsValuesToExpr(
+                                     predicate_column_ids, values, idx + 1);
+
+  expression::AbstractExpression *root_expr =
+      new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
+                                            lexpr, rexpr);
+
+  root_expr->DeduceExpressionType();
+  return root_expr;
+}
+
+expression::AbstractExpression *SeqScanExecutor::ColumnValueToCmpExpr(
+    const oid_t column_id, const type::Value &value) {
+  expression::AbstractExpression *lexpr =
+      new expression::TupleValueExpression("");
+  reinterpret_cast<expression::TupleValueExpression *>(lexpr)->SetValueType(
+      target_table_->GetSchema()->GetColumn(column_id).GetType());
+  reinterpret_cast<expression::TupleValueExpression *>(lexpr)
+      ->SetValueIdx(column_id);
+
+  expression::AbstractExpression *rexpr =
+      new expression::ConstantValueExpression(value);
+
+  expression::AbstractExpression *root_expr =
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL, lexpr,
+                                           rexpr);
+
+  root_expr->DeduceExpressionType();
+  return root_expr;
+}
 }  // namespace executor
 }  // namespace peloton

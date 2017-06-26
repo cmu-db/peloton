@@ -25,6 +25,8 @@ class PropertySet {
  public:
   PropertySet();
 
+  PropertySet(std::vector<std::shared_ptr<Property>> properties);
+
   const std::vector<std::shared_ptr<Property>> &Properties() const;
 
   void AddProperty(std::shared_ptr<Property> property);

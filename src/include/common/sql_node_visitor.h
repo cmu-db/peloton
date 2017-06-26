@@ -56,24 +56,24 @@ class SqlNodeVisitor {
  public:
   virtual ~SqlNodeVisitor(){};
 
-  virtual void Visit(const parser::SelectStatement *) = 0;
+  virtual void Visit(const parser::SelectStatement *) {}
 
   // Some sub query nodes inside SelectStatement
-  virtual void Visit(const parser::JoinDefinition *) = 0;
-  virtual void Visit(const parser::TableRef *) = 0;
-  virtual void Visit(const parser::GroupByDescription *) = 0;
-  virtual void Visit(const parser::OrderDescription *) = 0;
-  virtual void Visit(const parser::LimitDescription *) = 0;
+  virtual void Visit(const parser::JoinDefinition *) {}
+  virtual void Visit(const parser::TableRef *) {}
+  virtual void Visit(const parser::GroupByDescription *) {}
+  virtual void Visit(const parser::OrderDescription *) {}
+  virtual void Visit(const parser::LimitDescription *) {}
 
-  virtual void Visit(const parser::CreateStatement *) = 0;
-  virtual void Visit(const parser::InsertStatement *) = 0;
-  virtual void Visit(const parser::DeleteStatement *) = 0;
-  virtual void Visit(const parser::DropStatement *) = 0;
-  virtual void Visit(const parser::PrepareStatement *) = 0;
-  virtual void Visit(const parser::ExecuteStatement *) = 0;
-  virtual void Visit(const parser::TransactionStatement *) = 0;
-  virtual void Visit(const parser::UpdateStatement *) = 0;
-  virtual void Visit(const parser::CopyStatement *) = 0;
+  virtual void Visit(const parser::CreateStatement *) {}
+  virtual void Visit(const parser::InsertStatement *) {}
+  virtual void Visit(const parser::DeleteStatement *) {}
+  virtual void Visit(const parser::DropStatement *) {}
+  virtual void Visit(const parser::PrepareStatement *) {}
+  virtual void Visit(const parser::ExecuteStatement *) {}
+  virtual void Visit(const parser::TransactionStatement *) {}
+  virtual void Visit(const parser::UpdateStatement *) {}
+  virtual void Visit(const parser::CopyStatement *) {}
 
   virtual void Visit(expression::ComparisonExpression *expr);
   virtual void Visit(expression::AggregateExpression *expr);

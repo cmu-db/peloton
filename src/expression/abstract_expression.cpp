@@ -13,6 +13,7 @@
 #include <string>
 #include "expression/abstract_expression.h"
 #include "util/hash_util.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {
@@ -22,6 +23,11 @@ void AbstractExpression::DeduceExpressionName() {
   if (!alias.empty()) return;
 
   for (auto& child : children_) child->DeduceExpressionName();
+
+  // Aggregate expression already has correct expr_name_
+  if (ExpressionUtil::IsAggregateExpression(exp_type_))
+    return;
+
   auto op_str = ExpressionTypeToString(exp_type_, true);
   auto children_size = children_.size();
   PL_ASSERT(children_size <= 2);

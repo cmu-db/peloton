@@ -154,6 +154,11 @@ struct SelectStatement : SQLStatement {
   const std::vector<expression::AbstractExpression*>* getSelectList() const {
     return select_list;
   }
+
+  void UpdateWhereClause(expression::AbstractExpression* expr) {
+    delete where_clause;
+    where_clause = expr;
+  }
 };
 
 }  // End parser namespace

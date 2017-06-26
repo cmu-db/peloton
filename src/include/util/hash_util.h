@@ -22,6 +22,9 @@ using hash_t = std::size_t;
 
 class HashUtil {
 
+ private:
+  const static hash_t prime_factor = 10000019;
+
  public:
 /* Taken from
  * https://github.com/greenplum-db/gpos/blob/b53c1acd6285de94044ff91fbee91589543feba1/libgpos/src/utils.cpp#L126
@@ -39,6 +42,10 @@ class HashUtil {
     both[0] = l;
     both[1] = r;
     return HashBytes((char *) both, sizeof(hash_t) * 2);
+  }
+
+  static inline hash_t SumHashes(hash_t l, hash_t r) {
+    return (l % prime_factor + r % prime_factor) % prime_factor;
   }
 
   template<typename T>
