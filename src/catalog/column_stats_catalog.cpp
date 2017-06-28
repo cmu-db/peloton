@@ -10,10 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
+
+#include "catalog/catalog.h"
+#include "executor/logical_tile.h"
 #include "optimizer/stats/column_stats_collector.h"
-#include "type/type.h"
+#include "storage/data_table.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace catalog {
