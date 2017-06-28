@@ -25,7 +25,7 @@ namespace codegen {
 // Get the symbol name for ValuesRuntime::OutputTinyInt()
 const std::string &ValuesRuntimeProxy::_OutputBoolean::GetFunctionName() {
   static const std::string kOutputTinyIntFnName =
-      "_ZN7peloton7codegen13ValuesRuntime13OutputTinyIntEPcja";
+      "_ZN7peloton7codegen13ValuesRuntime10OutputBoolEPcjb";
   return kOutputTinyIntFnName;
 }
 
@@ -42,7 +42,7 @@ llvm::Function *ValuesRuntimeProxy::_OutputBoolean::GetFunction(
   auto *value_type = ValueProxy::GetType(codegen);
   auto *fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
-      {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int16Type()},
+      {value_type->getPointerTo(), codegen.Int64Type(), codegen.BoolType()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
