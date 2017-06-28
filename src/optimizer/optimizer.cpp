@@ -36,6 +36,8 @@
 #include "planner/populate_index_plan.h"
 #include "planner/analyze_plan.h"
 
+#include "storage/data_table.h"
+
 #include "binder/bind_node_visitor.h"
 
 using std::vector;
