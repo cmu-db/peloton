@@ -363,24 +363,24 @@ typedef struct Constraint
 {
   NodeTag		type;
   ConstrType	contype;		/* see above */
-  
+
   /* Fields used for most/all constraint types: */
   char	   *conname;		/* Constraint name, or NULL if unnamed */
   bool		deferrable;		/* DEFERRABLE? */
   bool		initdeferred;	/* INITIALLY DEFERRED? */
   int			location;		/* token location, or -1 if unknown */
-  
+
   /* Fields used for constraints with expressions (CHECK and DEFAULT): */
   bool		is_no_inherit;	/* is constraint non-inheritable? */
   Node	   *raw_expr;		/* expr, as untransformed parse tree */
   char	   *cooked_expr;	/* expr, as nodeToString representation */
-  
+
   /* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
   List	   *keys;			/* String nodes naming referenced column(s) */
-  
+
   /* Fields used for EXCLUSION constraints: */
   List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
-  
+
   /* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
   List	   *options;		/* options from WITH clause */
   char	   *indexname;		/* existing index to use; otherwise NULL */
@@ -388,7 +388,7 @@ typedef struct Constraint
   /* These could be, but currently are not, used for UNIQUE/PKEY: */
   char	   *access_method;	/* index access method; NULL for default */
   Node	   *where_clause;	/* partial index predicate */
-  
+
   /* Fields used for FOREIGN KEY constraints: */
   RangeVar   *pktable;		/* Primary key table */
   List	   *fk_attrs;		/* Attributes of foreign key */
@@ -398,7 +398,7 @@ typedef struct Constraint
   char		fk_del_action;	/* ON DELETE action */
   List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */
   Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former self */
-  
+
   /* Fields used for constraints that allow a NOT VALID specification */
   bool		skip_validation;	/* skip validation of existing rows? */
   bool		initially_valid;	/* mark the new constraint as valid? */
@@ -625,3 +625,22 @@ typedef struct ParamRef
   int			number;			/* the number of the parameter */
   int			location;		/* token location, or -1 if unknown */
 } ParamRef;
+
+typedef enum VacuumOption
+{
+	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
+	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
+	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
+	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
+	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
+	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
+	VACOPT_SKIPTOAST = 1 << 6	/* don't process the TOAST table, if any */
+} VacuumOption;
+
+typedef struct VacuumStmt
+{
+	NodeTag		type;
+	int			options;		/* OR of VacuumOption flags */
+	RangeVar   *relation;		/* single table to process, or NULL */
+	List	   *va_cols;		/* list of column names, or NIL for all */
+} VacuumStmt;

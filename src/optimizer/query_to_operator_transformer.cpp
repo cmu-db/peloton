@@ -273,6 +273,8 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
 }
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
+void QueryToOperatorTransformer::Visit(
+    UNUSED_ATTRIBUTE const parser::AnalyzeStatement *op) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

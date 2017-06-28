@@ -122,6 +122,8 @@ void QueryPropertyExtractor::Visit(
 }
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
+void QueryPropertyExtractor::Visit(
+    UNUSED_ATTRIBUTE const parser::AnalyzeStatement *op) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

@@ -599,6 +599,7 @@ enum class PlanNodeType {
   DROP = 33,
   CREATE = 34,
   POPULATE_INDEX = 35,
+  ANALYZE = 36,
 
   // Communication Nodes
   SEND = 40,
@@ -658,7 +659,8 @@ enum class StatementType {
   RENAME = 11,                // rename statement type
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
-  COPY = 14                   // copy type
+  COPY = 14,                  // copy type
+  ANALYZE = 15                // analyze type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
