@@ -72,7 +72,7 @@ llvm::Function *ValuesRuntimeProxy::_OutputTinyInt::GetFunction(
   auto *value_type = ValueProxy::GetType(codegen);
   auto *fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
-      {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int16Type()},
+      {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int8Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
@@ -185,6 +185,34 @@ llvm::Function *ValuesRuntimeProxy::_OutputDouble::GetFunction(
   auto *fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.DoubleType()},
+      false);
+  return codegen.RegisterFunction(fn_name, fn_type);
+}
+
+//===----------------------------------------------------------------------===//
+// OUTPUT DATE
+//===----------------------------------------------------------------------===//
+
+const std::string &ValuesRuntimeProxy::_OutputDate::GetFunctionName() {
+  static const std::string kOutputTimestampFnName =
+      "_ZN7peloton7codegen13ValuesRuntime10OutputDateEPcji";
+  return kOutputTimestampFnName;
+}
+
+llvm::Function *ValuesRuntimeProxy::_OutputDate::GetFunction(
+    CodeGen &codegen) {
+  const std::string &fn_name = GetFunctionName();
+
+  // Has the function already been registered?
+  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+  if (llvm_fn != nullptr) {
+    return llvm_fn;
+  }
+
+  auto *value_type = ValueProxy::GetType(codegen);
+  auto *fn_type = llvm::FunctionType::get(
+      codegen.VoidType(),
+      {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int32Type()},
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
