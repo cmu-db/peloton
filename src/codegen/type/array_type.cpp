@@ -44,7 +44,7 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 }  // anonymous namespace
 
-// Initialize the BIGINT SQL type with the configured type system
+// Initialize the ARRAY SQL type with the configured type system
 Array::Array()
     : SqlType(peloton::type::TypeId::ARRAY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
