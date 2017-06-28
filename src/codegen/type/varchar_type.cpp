@@ -171,7 +171,7 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 // TINYINT TYPE CONFIGURATION
 //===----------------------------------------------------------------------===//
 
-// Initialize the TINYINT SQL type with the configured type system
+// Initialize the VARCHAR SQL type with the configured type system
 Varchar::Varchar()
     : SqlType(peloton::type::TypeId::VARCHAR),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,

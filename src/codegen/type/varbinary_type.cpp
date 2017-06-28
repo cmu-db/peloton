@@ -200,8 +200,9 @@ Value Varbinary::GetNullValue(CodeGen &codegen) const {
                codegen.Const32(0), codegen.ConstBool(true)};
 }
 
-void Varbinary::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
-                                        llvm::Type *&len_type) const {
+void Varbinary::GetTypeForMaterialization(CodeGen &codegen,
+                                          llvm::Type *&val_type,
+                                          llvm::Type *&len_type) const {
   val_type = codegen.CharPtrType();
   len_type = codegen.Int32Type();
 }
