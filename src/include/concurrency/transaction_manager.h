@@ -42,36 +42,38 @@ class Transaction;
 
 class TransactionManager {
  public:
-  TransactionManager() {
-    next_cid_ = ATOMIC_VAR_INIT(START_CID);
-    maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
-  }
+  TransactionManager() {}
 
   virtual ~TransactionManager() {}
 
-  cid_t GetNextCommitId() {
-    cid_t temp_cid = next_cid_++;
-    // wait if we do not yet have a grant for this commit id
-    while (temp_cid > maximum_grant_cid_.load())
-      ;
-    return temp_cid;
+  void Init(const ProtocolType protocol,
+            const IsolationLevelType isolation, 
+            const ConflictAvoidanceType conflict) {
+    protocol_ = protocol;
+    isolation_level_ = isolation;
+    conflict_avoidance_ = conflict;
   }
 
-  cid_t GetCurrentCommitId() { return next_cid_.load(); }
-
   // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(
+  bool IsOccupied(
       Transaction *const current_txn, 
-      const void *position_ptr) = 0;
+      const void *position_ptr);
 
-  virtual VisibilityType IsVisible(
+  VisibilityType IsVisible(
+      Transaction *const current_txn, 
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id,
+      const VisibilityIdType type = VisibilityIdType::READ_ID);
+
+  // This method test whether the current transaction is the owner of this version.
+  virtual bool IsOwner(
       Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // This method test whether the current transaction is the owner of a tuple.
-  virtual bool IsOwner(
-      Transaction *const current_txn, 
+  // This method tests whether any other transaction has owned this version.
+  virtual bool IsOwned(
+      Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
@@ -96,7 +98,8 @@ class TransactionManager {
   // This method is used by executor to yield ownership after the acquired ownership.
   virtual void YieldOwnership(
       Transaction *const current_txn, 
-      const oid_t &tile_group_id, 
+      // const oid_t &tile_group_id, 
+      const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id) = 0;
 
   // The index_entry_ptr is the address of the head node of the version chain, 
@@ -127,36 +130,32 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  // for use by recovery
-  void SetNextCid(cid_t cid) { next_cid_ = cid; }
+  Transaction *BeginTransaction(const IsolationLevelType type) {
+    return BeginTransaction(0, type);
+  }
 
-  void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
+  Transaction *BeginTransaction(const size_t thread_id = 0, 
+                                const IsolationLevelType type = isolation_level_);
 
-  virtual Transaction *BeginTransaction(const size_t thread_id = 0) = 0;
-
-  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0) = 0;
-
-  virtual void EndTransaction(Transaction *current_txn) = 0;
-
-  virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
+  void EndTransaction(Transaction *current_txn);
 
   virtual ResultType CommitTransaction(Transaction *const current_txn) = 0;
 
   virtual ResultType AbortTransaction(Transaction *const current_txn) = 0;
 
-  void ResetStates() {
-    next_cid_ = START_CID;
-  }
-
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a
   // precise value.
-  cid_t GetMaxCommittedCid() {
-    return EpochManagerFactory::GetInstance().GetMaxCommittedCid();
+  cid_t GetExpiredCid() {
+    return EpochManagerFactory::GetInstance().GetExpiredCid();
   }
 
   void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
     this->dirty_range_ = dirty_range;
+  }
+
+  IsolationLevelType GetIsolationLevel() {
+    return isolation_level_;
   }
 
  protected:
@@ -168,9 +167,10 @@ class TransactionManager {
   std::pair<cid_t, cid_t> dirty_range_ =
       std::make_pair(INVALID_CID, INVALID_CID);
 
- private:
-  std::atomic<cid_t> next_cid_;
-  std::atomic<cid_t> maximum_grant_cid_;
+ protected:
+  static ProtocolType protocol_;
+  static IsolationLevelType isolation_level_;
+  static ConflictAvoidanceType conflict_avoidance_;
 
 };
 }  // End storage namespace

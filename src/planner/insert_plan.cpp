@@ -111,52 +111,60 @@ InsertPlan::InsertPlan(
         PL_ASSERT(columns->size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
-        int col_cntr = 0;
         int param_index = 0;
         auto &table_columns = table_schema->GetColumns();
         auto query_columns = columns;
-        for (catalog::Column const &elem : table_columns) {
-          std::size_t pos = std::find(query_columns->begin(),
-                                      query_columns->end(), elem.GetName()) -
-                            query_columns->begin();
+        auto query_columns_cnt = query_columns->size();
 
-          // If the column does not exist, insert a null value
-          if (pos >= query_columns->size()) {
-            tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
-                                          elem.GetType()),
-                            nullptr);
+        // Update parameter info in the specified columns order
+        for (size_t pos = 0; pos < query_columns_cnt; pos++) {
+          auto col_name = query_columns->at(pos);
+          auto col_cntr = table_schema->GetColumnID(col_name);
+
+          PL_ASSERT(col_cntr != INVALID_OID);
+
+          // If it's varchar or varbinary then use data pool, otherwise
+          // allocate
+          // inline
+          auto col_type = table_schema->GetColumn(col_cntr).GetType();
+          type::AbstractPool * data_pool = nullptr;
+          if (col_type == type::Type::VARCHAR ||
+              col_type == type::Type::VARBINARY)
+            data_pool = GetPlanPool();
+
+          LOG_TRACE(
+              "Column %d found in INSERT query, ExpressionType: %s", col_cntr,
+              ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                  .c_str());
+
+          if (values->at(pos)->GetExpressionType() ==
+              ExpressionType::VALUE_PARAMETER) {
+            std::tuple<oid_t, oid_t, oid_t> pair =
+                std::make_tuple(tuple_idx, col_cntr, param_index);
+            parameter_vector_->push_back(pair);
+            params_value_type_->push_back(
+                table_schema->GetColumn(col_cntr).GetType());
+            ++param_index;
           } else {
-            // If it's varchar or varbinary then use data pool, otherwise
-            // allocate
-            // inline
-            auto data_pool = GetPlanPool();
-            if (elem.GetType() != type::Type::VARCHAR &&
-                elem.GetType() != type::Type::VARBINARY)
-              data_pool = nullptr;
-
-            LOG_TRACE(
-                "Column %d found in INSERT query, ExpressionType: %s", col_cntr,
-                ExpressionTypeToString(values->at(pos)->GetExpressionType())
-                    .c_str());
-
-            if (values->at(pos)->GetExpressionType() ==
-                ExpressionType::VALUE_PARAMETER) {
-              std::tuple<oid_t, oid_t, oid_t> pair =
-                  std::make_tuple(tuple_idx, col_cntr, param_index);
-              parameter_vector_->push_back(pair);
-              params_value_type_->push_back(
-                  table_schema->GetColumn(col_cntr).GetType());
-              ++param_index;
-            } else {
-              expression::ConstantValueExpression *const_expr_elem =
-                  dynamic_cast<expression::ConstantValueExpression *>(
-                      values->at(pos));
-              type::Value val = (const_expr_elem->GetValue());
-              tuple->SetValue(col_cntr, val, data_pool);
+            expression::ConstantValueExpression *const_expr_elem =
+                dynamic_cast<expression::ConstantValueExpression *>(
+                    values->at(pos));
+            type::Value val = (const_expr_elem->GetValue());
+            tuple->SetValue(col_cntr, val, data_pool);
+          }
+        }
+        // Insert a null value for non-specified columns
+        auto table_columns_cnt = table_schema->GetColumnCount();
+        if (query_columns_cnt < table_columns_cnt) {
+          for (size_t col_cntr = 0; col_cntr < table_columns_cnt; col_cntr++) {
+            auto col = table_columns[col_cntr];
+            if (std::find(query_columns->begin(), query_columns->end(), col.GetName())
+                == query_columns->end()) {
+              tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
+                  col.GetType()),
+                              nullptr);
             }
           }
-
-          ++col_cntr;
         }
         LOG_TRACE("Tuple to be inserted: %s", tuple->GetInfo().c_str());
         tuples_.push_back(std::move(tuple));

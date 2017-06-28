@@ -42,7 +42,11 @@ class OperatorToPlanTransformer : public OperatorVisitor {
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
       std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
-  void Visit(const PhysicalScan *op) override;
+  void Visit(const DummyScan *) override;
+
+  void Visit(const PhysicalSeqScan *op) override;
+
+  void Visit(const PhysicalIndexScan *op) override;
 
   void Visit(const PhysicalProject *) override;
 
@@ -85,14 +89,25 @@ class OperatorToPlanTransformer : public OperatorVisitor {
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
-  void GenerateTableExprMap(ExprMap &expr_map, storage::DataTable *table);
+  void GenerateTableExprMap(ExprMap &expr_map, const std::string &alias, const storage::DataTable *table);
 
+  std::vector<oid_t> GenerateColumnsForScan(const PropertyColumns *column_prop,
+                                            const std::string &alias,
+                                            const storage::DataTable *table);
+
+  expression::AbstractExpression *GeneratePredicateForScan(
+      const PropertyPredicate *predicate_prop, const std::string &alias, const storage::DataTable *table);
 
   // Generate group by plan
   std::unique_ptr<planner::AggregatePlan> GenerateAggregatePlan(
-      const PropertyColumns* prop_col, AggregateType agg_type,
-      const std::vector<std::shared_ptr<expression::AbstractExpression>>* group_by_exprs,
+      const PropertyColumns *prop_col, AggregateType agg_type,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+      group_by_exprs,
       expression::AbstractExpression *having);
+
+  std::unique_ptr<planner::AbstractPlan> GenerateJoinPlan(
+      expression::AbstractExpression *join_predicate, JoinType join_type,
+      bool is_hash);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;

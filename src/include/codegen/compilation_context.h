@@ -81,6 +81,9 @@ class CompilationContext {
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
 
+  // Get a pointer to the executor context instance
+  llvm::Value *GetExecutorContextPtr();
+
  private:
   // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
@@ -118,6 +121,7 @@ class CompilationContext {
   // The ID for the catalog and transaction state
   RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
+  RuntimeState::StateID executor_context_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

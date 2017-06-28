@@ -40,7 +40,7 @@ class Tuple : public AbstractTuple {
   inline Tuple()
       : tuple_schema_(nullptr), tuple_data_(nullptr), allocated_(false) {}
 
-  // Setup the tuple given a table
+  // Setup the tuple given a tuple
   inline Tuple(const Tuple &rhs)
       : tuple_schema_(rhs.tuple_schema_),
         tuple_data_(rhs.tuple_data_),

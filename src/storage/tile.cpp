@@ -53,9 +53,11 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  data = reinterpret_cast<char *>(
-      storage_manager.Allocate(backend_type, tile_size));
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // data = reinterpret_cast<char *>(
+      // storage_manager.Allocate(backend_type, tile_size));
+
+  data = new char[tile_size];
   PL_ASSERT(data != NULL);
 
   // zero out the data
@@ -69,8 +71,10 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  storage_manager.Release(backend_type, data);
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // storage_manager.Release(backend_type, data);
+
+  delete[] data;
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
@@ -155,7 +159,14 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
 
   // const bool is_in_bytes = false;
   PL_ASSERT(pool != nullptr);
-  value.SerializeTo(field_location, is_inlined, pool);
+  // Cast the value if the type is different from column type
+  const type::Type::TypeId col_type = schema.GetType(column_id);
+  if (value.GetTypeId() == col_type) {
+    value.SerializeTo(field_location, is_inlined, pool);
+  } else {
+    type::Value casted_value = value.CastAs(col_type);
+    casted_value.SerializeTo(field_location, is_inlined, pool);
+  }
 }
 
 
@@ -472,8 +483,8 @@ oid_t Tile::GetActiveTupleCount() const {
 
 void Tile::Sync() {
   // Sync the tile data
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  storage_manager.Sync(backend_type, data, tile_size);
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // storage_manager.Sync(backend_type, data, tile_size);
 }
 
 //===--------------------------------------------------------------------===//

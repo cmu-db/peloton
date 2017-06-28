@@ -9,12 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-#include <include/parser/statements.h>
-#include <include/expression/tuple_value_expression.h>
-#include "parser/select_statement.h"
 #include "binder/bind_node_visitor.h"
-#include "type/types.h"
 
 namespace peloton {
 namespace binder {
@@ -84,9 +79,9 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
-  for (auto update : *node->updates)
+  for (auto update : *node->updates) {
     update->value->Accept(this);
-    
+  }
 
   // TODO: Update columns are not bound because they are char*
   // not TupleValueExpression in update_statement.h
@@ -112,6 +107,9 @@ void BindNodeVisitor::Visit(const parser::DropStatement *) {}
 void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
 void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
+void BindNodeVisitor::Visit(const parser::AnalyzeStatement *) {}
+
+// void BindNodeVisitor::Visit(const parser::ConstantValueExpression *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {

@@ -28,21 +28,21 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "type/types.h"
-#include "logging/logging_util.h"
+// #include "logging/logging_util.h"
 #include "storage/storage_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-// Logging mode
-extern peloton::LoggingType peloton_logging_mode;
+// // Logging mode
+// extern peloton::LoggingType peloton_logging_mode;
 
-// Flush mode (for NVM WBL)
-extern int peloton_flush_mode;
+// // Flush mode (for NVM WBL)
+// extern int peloton_flush_mode;
 
-// PCOMMIT latency (for NVM WBL)
-extern int peloton_pcommit_latency;
+// // PCOMMIT latency (for NVM WBL)
+// extern int peloton_pcommit_latency;
 
 // PMEM file size
 size_t peloton_data_file_size = 0;
@@ -186,17 +186,17 @@ static inline void flush_clflush(const void *addr, size_t len) {
     _mm_clflush((char *)uptr);
 }
 
-// flush_clwb -- (internal) flush the CPU cache, using clwb
-static inline void flush_clwb(const void *addr, size_t len) {
-  uintptr_t uptr;
+// // flush_clwb -- (internal) flush the CPU cache, using clwb
+// static inline void flush_clwb(const void *addr, size_t len) {
+//   uintptr_t uptr;
 
-  // Loop through cache-line-size (typically 64B) aligned chunks
-  // covering the given range.
-  for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
-       uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN) {
-    _mm_clwb((char *)uptr);
-  }
-}
+//   // Loop through cache-line-size (typically 64B) aligned chunks
+//   // covering the given range.
+//   for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
+//        uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN) {
+//     _mm_clwb((char *)uptr);
+//   }
+// }
 
 /*
  * pmem_flush() calls through Func_flush to do the work.  Although
@@ -207,9 +207,9 @@ static inline void flush_clwb(const void *addr, size_t len) {
  */
 static void (*Func_flush)(const void *, size_t) = flush_clflush;
 
-//===--------------------------------------------------------------------===//
-// PREDRAIN FUNCTIONS
-//===--------------------------------------------------------------------===//
+// //===--------------------------------------------------------------------===//
+// // PREDRAIN FUNCTIONS
+// //===--------------------------------------------------------------------===//
 
 /*
  * predrain_fence_empty -- (internal) issue the pre-drain fence instruction
@@ -218,25 +218,25 @@ static void predrain_fence_empty(void) {
   /* nothing to do (because CLFLUSH did it for us) */
 }
 
-/*
- * predrain_fence_sfence -- (internal) issue the pre-drain fence instruction
- */
-static void predrain_fence_sfence(void) {
-  _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
-}
+// /*
+//  * predrain_fence_sfence -- (internal) issue the pre-drain fence instruction
+//  */
+// static void predrain_fence_sfence(void) {
+//   _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
+// }
 
-/*
- * pmem_drain() calls through Func_predrain_fence to do the fence.  Although
- * initialized to predrain_fence_empty(), once the existence of the CLWB or
- * CLFLUSHOPT feature is confirmed by pmem_init() at library initialization
- * time, Func_predrain_fence is set to predrain_fence_sfence().  That's the
- * most common case on modern hardware that supports persistent memory.
- */
+
+//  * pmem_drain() calls through Func_predrain_fence to do the fence.  Although
+//  * initialized to predrain_fence_empty(), once the existence of the CLWB or
+//  * CLFLUSHOPT feature is confirmed by pmem_init() at library initialization
+//  * time, Func_predrain_fence is set to predrain_fence_sfence().  That's the
+//  * most common case on modern hardware that supports persistent memory.
+ 
 static void (*Func_predrain_fence)(void) = predrain_fence_empty;
 
-//===--------------------------------------------------------------------===//
-// DRAIN FUNCTIONS
-//===--------------------------------------------------------------------===//
+// //===--------------------------------------------------------------------===//
+// // DRAIN FUNCTIONS
+// //===--------------------------------------------------------------------===//
 
 /*
  * drain_no_pcommit -- (internal) wait for PM stores to drain, empty version
@@ -247,47 +247,47 @@ static void drain_no_pcommit(void) {
   /* caller assumed responsibility for the rest */
 }
 
-// PCOMMIT helpers
+// // PCOMMIT helpers
 
-#define CPU_FREQ_MHZ (2593)
+// #define CPU_FREQ_MHZ (2593)
 
-static inline unsigned long read_tsc(void) {
-  unsigned long var;
-  unsigned int hi, lo;
+// static inline unsigned long read_tsc(void) {
+//   unsigned long var;
+//   unsigned int hi, lo;
 
-  asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
-  var = ((unsigned long long int)hi << 32) | lo;
+//   asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+//   var = ((unsigned long long int)hi << 32) | lo;
 
-  return var;
-}
+//   return var;
+// }
 
-static inline void cpu_pause() { __asm__ volatile("pause" ::: "memory"); }
+// static inline void cpu_pause() { __asm__ volatile("pause" ::: "memory"); }
 
-static inline void pcommit(unsigned long lat) {
-  // Special case
-  if (lat == 0) return;
+// static inline void pcommit(unsigned long lat) {
+//   // Special case
+//   if (lat == 0) return;
 
-  unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ / 1000);
-  while (read_tsc() < etsc) {
-    cpu_pause();
-  }
-}
+//   unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ / 1000);
+//   while (read_tsc() < etsc) {
+//     cpu_pause();
+//   }
+// }
 
-/*
- * drain_pcommit -- (internal) wait for PM stores to drain, pcommit version
- */
-static void drain_pcommit(void) {
-  Func_predrain_fence();
+// /*
+//  * drain_pcommit -- (internal) wait for PM stores to drain, pcommit version
+//  */
+// static void drain_pcommit(void) {
+//   Func_predrain_fence();
 
-  // pause if needed
-  pcommit(peloton_pcommit_latency);
+//   // pause if needed
+//   pcommit(peloton_pcommit_latency);
 
-  // by default, this is zero
-  if (peloton_pcommit_latency == 0) {
-    _mm_pcommit();
-    _mm_sfence();
-  }
-}
+//   // by default, this is zero
+//   if (peloton_pcommit_latency == 0) {
+//     _mm_pcommit();
+//     _mm_sfence();
+//   }
+// }
 
 /*
  * pmem_drain() calls through Func_drain to do the work.  Although
@@ -313,133 +313,133 @@ StorageManager &StorageManager::GetInstance(void) {
 
 StorageManager::StorageManager()
     : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
-  // Check if we need a data pool
-  if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
-          true ||
-      peloton_logging_mode == LoggingType::INVALID) {
-    return;
-  }
+  // // Check if we need a data pool
+  // if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
+  //         true ||
+  //     peloton_logging_mode == LoggingType::INVALID) {
+  //   return;
+  // }
 
-  // Check for instruction availability and flush mode
-  // (1 -- clflush or 2 -- clwb)
-  if (is_cpu_clwb_present() && peloton_flush_mode == 2) {
-    LOG_TRACE("Found clwb \n");
-    Func_flush = flush_clwb;
-    Func_predrain_fence = predrain_fence_sfence;
-  }
+  // // Check for instruction availability and flush mode
+  // // (1 -- clflush or 2 -- clwb)
+  // if (is_cpu_clwb_present() && peloton_flush_mode == 2) {
+  //   LOG_TRACE("Found clwb \n");
+  //   Func_flush = flush_clwb;
+  //   Func_predrain_fence = predrain_fence_sfence;
+  // }
 
-  if (is_cpu_pcommit_present()) {
-    LOG_TRACE("Found pcommit \n");
-    Func_drain = drain_pcommit;
-  }
+  // if (is_cpu_pcommit_present()) {
+  //   LOG_TRACE("Found pcommit \n");
+  //   Func_drain = drain_pcommit;
+  // }
 
-  // Rest of this stuff is needed only for Write Behind Logging
-  int data_fd;
-  std::string data_file_name;
-  struct stat data_stat;
+  // // Rest of this stuff is needed only for Write Behind Logging
+  // int data_fd;
+  // std::string data_file_name;
+  // struct stat data_stat;
 
-  // Initialize file size
-  if (peloton_data_file_size != 0)
-    data_file_len = peloton_data_file_size * 1024 * 1024;  // MB
-  else
-    data_file_len = DATA_FILE_LEN;
+  // // Initialize file size
+  // if (peloton_data_file_size != 0)
+  //   data_file_len = peloton_data_file_size * 1024 * 1024;  // MB
+  // else
+  //   data_file_len = DATA_FILE_LEN;
 
-  // Check for relevant file system
-  bool found_file_system = false;
+  // // Check for relevant file system
+  // bool found_file_system = false;
 
-  switch (peloton_logging_mode) {
-    // Check for NVM FS for data
-    case LoggingType::NVM_WBL: {
-      int status = stat(NVM_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
-        found_file_system = true;
-      }
+  // switch (peloton_logging_mode) {
+  //   // Check for NVM FS for data
+  //   case LoggingType::NVM_WBL: {
+  //     int status = stat(NVM_DIR, &data_stat);
+  //     if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+  //       data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
+  //       found_file_system = true;
+  //     }
 
-    } break;
+  //   } break;
 
-    // Check for SSD FS for data
-    case LoggingType::SSD_WBL: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
-        found_file_system = true;
-      }
+  //   // Check for SSD FS for data
+  //   case LoggingType::SSD_WBL: {
+  //     int status = stat(SSD_DIR, &data_stat);
+  //     if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+  //       data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
+  //       found_file_system = true;
+  //     }
 
-    } break;
+  //   } break;
 
-    // Check for HDD FS
-    case LoggingType::HDD_WBL: {
-      int status = stat(HDD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
-        found_file_system = true;
-      }
+  //   // Check for HDD FS
+  //   case LoggingType::HDD_WBL: {
+  //     int status = stat(HDD_DIR, &data_stat);
+  //     if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+  //       data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
+  //       found_file_system = true;
+  //     }
 
-    } break;
+  //   } break;
 
-    default:
-      break;
-  }
+  //   default:
+  //     break;
+  // }
 
-  // Fallback to tmp directory if needed
-  if (found_file_system == false) {
-    int status = stat(TMP_DIR, &data_stat);
-    if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-      data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
-    } else {
-      throw Exception("Could not find temp directory : " +
-                      std::string(TMP_DIR));
-    }
-  }
+  // // Fallback to tmp directory if needed
+  // if (found_file_system == false) {
+  //   int status = stat(TMP_DIR, &data_stat);
+  //   if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+  //     data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+  //   } else {
+  //     throw Exception("Could not find temp directory : " +
+  //                     std::string(TMP_DIR));
+  //   }
+  // }
 
-  LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
+  // LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
-  // Create a data file
-  if ((data_fd = open(
-           data_file_name.c_str(), O_CREAT | O_TRUNC | O_RDWR,
-           S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
-    perror(data_file_name.c_str());
-    exit(EXIT_FAILURE);
-  }
+  // // Create a data file
+  // if ((data_fd = open(
+  //          data_file_name.c_str(), O_CREAT | O_TRUNC | O_RDWR,
+  //          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
+  //   perror(data_file_name.c_str());
+  //   exit(EXIT_FAILURE);
+  // }
 
-  // Allocate the data file
-  if ((errno = posix_fallocate(data_fd, 0, data_file_len)) != 0) {
-    perror("posix_fallocate");
-    exit(EXIT_FAILURE);
-  }
+  // // Allocate the data file
+  // if ((errno = posix_fallocate(data_fd, 0, data_file_len)) != 0) {
+  //   perror("posix_fallocate");
+  //   exit(EXIT_FAILURE);
+  // }
 
-  // map the data file in memory
-  if ((data_file_address = mmap(NULL, data_file_len, PROT_READ | PROT_WRITE,
-                                MAP_SHARED, data_fd, 0)) == MAP_FAILED) {
-    perror("mmap");
-    exit(EXIT_FAILURE);
-  }
+  // // map the data file in memory
+  // if ((data_file_address = mmap(NULL, data_file_len, PROT_READ | PROT_WRITE,
+  //                               MAP_SHARED, data_fd, 0)) == MAP_FAILED) {
+  //   perror("mmap");
+  //   exit(EXIT_FAILURE);
+  // }
 
-  // close the pmem file -- it will remain mapped
-  close(data_fd);
+  // // close the pmem file -- it will remain mapped
+  // close(data_fd);
 }
 
 StorageManager::~StorageManager() {
   LOG_TRACE("Allocation count : %ld \n", allocation_count);
 
-  // Check if we need a PMEM pool
-  if (peloton_logging_mode != LoggingType::NVM_WBL) return;
+  // // Check if we need a PMEM pool
+  // if (peloton_logging_mode != LoggingType::NVM_WBL) return;
 
-  // sync and unmap the data file
-  if (data_file_address != nullptr) {
-    // sync the mmap'ed file to SSD or HDD
-    int status = msync(data_file_address, data_file_len, MS_SYNC);
-    if (status != 0) {
-      perror("msync");
-      exit(EXIT_FAILURE);
-    }
+  // // sync and unmap the data file
+  // if (data_file_address != nullptr) {
+  //   // sync the mmap'ed file to SSD or HDD
+  //   int status = msync(data_file_address, data_file_len, MS_SYNC);
+  //   if (status != 0) {
+  //     perror("msync");
+  //     exit(EXIT_FAILURE);
+  //   }
 
-    if (munmap(data_file_address, data_file_len)) {
-      perror("munmap");
-      exit(EXIT_FAILURE);
-    }
-  }
+  //   if (munmap(data_file_address, data_file_len)) {
+  //     perror("munmap");
+  //     exit(EXIT_FAILURE);
+  //   }
+  // }
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {

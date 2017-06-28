@@ -16,19 +16,40 @@
 #include "planner/abstract_plan.h"
 
 namespace peloton {
+ std::unordered_map<std::string, QueryType> Statement::query_type_map_ {
+    {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
+    {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"SET", QueryType::QUERY_SET},
+    {"SHOW", QueryType::QUERY_SHOW}, {"INSERT", QueryType::QUERY_INSERT},
+    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE}
+  };
 
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)
     : statement_name_(statement_name), query_string_(query_string) {
-  ParseQueryType(query_string_, query_type_);
+  ParseQueryTypeString(query_string_, query_type_string_);
+  MapToQueryType(query_type_string_, query_type_);
 }
 
 Statement::~Statement() {}
 
-void Statement::ParseQueryType(const std::string& query_string,
-                               std::string& query_type) {
+void Statement::ParseQueryTypeString(const std::string& query_string,
+                               std::string& query_type_string) {
   std::stringstream stream(query_string);
-  stream >> query_type;
+  stream >> query_type_string;
+  if (query_type_string.back() == ';') {
+    query_type_string = query_type_string.substr(0, query_type_string.length() - 1);
+  }
+  boost::to_upper(query_type_string);
+}
+
+void Statement::MapToQueryType(const std::string& query_type_string, QueryType& query_type) {
+  std::unordered_map<std::string, QueryType>::iterator it;
+  it  = query_type_map_.find(query_type_string);
+  if (it != query_type_map_.end()) {
+    query_type = it -> second;
+  } else {
+    query_type = QueryType::QUERY_OTHER;
+  }
 }
 
 std::vector<FieldInfo> Statement::GetTupleDescriptor() const {
@@ -47,7 +68,9 @@ void Statement::SetQueryString(const std::string& query_string) {
 
 std::string Statement::GetQueryString() const { return query_string_; }
 
-std::string Statement::GetQueryType() const { return query_type_; }
+std::string Statement::GetQueryTypeString() const { return query_type_string_; }
+
+QueryType Statement::GetQueryType() const { return query_type_; }
 
 void Statement::SetParamTypes(const std::vector<int32_t>& param_types) {
   param_types_ = param_types;
@@ -100,7 +123,7 @@ const std::string Statement::GetInfo() const {
   os << ", ReplanNeeded=" << needs_replan_;
 
   // Query Type
-  os << ", QueryType=" << query_type_;
+  os << ", QueryType=" << query_type_string_;
 
   os << ")";
 

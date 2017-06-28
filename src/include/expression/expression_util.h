@@ -17,6 +17,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
@@ -104,7 +105,7 @@ class ExpressionUtil {
 
   /*
    * This function removes all the terms related to indexed columns within an
-   * expression.
+   * expression. The expression passed in may be modified.
    *
    * NOTE:
    * 1. This should only be called after we check that the predicate is index
@@ -177,13 +178,13 @@ class ExpressionUtil {
       // If one child is removable, return the other child
       if (partial_removable) {
         for (auto child : new_children)
-          if (child != nullptr) return child;
+          if (child != nullptr) return child->Copy();
       } else {
         // Otherwise replace the child expressions with tailored ones
         for (size_t i = 0; i < children_size; ++i) {
           if (expression->GetModifiableChild(i) != new_children[i]) {
             LOG_TRACE("Setting new child at idx: %ld", i);
-            expression->SetChild(i, new_children[i]->Copy());
+            expression->SetChild(i, new_children[i]);
           }
         }
       }
@@ -245,6 +246,10 @@ class ExpressionUtil {
       right = new ConjunctionExpression(type, left, right);
     }
     return left;
+  }
+
+  inline static bool IsAggregateExpression(AbstractExpression *expr) {
+    return IsAggregateExpression(expr->GetExpressionType());
   }
 
   inline static bool IsAggregateExpression(ExpressionType type) {
@@ -364,6 +369,83 @@ class ExpressionUtil {
 
  public:
   /**
+  * Generate a set of table alias included in an expression
+  */
+  static void GenerateTableAliasSet(
+      const AbstractExpression *expr,
+      std::unordered_set<std::string> &table_alias_set) {
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      table_alias_set.insert(
+          reinterpret_cast<const TupleValueExpression *>(expr)->GetTableName());
+      return;
+    }
+    for (size_t i = 0; i < expr->GetChildrenSize(); i++)
+      GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
+  }
+
+  /**
+   * Convert all aggregate expression in the child expression tree
+   * to tuple value expression with corresponding column offset
+   * of the input child tuple. This is used for handling projection
+   * on aggregate function (e.g. SELECT sum(a)+max(b) FROM ... GROUP BY ...)
+   */
+  static void ConvertAggExprToTvExpr(AbstractExpression *expr,
+                                     ExprMap &child_expr_map) {
+    for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
+      auto child_expr = expr->GetModifiableChild(i);
+      if (IsAggregateExpression(child_expr->GetExpressionType())) {
+        EvaluateExpression({child_expr_map}, child_expr);
+        std::shared_ptr<AbstractExpression> probe_expr(
+            std::shared_ptr<AbstractExpression>{}, child_expr);
+        expr->SetChild(i,
+                       new TupleValueExpression(child_expr->GetValueType(), 0,
+                                                child_expr_map[probe_expr]));
+      } else
+        ConvertAggExprToTvExpr(child_expr, child_expr_map);
+    }
+  }
+
+  /**
+   * Generate a vector to store expressions in output order
+   */
+  static std::vector<std::shared_ptr<AbstractExpression>>
+  GenerateOrderedOutputExprs(ExprMap &expr_map) {
+    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(
+        expr_map.size());
+    for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
+    return std::move(ordered_expr);
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
+  static void GetAggregateExprs(
+      std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
+      AbstractExpression *expr) {
+    std::vector<std::shared_ptr<TupleValueExpression>> dummy_tv_exprs;
+    GetAggregateExprs(aggr_exprs, dummy_tv_exprs, expr);
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs and TupleValueExprs
+   * subtrees.
+   */
+  static void GetAggregateExprs(
+      std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
+      std::vector<std::shared_ptr<TupleValueExpression>> &tv_exprs,
+      AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    if (IsAggregateExpression(expr->GetExpressionType()))
+      aggr_exprs.emplace_back((AggregateExpression *)expr->Copy());
+    else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      tv_exprs.emplace_back((TupleValueExpression *)expr->Copy());
+    else {
+      for (size_t i = 0; i < children_size; i++)
+        GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
+    }
+  }
+
+  /**
    * Walks an expression trees and find all TupleValueExprs in the tree, add
    * them to a map for order preserving.
    */
@@ -382,6 +464,8 @@ class ExpressionUtil {
    * Walks an expression trees and find all TupleValueExprs in the tree
    */
   static void GetTupleValueExprs(ExprSet &expr_set, AbstractExpression *expr) {
+    if (expr == nullptr) 
+      return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
@@ -399,12 +483,13 @@ class ExpressionUtil {
    * Plz notice: this function should only be used in the optimizer.
    * The following version TransformExpression will eventually be depracated
    */
-  static void EvaluateExpression(const ExprMap &expr_map,
+  static void EvaluateExpression(const std::vector<ExprMap> &expr_maps,
                                  AbstractExpression *expr) {
     // To evaluate the return type, we need a bottom up approach.
+    if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
-      EvaluateExpression(expr_map, expr->GetModifiableChild(i));
+      EvaluateExpression(expr_maps, expr->GetModifiableChild(i));
 
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // Point to the correct column returned in the logical tuple underneath
@@ -413,23 +498,141 @@ class ExpressionUtil {
       auto tup_expr = (TupleValueExpression *)expr;
       std::shared_ptr<AbstractExpression> probe_expr(
           std::shared_ptr<AbstractExpression>{}, tup_expr);
-      tup_expr->SetValueIdx(expr_map.at(probe_expr));
+      size_t tuple_idx = 0;
+      for (auto &expr_map : expr_maps) {
+        auto iter = expr_map.find(probe_expr);
+        if (iter != expr_map.end()) {
+          tup_expr->SetValueIdx(iter->second, tuple_idx);
+          break;
+        }
+        ++tuple_idx;
+      }
+    } else if (IsAggregateExpression(expr->GetExpressionType())) {
+      auto aggr_expr = (AggregateExpression *)expr;
+      std::shared_ptr<AbstractExpression> probe_expr(
+          std::shared_ptr<AbstractExpression>{}, aggr_expr);
+      auto &expr_map = expr_maps[0];
+      auto iter = expr_map.find(probe_expr);
+      if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       // Check and set the function ptr
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
-      LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
+      LOG_INFO("Function %s found in the catalog",
+               func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
-    } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-      auto const_expr = (expression::ConstantValueExpression *)expr;
-      const_expr->expr_name_ = const_expr->GetValue().ToString();
-    } else {
+    }
+
+    // Decude the expression type for Non-TupleValueExpressions
+    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
       expr->DeduceExpressionType();
+  }
+
+  /**
+   * Extract join columns id from expr
+   * For example, expr = (expr_1) AND (expr_2) AND (expr_3)
+   * we only extract expr_i that have the format (l_table.a = r_table.b)
+   * i.e. expr that is equality check for tuple columns from both of
+   * the underlying tables
+   *
+   * remove set to true if we want to return a newly created expr with
+   * join columns removed from expr
+   */
+
+  static expression::AbstractExpression *ExtractJoinColumns(
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          r_column_exprs,
+      const expression::AbstractExpression *expr) {
+    if (expr == nullptr) return nullptr;
+    if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+      auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
+                                          expr->GetChild(0));
+
+      auto right_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
+                                           expr->GetChild(1));
+
+      expression::AbstractExpression *root = nullptr;
+
+      if (left_expr == nullptr || right_expr == nullptr) {
+        // Remove the CONJUNCTION_AND if left child or right child (or both)
+        // is removed
+        if (left_expr != nullptr) root = left_expr;
+        if (right_expr != nullptr) root = right_expr;
+      } else
+        root = ConjunctionFactory(ExpressionType::CONJUNCTION_AND, left_expr,
+                                  right_expr);
+
+      return root;
+    } else if (expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      // TODO support arbitary comarison when executor add support
+      // If left tuple and right tuple are from different child
+      // then add to join column
+      auto l_expr = expr->GetChild(0);
+      auto r_expr = expr->GetChild(1);
+      // TODO support arbitary expression
+      if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto l_tuple_idx =
+            reinterpret_cast<const expression::TupleValueExpression *>(l_expr)
+                ->GetTupleId();
+        auto r_tuple_idx =
+            reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
+                ->GetTupleId();
+
+        // If it can be removed then return nullptr
+        if (l_tuple_idx != r_tuple_idx) {
+          auto l_value_idx =
+              reinterpret_cast<const expression::TupleValueExpression *>(l_expr)
+                  ->GetColumnId();
+          auto r_value_idx =
+              reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
+                  ->GetColumnId();
+          if (l_tuple_idx == 0) {
+            l_column_exprs.emplace_back(new expression::TupleValueExpression(
+                l_expr->GetValueType(), 0, l_value_idx));
+            r_column_exprs.emplace_back(new expression::TupleValueExpression(
+                r_expr->GetValueType(), 0, r_value_idx));
+          } else {
+            l_column_exprs.emplace_back(new expression::TupleValueExpression(
+                l_expr->GetValueType(), 0, r_value_idx));
+            r_column_exprs.emplace_back(new expression::TupleValueExpression(
+                r_expr->GetValueType(), 0, l_value_idx));
+          }
+          return nullptr;
+        }
+      }
+    }
+
+    return expr->Copy();
+  }
+
+  /*
+   * Check whether two vectors of expression equal to each other.
+   * ordered flag indicate whether the comparison should consider the order.
+   * */
+  static bool EqualExpressions(
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &l,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &r,
+      bool ordered = false) {
+    if (l.size() != r.size()) return false;
+    // Consider expression order in the comparison
+    if (ordered) {
+      size_t num_exprs = l.size();
+      for (size_t i = 0; i < num_exprs; i++)
+        if (!l[i]->Equals(r[i].get())) return false;
+      return true;
+    } else {
+      ExprSet l_set, r_set;
+      for (auto expr : l) l_set.insert(expr);
+      for (auto expr : r) r_set.insert(expr);
+      return l_set == r_set;
     }
   }
 

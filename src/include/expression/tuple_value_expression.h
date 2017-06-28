@@ -14,6 +14,7 @@
 
 #include "expression/abstract_expression.h"
 
+#include "type/types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
@@ -38,7 +39,7 @@ class TupleValueExpression : public AbstractExpression {
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
-        table_name_(table_name),
+        table_name_(StringUtil::Lower(table_name)),
         col_name_(col_name),
         ai_(nullptr) {}
 
@@ -56,11 +57,10 @@ class TupleValueExpression : public AbstractExpression {
       executor::ExecutorContext *context) const override;
 
   virtual void DeduceExpressionName() override {
-    if (!alias.empty())
-      return;
+    if (!alias.empty()) return;
     expr_name_ = col_name_;
   }
-  
+
   // TODO: Delete this when TransformExpression is completely depracated
   void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
@@ -68,11 +68,11 @@ class TupleValueExpression : public AbstractExpression {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
-  
+
   inline void SetValueType(type::Type::TypeId type_id) {
     return_value_type_ = type_id;
   }
-  
+
   inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
@@ -84,8 +84,8 @@ class TupleValueExpression : public AbstractExpression {
     const auto &context = binding_contexts[GetTupleId()];
     ai_ = context->Find(GetColumnId());
     PL_ASSERT(ai_ != nullptr);
-    LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)",
-              GetTupleId(), GetColumnId(), ai_, ai_->name.c_str());
+    LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
+              GetColumnId(), ai_, ai_->name.c_str());
   }
 
   // Return the attributes this expression uses
@@ -100,10 +100,17 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual bool Equals(AbstractExpression *expr) const override {
-    if (exp_type_ != expr->GetExpressionType())
-      return false;
-    auto tup_expr = (TupleValueExpression *) expr;
-    return bound_obj_id_ == tup_expr->bound_obj_id_;
+    if (exp_type_ != expr->GetExpressionType()) return false;
+    auto tup_expr = (TupleValueExpression *)expr;
+    // For query like SELECT A.id, B.id FROM test AS A, test AS B;
+    // we need to know whether A.id is from A.id or B.id. In this case,
+    // A.id and B.id have the same bound oids since they refer to the same table
+    // but they have different table alias.
+    if (table_name_.empty() xor tup_expr->table_name_.empty()) return false;
+    bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
+    if (!table_name_.empty() && !tup_expr->table_name_.empty())
+      res = table_name_ == tup_expr->table_name_ && res;
+    return res;
   }
 
   virtual hash_t Hash() const;
@@ -129,7 +136,7 @@ class TupleValueExpression : public AbstractExpression {
     bound_obj_id_ = std::make_tuple(db_id, table_id, col_id);
     is_bound_ = true;
   }
-  
+
   void SetBoundOid(std::tuple<oid_t, oid_t, oid_t> &bound_oid) {
     bound_obj_id_ = bound_oid;
     is_bound_ = true;
@@ -147,9 +154,11 @@ class TupleValueExpression : public AbstractExpression {
         table_name_(other.table_name_),
         col_name_(other.col_name_) {}
 
-  // Binder stuff
+  // Bound flag
   bool is_bound_ = false;
-  std::tuple<oid_t, oid_t, oid_t> bound_obj_id_;
+  // Bound ids. Init to INVALID_OID
+  std::tuple<oid_t, oid_t, oid_t> bound_obj_id_ =
+      std::make_tuple(INVALID_OID, INVALID_OID, INVALID_OID);
   int value_idx_;
   int tuple_idx_;
   std::string table_name_;

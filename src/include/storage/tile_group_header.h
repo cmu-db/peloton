@@ -59,6 +59,12 @@ class TileGroup;
  * of the version chain header.
  *  ReservedField: unused space for future usage.
  *
+ *  STATUS:
+ *  ===================
+ *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty version
+ *  TxnID != INITIAL_TXN_ID, BeginTS != MAX_CID --> to-be-updated old version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> to-be-installed new version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID --> to-be-installed deleted version
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
@@ -228,7 +234,6 @@ class TileGroupHeader : public Printable {
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Getter for spin lock
-
   Spinlock &GetHeaderLock() { return tile_header_lock; }
 
   // Sync the contents

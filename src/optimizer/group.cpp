@@ -18,7 +18,8 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id) : id_(id) {
+Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
+    : id_(id), table_aliases_(std::move(table_aliases)) {
   has_explored_ = false;
   has_implemented_ = false;
 }
@@ -26,10 +27,14 @@ void Group::add_item(Operator op) {
   // TODO(abpoms): do duplicate checking
   items_.push_back(op);
 }
-void Group::AddExpression(std::shared_ptr<GroupExpression> expr) {
+void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
+                          bool enforced) {
   // Do duplicate detection
   expr->SetGroupID(id_);
-  expressions_.push_back(expr);
+  if (enforced)
+    enforced_exprs_.push_back(expr);
+  else
+    expressions_.push_back(expr);
 }
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,

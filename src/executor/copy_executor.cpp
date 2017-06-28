@@ -76,10 +76,10 @@ bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
     file_handle_.file = file;
   }
 
-  // also, get the descriptor
+  // get the descriptor
   auto fd = fileno(file);
   if (fd == INVALID_FILE_DESCRIPTOR) {
-    LOG_ERROR("checkpoint_file_fd_ is -1");
+    LOG_ERROR("file fd is -1");
     return false;
   } else {
     file_handle_.fd = fd;

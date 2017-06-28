@@ -54,10 +54,11 @@ bool UpdateExecutor::DInit() {
   return true;
 }
 
-bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
+bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
+                                             storage::TileGroup *tile_group, 
+                                             storage::TileGroupHeader *tile_group_header,
                                              oid_t physical_tuple_id,
-                                             ItemPointer &old_location,
-                                             storage::TileGroup *tile_group) {
+                                             ItemPointer &old_location) {
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -81,7 +82,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
     if (is_owner == false) {
       // If the ownership is acquire inside this update executor, we
       // release it here
-      transaction_manager.YieldOwnership(current_txn, tile_group_id,
+      transaction_manager.YieldOwnership(current_txn, tile_group_header,
                                          physical_tuple_id);
     }
     transaction_manager.SetTransactionResult(current_txn,
@@ -108,9 +109,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
       target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
 
   // it is possible that some concurrent transactions have inserted the
-  // same
-  // tuple.
-  // in this case, abort the transaction.
+  // same tuple. In this case, abort the transaction.
   if (location.block == INVALID_OID) {
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
@@ -121,6 +120,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
 
   return true;
 }
+
 /**
  * @brief updates a set of columns
  * @return true on success, false otherwise.
@@ -139,11 +139,7 @@ bool UpdateExecutor::DExecute() {
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
-  storage::Tile *tile = source_tile->GetBaseTile(0);
-  storage::TileGroup *tile_group = tile->GetTileGroup();
-  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-  auto tile_group_id = tile_group->GetTileGroupId();
-
+  
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -151,32 +147,59 @@ bool UpdateExecutor::DExecute() {
 
   // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
+
+    storage::TileGroup *tile_group = source_tile->GetBaseTile(0)->GetTileGroup();
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+    
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    ItemPointer old_location(tile_group_id, physical_tuple_id);
+    ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
-                                                physical_tuple_id);
+    ///////////////////////////////////////////////////////////
+    // if running at snapshot isolation, 
+    // then we need to retrieve the latest version of this tuple.
+    if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
+      old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
+      
+      auto &manager = catalog::Manager::GetInstance();
+      tile_group = manager.GetTileGroup(old_location.block).get();
+      tile_group_header = tile_group->GetHeader();
 
-    bool is_written = transaction_manager.IsWritten(
-        current_txn, tile_group_header, physical_tuple_id);
+      physical_tuple_id = old_location.offset;
 
-    PL_ASSERT((is_owner == false && is_written == true) == false);
+      auto visibility = transaction_manager.IsVisible(
+          current_txn, tile_group_header, physical_tuple_id, VisibilityIdType::COMMIT_ID);
+      if (visibility != VisibilityType::OK) {
+        transaction_manager.SetTransactionResult(current_txn,
+                                                 ResultType::FAILURE);
+        return false;
+      }
+    }
+    ///////////////////////////////////////////////////////////
+
+    bool is_owner = 
+        transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
+
+    bool is_written = 
+        transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
 
     // Prepare to examine primary key
     bool ret = false;
     const planner::UpdatePlan &update_node = GetPlanNode<planner::UpdatePlan>();
 
+    // if the current transaction is the creator of this version.
+    // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
 
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
         ret =
-            PerformUpdatePrimaryKey(is_owner, tile_group_id, physical_tuple_id,
-                                    old_location, tile_group);
+            PerformUpdatePrimaryKey(is_owner, tile_group, 
+                                    tile_group_header, physical_tuple_id,
+                                    old_location);
 
         // Examine the result
         if (ret == true) {
@@ -202,8 +225,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
     }
-    // if we have already got the
-    // ownership
+    // if we have already obtained the ownership
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
@@ -228,9 +250,9 @@ bool UpdateExecutor::DExecute() {
 
         if (update_node.GetUpdatePrimaryKey()) {
           // Update primary key
-          ret = PerformUpdatePrimaryKey(is_owner, tile_group_id,
-                                        physical_tuple_id, old_location,
-                                        tile_group);
+          ret = PerformUpdatePrimaryKey(is_owner, tile_group, 
+                                        tile_group_header, physical_tuple_id, 
+                                        old_location);
 
           if (ret == true) {
             executor_context_->num_processed += 1;  // updated one
@@ -260,8 +282,7 @@ bool UpdateExecutor::DExecute() {
 
           // perform projection from old version to new version.
           // this triggers in-place update, and we do not need to allocate
-          // another
-          // version.
+          // another version.
           project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                   executor_context_);
 
@@ -290,7 +311,7 @@ bool UpdateExecutor::DExecute() {
             if (is_owner == false) {
               // If the ownership is acquire inside this update executor, we
               // release it here
-              transaction_manager.YieldOwnership(current_txn, tile_group_id,
+              transaction_manager.YieldOwnership(current_txn, tile_group_header,
                                                  physical_tuple_id);
             }
             transaction_manager.SetTransactionResult(current_txn,

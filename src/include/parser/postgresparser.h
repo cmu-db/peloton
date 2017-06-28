@@ -160,7 +160,7 @@ class PostgresParser {
 
   // transform helper for create statements
   static parser::SQLStatement* CreateTransform(CreateStmt* root);
-  
+
   // transform helper for create index statements
   static parser::SQLStatement* CreateIndexTransform(IndexStmt* root);
 
@@ -200,7 +200,7 @@ class PostgresParser {
 
   // transform helper for truncate statement
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
-  
+
   // transform helper for transaction statement
   static parser::TransactionStatement* TransactionTransform(TransactionStmt* root);
 
@@ -217,6 +217,9 @@ class PostgresParser {
 
   // transform helper for execute statement
   static parser::CopyStatement* CopyTransform(CopyStmt* root);
+
+  // transform helper for analyze statement
+  static parser::AnalyzeStatement* VacuumTransform(VacuumStmt* root);
 };
 
 }  // End parser namespace

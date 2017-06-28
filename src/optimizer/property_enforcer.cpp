@@ -35,28 +35,27 @@ void PropertyEnforcer::Visit(const PropertyColumns *) {
       std::make_shared<GroupExpression>(PhysicalProject::make(), child_groups);
 }
 
-void PropertyEnforcer::Visit(const PropertyProjection *) {
-  //  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
-  //
-  //  output_gexpr_ =
-  //      std::make_shared<GroupExpression>(PhysicalProject::make(),
-  //      child_groups);
-}
-
 void PropertyEnforcer::Visit(const PropertySort *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ =
       std::make_shared<GroupExpression>(PhysicalOrderBy::make(), child_groups);
 }
 
-// TODO add implementation for PropertyDistinct and PropertyPredicate
 void PropertyEnforcer::Visit(const PropertyDistinct *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ =
       std::make_shared<GroupExpression>(PhysicalDistinct::make(), child_groups);
 }
-
+  
+void PropertyEnforcer::Visit(const PropertyLimit *) {
+  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
+  output_gexpr_ =
+    std::make_shared<GroupExpression>(PhysicalLimit::make(), child_groups);
+}
+  
 void PropertyEnforcer::Visit(const PropertyPredicate *) {}
+  
+
 
 } /* namespace optimizer */
 } /* namespace peloton */

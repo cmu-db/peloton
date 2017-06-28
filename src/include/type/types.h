@@ -78,15 +78,6 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-enum class GarbageCollectionType {
-  INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
-};
 
 //===--------------------------------------------------------------------===//
 // Postgres Value Types
@@ -372,6 +363,9 @@ enum class NetworkMessageType : unsigned char {
   PARSE_COMMAND = 'P',
   SIMPLE_QUERY_COMMAND = 'Q',
   CLOSE_COMMAND = 'C',
+  // SSL willingness
+  SSL_YES = 'S',
+  SSL_NO = 'N',
 };
 
 enum class NetworkTransactionStateType : unsigned char {
@@ -389,10 +383,13 @@ enum SqlStateErrorCode {
 // Concurrency Control Types
 //===--------------------------------------------------------------------===//
 
-enum class ConcurrencyType {
+enum class ProtocolType {
   INVALID = INVALID_TYPE_ID,
   TIMESTAMP_ORDERING = 1  // timestamp ordering
 };
+std::string ProtocolTypeToString(ProtocolType type);
+ProtocolType StringToProtocolType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ProtocolType &type);
 
 //===--------------------------------------------------------------------===//
 // Epoch Types
@@ -402,6 +399,20 @@ enum class EpochType {
   INVALID = INVALID_TYPE_ID,
   DECENTRALIZED_EPOCH = 1  // decentralized epoch manager
 };
+std::string EpochTypeToString(EpochType type);
+EpochType StringToEpochType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const EpochType &type);
+
+
+enum class TimestampType {
+  INVALID = INVALID_TYPE_ID,
+  SNAPSHOT_READ = 1,
+  READ = 2,
+  COMMIT = 3
+};
+std::string TimestampTypeToString(TimestampType type);
+TimestampType StringToTimestampType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TimestampType &type);
 
 //===--------------------------------------------------------------------===//
 // Visibility Types
@@ -413,6 +424,19 @@ enum class VisibilityType {
   DELETED = 2,
   OK = 3
 };
+std::string VisibilityTypeToString(VisibilityType type);
+VisibilityType StringToVisibilityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const VisibilityType &type);
+
+
+enum class VisibilityIdType {
+  INVALID = INVALID_TYPE_ID,
+  READ_ID = 1,
+  COMMIT_ID = 2
+};
+std::string VisibilityIdTypeToString(VisibilityIdType type);
+VisibilityIdType StringToVisibilityIdType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type);
 
 //===--------------------------------------------------------------------===//
 // Isolation Levels
@@ -420,13 +444,44 @@ enum class VisibilityType {
 
 enum class IsolationLevelType {
   INVALID = INVALID_TYPE_ID,
-  FULL = 1,            // full serializability
-  SNAPSHOT = 2,        // snapshot isolation
-  REPEATABLE_READ = 3  // repeatable read
+  SERIALIZABLE = 1,     // serializable
+  SNAPSHOT = 2,         // snapshot isolation
+  REPEATABLE_READS = 3, // repeatable reads
+  READ_COMMITTED = 4,   // read committed
+  READ_ONLY = 5         // read only
 };
+std::string IsolationLevelTypeToString(IsolationLevelType type);
+IsolationLevelType StringToIsolationLevelType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IsolationLevelType &type);
+
+//===--------------------------------------------------------------------===//
+// Conflict Avoidance types
+//===--------------------------------------------------------------------===//
+
+enum class ConflictAvoidanceType {
+  INVALID = INVALID_TYPE_ID,
+  WAIT = 1,     // wait-based
+  ABORT = 2,    // abort-based
+};
+std::string ConflictAvoidanceTypeToString(ConflictAvoidanceType type);
+ConflictAvoidanceType StringToConflictAvoidanceType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ConflictAvoidanceType &type);
 
 //===--------------------------------------------------------------------===//
 // Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+enum class GarbageCollectionType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
+};
+std::string GarbageCollectionTypeToString(GarbageCollectionType type);
+GarbageCollectionType StringToGarbageCollectionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const GarbageCollectionType &type);
+
+//===--------------------------------------------------------------------===//
+// Backend Types
 //===--------------------------------------------------------------------===//
 
 enum class BackendType {
@@ -544,6 +599,7 @@ enum class PlanNodeType {
   DROP = 33,
   CREATE = 34,
   POPULATE_INDEX = 35,
+  ANALYZE = 36,
 
   // Communication Nodes
   SEND = 40,
@@ -603,11 +659,28 @@ enum class StatementType {
   RENAME = 11,                // rename statement type
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
-  COPY = 14                   // copy type
+  COPY = 14,                  // copy type
+  ANALYZE = 15                // analyze type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const StatementType &type);
+
+//===--------------------------------------------------------------------===//
+// Query Types
+//===--------------------------------------------------------------------===//
+
+enum class QueryType {
+  QUERY_BEGIN,                // begin query
+  QUERY_COMMIT,               // commit query
+  QUERY_ROLLBACK,             // rollback query
+  QUERY_INSERT,               // insert query
+  QUERY_SET,                  // set query
+  QUERY_SHOW,                 // show query
+  QUERY_PREPARE,	      // prepare query
+  QUERY_EXECUTE, 	      // execute query
+  QUERY_OTHER,                // other queries
+};
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
@@ -811,25 +884,47 @@ std::ostream &operator<<(std::ostream &os, const SetOpType &type);
 // Logging + Recovery Types
 //===--------------------------------------------------------------------===//
 
-// AAA_BBB
-// Data stored in AAA
-// Log stored in BBB
 enum class LoggingType {
   INVALID = INVALID_TYPE_ID,
-
-  // Based on write behind logging
-  NVM_WBL = 1,
-  SSD_WBL = 2,
-  HDD_WBL = 3,
-
-  // Based on write ahead logging
-  NVM_WAL = 4,
-  SSD_WAL = 5,
-  HDD_WAL = 6,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
 };
 std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggingType &type);
+
+
+enum class LogRecordType {
+  INVALID = INVALID_TYPE_ID,
+
+  // Transaction-related records
+  TRANSACTION_BEGIN = 1,
+  TRANSACTION_COMMIT = 2,
+
+  // Generic dml records
+  TUPLE_INSERT = 11,
+  TUPLE_DELETE = 12,
+  TUPLE_UPDATE = 13,
+
+  // Epoch related records
+  EPOCH_BEGIN = 21,
+  EPOCH_END = 22,
+};
+std::string LogRecordTypeToString(LogRecordType type);
+LogRecordType StringToLogRecordType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
+
+
+enum class CheckpointingType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
+};
+std::string CheckpointingTypeToString(CheckpointingType type);
+CheckpointingType StringToCheckpointingType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
+
+
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -838,92 +933,6 @@ typedef enum LayoutType {
   LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
   LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
 } LayoutType;
-
-enum class LoggerMappingStrategyType {
-  INVALID = INVALID_TYPE_ID,
-  ROUND_ROBIN = 1,
-  AFFINITY = 2,
-  MANUAL = 3
-};
-std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
-LoggerMappingStrategyType StringToLoggerMappingStrategyType(
-    const std::string &str);
-std::ostream &operator<<(std::ostream &os,
-                         const LoggerMappingStrategyType &type);
-
-enum class CheckpointType {
-  INVALID = INVALID_TYPE_ID,
-  NORMAL = 1,
-};
-std::string CheckpointTypeToString(CheckpointType type);
-CheckpointType StringToCheckpointType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointType &type);
-
-enum ReplicationType {
-  ASYNC_REPLICATION,
-  SYNC_REPLICATION,
-  SEMISYNC_REPLICATION
-};
-
-enum class LoggingStatusType {
-  INVALID = INVALID_TYPE_ID,
-  STANDBY = 1,
-  RECOVERY = 2,
-  LOGGING = 3,
-  TERMINATE = 4,
-  SLEEP = 5
-};
-std::string LoggingStatusTypeToString(LoggingStatusType type);
-LoggingStatusType StringToLoggingStatusType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggingStatusType &type);
-
-enum class LoggerType { INVALID = INVALID_TYPE_ID, FRONTEND = 1, BACKEND = 2 };
-std::string LoggerTypeToString(LoggerType type);
-LoggerType StringToLoggerType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggerType &type);
-
-enum LogRecordType {
-  LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
-
-  // Transaction-related records
-  LOGRECORD_TYPE_TRANSACTION_BEGIN = 1,
-  LOGRECORD_TYPE_TRANSACTION_COMMIT = 2,
-  LOGRECORD_TYPE_TRANSACTION_END = 3,
-  LOGRECORD_TYPE_TRANSACTION_ABORT = 4,
-  LOGRECORD_TYPE_TRANSACTION_DONE = 5,
-
-  // Generic dml records
-  LOGRECORD_TYPE_TUPLE_INSERT = 11,
-  LOGRECORD_TYPE_TUPLE_DELETE = 12,
-  LOGRECORD_TYPE_TUPLE_UPDATE = 13,
-
-  // DML records for Write ahead logging
-  LOGRECORD_TYPE_WAL_TUPLE_INSERT = 21,
-  LOGRECORD_TYPE_WAL_TUPLE_DELETE = 22,
-  LOGRECORD_TYPE_WAL_TUPLE_UPDATE = 23,
-
-  // DML records for Write behind logging
-  LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
-  LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
-  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
-
-  // Record for delimiting transactions
-  // includes max persistent commit_id
-  LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
-};
-std::string LogRecordTypeToString(LogRecordType type);
-LogRecordType StringToLogRecordType(const std::string &str);
-
-enum class CheckpointStatus {
-  INVALID = INVALID_TYPE_ID,
-  STANDBY = 1,
-  RECOVERY = 2,
-  DONE_RECOVERY = 3,
-  CHECKPOINTING = 4,
-};
-std::string CheckpointStatusToString(CheckpointStatus type);
-CheckpointStatus StringToCheckpointStatus(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
@@ -1017,10 +1026,6 @@ static const txn_id_t INVALID_TXN_ID = 0;
 
 static const txn_id_t INITIAL_TXN_ID = 1;
 
-static const txn_id_t READONLY_TXN_ID = 2;
-
-static const txn_id_t START_TXN_ID = 3;
-
 static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
 
 // For commit id
@@ -1029,11 +1034,15 @@ typedef uint64_t cid_t;
 
 static const cid_t INVALID_CID = 0;
 
-static const cid_t READ_ONLY_START_CID = 1;
-
-static const cid_t START_CID = 2;
-
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
+
+// For epoch id
+
+typedef uint64_t eid_t;
+
+static const cid_t INVALID_EID = 0;
+
+static const cid_t MAX_EID = std::numeric_limits<eid_t>::max();
 
 // For epoch
 static const size_t EPOCH_LENGTH = 40;
@@ -1156,10 +1165,10 @@ typedef std::vector<DirectMap> DirectMapList;
 //===--------------------------------------------------------------------===//
 enum class PropertyType {
   PREDICATE,
-  PROJECT,
   COLUMNS,
   DISTINCT,
   SORT,
+  LIMIT,
 };
 
 namespace expression {
@@ -1167,6 +1176,21 @@ class AbstractExpression;
 class ExprHasher;
 class ExprEqualCmp;
 }
+
+// Augment abstract expression with a table alias set
+struct MultiTableExpression {
+  MultiTableExpression(
+      expression::AbstractExpression* i_expr,
+      std::unordered_set<std::string>& i_set)
+      : expr(i_expr), table_alias_set(i_set) {}
+  MultiTableExpression(const MultiTableExpression& mt_expr)
+      : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
+  expression::AbstractExpression* expr;
+  std::unordered_set<std::string> table_alias_set;
+};
+
+typedef std::vector<expression::AbstractExpression*> SingleTablePredicates;
+typedef std::vector<MultiTableExpression> MultiTablePredicates;
 
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,

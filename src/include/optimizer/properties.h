@@ -19,7 +19,7 @@
 namespace peloton {
 namespace optimizer {
 
-// Specifies which columns should the executor return
+// Specifies which columns should the operator returns
 class PropertyColumns : public Property {
  public:
   PropertyColumns(std::vector<std::shared_ptr<expression::AbstractExpression>>
@@ -77,39 +77,29 @@ class PropertyDistinct : public Property {
   std::vector<std::shared_ptr<expression::AbstractExpression>>
       distinct_column_exprs_;
 };
-
-// Specifies the output expressions of the query
-class PropertyProjection : public Property {
+  
+// Specify how many tuples to output
+class PropertyLimit : public Property {
  public:
-  PropertyProjection(
-      std::vector<std::unique_ptr<expression::AbstractExpression>> expressions);
-
+  PropertyLimit(int64_t offset, int64_t limit):offset_(offset), limit_(limit){}
+  
   PropertyType Type() const override;
-
+  
   hash_t Hash() const override;
-
+  
   bool operator>=(const Property &r) const override;
-
+  
   void Accept(PropertyVisitor *v) const override;
-
+  
   std::string ToString() const override;
-
-  inline size_t GetProjectionListSize() const { return expressions_.size(); }
-
-  inline expression::AbstractExpression *GetProjection(size_t idx) const {
-    return expressions_[idx].get();
-  }
-
-  inline bool AllAggregation() const {
-    for (size_t idx = 0; idx < expressions_.size(); idx++)
-      if (!expression::ExpressionUtil::IsAggregateExpression(
-              expressions_[idx]->GetExpressionType()))
-        return false;
-    return true;
-  }
-
+  
+  inline int64_t GetLimit() const { return limit_; }
+  
+  inline int64_t GetOffset() const { return offset_; }
+  
  private:
-  std::vector<std::unique_ptr<expression::AbstractExpression>> expressions_;
+  int64_t offset_;
+  int64_t limit_;
 };
 
 // Specifies the required sorting order of the query

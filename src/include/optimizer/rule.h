@@ -16,6 +16,7 @@
 
 #include <memory>
 #include "operator_expression.h"
+#include "memo.h"
 
 namespace peloton {
 namespace optimizer {
@@ -30,7 +31,7 @@ class Rule {
 
   bool IsLogical() const { return logical; }
 
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr) const = 0;
+  virtual bool Check(std::shared_ptr<OperatorExpression> expr, Memo *memo) const = 0;
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,

@@ -30,29 +30,28 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual ~TimestampOrderingTransactionManager() {}
 
-  static TimestampOrderingTransactionManager &GetInstance();
+  static TimestampOrderingTransactionManager &GetInstance(
+      const ProtocolType protocol,
+      const IsolationLevelType isolation, 
+      const ConflictAvoidanceType conflict);
 
-  // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(
-      Transaction *const current_txn, 
-      const void *position);
-
-  virtual VisibilityType IsVisible(
+  // This method tests whether the current transaction is the owner of this version.
+  virtual bool IsOwner(
       Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  // This method test whether the current transaction is the owner of a tuple.
-  virtual bool IsOwner(Transaction *const current_txn,
-                       const storage::TileGroupHeader *const tile_group_header,
-                       const oid_t &tuple_id);
+  // This method tests whether any other transaction has owned this version.
+  virtual bool IsOwned(
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   // This method tests whether the current transaction has created this version of the tuple
   virtual bool IsWritten(
-    Transaction *const current_txn,
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id
-  );
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -68,9 +67,10 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   // This method is used by executor to yield ownership after the acquired
   // ownership.
-  virtual void YieldOwnership(Transaction *const current_txn,
-                              const oid_t &tile_group_id,
-                              const oid_t &tuple_id);
+  virtual void YieldOwnership(
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   // The index_entry_ptr is the address of the head node of the version chain,
   // which is directly pointed by the primary index.
@@ -100,13 +100,6 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
 
-  virtual Transaction *BeginTransaction(const size_t thread_id = 0);
-
-  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0);
-
-  virtual void EndTransaction(Transaction *current_txn);
-
-  virtual void EndReadonlyTransaction(Transaction *current_txn);
 
 private:
   static const int LOCK_OFFSET = 0;
@@ -122,7 +115,9 @@ private:
 
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &current_cid);
+      const oid_t &tuple_id, 
+      const cid_t &current_cid, 
+      const bool is_owner);
 
   // Initiate reserved area of a tuple
   void InitTupleReserved(

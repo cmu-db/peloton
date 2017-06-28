@@ -363,6 +363,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::ANALYZE: {
+      return "ANALYZE";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -657,9 +660,9 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_MULTIPLY;
   } else if (upper_str == "OPERATOR_DIVIDE" || upper_str == "/") {
     return ExpressionType::OPERATOR_DIVIDE;
-  } else if (upper_str == "OPERATOR_CONCAT") {
+  } else if (upper_str == "OPERATOR_CONCAT" || upper_str == "||") {
     return ExpressionType::OPERATOR_CONCAT;
-  } else if (upper_str == "OPERATOR_MOD") {
+  } else if (upper_str == "OPERATOR_MOD" || upper_str == "%" ) {
     return ExpressionType::OPERATOR_MOD;
   } else if (upper_str == "OPERATOR_CAST") {
     return ExpressionType::OPERATOR_CAST;
@@ -673,7 +676,8 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=" || upper_str == "<>") {
+  } else if (upper_str == "COMPARE_NOTEQUAL"
+      || upper_str == "!=" || upper_str == "<>") {
     return ExpressionType::COMPARE_NOTEQUAL;
   } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
@@ -1040,6 +1044,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::POPULATE_INDEX: {
       return ("POPULATE_INDEX");
     }
+    case PlanNodeType::ANALYZE: {
+      return ("ANALYZE");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for PlanNodeType value '%d'",
@@ -1111,6 +1118,8 @@ PlanNodeType StringToPlanNodeType(const std::string& str) {
     return PlanNodeType::COPY;
   } else if (upper_str == "MOCK") {
     return PlanNodeType::MOCK;
+  } else if (upper_str == "ANALYZE") {
+    return PlanNodeType::ANALYZE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
@@ -1757,31 +1766,384 @@ std::ostream& operator<<(std::ostream& os, const SetOpType& type) {
   return os;
 }
 
+
 //===--------------------------------------------------------------------===//
-// Log Types - String Utilities
+// Concurrency Control Types
+//===--------------------------------------------------------------------===//
+
+std::string ProtocolTypeToString(ProtocolType type) {
+  switch (type) {
+    case ProtocolType::INVALID: {
+      return "INVALID";
+    }
+    case ProtocolType::TIMESTAMP_ORDERING: {
+      return "TIMESTAMP_ORDERING";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for ProtocolType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+ProtocolType StringToProtocolType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return ProtocolType::INVALID;
+  } else if (upper_str == "TIMESTAMP_ORDERING") {
+    return ProtocolType::TIMESTAMP_ORDERING;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No ProtocolType conversion from string '%s'", upper_str.c_str()));
+  }
+  return ProtocolType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const ProtocolType &type) {
+  os << ProtocolTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// Epoch Types
+//===--------------------------------------------------------------------===//
+
+std::string EpochTypeToString(EpochType type) {
+  switch (type) {
+    case EpochType::INVALID: {
+      return "INVALID";
+    }
+    case EpochType::DECENTRALIZED_EPOCH: {
+      return "DECENTRALIZED_EPOCH";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for EpochType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+EpochType StringToEpochType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return EpochType::INVALID;
+  } else if (upper_str == "DECENTRALIZED_EPOCH") {
+    return EpochType::DECENTRALIZED_EPOCH;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No EpochType conversion from string '%s'", upper_str.c_str()));
+  }
+  return EpochType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const EpochType &type) {
+  os << EpochTypeToString(type);
+  return os;
+}
+
+std::string TimestampTypeToString(TimestampType type) {
+  switch (type) {
+    case TimestampType::INVALID: {
+      return "INVALID";
+    }
+    case TimestampType::SNAPSHOT_READ: {
+      return "SNAPSHOT_READ";
+    }
+    case TimestampType::READ: {
+      return "READ";
+    }
+    case TimestampType::COMMIT: {
+      return "COMMIT";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for TimestampType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+TimestampType StringToTimestampType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return TimestampType::INVALID;
+  } else if (upper_str == "SNAPSHOT_READ") {
+    return TimestampType::SNAPSHOT_READ;
+  } else if (upper_str == "READ") {
+    return TimestampType::READ;
+  } else if (upper_str == "COMMIT") {
+    return TimestampType::COMMIT;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No TimestampType conversion from string '%s'", upper_str.c_str()));
+  }
+  return TimestampType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const TimestampType &type) {
+  os << TimestampTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// Visibility Types
+//===--------------------------------------------------------------------===//
+
+std::string VisibilityTypeToString(VisibilityType type) {
+  switch (type) {
+    case VisibilityType::INVALID: {
+      return "INVALID";
+    }
+    case VisibilityType::INVISIBLE: {
+      return "INVISIBLE";
+    }
+    case VisibilityType::DELETED: {
+      return "DELETED";
+    }
+    case VisibilityType::OK: {
+      return "OK";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for VisibilityType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+VisibilityType StringToVisibilityType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return VisibilityType::INVALID;
+  } else if (upper_str == "INVISIBLE") {
+    return VisibilityType::INVISIBLE;
+  } else if (upper_str == "DELETED") {
+    return VisibilityType::DELETED;
+  } else if (upper_str == "OK") {
+    return VisibilityType::OK;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No VisibilityType conversion from string '%s'", upper_str.c_str()));
+  }
+  return VisibilityType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const VisibilityType &type) {
+  os << VisibilityTypeToString(type);
+  return os;
+}
+
+
+std::string VisibilityIdTypeToString(VisibilityIdType type) {
+  switch (type) {
+    case VisibilityIdType::INVALID: {
+      return "INVALID";
+    }
+    case VisibilityIdType::READ_ID: {
+      return "READ_ID";
+    }
+    case VisibilityIdType::COMMIT_ID: {
+      return "COMMIT_ID";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for VisibilityIdType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+VisibilityIdType StringToVisibilityIdType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return VisibilityIdType::INVALID;
+  } else if (upper_str == "READ_ID") {
+    return VisibilityIdType::READ_ID;
+  } else if (upper_str == "COMMIT_ID") {
+    return VisibilityIdType::COMMIT_ID;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No VisibilityIdType conversion from string '%s'", upper_str.c_str()));
+  }
+  return VisibilityIdType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type) {
+  os << VisibilityIdTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// Isolation Levels
+//===--------------------------------------------------------------------===//
+
+std::string IsolationLevelTypeToString(IsolationLevelType type) {
+  switch (type) {
+    case IsolationLevelType::INVALID: {
+      return "INVALID";
+    }
+    case IsolationLevelType::SERIALIZABLE: {
+      return "SERIALIZABLE";
+    }
+    case IsolationLevelType::SNAPSHOT: {
+      return "SNAPSHOT";
+    }
+    case IsolationLevelType::REPEATABLE_READS: {
+      return "REPEATABLE_READS";
+    }
+    case IsolationLevelType::READ_COMMITTED: {
+      return "READ_COMMITTED";
+    }
+    case IsolationLevelType::READ_ONLY: {
+      return "READ_ONLY";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for IsolationLevelType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+IsolationLevelType StringToIsolationLevelType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return IsolationLevelType::INVALID;
+  } else if (upper_str == "SERIALIZABLE") {
+    return IsolationLevelType::SERIALIZABLE;
+  } else if (upper_str == "SNAPSHOT") {
+    return IsolationLevelType::SNAPSHOT;
+  } else if (upper_str == "REPEATABLE_READS") {
+    return IsolationLevelType::REPEATABLE_READS;
+  } else if (upper_str == "READ_COMMITTED") {
+    return IsolationLevelType::READ_COMMITTED;
+  } else if (upper_str == "READ_ONLY") {
+    return IsolationLevelType::READ_ONLY;
+  }
+  else {
+    throw ConversionException(StringUtil::Format(
+        "No IsolationLevelType conversion from string '%s'", upper_str.c_str()));
+  }
+  return IsolationLevelType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const IsolationLevelType &type) {
+  os << IsolationLevelTypeToString(type);
+  return os;
+}
+
+
+//===--------------------------------------------------------------------===//
+// Conflict Avoidance types
+//===--------------------------------------------------------------------===//
+
+std::string ConflictAvoidanceTypeToString(ConflictAvoidanceType type) {
+  switch (type) {
+    case ConflictAvoidanceType::INVALID: {
+      return "INVALID";
+    }
+    case ConflictAvoidanceType::WAIT: {
+      return "WAIT";
+    }
+    case ConflictAvoidanceType::ABORT: {
+      return "ABORT";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for ConflictAvoidanceType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+ConflictAvoidanceType StringToConflictAvoidanceType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return ConflictAvoidanceType::INVALID;
+  } else if (upper_str == "WAIT") {
+    return ConflictAvoidanceType::WAIT;
+  } else if (upper_str == "ABORT") {
+    return ConflictAvoidanceType::ABORT;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No ConflictAvoidanceType conversion from string '%s'", upper_str.c_str()));
+  }
+  return ConflictAvoidanceType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const ConflictAvoidanceType &type) {
+  os << ConflictAvoidanceTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+std::string GarbageCollectionTypeToString(GarbageCollectionType type) {
+  switch (type) {
+    case GarbageCollectionType::INVALID: {
+      return "INVALID";
+    }
+    case GarbageCollectionType::OFF: {
+      return "OFF";
+    }
+    case GarbageCollectionType::ON: {
+      return "ON";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for GarbageCollectionType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+GarbageCollectionType StringToGarbageCollectionType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return GarbageCollectionType::INVALID;
+  } else if (upper_str == "OFF") {
+    return GarbageCollectionType::OFF;
+  } else if (upper_str == "ON") {
+    return GarbageCollectionType::ON;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No GarbageCollectionType conversion from string '%s'", upper_str.c_str()));
+  }
+  return GarbageCollectionType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const GarbageCollectionType& type) {
+  os << GarbageCollectionTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// LoggingType - String Utilities
 //===--------------------------------------------------------------------===//
 
 std::string LoggingTypeToString(LoggingType type) {
   switch (type) {
-    case LoggingType::INVALID:
+    case LoggingType::INVALID: {
       return "INVALID";
-
-    // WAL Based
-    case LoggingType::NVM_WAL:
-      return "NVM_WAL";
-    case LoggingType::SSD_WAL:
-      return "SSD_WAL";
-    case LoggingType::HDD_WAL:
-      return "HDD_WAL";
-
-    // WBL Based
-    case LoggingType::NVM_WBL:
-      return "NVM_WBL";
-    case LoggingType::SSD_WBL:
-      return "SSD_WBL";
-    case LoggingType::HDD_WBL:
-      return "HDD_WBL";
-
+    }
+    case LoggingType::OFF: {
+      return "OFF";
+    }
+    case LoggingType::ON: {
+      return "ON";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for LoggingType value '%d'",
@@ -1795,18 +2157,10 @@ LoggingType StringToLoggingType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return LoggingType::INVALID;
-  } else if (upper_str == "NVM_WAL") {
-    return LoggingType::NVM_WAL;
-  } else if (upper_str == "SSD_WAL") {
-    return LoggingType::SSD_WAL;
-  } else if (upper_str == "HDD_WAL") {
-    return LoggingType::HDD_WAL;
-  } else if (upper_str == "NVM_WBL") {
-    return LoggingType::NVM_WBL;
-  } else if (upper_str == "SSD_WBL") {
-    return LoggingType::SSD_WBL;
-  } else if (upper_str == "HDD_WBL") {
-    return LoggingType::HDD_WBL;
+  } else if (upper_str == "OFF") {
+    return LoggingType::OFF;
+  } else if (upper_str == "ON") {
+    return LoggingType::ON;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggingType conversion from string '%s'", upper_str.c_str()));
@@ -1819,253 +2173,37 @@ std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
   return os;
 }
 
-//===--------------------------------------------------------------------===//
-// LoggerMappingStrategyType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type) {
-  switch (type) {
-    case LoggerMappingStrategyType::INVALID: {
-      return "INVALID";
-    }
-    case LoggerMappingStrategyType::ROUND_ROBIN: {
-      return "ROUND_ROBIN";
-    }
-    case LoggerMappingStrategyType::AFFINITY: {
-      return "AFFINITY";
-    }
-    case LoggerMappingStrategyType::MANUAL: {
-      return "MANUAL";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LoggerMappingStrategyType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return LoggerMappingStrategyType::INVALID;
-  } else if (upper_str == "ROUND_ROBIN") {
-    return LoggerMappingStrategyType::ROUND_ROBIN;
-  } else if (upper_str == "AFFINITY") {
-    return LoggerMappingStrategyType::AFFINITY;
-  } else if (upper_str == "MANUAL") {
-    return LoggerMappingStrategyType::MANUAL;
-  } else {
-    throw ConversionException(
-        StringUtil::Format("No LoggerMappingStrategyType conversion from string '%s'",
-                           upper_str.c_str()));
-  }
-  return LoggerMappingStrategyType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const LoggerMappingStrategyType& type) {
-  os << LoggerMappingStrategyTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// CheckpointType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string CheckpointTypeToString(CheckpointType type) {
-  switch (type) {
-    case CheckpointType::INVALID: {
-      return "INVALID";
-    }
-    case CheckpointType::NORMAL: {
-      return "NORMAL";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-CheckpointType StringToCheckpointType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return CheckpointType::INVALID;
-  } else if (upper_str == "NORMAL") {
-    return CheckpointType::NORMAL;
-  } else {
-    throw ConversionException(
-        StringUtil::Format("No CheckpointType conversion from string '%s'",
-                           upper_str.c_str()));
-  }
-  return CheckpointType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const CheckpointType& type) {
-  os << CheckpointTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// LoggingStatusType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string LoggingStatusTypeToString(LoggingStatusType type) {
-  switch (type) {
-    case LoggingStatusType::INVALID: {
-      return "INVALID";
-    }
-    case LoggingStatusType::STANDBY: {
-      return "STANDBY";
-    }
-    case LoggingStatusType::RECOVERY: {
-      return "RECOVERY";
-    }
-    case LoggingStatusType::LOGGING: {
-      return "LOGGING";
-    }
-    case LoggingStatusType::TERMINATE: {
-      return "TERMINATE";
-    }
-    case LoggingStatusType::SLEEP: {
-      return "SLEEP";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LoggingStatusType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-LoggingStatusType StringToLoggingStatusType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return LoggingStatusType::INVALID;
-  } else if (upper_str == "STANDBY") {
-    return LoggingStatusType::STANDBY;
-  } else if (upper_str == "RECOVERY") {
-    return LoggingStatusType::RECOVERY;
-  } else if (upper_str == "LOGGING") {
-    return LoggingStatusType::LOGGING;
-  } else if (upper_str == "TERMINATE") {
-    return LoggingStatusType::TERMINATE;
-  } else if (upper_str == "SLEEP") {
-    return LoggingStatusType::SLEEP;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
-  }
-  return LoggingStatusType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type) {
-  os << LoggingStatusTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// LoggerType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string LoggerTypeToString(LoggerType type) {
-  switch (type) {
-    case LoggerType::INVALID: {
-      return "INVALID";
-    }
-    case LoggerType::FRONTEND: {
-      return "FRONTEND";
-    }
-    case LoggerType::BACKEND: {
-      return "BACKEND";
-    }
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for LoggerType value '%d'",
-                             static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-LoggerType StringToLoggerType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return LoggerType::INVALID;
-  } else if (upper_str == "FRONTEND") {
-    return LoggerType::FRONTEND;
-  } else if (upper_str == "BACKEND") {
-    return LoggerType::BACKEND;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LoggerType conversion from string '%s'", upper_str.c_str()));
-  }
-  return LoggerType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const LoggerType& type) {
-  os << LoggerTypeToString(type);
-  return os;
-}
 
 std::string LogRecordTypeToString(LogRecordType type) {
   switch (type) {
-    case LOGRECORD_TYPE_INVALID: {
+    case LogRecordType::INVALID: {
       return "INVALID";
     }
-    case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
+    case LogRecordType::TRANSACTION_BEGIN: {
       return "TRANSACTION_BEGIN";
     }
-    case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+    case LogRecordType::TRANSACTION_COMMIT: {
       return "TRANSACTION_COMMIT";
     }
-    case LOGRECORD_TYPE_TRANSACTION_END: {
-      return "TRANSACTION_END";
-    }
-    case LOGRECORD_TYPE_TRANSACTION_ABORT: {
-      return "TRANSACTION_ABORT";
-    }
-    case LOGRECORD_TYPE_TRANSACTION_DONE: {
-      return "TRANSACTION_DONE";
-    }
-    case LOGRECORD_TYPE_TUPLE_INSERT: {
+    case LogRecordType::TUPLE_INSERT: {
       return "TUPLE_INSERT";
     }
-    case LOGRECORD_TYPE_TUPLE_DELETE: {
+    case LogRecordType::TUPLE_DELETE: {
       return "TUPLE_DELETE";
     }
-    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+    case LogRecordType::TUPLE_UPDATE: {
       return "TUPLE_UPDATE";
     }
-    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
-      return "WAL_TUPLE_INSERT";
+    case LogRecordType::EPOCH_BEGIN: {
+      return "EPOCH_BEGIN";
     }
-    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
-      return "WAL_TUPLE_DELETE";
-    }
-    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
-      return "WAL_TUPLE_UPDATE";
-    }
-    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
-      return "WBL_TUPLE_INSERT";
-    }
-    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
-      return "WBL_TUPLE_DELETE";
-    }
-    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-      return "WBL_TUPLE_UPDATE";
-    }
-    case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-      return "ITERATION_DELIMITER";
+    case LogRecordType::EPOCH_END: {
+      return "EPOCH_END";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LogRecordType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException(
+          StringUtil::Format("No string conversion for LogRecordType value '%d'",
+                             static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2074,98 +2212,81 @@ std::string LogRecordTypeToString(LogRecordType type) {
 LogRecordType StringToLogRecordType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGRECORD_TYPE_INVALID;
+    return LogRecordType::INVALID;
   } else if (upper_str == "TRANSACTION_BEGIN") {
-    return LOGRECORD_TYPE_TRANSACTION_BEGIN;
+    return LogRecordType::TRANSACTION_BEGIN;
   } else if (upper_str == "TRANSACTION_COMMIT") {
-    return LOGRECORD_TYPE_TRANSACTION_COMMIT;
-  } else if (upper_str == "TRANSACTION_END") {
-    return LOGRECORD_TYPE_TRANSACTION_END;
-  } else if (upper_str == "TRANSACTION_ABORT") {
-    return LOGRECORD_TYPE_TRANSACTION_ABORT;
-  } else if (upper_str == "TRANSACTION_DONE") {
-    return LOGRECORD_TYPE_TRANSACTION_DONE;
+    return LogRecordType::TRANSACTION_COMMIT;
   } else if (upper_str == "TUPLE_INSERT") {
-    return LOGRECORD_TYPE_TUPLE_INSERT;
+    return LogRecordType::TUPLE_INSERT;
   } else if (upper_str == "TUPLE_DELETE") {
-    return LOGRECORD_TYPE_TUPLE_DELETE;
+    return LogRecordType::TUPLE_DELETE;
   } else if (upper_str == "TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_TUPLE_UPDATE;
-  } else if (upper_str == "WAL_TUPLE_INSERT") {
-    return LOGRECORD_TYPE_WAL_TUPLE_INSERT;
-  } else if (upper_str == "WAL_TUPLE_DELETE") {
-    return LOGRECORD_TYPE_WAL_TUPLE_DELETE;
-  } else if (upper_str == "WAL_TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
-  } else if (upper_str == "WBL_TUPLE_INSERT") {
-    return LOGRECORD_TYPE_WBL_TUPLE_INSERT;
-  } else if (upper_str == "WBL_TUPLE_DELETE") {
-    return LOGRECORD_TYPE_WBL_TUPLE_DELETE;
-  } else if (upper_str == "WBL_TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
-  } else if (upper_str == "ITERATION_DELIMITER") {
-    return LOGRECORD_TYPE_ITERATION_DELIMITER;
+    return LogRecordType::TUPLE_UPDATE;
+  } else if (upper_str == "EPOCH_BEGIN") {
+    return LogRecordType::EPOCH_BEGIN;
+  } else if (upper_str == "EPOCH_END") {
+    return LogRecordType::EPOCH_END;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LogRecordType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGRECORD_TYPE_INVALID;
+  return LogRecordType::INVALID;
 }
 
+std::ostream& operator<<(std::ostream& os, const LogRecordType& type) {
+  os << LogRecordTypeToString(type);
+  return os;
+}
+
+
 //===--------------------------------------------------------------------===//
-// CheckpointStatus - String Utilities
+// CheckpointingType - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string CheckpointStatusToString(CheckpointStatus type) {
+std::string CheckpointingTypeToString(CheckpointingType type) {
   switch (type) {
-    case CheckpointStatus::INVALID: {
+    case CheckpointingType::INVALID: {
       return "INVALID";
     }
-    case CheckpointStatus::STANDBY: {
-      return "STANDBY";
+    case CheckpointingType::OFF: {
+      return "OFF";
     }
-    case CheckpointStatus::RECOVERY: {
-      return "RECOVERY";
-    }
-    case CheckpointStatus::DONE_RECOVERY: {
-      return "DONE_RECOVERY";
-    }
-    case CheckpointStatus::CHECKPOINTING: {
-      return "CHECKPOINTING";
+    case CheckpointingType::ON: {
+      return "ON";
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointStatus value '%d'",
+          "No string conversion for CheckpointingType value '%d'",
           static_cast<int>(type)));
     }
   }
   return "INVALID";
 }
 
-CheckpointStatus StringToCheckpointStatus(const std::string& str) {
+CheckpointingType StringToCheckpointingType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return CheckpointStatus::INVALID;
-  } else if (upper_str == "STANDBY") {
-    return CheckpointStatus::STANDBY;
-  } else if (upper_str == "RECOVERY") {
-    return CheckpointStatus::RECOVERY;
-  } else if (upper_str == "DONE_RECOVERY") {
-    return CheckpointStatus::DONE_RECOVERY;
-  } else if (upper_str == "CHECKPOINTING") {
-    return CheckpointStatus::CHECKPOINTING;
-  } else {
+    return CheckpointingType::INVALID;
+  } else if (upper_str == "OFF") {
+    return CheckpointingType::OFF;
+  } else if (upper_str == "ON") {
+    return CheckpointingType::ON;
+  }
+  else {
     throw ConversionException(
-        StringUtil::Format("No CheckpointStatus conversion from string '%s'",
+        StringUtil::Format("No CheckpointingType conversion from string '%s'",
                            upper_str.c_str()));
   }
-  return CheckpointStatus::INVALID;
+  return CheckpointingType::INVALID;
 }
 
-std::ostream& operator<<(std::ostream& os, const CheckpointStatus& type) {
-  os << CheckpointStatusToString(type);
+std::ostream& operator<<(std::ostream& os, const CheckpointingType& type) {
+  os << CheckpointingTypeToString(type);
   return os;
 }
+
+
 
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
@@ -2386,10 +2507,10 @@ std::string PropertyTypeToString(PropertyType type) {
       return "COLUMNS";
     case PropertyType::PREDICATE:
       return "PREDICATE";
-    case PropertyType::PROJECT:
-      return "PROJECT";
     case PropertyType::DISTINCT:
       return "DISTINCT";
+    case PropertyType::LIMIT:
+      return "LIMIT";
     default:
       throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
                                                    static_cast<int>(type)));
