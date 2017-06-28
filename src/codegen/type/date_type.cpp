@@ -156,7 +156,7 @@ void Date::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 
 llvm::Function *Date::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputInteger::GetFunction(codegen);
+  return ValuesRuntimeProxy::_OutputDate::GetFunction(codegen);
 }
 
 }  // namespace type

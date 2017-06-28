@@ -48,6 +48,12 @@ class ValuesRuntimeProxy {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
+  // The proxy around ValuesRuntime::OutputDate()
+  struct _OutputDate {
+    static const std::string &GetFunctionName();
+    static llvm::Function *GetFunction(CodeGen &codegen);
+  };
+
   // The proxy around ValuesRuntime::OutputTimestamp()
   struct _OutputTimestamp {
     static const std::string &GetFunctionName();

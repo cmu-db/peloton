@@ -34,6 +34,9 @@ class ValuesRuntime {
   // Write out the given bigint value into the array at the provided index
   static void OutputBigInt(char *values, uint32_t idx, int64_t val);
 
+  // Write out the given date value into the array at the provided index
+  static void OutputDate(char *values, uint32_t idx, int32_t val);
+
   // Write out the given timestamp value into the array at the provided index
   static void OutputTimestamp(char *values, uint32_t idx, int64_t val);
 
