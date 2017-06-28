@@ -601,9 +601,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     } else {
       // For more complex expression, we need to do evaluation in Executor
 
-      planner::DerivedAttribute attribute;
-      attribute.expr = expr->Copy();
-      attribute.attribute_info.type = attribute.expr->GetValueType();
+      planner::DerivedAttribute attribute{expr->Copy()};
       tl.emplace_back(output_offset, attribute);
     }
     (*output_expr_map_)[expr] = output_offset;

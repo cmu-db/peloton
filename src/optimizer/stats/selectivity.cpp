@@ -137,7 +137,7 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
 // Complete implementation once we support LIKE operator.
 double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
                          const ValueCondition &condition) {
-  if ((condition.value).GetTypeId() != type::Type::TypeId::VARCHAR) {
+  if ((condition.value).GetTypeId() != type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 
@@ -154,11 +154,11 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   auto column_catalog = catalog::ColumnCatalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  type::Type::TypeId column_type =
+  type::TypeId column_type =
       column_catalog->GetColumnType(table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
-  if (column_type != type::Type::TypeId::VARCHAR) {
+  if (column_type != type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 

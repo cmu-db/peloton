@@ -160,7 +160,7 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
   // const bool is_in_bytes = false;
   PL_ASSERT(pool != nullptr);
   // Cast the value if the type is different from column type
-  const type::Type::TypeId col_type = schema.GetType(column_id);
+  const type::TypeId col_type = schema.GetType(column_id);
   if (value.GetTypeId() == col_type) {
     value.SerializeTo(field_location, is_inlined, pool);
   } else {

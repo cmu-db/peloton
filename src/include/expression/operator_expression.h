@@ -73,7 +73,7 @@ class OperatorExpression : public AbstractExpression {
     // children
     // This relies on a particular order in types.h
     if (exp_type_ == ExpressionType::OPERATOR_NOT) {
-      return_value_type_ = type::Type::BOOLEAN;
+      return_value_type_ = type::TypeId::BOOLEAN;
       return;
     }
       auto type =
