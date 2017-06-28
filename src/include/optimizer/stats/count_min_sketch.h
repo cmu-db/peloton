@@ -12,14 +12,15 @@
 
 #pragma once
 
+#include <cassert>
+#include <cinttypes>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+
 #include "common/logger.h"
 #include "murmur3/MurmurHash3.h"
-
-#include <cmath>
-#include <vector>
-#include <cassert>
-#include <cstdlib>
-#include <cinttypes>
 
 namespace peloton {
 namespace optimizer {

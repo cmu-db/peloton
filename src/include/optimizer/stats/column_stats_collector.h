@@ -40,7 +40,7 @@ class ColumnStatsCollector {
   using ValueFrequencyPair = std::pair<type::Value, double>;
 
   ColumnStatsCollector(oid_t database_id, oid_t table_id, oid_t column_id,
-                       type::Type::TypeId column_type, std::string column_name);
+                       type::TypeId column_type, std::string column_name);
 
   ~ColumnStatsCollector();
 
@@ -68,7 +68,7 @@ class ColumnStatsCollector {
   const oid_t database_id_;
   const oid_t table_id_;
   const oid_t column_id_;
-  const type::Type::TypeId column_type_;
+  const type::TypeId column_type_;
   const std::string column_name_;
   HyperLogLog hll_;
   Histogram hist_;

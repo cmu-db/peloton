@@ -34,9 +34,9 @@ class StatsUtil {
       LOG_TRACE("Fail to convert Peloton NULL value to numeric value.");
       return raw_value;
     }
-    if (value.CheckInteger() || value.GetTypeId() == type::Type::TIMESTAMP) {
+    if (value.CheckInteger() || value.GetTypeId() == type::TypeId::TIMESTAMP) {
       raw_value = static_cast<double>(value.GetAs<int>());
-    } else if (value.GetTypeId() == type::Type::DECIMAL) {
+    } else if (value.GetTypeId() == type::TypeId::DECIMAL) {
       raw_value = value.GetAs<double>();
     } else {
       LOG_TRACE("Fail to convert non-numeric Peloton value to numeric value");
@@ -52,37 +52,37 @@ class StatsUtil {
   static uint64_t HashValue(const type::Value& value) {
     uint64_t hash[2];
     switch (value.GetTypeId()) {
-      case type::Type::VARCHAR:
-      case type::Type::VARBINARY: {
+      case type::TypeId::VARCHAR:
+      case type::TypeId::VARBINARY: {
         const char* key = value.GetData();
         MurmurHash3_x64_128(key, (uint64_t)strlen(key), 0, hash);
       } break;
-      case type::Type::BOOLEAN:
-      case type::Type::TINYINT: {
+      case type::TypeId::BOOLEAN:
+      case type::TypeId::TINYINT: {
         int8_t key = value.GetAs<int8_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::SMALLINT: {
+      case type::TypeId::SMALLINT: {
         int16_t key = value.GetAs<int16_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::INTEGER: {
+      case type::TypeId::INTEGER: {
         int32_t key = value.GetAs<int32_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::BIGINT: {
+      case type::TypeId::BIGINT: {
         int64_t key = value.GetAs<int64_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::DECIMAL: {
+      case type::TypeId::DECIMAL: {
         double key = value.GetAs<double>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::DATE: {
+      case type::TypeId::DATE: {
         uint32_t key = value.GetAs<uint32_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;
-      case type::Type::TIMESTAMP: {
+      case type::TypeId::TIMESTAMP: {
         uint64_t key = value.GetAs<uint64_t>();
         MurmurHash3_x64_128(&key, sizeof(key), 0, hash);
       } break;

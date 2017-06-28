@@ -78,9 +78,9 @@ bool ColumnStatsCatalog::InsertColumnStats(
     val_common_freq = type::ValueFactory::GetVarcharValue(most_common_freqs);
   } else {
     val_common_val =
-        type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+        type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     val_common_freq =
-        type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+        type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
 
   type::Value val_hist_bounds;
@@ -88,7 +88,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
     val_hist_bounds = type::ValueFactory::GetVarcharValue(histogram_bounds);
   } else {
     val_hist_bounds =
-        type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+        type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
   type::Value val_column_name =

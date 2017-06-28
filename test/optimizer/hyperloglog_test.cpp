@@ -159,7 +159,7 @@ TEST_F(HyperLogLogTests, DataTypeTest) {
   hll.Update(str_val);
   // Null
   type::Value null =
-      type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+      type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
   hll.Update(str_val);
 
   hll.EstimateCardinality();

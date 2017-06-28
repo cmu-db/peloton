@@ -121,7 +121,8 @@ class StatsStorage {
       return std::make_pair("", "");
     }
     auto type_id = val_freqs[0].first.GetTypeId();
-    if (type_id == type::Type::VARBINARY || type_id == type::Type::VARCHAR) {
+    if (type_id == type::TypeId::VARBINARY ||
+        type_id == type::TypeId::VARCHAR) {
       return std::make_pair("", "");
     }
     std::stringstream ss_value;
