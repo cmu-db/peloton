@@ -19,17 +19,17 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// OUTPUT BOOLEAN
+// OUTPUT BOOL
 //===----------------------------------------------------------------------===//
 
-// Get the symbol name for ValuesRuntime::OutputTinyInt()
-const std::string &ValuesRuntimeProxy::_OutputBoolean::GetFunctionName() {
+// Get the symbol name for ValuesRuntime::OutputBool()
+const std::string &ValuesRuntimeProxy::_OutputBool::GetFunctionName() {
   static const std::string kOutputTinyIntFnName =
       "_ZN7peloton7codegen13ValuesRuntime10OutputBoolEPcjb";
   return kOutputTinyIntFnName;
 }
 
-llvm::Function *ValuesRuntimeProxy::_OutputBoolean::GetFunction(
+llvm::Function *ValuesRuntimeProxy::_OutputBool::GetFunction(
     CodeGen &codegen) {
   const std::string &fn_name = GetFunctionName();
 
