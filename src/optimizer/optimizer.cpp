@@ -34,6 +34,7 @@
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/populate_index_plan.h"
+#include "planner/analyze_plan.h"
 
 #include "binder/bind_node_visitor.h"
 
@@ -135,7 +136,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       unique_ptr<planner::AbstractPlan> drop_plan(
           new planner::DropPlan((parser::DropStatement *)tree));
       ddl_plan = move(drop_plan);
-    } break;
+      break;
+    } 
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
@@ -167,9 +169,18 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
         ddl_plan = std::move(child_PopulateIndexPlan);
       }
-    } break;
-    case StatementType::TRANSACTION:
       break;
+    }
+    case StatementType::TRANSACTION: {
+      break;
+    }
+    case StatementType::ANALYZE: {
+      LOG_TRACE("Adding Analyze plan...");
+      unique_ptr<planner::AbstractPlan> analyze_plan(
+        new planner::AnalyzePlan((parser::AnalyzeStatement *)tree));
+      ddl_plan = move(analyze_plan);
+      break;
+    }
     default:
       is_ddl_stmt = false;
   }

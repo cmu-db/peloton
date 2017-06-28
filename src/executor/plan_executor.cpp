@@ -376,6 +376,11 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor = new executor::DropExecutor(plan, executor_context);
       break;
 
+    case PlanNodeType::ANALYZE:
+      LOG_TRACE("Adding Analyze Executor");
+      child_executor = new executor::AnalyzeExecutor(plan, executor_context);
+      break;
+
     case PlanNodeType::CREATE:
       LOG_TRACE("Adding Create Executor");
       child_executor = new executor::CreateExecutor(plan, executor_context);

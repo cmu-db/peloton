@@ -363,6 +363,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::ANALYZE: {
+      return "ANALYZE";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -1041,6 +1044,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::POPULATE_INDEX: {
       return ("POPULATE_INDEX");
     }
+    case PlanNodeType::ANALYZE: {
+      return ("ANALYZE");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for PlanNodeType value '%d'",
@@ -1112,6 +1118,8 @@ PlanNodeType StringToPlanNodeType(const std::string& str) {
     return PlanNodeType::COPY;
   } else if (upper_str == "MOCK") {
     return PlanNodeType::MOCK;
+  } else if (upper_str == "ANALYZE") {
+    return PlanNodeType::ANALYZE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));

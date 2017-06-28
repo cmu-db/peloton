@@ -25,6 +25,7 @@ class ExecuteStatement;
 class TransactionStatement;
 class UpdateStatement;
 class CopyStatement;
+class AnalyzeStatement;
 struct JoinDefinition;
 struct TableRef;
 
@@ -74,6 +75,7 @@ class SqlNodeVisitor {
   virtual void Visit(const parser::TransactionStatement *) {}
   virtual void Visit(const parser::UpdateStatement *) {}
   virtual void Visit(const parser::CopyStatement *) {}
+  virtual void Visit(const parser::AnalyzeStatement *) {};
 
   virtual void Visit(expression::ComparisonExpression *expr);
   virtual void Visit(expression::AggregateExpression *expr);

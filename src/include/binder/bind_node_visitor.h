@@ -10,8 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "binder/binder_context.h"
 #include "common/sql_node_visitor.h"
+#include "binder/binder_context.h"
+#include "parser/statements.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/constant_value_expression.h"
+#include "type/types.h"
+
 
 namespace peloton {
 namespace binder {
@@ -39,8 +44,9 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(const parser::TransactionStatement *) override;
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
+  void Visit(const parser::AnalyzeStatement *) override;
 
-  void Visit(expression::ConstantValueExpression* expr) override;
+  // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
 
  private:

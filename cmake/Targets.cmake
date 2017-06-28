@@ -82,21 +82,24 @@ function(peloton_pickup_peloton_sources root)
   # murmur3
   file(GLOB_RECURSE murmur_srcs ${root}/third_party/murmur3/*.cpp)
 
+  # libcount
+  file(GLOB_RECURSE libcount_srcs ${root}/third_party/libcount/*.cc)
+
   # jsoncpp
   file(GLOB_RECURSE jsoncpp_srcs ${root}/third_party/jsoncpp/*.cpp)
-  
+
   # date
   file(GLOB_RECURSE jsoncpp_srcs ${root}/third_party/date/*.cpp)
   set(date_hdrs ${root}/third_party/date/)
   include_directories(SYSTEM "${date_hdrs}")
-    
+
   # adding headers to make the visible in some IDEs (Qt, VS, Xcode)
   list(APPEND srcs ${hdrs} ${PROJECT_BINARY_DIR}/peloton_config.h)
   list(APPEND test_srcs ${test_hdrs})
 
   # add proto to make them editable in IDEs too
   file(GLOB_RECURSE proto_files ${root}/src/peloton/*.proto)
-  list(APPEND srcs ${proto_files} ${murmur_srcs} ${libcds_srcs} ${jsoncpp_srcs})
+  list(APPEND srcs ${proto_files} ${murmur_srcs} ${libcount_srcs} ${libcds_srcs} ${jsoncpp_srcs})
 
   # propogate to parent scope
   set(srcs ${srcs} PARENT_SCOPE)
@@ -172,4 +175,3 @@ function(peloton_leave_only_selected_tests file_list)
   endforeach()
   set(${file_list} ${result} PARENT_SCOPE)
 endfunction()
-
