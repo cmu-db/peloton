@@ -67,8 +67,8 @@ InsertPlan::InsertPlan(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
         int param_index = 0;
-        for (auto elem = values->begin(); elem != values->end(); ++elem) {
-          if ((*elem)->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
+        for (auto& elem : *values) {
+          if (elem->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
             std::tuple<oid_t, oid_t, oid_t> pair =
                 std::make_tuple(tuple_idx, col_cntr, param_index++);
             parameter_vector_->push_back(pair);
@@ -76,7 +76,7 @@ InsertPlan::InsertPlan(
                 table_schema->GetColumn(col_cntr).GetType());
           } else {
             expression::ConstantValueExpression *const_expr_elem =
-                dynamic_cast<expression::ConstantValueExpression *>(elem->get());
+                dynamic_cast<expression::ConstantValueExpression *>(elem.get());
             type::Value const_expr_elem_val = (const_expr_elem->GetValue());
             switch (const_expr_elem->GetValueType()) {
               case type::Type::VARCHAR:

@@ -331,16 +331,15 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   GenerateTableExprMap(table_expr_map, op->target_table);
 
   // Evaluate update expression and add to target list
-  for (auto update = op->updates->begin(); update != op->updates->end(); ++update) {
-    auto column = std::string((*update)->column.get());
+  for (auto& update : *(op->updates)) {
+    auto column = std::string(update->column.get());
     auto col_id = schema->GetColumnID(column);
     if (update_col_ids.find(col_id) != update_col_ids.end())
       throw SyntaxException("Multiple assignments to same column "+ column);
     update_col_ids.insert(col_id);
-    expression::ExpressionUtil::EvaluateExpression(table_expr_map,
-                                                   (*update)->value.get());
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map, update->value.get());
     planner::DerivedAttribute attribute;
-    attribute.expr = (*update)->value->Copy();
+    attribute.expr = update->value->Copy();
     attribute.attribute_info.type = attribute.expr->GetValueType();
     tl.emplace_back(col_id, attribute);
   }

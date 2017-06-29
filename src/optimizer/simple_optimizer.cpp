@@ -153,8 +153,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // Preparing the group by columns
       if (group_by != NULL) {
         LOG_TRACE("Found GROUP BY");
-        for (auto elem = group_by->columns->begin(); elem != group_by->columns->end(); ++elem) {
-          auto tuple_elem = (expression::TupleValueExpression*)elem->get();
+        for (auto& elem : *(group_by->columns)) {
+          auto tuple_elem = (expression::TupleValueExpression*)elem.get();
           std::string col_name(tuple_elem->GetColumnName());
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
@@ -173,8 +173,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       bool is_star = (*select_stmt->getSelectList())[0]->GetExpressionType() ==
                      ExpressionType::STAR;
 
-      for (auto col = select_stmt->select_list->begin(); col != select_stmt->select_list->end(); ++col) {
-        expression::ExpressionUtil::TransformExpression(column_ids, col->get(), schema,
+      for (auto& col : *(select_stmt->select_list)) {
+        expression::ExpressionUtil::TransformExpression(column_ids, col.get(), schema,
                                                         needs_projection);
       }
 
@@ -190,9 +190,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       // Check if there are any aggregate functions
       bool agg_flag = false;
-      for (auto expr = select_stmt->getSelectList()->begin(); expr != select_stmt->getSelectList()->end(); ++expr) {
+      for (auto& expr : *(select_stmt->getSelectList())) {
         if (expression::ExpressionUtil::IsAggregateExpression(
-              (*expr)->GetExpressionType())) {
+              expr->GetExpressionType())) {
           LOG_TRACE("Query has aggregate functions");
           agg_flag = true;
           break;
@@ -282,9 +282,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               hash_keys.emplace_back(key);
             }
           } else {
-            for (auto col = select_stmt->select_list->begin(); col != select_stmt->select_list->end(); ++col) {
+            for (auto& col : *(select_stmt->select_list)) {
               // Copy column for handling of unique_ptr
-              auto copy_col = (*col)->Copy();
+              auto copy_col = col->Copy();
               hash_keys.emplace_back(std::unique_ptr<const expression::AbstractExpression>(copy_col));
             }
           }
@@ -346,14 +346,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         oid_t new_col_id = 0;
         oid_t agg_id = 0;
         int col_cntr_id = 0;
-        for (auto expr = select_stmt->getSelectList()->begin(); expr != select_stmt->getSelectList()->end(); ++expr) {
+        for (auto& expr : *(select_stmt->getSelectList())) {
           LOG_TRACE("Expression type in Select: %s",
                     ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
           // If an aggregate function is found
           if (expression::ExpressionUtil::IsAggregateExpression(
-              (*expr)->GetExpressionType())) {
-            auto agg_expr = (expression::AggregateExpression*)expr->get();
+              expr->GetExpressionType())) {
+            auto agg_expr = (expression::AggregateExpression*)expr.get();
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
                 ExpressionTypeToString(expr->GetExpressionType()).c_str());
@@ -455,7 +455,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           else {
             // There are columns in the query
             agg_type = AggregateType::HASH;
-            std::string col_name((*expr)->GetExpressionName());
+            std::string col_name(expr->GetExpressionName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
             std::pair<oid_t, oid_t> inner_pair = std::make_pair(0, old_col_id);
@@ -608,9 +608,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       auto update_clauses = updateStmt->updates.get();
 
-      for (auto clause = update_clauses->begin(); clause != update_clauses->end(); ++clause) {
-        auto clause_expr = (*clause)->value.get();
-        auto columnID = target_table->GetSchema()->GetColumnID((*clause)->column.get());
+      for (auto& clause : *(update_clauses)) {
+        auto clause_expr = clause->value.get();
+        auto columnID = target_table->GetSchema()->GetColumnID(clause->column.get());
         auto column = target_table->GetSchema()->GetColumn(columnID);
 
         if (clause_expr->GetExpressionType() ==
@@ -622,8 +622,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           auto value_expression =
               new expression::ConstantValueExpression(value);
 
-          (*clause)->value.reset(value_expression);
-
+          clause->value.reset(value_expression);
         } else {
           for (unsigned int child_index = 0;
                child_index < clause_expr->GetChildrenSize(); child_index++) {
@@ -1143,8 +1142,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
 
   agg_plan->AddChild(std::move(nested_join_plan_node));
 
-  for (auto col = statement->select_list->begin(); col != statement->select_list->end(); ++col) {
-    expression::ExpressionUtil::TransformExpression(stock_table->GetSchema(), col->get());
+  for (auto& col : *(statement->select_list)) {
+    expression::ExpressionUtil::TransformExpression(stock_table->GetSchema(), col.get());
   }
 
   return std::move(agg_plan);
@@ -1253,13 +1252,13 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 
   // SELECT col1, col2, fun1, ... FROM A JOIN B
   else {
-    for (auto expr = select_list.begin(); expr != select_list.end(); ++expr) {
-      expression::ExpressionUtil::TransformExpression(schemas, expr->get());
+    for (auto& expr : select_list) {
+      expression::ExpressionUtil::TransformExpression(schemas, expr.get());
 
-      auto expr_type = (*expr)->GetExpressionType();
+      auto expr_type = expr->GetExpressionType();
       // Column experssion
       if (expr_type == ExpressionType::VALUE_TUPLE) {
-        auto tup_expr = (expression::TupleValueExpression*)expr->get();
+        auto tup_expr = (expression::TupleValueExpression*)expr.get();
         oid_t old_col_id = -1;
         catalog::Column column;
 
@@ -1289,11 +1288,11 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
       // Function Ref
       else {
         planner::DerivedAttribute attribute;
-        attribute.expr = (*expr)->Copy();
+        attribute.expr = expr->Copy();
         attribute.attribute_info.type = attribute.expr->GetValueType();
         tl.push_back(Target(i, attribute));
         output_table_columns.push_back(catalog::Column(
-            (*expr)->GetValueType(), type::Type::GetTypeSize((*expr)->GetValueType()),
+            expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
             "expr" + std::to_string(i)));
       }
       i++;

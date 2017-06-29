@@ -43,8 +43,8 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
 
   // Generate PropertyColumns
   vector<shared_ptr<expression::AbstractExpression>> output_expressions;
-  for (auto col = select_stmt->select_list->begin(); col != select_stmt->select_list->end(); ++col)
-    output_expressions.emplace_back((*col)->Copy());
+  for (auto& col : *(select_stmt->select_list))
+    output_expressions.emplace_back(col->Copy());
   property_set_.AddProperty(
       shared_ptr<PropertyColumns>(new PropertyColumns(output_expressions)));
 

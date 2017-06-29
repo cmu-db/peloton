@@ -67,8 +67,8 @@ void UpdatePlan::BuildInitialUpdatePlan(
       database_name, table_name);
   PL_ASSERT(target_table_ != nullptr);
 
-  for (auto update_clause = parse_tree->updates->begin(); update_clause != parse_tree->updates->end(); ++update_clause) {
-    updates_.push_back((*update_clause)->Copy());
+  for (auto& update_clause : *(parse_tree->updates)) {
+    updates_.push_back(update_clause->Copy());
   }
   TargetList tlist;
   DirectMapList dmlist;

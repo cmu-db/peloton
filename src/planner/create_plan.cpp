@@ -41,31 +41,31 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   std::vector<catalog::Constraint> column_contraints;
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
-    for (auto col = parse_tree->columns->begin(); col != parse_tree->columns->end(); ++col) {
+    for (auto& col : *(parse_tree->columns)) {
       // TODO: Currently, the parser will parse the foreign key constraint and
       // put it into a ColumnDefinition. Later when we implement constraint
       // we may need to change this. Just skip foreign key constraint for now
-      if ((*col)->type == parser::ColumnDefinition::FOREIGN)
+      if (col->type == parser::ColumnDefinition::FOREIGN)
         continue;
         
-      type::Type::TypeId val = (*col)->GetValueType((*col)->type);
+      type::Type::TypeId val = col->GetValueType(col->type);
 
-      LOG_TRACE("Column name: %s; Is primary key: %d", (*col)->name.get(), (*col)->primary);
+      LOG_TRACE("Column name: %s; Is primary key: %d", col->name.get(), col->primary);
 
       // Check main constraints
-      if ((*col)->primary) {
+      if (col->primary) {
         catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
         column_contraints.push_back(constraint);
-        LOG_TRACE("Added a primary key constraint on column \"%s\"", (*col)->name.get());
+        LOG_TRACE("Added a primary key constraint on column \"%s\"", col->name.get());
       }
 
-      if ((*col)->not_null) {
+      if (col->not_null) {
         catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
         column_contraints.push_back(constraint);
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string((*col)->name.get()), false);
+          std::string(col->name.get()), false);
       for (auto con : column_contraints) {
         column.AddConstraint(con);
       }
@@ -88,8 +88,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
     std::vector<std::string> index_attrs_holder;
 
-    for (auto attr = parse_tree->index_attrs->begin(); attr != parse_tree->index_attrs->end(); ++attr) {
-      index_attrs_holder.push_back(attr->get());
+    for (auto& attr : *(parse_tree->index_attrs)) {
+      index_attrs_holder.push_back(attr.get());
     }
 
     index_attrs = index_attrs_holder;

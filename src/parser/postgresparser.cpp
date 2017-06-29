@@ -861,11 +861,11 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   }
 
   // Enforce Primary Keys
-  for (auto column = result->columns->begin(); column != result->columns->end(); ++column) {
+  for (auto& column : *(result->columns)) {
     // Skip Foreign Key Constraint
-    if ((*column)->name == nullptr) continue;
-    if (primary_keys.find(std::string((*column)->name.get())) != primary_keys.end()) {
-      (*column)->primary = true;
+    if (column->name == nullptr) continue;
+    if (primary_keys.find(std::string(column->name.get())) != primary_keys.end()) {
+      column->primary = true;
     }
   }
 

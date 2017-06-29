@@ -50,8 +50,8 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   if (op->group_by != nullptr) {
     // Make copies of groupby columns
     vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-    for (auto col = op->group_by->columns->begin(); col != op->group_by->columns->end(); ++col)
-      group_by_cols.emplace_back((*col)->Copy());
+    for (auto& col : *(op->group_by->columns))
+      group_by_cols.emplace_back(col->Copy());
     auto aggregate = std::make_shared<OperatorExpression>(
         LogicalGroupBy::make(move(group_by_cols), op->group_by->having.get()));
     aggregate->PushChild(output_expr);
@@ -60,9 +60,9 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     // Check plain aggregation
     bool aggregation = false;
     bool non_aggregation = false;
-    for (auto expr = op->getSelectList()->begin(); expr != op->getSelectList()->end(); ++expr) {
+    for (auto& expr : *(op->getSelectList())) {
       if (expression::ExpressionUtil::IsAggregateExpression(
-            (*expr)->GetExpressionType()))
+            expr->GetExpressionType()))
         aggregation = true;
       else
         non_aggregation = true;
@@ -155,7 +155,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
     std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
 
     // Construct join sequences with Cartesian products
-    for (auto table = node->list->begin(); table != node->list->end(); ++table) {
+    for (auto& table : *(node->list)) {
       if (join_expr == nullptr) {
         join_expr =
             std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -165,7 +165,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
         next_join_expr->PushChild(join_expr);
         join_expr = next_join_expr;
       }
-      (*table)->Accept(this);
+      table->Accept(this);
       join_expr->PushChild(output_expr);
     }
     output_expr = join_expr;
