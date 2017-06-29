@@ -592,9 +592,11 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       // the pointer has a chance to be dereferenced by readers and it cannot be
       // deleted
       *index_entry_ptr = nullptr;
-      LOG_TRACE("Index constraint of type %s violated", failure_type.c_str());
-      throw ConstraintException("Constraint of type " + failure_type +
-          " violated.");
+      std::string error = StringUtil::Format(
+                            "Index constraint of type %s violated on table '%s'",
+                            failure_type.c_str(), GetName().c_str());
+      LOG_TRACE(error.c_str());
+      throw ConstraintException(error);
       return false;
     } else {
       success_count += 1;
