@@ -11,14 +11,13 @@
 //===----------------------------------------------------------------------===//
 #define VALUE_TESTS
 
-#include <include/tcop/tcop.h>
-#include <include/planner/create_plan.h>
-#include <include/executor/executors.h>
 #include "gtest/gtest.h"
 
 #include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-
+#include "tcop/tcop.h"
+#include "planner/create_plan.h"
+#include "executor/executors.h"
 #include "catalog/schema.h"
 #include "catalog/foreign_key.h"
 #include "type/value.h"
@@ -31,7 +30,6 @@
 #include "storage/database.h"
 #include "index/index_factory.h"
 #include "catalog/constraints_tests_util.h"
-
 #include "common/harness.h"
 #include "common/macros.h"
 #include "common/logger.h"
@@ -417,21 +415,6 @@ TEST_F(ConstraintsTests, CHECKTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
-
-  /*
-  std::string cmd = "select A > 0 FROM TEST_TABLE;";
-  parser::SQLStatementList* stmt_list =
-  parser::Parser::ParseSQLString(cmd.c_str());
-  EXPECT_TRUE(stmt_list->is_valid);
-  if (stmt_list->is_valid == false) {
-    std::cout << "Message: " << stmt_list->parser_msg << ",line: " <<
-  stmt_list->error_line << " ,col:" << stmt_list->error_col << std::endl;
-  }
-  std::cout << stmt_list->GetStatements().size() << " " <<
-  stmt_list->GetStatements().at(0)->GetType()<< std::endl;
-  std::cout << "xxxxxxxxx" << stmt_list->GetInfo().c_str() << std::endl;
-  delete stmt_list;
-  */
 
   auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
   auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
