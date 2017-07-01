@@ -126,66 +126,6 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
-void DataTable::AddUNIQUEIndex() {
-  auto schema = this->GetSchema();
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    catalog::Column tmp_col = schema->GetColumn(col_itr);
-    if (tmp_col.is_unique_) {
-      // create index
-      // TODO should we retry until success?
-      std::vector<std::string> index_attrs;
-      index_attrs.push_back(tmp_col.GetName());
-      std::string index_name = table_name + "_" + tmp_col.GetName() + "_index";
-      std::string db_name = catalog::Catalog::GetInstance()
-                                ->GetDatabaseWithOid(database_oid)
-                                ->GetDBName();
-      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
-      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-          db_name, table_name, index_attrs, index_name, true,
-          IndexType::BWTREE);
-      if (result == ResultType::SUCCESS) {
-        LOG_TRACE("Creating table succeeded!");
-      } else {
-        LOG_TRACE("Creating table failed!");
-      }
-    }
-  }
-}
-
-void DataTable::AddMultiUNIQUEIndex() {
-  auto schema = this->GetSchema();
-  std::vector<catalog::MultiConstraint> multi_constraints;
-  multi_constraints = schema->GetMultiConstraints();
-  for (auto mc : multi_constraints) {
-    LOG_DEBUG("%s", mc.GetInfo().c_str());
-    std::vector<oid_t> cols = mc.GetCols();
-    ConstraintType type = mc.GetType();
-    if (cols.size() <= 0) continue;
-    if (type == ConstraintType::UNIQUE) {
-      std::vector<std::string> index_attrs;
-      std::string index_name = table_name + "_";
-      for (auto id : cols) {
-        index_attrs.push_back(schema->GetColumn(id).GetName());
-        index_name += schema->GetColumn(id).GetName() + "_";
-      }
-      index_name += "index";
-      std::string db_name = catalog::Catalog::GetInstance()
-                                ->GetDatabaseWithOid(database_oid)
-                                ->GetDBName();
-      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
-      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-          db_name, table_name, index_attrs, index_name, true,
-          IndexType::BWTREE);
-      if (result == ResultType::SUCCESS) {
-        LOG_TRACE("Creating table succeeded!");
-      } else {
-        LOG_TRACE("Creating table failed!");
-      }
-    }
-  }
-}
-
 bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
                               oid_t column_idx) const {
   if (tuple->IsNull(column_idx)) {
@@ -202,6 +142,44 @@ bool DataTable::MultiCheckNotNulls(const storage::Tuple *tuple,
                                    std::vector<oid_t> cols) const {
   for (auto col : cols) {
     if (tuple->IsNull(col)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
+                         std::pair<ExpressionType, type::Value> exp) const {
+  type::Value cur = tuple->GetValue(column_idx);
+  switch (exp.first) {
+    case ExpressionType::COMPARE_EQUAL: {
+      if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_NOTEQUAL: {
+      if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHAN: {
+      if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
+        return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHAN: {
+      if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
+      if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+      if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    default: {
+      // TODO: throw an exception
+      LOG_ERROR("Operator NOT SUPPORTED");
       return false;
     }
   }
@@ -311,7 +289,10 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
         return false;
       }
     }
-		return true;
+
+  }
+
+  return true;
 }
 
 // this function is called when update/delete/insert is performed.
@@ -693,10 +674,10 @@ bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                            concurrency::Transaction *current_txn
                                            UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
-    std::string sink_table_name = foreign_key->GetSinkTableName();
+    oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::Database *database = 
         catalog::Catalog::GetInstance()->GetDatabaseWithOid(database_oid);
-    storage::DataTable *ref_table = database->GetTableWithName(sink_table_name);
+    storage::DataTable *ref_table = database->GetTableWithOid(sink_table_id);
 
     int ref_table_index_count = ref_table->GetIndexCount();
 
@@ -709,12 +690,7 @@ bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple,
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
         
-        std::vector<std::string> key_names = foreign_key->GetFKColumnNames();
-        std::vector<oid_t> key_attrs;
-        for (std::string col_name : key_names) {
-          key_attrs.push_back(schema->GetColumnID(col_name));
-        }
-
+        std::vector<oid_t> key_attrs = foreign_key->GetFKColumnNames();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
@@ -1121,7 +1097,7 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
   }
 }
 
-oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
 // Adds to the list of tables for which this table's PK is the foreign key sink
 void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {

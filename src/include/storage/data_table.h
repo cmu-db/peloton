@@ -178,7 +178,7 @@ class DataTable : public AbstractTable {
 
   void DropForeignKey(const oid_t &key_offset);
 
-  oid_t GetForeignKeyCount() const;
+  size_t GetForeignKeyCount() const;
 
   void RegisterForeignKeySource(const std::string &source_table_name);
 
@@ -241,8 +241,6 @@ class DataTable : public AbstractTable {
   // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 
-  inline oid_t GetTableOid() const { return (table_oid); }
-
   bool HasPrimaryKey() const { return (has_primary_key_); }
 
   bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
@@ -272,11 +270,17 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-  bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool CheckNotNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+                          std::vector<oid_t> cols) const;
 
   bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
                 std::pair<ExpressionType, type::Value> exp) const;
   bool CheckUnique(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
@@ -315,10 +319,6 @@ class DataTable : public AbstractTable {
 
   static size_t default_active_indirection_array_count_;
 
-  void AddUNIQUEIndex();
-
-  void AddMultiUNIQUEIndex();
-
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -331,7 +331,6 @@ class DataTable : public AbstractTable {
 
   // deprecated, use catalog::TableCatalog::GetInstance()->GetTableName()
   std::string table_name;
-  oid_t table_oid;
 
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;

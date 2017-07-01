@@ -43,9 +43,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
-      /* The parser puts the Foreign Key information into an artificial
-       * ColumnDefinition.
-       */
+      // The parser puts the Foreign Key information into an artificial
+      // ColumnDefinition.
       if (col->type == parser::ColumnDefinition::FOREIGN) {
         if (foreign_keys.get() == nullptr) {
           foreign_keys.reset(new std::vector<catalog::ForeignKey>());

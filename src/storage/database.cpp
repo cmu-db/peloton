@@ -159,8 +159,8 @@ const std::string Database::GetInfo() const {
              foreign_key_itr++) {
           auto foreign_key = table->GetForeignKey(foreign_key_itr);
 
-          std::string sink_table_name = foreign_key->GetSinkTableName();
-          storage::DataTable *sink_table = GetTableWithName(sink_table_name);
+          auto sink_table_oid = foreign_key->GetSinkTableOid();
+          auto sink_table = GetTableWithOid(sink_table_oid);
 
           os << "table name : " << sink_table->GetName() << std::endl;
         }

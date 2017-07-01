@@ -29,45 +29,38 @@ namespace catalog {
 // Stores info about foreign key constraints, like the sink table id etc.
 class ForeignKey {
  public:
-  ForeignKey(const std::string &sink_table_name,
-             std::vector<std::string> pk_column_names,
-             std::vector<std::string> fk_column_names,
+  ForeignKey(oid_t sink_table_id,
+             std::vector<oid_t> pk_column_offsets,
+             std::vector<oid_t> fk_column_offsets,
              FKConstrActionType fk_update_action,
              FKConstrActionType fk_delete_action,
              std::string constraint_name)
 
-      : sink_table_name(sink_table_name),
-        //source_table_name(sink_table_name),
-        pk_column_names(pk_column_names),
-        fk_column_names(fk_column_names),
+      : sink_table_id(sink_table_id),
+        pk_column_names(pk_column_offsets),
+        fk_column_names(fk_column_offsets),
         fk_update_action(fk_update_action),
         fk_delete_action(fk_delete_action),
         fk_name(constraint_name) {}
 
-  std::string GetSinkTableName() const { return sink_table_name; }
+  oid_t GetSinkTableOid() const { return sink_table_id; }
 
-  std::vector<std::string> GetPKColumnNames() const { return pk_column_names; }
-  std::vector<std::string> GetFKColumnNames() const { return fk_column_names; }
+  std::vector<oid_t> GetPKColumnNames() const { return pk_column_names; }
+  std::vector<oid_t> GetFKColumnNames() const { return fk_column_names; }
 
   FKConstrActionType GetUpdateAction() const { return fk_update_action; }
-
-  FKConstrActionType GetDeleteAction() const{ return fk_delete_action; }
-
+  FKConstrActionType GetDeleteAction() const { return fk_delete_action; }
   std::string &GetConstraintName() { return fk_name; }
 
-  FKConstrActionType GetUpdateAction() { return fk_update_action; }
-  FKConstrActionType GetDeleteAction() { return fk_delete_action; }
-  std::vector<std::string> GetFKColumnNames() { return fk_column_names; }
-
  private:
-  std::string sink_table_name;
+  oid_t sink_table_id = INVALID_OID;
 
   // Columns in the reference table (sink)
-  std::vector<std::string> pk_column_names;
+  std::vector<oid_t> pk_column_names;
 
   // Columns in the current table (source)
   // Can be a single column or multiple columns depending on the constraint
-  std::vector<std::string> fk_column_names;
+  std::vector<oid_t> fk_column_names;
 
   FKConstrActionType fk_update_action;
   FKConstrActionType fk_delete_action;
