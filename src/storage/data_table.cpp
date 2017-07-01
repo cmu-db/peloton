@@ -132,7 +132,7 @@ bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
     LOG_TRACE(
         "%u th attribute in the tuple was NULL. It is non-nullable "
         "attribute.",
-        column_itr);
+        column_idx);
     return false;
   }
   return true;
@@ -576,7 +576,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       std::string error = StringUtil::Format(
                             "Index constraint of type %s violated on table '%s'",
                             failure_type.c_str(), GetName().c_str());
-      LOG_TRACE(error.c_str());
+      LOG_TRACE("%s", error.c_str());
       throw ConstraintException(error);
       return false;
     } else {
@@ -690,7 +690,7 @@ bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple,
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
         
-        std::vector<oid_t> key_attrs = foreign_key->GetFKColumnNames();
+        std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
@@ -1076,7 +1076,7 @@ void DataTable::AddForeignKey(catalog::ForeignKey *key) {
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
-    for (auto fk_column : key->GetFKColumnNames()) {
+    for (auto fk_column : key->GetSourceColumnIds()) {
       schema->AddConstraint(fk_column, constraint);
     }
     foreign_keys_.push_back(key);

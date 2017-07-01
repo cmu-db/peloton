@@ -97,8 +97,8 @@ bool CreateExecutor::DExecute() {
 
           // Create the catalog object and shove it into the table
           auto catalog_fk = new catalog::ForeignKey(sink_table->GetOid(),
-                                                    source_col_ids,
                                                     sink_col_ids,
+                                                    source_col_ids,
                                                     fk.upd_action,
                                                     fk.del_action,
                                                     fk.constraint_name);

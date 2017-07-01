@@ -857,7 +857,7 @@ enum class FKConstrActionType {
   RESTRICT = 1,
   CASCADE = 2,
   SETNULL = 3,
-SETDEFAULT = 4
+  SETDEFAULT = 4
 };
 
 enum class FKConstrMatchType {

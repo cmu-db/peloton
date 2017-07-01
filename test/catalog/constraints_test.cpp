@@ -13,36 +13,26 @@
 
 #include "gtest/gtest.h"
 
+#include "type/types.h"
 #include "concurrency/testing_transaction_util.h"
-#include "common/harness.h"
 #include "tcop/tcop.h"
 #include "planner/create_plan.h"
 #include "executor/executors.h"
-#include "catalog/schema.h"
 #include "catalog/foreign_key.h"
-#include "type/value.h"
-#include "concurrency/transaction.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "executor/abstract_executor.h"
-#include "storage/tile_group_factory.h"
-#include "storage/tuple.h"
-#include "storage/table_factory.h"
-#include "storage/database.h"
-#include "index/index_factory.h"
 #include "catalog/constraints_tests_util.h"
-#include "common/harness.h"
-#include "common/macros.h"
-#include "common/logger.h"
 #include "parser/postgresparser.h"
 
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST
 #define CHECK_TEST
+//#define DEFAULT_TEST
 //#define PRIMARY_UNIQUEKEY_TEST
-#define FOREIGHN_KEY_TEST
-#define FOREIGHN_MULTI_KEY_TEST
+#define FOREIGN_KEY_TEST
+#define FOREIGN_MULTI_KEY_TEST
 #define UNIQUE_TEST
 #define MULTI_UNIQUE_TEST
+
+#define DEFAULT_VALUE 11111
 
 namespace peloton {
 namespace test {
@@ -71,7 +61,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto catalog = catalog::Catalog::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Test1: insert a tuple with column  meet the constraint requirment
   bool hasException = false;
@@ -96,90 +85,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
-}
-#endif
-
-#ifdef UNIQUE_TEST
-TEST_F(ConstraintsTests, UNIQUETest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto catalog = catalog::Catalog::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
-  auto column2 = catalog::Column(type::Type::INTEGER, 25, "B", false, 1);
-
-  auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
-  column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
-  std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({column1, column2}));
-  std::string table_name("TEST_TABLE");
-  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
-                                               std::move(table_schema), txn);
-  txn_manager.CommitTransaction(txn);
-  storage::Database *database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  storage::DataTable *table = database->GetTableWithName(table_name);
-
-  // table->AddUNIQUEIndex();
-
-  txn = txn_manager.BeginTransaction();
-  // begin this transaction
-  // Test1: insert a tuple with column  meet the unique requirment
-  bool hasException = false;
-
-  try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, table,
-        type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
-  // one column is NULL
-  hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
-  // two columns are not NULL
-  hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_FALSE(hasException);
-
-  // Test2: insert not a valid column violate the constraint
-  hasException = false;
-  try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(15, 2)),
-        type::ValueFactory::GetVarcharValue(
-            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_FALSE(hasException);
-
-  // commit this transaction
-  txn_manager.CommitTransaction(txn);
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
-  txn_manager.CommitTransaction(txn);
 }
 #endif
 
@@ -611,7 +516,7 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
 }
 #endif
 
-#ifdef FOREIGHN_KEY_TEST
+#ifdef FOREIGN_KEY_TEST
 TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
   // First, initial 2 tables like following
   //     TABLE A -- src table          TABLE B -- sink table
@@ -637,14 +542,12 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 
   auto constraints = catalog::Constraint(ConstraintType::PRIMARY, "primary1");
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo());
+  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
   std::unique_ptr<catalog::Schema> tableA_schema(
       new catalog::Schema({column1, column2}));
 
   catalog->CreateTable(db_name, table_a_name, std::move(tableA_schema), txn);
   txn_manager.CommitTransaction(txn);
-
-  auto table_A = catalog->GetTableWithName(db_name, table_a_name);
 
   txn = txn_manager.BeginTransaction();
   auto column3 = catalog::Column(type::Type::INTEGER, 25, "b", false, 0);
@@ -657,11 +560,15 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
-  catalog::ForeignKey *foreign_key =
-      new catalog::ForeignKey(table_b_name, {"b"}, {"a"},
-                              FKConstrActionType.NOACTION,
-                              FKConstrActionType.NOACTION,
-                              "foreign_constraint1");
+
+  oid_t sink_table_id = table_b->GetOid();
+  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
+  std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("a") };
+  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
+      sink_table_id, sink_col_ids, source_col_ids,
+      FKConstrActionType::NOACTION,
+      FKConstrActionType::NOACTION,
+      "foreign_constraint1");
   table_a->AddForeignKey(foreign_key);
 
   txn = txn_manager.BeginTransaction();
@@ -706,7 +613,7 @@ TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 }
 #endif
 
-#ifdef FOREIGHN_MULTI_KEY_TEST
+#ifdef FOREIGN_MULTI_KEY_TEST
 TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   // First, initial 2 tables like following
   //     TABLE A -- src table          TABLE B -- sink table
@@ -726,12 +633,11 @@ TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   std::string table_b_name = "tableB";
   catalog->CreateDatabase(db_name, txn);
 
+  // TABLE A
   auto column1 = catalog::Column(type::Type::INTEGER, 25, "a", false, 0);
   auto column2 = catalog::Column(type::Type::INTEGER, 25, "b", false, 1);
-
   std::unique_ptr<catalog::Schema> tableA_schema(
       new catalog::Schema({column1, column2}));
-
   catalog->CreateTable(db_name, table_a_name, std::move(tableA_schema), txn);
   txn_manager.CommitTransaction(txn);
   auto table_A = catalog->GetTableWithName(db_name, table_a_name);
@@ -744,8 +650,9 @@ TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   cols.push_back(1);
   auto mc =
       catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1", cols);
-  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo());
+  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo().c_str());
 
+  // TABLE B
   catalog::Schema *table_schema = new catalog::Schema({column3, column4});
   table_schema->AddMultiConstraints(mc);
   std::unique_ptr<catalog::Schema> tableB_schema(table_schema);
@@ -754,9 +661,16 @@ TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
   auto table_a = catalog->GetTableWithName(db_name, table_a_name);
   auto table_b = catalog->GetTableWithName(db_name, table_b_name);
   txn_manager.CommitTransaction(txn);
-  oid_t table_B_id = table_b->GetTableOid();
+
+  // Create foreign key tableA.B -> tableB.B
+  oid_t sink_table_id = table_b->GetOid();
+  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
+  std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("b") };
   catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
-      table_B_id, {"B"}, {1}, {"B"}, {1}, 'r', 'c', "foreign_constraint1");
+      sink_table_id, sink_col_ids, source_col_ids,
+      FKConstrActionType::RESTRICT,
+      FKConstrActionType::CASCADE,
+      "foreign_constraint1");
   table_A->AddForeignKey(foreign_key);
 
   // Test1: insert a tuple with column  meet the constraint requirment

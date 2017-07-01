@@ -30,40 +30,41 @@ namespace catalog {
 class ForeignKey {
  public:
   ForeignKey(oid_t sink_table_id,
-             std::vector<oid_t> pk_column_offsets,
-             std::vector<oid_t> fk_column_offsets,
-             FKConstrActionType fk_update_action,
-             FKConstrActionType fk_delete_action,
+             std::vector<oid_t> sink_col_ids,
+             std::vector<oid_t> source_col_ids,
+             FKConstrActionType update_action,
+             FKConstrActionType delete_action,
              std::string constraint_name)
 
       : sink_table_id(sink_table_id),
-        pk_column_names(pk_column_offsets),
-        fk_column_names(fk_column_offsets),
-        fk_update_action(fk_update_action),
-        fk_delete_action(fk_delete_action),
+        sink_col_ids(sink_col_ids),
+        source_col_ids(source_col_ids),
+        update_action(update_action),
+        delete_action(delete_action),
         fk_name(constraint_name) {}
 
   oid_t GetSinkTableOid() const { return sink_table_id; }
 
-  std::vector<oid_t> GetPKColumnNames() const { return pk_column_names; }
-  std::vector<oid_t> GetFKColumnNames() const { return fk_column_names; }
+  std::vector<oid_t> GetSinkColumnIds() const { return sink_col_ids; }
+  std::vector<oid_t> GetSourceColumnIds() const { return source_col_ids; }
 
-  FKConstrActionType GetUpdateAction() const { return fk_update_action; }
-  FKConstrActionType GetDeleteAction() const { return fk_delete_action; }
+  FKConstrActionType GetUpdateAction() const { return update_action; }
+  FKConstrActionType GetDeleteAction() const { return delete_action; }
   std::string &GetConstraintName() { return fk_name; }
 
  private:
   oid_t sink_table_id = INVALID_OID;
 
   // Columns in the reference table (sink)
-  std::vector<oid_t> pk_column_names;
+  std::vector<oid_t> sink_col_ids;
 
   // Columns in the current table (source)
-  // Can be a single column or multiple columns depending on the constraint
-  std::vector<oid_t> fk_column_names;
+  // Can be a single column or multiple columns depending
+  // on the constraint
+  std::vector<oid_t> source_col_ids;
 
-  FKConstrActionType fk_update_action;
-  FKConstrActionType fk_delete_action;
+  FKConstrActionType update_action;
+  FKConstrActionType delete_action;
 
   std::string fk_name;
 };
