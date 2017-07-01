@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// statement_create.h
+// create_statement.h
 //
-// Identification: src/include/parser/statement_create.h
+// Identification: src/include/parser/create_statement.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

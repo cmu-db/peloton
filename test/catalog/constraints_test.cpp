@@ -33,7 +33,7 @@
 #include "common/harness.h"
 #include "common/macros.h"
 #include "common/logger.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 
 #define NOTNULL_TEST
 #define MULTI_NOTNULL_TEST

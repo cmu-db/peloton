@@ -54,7 +54,7 @@ bool BinderContext::GetColumnPosTuple(
                     ->GetTableWithOid(db_id, table_id)
                     ->GetSchema();
   auto col_pos = schema->GetColumnID(col_name);
-  if (col_pos == (oid_t)-1) return false;
+  if (col_pos == INVALID_OID) return false;
   col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
   value_type = schema->GetColumn(col_pos).GetType();
   return true;

@@ -114,9 +114,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
       return column;
     } break;
 
-    // Some random values were just inserted for testing purposes
     case 3: {
-      auto column = catalog::Column(type::Type::VARCHAR, 25,  // A random column length
+      auto column = catalog::Column(type::Type::VARCHAR, 25,  // Column length.
                                     "COL_D", !is_inlined);    // inlined.
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,

@@ -128,8 +128,8 @@ class Schema : public Printable {
   }
 
   inline oid_t GetColumnID(std::string col_name) const {
-    oid_t index = -1;
-    for (oid_t i = 0; i < columns.size(); ++i) {
+    oid_t index = INVALID_OID;
+    for (oid_t i = 0, cnt = columns.size(); i < cnt; ++i) {
       if (columns[i].GetName() == col_name) {
         index = i;
         break;

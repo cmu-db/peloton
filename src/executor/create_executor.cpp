@@ -55,35 +55,75 @@ bool CreateExecutor::DExecute() {
     if (current_txn->GetResult() == ResultType::SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
 
-      // Add the foreign key constraint (or other multi-column constriants)
-      if (node.GetForeignKeys() != nullptr) {
+      // Add the foreign key constraint (or other multi-column constraints)
+      if (node.GetForeignKeys().empty() == false) {
         auto catalog = catalog::Catalog::GetInstance();
-        auto source_table = catalog->GetDatabaseWithName(database_name)
-                    ->GetTableWithName(table_name);
+        auto db = catalog->GetDatabaseWithName(database_name);
+
+        auto source_table = db->GetTableWithName(table_name);
         int count = 1;
-        for (auto &fk : *(node.GetForeignKeys())) {
-          source_table->AddForeignKey(new catalog::ForeignKey(fk));
+        for (auto fk : node.GetForeignKeys()) {
+          auto sink_table = db->GetTableWithName(fk.sink_table_name);
+
+          // Source Column Offsets
+          std::vector<oid_t> source_col_ids;
+          for (auto col_name : fk.foreign_key_sources) {
+            oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+            if (col_id == INVALID_OID) {
+              std::string error = StringUtil::Format(
+                  "Invalid source column name '%s.%s' for foreign key '%s'",
+                  source_table->GetName().c_str(), col_name.c_str(),
+                  fk.constraint_name.c_str());
+              throw ExecutorException(error);
+            }
+            source_col_ids.push_back(col_id);
+          } // FOR
+          PL_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
+
+          // Sink Column Offsets
+          std::vector<oid_t> sink_col_ids;
+          for (auto col_name : fk.foreign_key_sinks) {
+            oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+            if (col_id == INVALID_OID) {
+              std::string error = StringUtil::Format(
+                  "Invalid sink column name '%s.%s' for foreign key '%s'",
+                  sink_table->GetName().c_str(), col_name.c_str(),
+                  fk.constraint_name.c_str());
+              throw ExecutorException(error);
+            }
+            sink_col_ids.push_back(col_id);
+          } // FOR
+          PL_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
+
+          // Create the catalog object and shove it into the table
+          auto catalog_fk = new catalog::ForeignKey(sink_table->GetOid(),
+                                                    source_col_ids,
+                                                    sink_col_ids,
+                                                    fk.upd_action,
+                                                    fk.del_action,
+                                                    fk.constraint_name);
+          source_table->AddForeignKey(catalog_fk);
 
           // Register FK with the sink table for delete/update actions
-          std::string sink_table_name = fk.GetSinkTableName();
-          auto sink_table = catalog->GetDatabaseWithName(database_name)
-                    ->GetTableWithName(sink_table_name);
           sink_table->RegisterForeignKeySource(table_name);
 
           // Add a non-unique index on the source table if needed
-          if (fk.GetUpdateAction() != FKConstrActionType::NOACTION ||
-              fk.GetDeleteAction() != FKConstrActionType::NOACTION) {
-            std::vector<std::string> source_col_names = fk.GetFKColumnNames();
+          if (catalog_fk->GetUpdateAction() != FKConstrActionType::NOACTION ||
+              catalog_fk->GetDeleteAction() != FKConstrActionType::NOACTION) {
+            std::vector<std::string> source_col_names = fk.foreign_key_sources;
             std::string index_name =
                 source_table->GetName() + "_FK_" + std::to_string(count);
             catalog->CreateIndex(database_name, source_table->GetName(), source_col_names,
                 index_name, false, IndexType::BWTREE, current_txn);
+            count++;
+
+#ifdef LOG_DEBUG_ENABLED
             LOG_DEBUG("Added a FOREIGN index on in %s.", table_name.c_str());
             LOG_DEBUG("Foreign key column names: ");
             for (auto c : source_col_names) {
               LOG_DEBUG("FK col name: %s", c.c_str());
             }
-            count++;
+#endif
           }
         }
       }

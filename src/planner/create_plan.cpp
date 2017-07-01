@@ -46,39 +46,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // The parser puts the Foreign Key information into an artificial
       // ColumnDefinition.
       if (col->type == parser::ColumnDefinition::FOREIGN) {
-        if (foreign_keys.get() == nullptr) {
-          foreign_keys.reset(new std::vector<catalog::ForeignKey>());
-        }
-
-        // Extract source and sink column names
-        std::vector<std::string> foreign_key_source;
-        for (auto key : *(col->foreign_key_source)) {
-          foreign_key_source.push_back(key);
-        }
-        std::vector<std::string> foreign_key_sink;
-        for (auto key : *(col->foreign_key_sink)) {
-          foreign_key_sink.push_back(key);
-        }
-
-        // Extract table names
-        std::string sink_table_name = strdup(col->table_info_->table_name);
-        std::string source_table_name = table_name;
-
-        // Extract delete and update actions
-        FKConstrActionType upd_action = col->foreign_key_update_action;
-        FKConstrActionType del_action = col->foreign_key_delete_action;
-
-        std::string fk_name =
-            "FK_" + source_table_name + "->" + sink_table_name;
-        catalog::ForeignKey fk(sink_table_name,
-                               foreign_key_sink, foreign_key_source,
-                               upd_action, del_action, fk_name);
-        LOG_DEBUG("Added a foreign key constraint toward sink table %s", 
-            sink_table_name.c_str());
-
-        // WARNING : the col is deleted later before the executor
-        // TODO : define a new data structure to replace ColumnDefinition ?
-        foreign_keys.get()->push_back(fk);
+        this->ProcessForeignKeyConstraint(table_name, col);
+        // XXX: Why should we always continue here?
         continue;
       }
   
@@ -105,7 +74,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name);
       }
       
-      //TODO: check if foreign key just on column
+      // TODO: check if foreign key just on column
       if (col->foreign_key_source != nullptr) {
         LOG_TRACE("FK source: %lu", col->foreign_key_source->size());
       }
@@ -183,6 +152,34 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     unique = parse_tree->unique;
   }
   // TODO check type CreateType::kDatabase
+}
+
+void CreatePlan::ProcessForeignKeyConstraint(const std::string table_name,
+                                             const parser::ColumnDefinition *col) {
+
+  ForeignKeyInfo fkey_info;
+
+  // Extract source and sink column names
+  for (auto key : *(col->foreign_key_source)) {
+    fkey_info.foreign_key_sources.push_back(key);
+  }
+  for (auto key : *(col->foreign_key_sink)) {
+    fkey_info.foreign_key_sinks.push_back(key);
+  }
+
+  // Extract table names
+  fkey_info.sink_table_name = strdup(col->table_info_->table_name);
+
+  // Extract delete and update actions
+  fkey_info.upd_action = col->foreign_key_update_action;
+  fkey_info.del_action = col->foreign_key_delete_action;
+
+  fkey_info.constraint_name =
+      "FK_" + table_name + "->" + fkey_info.sink_table_name;
+
+  LOG_DEBUG("Added a foreign key constraint toward sink table %s",
+            fkey_info.sink_table_name.c_str());
+  foreign_keys.push_back(fkey_info);
 }
 
 }  // namespace planner
