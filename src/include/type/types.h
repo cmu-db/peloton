@@ -599,6 +599,7 @@ enum class PlanNodeType {
   DROP = 33,
   CREATE = 34,
   POPULATE_INDEX = 35,
+  ANALYZE = 36,
 
   // Communication Nodes
   SEND = 40,
@@ -658,11 +659,28 @@ enum class StatementType {
   RENAME = 11,                // rename statement type
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
-  COPY = 14                   // copy type
+  COPY = 14,                  // copy type
+  ANALYZE = 15                // analyze type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const StatementType &type);
+
+//===--------------------------------------------------------------------===//
+// Query Types
+//===--------------------------------------------------------------------===//
+
+enum class QueryType {
+  QUERY_BEGIN,                // begin query
+  QUERY_COMMIT,               // commit query
+  QUERY_ROLLBACK,             // rollback query
+  QUERY_INSERT,               // insert query
+  QUERY_SET,                  // set query
+  QUERY_SHOW,                 // show query
+  QUERY_PREPARE,	      // prepare query
+  QUERY_EXECUTE, 	      // execute query
+  QUERY_OTHER,                // other queries
+};
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
@@ -1133,10 +1151,10 @@ typedef std::vector<DirectMap> DirectMapList;
 //===--------------------------------------------------------------------===//
 enum class PropertyType {
   PREDICATE,
-  PROJECT,
   COLUMNS,
   DISTINCT,
   SORT,
+  LIMIT,
 };
 
 namespace expression {
@@ -1144,6 +1162,21 @@ class AbstractExpression;
 class ExprHasher;
 class ExprEqualCmp;
 }
+
+// Augment abstract expression with a table alias set
+struct MultiTableExpression {
+  MultiTableExpression(
+      expression::AbstractExpression* i_expr,
+      std::unordered_set<std::string>& i_set)
+      : expr(i_expr), table_alias_set(i_set) {}
+  MultiTableExpression(const MultiTableExpression& mt_expr)
+      : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
+  expression::AbstractExpression* expr;
+  std::unordered_set<std::string> table_alias_set;
+};
+
+typedef std::vector<expression::AbstractExpression*> SingleTablePredicates;
+typedef std::vector<MultiTableExpression> MultiTablePredicates;
 
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,

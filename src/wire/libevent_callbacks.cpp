@@ -77,7 +77,7 @@ void StateMachine(LibeventSocket *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_INFO("current state: %d", conn->state);
+    LOG_TRACE("current state: %d", conn->state);
     switch (conn->state) {
       case CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -247,7 +247,7 @@ void StateMachine(LibeventSocket *conn) {
 void ControlCallback::Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
                                       UNUSED_ATTRIBUTE short what, void *arg) {
   struct event_base *base = (event_base *)arg;
-  LOG_INFO("stop");
+  LOG_TRACE("stop");
   event_base_loopexit(base, NULL);
 }
 

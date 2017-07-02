@@ -19,6 +19,9 @@ namespace optimizer {
 
 PropertySet::PropertySet() {}
 
+PropertySet::PropertySet(std::vector<std::shared_ptr<Property>> properties)
+    : properties_(std::move(properties)) {}
+
 const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
   return properties_;
 }

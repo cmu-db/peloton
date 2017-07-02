@@ -275,31 +275,29 @@ void PacketManager::SendDataRows(std::vector<StatementResult> &results,
   rows_affected = numrows;
 }
 
-void PacketManager::CompleteCommand(const std::string &query_type, int rows) {
+void PacketManager::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
-  std::string tag = query_type;
-  /* After Begin, we enter a txn block */
-  if (query_type.compare("BEGIN") == 0) {
-    txn_state_ = NetworkTransactionStateType::BLOCK;
-  }
-  /* After commit, we end the txn block */
-  else if (query_type.compare("COMMIT") == 0) {
-    txn_state_ = NetworkTransactionStateType::IDLE;
-  }
-  /* After rollback, the txn block is ended */
-  else if (!query_type.compare("ROLLBACK")) {
-    txn_state_ = NetworkTransactionStateType::IDLE;
-  }
-  /* the rest are custom status messages for each command */
-  else if (!query_type.compare("INSERT")) {
-    tag += " 0 " + std::to_string(rows);
-  } else {
-    tag += " " + std::to_string(rows);
-  }
-  PacketPutString(pkt.get(), tag);
-
-  responses.push_back(std::move(pkt));
+  std::string tag = query;
+  switch (query_type) {
+    /* After Begin, we enter a txn block */
+    case QueryType::QUERY_BEGIN:
+      txn_state_ = NetworkTransactionStateType::BLOCK;
+      break;
+    /* After commit, we end the txn block */
+    case QueryType::QUERY_COMMIT:
+    /* After rollback, the txn block is ended */
+    case QueryType::QUERY_ROLLBACK:
+      txn_state_ = NetworkTransactionStateType::IDLE;
+      break;
+    case QueryType::QUERY_INSERT:
+      tag += " 0 " + std::to_string(rows);
+      break;
+    default:
+      tag += " " + std::to_string(rows);
+   }     
+   PacketPutString(pkt.get(), tag);
+   responses.push_back(std::move(pkt));
 }
 
 /*
@@ -311,59 +309,59 @@ void PacketManager::SendEmptyQueryResponse() {
   responses.push_back(std::move(response));
 }
 
-bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
-  // Skip SET
-  if (query_type.compare("SET") == 0 || query_type.compare("SHOW") == 0)
-    return false;
-  // skip duplicate BEGIN
-  if (!query_type.compare("BEGIN") &&
-      txn_state_ == NetworkTransactionStateType::BLOCK) {
-    return false;
+bool PacketManager::HardcodedExecuteFilter(QueryType query_type) {
+  switch (query_type) {
+    // Skip SET
+    case QueryType::QUERY_SET:
+    case QueryType::QUERY_SHOW:
+      return false;
+    // Skip duplicate BEGIN
+    case QueryType::QUERY_BEGIN:
+      if (txn_state_ == NetworkTransactionStateType::BLOCK) {
+        return false;  
+      }
+      break;
+    // Skip duuplicate Commits and Rollbacks
+    case QueryType::QUERY_COMMIT:
+    case QueryType::QUERY_ROLLBACK:
+      if (txn_state_ == NetworkTransactionStateType::IDLE) {
+        return false;
+      }
+    default:
+      break;
   }
-  // skip duplicate Commits
-  if (!query_type.compare("COMMIT") &&
-      txn_state_ == NetworkTransactionStateType::IDLE)
-    return false;
-  // skip duplicate Rollbacks
-  if (!query_type.compare("ROLLBACK") &&
-      txn_state_ == NetworkTransactionStateType::IDLE)
-    return false;
   return true;
 }
 
 // The Simple Query Protocol
+// Fix mis-split bug: Previously, this function assumes there are multiple
+// queries in the string and split it by ';', which would cause one containing
+// ';' being split into multiple queries.
+// However, the multi-statement queries has been split by the psql client and
+// there is no need to split the query again.
 void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
-  std::string q_str;
-  PacketGetString(pkt, pkt->len, q_str);
+  std::string query;
+  PacketGetString(pkt, pkt->len, query);
 
-  std::vector<std::string> queries;
-  boost::split(queries, q_str, boost::is_any_of(";"));
-
-  if (queries.size() == 0) {
-    SendEmptyQueryResponse();
-    SendReadyForQuery(txn_state_);
-    return;
+  // pop out the last character if it is ';'
+  if (query.back() == ';') {
+    query.pop_back();
   }
+  boost::trim(query);
 
-  if (queries.size() == 1 && queries.at(0).empty()) {
-    SendEmptyQueryResponse();
-    SendReadyForQuery(txn_state_);
-    return;
-  }
+  if (!query.empty()) {
+    std::vector<StatementResult> result;
+    std::vector<FieldInfo> tuple_descriptor;
+    std::string error_message;
+    int rows_affected = 0;
 
-  for (auto query : queries) {
-    // iterate till before the empty string after the last ';'
-    if (!query.empty()) {
-      std::vector<StatementResult> result;
-      std::vector<FieldInfo> tuple_descriptor;
-      std::string error_message;
-      int rows_affected = 0;
-      std::string query_type;
-
+    QueryType query_type;
+    Statement::MapToQueryType(query, query_type);
       std::stringstream stream(query);
-      stream >> query_type;
 
-      if (query_type.compare("PREPARE") == 0) {
+    switch (query_type) {
+      case QueryType::QUERY_PREPARE:
+      {
         std::string statement_name;
         stream >> statement_name;
         std::size_t pos = query.find("AS");
@@ -374,10 +372,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         std::shared_ptr<Statement> statement(nullptr);
 
         LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-                  statement_query.c_str());
+                statement_query.c_str());
 
         statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
-                                                   error_message);
+                                                 error_message);
         if (statement.get() == nullptr) {
           skipped_stmt_ = true;
           SendErrorResponse(
@@ -391,7 +389,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         for (auto table_id : statement->GetReferencedTables()) {
           table_statement_cache_[table_id].push_back(statement.get());
         }
-      } else if (query_type.compare("EXECUTE") == 0) {
+        break;
+      }
+      case QueryType::QUERY_EXECUTE:
+      {
         std::string statement_name;
         std::shared_ptr<Statement> statement;
         std::vector<type::Value> param_values;
@@ -411,7 +412,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
           LOG_ERROR("%s", error_message.c_str());
           SendErrorResponse(
               {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return;
         }
 
         std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
@@ -430,42 +432,46 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         }
 
         auto status =
-            traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                              result, rows_affected, error_message, thread_id);
 
         if (status == ResultType::SUCCESS) {
           tuple_descriptor = std::move(statement->GetTupleDescriptor());
         } else {
-          SendErrorResponse( 
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
+          SendErrorResponse(
+                {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return;
         }
-      } else {
+      	break;
+      }
+      default:
+      {
         // execute the query using tcop
         auto status = traffic_cop_->ExecuteStatement(
             query, result, tuple_descriptor, rows_affected, error_message,
             thread_id);
 
-        // check status
+      // check status
         if (status == ResultType::FAILURE) {
           SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          break;
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return;
         }
       }
-
-      // send the attribute names
-      PutTupleDescriptor(tuple_descriptor);
-
-      // send the result rows
-      SendDataRows(result, tuple_descriptor.size(), rows_affected);
-
-      CompleteCommand(query_type, rows_affected);
-    } else if (query != queries.back()) {
-      SendEmptyQueryResponse();
-      SendReadyForQuery(NetworkTransactionStateType::IDLE);
-      return;
     }
+
+    // send the attribute names
+    PutTupleDescriptor(tuple_descriptor);
+
+    // send the result rows
+    SendDataRows(result, tuple_descriptor.size(), rows_affected);
+
+    // The response to the SimpleQueryCommand is the query string.
+    CompleteCommand(query, query_type, rows_affected);
+  } else {
+    SendEmptyQueryResponse();
   }
 
   // PAVLO: 2017-01-15
@@ -481,14 +487,16 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
  * exec_parse_message - handle PARSE message
  */
 void PacketManager::ExecParseMessage(InputPacket *pkt) {
-  std::string error_message, statement_name, query_string, query_type;
+  std::string error_message, statement_name, query_string, query_type_string;
   GetStringToken(pkt, statement_name);
+  QueryType query_type;
 
   // Read prepare statement name
   // Read query string
   GetStringToken(pkt, query_string);
   skipped_stmt_ = false;
-  Statement::ParseQueryType(query_string, query_type);
+  Statement::ParseQueryTypeString(query_string, query_type_string);
+  Statement::MapToQueryType(query_type_string, query_type);
 
   // For an empty query or a query to be filtered, just send parse complete
   // response and don't execute
@@ -905,7 +913,10 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
     if (skipped_query_string_ == "") {
       SendEmptyQueryResponse();
     } else {
-      CompleteCommand(skipped_query_type_, rows_affected);
+      std::string skipped_query_type_string;
+      Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
+      // The response to ExecuteCommand is the query_type string token.
+      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected);
     }
     skipped_stmt_ = false;
     return;
@@ -947,7 +958,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
           {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
       return;
     case ResultType::ABORTED:
-      if (query_type != "ROLLBACK") {
+      if (query_type != QueryType::QUERY_ROLLBACK) {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query
         SendErrorResponse({{NetworkMessageType::SQLSTATE_CODE_ERROR,
@@ -958,7 +969,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
     default: {
       auto tuple_descriptor = statement->GetTupleDescriptor();
       SendDataRows(results, tuple_descriptor.size(), rows_affected);
-      CompleteCommand(query_type, rows_affected);
+      // The reponse to ExecuteCommand is the query_type string token.
+      CompleteCommand(statement->GetQueryTypeString(), query_type, rows_affected);
       return;
     }
   }
@@ -1099,7 +1111,6 @@ void PacketManager::Reset() {
   txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();
-  skipped_query_type_.clear();
 
   statement_cache_.clear();
   table_statement_cache_.clear();

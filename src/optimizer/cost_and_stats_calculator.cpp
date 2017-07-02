@@ -13,6 +13,7 @@
 #include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/column_manager.h"
 #include "optimizer/stats.h"
+#include "optimizer/properties.h"
 
 namespace peloton {
 namespace optimizer {
@@ -32,10 +33,43 @@ void CostAndStatsCalculator::CalculateCostAndStats(
   gexpr->Op().Accept(this);
 }
 
-void CostAndStatsCalculator::Visit(const PhysicalScan *) {
+void CostAndStatsCalculator::Visit(const DummyScan *) {
   // TODO: Replace with more accurate cost
   output_stats_.reset(new Stats(nullptr));
+  output_cost_ = 0;
+}
+
+void CostAndStatsCalculator::Visit(const PhysicalSeqScan *) {
+  // TODO : Replace with more accurate cost
+  output_stats_.reset(new Stats(nullptr));
   output_cost_ = 1;
+};
+void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
+  // Simple cost function
+  // indexSearchable ? Index : SeqScan
+  // TODO : Replace with more accurate cost
+  output_stats_.reset(new Stats(nullptr));
+  auto predicate_prop =
+      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
+
+  if (predicate_prop == nullptr) {
+    output_cost_ = 2;
+    return;
+  }
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  oid_t index_id = 0;
+
+  expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
+  if (util::CheckIndexSearchable(op->table_, predicate, key_column_ids,
+                                 expr_types, values, index_id)) {
+    output_cost_ = 0;
+  } else {
+    output_cost_ = 2;
+  }
 };
 void CostAndStatsCalculator::Visit(const PhysicalProject *) {
   // TODO: Replace with more accurate cost
@@ -51,11 +85,17 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
   output_cost_ = 0;
 }
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
-void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){};
+void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){
+  // TODO: Replace with more accurate cost
+  output_cost_ = 1;
+};
 void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalRightNLJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalOuterNLJoin *){};
-void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *){};
+void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *){
+  // TODO: Replace with more accurate cost
+  output_cost_ = 0;
+};
 void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *){};

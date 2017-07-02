@@ -145,6 +145,21 @@ bool NestedLoopJoinExecutor::DExecute() {
           // Insert a tuple into the output logical tile
           // First, copy the elements in left logical tile's tuple
           LOG_TRACE("Insert a tuple into the output logical tile");
+
+          expression::ContainerTuple<executor::LogicalTile> right_tuple(
+              right_tile.get(), right_tile_row_itr);
+
+          if (predicate_ != nullptr) {
+            auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
+                                             executor_context_);
+
+            // Join predicate is false. Skip pair and continue.
+            if (eval.IsFalse()) {
+              LOG_TRACE("Not math join predicate");
+              continue;
+            }
+            LOG_TRACE("Find a tuple with join predicate");
+          }
           pos_lists_builder.AddRow(left_tile_row_itr_, right_tile_row_itr);
         }  // Outer loop of NLJ
 
