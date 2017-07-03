@@ -1,20 +1,17 @@
 sudo: required
 dist: trusty
-language: C++
-
-matrix:
-    include:
-       - compiler: gcc
-          addons:
-              apt:
-                sources:
-                    - llvm-toolchain-precise-3.7
-                    - ubuntu-toolchain-r-test
-                    - boost-latest
-                packages:
-                    - g++-4.9
-                    - g++5
-          env: 
+language: c++
+compiler: gcc
+apt:
+    sources:
+            - llvm-toolchain-precise-3.7
+            - ubuntu-toolchain-r-test
+            - boost-latest
+    packages:
+            - g++-4.9
+            - g++5
+env: 
+    matrix:
             - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=On
             - CXX=g++-4.9 PELOTON_BUILD_TYPE=Release COVERALLS=Off
             - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
