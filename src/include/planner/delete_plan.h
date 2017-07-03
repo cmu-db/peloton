@@ -16,70 +16,71 @@
 #include "type/types.h"
 #include "parser/table_ref.h"
 #include "planner/abstract_plan.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
-namespace parser {
-class DeleteStatement;
-}
-namespace storage {
-class DataTable;
-}
-namespace expression {
-class Expression;
-}
-
-namespace planner {
-
-class DeletePlan : public AbstractPlan {
- public:
-  DeletePlan() = delete;
-
-  ~DeletePlan() {
-    if (expr_ != nullptr) {
-      delete expr_;
-    }
+  namespace parser {
+    class DeleteStatement;
+  }
+  namespace storage {
+    class DataTable;
+  }
+  namespace expression {
+    class Expression;
   }
 
-  explicit DeletePlan(storage::DataTable *table, bool truncate);
+  namespace planner {
 
-  explicit DeletePlan(storage::DataTable *table,
-                      const expression::AbstractExpression *predicate);
+    class DeletePlan : public AbstractPlan {
+    public:
+      DeletePlan() = delete;
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DELETE; }
+      ~DeletePlan() {
+        if (expr_ != nullptr) {
+          delete expr_;
+        }
+      }
 
-  storage::DataTable *GetTable() const { return target_table_; }
+      explicit DeletePlan(storage::DataTable *table, bool truncate);
 
-  const std::string GetInfo() const { return "DeletePlan"; }
+      explicit DeletePlan(storage::DataTable *table,
+                          const expression::AbstractExpression *predicate);
 
-  void SetParameterValues(std::vector<type::Value> *values) override;
+      inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DELETE; }
 
-  bool GetTruncate() const { return truncate; }
+      storage::DataTable *GetTable() const { return target_table_; }
 
-  expression::AbstractExpression *GetPredicate() { return expr_; }
+      const std::string GetInfo() const { return "DeletePlan"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(
-        new DeletePlan(target_table_, truncate));
-  }
+      void SetParameterValues(std::vector<type::Value> *values) override;
 
- private:
-  void BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet);
+      bool GetTruncate() const { return truncate; }
 
-  /** @brief Target table. */
-  storage::DataTable *target_table_ = nullptr;
+      expression::AbstractExpression *GetPredicate() { return expr_; }
 
-  // TODO: should be deleted after refacor
-  std::string table_name_;
+      std::unique_ptr<AbstractPlan> Copy() const {
+        return std::unique_ptr<AbstractPlan>(
+            new DeletePlan(target_table_, truncate));
+      }
 
-  expression::AbstractExpression *expr_ = nullptr;
+    private:
+      void BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet, concurrency::Transaction *consistentTxn = nullptr);
 
-  /** @brief Truncate table. */
-  bool truncate = false;
+      /** @brief Target table. */
+      storage::DataTable *target_table_ = nullptr;
 
- private:
-  DISALLOW_COPY_AND_MOVE(DeletePlan);
-};
+      // TODO: should be deleted after refacor
+      std::string table_name_;
 
-}  // namespace planner
+      expression::AbstractExpression *expr_ = nullptr;
+
+      /** @brief Truncate table. */
+      bool truncate = false;
+
+    private:
+      DISALLOW_COPY_AND_MOVE(DeletePlan);
+    };
+
+  }  // namespace planner
 }  // namespace peloton
