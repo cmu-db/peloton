@@ -58,7 +58,7 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
 
 bool PropertySet::HasProperty(const Property &r_property) const {
   for (auto property : properties_) {
-    if (*property >= r_property) {
+    if (*property >= r_property && r_property >= *property) {
       return true;
     }
   }

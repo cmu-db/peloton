@@ -104,12 +104,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
     key_column_ids.clear();
     expr_types.clear();
     values.clear();
-  } else {
-    // Indes Searchable. Remove predicates that has indexed columns
-    auto original_predicate = predicate;
-    predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-        original_predicate, op->table_->GetIndex(index_id));
-    if (predicate != original_predicate) delete original_predicate;
   }
 
   // Generate column ids to pass into scan plan and generate output expr map
