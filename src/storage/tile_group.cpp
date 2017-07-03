@@ -77,6 +77,10 @@ type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
+oid_t TileGroup::GetTileGroupId() const {
+  return tile_group_id;
+}
+
 // TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetCurrentNextTupleSlot();
