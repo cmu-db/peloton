@@ -30,7 +30,7 @@ script:
     - mkdir build
     - cd build
     # run cmake
-    - cmake -DCOVERALLS=$COVERALLS -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+    - cmake -DCOVERALLS=$COVERALLS -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DCMAKE_CXX_COMPILER=$CXX -DUSE_SANITIZER=Address ..
     # build
     - make -j4
     # run tests
