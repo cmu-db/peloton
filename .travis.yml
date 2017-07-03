@@ -3,16 +3,6 @@ dist: trusty
 
 matrix:
     include:
-        #- compiler: gcc
-        #  addons:
-        #      apt:
-        #        sources:
-        #            - llvm-toolchain-precise-3.7
-        #            - ubuntu-toolchain-r-test
-        #            - boost-latest
-        #        packages:
-        #            - g++-4.9
-        #  env: CXX=g++-4.9
         - compiler: gcc
           addons:
               apt:
@@ -21,8 +11,28 @@ matrix:
                     - ubuntu-toolchain-r-test
                     - boost-latest
                 packages:
+                    - g++-4.9
                     - g++-5
+          env: 
+            - CXX=g++-4.9
+            - CXX=g++-5
+            - DCMAKE_BUILD_TYPE=Debug
+            - DCMAKE_BUILD_TYPE=Release
+    exclude:
+        - packages: g++-4.9
           env: CXX=g++-5
+        - packages: g++-5
+          env: CXX=g++-4.9
+        #- compiler: gcc
+        #  addons:
+        #      apt:
+        #        sources:
+        #            - llvm-toolchain-precise-3.7
+        #            - ubuntu-toolchain-r-test
+        #            - boost-latest
+        #        packages:
+        #            - g++-5
+        #  env: CXX=g++-5
 
 before_script:
     # setup environment
@@ -36,7 +46,7 @@ script:
     - mkdir build
     - cd build
     # run cmake
-    - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address ..
+    - cmake -DCOVERALLS=ON -DUSE_SANITIZER=Address ..
     # build
     - make -j4
     # run tests
