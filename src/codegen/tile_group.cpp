@@ -152,7 +152,8 @@ codegen::Value TileGroup::LoadColumn(
       // need to be careful that the runtime type of both values is not NULL to
       // bypass the type system's NULL checking logic.
       auto val_tmp = codegen::Value{sql_type, val};
-      auto null_val = codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
+      auto null_val =
+          codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
       auto val_is_null = val_tmp.CompareEq(codegen, null_val);
       PL_ASSERT(!val_is_null.IsNullable());
       PL_ASSERT(val_is_null.GetType() == type::Boolean::Instance());
