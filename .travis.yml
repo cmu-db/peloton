@@ -5,6 +5,7 @@ language: C++
 
 
 matrix:
+    - compiler: gcc
         apt: 
             sources: 
                 - llvm-toolchain-precise-3.7
