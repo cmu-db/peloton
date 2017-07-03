@@ -9,7 +9,7 @@ apt:
             - boost-latest
     packages:
             - g++-4.9
-            - g++5
+            - g++-5
 env: 
     matrix:
             - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=On
