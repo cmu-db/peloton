@@ -136,7 +136,7 @@ ResultType TrafficCop::AbortQueryHelper() {
     return ResultType::ABORTED;
   }
 }
-
+// hello github
 ResultType TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
