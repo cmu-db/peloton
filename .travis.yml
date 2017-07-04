@@ -14,8 +14,18 @@ matrix:
                     - g++-4.9
           env: 
             - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+        - compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
+                    - g++-4.9
+          env: 
             - CXX=g++-4.9 PELOTON_BUILD_TYPE=Release COVERALLS=Off
-               
+        
         - compiler: gcc
           addons:
               apt:
@@ -26,9 +36,19 @@ matrix:
                   packages:
                     - g++-5
           env: 
-            matrix:
-                - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
-                - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+            
+        - compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
+                    - g++-5
+          env: 
+            - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
     
 before_script:
     # setup environment
