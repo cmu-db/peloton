@@ -111,6 +111,7 @@ namespace tcop {
     tcop_txn_state_.pop();
     // commit the txn only if it has not aborted already
     if (curr_state.second != ResultType::ABORTED) {
+      LOG_INFO("ENTER != aborted");
       auto txn = curr_state.first;
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto result = txn_manager.CommitTransaction(txn);
@@ -119,26 +120,45 @@ namespace tcop {
     } else {
       // otherwise, the txn has already been aborted
       LOG_INFO("final tcop_txn_state_ size() %lu", tcop_txn_state_.size());
-
-      return ResultType::ABORTED;
-    }
-  }
-
-  ResultType TrafficCop::AbortQueryHelper() {
-    // do nothing if we have no active txns
-    if (tcop_txn_state_.empty()) return ResultType::NOOP;
-    auto &curr_state = tcop_txn_state_.top();
-    tcop_txn_state_.pop();
-    // explicitly abort the txn only if it has not aborted already
-    if (curr_state.second != ResultType::ABORTED) {
       auto txn = curr_state.first;
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto result = txn_manager.AbortTransaction(txn);
       // # 623
-      tcop_txn_state_.pop();
       return result;
+//      return ResultType::ABORTED;
+    }
+  }
+
+  ResultType TrafficCop::AbortQueryHelper() {
+
+    if (single_statement_txn == true) {
+      LOG_INFO("ENTER NOT SINGLE ABORTQUERYHELPER");
+      // do nothing if we have no active txns
+      if (tcop_txn_state_.empty()) return ResultType::NOOP;
+      LOG_INFO("AFTER NOT SINGLE ABORTQUERYHELPER");
+      auto &curr_state = tcop_txn_state_.top();
+      tcop_txn_state_.pop();
+      // explicitly abort the txn only if it has not aborted already
+      if (curr_state.second != ResultType::ABORTED) {
+        LOG_INFO("SINGLE ABORTQUERYHELPER");
+        auto txn = curr_state.first;
+        auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+        auto result = txn_manager.AbortTransaction(txn);
+        return result;
+      } else {
+        LOG_INFO("SINGLE ABORTQUERYHELPER!!");
+        // otherwise, the txn has already been aborted
+        return ResultType::ABORTED;
+      }
     } else {
-      // otherwise, the txn has already been aborted
+//      LOG_INFO("NOT SINGLE ABORTQUERYHELPER");
+//      if (tcop_txn_state_.empty()) return ResultType::NOOP;
+//      auto &curr_state = tcop_txn_state_.top();
+//      tcop_txn_state_.top().second = ResultType::ABORTED;
+//      auto txn = curr_state.first;
+//      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//      auto result = txn_manager.AbortTransaction(txn);
+//      return result;
       return ResultType::ABORTED;
     }
   }
@@ -154,27 +174,31 @@ namespace tcop {
     std::shared_ptr<Statement> statement(new Statement(unnamed_statement, query));
     // transaction
     if (!tcop_txn_state_.empty()) {
+      LOG_INFO("TCOP_TXN_STATE NUMBER: %lu", tcop_txn_state_.size());
       single_statement_txn = false;
       auto &curr_state = tcop_txn_state_.top();
+      LOG_INFO("TOP TRANSACTION ID: %lu", curr_state.first->GetTransactionId());
       // prepare statement in txn only if it has not aborted already
       if (curr_state.second != ResultType::ABORTED) {
         statement = PrepareStatement(unnamed_statement, query, error_message);
         if (statement.get() == nullptr) {
-          curr_state.second = ResultType::ABORTED;
           LOG_INFO("TRANSACTION IS GONNA BE ABORTED!!!");
+          tcop_txn_state_.top().second = ResultType::ABORTED;
           return ResultType::ABORTED;
         }
       } else {
         // otherwise, the txn has already been aborted
         if (query == "COMMIT") {
+          return CommitQueryHelper();
         } else {
           LOG_INFO("TRANSACTION ABORTED!!!");
           return ResultType::ABORTED;
         }
       }
-    } else { // single statement
-      single_statement_txn = true;
+    } else {
+
       if (query == "BEGIN") {
+        single_statement_txn = false;
         auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
         auto txn = txn_manager.BeginTransaction(thread_id);
 
@@ -190,6 +214,8 @@ namespace tcop {
         tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
       } else {
+        // single statement
+        single_statement_txn = true;
         auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
         auto txn = txn_manager.BeginTransaction(thread_id);
         // this shouldn't happen
@@ -197,13 +223,18 @@ namespace tcop {
           LOG_DEBUG("Begin txn failed");
         }
         (*optimizer_).consistentTxn = txn;
+        LOG_INFO("after begin single txn id: %lu", txn->GetTransactionId());
+        tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
         statement = PrepareStatement(unnamed_statement, query, error_message);
+        LOG_INFO("SINGLE NOT ABORT!");
+        // ABORT
         if (statement.get() == nullptr) {
           // reset tcop_txn_state_
-          tcop_txn_state_.pop();
-          return ResultType::ABORTED;
+          LOG_INFO("SINGLE ABORT!");
+          return AbortQueryHelper();
+//          return ResultType::ABORTED;
         }
-        tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+
       }
     }
 
