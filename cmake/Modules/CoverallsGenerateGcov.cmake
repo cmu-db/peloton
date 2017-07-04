@@ -202,7 +202,7 @@ foreach(GCDA ${GCDA_FILES})
 	# If -p is not specified then the file is named only "the_file.c.gcov"
 	#
 	execute_process(
-		COMMAND ${GCOV_EXECUTABLE} -p -r -o ${GCDA_DIR} ${GCDA}
+		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA}
 		WORKING_DIRECTORY ${COV_PATH}
 	)
 endforeach()

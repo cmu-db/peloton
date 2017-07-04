@@ -26,8 +26,9 @@ matrix:
                   packages:
                     - g++-5
           env: 
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            matrix:
+                - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+                - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
     
 before_script:
     # setup environment
