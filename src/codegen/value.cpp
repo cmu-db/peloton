@@ -15,10 +15,9 @@
 #include <list>
 #include <queue>
 
-#include "codegen/if.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type.h"
-
 #include "type/value.h"
 
 namespace peloton {

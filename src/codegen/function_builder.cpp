@@ -12,7 +12,7 @@
 
 #include "codegen/function_builder.h"
 
-#include "codegen/runtime_functions_proxy.h"
+#include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "common/exception.h"
 
 namespace peloton {

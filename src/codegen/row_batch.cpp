@@ -13,7 +13,7 @@
 #include "codegen/row_batch.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/if.h"
+#include "codegen/util/if.h"
 #include "codegen/vectorized_loop.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -233,10 +233,10 @@ void RowBatch::Iterate(CodeGen &codegen, RowBatch::IterateCallback &cb) {
   llvm::Value *end = GetNumValidRows(codegen);
 
   // Generating the loop
-  std::vector<Loop::LoopVariable> loop_vars = {
+  std::vector<util::Loop::LoopVariable> loop_vars = {
       {"readIdx", start}, {"writeIdx", codegen.Const32(0)}};
   llvm::Value *loop_cond = codegen->CreateICmpULT(start, end);
-  Loop batch_loop{codegen, loop_cond, loop_vars};
+  util::Loop batch_loop{codegen, loop_cond, loop_vars};
   {
     // Pull out loop vars for convenience
     auto *batch_pos = batch_loop.GetLoopVar(0);

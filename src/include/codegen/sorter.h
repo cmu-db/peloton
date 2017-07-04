@@ -20,7 +20,7 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// This class simplifies interaction with a codegen::utils::Sorter instance from
+// This class simplifies interaction with a codegen::util::Sorter instance from
 // generated code.
 //===----------------------------------------------------------------------===//
 class Sorter {

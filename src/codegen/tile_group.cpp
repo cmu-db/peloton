@@ -13,11 +13,11 @@
 #include "codegen/tile_group.h"
 
 #include "catalog/schema.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/util/if.h"
+#include "codegen/util/loop.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/scan_consumer.h"
-#include "codegen/tile_group_proxy.h"
 #include "codegen/type.h"
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
@@ -44,7 +44,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 
   // Iterate from 0 -> num_tuples in batches of batch_size
   llvm::Value *tid = codegen.Const32(0);
-  Loop tile_group_loop{
+  util::Loop tile_group_loop{
       codegen, codegen->CreateICmpULT(tid, num_tuples), {{"tid", tid}}};
   {
     tid = tile_group_loop.GetLoopVar(0);

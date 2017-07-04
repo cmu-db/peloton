@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/data_table_proxy.h"
+#include "include/codegen/proxy/data_table_proxy.h"
 
 #include "storage/data_table.h"
 
