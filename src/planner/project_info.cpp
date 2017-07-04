@@ -128,14 +128,19 @@ void ProjectInfo::PerformRebinding(
   // (B) Add the attributes produced by the target list expressions
   for (auto &target : target_list_) {
     oid_t dest_col_id = target.first;
+    auto &derived_attribute = const_cast<DerivedAttribute &>(target.second);
 
-    PL_ASSERT(target.second.expr != nullptr);
+    PL_ASSERT(derived_attribute.expr != nullptr);
 
     LOG_DEBUG("Binding target-list expressions ...");
-    auto *expr = const_cast<expression::AbstractExpression *>(target.second.expr);
+    auto *expr =
+        const_cast<expression::AbstractExpression *>(derived_attribute.expr);
     expr->PerformBinding(input_contexts);
 
-    const auto *dest_ai = &target.second.attribute_info;
+    // Setup the result type of the derived attribute
+    derived_attribute.attribute_info.type = expr->ResultType();
+
+    const auto *dest_ai = &derived_attribute.attribute_info;
     LOG_DEBUG("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
   }

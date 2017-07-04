@@ -43,9 +43,7 @@ struct DerivedAttribute {
   AttributeInfo attribute_info;
   const expression::AbstractExpression *expr;
 
-  DerivedAttribute(const expression::AbstractExpression *_expr) : expr(_expr) {
-    attribute_info.type = expr->ResultType();
-  }
+  DerivedAttribute(const expression::AbstractExpression *_expr) : expr(_expr) {}
 };
 
 class ProjectInfo {

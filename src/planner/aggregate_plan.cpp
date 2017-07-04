@@ -22,16 +22,27 @@ namespace planner {
 AggregatePlan::AggTerm::AggTerm(ExpressionType et,
                                 expression::AbstractExpression *expr,
                                 bool distinct)
-    : aggtype(et), expression(expr), distinct(distinct) {
-  switch (et) {
+    : aggtype(et), expression(expr), distinct(distinct) {}
+
+void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
+  // If there's an input expression, first perform binding
+  auto *agg_expr = const_cast<expression::AbstractExpression *>(expression);
+  if (agg_expr != nullptr) {
+    agg_expr->PerformBinding({&binding_context});
+  }
+
+  // Setup the aggregate's return type
+  switch (aggtype) {
     case ExpressionType::AGGREGATE_COUNT:
     case ExpressionType::AGGREGATE_COUNT_STAR: {
-      // For COUNT(), the type is always a non-nullable bigint
-      agg_ai.type =
-          codegen::type::Type{codegen::type::BigInt::Instance(), false};
+      // The SQL type of COUNT() or COUNT(*) is always a non-nullable BIGINT
+      agg_ai.type = codegen::type::Type{codegen::type::BigInt::Instance()};
       break;
     }
     case ExpressionType::AGGREGATE_AVG: {
+      // AVG() must have an input expression (that has been bound earlier).
+      // The return type of the AVG() aggregate is always a SQL DECIMAL that
+      // may or may not be NULL depending on the input expression.
       PL_ASSERT(expression != nullptr);
       // TODO: Move this logic into the SQL type
       const auto &input_type = expression->ResultType();
@@ -42,13 +53,15 @@ AggregatePlan::AggTerm::AggTerm(ExpressionType et,
     case ExpressionType::AGGREGATE_MAX:
     case ExpressionType::AGGREGATE_MIN:
     case ExpressionType::AGGREGATE_SUM: {
+      // These aggregates must have an input expression and takes on the same
+      // return type as its input expression.
       PL_ASSERT(expression != nullptr);
       agg_ai.type = expression->ResultType();
       break;
     }
     default: {
       throw Exception{StringUtil::Format("%s not a valid aggregate",
-                                         ExpressionTypeToString(et))};
+                                         ExpressionTypeToString(aggtype))};
     }
   }
 }
@@ -78,12 +91,9 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   const auto &aggregates = GetUniqueAggTerms();
 
   // Now let the aggregate expressions do their bindings
-  for (oid_t i = 0; i < aggregates.size(); i++) {
-    auto *term_exp =
-        const_cast<expression::AbstractExpression *>(aggregates[i].expression);
-    if (term_exp != nullptr) {
-      term_exp->PerformBinding({&input_context});
-    }
+  for (const auto &agg_term : GetUniqueAggTerms()) {
+    auto &non_const_agg_term = const_cast<AggregatePlan::AggTerm &>(agg_term);
+    non_const_agg_term.PerformBinding(input_context);
   }
 
   // Handle the projection by creating two binding contexts, the first being
