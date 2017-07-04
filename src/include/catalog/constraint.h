@@ -10,14 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "common/printable.h"
+#include "type/type.h"
 #include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace catalog {
@@ -30,12 +32,21 @@ class Constraint : public Printable {
  public:
   Constraint(ConstraintType type, std::string constraint_name)
       : constraint_type(type), constraint_name(constraint_name) {}
+  Constraint(ConstraintType type, std::string constraint_name,
+             std::string check_cmd)
+      : constraint_type(type),
+        constraint_name(constraint_name),
+        check_cmd(check_cmd) {}
+  
+  // typedef std::pair<ExpressionType, type::Value> ExpConstrain;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
   ConstraintType GetType() const { return constraint_type; }
+
+  std::pair<ExpressionType, type::Value> GetExp() { return exp; }
 
   // Offset into the list of "reference tables" in the Table.
   void SetForeignKeyListOffset(oid_t offset) { fk_list_offset = offset; }
@@ -51,8 +62,35 @@ class Constraint : public Printable {
 
   std::string GetName() const { return constraint_name; }
 
+  // Get check command
+  std::string GetcheckInfo() const {
+    std::ostringstream os;
+    os << exp.first << " " << exp.second.GetInfo().c_str();
+    return os.str();
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  // Todo: default union data structure,
+  // For default constraint
+  void addDefaultValue(const type::Value &value) {
+    if (constraint_type != ConstraintType::DEFAULT || default_value.get() != nullptr) {
+      return;
+    }
+
+    default_value.reset(new peloton::type::Value(value));
+  }
+
+  type::Value* getDefaultValue() {
+    return default_value.get();
+  }
+
+  // Add check constrain
+  void AddCheck(ExpressionType op, peloton::type::Value val) {
+    exp = std::pair<ExpressionType, type::Value>(op, val);
+    return;
+  };
 
  private:
   //===--------------------------------------------------------------------===//
@@ -69,6 +107,12 @@ class Constraint : public Printable {
 
   std::string constraint_name;
 
+  std::shared_ptr<type::Value> default_value;
+
+  std::string check_cmd = "";
+
+  // key string is column name
+  std::pair<ExpressionType, type::Value> exp;
 };
 
 }  // End catalog namespace

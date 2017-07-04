@@ -15,6 +15,7 @@
 #include "parser/statements.h"
 #include "parser/pg_query.h"
 #include "parser/parsenodes.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace parser {
@@ -64,23 +65,23 @@ class PostgresParser {
     return new_str;
   }
 
-  static ColumnDefinition::FKConstrActionType CharToActionType(char &type) {
+  static FKConstrActionType CharToActionType(char &type) {
     switch (type) {
-      case 'a':return ColumnDefinition::FKConstrActionType::NOACTION;
-      case 'r':return ColumnDefinition::FKConstrActionType::RESTRICT;
-      case 'c':return ColumnDefinition::FKConstrActionType::CASCADE;
-      case 'n':return ColumnDefinition::FKConstrActionType::SETNULL;
-      case 'd':return ColumnDefinition::FKConstrActionType::SETDEFAULT;
-      default:return ColumnDefinition::FKConstrActionType::NOACTION;
+      case 'a':return FKConstrActionType::NOACTION;
+      case 'r':return FKConstrActionType::RESTRICT;
+      case 'c':return FKConstrActionType::CASCADE;
+      case 'n':return FKConstrActionType::SETNULL;
+      case 'd':return FKConstrActionType::SETDEFAULT;
+      default:return FKConstrActionType::NOACTION;
     }
   }
 
-  static ColumnDefinition::FKConstrMatchType CharToMatchType(char &type) {
+  static FKConstrMatchType CharToMatchType(char &type) {
     switch (type) {
-      case 'f':return ColumnDefinition::FKConstrMatchType::FULL;
-      case 'p':return ColumnDefinition::FKConstrMatchType::PARTIAL;
-      case 's':return ColumnDefinition::FKConstrMatchType::SIMPLE;
-      default:return ColumnDefinition::FKConstrMatchType::SIMPLE;
+      case 'f':return FKConstrMatchType::FULL;
+      case 'p':return FKConstrMatchType::PARTIAL;
+      case 's':return FKConstrMatchType::SIMPLE;
+      default:return FKConstrMatchType::SIMPLE;
     }
   }
 

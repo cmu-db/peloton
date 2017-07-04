@@ -234,8 +234,18 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                   result_format);
+    // Handle constraint exceptions
+    try {
+      p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+                                                 result_format);
+    } catch (Exception &e) {
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      // Abort
+      LOG_TRACE("Abort Transaction");
+      p_status.m_result = txn_manager.AbortTransaction(txn);
+      curr_state.second = ResultType::ABORTED;
+      throw e;
+    }
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed

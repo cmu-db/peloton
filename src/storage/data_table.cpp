@@ -1,4 +1,5 @@
 //===----------------------------------------------------------------------===//
+
 //
 //                         Peloton
 //
@@ -62,6 +63,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
   // Init default partition
+  this->table_oid = table_oid;
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
@@ -124,31 +126,232 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
-bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
-  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
+void DataTable::AddUNIQUEIndex() {
+  auto schema = this->GetSchema();
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    catalog::Column tmp_col = schema->GetColumn(col_itr);
+    if (tmp_col.is_unique_) {
+      // create index
+      // TODO should we retry until success?
+      std::vector<std::string> index_attrs;
+      index_attrs.push_back(tmp_col.GetName());
+      std::string index_name = table_name + "_" + tmp_col.GetName() + "_index";
+      std::string db_name = catalog::Catalog::GetInstance()
+                                ->GetDatabaseWithOid(database_oid)
+                                ->GetDBName();
+      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
+      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
+          db_name, table_name, index_attrs, index_name, true,
+          IndexType::BWTREE, nullptr);
+      if (result == ResultType::SUCCESS) {
+        LOG_TRACE("Creating table succeeded!");
+      } else {
+        LOG_TRACE("Creating table failed!");
+      }
+    }
+  }
+}
 
-  oid_t column_count = schema->GetColumnCount();
-  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_TRACE(
-          "%u th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
-          column_itr);
+void DataTable::AddMultiUNIQUEIndex() {
+  auto schema = this->GetSchema();
+  std::vector<catalog::MultiConstraint> multi_constraints;
+  multi_constraints = schema->GetMultiConstraints();
+  for (auto mc : multi_constraints) {
+    LOG_DEBUG("%s", mc.GetInfo().c_str());
+    std::vector<oid_t> cols = mc.GetCols();
+    ConstraintType type = mc.GetType();
+    if (cols.size() <= 0) continue;
+    if (type == ConstraintType::UNIQUE) {
+      std::vector<std::string> index_attrs;
+      std::string index_name = table_name + "_";
+      for (auto id : cols) {
+        index_attrs.push_back(schema->GetColumn(id).GetName());
+        index_name += schema->GetColumn(id).GetName() + "_";
+      }
+      index_name += "index";
+      std::string db_name = catalog::Catalog::GetInstance()
+                                ->GetDatabaseWithOid(database_oid)
+                                ->GetDBName();
+      LOG_DEBUG("********db name: %s index name: %s", db_name.c_str(), index_name.c_str());
+      ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
+          db_name, table_name, index_attrs, index_name, true,
+          IndexType::BWTREE, nullptr);
+      if (result == ResultType::SUCCESS) {
+        LOG_TRACE("Creating table succeeded!");
+      } else {
+        LOG_TRACE("Creating table failed!");
+      }
+    }
+  }
+}
+
+bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
+                              oid_t column_idx) const {
+  if (tuple->IsNull(column_idx)) {
+    LOG_TRACE(
+        "%u th attribute in the tuple was NULL. It is non-nullable "
+        "attribute.",
+        column_itr);
+    return false;
+  }
+  return true;
+}
+
+bool DataTable::MultiCheckNotNulls(const storage::Tuple *tuple,
+                                   std::vector<oid_t> cols) const {
+  for (auto col : cols) {
+    if (tuple->IsNull(col)) {
       return false;
     }
   }
+  return true;
+}
 
+bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
+                         std::pair<ExpressionType, type::Value> exp) const {
+  type::Value cur = tuple->GetValue(column_idx);
+  switch (exp.first) {
+    case ExpressionType::COMPARE_EQUAL: {
+      if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_NOTEQUAL: {
+      if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHAN: {
+      if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
+        return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHAN: {
+      if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
+      if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+      if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    default: {
+      // TODO: throw an exception
+      LOG_ERROR("Operator NOT SUPPORTED");
+      return false;
+    }
+  }
   return true;
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
-  if (CheckNulls(tuple) == false) {
-    LOG_TRACE("Not NULL constraint violated");
-    throw ConstraintException("Not NULL constraint violated : " +
-                              std::string(tuple->GetInfo()));
-    return false;
+  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    std::vector<catalog::Constraint> column_cons =
+        schema->GetColumn(column_itr).GetConstraints();
+    for (auto cons : column_cons) {
+      ConstraintType type = cons.GetType();
+      switch (type) {
+        case ConstraintType::NOTNULL: {
+          if (CheckNotNulls(tuple, column_itr) == false) {
+            LOG_TRACE("Not NULL constraint violated");
+            throw ConstraintException("Not NULL constraint violated : " +
+                                      std::string(tuple->GetInfo()));
+          }
+          break;
+        }
+        case ConstraintType::CHECK: {
+          std::pair<ExpressionType, type::Value> exp = cons.GetExp();
+          if (CheckExp(tuple, column_itr, exp) == false) {
+            LOG_TRACE("CHECK EXPRESSION constraint violated");
+            throw ConstraintException(
+                "CHECK EXPRESSION constraint violated : " +
+                std::string(tuple->GetInfo()));
+          }
+          break;
+        }
+        case ConstraintType::UNIQUE: {
+          break;
+        }
+        case ConstraintType::DEFAULT: {
+          // Should not be handled here
+          // Handled in higher hierarchy
+          break;
+        }
+        case ConstraintType::PRIMARY: {
+          break;
+        }
+        case ConstraintType::FOREIGN: {
+          break;
+        }
+        case ConstraintType::EXCLUSION: {
+          break;
+        }
+        default: {
+          LOG_TRACE("Constraint type not supported");
+          throw ConstraintException("Constraint type not supported : " +
+                                    std::string(tuple->GetInfo()));
+          return false;
+        }
+      }
+    }
   }
+
+  std::vector<catalog::MultiConstraint> multi_constraints;
+  multi_constraints = schema->GetMultiConstraints();
+  for (auto mc : multi_constraints) {
+    // TODO multi constraints check
+    LOG_DEBUG("%s", mc.GetInfo().c_str());
+    std::vector<oid_t> cols = mc.GetCols();
+    ConstraintType type = mc.GetType();
+    if (cols.size() <= 0) continue;
+    switch (type) {
+      case ConstraintType::NOTNULL: {
+        // TODO check not null for multi columns
+        if (MultiCheckNotNulls(tuple, cols) == false) {
+          LOG_TRACE("CHECK MULTI columns NOT NULL constraint violated");
+          throw ConstraintException(
+              "CHECK MULTI columns NOT NULL constraint violated : " +
+              std::string(tuple->GetInfo()));
+          return false;
+        }
+        break;
+      }
+      case ConstraintType::DEFAULT: {
+        break;
+      }
+      case ConstraintType::CHECK: {
+        break;
+      }
+      case ConstraintType::PRIMARY: {
+        break;
+      }
+      case ConstraintType::INVALID: {
+        break;
+      }
+      case ConstraintType::UNIQUE: {
+        break;
+      }
+      case ConstraintType::FOREIGN: {
+        break;
+      }
+      case ConstraintType::EXCLUSION: {
+        break;
+      }
+      default: {
+        throw ConstraintException(
+            "MULTI COLUMN constraints TYPE NOT supported:" +
+            std::string(tuple->GetInfo()));
+        return false;
+      }
+    }
+
+  }
+
   return true;
 }
 
@@ -166,7 +369,13 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // in-place update at executor level.
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                         bool check_constraint) {
+
+  // Check constraint here because tuple could be nullptr in update case
+  if (tuple && check_constraint && CheckConstraints(tuple) == false)
+    return INVALID_ITEMPOINTER;
+
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -251,13 +460,23 @@ ItemPointer DataTable::AcquireVersion() {
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
                                concurrency::Transaction *transaction,
-                               ItemPointer *index_entry_ptr) {
+                               ItemPointer *index_entry_ptr,
+                               bool &fk_failure) {
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
+    fk_failure = false;
     return false;
   }
+
+  // Check foreign key constraint
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
+    LOG_TRACE("ForeignKey constraint violated");
+    fk_failure = true;
+    return false;
+  }
+
   return true;
 }
 
@@ -287,16 +506,20 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     IncreaseTupleCount(1);
     return location;
   }
-  // Index checks and updates
+  // Index checks and updates (checks PRIMARY KEY and UNIQUE constraints)
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
-    return INVALID_ITEMPOINTER;
+
+    // Exceptions will be handled in upper layers
+    throw ConstraintException("UNIQUE constraint violated : " +
+                              std::string(tuple->GetInfo()));
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
-    return INVALID_ITEMPOINTER;
+    throw ConstraintException("FOREIGN KEY constraint violated : " +
+                               std::string(tuple->GetInfo()));
   }
 
   PL_ASSERT((*index_entry_ptr)->block == location.block &&
@@ -373,6 +596,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   // Since this is NOT protected by a lock, concurrent insert may happen.
   bool res = true;
+  std::string failure_type = "";
   int success_count = 0;
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
@@ -384,11 +608,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case IndexConstraintType::PRIMARY_KEY:
+      case IndexConstraintType::PRIMARY_KEY: {
+        failure_type = "PRIMARY";
+        res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
+      } break;
       case IndexConstraintType::UNIQUE: {
         // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
+        failure_type = "UNIQUE";
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       } break;
 
@@ -404,6 +632,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       // the pointer has a chance to be dereferenced by readers and it cannot be
       // deleted
       *index_entry_ptr = nullptr;
+      LOG_TRACE("Index constraint of type %s violated", failure_type.c_str());
+      throw ConstraintException("Constraint of type " + failure_type +
+          " violated.");
       return false;
     } else {
       success_count += 1;
@@ -496,13 +727,14 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple,
+                                           concurrency::Transaction *current_txn
+                                           UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
-    oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Catalog::GetInstance()->GetTableWithOid(
-            database_oid, sink_table_id);
+    std::string sink_table_name = foreign_key->GetSinkTableName();
+    storage::Database *database = 
+        catalog::Catalog::GetInstance()->GetDatabaseWithOid(database_oid);
+    storage::DataTable *ref_table = database->GetTableWithName(sink_table_name);
 
     int ref_table_index_count = ref_table->GetIndexCount();
 
@@ -513,8 +745,13 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_TRACE("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
+        LOG_INFO("BEGIN checking referred table");
+        
+        std::vector<std::string> key_names = foreign_key->GetFKColumnNames();
+        std::vector<oid_t> key_attrs;
+        for (std::string col_name : key_names) {
+          key_attrs.push_back(schema->GetColumnID(col_name));
+        }
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
@@ -523,7 +760,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_TRACE("check key: %s", key->GetInfo().c_str());
+        LOG_INFO("check key: %s", key->GetInfo().c_str());
 
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
@@ -531,8 +768,33 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
           return false;
+        } else {
+          LOG_DEBUG("Location pointer size: %lu", location_ptrs.size());
+          auto &transaction_manager = 
+                          concurrency::TransactionManagerFactory::GetInstance();
+          auto &manager = catalog::Manager::GetInstance();
+          bool acquire_owner = true;
+          for (auto location_ptr : location_ptrs) {
+              auto tile_group = manager.GetTileGroup(location_ptr->block);
+              auto tile_group_header = tile_group.get()->GetHeader();
+              auto visibility = transaction_manager.IsVisible(
+                         current_txn, tile_group_header, location_ptr->offset);
+              if (visibility == VisibilityType::OK) {
+                LOG_DEBUG("performing read: %u, %u", location_ptr->block,
+                  location_ptr->offset);
+                bool res = transaction_manager.PerformRead(
+                                    current_txn, *location_ptr, acquire_owner);
+                if (!res) {
+                  LOG_DEBUG("read failed of location: %u, %u",
+                    location_ptr->block, location_ptr->offset);
+                    return false;
+                }
+              } else {
+                LOG_DEBUG("Location not visible.");
+                return false;
+              }
+          }
         }
-
         break;
       }
     }
@@ -873,16 +1135,13 @@ oid_t DataTable::GetValidIndexCount() const {
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
     for (auto fk_column : key->GetFKColumnNames()) {
       schema->AddConstraint(fk_column, constraint);
     }
-    // TODO :: We need this one..
-    catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys_.push_back(fk);
+    foreign_keys_.push_back(key);
   }
 }
 
@@ -901,6 +1160,26 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
 }
 
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+
+// Adds to the list of tables for which this table's PK is the foreign key sink
+void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    foreign_key_sources_.push_back(source_table_name);
+  }
+}
+
+// Remove a table for which this table's PK is the foreign key sink
+void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
+      if (foreign_key_sources_[i] == source_table_name) {
+        foreign_key_sources_.erase(foreign_key_sources_.begin()+i);
+      }
+    }
+  }
+}
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(

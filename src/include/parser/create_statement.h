@@ -31,6 +31,8 @@ struct ColumnDefinition {
     PRIMARY,
     FOREIGN,
 
+    MULTIUNIQUE,
+
     CHAR,
     INT,
     INTEGER,
@@ -47,20 +49,6 @@ struct ColumnDefinition {
 
     VARCHAR,
     VARBINARY
-  };
-
-  enum FKConstrActionType {
-    NOACTION,
-    RESTRICT,
-    CASCADE,
-    SETNULL,
-    SETDEFAULT
-  };
-
-  enum FKConstrMatchType {
-    SIMPLE,
-    PARTIAL,
-    FULL
   };
 
   ColumnDefinition(DataType type) : type(type) {
@@ -88,6 +76,10 @@ struct ColumnDefinition {
     if (foreign_key_sink) {
       for (auto key : *foreign_key_sink) delete[] (key);
       delete foreign_key_sink;
+    }
+    if (multi_unique_cols) {
+      for (auto key : *multi_unique_cols) delete[] (key);
+      delete multi_unique_cols;
     }
     delete[] name;
     if (table_info_ != nullptr)
@@ -174,6 +166,8 @@ struct ColumnDefinition {
   std::vector<char*>* foreign_key_source = nullptr;
   std::vector<char*>* foreign_key_sink = nullptr;
 
+  std::vector<char *>* multi_unique_cols = nullptr;
+
   char* foreign_key_table_name = nullptr;
   FKConstrActionType foreign_key_delete_action;
   FKConstrActionType foreign_key_update_action;
@@ -222,6 +216,9 @@ struct CreateStatement : TableRefStatement {
 
   std::vector<ColumnDefinition*>* columns;
   std::vector<char*>* index_attrs = nullptr;
+
+  // TODO: Put all multi-column constraints here
+  
 
   IndexType index_type;
 
