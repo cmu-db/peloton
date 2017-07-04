@@ -39,6 +39,9 @@ class AggregatePlan : public AbstractPlan {
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
             bool distinct = false);
 
+    // Bindings
+    void PerformBinding(BindingContext &binding_context);
+
     AggTerm Copy() const;
   };
 

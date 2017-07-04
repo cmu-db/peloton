@@ -11,12 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include <string>
+
 #include "common/abstract_tuple.h"
 #include "expression/tuple_value_expression.h"
 #include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
+
 type::Value TupleValueExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
@@ -41,6 +43,10 @@ hash_t TupleValueExpression::Hash() const {
   hash = HashUtil::CombineHashes(hash,
                                  HashUtil::Hash(&(std::get<2>(bound_obj_id_))));
   return hash;
+}
+
+bool TupleValueExpression::IsNullable() const {
+  return ai_->type.nullable;
 }
 
 }  // namespace expression

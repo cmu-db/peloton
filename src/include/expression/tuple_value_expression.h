@@ -144,6 +144,8 @@ class TupleValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  bool IsNullable() const override;
+
  protected:
   TupleValueExpression(const TupleValueExpression &other)
       : AbstractExpression(other),
