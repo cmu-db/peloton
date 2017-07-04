@@ -74,7 +74,7 @@ void Cost::CombineConjunctionStats(const std::shared_ptr<TableStats> &lhs,
       break;
     default:
       LOG_TRACE("Cost model conjunction on expression type %d not supported",
-                type);
+                (int)type);
   }
   if (output_stats != nullptr) {
     output_stats->num_rows = num_tuples;

@@ -43,7 +43,7 @@ double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats> &stats,
       return DistinctFrom(stats, condition);
     default:
       LOG_TRACE("Expression type %d not supported for computing selectivity",
-                type);
+                (int)(condition.type));
       return DEFAULT_SELECTIVITY;
   }
 }
