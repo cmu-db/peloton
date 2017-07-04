@@ -566,7 +566,6 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 
 //////////////////////////////////////////////////////////////////////////////
 /// Memo insertion
-
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
   vector<GroupID> child_groups;
