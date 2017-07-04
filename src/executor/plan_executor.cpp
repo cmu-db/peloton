@@ -81,7 +81,19 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
       // Execute the tree until we get result tiles from root node
       while (status == true) {
-        status = executor_tree->Execute();
+        // Handle constraint exceptions
+        // TODO: This is a temporary solution
+        // The best way to handle constraint violations is NOT using
+        // exceptions
+        try {
+          status = executor_tree->Execute();
+        } catch (Exception &e) {
+          p_status.m_processed = executor_context->num_processed;
+          p_status.m_result = ResultType::FAILURE;
+          p_status.m_result_slots = nullptr;
+          CleanExecutorTree(executor_tree.get());
+          throw e;
+        }
 
         std::unique_ptr<executor::LogicalTile> logical_tile(
             executor_tree->GetOutput());

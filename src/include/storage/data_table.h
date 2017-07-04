@@ -110,7 +110,7 @@ class DataTable : public AbstractTable {
   // required.
   bool InstallVersion(const AbstractTuple *tuple, const TargetList *targets_ptr,
                       concurrency::Transaction *transaction,
-                      ItemPointer *index_entry_ptr);
+                      ItemPointer *index_entry_ptr, bool &fk_failure);
 
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
@@ -178,7 +178,11 @@ class DataTable : public AbstractTable {
 
   void DropForeignKey(const oid_t &key_offset);
 
-  oid_t GetForeignKeyCount() const;
+  size_t GetForeignKeyCount() const;
+
+  void RegisterForeignKeySource(const std::string &source_table_name);
+
+  void RemoveForeignKeySource(const std::string &source_table_name);
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -266,12 +270,25 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-  bool CheckNulls(const storage::Tuple *tuple) const;
+  bool CheckNotNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+                          std::vector<oid_t> cols) const;
+
+  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
+                std::pair<ExpressionType, type::Value> exp) const;
+  bool CheckUnique(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
+  bool SetDefaults(storage::Tuple *tuple);
+
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                bool check_constraint = true);
 
   // add a tile group to the table
   oid_t AddDefaultTileGroup();
@@ -294,7 +311,8 @@ class DataTable : public AbstractTable {
                                 ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
-  bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
+  bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
+                                  concurrency::Transaction *transaction);
 
  public:
   static size_t default_active_tilegroup_count_;
@@ -338,7 +356,10 @@ class DataTable : public AbstractTable {
   std::vector<std::set<oid_t>> indexes_columns_;
 
   // CONSTRAINTS
+  // fk constraints for which this table is the source
   std::vector<catalog::ForeignKey *> foreign_keys_;
+  // names of tables for which this table's PK is the foreign key sink
+  std::vector<std::string> foreign_key_sources_;
 
   // has a primary key ?
   std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);

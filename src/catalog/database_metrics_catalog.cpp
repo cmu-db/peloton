@@ -29,7 +29,7 @@ DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." DATABASE_METRICS_CATALOG_NAME
                       " ("
-                      "database_oid  INT NOT NULL PRIMARY KEY, "
+                      "database_oid  INT NOT NULL, "
                       "txn_committed INT NOT NULL, "
                       "txn_aborted   INT NOT NULL, "
                       "time_stamp    INT NOT NULL);",
@@ -67,31 +67,6 @@ bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
-}
-
-oid_t DatabaseMetricsCatalog::GetTimeStamp(oid_t database_oid,
-                                           concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids(
-      {ColumnId::TIME_STAMP});                // projection column is time_stamp
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
-
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t time_stamp = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      time_stamp = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
-    }
-  }
-
-  return time_stamp;
 }
 
 }  // end of namespace catalog

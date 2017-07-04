@@ -273,7 +273,7 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
 }
 
 void StatsAggregator::RunAggregator() {
-  LOG_DEBUG("Aggregator is now running.");
+  LOG_DEBUG("StatsAggregator is now running.");
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
   int64_t interval_cnt = 0;
@@ -286,7 +286,7 @@ void StatsAggregator::RunAggregator() {
          is_aggregating_) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   }
-  LOG_DEBUG("Aggregator done!");
+  LOG_DEBUG("StatsAggregator is finished");
 }
 
 StatsAggregator &StatsAggregator::GetInstance(int64_t aggregation_interval_ms) {

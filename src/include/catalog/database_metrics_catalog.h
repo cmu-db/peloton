@@ -54,9 +54,8 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  oid_t GetTimeStamp(oid_t database_oid, concurrency::Transaction *txn);
+  
   // TODO: add more if needed
-
   enum ColumnId {
     DATABASE_OID = 0,
     TXN_COMMITTED = 1,

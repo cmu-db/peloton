@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "parser/create_statement.h"
 
 namespace peloton {
 namespace catalog {
@@ -26,6 +27,21 @@ class CreateStatement;
 }
 
 namespace planner {
+
+/**
+ * The meta-data for a foreign key reference.
+ * This is meant to be a bridge from the parser to the
+ * catalog. It only has table names and not OIDs, whereas
+ * the catalog only wants OIDs.
+ */
+struct ForeignKeyInfo {
+  std::vector<std::string> foreign_key_sources;
+  std::vector<std::string> foreign_key_sinks;
+  std::string sink_table_name;
+  std::string constraint_name;
+  FKConstrActionType upd_action;
+  FKConstrActionType del_action;
+};
 
 class CreatePlan : public AbstractPlan {
  public:
@@ -63,6 +79,15 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
+  inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+
+ protected:
+
+  // This is a helper method for extracting foreign key information
+  // and storing it in an internal struct.
+  void ProcessForeignKeyConstraint(const std::string table_name,
+                                   const parser::ColumnDefinition *col);
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
@@ -90,6 +115,9 @@ class CreatePlan : public AbstractPlan {
 
   // UNIQUE INDEX flag
   bool unique;
+
+  // ColumnDefinition for multi-column constraints (including foreign key)
+  std::vector<ForeignKeyInfo> foreign_keys;
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);
