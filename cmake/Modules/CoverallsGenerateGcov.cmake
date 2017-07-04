@@ -426,7 +426,7 @@ foreach (GCOV_FILE ${GCOV_FILES})
 	set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}]")
 
 	# Generate the final JSON for this file.
-	message("Generate JSON for file: ${GCOV_SRC_REL_PATH}...")
+#	message("Generate JSON for file: ${GCOV_SRC_REL_PATH}...")
 	string(CONFIGURE ${SRC_FILE_TEMPLATE} FILE_JSON)
 
 	set(JSON_GCOV_FILES "${JSON_GCOV_FILES}${FILE_JSON}, ")
@@ -462,7 +462,7 @@ foreach(NOT_COVERED_SRC ${COVERAGE_SRCS_REMAINING})
 	set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}]")
 
 	# Generate the final JSON for this file.
-	message("Generate JSON for non-gcov file: ${NOT_COVERED_SRC}...")
+#	message("Generate JSON for non-gcov file: ${NOT_COVERED_SRC}...")
 	string(CONFIGURE ${SRC_FILE_TEMPLATE} FILE_JSON)
 	set(JSON_GCOV_FILES "${JSON_GCOV_FILES}${FILE_JSON}, ")
 endforeach()

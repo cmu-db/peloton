@@ -78,6 +78,8 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 		COMMAND ${CMAKE_COMMAND}
 				-DCOVERAGE_SRCS="${COVERAGE_SRCS}" # TODO: This is passed like: "a b c", not "a;b;c"
 				-DCOVERALLS_OUTPUT_FILE="${COVERALLS_FILE}"
+				-DCMAKE_RULE_MESSAGES=OFF 
+				-Q
 				-DCOV_PATH="${PROJECT_BINARY_DIR}"
 				-DPROJECT_ROOT="${PROJECT_SOURCE_DIR}"
 				-P "${_CMAKE_SCRIPT_PATH}/CoverallsGenerateGcov.cmake"
