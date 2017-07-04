@@ -73,8 +73,7 @@ script:
     # install peloton
     - make install
     # run psql tests
-    # FIXME: Need to fix this for jenkins
-    # - bash ../script/testing/psql/psql_test.sh
+    - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
     - python ../script/validators/jdbc_validator.py
     # upload coverage info
