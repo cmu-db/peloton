@@ -413,32 +413,5 @@ TEST_F(ParserTests, CopyTest) {
   }
 }
 
-TEST_F(ParserTests, WrongSelectTest) {
-  std::vector<std::string> queries;
-  queries.push_back("SELECT;");
-  queries.push_back("SELECT *;");
-  for (auto query : queries) {
-    parser::SQLStatementList *result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
-
-    if (result->is_valid == true) {
-        LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
-                  result->error_line, result->error_col);
-    }
-    EXPECT_EQ(result->is_valid, true);
-
-    parser::CopyStatement *copy_stmt =
-            static_cast<parser::CopyStatement *>(result->GetStatement(0));
-
-    EXPECT_EQ(copy_stmt->delimiter, ',');
-    EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");
-
-    if (result != nullptr) {
-        LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-        delete result;
-    }
-}
-}
-
 }  // End test namespace
 }  // End peloton namespace
