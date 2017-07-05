@@ -41,21 +41,21 @@ class UpdateableStorage {
 
   // Get the value at a specific index into the storage area, ignoring whether
   // the value is NULL or not
-  codegen::Value GetValueSkipNull(CodeGen &codegen, llvm::Value *area_start,
+  codegen::Value GetValueSkipNull(CodeGen &codegen, llvm::Value *space,
                                   uint64_t index) const;
 
   // Like GetValueIgnoreNull(), but this also reads the NULL bitmap to determine
   // if the value is null.
-  codegen::Value GetValue(CodeGen &codegen, llvm::Value *area_start,
-                          uint64_t index, NullBitmap &null_bitmap) const;
+  codegen::Value GetValue(CodeGen &codegen, llvm::Value *space, uint64_t index,
+                          NullBitmap &null_bitmap) const;
 
   // Set the given value at the specific index in the storage area, ignoring to
   // update the bitmap
-  void SetValueSkipNull(CodeGen &codegen, llvm::Value *area_start,
-                        uint64_t index, const codegen::Value &value) const;
+  void SetValueSkipNull(CodeGen &codegen, llvm::Value *space, uint64_t index,
+                        const codegen::Value &value) const;
 
   // Like SetValueIgnoreNull(), but this also updates the NULL bitmap
-  void SetValue(CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+  void SetValue(CodeGen &codegen, llvm::Value *space, uint64_t index,
                 const codegen::Value &value, NullBitmap &null_bitmap) const;
 
   // Return the format of the storage area
