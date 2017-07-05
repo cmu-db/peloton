@@ -146,7 +146,6 @@ ResultType TrafficCop::ExecuteStatement(
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
-  LOG_DEBUG("After Return");
 
   if (statement.get() == nullptr) {
     return ResultType::FAILURE;
@@ -312,7 +311,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
-    LOG_DEBUG("Before Return");
     return std::move(statement);
   } catch (Exception &e) {
     error_message = e.what();
