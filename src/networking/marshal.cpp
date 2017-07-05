@@ -13,13 +13,13 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include "wire/marshal.h"
+#include "networking/marshal.h"
 #include "common/macros.h"
 
 #include <netinet/in.h>
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
 // checks for parsing overflows
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,

@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// libevent_server.cpp
+// network_server.cpp
 //
-// Identification: src/wire/libevent_server.cpp
+// Identification: src/networking/network_server.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "wire/libevent_server.h"
+#include "networking/network_server.h"
 
 #include <fcntl.h>
 #include <inttypes.h>
@@ -22,21 +22,21 @@
 #include "common/thread_pool.h"
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
-int LibeventServer::recent_connfd = -1;
-SSL_CTX *LibeventServer::ssl_context = nullptr;
+int NetworkServer::recent_connfd = -1;
+SSL_CTX *NetworkServer::ssl_context = nullptr;
 
-std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
-LibeventServer::GetGlobalSocketList() {
+std::unordered_map<int, std::unique_ptr<NetworkSocket>> &
+NetworkServer::GetGlobalSocketList() {
   // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<LibeventSocket>>
+  static std::unordered_map<int, std::unique_ptr<NetworkSocket>>
       global_socket_list;
 
   return global_socket_list;
 }
 
-LibeventSocket *LibeventServer::GetConn(const int &connfd) {
+NetworkSocket *NetworkServer::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
   if (global_socket_list.find(connfd) != global_socket_list.end()) {
     return global_socket_list.at(connfd).get();
@@ -45,8 +45,8 @@ LibeventSocket *LibeventServer::GetConn(const int &connfd) {
   }
 }
 
-void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
-                                   LibeventThread *thread,
+void NetworkServer::CreateNewConn(const int &connfd, short ev_flags,
+                                   NetworkThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
@@ -54,11 +54,11 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
     LOG_INFO("create new connection: id = %d", connfd);
   }
   global_socket_list[connfd].reset(
-      new LibeventSocket(connfd, ev_flags, thread, init_state));
+      new NetworkSocket(connfd, ev_flags, thread, init_state));
   thread->SetThreadSockFd(connfd);
 }
 
-LibeventServer::LibeventServer() {
+NetworkServer::NetworkServer() {
   base_ = event_base_new();
 
   // Create our event base
@@ -79,7 +79,7 @@ LibeventServer::LibeventServer() {
 
   // a master thread is responsible for coordinating worker threads.
   master_thread_ =
-      std::make_shared<LibeventMasterThread>(CONNECTION_THREAD_COUNT, base_);
+      std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -99,7 +99,7 @@ LibeventServer::LibeventServer() {
   signal(SIGPIPE, SIG_IGN);
 }
 
-void LibeventServer::StartServer() {
+void NetworkServer::StartServer() {
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -160,17 +160,21 @@ void LibeventServer::StartServer() {
       throw ConnectionException("Error listening onsocket.");
     }
 
+<<<<<<< 1ac48311dca16978f6cf47687b0b4c57d1e24380:src/wire/libevent_server.cpp
     master_thread_->Start();
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
+=======
+    NetworkServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
+>>>>>>> move src from wire to networking:src/networking/network_server.cpp
                                   master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
-    LibeventServer::GetConn(listen_fd)->CloseSocket();
+    NetworkServer::GetConn(listen_fd)->CloseSocket();
 
     // Free events and event base
-    event_free(LibeventServer::GetConn(listen_fd)->event);
+    event_free(NetworkServer::GetConn(listen_fd)->event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);
@@ -185,7 +189,7 @@ void LibeventServer::StartServer() {
   }
 }
 
-void LibeventServer::CloseServer() {
+void NetworkServer::CloseServer() {
   LOG_INFO("Begin to stop server");
   this->SetIsClosed(true);
 }
@@ -194,6 +198,5 @@ void LibeventServer::CloseServer() {
  * Change port to new_port
  */
 void LibeventServer::SetPort(int new_port) { port_ = new_port; }
-
-}  // namespace wire
-}  // namespace peloton
+} // namespace networking
+} // namespace peloton

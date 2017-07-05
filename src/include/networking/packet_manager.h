@@ -4,7 +4,7 @@
 //
 // packet_manager.h
 //
-// Identification: src/include/wire/packet_manager.h
+// Identification: src/include/networking/packet_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,14 +22,14 @@
 #include "common/portal.h"
 #include "common/statement.h"
 #include "tcop/tcop.h"
-#include "wire/marshal.h"
+#include "networking/marshal.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
 
 namespace peloton {
 
-namespace wire {
+namespace networking {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
@@ -225,5 +225,5 @@ class PacketManager {
   static std::mutex packet_managers_mutex_;
 };
 
-}  // namespace wire
-}  // namespace peloton
+}  // End networking namespace
+}  // End peloton namespace

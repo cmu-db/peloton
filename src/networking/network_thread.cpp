@@ -2,42 +2,42 @@
 //
 //                         Peloton
 //
-// libevent_thread.cpp
+// network_thread.cpp
 //
-// Identification: src/wire/libevent_thread.cpp
+// Identification: src/networking/network_thread.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "wire/libevent_thread.h"
+#include "networking/network_thread.h"
 #include <sys/file.h>
 #include <fstream>
 #include <vector>
 #include "boost/thread/future.hpp"
 #include "common/init.h"
 #include "common/thread_pool.h"
-#include "wire/libevent_server.h"
+#include "networking/network_server.h"
 #include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
 /*
- * Get the vector of libevent worker threads
+ * Get the vector of network worker threads
  */
-std::vector<std::shared_ptr<LibeventWorkerThread>> &
-LibeventMasterThread::GetWorkerThreads() {
-  static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
+std::vector<std::shared_ptr<NetworkWorkerThread>> &
+NetworkMasterThread::GetWorkerThreads() {
+  static std::vector<std::shared_ptr<NetworkWorkerThread>> worker_threads;
   return worker_threads;
 }
 
 /*
- * The libevent master thread initialize num_threads worker threads on
+ * The network master thread initialize num_threads worker threads on
  * constructor.
  */
-LibeventMasterThread::LibeventMasterThread(const int num_threads,
+NetworkMasterThread::NetworkMasterThread(const int num_threads,
                                            struct event_base *libevent_base)
-    : LibeventThread(MASTER_THREAD_ID, libevent_base),
+    : NetworkThread(MASTER_THREAD_ID, libevent_base),
       num_threads_(num_threads),
       next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
@@ -60,9 +60,9 @@ void LibeventMasterThread::Start() {
 
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads.push_back(std::shared_ptr<LibeventWorkerThread>(
-        new LibeventWorkerThread(thread_id)));
-    thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
+    threads.push_back(std::shared_ptr<NetworkWorkerThread>(
+        new NetworkWorkerThread(thread_id)));
+    thread_pool.SubmitDedicatedTask(NetworkMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
 
@@ -96,7 +96,7 @@ void LibeventMasterThread::Stop() {
 /*
  * Start with worker event loop
  */
-void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
+void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   // Set worker thread's close flag to false to indicate loop has exited
   worker_thread->SetThreadIsClosed(false);
@@ -104,7 +104,7 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
   // Free events and event base
   if (worker_thread->GetThreadSockFd() != -1) {
     event_free(
-        LibeventServer::GetConn(worker_thread->GetThreadSockFd())->event);
+        NetworkServer::GetConn(worker_thread->GetThreadSockFd())->event);
   }
   event_free(worker_thread->GetNewConnEvent());
   event_free(worker_thread->GetTimeoutEvent());
@@ -115,8 +115,8 @@ void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
 * The worker thread creates a pipe for master-worker communication on
 * constructor.
 */
-LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
-    : LibeventThread(thread_id, event_base_new()), new_conn_queue(QUEUE_SIZE) {
+NetworkWorkerThread::NetworkWorkerThread(const int thread_id)
+    : NetworkThread(thread_id, event_base_new()), new_conn_queue(QUEUE_SIZE) {
   int fds[2];
   if (pipe(fds)) {
     LOG_ERROR("Can't create notify pipe to accept connections");
@@ -147,7 +147,7 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
 * Dispatch a new connection event to a random worker thread by
 * writing to the worker's pipe
 */
-void LibeventMasterThread::DispatchConnection(int new_conn_fd,
+void NetworkMasterThread::DispatchConnection(int new_conn_fd,
                                               short event_flags) {
   char buf[1];
   buf[0] = 'c';
@@ -159,7 +159,7 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   // update next threadID
   next_thread_id_ = (next_thread_id_ + 1) % num_threads_;
 
-  std::shared_ptr<LibeventWorkerThread> worker_thread = threads[thread_id];
+  std::shared_ptr<NetworkWorkerThread> worker_thread = threads[thread_id];
   LOG_DEBUG("Dispatching connection to worker %d", thread_id);
 
   std::shared_ptr<NewConnQueueItem> item(
@@ -171,5 +171,5 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
-}  // namespace wire
-}  // namespace peloton
+} // end networking
+} // end peloton
