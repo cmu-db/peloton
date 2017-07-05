@@ -113,7 +113,7 @@ class PostgresParser {
   static parser::JoinDefinition* JoinTransform(JoinExpr* root);
 
   // transform helper for from clauses
-  static parser::TableRef* FromTransform(List* root);
+  static parser::TableRef* FromTransform(SelectStmt* root);
 
   // transform helper for select targets
   static std::vector<expression::AbstractExpression*>* TargetTransform(List* root);
