@@ -283,9 +283,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       new Statement(statement_name, query_string));
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-      LOG_DEBUG("START PARSING");
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-      LOG_DEBUG("PARSE_FIN");
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
