@@ -259,7 +259,20 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     }
 
     CreatePrimaryIndex(database_oid, table_oid, txn);
-
+    for(auto column : table->GetSchema()->GetColumns()){
+        //Maybe add a is_unique_ in column definition?
+        //Would avoid the double loop for sure.
+        std::vector<std::string> column_name;
+        column_name.push_back(column.GetName());
+        for(auto constraint : column.GetConstraints())
+            if(constraint.GetType() == ConstraintType::UNIQUE)
+                CreateIndex(database_name,
+                            table_name,
+                            column_name,
+                            table_name+"_"+column_name[0]+"_key", true,
+                                                IndexType::BWTREE,
+                                                txn);
+    }
     return ResultType::SUCCESS;
   } catch (CatalogException &e) {
     LOG_TRACE("Can't found database %s. Return RESULT_FAILURE",
