@@ -189,7 +189,13 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
-  if (root == nullptr) return nullptr;
+  /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead to
+   * null_list*/
+  if (root == nullptr) {
+      throw ParserException(
+          StringUtil::Format("Error parsing SQL statement"));
+  }
+
   parser::TableRef* result = nullptr;
   Node* node;
   if (root->length > 1) {
@@ -503,6 +509,13 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 // It checks the type of each target and call the corresponding helpers.
 std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
     List* root) {
+  /* Statement like 'SELECT;' cannot detect by postgres parser and would lead to
+   * null list*/
+  if (root == nullptr) {
+      throw ParserException(
+          StringUtil::Format("Error parsing SQL statement"));
+  }
+
   std::vector<expression::AbstractExpression*>* result =
       new std::vector<expression::AbstractExpression*>();
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
@@ -1231,7 +1244,6 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
     result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
   }
-
   return result;
 }
 
@@ -1280,7 +1292,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  //   print_pg_parse_tree(result.tree);
+  // print_pg_parse_tree(result.tree);
 
   auto transform_result = ListTransform(result.tree);
   pg_query_parse_finish(ctx);
