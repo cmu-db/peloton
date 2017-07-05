@@ -94,7 +94,7 @@ class Aggregation {
     ExpressionType aggregate_type;
 
     // The SQL (data) type of the aggregate
-    const type::Type &type;
+    const type::Type type;
 
     // The position in the original (ordered) list of aggregates that this
     // aggregate is stored
@@ -110,8 +110,8 @@ class Aggregation {
 
  private:
   // Advance the value of a specific aggregate, given its next value
-  void DoAdvanceValue(CodeGen &codegen, llvm::Value *storage_space,
-                      const AggregateInfo &aggregate_info,
+  void DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
+                      const AggregateInfo &agg_info,
                       const codegen::Value &next) const;
 
  private:

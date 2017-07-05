@@ -109,7 +109,7 @@ void UpdateableStorage::FindStoragePositionFor(uint32_t item_index,
 
 // Get the value at a specific index into the storage area
 codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
-                                                   llvm::Value *area_start,
+                                                   llvm::Value *space,
                                                    uint64_t index) const {
   PL_ASSERT(storage_type_ != nullptr);
   PL_ASSERT(index < schema_.size());
@@ -119,7 +119,7 @@ codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
   FindStoragePositionFor(index, val_idx, len_idx);
 
   llvm::Value *typed_ptr =
-      codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
+      codegen->CreateBitCast(space, storage_type_->getPointerTo());
 
   // Load the value
   llvm::Value *val_addr =
@@ -140,7 +140,7 @@ codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
 }
 
 codegen::Value UpdateableStorage::GetValue(
-    CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+    CodeGen &codegen, llvm::Value *space, uint64_t index,
     UpdateableStorage::NullBitmap &null_bitmap) const {
   codegen::Value null_val, read_val;
 
@@ -153,7 +153,7 @@ codegen::Value UpdateableStorage::GetValue(
   val_is_null.ElseBlock();
   {
     // If the index doesn't have its null-bit set, read from storage
-    read_val = GetValueSkipNull(codegen, area_start, index);
+    read_val = GetValueSkipNull(codegen, space, index);
   }
   val_is_null.EndIf();
 
@@ -162,7 +162,7 @@ codegen::Value UpdateableStorage::GetValue(
 }
 
 // Get the value at a specific index into the storage area
-void UpdateableStorage::SetValueSkipNull(CodeGen &codegen, llvm::Value *ptr,
+void UpdateableStorage::SetValueSkipNull(CodeGen &codegen, llvm::Value *space,
                                          uint64_t index,
                                          const codegen::Value &value) const {
   llvm::Value *val = nullptr, *len = nullptr, *null = nullptr;
@@ -173,7 +173,7 @@ void UpdateableStorage::SetValueSkipNull(CodeGen &codegen, llvm::Value *ptr,
   FindStoragePositionFor(index, val_idx, len_idx);
 
   llvm::Value *typed_ptr =
-      codegen->CreateBitCast(ptr, storage_type_->getPointerTo());
+      codegen->CreateBitCast(space, storage_type_->getPointerTo());
 
   // Store the value at the appropriate slot
   llvm::Value *val_addr =
@@ -189,9 +189,11 @@ void UpdateableStorage::SetValueSkipNull(CodeGen &codegen, llvm::Value *ptr,
 }
 
 void UpdateableStorage::SetValue(
-    CodeGen &codegen, llvm::Value *area_start, uint64_t index,
+    CodeGen &codegen, llvm::Value *space, uint64_t index,
     const codegen::Value &value,
     UpdateableStorage::NullBitmap &null_bitmap) const {
+  PL_ASSERT(null_bitmap.IsNullable(index));
+
   // Set the NULL bit
   llvm::Value *null = value.IsNull(codegen);
   null_bitmap.SetNull(codegen, index, null);
@@ -199,7 +201,7 @@ void UpdateableStorage::SetValue(
   If val_not_null{codegen, codegen->CreateNot(null)};
   {
     // If the value isn't NULL, write it into storage
-    SetValueSkipNull(codegen, area_start, index, value);
+    SetValueSkipNull(codegen, space, index, value);
   }
   val_not_null.EndIf();
 }
