@@ -112,23 +112,23 @@ void Aggregation::Setup(
 }
 
 void Aggregation::CreateInitialGlobalValues(CodeGen &codegen,
-                                            llvm::Value *storage_space) const {
+                                            llvm::Value *space) const {
   PL_ASSERT(IsGlobal());
-  auto null_bitmap = UpdateableStorage::NullBitmap{
-      codegen, GetAggregateStorage(), storage_space};
+  auto null_bitmap =
+      UpdateableStorage::NullBitmap{codegen, GetAggregateStorage(), space};
   null_bitmap.InitAllNull(codegen);
   null_bitmap.WriteBack(codegen);
 }
 
 // Create the initial values of all aggregates based on the the provided values
 void Aggregation::CreateInitialValues(
-    CodeGen &codegen, llvm::Value *storage_space,
+    CodeGen &codegen, llvm::Value *space,
     const std::vector<codegen::Value> &initial) const {
   // Global aggregations should be calling CreateInitialGlobalValues(...)
   PL_ASSERT(!IsGlobal());
 
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
 
   // Initialize bitmap to all NULLs
   null_bitmap.InitAllNull(codegen);
@@ -142,11 +142,11 @@ void Aggregation::CreateInitialValues(
         // For the above aggregations, the initial value is the attribute value
         const auto &input_val = initial[agg_info.source_index];
         if (null_bitmap.IsNullable(i)) {
-          storage_.SetValue(codegen, storage_space, agg_info.storage_index,
-                            input_val, null_bitmap);
+          storage_.SetValue(codegen, space, agg_info.storage_index, input_val,
+                            null_bitmap);
         } else {
-          storage_.SetValueSkipNull(codegen, storage_space,
-                                    agg_info.storage_index, input_val);
+          storage_.SetValueSkipNull(codegen, space, agg_info.storage_index,
+                                    input_val);
         }
         break;
       }
@@ -159,16 +159,15 @@ void Aggregation::CreateInitialValues(
         } else {
           raw_initial = codegen.Const64(1);
         }
-        auto initial = codegen::Value{agg_info.type, raw_initial};
-        storage_.SetValueSkipNull(codegen, storage_space,
-                                  agg_info.storage_index, initial);
+        auto initial_val = codegen::Value{agg_info.type, raw_initial};
+        storage_.SetValueSkipNull(codegen, space, agg_info.storage_index,
+                                  initial_val);
         break;
       }
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         // The initial value for COUNT(*) is 1
         auto one = codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
-        storage_.SetValueSkipNull(codegen, storage_space,
-                                  agg_info.storage_index, one);
+        storage_.SetValueSkipNull(codegen, space, agg_info.storage_index, one);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
@@ -259,14 +258,12 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
   storage_.SetValueSkipNull(codegen, space, agg_info.storage_index, next);
 }
 
-//===----------------------------------------------------------------------===//
 // Advance each of the aggregates stored in the provided storage space
-//===----------------------------------------------------------------------===//
 void Aggregation::AdvanceValues(
-    CodeGen &codegen, llvm::Value *storage_space,
+    CodeGen &codegen, llvm::Value *space,
     const std::vector<codegen::Value> &next_vals) const {
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
 
   // Loop over all aggregates, advancing each
   for (const auto &aggregate_info : aggregate_infos_) {
@@ -281,7 +278,7 @@ void Aggregation::AdvanceValues(
     // If the aggregate is not NULL-able, avoid NULL checking altogether and
     // generate the fast-path route.
     if (!null_bitmap.IsNullable(aggregate_info.storage_index)) {
-      DoAdvanceValue(codegen, storage_space, aggregate_info, update);
+      DoAdvanceValue(codegen, space, aggregate_info, update);
       continue;
     }
 
@@ -314,15 +311,14 @@ void Aggregation::AdvanceValues(
           case ExpressionType::AGGREGATE_SUM:
           case ExpressionType::AGGREGATE_MIN:
           case ExpressionType::AGGREGATE_MAX: {
-            storage_.SetValue(codegen, storage_space,
-                              aggregate_info.storage_index, update,
-                              null_bitmap);
+            storage_.SetValue(codegen, space, aggregate_info.storage_index,
+                              update, null_bitmap);
             break;
           }
           case ExpressionType::AGGREGATE_COUNT: {
             codegen::Value one{type::BigInt::Instance(), codegen.Const64(1)};
-            storage_.SetValue(codegen, storage_space,
-                              aggregate_info.storage_index, one, null_bitmap);
+            storage_.SetValue(codegen, space, aggregate_info.storage_index, one,
+                              null_bitmap);
             break;
           }
           default: { break; }
@@ -331,7 +327,7 @@ void Aggregation::AdvanceValues(
       agg_is_null.ElseBlock();
       {
         // (1)
-        DoAdvanceValue(codegen, storage_space, aggregate_info, update);
+        DoAdvanceValue(codegen, space, aggregate_info, update);
       }
       agg_is_null.EndIf();
 
@@ -348,21 +344,17 @@ void Aggregation::AdvanceValues(
   null_bitmap.WriteBack(codegen);
 }
 
-//===----------------------------------------------------------------------===//
-// This function will finalize the aggregates stored in the provided storage
-// space.  Finalization essentially means computing the final values of the
-// aggregates. This is only really necessary for averages. Either way, we
-// populate the final_vals vector with the final values of all the aggregates.
-//===----------------------------------------------------------------------===//
+// This function will computes the final values of all aggregates stored in the
+// provided storage space, and populates the provided vector with these values.
 void Aggregation::FinalizeValues(
-    CodeGen &codegen, llvm::Value *storage_space,
+    CodeGen &codegen, llvm::Value *space,
     std::vector<codegen::Value> &final_vals) const {
   // Collect all final values into this map. We need this because some
   // aggregates are derived from other component aggregates.
   std::map<std::pair<uint32_t, ExpressionType>, codegen::Value> vals;
 
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, storage_space};
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
 
   for (const auto &agg_info : aggregate_infos_) {
     uint32_t source = agg_info.source_index;
@@ -373,11 +365,11 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_MAX: {
         codegen::Value final_val;
         if (null_bitmap.IsNullable(agg_info.storage_index)) {
-          final_val = storage_.GetValue(codegen, storage_space,
-                                        agg_info.storage_index, null_bitmap);
+          final_val = storage_.GetValue(codegen, space, agg_info.storage_index,
+                                        null_bitmap);
         } else {
-          final_val = storage_.GetValueSkipNull(codegen, storage_space,
-                                                agg_info.storage_index);
+          final_val =
+              storage_.GetValueSkipNull(codegen, space, agg_info.storage_index);
         }
 
         vals[std::make_pair(source, agg_type)] = final_val;
@@ -388,11 +380,17 @@ void Aggregation::FinalizeValues(
       }
       case ExpressionType::AGGREGATE_AVG: {
         // Find the sum and count for this aggregate
-        codegen::Value count = vals[{source, ExpressionType::AGGREGATE_COUNT}];
-        count = count.CastTo(codegen, type::Decimal::Instance());
+        auto count_key =
+            std::make_pair(source, ExpressionType::AGGREGATE_COUNT);
+        auto sum_key = std::make_pair(source, ExpressionType::AGGREGATE_SUM);
+        PL_ASSERT(vals.find(count_key) != vals.end());
+        PL_ASSERT(vals.find(sum_key) != vals.end());
 
-        codegen::Value sum = vals[{source, ExpressionType::AGGREGATE_SUM}];
-        sum = sum.CastTo(codegen, type::Decimal::Instance());
+        codegen::Value count =
+            vals[count_key].CastTo(codegen, type::Decimal::Instance());
+
+        codegen::Value sum =
+            vals[sum_key].CastTo(codegen, type::Decimal::Instance());
 
         codegen::Value final_val = sum.Div(codegen, count, OnError::ReturnNull);
 
@@ -402,9 +400,9 @@ void Aggregation::FinalizeValues(
       }
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR: {
-        // COUNT's can never return NULL
-        codegen::Value final_val = storage_.GetValueSkipNull(
-            codegen, storage_space, agg_info.storage_index);
+        // Neither COUNT(...) or COUNT(*) can ever return NULL, so no NULL-check
+        codegen::Value final_val =
+            storage_.GetValueSkipNull(codegen, space, agg_info.storage_index);
 
         vals[std::make_pair(source, agg_type)] = final_val;
         if (!agg_info.is_internal) {
