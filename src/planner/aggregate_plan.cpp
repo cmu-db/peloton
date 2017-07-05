@@ -60,8 +60,8 @@ void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
       break;
     }
     default: {
-      throw Exception{StringUtil::Format("%s not a valid aggregate",
-                                         ExpressionTypeToString(aggtype))};
+      throw Exception{StringUtil::Format(
+          "%s not a valid aggregate", ExpressionTypeToString(aggtype).c_str())};
     }
   }
 }
