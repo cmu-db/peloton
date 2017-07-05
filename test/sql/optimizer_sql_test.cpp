@@ -596,6 +596,11 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       },
       false);
 
+  // Test mixing single table predicates with join predicates
+  TestUtil("SELECT test.b FROM TEST, TEST1 "
+               "WHERE test.a = test1.a and test.c > 333 ",
+           {"33", "0"}, false);
+
   /************************* Complex Queries *******************************/
   // Test projection with join
   TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 WHERE test.a = test2.a",
@@ -623,6 +628,20 @@ TEST_F(OptimizerSQLTests, JoinTest) {
                "ORDER BY test.a",
            {"22", "1", "11", "2", "22", "3", "0", "4"}, true);
 
+
+}
+
+TEST_F(OptimizerSQLTests, IndexTest) {
+  TestingSQLUtil::ExecuteSQLQuery(
+      "create table foo(a int, b varchar(32), primary key(a, b));");
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "create index sk0 on foo(a);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO foo VALUES (2, '323');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO foo VALUES (2, '313');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO foo VALUES (1, '313');");
+
+  TestUtil("select * from foo where b = '313';", {"2", "313", "1", "313"}, false);
 }
 
 }  // namespace test

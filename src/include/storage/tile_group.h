@@ -147,7 +147,7 @@ class TileGroup : public Printable {
     return column_map;
   }
 
-  oid_t GetTileGroupId() const { return tile_group_id; }
+  oid_t GetTileGroupId() const;
 
   oid_t GetDatabaseId() const { return database_id; }
 

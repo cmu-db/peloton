@@ -241,15 +241,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     }
   }
   
-#ifdef LOG_DEBUG_ENABLED
-  LOG_DEBUG("Children map: %ld", children_expr_map.size());
-  for (auto map : children_expr_map) {
-    for (auto iter : map) {
-      LOG_DEBUG("%d", iter.second);
-    }
-  }
-#endif
-  
   
   // Derive root plan
   shared_ptr<OperatorExpression> op =
