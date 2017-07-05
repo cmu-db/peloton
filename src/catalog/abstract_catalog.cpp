@@ -12,6 +12,7 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "planner/create_plan.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
@@ -55,7 +56,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       catalog_table_name, CATALOG_DATABASE_OID, txn);
 
   // set catalog_table_
-  catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
+  catalog_table_ = CatalogStorageManager::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
                                                            catalog_table_oid);
 }
 
