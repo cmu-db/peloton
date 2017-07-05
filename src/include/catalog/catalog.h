@@ -154,31 +154,8 @@ class Catalog {
                                        concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
-  // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
-  //===--------------------------------------------------------------------===//
-
-  /* Find a database using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
-
-  /* Find a table using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  storage::DataTable *GetTableWithOid(oid_t database_oid,
-                                      oid_t table_oid) const;
-
-  /* Find a index using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
-                                oid_t index_oid) const;
-
-  //===--------------------------------------------------------------------===//
   // HELPERS
   //===--------------------------------------------------------------------===//
-  // Returns true if the catalog contains the given database with the id
-  bool HasDatabase(oid_t db_oid) const;
 
   // Get the number of databases currently in the catalog
   oid_t GetDatabaseCount();
@@ -200,9 +177,6 @@ class Catalog {
 
  private:
   Catalog();
-
-  // A vector of the database pointers in the catalog
-  std::vector<storage::Database *> databases_;
 
   // Map of function names to data about functions (number of arguments,
   // function ptr, return type)

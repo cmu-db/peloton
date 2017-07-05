@@ -12,6 +12,7 @@
 
 #include "parser/table_ref.h"
 #include "binder/binder_context.h"
+#include "catalog/catalog_storage_manager.h"
 #include "catalog/catalog.h"
 
 namespace peloton {
@@ -50,7 +51,7 @@ bool BinderContext::GetColumnPosTuple(
     type::TypeId& value_type) {
   auto db_id = std::get<0>(table_id_tuple);
   auto table_id = std::get<1>(table_id_tuple);
-  auto schema = catalog::Catalog::GetInstance()
+  auto schema = catalog::CatalogStorageManager::GetInstance()
                     ->GetTableWithOid(db_id, table_id)
                     ->GetSchema();
   auto col_pos = schema->GetColumnID(col_name);
