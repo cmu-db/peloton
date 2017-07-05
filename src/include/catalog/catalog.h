@@ -39,6 +39,7 @@ class Tuple;
 
 namespace type {
 class AbstractPool;
+class Value;
 class ValueFactory;
 class Value;
 }
