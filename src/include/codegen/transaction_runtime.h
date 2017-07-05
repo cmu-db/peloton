@@ -27,6 +27,7 @@ class ExecutorContext;
 namespace storage {
 class DataTable;
 class TileGroup;
+class Tuple;
 }  // namespace storage
 
 namespace codegen {
@@ -37,7 +38,6 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class TransactionRuntime {
  public:
-
   // Perform a read operation for all tuples in the given tile group with IDs
   // in the range [tid_start, tid_end) in the context of the given transaction
   static uint32_t PerformVectorizedRead(concurrency::Transaction &txn,
