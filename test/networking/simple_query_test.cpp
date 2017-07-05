@@ -4,7 +4,7 @@
 //
 // simple_query_test.cpp
 //
-// Identification: test/wire/simple_query_test.cpp
+// Identification: test/networking/simple_query_test.cpp
 //
 // Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
@@ -13,7 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
-#include "wire/libevent_server.h"
+#include "networking/network_server.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 
@@ -28,11 +28,11 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::LibeventServer libeventserver,
+static void *LaunchServer(peloton::networking::NetworkServer networkserver,
                           int port) {
   try {
-    libeventserver.SetPort(port);
-    libeventserver.StartServer();
+    networkserver.SetPort(port);
+    networkserver.StartServer();
   } catch (peloton::ConnectionException exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -49,9 +49,9 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::wire::LibeventSocket *conn =
-        peloton::wire::LibeventServer::GetConn(
-            peloton::wire::LibeventServer::recent_connfd);
+    peloton::networking::NetworkSocket *conn =
+        peloton::networking::NetworkServer::GetConn(
+            peloton::networking::NetworkServer::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
@@ -155,18 +155,18 @@ TEST_F(PacketManagerTests, RollbackTest) {
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
+  peloton::networking::NetworkServer networkserver;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, libeventserver, port);
-  while (!libeventserver.GetIsStarted()) {
+  std::thread serverThread(LaunchServer, networkserver, port);
+  while (!networkserver.GetIsStarted()) {
     sleep(1);
   }
 
   // server & client running correctly
   SimpleQueryTest(port);
 
-  libeventserver.CloseServer();
+  networkserver.CloseServer();
   serverThread.join();
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");

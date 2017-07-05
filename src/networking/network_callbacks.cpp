@@ -2,30 +2,30 @@
 //
 //                         Peloton
 //
-// libevent_callbacks.cpp
+// network_callbacks.cpp
 //
 // Implements Libevent callbacks for the protocol and their helpers
 //
-// Identification: src/wire/libevent_callbacks.cpp
+// Identification: src/networking/network_callbacks.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include "wire/libevent_server.h"
+#include "networking/network_server.h"
 #include "common/macros.h"
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
 void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
                          UNUSED_ATTRIBUTE short ev_flags, void *arg) {
   // buffer used to receive messages from the main thread
   char m_buf[1];
   std::shared_ptr<NewConnQueueItem> item;
-  LibeventSocket *conn;
-  LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
+  NetworkSocket *conn;
+  NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
 
   // pipe fds should match
   PL_ASSERT(new_conn_recv_fd == thread->GetNewConnReceiveFd());
@@ -41,18 +41,18 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
     case 'c': {
       // fetch the new connection fd from the queue
       thread->new_conn_queue.Dequeue(item);
-      conn = LibeventServer::GetConn(item->new_conn_fd);
+      conn = NetworkServer::GetConn(item->new_conn_fd);
       if (conn == nullptr) {
         LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
-        LibeventServer::CreateNewConn(item->new_conn_fd, item->event_flags,
-                                      static_cast<LibeventThread *>(thread),
+        NetworkServer::CreateNewConn(item->new_conn_fd, item->event_flags,
+                                      static_cast<NetworkThread *>(thread),
                                       CONN_READ);
       } else {
         LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
-        conn->Init(item->event_flags, static_cast<LibeventThread *>(thread),
+        conn->Init(item->event_flags, static_cast<NetworkThread *>(thread),
                    CONN_READ);
       }
       break;
@@ -66,14 +66,14 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags,
                   void *arg) {
   LOG_TRACE("Event callback fired for connfd: %d", connfd);
-  LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
+  NetworkSocket *conn = static_cast<NetworkSocket *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
   PL_ASSERT(connfd == conn->sock_fd);
   StateMachine(conn);
 }
 
-void StateMachine(LibeventSocket *conn) {
+void StateMachine(NetworkSocket *conn) {
   bool done = false;
 
   while (done == false) {
@@ -87,7 +87,7 @@ void StateMachine(LibeventSocket *conn) {
         if (new_conn_fd == -1) {
           LOG_ERROR("Failed to accept");
         }
-        (static_cast<LibeventMasterThread *>(conn->thread))
+        (static_cast<NetworkMasterThread *>(conn->thread))
             ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
         done = true;
         break;
@@ -132,7 +132,7 @@ void StateMachine(LibeventSocket *conn) {
         if(conn->pkt_manager.ssl_sent) {
             // start SSL handshake
             // TODO: consider free conn_SSL_context
-            conn->conn_SSL_context = SSL_new(LibeventServer::ssl_context);
+            conn->conn_SSL_context = SSL_new(NetworkServer::ssl_context);
             if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
               LOG_ERROR("Failed to set SSL fd");
               PL_ASSERT(false);
@@ -255,7 +255,7 @@ void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
                                                  fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
-  LibeventServer *server = (LibeventServer *)arg;
+  NetworkServer *server = (NetworkServer *)arg;
   if (server->GetIsStarted() == false) {
     server->SetIsStarted(true);
   }
@@ -268,7 +268,7 @@ void ControlCallback::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
                                                  fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
-  LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
+  NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
   if (!thread->GetThreadIsStarted()) {
     thread->SetThreadIsStarted(true);
   }

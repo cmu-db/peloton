@@ -2,14 +2,14 @@
 //
 //                         Peloton
 //
-// protocol.cpp
+// packet_manager.cpp
 //
-// Identification: src/wire/protocol.cpp
+// Identification: src/networking/packet_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "wire/packet_manager.h"
+#include "networking/packet_manager.h"
 
 #include <boost/algorithm/string.hpp>
 #include <cstdio>
@@ -26,14 +26,14 @@
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "wire/marshal.h"
+#include "networking/marshal.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
 #define UNUSED(x) (void)(x)
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
 // TODO: Remove hardcoded auth strings
 // Hardcoded authentication strings used during session startup. To be removed

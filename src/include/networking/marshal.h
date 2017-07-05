@@ -22,9 +22,9 @@
 #define BUFFER_INIT_SIZE 100
 
 namespace peloton {
-namespace wire {
+namespace networking {
 
-class LibeventSocket;
+class NetworkSocket;
 
 class InputPacket {
  public:
@@ -177,5 +177,5 @@ extern void PacketGetByte(InputPacket *rpkt, uchar &result);
 */
 extern void GetStringToken(InputPacket *pkt, std::string &result);
 
-}  // End wire namespace
+}  // End networking namespace
 }  // End peloton namespace
