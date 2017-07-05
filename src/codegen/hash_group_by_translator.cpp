@@ -220,12 +220,12 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   CollectHashKeys(row, key);
 
   // Collect the values of the expressions
-  std::vector<codegen::Value> vals;
   auto &aggregates = group_by_.GetUniqueAggTerms();
-  for (const auto &agg_term : aggregates) {
+  std::vector<codegen::Value> vals{aggregates.size()};
+  for (uint32_t i = 0; i < aggregates.size(); i++) {
+    const auto &agg_term = aggregates[i];
     if (agg_term.expression != nullptr) {
-      codegen::Value agg_value = row.DeriveValue(codegen, *agg_term.expression);
-      vals.push_back(agg_value);
+      vals[i] = row.DeriveValue(codegen, *agg_term.expression);
     }
   }
 

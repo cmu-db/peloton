@@ -102,10 +102,12 @@ void GlobalGroupByTranslator::Produce() const {
 void GlobalGroupByTranslator::Consume(ConsumerContext &,
                                       RowBatch::Row &row) const {
   // Get the updates to advance the aggregates
-  std::vector<codegen::Value> vals;
-  for (const auto &agg_term : plan_.GetUniqueAggTerms()) {
+  auto &aggregates = plan_.GetUniqueAggTerms();
+  std::vector<codegen::Value> vals{aggregates.size()};
+  for (uint32_t i = 0; i < aggregates.size(); i++) {
+    const auto &agg_term = aggregates[i];
     if (agg_term.expression != nullptr) {
-      vals.push_back(row.DeriveValue(GetCodeGen(), *agg_term.expression));
+      vals[i] = row.DeriveValue(GetCodeGen(), *agg_term.expression);
     }
   }
 
