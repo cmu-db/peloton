@@ -19,7 +19,7 @@ namespace codegen {
 
 class ValuesRuntimeProxy {
  public:
-  struct _OutputBool {
+  struct _OutputBoolean {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
