@@ -185,24 +185,24 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 }
 
 // Get in a target list and check if is with variables
-bool IsTargetListWithVar(List* target_list) {
+bool IsTargetListWithVariable(List* target_list) {
   // The only valid situation of a null from list is that all targets are constant
-  LOG_DEBUG("size is : %d", target_list->length);
-  print_pg_parse_tree(target_list);
-
   for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
-
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
-      LOG_DEBUG("Type: %d, expected %d", target->type, T_A_Const);
+    LOG_TRACE("Type: %d", target->type);
 
-      switch (target->val->type) {
-        case T_A_Const:
-        case T_A_Expr:
-        case T_BoolExpr:
-          continue;
-        default:
-          return true;
-      }
+    // Bypass the target nodes with type:
+    // constant("SELECT 1;"), expression ("SELECT 1 + 1"),
+    // and boolean ("SELECT 1!=2;");
+    // TODO: We may want to see if there are more types to check.
+    switch (target->val->type) {
+      case T_A_Const:
+      case T_A_Expr:
+      case T_BoolExpr:
+        continue;
+      default:
+        return true;
+    }
   }
   return false;
 }
@@ -212,20 +212,20 @@ bool IsTargetListWithVar(List* target_list) {
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
   // now support select from only one sources
+
   List* root = select_root->fromClause;
   /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead to
    * a null list of from clause*/
-
   if (root == nullptr) {
-      auto target_list = select_root->targetList;
-      // The only valid situation of a null from list is that all targets are constant
-      LOG_DEBUG("size is : %d", target_list->length);
-      print_pg_parse_tree(target_list);
-      if (IsTargetListWithVar(target_list)) {
-        throw ParserException(
-            StringUtil::Format("Error parsing SQL statement"));
-      }
-      return nullptr;
+    auto target_list = select_root->targetList;
+    // The only valid situation of a null 'from list' is that all targets are constant
+    LOG_TRACE("size is : %d", target_list->length);
+    //print_pg_parse_tree(target_list);
+    if (IsTargetListWithVariable(target_list)) {
+      throw ParserException(
+          StringUtil::Format("Error parsing SQL statement"));
+    }
+    return nullptr;
   }
 
   parser::TableRef* result = nullptr;
@@ -1331,7 +1331,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   }
 
   // DEBUG only. Comment this out in release mode
-   print_pg_parse_tree(result.tree);
+  // print_pg_parse_tree(result.tree);
 
   parser::SQLStatementList* transform_result = nullptr;
   try {
