@@ -248,6 +248,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
 
+
   auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
                                          children_plans, children_expr_map,
                                          output_expr_map);

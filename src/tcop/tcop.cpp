@@ -130,7 +130,7 @@ namespace tcop {
   }
 
   ResultType TrafficCop::AbortQueryHelper() {
-    
+
     LOG_INFO("ENTER NOT SINGLE ABORTQUERYHELPER");
     // do nothing if we have no active txns
     if (tcop_txn_state_.empty()) return ResultType::NOOP;
