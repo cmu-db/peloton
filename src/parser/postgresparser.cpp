@@ -184,6 +184,29 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
   return result;
 }
 
+// Get in a target list and check if is with variables
+bool IsTargetListWithVar(List* target_list) {
+  // The only valid situation of a null from list is that all targets are constant
+  LOG_DEBUG("size is : %d", target_list->length);
+  print_pg_parse_tree(target_list);
+
+  for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
+
+    ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
+      LOG_DEBUG("Type: %d, expected %d", target->type, T_A_Const);
+
+      switch (target->val->type) {
+        case T_A_Const:
+        case T_A_Expr:
+        case T_BoolExpr:
+          continue;
+        default:
+          return true;
+      }
+  }
+  return false;
+}
+
 // This fucntion takes in fromClause of a Postgres SelectStmt and transfers
 // into a Peloton TableRef object.
 // TODO: support select from multiple sources, nested queries, various joins
@@ -198,15 +221,9 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
       // The only valid situation of a null from list is that all targets are constant
       LOG_DEBUG("size is : %d", target_list->length);
       print_pg_parse_tree(target_list);
-      for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
-
-        ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
-          LOG_DEBUG("Type: %d, expected %d", target->type, T_A_Const);
-          if (target->val->type != T_A_Const && target->val->type != T_A_Expr){
-              LOG_DEBUG("Throwing ERROR!!!");
-              throw ParserException(
-          StringUtil::Format("Error parsing SQL statement"));
-          }
+      if (IsTargetListWithVar(target_list)) {
+        throw ParserException(
+            StringUtil::Format("Error parsing SQL statement"));
       }
       return nullptr;
   }
