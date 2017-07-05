@@ -187,13 +187,28 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 // This fucntion takes in fromClause of a Postgres SelectStmt and transfers
 // into a Peloton TableRef object.
 // TODO: support select from multiple sources, nested queries, various joins
-parser::TableRef* PostgresParser::FromTransform(List* root) {
+parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
   // now support select from only one sources
+  List* root = select_root->fromClause;
   /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead to
-   * null_list*/
+   * a null list of from clause*/
+
   if (root == nullptr) {
-      throw ParserException(
+      auto target_list = select_root->targetList;
+      // The only valid situation of a null from list is that all targets are constant
+      LOG_DEBUG("size is : %d", target_list->length);
+      print_pg_parse_tree(target_list);
+      for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
+
+        ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
+          LOG_DEBUG("Type: %d, expected %d", target->type, T_A_Const);
+          if (target->val->type != T_A_Const && target->val->type != T_A_Expr){
+              LOG_DEBUG("Throwing ERROR!!!");
+              throw ParserException(
           StringUtil::Format("Error parsing SQL statement"));
+          }
+      }
+      return nullptr;
   }
 
   parser::TableRef* result = nullptr;
@@ -1121,7 +1136,7 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
     case SETOP_NONE:
       result = new parser::SelectStatement();
       result->select_list = TargetTransform(root->targetList);
-      result->from_table = FromTransform(root->fromClause);
+      result->from_table = FromTransform(root);
       result->select_distinct = root->distinctClause != NULL ? true : false;
       result->group_by =
           GroupByTransform(root->groupClause, root->havingClause);
@@ -1293,7 +1308,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  // print_pg_parse_tree(result.tree);
+   print_pg_parse_tree(result.tree);
 
   parser::SQLStatementList* transform_result = nullptr;
   try {
