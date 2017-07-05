@@ -20,7 +20,7 @@ namespace codegen {
 class ValuesRuntime {
  public:
   // Write out the given boolean value into the array at the provided index
-  static void OutputBool(char *values, uint32_t idx, bool val);
+  static void OutputBoolean(char *values, uint32_t idx, bool val);
 
   // Write out the given tinyint value into the array at the provided index
   static void OutputTinyInt(char *values, uint32_t idx, int8_t val);

@@ -263,7 +263,7 @@ void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 
 llvm::Function *Boolean::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputBool::GetFunction(codegen);
+  return ValuesRuntimeProxy::_OutputBoolean::GetFunction(codegen);
 }
 
 // This method reifies a NULL-able boolean value, thanks to the weird-ass

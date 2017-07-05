@@ -177,7 +177,7 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// TINYINT TYPE CONFIGURATION
+// VARBINARY TYPE CONFIGURATION
 //===----------------------------------------------------------------------===//
 
 // Initialize the VARBINARY/BLOB SQL type with the configured type system
