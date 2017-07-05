@@ -41,22 +41,21 @@ class Aggregation {
              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
              bool is_global);
 
-  // Store the initial values of the aggregates into the provided storage space.
-  void CreateInitialGlobalValues(CodeGen &codegen,
-                                 llvm::Value *storage_space) const;
+  // Create default initial values for all global aggregate components
+  void CreateInitialGlobalValues(CodeGen &codegen, llvm::Value *space) const;
 
-  // Store the initial values of the aggregates into the provided storage space.
-  void CreateInitialValues(CodeGen &codegen, llvm::Value *storage_space,
+  // Store the provided values as the initial values for each of the aggregates
+  void CreateInitialValues(CodeGen &codegen, llvm::Value *space,
                            const std::vector<codegen::Value> &initial) const;
 
-  // Advance all the aggregates that are stored in the provided storage space
-  // by the values from the provided vector.
-  void AdvanceValues(CodeGen &codegen, llvm::Value *storage_space,
+  // Advance all stored aggregates (stored in the provided storage space) using
+  // the values in the provided vector
+  void AdvanceValues(CodeGen &codegen, llvm::Value *space,
                      const std::vector<codegen::Value> &next) const;
 
   // Compute the final values of all the aggregates stored in the provided
   // storage space, inserting them into the provided output vector.
-  void FinalizeValues(CodeGen &codegen, llvm::Value *storage_space,
+  void FinalizeValues(CodeGen &codegen, llvm::Value *space,
                       std::vector<codegen::Value> &final_vals) const;
 
   // Get the total number of bytes needed to store all the aggregates this is
@@ -69,21 +68,20 @@ class Aggregation {
   const UpdateableStorage &GetAggregateStorage() const { return storage_; }
 
  private:
-
   bool IsGlobal() const { return is_global_; }
 
   //===--------------------------------------------------------------------===//
   // Little struct to map the aggregates we physically store to the higher level
-  // aggregates. It is possible that the number of aggregate information structs
-  // we keep is not equal to the total number of aggregates the caller has
-  // setup. This can occur for two reasons:
+  // aggregates. It is possible that the number of these structs is greater than
+  // the total number of aggregates the caller has setup. This can occur for two
+  // reasons:
   //
-  // 1) There are occasions where components of aggregates can be shared
-  //    across multiple aggregates.  An example is a SUM(a) and AVG(a). Both
-  //    of these will share the summation on the column.
-  // 2) Some aggregates decompose into simpler aggregations. An example is AVG()
-  //    which we decompose into a SUM() and COUNT().  AVG(), therefore, occupies
-  //    three total slots.
+  // 1) Some aggregates decompose into multiple aggregations. For example, AVG()
+  //    aggregates decompose into a SUM() and COUNT(), therefore occupying three
+  //    slots: one each for the sum, count, and logical average.
+  // 2) There are occasions where components of aggregates can be shared across
+  //    multiple aggregates.  An example is a SUM(a) and AVG(a). Both of these
+  //    will share the summation aggregate on 'a'.
   //
   // Storing the mapping from the physical position the aggregate is stored to
   // where the caller expects them allows us to rearrange positions without
@@ -93,7 +91,7 @@ class Aggregation {
     // The type of aggregate
     ExpressionType aggregate_type;
 
-    // The SQL (data) type of the aggregate
+    // The data type of the aggregate
     const type::Type type;
 
     // The position in the original (ordered) list of aggregates that this
@@ -103,13 +101,13 @@ class Aggregation {
     // The position in the physical storage space where this aggregate is stored
     uint32_t storage_index;
 
-    // Is this internal? In other words, does the caller know that this
-    // aggregate exists?
+    // Is this aggregate purely for internal use? Is this externally visible?
     bool is_internal;
   };
 
  private:
-  // Advance the value of a specific aggregate, given its next value
+  // Advance the value of a specific aggregate, given its next value without any
+  // NULL checking. This assumes that the current aggregate value is not NULL.
   void DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
                       const AggregateInfo &agg_info,
                       const codegen::Value &next) const;
