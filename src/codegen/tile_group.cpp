@@ -22,8 +22,6 @@
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
 #include "codegen/vectorized_loop.h"
-#include "codegen/type.h"
-#include "type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -37,8 +35,7 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 // ColumnLayoutInfo structs are, which we need to acquire the layout information
 // of columns in this tile group.
 //===----------------------------------------------------------------------===//
-void TileGroup::GenerateTidScan(CodeGen &codegen,
-                                llvm::Value *tile_group_ptr,
+void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 ScanConsumer &consumer) const {
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
@@ -73,6 +70,7 @@ void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
 
   llvm::Value *num_tuples = GetNumTuples(codegen, tile_group_ptr);
+
   VectorizedLoop loop{codegen, num_tuples, vector_size, {}};
   {
     VectorizedLoop::Range curr_range = loop.GetCurrentRange();
@@ -86,12 +84,17 @@ void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
   }
 }
 
-//===----------------------------------------------------------------------===//
 // Call TileGroup::GetNextTupleSlot(...) to determine # of tuples in tile group.
-//===----------------------------------------------------------------------===//
 llvm::Value *TileGroup::GetNumTuples(CodeGen &codegen,
                                      llvm::Value *tile_group) const {
-  auto tg_func = TileGroupProxy::_GetNextTupleSlot::GetFunction(codegen);
+  auto *tg_func = TileGroupProxy::_GetNextTupleSlot::GetFunction(codegen);
+  return codegen.CallFunc(tg_func, {tile_group});
+}
+
+// Call TileGroup::GetTileGroupId()
+llvm::Value *TileGroup::GetTileGroupId(CodeGen &codegen,
+                                       llvm::Value *tile_group) const {
+  auto tg_func = TileGroupProxy::_GetTileGroupId::GetFunction(codegen);
   return codegen.CallFunc(tg_func, {tile_group});
 }
 

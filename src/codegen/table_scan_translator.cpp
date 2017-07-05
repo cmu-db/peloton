@@ -110,8 +110,8 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
 
 // Generate the body of the vectorized scan
 void TableScanTranslator::ScanConsumer::ProcessTuples(
-    CodeGen &codegen, llvm::Value *tid_start,
-    llvm::Value *tid_end, TileGroup::TileGroupAccess &tile_group_access) {
+    CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
+    TileGroup::TileGroupAccess &tile_group_access) {
   // TODO: Should visibility check be done here or in codegen::Table/TileGroup?
 
   // 1. Filter the rows in the range [tid_start, tid_end) by txn visibility
@@ -198,14 +198,6 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();
-
-  if (predicate->IsSIMDable()) {
-    // The predicate is SIMDable, do it here
-    /*
-    SIMDFilterRows(batch, access);
-    return;
-    */
-  }
 
   // Determine the attributes the predicate needs
   std::unordered_set<const planner::AttributeInfo *> used_attributes;

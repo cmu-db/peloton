@@ -44,6 +44,9 @@ find_package(PQXX REQUIRED)
 include_directories(SYSTEM ${PQXX_INCLUDE_DIRECTORIES})
 list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
 
+# --[ Open SSL
+list(APPEND Peloton_LINKER_LIBS "-lssl")
+
 # --[ LLVM 3.7+
 find_package(LLVM 3.7 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")

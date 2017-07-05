@@ -1,29 +1,56 @@
 sudo: required
 dist: trusty
-
+#language: c++
 matrix:
     include:
-        #- compiler: gcc
-        #  addons:
-        #      apt:
-        #        sources:
-        #            - llvm-toolchain-precise-3.7
-        #            - ubuntu-toolchain-r-test
-        #            - boost-latest
-        #        packages:
-        #            - g++-4.9
-        #  env: CXX=g++-4.9
         - compiler: gcc
           addons:
               apt:
-                sources:
-                    - llvm-toolchain-precise-3.7
-                    - ubuntu-toolchain-r-test
-                    - boost-latest
-                packages:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
+                    - g++-4.9
+          env: 
+            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=Off
+        - compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
+                    - g++-4.9
+          env: 
+            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+        
+        #Job where coveralls is executed
+        - compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
                     - g++-5
-          env: CXX=g++-5
-
+          env: 
+            - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+            
+        - compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                      - boost-latest
+                  packages:
+                    - g++-5
+          env: 
+            - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+    
 before_script:
     # setup environment
     - ./script/installation/packages.sh
@@ -36,7 +63,7 @@ script:
     - mkdir build
     - cd build
     # run cmake
-    - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address ..
+    - cmake -DCOVERALLS=$COVERALLS -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
     # build
     - make -j4
     # run tests
@@ -46,10 +73,9 @@ script:
     # install peloton
     - make install
     # run psql tests
-    # FIXME: Need to fix this for jenkins
-    # - bash ../script/testing/psql/psql_test.sh
+    - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
     - python ../script/validators/jdbc_validator.py
     # upload coverage info
-    - make coveralls
+    - bash -c "if [ \"${COVERALLS^^}\" = 'ON' ] ; then make coveralls; fi"
 

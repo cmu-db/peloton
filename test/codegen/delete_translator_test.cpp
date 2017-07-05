@@ -11,30 +11,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/harness.h"
+
 #include "catalog/catalog.h"
 #include "codegen/codegen_test_util.h"
-#include "common/harness.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of insert
-// plans. All tests use a test table with the following schema:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-//===----------------------------------------------------------------------===//
-
 class DeleteTranslatorTest : public PelotonCodeGenTest {
  public:
   DeleteTranslatorTest() : PelotonCodeGenTest() {}
 
-  size_t getCurrentTableSize(uint32_t table_id) {
+  // We need this to get a transactionally consistent idea of the table size
+  size_t GetCurrentTableSize(uint32_t table_id) {
     planner::SeqScanPlan scan{&GetTestTable(table_id), nullptr, {0, 1}};
     planner::BindingContext context;
     scan.PerformBinding(context);
@@ -77,7 +69,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
-  EXPECT_EQ(0, getCurrentTableSize(TestTableId1()));
+  EXPECT_EQ(0, GetCurrentTableSize(TestTableId1()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
@@ -113,12 +105,12 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  EXPECT_EQ(4, getCurrentTableSize(TestTableId2()));
+  EXPECT_EQ(4, GetCurrentTableSize(TestTableId2()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   //
-  // DELETE FROM table where a >= 40 and b = 21;
+  // DELETE FROM table where a >= 20 and b = 21;
   //
 
   LoadTestTable(TestTableId3(), NumRowsInTestTable());
@@ -160,7 +152,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  EXPECT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize(TestTableId3()));
+  EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId3()));
 }
 
 TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
@@ -201,7 +193,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   CompileAndExecute(*delete_plan, buffer,
                     reinterpret_cast<char*>(buffer.GetState()));
 
-  EXPECT_EQ(NumRowsInTestTable() - 1, getCurrentTableSize(TestTableId4()));
+  EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId4()));
 }
 
 }  // namespace test

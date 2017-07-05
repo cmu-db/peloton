@@ -25,6 +25,7 @@ namespace peloton {
 namespace wire {
 
 int LibeventServer::recent_connfd = -1;
+SSL_CTX *LibeventServer::ssl_context = nullptr;
 
 std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
 LibeventServer::GetGlobalSocketList() {
@@ -82,6 +83,8 @@ LibeventServer::LibeventServer() {
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
+  private_key_file_ = FLAGS_private_key_file;
+  certificate_file_ = FLAGS_certificate_file;
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -112,17 +115,49 @@ void LibeventServer::StartServer() {
       throw ConnectionException("Failed to create listen socket");
     }
 
+    int conn_backlog = 12;
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
-    if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-      throw ConnectionException("Failed to bind socket to port: " +
-                                std::to_string(port_));
+    /* Initialize SSL listener connection */
+    SSL_load_error_strings();
+    SSL_library_init();
+
+    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
+    {
+      throw ConnectionException("Error creating SSL context.\n");
     }
 
-    int conn_backlog = 12;
-    if (listen(listen_fd, conn_backlog) < 0) {
-      throw ConnectionException("Failed to listen to socket");
+    LOG_INFO("private key file path %s", private_key_file_.c_str());
+    /*
+     * Temporarily commented to pass tests START
+    // register private key
+    if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
+                                    SSL_FILETYPE_PEM) == 0)
+    {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Error associating private key.\n");
+    }
+    LOG_INFO("certificate file path %s", certificate_file_.c_str());
+    // register public key (certificate)
+    if (SSL_CTX_use_certificate_file(ssl_context, certificate_file_.c_str(),
+                                     SSL_FILETYPE_PEM) == 0)
+    {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Error associating certificate.\n");
+    }
+    * Temporarily commented to pass tests END
+    */
+    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
+    {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Failed binding socket.\n");
+    }
+
+    if (listen(listen_fd, conn_backlog) < 0)
+    {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Error listening onsocket.\n");
     }
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,

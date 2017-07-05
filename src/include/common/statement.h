@@ -44,8 +44,11 @@ class Statement : public Printable {
 
   ~Statement();
 
-  static void ParseQueryType(const std::string& query_string,
-                             std::string& query_type);
+  static void ParseQueryTypeString(const std::string& query_string,
+                             std::string& query_type_string);
+ 
+  static void MapToQueryType(const std::string& query_type_string,
+                             QueryType& query_type);
 
   std::vector<FieldInfo> GetTupleDescriptor() const;
 
@@ -57,7 +60,9 @@ class Statement : public Printable {
 
   std::string GetQueryString() const;
 
-  std::string GetQueryType() const;
+  std::string GetQueryTypeString() const;
+
+  QueryType GetQueryType() const;
 
   void SetParamTypes(const std::vector<int32_t>& param_types);
 
@@ -88,7 +93,12 @@ class Statement : public Printable {
   std::string query_string_;
 
   // first token in query
-  std::string query_type_;
+  // Keep the string token of the query_type because it is returned 
+  // as responses after executing commands.
+  std::string query_type_string_;
+
+  // enum value of query_type
+  QueryType query_type_;
 
   // format codes of the parameters
   std::vector<int32_t> param_types_;
@@ -105,6 +115,10 @@ class Statement : public Printable {
 
   // If this flag is true, then somebody wants us to replan this query
   bool needs_replan_ = false;
-};
 
+  // containing pairs of <query_type_string, query_type>
+  // use map to speed up searching
+  static std::unordered_map<std::string, QueryType> query_type_map_;
+
+};
 }  // namespace peloton

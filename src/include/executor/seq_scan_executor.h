@@ -28,6 +28,9 @@ class SeqScanExecutor : public AbstractScanExecutor {
   explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
+  void UpdatePredicate(const std::vector<oid_t> &column_ids,
+                       const std::vector<type::Value> &values) override;
+
   void ResetState() { current_tile_group_offset_ = START_OID; }
 
  protected:
@@ -36,6 +39,17 @@ class SeqScanExecutor : public AbstractScanExecutor {
   bool DExecute();
 
  private:
+  //===--------------------------------------------------------------------===//
+  // Helper Functions
+  //===--------------------------------------------------------------------===//
+
+  expression::AbstractExpression *ColumnsValuesToExpr(
+      const std::vector<oid_t> &predicate_column_ids,
+      const std::vector<type::Value> &values, size_t idx);
+
+  expression::AbstractExpression *ColumnValueToCmpExpr(
+      const oid_t column_id, const type::Value &value);
+
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -54,6 +68,14 @@ class SeqScanExecutor : public AbstractScanExecutor {
 
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
+
+  // TODO make predicate_ a unique_ptr
+  // this is a hack that prevents memory leak
+  std::unique_ptr<expression::AbstractExpression> new_predicate_ = nullptr;
+
+  // The original predicate, if it's not nullptr
+  // we need to combine it with the undated predicate 
+  const expression::AbstractExpression *old_predicate_;
 };
 
 }  // namespace executor

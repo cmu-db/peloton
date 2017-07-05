@@ -435,9 +435,8 @@ void UpdateIndexUtility(storage::DataTable* table,
 
 void PrintIndexInformation(storage::DataTable* table) {
   oid_t index_count = table->GetIndexCount();
-  oid_t valid_index_count = table->GetValidIndexCount();
   auto table_tilegroup_count = table->GetTileGroupCount();
-  LOG_INFO("Index count : %u", valid_index_count);
+  LOG_INFO("Index count : %u", table->GetValidIndexCount());
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
     // Get index

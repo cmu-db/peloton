@@ -17,6 +17,8 @@
 namespace peloton {
 namespace optimizer {
 
+/*************** PropertyColumns *****************/
+  
 PropertyColumns::PropertyColumns(
     std::vector<std::shared_ptr<expression::AbstractExpression>> column_exprs)
     : column_exprs_(std::move(column_exprs)) {}
@@ -56,7 +58,7 @@ hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
   for (auto expr : column_exprs_) {
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
+    hash = HashUtil::SumHashes(hash, expr->Hash());
   }
   return hash;
 }
@@ -80,10 +82,12 @@ std::string PropertyColumns::ToString() const {
   return str + "\n";
 }
 
+/*************** PropertyDistinct *****************/
+  
 PropertyDistinct::PropertyDistinct(std::vector<
     std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
-  LOG_TRACE("Size of column property: %lu", GetSize());
+  LOG_TRACE("Size of column property: %ld", distinct_column_exprs_.size());
 }
 
 PropertyType PropertyDistinct::Type() const { return PropertyType::DISTINCT; }
@@ -140,6 +144,37 @@ std::string PropertyDistinct::ToString() const {
   return str + "\n";
 }
 
+/*************** PropertyLimit *****************/
+  
+PropertyType PropertyLimit::Type() const { return PropertyType::LIMIT; }
+  
+
+bool PropertyLimit::operator>=(const Property &r) const {
+  if (r.Type() != PropertyType::LIMIT) return false;
+  const PropertyLimit &r_limit = *reinterpret_cast<const PropertyLimit*>(&r);
+  return offset_ == r_limit.offset_ && limit_ == r_limit.limit_;
+}
+  
+hash_t PropertyLimit::Hash() const {
+  hash_t hash = Property::Hash();
+  HashUtil::CombineHashes(hash, offset_);
+  HashUtil::CombineHashes(hash, limit_);
+  return hash;
+}
+  
+void PropertyLimit::Accept(PropertyVisitor *v) const {
+  v->Visit((const PropertyLimit *)this);
+}
+  
+std::string PropertyLimit::ToString() const {
+  std::string res = PropertyTypeToString(Type());
+  res += std::to_string(offset_) + " " + std::to_string(limit_) + "\n";
+  return res;
+}
+
+
+/*************** PropertySort *****************/
+  
 PropertySort::PropertySort(
     std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
     std::vector<bool> sort_ascending)
@@ -184,6 +219,8 @@ std::string PropertySort::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
 
+/*************** PropertyPredicate *****************/
+  
 PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
     : predicate_(predicate){};
 
@@ -207,28 +244,6 @@ void PropertyPredicate::Accept(PropertyVisitor *v) const {
 }
 
 std::string PropertyPredicate::ToString() const {
-  return PropertyTypeToString(Type()) + "\n";
-}
-
-PropertyProjection::PropertyProjection(
-    std::vector<std::unique_ptr<expression::AbstractExpression>> expressions)
-    : expressions_(std::move(expressions)){};
-
-PropertyType PropertyProjection::Type() const { return PropertyType::PROJECT; }
-
-// PropertyOutputExpressions is only used for projection operator. We also
-// assume this is always going to be satisfied.
-bool PropertyProjection::operator>=(const Property &r) const {
-  return Property::operator>=(r);
-}
-
-hash_t PropertyProjection::Hash() const { return Property::Hash(); }
-
-void PropertyProjection::Accept(PropertyVisitor *v) const {
-  v->Visit((const PropertyProjection *)this);
-}
-
-std::string PropertyProjection::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
 

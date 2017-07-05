@@ -38,7 +38,8 @@ ProjectionExecutor::ProjectionExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool ProjectionExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1 || children_.size() == 2);
+  // NOTE: We only handle 1 child or no child for now
+  PL_ASSERT(children_.size() < 2);
 
   // Grab settings from plan node
   const planner::ProjectionPlan &node = GetPlanNode<planner::ProjectionPlan>();
@@ -57,10 +58,36 @@ bool ProjectionExecutor::DInit() {
 bool ProjectionExecutor::DExecute() {
   PL_ASSERT(project_info_);
   PL_ASSERT(schema_);
-  PL_ASSERT(children_.size() == 1);
+  // NOTE: We only handle 1 child or no child for now
+  PL_ASSERT(children_.size() < 2);
 
-  // NOTE: We only handle 1 child for now
-  if (children_.size() == 1) {
+  if (children_.size() == 0) {
+    if (finished_) return false;
+
+    LOG_TRACE("Projection : child 0 ");
+    // Create new physical tile where we store projected tuples
+    std::shared_ptr<storage::Tile> dest_tile(
+        storage::TileFactory::GetTempTile(*schema_, 1));
+
+    // Create projections tuple-at-a-time from original tile
+    storage::Tuple *buffer = new storage::Tuple(schema_, true);
+    project_info_->Evaluate(buffer, nullptr, nullptr, executor_context_);
+
+    // Insert projected tuple into the new tile
+    dest_tile.get()->InsertTuple(0, buffer);
+
+    delete buffer;
+
+    // Wrap physical tile in logical tile and return it
+    SetOutput(LogicalTileFactory::WrapTiles({dest_tile}));
+
+    // Return 1 tuple only, set the finished flag to true
+    finished_ = true;
+
+    return true;
+  }
+
+  else if (children_.size() == 1) {
     LOG_TRACE("Projection : child 1 ");
 
     // Execute child

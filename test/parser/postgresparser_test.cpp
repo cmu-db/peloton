@@ -118,7 +118,7 @@ TEST_F(PostgresParserTests, OrderByTest) {
   EXPECT_EQ(order_by->types->size(), 1);
   EXPECT_EQ(order_by->exprs->size(), 1);
   EXPECT_EQ(order_by->types->at(0), parser::OrderType::kOrderAsc);
-  auto expr = order_by->exprs->at(0);
+  auto expr = order_by->exprs->at(0).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(), "id");
   delete stmt_list;
@@ -137,7 +137,7 @@ TEST_F(PostgresParserTests, OrderByTest) {
   EXPECT_EQ(order_by->types->size(), 1);
   EXPECT_EQ(order_by->exprs->size(), 1);
   EXPECT_EQ(order_by->types->at(0), parser::OrderType::kOrderAsc);
-  expr = order_by->exprs->at(0);
+  expr = order_by->exprs->at(0).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(), "id");
   delete stmt_list;
@@ -156,7 +156,7 @@ TEST_F(PostgresParserTests, OrderByTest) {
   EXPECT_EQ(order_by->types->size(), 1);
   EXPECT_EQ(order_by->exprs->size(), 1);
   EXPECT_EQ(order_by->types->at(0), parser::OrderType::kOrderDesc);
-  expr = order_by->exprs->at(0);
+  expr = order_by->exprs->at(0).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(), "id");
   delete stmt_list;
@@ -175,10 +175,10 @@ TEST_F(PostgresParserTests, OrderByTest) {
   EXPECT_EQ(order_by->types->size(), 2);
   EXPECT_EQ(order_by->exprs->size(), 2);
   EXPECT_EQ(order_by->types->at(0), parser::OrderType::kOrderAsc);
-  expr = order_by->exprs->at(0);
+  expr = order_by->exprs->at(0).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(), "id");
-  expr = order_by->exprs->at(1);
+  expr = order_by->exprs->at(1).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(),
             "name");
@@ -198,11 +198,11 @@ TEST_F(PostgresParserTests, OrderByTest) {
   EXPECT_EQ(order_by->types->size(), 2);
   EXPECT_EQ(order_by->exprs->size(), 2);
   EXPECT_EQ(order_by->types->at(0), parser::OrderType::kOrderAsc);
-  expr = order_by->exprs->at(0);
+  expr = order_by->exprs->at(0).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(), "id");
   EXPECT_EQ(order_by->types->at(1), parser::OrderType::kOrderDesc);
-  expr = order_by->exprs->at(1);
+  expr = order_by->exprs->at(1).get();
   EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(((expression::TupleValueExpression *)expr)->GetColumnName(),
             "name");
@@ -246,6 +246,9 @@ TEST_F(PostgresParserTests, JoinTest) {
       "SELECT * FROM foo FULL OUTER JOIN bar ON foo.id=bar.id AND foo.val > "
       "bar.val;");
 
+  queries.push_back(
+      "SELECT * FROM foo JOIN bar ON foo.id=bar.id JOIN baz ON foo.id2=baz.id2;");
+
   auto parser = parser::PostgresParser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -258,6 +261,19 @@ TEST_F(PostgresParserTests, JoinTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    // Test for multiple table join
+    if (ii == 5) {
+      auto select_stmt = 
+          reinterpret_cast<parser::SelectStatement *>(stmt_list->statements[0].get());
+      auto join_table = select_stmt->from_table.get();
+      EXPECT_TRUE(join_table->type == TableReferenceType::JOIN);
+      auto l_join = join_table->join->left.get();
+      auto r_table = join_table->join->right.get();
+      EXPECT_TRUE(l_join->type == TableReferenceType::JOIN);
+      EXPECT_TRUE(r_table->type == TableReferenceType::NAME);
+      LOG_INFO("condition 0 : %s", join_table->join->condition->GetInfo().c_str());
+      LOG_INFO("condition 0 : %s", l_join->join->condition->GetInfo().c_str());
+    }
     delete stmt_list;
   }
 }

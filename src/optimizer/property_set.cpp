@@ -19,6 +19,9 @@ namespace optimizer {
 
 PropertySet::PropertySet() {}
 
+PropertySet::PropertySet(std::vector<std::shared_ptr<Property>> properties)
+    : properties_(std::move(properties)) {}
+
 const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
   return properties_;
 }
@@ -55,7 +58,7 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
 
 bool PropertySet::HasProperty(const Property &r_property) const {
   for (auto property : properties_) {
-    if (*property >= r_property) {
+    if (*property >= r_property && r_property >= *property) {
       return true;
     }
   }

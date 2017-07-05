@@ -25,7 +25,7 @@ class Stats {
   Stats(TupleSample *sample) : sample_(sample){};
 
  private:
-  TupleSample *sample_;
+   TupleSample *sample_;
 };
 
 } /* namespace optimizer */

@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/rule_impls.h"
+#include "optimizer/util.h"
 #include "optimizer/operators.h"
+#include "storage/data_table.h"
 
 #include <memory>
 
@@ -32,8 +34,9 @@ InnerJoinCommutativity::InnerJoinCommutativity() {
   match_pattern->AddChild(predicate);
 }
 
-bool InnerJoinCommutativity::Check(
-    std::shared_ptr<OperatorExpression> expr) const {
+bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
+                                   Memo *memo) const {
+  (void)memo;
   (void)expr;
   return true;
 }
@@ -52,25 +55,87 @@ void InnerJoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// GetToScan
-GetToScan::GetToScan() {
+/// GetToDummyScan
+GetToDummyScan::GetToDummyScan() {
   physical = true;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToScan::Check(std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
+bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan,
+                           Memo *memo) const {
+  (void)memo;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table == nullptr;
 }
 
-void GetToScan::Transform(
+void GetToDummyScan::Transform(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result_plan = std::make_shared<OperatorExpression>(DummyScan::make());
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// GetToSeqScan
+GetToSeqScan::GetToSeqScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan,
+                         Memo *memo) const {
+  (void)memo;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  return get->table != nullptr;
+}
+
+void GetToSeqScan::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));
+      std::make_shared<OperatorExpression>(
+          PhysicalSeqScan::make(get->table, get->table_alias, get->is_for_update));
+
+  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
+      input->Children();
+  PL_ASSERT(children.size() == 0);
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// GetToIndexScan
+GetToIndexScan::GetToIndexScan() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::Get);
+}
+
+bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
+                           Memo *memo) const {
+  // If there is a index for the table, return true,
+  // else return false
+  (void)memo;
+  bool index_exist = false;
+  const LogicalGet *get = plan->Op().As<LogicalGet>();
+  if (get != nullptr && get->table != nullptr &&
+      !get->table->GetIndexColumns().empty())
+    index_exist = true;
+  return index_exist;
+}
+
+void GetToIndexScan::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalGet *get = input->Op().As<LogicalGet>();
+
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalIndexScan::make(get->table, get->table_alias, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -91,9 +156,10 @@ LogicalFilterToPhysical::LogicalFilterToPhysical() {
   match_pattern->AddChild(predicate);
 }
 
-bool LogicalFilterToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalFilterToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -110,32 +176,6 @@ void LogicalFilterToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalLimitToPhysical
-LogicalLimitToPhysical::LogicalLimitToPhysical() {
-  physical = true;
-  match_pattern = std::make_shared<Pattern>(OpType::Limit);
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(child);
-}
-
-bool LogicalLimitToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
-}
-
-void LogicalLimitToPhysical::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalLimit *limit = input->Op().As<LogicalLimit>();
-  auto result = std::make_shared<OperatorExpression>(
-      PhysicalLimit::make(limit->limit, limit->offset));
-  PL_ASSERT(input->Children().size() == 1);
-  result->PushChild(input->Children().at(0));
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalDeleteToPhysical
 LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   physical = true;
@@ -144,9 +184,10 @@ LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   match_pattern->AddChild(child);
 }
 
-bool LogicalDeleteToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalDeleteToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -170,9 +211,10 @@ LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
   match_pattern->AddChild(child);
 }
 
-bool LogicalUpdateToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalUpdateToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -196,9 +238,10 @@ LogicalInsertToPhysical::LogicalInsertToPhysical() {
   //  match_pattern->AddChild(child);
 }
 
-bool LogicalInsertToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LogicalInsertToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
+                                    Memo *memo) const {
   (void)plan;
+  (void)memo;
   return true;
 }
 
@@ -223,7 +266,9 @@ LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
 }
 
 bool LogicalGroupByToHashGroupBy::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -248,7 +293,9 @@ LogicalGroupByToSortGroupBy::LogicalGroupByToSortGroupBy() {
 }
 
 bool LogicalGroupByToSortGroupBy::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -273,7 +320,9 @@ LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
 }
 
 bool LogicalAggregateToPhysical::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan) const {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    Memo *memo) const {
+  (void)memo;
   return true;
 }
 
@@ -291,24 +340,23 @@ void LogicalAggregateToPhysical::Transform(
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   physical = true;
 
-  // Make three node types for pattern matching
+  // TODO NLJoin currently only support left deep tree
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Get));
 
   // Initialize a pattern for optimizer to match
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
 
-  // Add node - we match join relation R and S as well as the predicate exp
+  // Add node - we match join relation R and S
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
 
   return;
 }
 
-bool InnerJoinToInnerNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -317,15 +365,15 @@ void InnerJoinToInnerNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   // first build an expression representing hash join
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalInnerNLJoin::make());
+  const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalInnerNLJoin::make(inner_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
+  PL_ASSERT(children.size() == 2);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
 
   transformed.push_back(result_plan);
 
@@ -350,8 +398,9 @@ LeftJoinToLeftNLJoin::LeftJoinToLeftNLJoin() {
   return;
 }
 
-bool LeftJoinToLeftNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LeftJoinToLeftNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                 Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -359,8 +408,9 @@ bool LeftJoinToLeftNLJoin::Check(
 void LeftJoinToLeftNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalLeftNLJoin::make());
+  const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalLeftNLJoin::make(left_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -391,8 +441,9 @@ RightJoinToRightNLJoin::RightJoinToRightNLJoin() {
   return;
 }
 
-bool RightJoinToRightNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool RightJoinToRightNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -400,8 +451,9 @@ bool RightJoinToRightNLJoin::Check(
 void RightJoinToRightNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalRightNLJoin::make());
+  const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalRightNLJoin::make(right_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -432,8 +484,9 @@ OuterJoinToOuterNLJoin::OuterJoinToOuterNLJoin() {
   return;
 }
 
-bool OuterJoinToOuterNLJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool OuterJoinToOuterNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return true;
 }
@@ -441,8 +494,9 @@ bool OuterJoinToOuterNLJoin::Check(
 void OuterJoinToOuterNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalOuterNLJoin::make());
+  const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalOuterNLJoin::make(outer_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -463,7 +517,6 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   // Make three node types for pattern matching
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
 
   // Initialize a pattern for optimizer to match
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
@@ -471,15 +524,29 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   // Add node - we match join relation R and S as well as the predicate exp
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
 
   return;
 }
 
-bool InnerJoinToInnerHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   // TODO(abpoms): Figure out how to determine if the join condition is hashable
+  // If join column != empty then hashable
+  auto children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  const auto &left_group_alias =
+      memo->GetGroupByID(left_group_id)->GetTableAliases();
+  const auto &right_group_alias =
+      memo->GetGroupByID(right_group_id)->GetTableAliases();
+
+  auto expr = plan->Op().As<LogicalInnerJoin>()->join_predicate.get();
+
+  if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr))
+    return true;
   return false;
 }
 
@@ -487,15 +554,15 @@ void InnerJoinToInnerHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   // first build an expression representing hash join
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalInnerHashJoin::make());
+  const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalInnerHashJoin::make(inner_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
+  PL_ASSERT(children.size() == 2);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
 
   transformed.push_back(result_plan);
 
@@ -520,8 +587,9 @@ LeftJoinToLeftHashJoin::LeftJoinToLeftHashJoin() {
   return;
 }
 
-bool LeftJoinToLeftHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool LeftJoinToLeftHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                   Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
@@ -529,8 +597,9 @@ bool LeftJoinToLeftHashJoin::Check(
 void LeftJoinToLeftHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalLeftHashJoin::make());
+  const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalLeftHashJoin::make(left_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -561,8 +630,9 @@ RightJoinToRightHashJoin::RightJoinToRightHashJoin() {
   return;
 }
 
-bool RightJoinToRightHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool RightJoinToRightHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
@@ -570,8 +640,9 @@ bool RightJoinToRightHashJoin::Check(
 void RightJoinToRightHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalRightHashJoin::make());
+  const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalRightHashJoin::make(right_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
@@ -602,8 +673,9 @@ OuterJoinToOuterHashJoin::OuterJoinToOuterHashJoin() {
   return;
 }
 
-bool OuterJoinToOuterHashJoin::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
+bool OuterJoinToOuterHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     Memo *memo) const {
+  (void)memo;
   (void)plan;
   return false;
 }
@@ -611,8 +683,9 @@ bool OuterJoinToOuterHashJoin::Check(
 void OuterJoinToOuterHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalOuterHashJoin::make());
+  const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalOuterHashJoin::make(outer_join->join_predicate));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 

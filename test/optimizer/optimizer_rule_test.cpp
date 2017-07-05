@@ -57,14 +57,12 @@ TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   // Setup rule
   InnerJoinCommutativity rule;
 
-  EXPECT_TRUE(rule.Check(join));
+  EXPECT_TRUE(rule.Check(join, nullptr));
 
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
   rule.Transform(join, outputs);
   EXPECT_EQ(outputs.size(), 1);
 }
-
-
 
 } /* namespace test */
 } /* namespace peloton */

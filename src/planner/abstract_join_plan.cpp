@@ -50,7 +50,7 @@ void AbstractJoinPlan::PerformBinding(BindingContext &context) {
   const auto *predicate = GetPredicate();
   if (predicate != nullptr) {
     const_cast<expression::AbstractExpression *>(predicate)
-        ->PerformBinding({&context});
+        ->PerformBinding({&left_context, &right_context});
   }
 }
 

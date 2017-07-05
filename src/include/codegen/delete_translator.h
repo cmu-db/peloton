@@ -4,7 +4,7 @@
 //
 // delete_translator.h
 //
-// Identification: src/include/codegen/delete/delete_translator.h
+// Identification: src/include/codegen/delete_translator.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -15,10 +15,17 @@
 #include "codegen/compilation_context.h"
 #include "codegen/pipeline.h"
 #include "codegen/table.h"
-#include "planner/delete_plan.h"
-#include "storage/tile_group.h"
 
 namespace peloton {
+
+namespace planner {
+class DeletePlan;
+}  // namespace planner
+
+namespace storage {
+class TileGroup;
+}  // namespace storage
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -29,23 +36,27 @@ class DeleteTranslator : public OperatorTranslator {
   DeleteTranslator(const planner::DeletePlan &delete_plan,
                    CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override {}
+  void InitializeState() override;
 
   void DefineAuxiliaryFunctions() override {}
 
   void TearDownState() override {}
 
-  std::string GetName() const override { return "delete"; }
+  std::string GetName() const override { return "Delete"; }
 
   void Produce() const override;
 
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
-  mutable llvm::Value *table_ptr_;
-  mutable llvm::Value *tile_group_;
+  // The delete plan
   const planner::DeletePlan &delete_plan_;
+
+  // Table accessor
   codegen::Table table_;
+
+  // The Deleter instance
+  RuntimeState::StateID deleter_state_id_;
 };
 
 }  // namespace codegen
