@@ -64,6 +64,11 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         column_contraints.push_back(constraint);
       }
 
+      if (col->unique) {
+        catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
+        column_contraints.push_back(constraint);
+      }
+
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
           std::string(col->name), false);
       for (auto con : column_contraints) {
