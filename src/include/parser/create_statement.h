@@ -75,28 +75,7 @@ struct ColumnDefinition {
       varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  virtual ~ColumnDefinition() {
-    if (primary_key) {
-      for (auto key : *primary_key) delete[] (key);
-      delete primary_key;
-    }
-
-    if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[] (key);
-      delete foreign_key_source;
-    }
-    if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[] (key);
-      delete foreign_key_sink;
-    }
-    delete[] name;
-    if (table_info_ != nullptr)
-      delete table_info_;
-    if (default_value != nullptr)
-      delete default_value;
-    if (check_expression != nullptr)
-      delete check_expression;
-  }
+  virtual ~ColumnDefinition() {}
 
   static type::Type::TypeId GetValueType(DataType type) {
     switch (type) {
@@ -157,22 +136,22 @@ struct ColumnDefinition {
     }
   }
 
-  char* name = nullptr;
+  std::unique_ptr<char[]> name = nullptr;
 
   // The name of the table and its database
-  TableInfo* table_info_ = nullptr;
+  std::unique_ptr<TableInfo> table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
   bool not_null = false;
   bool primary = false;
   bool unique = false;
-  expression::AbstractExpression* default_value = nullptr;
-  expression::AbstractExpression* check_expression = nullptr;
+  std::unique_ptr<expression::AbstractExpression> default_value = nullptr;
+  std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
-  std::vector<char*>* primary_key = nullptr;
-  std::vector<char*>* foreign_key_source = nullptr;
-  std::vector<char*>* foreign_key_sink = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> primary_key = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_source = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_sink = nullptr;
 
   char* foreign_key_table_name = nullptr;
   FKConstrActionType foreign_key_delete_action;
@@ -194,24 +173,7 @@ struct CreateStatement : TableRefStatement {
         if_not_exists(false),
         columns(nullptr){};
 
-  virtual ~CreateStatement() {
-    if (columns != nullptr) {
-      for (auto col : *columns) delete col;
-      delete columns;
-    }
-
-    if (index_attrs != nullptr) {
-      for (auto attr : *index_attrs) delete[] (attr);
-      delete index_attrs;
-    }
-
-    if (index_name != nullptr) {
-      delete[] (index_name);
-    }
-    if (database_name != nullptr) {
-      delete[] (database_name);
-    }
-  }
+  virtual ~CreateStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
@@ -220,13 +182,13 @@ struct CreateStatement : TableRefStatement {
   CreateType type;
   bool if_not_exists;
 
-  std::vector<ColumnDefinition*>* columns;
-  std::vector<char*>* index_attrs = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<ColumnDefinition>>> columns;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> index_attrs = nullptr;
 
   IndexType index_type;
 
-  char* index_name = nullptr;
-  char* database_name = nullptr;
+  std::unique_ptr<char[]> index_name = nullptr;
+  std::unique_ptr<char[]> database_name = nullptr;
 
   bool unique = false;
 };

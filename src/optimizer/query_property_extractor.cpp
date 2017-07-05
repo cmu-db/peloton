@@ -35,7 +35,7 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   // Generate PropertyPredicate
-  auto predicate = select_stmt->where_clause;
+  auto predicate = select_stmt->where_clause.get();
   if (predicate != nullptr) {
     property_set_.AddProperty(shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
@@ -43,7 +43,7 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
 
   // Generate PropertyColumns
   vector<shared_ptr<expression::AbstractExpression>> output_expressions;
-  for (auto col : *select_stmt->select_list)
+  for (auto& col : *(select_stmt->select_list))
     output_expressions.emplace_back(col->Copy());
   property_set_.AddProperty(
       shared_ptr<PropertyColumns>(new PropertyColumns(output_expressions)));

@@ -233,10 +233,8 @@ class ConjunctionScanPredicate {
       PL_ASSERT(high_key_p_ != nullptr);
     }
 
-    if (high_key_p_ != nullptr) {
-      delete high_key_p_;
-    }
-
+    delete high_key_p_;
+  
     return;
   }
 

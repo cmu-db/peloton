@@ -147,6 +147,7 @@ ResultType TrafficCop::ExecuteStatement(
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
+  LOG_DEBUG("After Return");
 
   if (statement.get() == nullptr) {
     return ResultType::FAILURE;
@@ -296,10 +297,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    for (auto stmt : sql_stmt->GetStatements()) {
+    for (auto& stmt : sql_stmt->GetStatements()) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
       if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt);
+        auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
         statement->SetTupleDescriptor(tuple_descriptor);
       }
       break;
@@ -311,6 +312,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
+    LOG_DEBUG("Before Return");
     return std::move(statement);
   } catch (Exception &e) {
     error_message = e.what();
@@ -367,7 +369,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   // For now we only pick the first table in the list
   // FIX: Better handle for queries with multiple tables
   else {
-    for (auto table : *select_stmt->from_table->list) {
+    for (auto& table : *(select_stmt->from_table->list)) {
       auto *target_table = static_cast<storage::DataTable *>(
           catalog::Catalog::GetInstance()->GetTableWithName(
               table->GetDatabaseName(), table->GetTableName()));
@@ -377,7 +379,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   }
 
   int count = 0;
-  for (auto expr : *select_stmt->select_list) {
+  for (auto& expr : *(select_stmt->select_list)) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {

@@ -62,7 +62,7 @@ const std::string SQLStatementList::GetInfo() const {
   std::ostringstream os;
 
   if (is_valid) {
-    for (auto stmt : statements) {
+    for (auto& stmt : statements) {
       os << stmt->GetInfo();
     }
   } else {

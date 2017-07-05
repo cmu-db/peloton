@@ -187,7 +187,7 @@ TEST_F(ParserTests, SelectParserTest) {
             ExpressionType::AGGREGATE_SUM);
 
   // Join Table
-  parser::JoinDefinition* join = stmt->from_table->join;
+  parser::JoinDefinition* join = stmt->from_table->join.get();
   EXPECT_EQ(stmt->from_table->type, TableReferenceType::JOIN);
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName(), "customers");
@@ -404,7 +404,7 @@ TEST_F(ParserTests, CopyTest) {
         static_cast<parser::CopyStatement*>(result->GetStatement(0));
 
     EXPECT_EQ(copy_stmt->delimiter, ',');
-    EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");
+    EXPECT_STREQ(copy_stmt->file_path.get(), "/home/user/output.csv");
 
     if (result != nullptr) {
       LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());

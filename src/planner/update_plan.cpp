@@ -59,7 +59,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 void UpdatePlan::BuildInitialUpdatePlan(
     const parser::UpdateStatement *parse_tree, std::vector<oid_t> &column_ids) {
   LOG_TRACE("Creating an Update Plan");
-  auto t_ref = parse_tree->table;
+  auto t_ref = parse_tree->table.get();
   auto table_name = std::string(t_ref->GetTableName());
   auto database_name = t_ref->GetDatabaseName();
   LOG_TRACE("Update database %s table %s", database_name, table_name.c_str());
@@ -67,7 +67,7 @@ void UpdatePlan::BuildInitialUpdatePlan(
       database_name, table_name);
   PL_ASSERT(target_table_ != nullptr);
 
-  for (auto update_clause : *parse_tree->updates) {
+  for (auto& update_clause : *(parse_tree->updates)) {
     updates_.push_back(update_clause->Copy());
   }
   TargetList tlist;
@@ -77,7 +77,7 @@ void UpdatePlan::BuildInitialUpdatePlan(
 
   for (auto update : updates_) {
     // get oid_t of the column and push it to the vector;
-    col_id = schema->GetColumnID(std::string(update->column));
+    col_id = schema->GetColumnID(std::string(update->column.get()));
     column_ids.push_back(col_id);
     auto *update_expr = update->value->Copy();
     expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
@@ -86,7 +86,7 @@ void UpdatePlan::BuildInitialUpdatePlan(
     planner::DerivedAttribute attribute;
     attribute.expr = update_expr;
     attribute.attribute_info.type = update_expr->GetValueType();
-    attribute.attribute_info.name = update->column;
+    attribute.attribute_info.name = update->column.get();
     tlist.emplace_back(col_id, attribute);
   }
 
@@ -124,7 +124,7 @@ UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree)
 
   // Set primary key update flag
   for (auto update_clause : updates_) {
-    std::string column_name = update_clause->column;
+    std::string column_name = update_clause->column.get();
 
     oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
     update_primary_key_ =
@@ -149,7 +149,7 @@ UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree,
 
   // Set primary key update flag
   for (auto update_clause : updates_) {
-    std::string column_name = update_clause->column;
+    std::string column_name = update_clause->column.get();
 
     oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
     update_primary_key_ =
