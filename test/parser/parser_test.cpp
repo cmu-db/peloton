@@ -412,6 +412,17 @@ TEST_F(ParserTests, CopyTest) {
     }
   }
 }
-
+// Test that the wrong queries can be detected.
+TEST_F(ParserTests, WrongQueryTest) {
+  std::vector<std::string> queries;
+  queries.push_back("SELECT;");
+  queries.push_back("SELECT *;");
+  // Parsing
+  for (auto query : queries) {
+    UNUSED_ATTRIBUTE parser::SQLStatementList* result =
+        parser::PostgresParser::ParseSQLString(query.c_str());
+    EXPECT_EQ(result->is_valid, false);
+  }
+}
 }  // End test namespace
 }  // End peloton namespace
