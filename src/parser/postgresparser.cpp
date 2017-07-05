@@ -215,6 +215,7 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
           break;
         }
         default: {
+          delete result;
           throw NotImplementedException(StringUtil::Format(
               "From Type %d not supported yet...", node->type));
         }
@@ -1294,7 +1295,18 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   // DEBUG only. Comment this out in release mode
   // print_pg_parse_tree(result.tree);
 
-  auto transform_result = ListTransform(result.tree);
+  parser::SQLStatementList* transform_result = nullptr;
+  try {
+    transform_result = ListTransform(result.tree);
+  } catch (Exception e) {
+    if (transform_result != nullptr) {
+        delete transform_result;
+    }
+    pg_query_parse_finish(ctx);
+    pg_query_free_parse_result(result);
+    throw e;
+  }
+
   pg_query_parse_finish(ctx);
   pg_query_free_parse_result(result);
   return transform_result;
