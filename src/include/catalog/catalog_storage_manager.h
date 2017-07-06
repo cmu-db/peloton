@@ -102,6 +102,8 @@ class CatalogStorageManager {
       return false;
   }
 
+  void DestroyDatabases();
+
  private:
   CatalogStorageManager();
 

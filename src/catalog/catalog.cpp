@@ -774,7 +774,8 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
 // This should be deprecated! this can screw up the database oid system
 void Catalog::AddDatabase(storage::Database *database) {
   std::lock_guard<std::mutex> lock(catalog_mutex);
-  CatalogStorageManager::GetInstance()->AddDatabaseToStorageManager(database);
+  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  catalog_storage_manager->AddDatabaseToStorageManager(database);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   DatabaseCatalog::GetInstance()->InsertDatabase(
@@ -788,6 +789,8 @@ void Catalog::AddDatabase(storage::Database *database) {
 //===--------------------------------------------------------------------===//
 
 Catalog::~Catalog() {
+
+CatalogStorageManager::GetInstance()->DestroyDatabases();
 
 }
 
