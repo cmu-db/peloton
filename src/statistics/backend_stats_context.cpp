@@ -14,7 +14,8 @@
 
 #include "type/types.h"
 #include "common/statement.h"
-#include "catalog/catalog.h"
+//#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "index/index.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
@@ -279,9 +280,9 @@ void BackendStatsContext::Reset() {
     index_metric->Reset();
   }
 
-  oid_t num_databases = catalog::Catalog::GetInstance()->GetDatabaseCount();
+  oid_t num_databases = catalog::CatalogStorageManager::GetInstance()->GetDatabaseCount();
   for (oid_t i = 0; i < num_databases; ++i) {
-    auto database = catalog::Catalog::GetInstance()->GetDatabaseWithOffset(i);
+    auto database = catalog::CatalogStorageManager::GetInstance()->GetDatabaseWithOffset(i);
     oid_t database_id = database->GetOid();
 
     // Reset database metrics

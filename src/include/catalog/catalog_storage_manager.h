@@ -46,6 +46,17 @@ class CatalogStorageManager {
   ~CatalogStorageManager();
 
   //===--------------------------------------------------------------------===//
+  // DEPRECATED FUNCTIONs
+  //===--------------------------------------------------------------------===//
+  /*
+  * We're working right now to remove metadata from storage level and eliminate
+  * multiple copies, so those functions below will be DEPRECATED soon.
+  */
+
+  // Find a database using vector offset
+  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
+
+  //===--------------------------------------------------------------------===//
   // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
   //===--------------------------------------------------------------------===//
 
@@ -72,6 +83,24 @@ class CatalogStorageManager {
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(oid_t db_oid) const;
   oid_t GetDatabaseCount() { return databases_.size(); }
+
+  //===--------------------------------------------------------------------===//
+  // FUNCTIONS USED BY CATALOG
+  //===--------------------------------------------------------------------===//
+
+  void AddDatabaseToStorageManager(storage::Database *db) {
+      databases_.push_back(db);
+  }
+  bool RemoveDatabaseFromStorageManager(oid_t database_oid) {
+      for(auto it = databases_.begin(); it != databases_.end(); ++it){
+          if((*it)->GetOid() == database_oid){
+              delete (*it);
+              databases_.erase(it);
+              return true;
+          }
+      }
+      return false;
+  }
 
  private:
   CatalogStorageManager();

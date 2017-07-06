@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "common/harness.h"
 
 #include "storage/data_table.h"
@@ -30,23 +30,23 @@ class DatabaseTests : public PelotonTest {};
 
 TEST_F(DatabaseTests, AddDropTest) {
   // ADD!
-  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(catalog_storage_manager->HasDatabase(db_id));
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(catalog_storage_manager->HasDatabase(db_id));
 }
 
 
 TEST_F(DatabaseTests, AddDropTableTest) {
   // ADD!
-  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(catalog_storage_manager->HasDatabase(db_id));
 
   // create data table
   std::unique_ptr<storage::DataTable> data_table(
@@ -67,7 +67,7 @@ TEST_F(DatabaseTests, AddDropTableTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(catalog_storage_manager->HasDatabase(db_id));
 }
 
 }  // End test namespace

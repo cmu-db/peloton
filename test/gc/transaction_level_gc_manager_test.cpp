@@ -12,7 +12,7 @@
 
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
-#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "common/harness.h"
 #include "gc/transaction_level_gc_manager.h"
 #include "concurrency/epoch_manager.h"
@@ -85,11 +85,11 @@ TEST_F(TransactionLevelGCManagerTests, GCTest) {
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
 
   
-  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("DATABASE");
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(catalog_storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
@@ -195,7 +195,7 @@ TEST_F(TransactionLevelGCManagerTests, GCTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DATABASE");
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(catalog_storage_manager->HasDatabase(db_id));
 
 }
 
