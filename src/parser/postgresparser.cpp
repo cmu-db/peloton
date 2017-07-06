@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_set>
 #include <include/parser/pg_list.h>
+#include <include/parser/pg_query.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -1150,8 +1151,13 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
   switch (root->op) {
     case SETOP_NONE:
       result = new parser::SelectStatement();
-      result->select_list = TargetTransform(root->targetList);
-      result->from_table = FromTransform(root);
+      try {
+        result->select_list = TargetTransform(root->targetList);
+        result->from_table = FromTransform(root);
+      } catch (ParserException &e) {
+        delete (result);
+        throw e;
+      }
       result->select_distinct = root->distinctClause != NULL ? true : false;
       result->group_by =
           GroupByTransform(root->groupClause, root->havingClause);
@@ -1272,8 +1278,13 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
     return nullptr;
   }
   LOG_TRACE("%d statements in total\n", (root->length));
-  for (auto cell = root->head; cell != nullptr; cell = cell->next) {
-    result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
+  try {
+    for (auto cell = root->head; cell != nullptr; cell = cell->next) {
+      result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
+    }
+  } catch (ParserException &e) {
+    delete result;
+    throw e;
   }
 
   return result;
@@ -1325,14 +1336,10 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
 
   // DEBUG only. Comment this out in release mode
   // print_pg_parse_tree(result.tree);
-
-  parser::SQLStatementList* transform_result = nullptr;
+  parser::SQLStatementList* transform_result;
   try {
     transform_result = ListTransform(result.tree);
-  } catch (Exception e) {
-    if (transform_result != nullptr) {
-        delete transform_result;
-    }
+  } catch (Exception &e) {
     pg_query_parse_finish(ctx);
     pg_query_free_parse_result(result);
     throw e;
