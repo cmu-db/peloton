@@ -1272,13 +1272,8 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
     return nullptr;
   }
   LOG_TRACE("%d statements in total\n", (root->length));
-  try {
-    for (auto cell = root->head; cell != nullptr; cell = cell->next) {
-      result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
-    }
-  } catch (ParserException e) {
-    result->is_valid = false;
-    return result;
+  for (auto cell = root->head; cell != nullptr; cell = cell->next) {
+    result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
   }
 
   return result;
@@ -1334,7 +1329,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   parser::SQLStatementList* transform_result = nullptr;
   try {
     transform_result = ListTransform(result.tree);
-  } catch (NotImplementedException e) {
+  } catch (Exception e) {
     if (transform_result != nullptr) {
         delete transform_result;
     }
