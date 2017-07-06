@@ -412,6 +412,7 @@ TEST_F(ParserTests, CopyTest) {
     }
   }
 }
+
 // Test that the wrong queries can be detected.
 TEST_F(ParserTests, WrongQueryTest) {
   std::vector<std::string> queries;
@@ -419,9 +420,7 @@ TEST_F(ParserTests, WrongQueryTest) {
   queries.push_back("SELECT *;");
   // Parsing
   for (auto query : queries) {
-    UNUSED_ATTRIBUTE parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
-    EXPECT_EQ(result->is_valid, false);
+    EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()), Exception);
   }
 }
 }  // End test namespace
