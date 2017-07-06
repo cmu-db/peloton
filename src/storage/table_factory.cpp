@@ -12,7 +12,7 @@
 
 #include "storage/table_factory.h"
 
-#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "index/index.h"
@@ -43,10 +43,10 @@ TempTable *TableFactory::GetTempTable(catalog::Schema *schema,
 }
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
-  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
   try {
     DataTable *table =
-        (DataTable *)catalog->GetTableWithOid(database_oid, table_oid);
+        (DataTable *)catalog_storage_manager->GetTableWithOid(database_oid, table_oid);
     delete table;
   } catch (CatalogException &e) {
     return false;

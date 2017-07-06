@@ -13,7 +13,7 @@
 #include "planner/seq_scan_plan.h"
 
 #include "parser/select_statement.h"
-#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
@@ -140,7 +140,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
 
   // Get table and set it to the member
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid,
+      catalog::CatalogStorageManager::GetInstance()->GetTableWithOid(database_oid,
                                                        table_oid));
   SetTargetTable(target_table);
 

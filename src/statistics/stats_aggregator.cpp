@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
@@ -189,16 +190,16 @@ void StatsAggregator::UpdateMetrics() {
 
   // Get the target table metrics table
   LOG_TRACE("Inserting stat tuples into catalog database..");
-  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
   auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
                         time_since_epoch).count();
 
-  auto database_count = catalog->GetDatabaseCount();
+  auto database_count = catalog_storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
        database_offset++) {
-    auto database = catalog->GetDatabaseWithOffset(database_offset);
+    auto database = catalog_storage_manager->GetDatabaseWithOffset(database_offset);
 
     // Update database metrics table
     auto database_oid = database->GetOid();
@@ -331,7 +332,7 @@ void StatsAggregator::UnregisterContext(std::thread::id id) {
 
 storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
   auto catalog = catalog::Catalog::GetInstance();
-  PL_ASSERT(catalog->GetDatabaseCount() > 0);
+  PL_ASSERT(catalog::CatalogStorageManager::GetInstance()->GetDatabaseCount() > 0);
   storage::Database *catalog_database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   PL_ASSERT(catalog_database != nullptr);

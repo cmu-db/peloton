@@ -30,10 +30,14 @@
 namespace peloton {
 namespace catalog {
 
-// Get instance of the global catalog
+// Get instance of the global catalog storage manager
 CatalogStorageManager *CatalogStorageManager::GetInstance(void) {
   static std::unique_ptr<CatalogStorageManager> global_catalog_storage_manager(new CatalogStorageManager());
   return global_catalog_storage_manager.get();
+}
+
+CatalogStorageManager::CatalogStorageManager() {
+
 }
 
 
@@ -78,6 +82,18 @@ index::Index *CatalogStorageManager::GetIndexWithOid(oid_t database_oid, oid_t t
   return table->GetIndexWithOid(index_oid)
       .get();  // Throw exception if not exists
 }
+
+//===--------------------------------------------------------------------===//
+// DEPRECATED
+//===--------------------------------------------------------------------===//
+
+// This is used as an iterator
+storage::Database *CatalogStorageManager::GetDatabaseWithOffset(oid_t database_offset) const {
+  PL_ASSERT(database_offset < databases_.size());
+  auto database = databases_.at(database_offset);
+  return database;
+}
+
 
 //===--------------------------------------------------------------------===//
 // HELPERS

@@ -15,7 +15,8 @@
 
 #include "brain/clusterer.h"
 #include "brain/sample.h"
-#include "catalog/catalog.h"
+//#include "catalog/catalog.h"
+#include "catalog/catalog_storage_manager.h"
 #include "catalog/foreign_key.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -501,7 +502,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Catalog::GetInstance()->GetTableWithOid(
+        (storage::DataTable *)catalog::CatalogStorageManager::GetInstance()->GetTableWithOid(
             database_oid, sink_table_id);
 
     int ref_table_index_count = ref_table->GetIndexCount();
