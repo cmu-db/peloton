@@ -98,8 +98,7 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
   return CallFunc(printf_fn, printf_args);
 }
 
-llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left,
-                                          llvm::Value *right,
+llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) const {
   PL_ASSERT(left->getType() == right->getType());
 
@@ -117,8 +116,7 @@ llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left,
   return GetBuilder().CreateExtractValue(add_result, 0);
 }
 
-llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left,
-                                          llvm::Value *right,
+llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) const {
   PL_ASSERT(left->getType() == right->getType());
 
@@ -136,8 +134,7 @@ llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left,
   return GetBuilder().CreateExtractValue(sub_result, 0);
 }
 
-llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left,
-                                          llvm::Value *right,
+llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) const {
   PL_ASSERT(left->getType() == right->getType());
   llvm::Function *mul_func = llvm::Intrinsic::getDeclaration(

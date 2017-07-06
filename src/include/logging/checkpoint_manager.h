@@ -49,7 +49,8 @@ class CheckpointManager {
   // Get status of whether logging threads are running or not
   bool GetStatus() { return this->is_running_; }
 
-  virtual void StartCheckpointing(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartCheckpointing(
+      std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
 
   virtual void StartCheckpointing() {}
 

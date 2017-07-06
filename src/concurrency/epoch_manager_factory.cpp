@@ -10,13 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace concurrency {
 
 EpochType EpochManagerFactory::epoch_ = EpochType::DECENTRALIZED_EPOCH;
-
 }
 }

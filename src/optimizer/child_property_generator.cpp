@@ -74,7 +74,7 @@ void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *op){
+void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *op) {
   JoinHelper(op);
 };
 void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
@@ -398,10 +398,11 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
     // the table alias.
     PL_ASSERT(child_groups_.size() == 2);
     auto &left_table_alias = child_groups_[0]->GetTableAliases();
-    UNUSED_ATTRIBUTE auto &right_table_alias = child_groups_[1]->GetTableAliases();
+    UNUSED_ATTRIBUTE auto &right_table_alias =
+        child_groups_[1]->GetTableAliases();
 
     for (auto child_col : child_cols) {
-      auto tv_expr = (expression::TupleValueExpression *) child_col.get();
+      auto tv_expr = (expression::TupleValueExpression *)child_col.get();
       if (left_table_alias.count(tv_expr->GetTableName()) > 0) {
         // This column should be provided by the left child
         left_cols.push_back(child_col);

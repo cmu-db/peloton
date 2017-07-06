@@ -289,9 +289,7 @@ void Aggregation::FinalizeValues(
 
           codegen::Value final_null;
           If check_count{codegen, zero_count.GetValue()};
-          {
-            final_null = Type::GetNullValue(codegen, final_calc.GetType());
-          }
+          { final_null = Type::GetNullValue(codegen, final_calc.GetType()); }
           check_count.EndIf();
           auto final_val = check_count.BuildPHI(final_null, final_calc);
           final_vals.push_back(final_val);

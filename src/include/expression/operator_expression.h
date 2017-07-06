@@ -16,7 +16,6 @@
 #include "common/sql_node_visitor.h"
 #include "type/value_factory.h"
 
-
 namespace peloton {
 namespace expression {
 
@@ -76,7 +75,7 @@ class OperatorExpression : public AbstractExpression {
       return_value_type_ = type::Type::BOOLEAN;
       return;
     }
-      auto type =
+    auto type =
         std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
     PL_ASSERT(type <= type::Type::DECIMAL);
     return_value_type_ = type;

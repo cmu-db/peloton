@@ -54,7 +54,8 @@ class GCManager {
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
 
-  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartGC(
+      std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
 
   virtual void StartGC() {}
 
@@ -70,8 +71,9 @@ class GCManager {
 
   virtual size_t GetTableCount() { return 0; }
 
-  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set UNUSED_ATTRIBUTE, 
-                                  const eid_t &epoch_id UNUSED_ATTRIBUTE, 
+  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set
+                                      UNUSED_ATTRIBUTE,
+                                  const eid_t &epoch_id UNUSED_ATTRIBUTE,
                                   const size_t &thread_id UNUSED_ATTRIBUTE) {}
 
  protected:

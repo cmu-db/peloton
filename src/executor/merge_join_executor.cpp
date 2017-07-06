@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "type/types.h"
@@ -180,11 +179,12 @@ bool MergeJoinExecutor::DExecute() {
 
     // Join predicate exists
     if (predicate_ != nullptr) {
-      auto eval = predicate_->Evaluate(&left_tuple,
-                                      &right_tuple, executor_context_);
+      auto eval =
+          predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_);
       if (eval.IsFalse()) {
-      //if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-      //        .IsFalse()) {
+        // if (predicate_->Evaluate(&left_tuple, &right_tuple,
+        // executor_context_)
+        //        .IsFalse()) {
         // Join predicate is false. Advance both.
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);

@@ -30,22 +30,23 @@ configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
-
   if (state.gc_mode == false) {
     gc::GCManagerFactory::Configure(0);
   } else {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
-  
+
   concurrency::EpochManagerFactory::Configure(state.epoch);
 
   std::unique_ptr<std::thread> epoch_thread;
   std::vector<std::unique_ptr<std::thread>> gc_threads;
 
-  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  concurrency::EpochManager &epoch_manager =
+      concurrency::EpochManagerFactory::GetInstance();
 
-  if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
-    for (size_t i = 0; i < (size_t) state.backend_count; ++i) {
+  if (concurrency::EpochManagerFactory::GetEpochType() ==
+      EpochType::DECENTRALIZED_EPOCH) {
+    for (size_t i = 0; i < (size_t)state.backend_count; ++i) {
       // register thread to epoch manager
       epoch_manager.RegisterThread(i);
     }
@@ -55,7 +56,7 @@ void RunBenchmark() {
   epoch_manager.StartEpoch(epoch_thread);
 
   gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
- 
+
   // start GC.
   gc_manager.StartGC(gc_threads);
 
@@ -67,7 +68,7 @@ void RunBenchmark() {
 
   // Run the workload
   RunWorkload();
-  
+
   // stop GC.
   gc_manager.StopGC();
 
@@ -83,7 +84,6 @@ void RunBenchmark() {
   // join epoch thread
   PL_ASSERT(epoch_thread != nullptr);
   epoch_thread->join();
-
 
   // Emit throughput
   WriteOutput();

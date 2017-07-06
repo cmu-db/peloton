@@ -18,7 +18,7 @@ namespace peloton {
 namespace optimizer {
 
 /*************** PropertyColumns *****************/
-  
+
 PropertyColumns::PropertyColumns(
     std::vector<std::shared_ptr<expression::AbstractExpression>> column_exprs)
     : column_exprs_(std::move(column_exprs)) {}
@@ -83,7 +83,7 @@ std::string PropertyColumns::ToString() const {
 }
 
 /*************** PropertyDistinct *****************/
-  
+
 PropertyDistinct::PropertyDistinct(std::vector<
     std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
@@ -145,36 +145,34 @@ std::string PropertyDistinct::ToString() const {
 }
 
 /*************** PropertyLimit *****************/
-  
+
 PropertyType PropertyLimit::Type() const { return PropertyType::LIMIT; }
-  
 
 bool PropertyLimit::operator>=(const Property &r) const {
   if (r.Type() != PropertyType::LIMIT) return false;
-  const PropertyLimit &r_limit = *reinterpret_cast<const PropertyLimit*>(&r);
+  const PropertyLimit &r_limit = *reinterpret_cast<const PropertyLimit *>(&r);
   return offset_ == r_limit.offset_ && limit_ == r_limit.limit_;
 }
-  
+
 hash_t PropertyLimit::Hash() const {
   hash_t hash = Property::Hash();
   HashUtil::CombineHashes(hash, offset_);
   HashUtil::CombineHashes(hash, limit_);
   return hash;
 }
-  
+
 void PropertyLimit::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyLimit *)this);
 }
-  
+
 std::string PropertyLimit::ToString() const {
   std::string res = PropertyTypeToString(Type());
   res += std::to_string(offset_) + " " + std::to_string(limit_) + "\n";
   return res;
 }
 
-
 /*************** PropertySort *****************/
-  
+
 PropertySort::PropertySort(
     std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
     std::vector<bool> sort_ascending)
@@ -220,7 +218,7 @@ std::string PropertySort::ToString() const {
 }
 
 /*************** PropertyPredicate *****************/
-  
+
 PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
     : predicate_(predicate){};
 

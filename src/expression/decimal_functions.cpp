@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "expression/abstract_expression.h"
 #include "expression/decimal_functions.h"
 #include "type/value_factory.h"

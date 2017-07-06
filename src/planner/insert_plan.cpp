@@ -49,7 +49,6 @@ InsertPlan::InsertPlan(
     std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
         insert_values)
     : bulk_insert_count(insert_values->size()) {
-
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
   params_value_type_.reset(new std::vector<type::Type::TypeId>);
 
@@ -118,15 +117,15 @@ InsertPlan::InsertPlan(
           // allocate
           // inline
           auto col_type = table_schema->GetColumn(col_cntr).GetType();
-          type::AbstractPool * data_pool = nullptr;
+          type::AbstractPool *data_pool = nullptr;
           if (col_type == type::Type::VARCHAR ||
               col_type == type::Type::VARBINARY)
             data_pool = GetPlanPool();
 
-          LOG_TRACE(
-              "Column %d found in INSERT query, ExpressionType: %s", col_cntr,
-              ExpressionTypeToString(values->at(pos)->GetExpressionType())
-                  .c_str());
+          LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
+                    col_cntr,
+                    ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                        .c_str());
 
           if (values->at(pos)->GetExpressionType() ==
               ExpressionType::VALUE_PARAMETER) {
@@ -149,10 +148,10 @@ InsertPlan::InsertPlan(
         if (query_columns_cnt < table_columns_cnt) {
           for (size_t col_cntr = 0; col_cntr < table_columns_cnt; col_cntr++) {
             auto col = table_columns[col_cntr];
-            if (std::find(query_columns->begin(), query_columns->end(), col.GetName())
-                == query_columns->end()) {
+            if (std::find(query_columns->begin(), query_columns->end(),
+                          col.GetName()) == query_columns->end()) {
               tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
-                  col.GetType()),
+                                            col.GetType()),
                               nullptr);
             }
           }
@@ -168,8 +167,7 @@ InsertPlan::InsertPlan(
 
 type::AbstractPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
-  if (pool_.get() == nullptr)
-    pool_.reset(new type::EphemeralPool());
+  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
   // return pool
   return pool_.get();
 }
@@ -188,14 +186,14 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
       case type::Type::VARBINARY:
       case type::Type::VARCHAR: {
         type::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]
-            ->SetValue(std::get<1>(put_loc), val, GetPlanPool());
+        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
+                                                GetPlanPool());
         break;
       }
       default: {
         type::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]
-            ->SetValue(std::get<1>(put_loc), val, nullptr);
+        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
+                                                nullptr);
       }
     }
   }

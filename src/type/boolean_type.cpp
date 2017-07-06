@@ -19,9 +19,7 @@ namespace peloton {
 namespace type {
 
 #define BOOLEAN_COMPARE_FUNC(OP) \
-  GetCmpBool(left.value_.boolean \
-             OP \
-             right.CastAs(Type::BOOLEAN).value_.boolean)
+  GetCmpBool(left.value_.boolean OP right.CastAs(Type::BOOLEAN).value_.boolean)
 
 BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
 
@@ -30,7 +28,7 @@ CmpBool BooleanType::CompareEquals(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(==);
+  return BOOLEAN_COMPARE_FUNC(== );
 }
 
 CmpBool BooleanType::CompareNotEquals(const Value& left,
@@ -38,7 +36,7 @@ CmpBool BooleanType::CompareNotEquals(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(!=);
+  return BOOLEAN_COMPARE_FUNC(!= );
 }
 
 CmpBool BooleanType::CompareLessThan(const Value& left,
@@ -46,7 +44,7 @@ CmpBool BooleanType::CompareLessThan(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(<);
+  return BOOLEAN_COMPARE_FUNC(< );
 }
 
 CmpBool BooleanType::CompareLessThanEquals(const Value& left,
@@ -54,7 +52,7 @@ CmpBool BooleanType::CompareLessThanEquals(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(<=);
+  return BOOLEAN_COMPARE_FUNC(<= );
 }
 
 CmpBool BooleanType::CompareGreaterThan(const Value& left,
@@ -62,7 +60,7 @@ CmpBool BooleanType::CompareGreaterThan(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(>);
+  return BOOLEAN_COMPARE_FUNC(> );
 }
 
 CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
@@ -70,7 +68,7 @@ CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return BOOLEAN_COMPARE_FUNC(>=);
+  return BOOLEAN_COMPARE_FUNC(>= );
 }
 
 std::string BooleanType::ToString(const Value& val) const {

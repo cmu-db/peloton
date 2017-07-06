@@ -24,8 +24,7 @@ TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
         catalog::Catalog::GetInstance()->GetTableWithOid(database_id, table_id);
     table_name_ = table->GetName();
     for (auto& ch : table_name_) ch = toupper(ch);
-  }
-  catch (CatalogException& e) {
+  } catch (CatalogException& e) {
     table_name_ = "";
   }
 }

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_executor.h"
@@ -26,13 +25,13 @@ namespace executor {
 
 class DropExecutor : public AbstractExecutor {
  public:
-	DropExecutor(const DropExecutor &) = delete;
-	DropExecutor &operator=(const DropExecutor &) = delete;
-	DropExecutor(DropExecutor &&) = delete;
-	DropExecutor &operator=(DropExecutor &&) = delete;
+  DropExecutor(const DropExecutor &) = delete;
+  DropExecutor &operator=(const DropExecutor &) = delete;
+  DropExecutor(DropExecutor &&) = delete;
+  DropExecutor &operator=(DropExecutor &&) = delete;
 
-	DropExecutor(const planner::AbstractPlan *node,
-                 ExecutorContext *executor_context);
+  DropExecutor(const planner::AbstractPlan *node,
+               ExecutorContext *executor_context);
 
   ~DropExecutor() {}
 
@@ -43,7 +42,6 @@ class DropExecutor : public AbstractExecutor {
 
  private:
   ExecutorContext *context;
-
 };
 
 }  // namespace executor

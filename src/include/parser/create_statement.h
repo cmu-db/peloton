@@ -49,53 +49,38 @@ struct ColumnDefinition {
     VARBINARY
   };
 
-  enum FKConstrActionType {
-    NOACTION,
-    RESTRICT,
-    CASCADE,
-    SETNULL,
-    SETDEFAULT
-  };
+  enum FKConstrActionType { NOACTION, RESTRICT, CASCADE, SETNULL, SETDEFAULT };
 
-  enum FKConstrMatchType {
-    SIMPLE,
-    PARTIAL,
-    FULL
-  };
+  enum FKConstrMatchType { SIMPLE, PARTIAL, FULL };
 
   ColumnDefinition(DataType type) : type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == TEXT)
-      varlen = type::PELOTON_TEXT_MAX_LEN;
+    if (type == TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
   ColumnDefinition(char* name, DataType type) : name(name), type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == TEXT)
-      varlen = type::PELOTON_TEXT_MAX_LEN;
+    if (type == TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) delete[] (key);
+      for (auto key : *primary_key) delete[](key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[] (key);
+      for (auto key : *foreign_key_source) delete[](key);
       delete foreign_key_source;
     }
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[] (key);
+      for (auto key : *foreign_key_sink) delete[](key);
       delete foreign_key_sink;
     }
     delete[] name;
-    if (table_info_ != nullptr)
-      delete table_info_;
-    if (default_value != nullptr)
-      delete default_value;
-    if (check_expression != nullptr)
-      delete check_expression;
+    if (table_info_ != nullptr) delete table_info_;
+    if (default_value != nullptr) delete default_value;
+    if (check_expression != nullptr) delete check_expression;
   }
 
   static type::Type::TypeId GetValueType(DataType type) {
@@ -201,21 +186,19 @@ struct CreateStatement : TableRefStatement {
     }
 
     if (index_attrs != nullptr) {
-      for (auto attr : *index_attrs) delete[] (attr);
+      for (auto attr : *index_attrs) delete[](attr);
       delete index_attrs;
     }
 
     if (index_name != nullptr) {
-      delete[] (index_name);
+      delete[](index_name);
     }
     if (database_name != nullptr) {
-      delete[] (database_name);
+      delete[](database_name);
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CreateType type;
   bool if_not_exists;

@@ -132,7 +132,8 @@ void ProjectInfo::PerformRebinding(
     PL_ASSERT(target.second.expr != nullptr);
 
     LOG_DEBUG("Binding target-list expressions ...");
-    auto *expr = const_cast<expression::AbstractExpression *>(target.second.expr);
+    auto *expr =
+        const_cast<expression::AbstractExpression *>(target.second.expr);
     expr->PerformBinding(input_contexts);
 
     const auto *dest_ai = &target.second.attribute_info;

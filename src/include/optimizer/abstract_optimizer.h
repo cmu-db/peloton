@@ -16,38 +16,38 @@
 #include "concurrency/transaction.h"
 
 namespace peloton {
-  namespace planner {
-    class AbstractPlan;
-  }
+namespace planner {
+class AbstractPlan;
+}
 
-  namespace parser {
-    class AbstractParse;
-    class SQLStatementList;
-  }
+namespace parser {
+class AbstractParse;
+class SQLStatementList;
+}
 
-  namespace optimizer {
+namespace optimizer {
 
 //===--------------------------------------------------------------------===//
 // Abstract Optimizer
 //===--------------------------------------------------------------------===//
-    class AbstractOptimizer {
-    public:
-      AbstractOptimizer(const AbstractOptimizer &) = delete;
-      AbstractOptimizer &operator=(const AbstractOptimizer &) = delete;
-      AbstractOptimizer(AbstractOptimizer &&) = delete;
-      AbstractOptimizer &operator=(AbstractOptimizer &&) = delete;
+class AbstractOptimizer {
+ public:
+  AbstractOptimizer(const AbstractOptimizer &) = delete;
+  AbstractOptimizer &operator=(const AbstractOptimizer &) = delete;
+  AbstractOptimizer(AbstractOptimizer &&) = delete;
+  AbstractOptimizer &operator=(AbstractOptimizer &&) = delete;
 
-      AbstractOptimizer();
-      virtual ~AbstractOptimizer();
+  AbstractOptimizer();
+  virtual ~AbstractOptimizer();
 
-      virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-          const std::unique_ptr<parser::SQLStatementList> &parse_tree) = 0;
+  virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree) = 0;
 
-      virtual void Reset(){};
+  virtual void Reset(){};
 
-      // # 623
-      concurrency::Transaction *consistentTxn;
-    };
+  // # 623
+  concurrency::Transaction *consistentTxn;
+};
 
-  }  // namespace optimizer
+}  // namespace optimizer
 }  // namespace peloton

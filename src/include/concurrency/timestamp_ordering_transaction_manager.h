@@ -31,23 +31,22 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual ~TimestampOrderingTransactionManager() {}
 
   static TimestampOrderingTransactionManager &GetInstance(
-      const ProtocolType protocol,
-      const IsolationLevelType isolation, 
+      const ProtocolType protocol, const IsolationLevelType isolation,
       const ConflictAvoidanceType conflict);
 
-  // This method tests whether the current transaction is the owner of this version.
-  virtual bool IsOwner(
-      Transaction *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+  // This method tests whether the current transaction is the owner of this
+  // version.
+  virtual bool IsOwner(Transaction *const current_txn,
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 
   // This method tests whether any other transaction has owned this version.
-  virtual bool IsOwned(
-      Transaction *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+  virtual bool IsOwned(Transaction *const current_txn,
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 
-  // This method tests whether the current transaction has created this version of the tuple
+  // This method tests whether the current transaction has created this version
+  // of the tuple
   virtual bool IsWritten(
       Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
@@ -100,8 +99,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
 
-
-private:
+ private:
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
 
@@ -115,9 +113,7 @@ private:
 
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, 
-      const cid_t &current_cid, 
-      const bool is_owner);
+      const oid_t &tuple_id, const cid_t &current_cid, const bool is_owner);
 
   // Initiate reserved area of a tuple
   void InitTupleReserved(

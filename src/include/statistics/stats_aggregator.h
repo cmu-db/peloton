@@ -69,8 +69,8 @@ class StatsAggregator {
   //===--------------------------------------------------------------------===//
 
   // Global singleton
-  static StatsAggregator &GetInstance(int64_t aggregation_interval_ms =
-                                          STATS_AGGREGATION_INTERVAL_MS);
+  static StatsAggregator &GetInstance(
+      int64_t aggregation_interval_ms = STATS_AGGREGATION_INTERVAL_MS);
 
   // Get the aggregated stats history of all exited threads
   inline BackendStatsContext &GetStatsHistory() { return stats_history_; }

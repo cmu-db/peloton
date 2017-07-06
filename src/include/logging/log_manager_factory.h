@@ -20,13 +20,11 @@ namespace logging {
 
 class LogManagerFactory {
  public:
-
   static LogManager& GetInstance() {
     switch (logging_type_) {
-
       case LoggingType::ON:
         return LogicalLogManager::GetInstance(logging_thread_count_);
-      
+
       default:
         return LogManager::GetInstance();
     }
@@ -43,12 +41,12 @@ class LogManagerFactory {
 
   inline static LoggingType GetLoggingType() { return logging_type_; }
 
-private:
+ private:
   // checkpointing type
   static LoggingType logging_type_;
 
   static int logging_thread_count_;
 };
 
-} // namespace logging
-} // namespace peloton
+}  // namespace logging
+}  // namespace peloton

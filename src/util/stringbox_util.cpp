@@ -19,8 +19,9 @@
 
 namespace peloton {
 
-std::string StringBoxUtil::MakeBox(const std::string &str, int max_len, std::string &horzMark,
-                           std::string &vertMark, std::string corners[]) {
+std::string StringBoxUtil::MakeBox(const std::string &str, int max_len,
+                                   std::string &horzMark, std::string &vertMark,
+                                   std::string corners[]) {
   std::vector<std::string> lines = StringUtil::Split(str);
   if (lines.size() == 0) return ("");
 
@@ -61,6 +62,4 @@ std::string StringBoxUtil::MakeBox(const std::string &str, int max_len, std::str
 
   return (os.str());
 }
-
-
 }

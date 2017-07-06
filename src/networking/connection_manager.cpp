@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "networking/connection_manager.h"
 
 #include "common/macros.h"

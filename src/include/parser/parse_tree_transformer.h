@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "type/types.h"
@@ -35,13 +34,12 @@ class ParseTreeTransformer {
 
   ParseTreeTransformer(){};
 
-  static void
-  PrintParseTree(const std::unique_ptr<parser::AbstractParse>& parse_tree,
-                 std::string prefix = "");
+  static void PrintParseTree(
+      const std::unique_ptr<parser::AbstractParse> &parse_tree,
+      std::string prefix = "");
 
-  static std::unique_ptr<parser::AbstractParse>
-  BuildParseTree(Node *postgres_parse_tree);
-
+  static std::unique_ptr<parser::AbstractParse> BuildParseTree(
+      Node *postgres_parse_tree);
 };
 
 }  // namespace parser

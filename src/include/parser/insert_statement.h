@@ -43,13 +43,14 @@ struct InsertStatement : SQLStatement {
     }
 
     if (insert_values != nullptr) {
-      for (auto *tuple : *insert_values) {
-        for (auto *expr : *tuple) {
+      for (auto* tuple : *insert_values) {
+        for (auto* expr : *tuple) {
           // Why?
-//          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
-            if (expr != nullptr) {
-              delete expr;
-            }
+          //          if (expr->GetExpressionType() !=
+          //          ExpressionType::VALUE_PARAMETER)
+          if (expr != nullptr) {
+            delete expr;
+          }
         }
         delete tuple;
       }
@@ -67,9 +68,7 @@ struct InsertStatement : SQLStatement {
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
-  inline std::string GetTableName() const {
-    return table_ref_->GetTableName();
-  }
+  inline std::string GetTableName() const { return table_ref_->GetTableName(); }
   inline std::string GetDatabaseName() const {
     return table_ref_->GetDatabaseName();
   }

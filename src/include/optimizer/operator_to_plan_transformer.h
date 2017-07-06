@@ -89,20 +89,22 @@ class OperatorToPlanTransformer : public OperatorVisitor {
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
-  void GenerateTableExprMap(ExprMap &expr_map, const std::string &alias, const storage::DataTable *table);
+  void GenerateTableExprMap(ExprMap &expr_map, const std::string &alias,
+                            const storage::DataTable *table);
 
   std::vector<oid_t> GenerateColumnsForScan(const PropertyColumns *column_prop,
                                             const std::string &alias,
                                             const storage::DataTable *table);
 
   expression::AbstractExpression *GeneratePredicateForScan(
-      const PropertyPredicate *predicate_prop, const std::string &alias, const storage::DataTable *table);
+      const PropertyPredicate *predicate_prop, const std::string &alias,
+      const storage::DataTable *table);
 
   // Generate group by plan
   std::unique_ptr<planner::AggregatePlan> GenerateAggregatePlan(
       const PropertyColumns *prop_col, AggregateType agg_type,
       const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-      group_by_exprs,
+          group_by_exprs,
       expression::AbstractExpression *having);
 
   std::unique_ptr<planner::AbstractPlan> GenerateJoinPlan(

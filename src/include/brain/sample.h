@@ -102,7 +102,6 @@ class Sample : public Printable {
 
   // type of sample
   SampleType sample_type_;
-
 };
 
 }  // End brain namespace

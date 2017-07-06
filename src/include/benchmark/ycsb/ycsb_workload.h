@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "benchmark/benchmark_common.h"
@@ -33,11 +32,12 @@ extern storage::DataTable* user_table;
 
 void RunWorkload();
 
-bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng);
+bool RunMixed(const size_t thread_id, ZipfDistribution& zipf, FastRandom& rng);
 
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<type::Value>> ExecuteRead(executor::AbstractExecutor* executor);
+std::vector<std::vector<type::Value>> ExecuteRead(
+    executor::AbstractExecutor* executor);
 
 void ExecuteUpdate(executor::AbstractExecutor* executor);
 

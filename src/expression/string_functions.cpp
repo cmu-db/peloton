@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <string>
 
 #include "expression/abstract_expression.h"
@@ -42,7 +41,7 @@ type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
   return type::ValueFactory::GetVarcharValue(str);
 }
 
-//substring
+// substring
 type::Value StringFunctions::Substr(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
@@ -108,7 +107,7 @@ type::Value StringFunctions::Replace(const std::vector<type::Value>& args) {
   std::string from = args[1].ToString();
   std::string to = args[2].ToString();
   size_t pos = 0;
-  while((pos = str.find(from, pos)) != std::string::npos) {
+  while ((pos = str.find(from, pos)) != std::string::npos) {
     str.replace(pos, from.length(), to);
     pos += to.length();
   }
@@ -130,8 +129,7 @@ type::Value StringFunctions::LTrim(const std::vector<type::Value>& args) {
     erase = 1;
     pos++;
   }
-  if (erase)
-    str.erase(0, pos);
+  if (erase) str.erase(0, pos);
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
@@ -144,16 +142,14 @@ type::Value StringFunctions::RTrim(const std::vector<type::Value>& args) {
   }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();
-  if (str.length() == 0)
-    return (type::ValueFactory::GetVarcharValue(""));
+  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
   size_t pos = str.length() - 1;
   bool erase = 0;
   while (from.find(str[pos]) != std::string::npos) {
     erase = 1;
     pos--;
   }
-  if (erase)
-    str.erase(pos + 1, str.length() - pos - 1);
+  if (erase) str.erase(pos + 1, str.length() - pos - 1);
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
@@ -166,8 +162,7 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value>& args) {
   }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();
-  if (str.length() == 0)
-    return (type::ValueFactory::GetVarcharValue(""));
+  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
 
   size_t pos = str.length() - 1;
   bool erase = 0;
@@ -175,8 +170,7 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value>& args) {
     erase = 1;
     pos--;
   }
-  if (erase)
-    str.erase(pos + 1, str.length() - pos - 1);
+  if (erase) str.erase(pos + 1, str.length() - pos - 1);
 
   pos = 0;
   erase = 0;
@@ -184,8 +178,7 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value>& args) {
     erase = 1;
     pos++;
   }
-  if (erase)
-    str.erase(0, pos);
+  if (erase) str.erase(0, pos);
   return (type::ValueFactory::GetVarcharValue(str));
 }
 

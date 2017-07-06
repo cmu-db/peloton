@@ -189,13 +189,20 @@ void TPCHDatabase::CreateCustomerTable() const {
 
 void TPCHDatabase::CreateLineitemTable() const {
   // Define columns
-  catalog::Column l_orderkey = {type::Type::TypeId::INTEGER, kIntSize, "l_orderkey"};
-  catalog::Column l_partkey = {type::Type::TypeId::INTEGER, kIntSize, "l_partkey"};
-  catalog::Column l_suppkey = {type::Type::TypeId::INTEGER, kIntSize, "l_suppkey"};
-  catalog::Column l_linenumber = {type::Type::TypeId::INTEGER, kIntSize, "l_linenumber"};
-  catalog::Column l_quantity = {type::Type::TypeId::INTEGER, kIntSize, "l_quantity"};
-  catalog::Column l_extendedprice = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice"};
-  catalog::Column l_discount = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_discount"};
+  catalog::Column l_orderkey = {type::Type::TypeId::INTEGER, kIntSize,
+                                "l_orderkey"};
+  catalog::Column l_partkey = {type::Type::TypeId::INTEGER, kIntSize,
+                               "l_partkey"};
+  catalog::Column l_suppkey = {type::Type::TypeId::INTEGER, kIntSize,
+                               "l_suppkey"};
+  catalog::Column l_linenumber = {type::Type::TypeId::INTEGER, kIntSize,
+                                  "l_linenumber"};
+  catalog::Column l_quantity = {type::Type::TypeId::INTEGER, kIntSize,
+                                "l_quantity"};
+  catalog::Column l_extendedprice = {type::Type::TypeId::DECIMAL, kDecimalSize,
+                                     "l_extendedprice"};
+  catalog::Column l_discount = {type::Type::TypeId::DECIMAL, kDecimalSize,
+                                "l_discount"};
   catalog::Column l_tax = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_tax"};
 
   catalog::Column l_returnflag;
@@ -212,11 +219,16 @@ void TPCHDatabase::CreateLineitemTable() const {
     l_linestatus = {type::Type::TypeId::VARCHAR, 1, "l_returnflag"};
   }
 
-  catalog::Column l_shipdate = {type::Type::TypeId::DATE, kDateSize, "l_shipdate"};
-  catalog::Column l_commitdate = {type::Type::TypeId::DATE, kDateSize, "l_commitdate"};
-  catalog::Column l_receiptdate = {type::Type::TypeId::DATE, kDateSize, "l_receiptdate"};
-  catalog::Column l_shipinstruct = {type::Type::TypeId::INTEGER, kIntSize, "l_shipinstruct"};
-  catalog::Column l_shipmode = {type::Type::TypeId::INTEGER, kIntSize, "l_shipmode"};
+  catalog::Column l_shipdate = {type::Type::TypeId::DATE, kDateSize,
+                                "l_shipdate"};
+  catalog::Column l_commitdate = {type::Type::TypeId::DATE, kDateSize,
+                                  "l_commitdate"};
+  catalog::Column l_receiptdate = {type::Type::TypeId::DATE, kDateSize,
+                                   "l_receiptdate"};
+  catalog::Column l_shipinstruct = {type::Type::TypeId::INTEGER, kIntSize,
+                                    "l_shipinstruct"};
+  catalog::Column l_shipmode = {type::Type::TypeId::INTEGER, kIntSize,
+                                "l_shipmode"};
   catalog::Column l_comment = {type::Type::TypeId::VARCHAR, 44, "l_comment"};
 
   auto lineitem_cols = {
@@ -244,22 +256,23 @@ void TPCHDatabase::CreateNationTable() const {
   catalog::Column n_nationkey = {type::Type::TypeId::INTEGER, kIntSize,
                                  "n_nationkey", true};
   catalog::Column n_name = {type::Type::TypeId::VARCHAR, 25, "n_name", false};
-  catalog::Column n_regionKey = {type::Type::TypeId::INTEGER, kIntSize, "n_regionkey",
-                                 true};
+  catalog::Column n_regionKey = {type::Type::TypeId::INTEGER, kIntSize,
+                                 "n_regionkey", true};
 
   catalog::Column n_comment = {type::Type::TypeId::VARCHAR, 152, "n_comment",
                                false};
 
   // Create the schema
   auto nation_cols = {n_nationkey, n_name, n_regionKey, n_comment};
-  std::unique_ptr<catalog::Schema> nation_schema{new catalog::Schema{nation_cols}};
+  std::unique_ptr<catalog::Schema> nation_schema{
+      new catalog::Schema{nation_cols}};
 
   // Create the table!
   bool owns_schema = true;
   bool adapt_table = true;
   storage::DataTable *nation_table = storage::TableFactory::GetDataTable(
-      kTPCHDatabaseId, (uint32_t)TableId::Nation, nation_schema.release(), "Nation",
-      config_.tuples_per_tile_group, owns_schema, adapt_table);
+      kTPCHDatabaseId, (uint32_t)TableId::Nation, nation_schema.release(),
+      "Nation", config_.tuples_per_tile_group, owns_schema, adapt_table);
 
   // Add the table to the database (we're releasing ownership at this point)
   GetDatabase().AddTable(nation_table);
@@ -359,14 +372,30 @@ void TPCHDatabase::CreateSupplierTable() const {}
 
 void TPCHDatabase::LoadTable(TableId table_id) {
   switch (table_id) {
-    case TableId::Customer: LoadCustomerTable(); break;
-    case TableId::Lineitem: LoadLineitemTable(); break;
-    case TableId::Nation:   LoadNationTable(); break;
-    case TableId::Orders:   LoadOrdersTable(); break;
-    case TableId::Part:     LoadPartTable(); break;
-    case TableId::PartSupp: LoadPartSupplierTable(); break;
-    case TableId::Region:   LoadRegionTable(); break;
-    case TableId::Supplier: LoadSupplierTable(); break;
+    case TableId::Customer:
+      LoadCustomerTable();
+      break;
+    case TableId::Lineitem:
+      LoadLineitemTable();
+      break;
+    case TableId::Nation:
+      LoadNationTable();
+      break;
+    case TableId::Orders:
+      LoadOrdersTable();
+      break;
+    case TableId::Part:
+      LoadPartTable();
+      break;
+    case TableId::PartSupp:
+      LoadPartSupplierTable();
+      break;
+    case TableId::Region:
+      LoadRegionTable();
+      break;
+    case TableId::Supplier:
+      LoadSupplierTable();
+      break;
   }
 }
 
@@ -374,11 +403,11 @@ void TPCHDatabase::LoadPartTable() {
   if (TableIsLoaded(TableId::Part)) {
     return;
   }
-  
+
   const std::string filename = config_.GetPartPath();
 
   LOG_INFO("Loading Part ['%s']\n", filename.c_str());
-  
+
   auto &table = GetTable(TableId::Part);
 
   Timer<std::ratio<1, 1000>> timer;
@@ -390,18 +419,22 @@ void TPCHDatabase::LoadPartTable() {
   uint64_t num_tuples = 0;
   std::unique_ptr<type::AbstractPool> pool{new type::EphemeralPool()};
 
-  ForEachLine(filename, [&](char *p){
+  ForEachLine(filename, [&](char *p) {
     storage::Tuple tuple{table.GetSchema(), true /* allocate */};
 
     tuple.SetValue(0, type::ValueFactory::GetIntegerValue(std::atoi(p)));
 
     p = strchr(p, '|') + 1;
     char *p_end = strchr(p, '|');
-    tuple.SetValue(1, type::ValueFactory::GetVarcharValue(std::string{p, p_end}), pool.get());
+    tuple.SetValue(1,
+                   type::ValueFactory::GetVarcharValue(std::string{p, p_end}),
+                   pool.get());
 
     p = p_end + 1;
     p_end = strchr(p, '|');
-    tuple.SetValue(2, type::ValueFactory::GetVarcharValue(std::string{p, p_end}), pool.get());
+    tuple.SetValue(2,
+                   type::ValueFactory::GetVarcharValue(std::string{p, p_end}),
+                   pool.get());
 
     p = p_end + 1;
     p_end = strchr(p, '|');
@@ -410,12 +443,15 @@ void TPCHDatabase::LoadPartTable() {
       uint32_t code = DictionaryEncode(p_brand_dict_, p_brand);
       tuple.SetValue(3, type::ValueFactory::GetIntegerValue(code));
     } else {
-      tuple.SetValue(3, type::ValueFactory::GetVarcharValue(p_brand), pool.get());
+      tuple.SetValue(3, type::ValueFactory::GetVarcharValue(p_brand),
+                     pool.get());
     }
 
     p = p_end + 1;
     p_end = strchr(p, '|');
-    tuple.SetValue(4, type::ValueFactory::GetVarcharValue(std::string{p, p_end}), pool.get());
+    tuple.SetValue(4,
+                   type::ValueFactory::GetVarcharValue(std::string{p, p_end}),
+                   pool.get());
 
     p = p_end + 1;
     tuple.SetValue(5, type::ValueFactory::GetIntegerValue(std::atoi(p)));
@@ -427,7 +463,8 @@ void TPCHDatabase::LoadPartTable() {
       uint32_t code = DictionaryEncode(p_container_dict_, p_brand);
       tuple.SetValue(6, type::ValueFactory::GetIntegerValue(code));
     } else {
-      tuple.SetValue(6, type::ValueFactory::GetVarcharValue(p_container), pool.get());
+      tuple.SetValue(6, type::ValueFactory::GetVarcharValue(p_container),
+                     pool.get());
     }
 
     p = p_end + 1;
@@ -435,7 +472,9 @@ void TPCHDatabase::LoadPartTable() {
 
     p = p_end + 1;
     p_end = strchr(p, '|');
-    tuple.SetValue(8, type::ValueFactory::GetVarcharValue(std::string{p, p_end}), pool.get());
+    tuple.SetValue(8,
+                   type::ValueFactory::GetVarcharValue(std::string{p, p_end}),
+                   pool.get());
 
     // Insert into table
     ItemPointer tuple_slot_id = table.InsertTuple(&tuple);
@@ -451,8 +490,8 @@ void TPCHDatabase::LoadPartTable() {
   PL_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
 
   timer.Stop();
-  LOG_INFO("Loading Part finished: %.2f ms (%lu tuples)\n",
-           timer.GetDuration(), num_tuples);
+  LOG_INFO("Loading Part finished: %.2f ms (%lu tuples)\n", timer.GetDuration(),
+           num_tuples);
 
   // Set table as loaded
   SetTableIsLoaded(TableId::Part);
@@ -501,7 +540,8 @@ void TPCHDatabase::LoadCustomerTable() {
     p_end = strchr(p, '|');
 
     std::string c_address{p, p_end};
-    tuple.SetValue(2, type::ValueFactory::GetVarcharValue(c_address), pool.get());
+    tuple.SetValue(2, type::ValueFactory::GetVarcharValue(c_address),
+                   pool.get());
 
     // C_NATIONKEY
     p = p_end + 1;
@@ -528,14 +568,16 @@ void TPCHDatabase::LoadCustomerTable() {
       uint32_t code = DictionaryEncode(c_mktsegment_dict_, c_mktsegment);
       tuple.SetValue(6, type::ValueFactory::GetIntegerValue(code));
     } else {
-      tuple.SetValue(6, type::ValueFactory::GetVarcharValue(c_mktsegment), pool.get());
+      tuple.SetValue(6, type::ValueFactory::GetVarcharValue(c_mktsegment),
+                     pool.get());
     }
 
     // C_COMMENT
     p = p_end + 1;
     p_end = strchr(p, '|');
     std::string c_comment{p, p_end};
-    tuple.SetValue(7, type::ValueFactory::GetVarcharValue(c_comment), pool.get());
+    tuple.SetValue(7, type::ValueFactory::GetVarcharValue(c_comment),
+                   pool.get());
 
     // Insert into table
     ItemPointer tuple_slot_id = table.InsertTuple(&tuple);

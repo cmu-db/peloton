@@ -123,8 +123,7 @@ void LibeventServer::StartServer() {
     SSL_load_error_strings();
     SSL_library_init();
 
-    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
-    {
+    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr) {
       throw ConnectionException("Error creating SSL context.\n");
     }
 
@@ -148,14 +147,12 @@ void LibeventServer::StartServer() {
     }
     * Temporarily commented to pass tests END
     */
-    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
-    {
+    if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Failed binding socket.\n");
     }
 
-    if (listen(listen_fd, conn_backlog) < 0)
-    {
+    if (listen(listen_fd, conn_backlog) < 0) {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Error listening onsocket.\n");
     }

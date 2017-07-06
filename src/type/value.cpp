@@ -377,8 +377,9 @@ bool Value::CheckComparable(const Value &o) const {
         case Type::BOOLEAN:
         case Type::VARCHAR:
           return (true);
-        default:break;
-      } // SWITCH
+        default:
+          break;
+      }  // SWITCH
       break;
     case Type::TINYINT:
     case Type::SMALLINT:
@@ -395,7 +396,7 @@ bool Value::CheckComparable(const Value &o) const {
           return true;
         default:
           break;
-      } // SWITCH
+      }  // SWITCH
       break;
     case Type::VARCHAR:
       // Anything can be cast to a string!
@@ -409,7 +410,7 @@ bool Value::CheckComparable(const Value &o) const {
       break;
     default:
       break;
-  } // SWITCH
+  }  // SWITCH
   return false;
 }
 

@@ -62,8 +62,8 @@ CodeContext::CodeContext()
   const llvm::DataLayout& data_layout = *jit_engine_->getDataLayout();
   module_->setDataLayout(data_layout);
 #elif LLVM_VERSION_MINOR >= 7
-  // LLVM 3.7
-  // No need to set the data layout in LLVM 3.7+
+// LLVM 3.7
+// No need to set the data layout in LLVM 3.7+
 #endif
 
   // The set of optimization passes we include
@@ -89,9 +89,8 @@ CodeContext::CodeContext()
 // JIT the code contained within after optimizing it
 //===----------------------------------------------------------------------===//
 bool CodeContext::Compile() {
-
   // Verify the module is okay
-  llvm::raw_ostream &errors = llvm::errs();
+  llvm::raw_ostream& errors = llvm::errs();
   if (llvm::verifyModule(*module_, &errors)) {
     // There is an error in the module that failed compilation.
     // Dump the crappy IR to the log ...

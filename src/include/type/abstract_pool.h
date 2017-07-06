@@ -19,10 +19,9 @@ namespace type {
 
 // Interface of a memory pool that can quickly allocate chunks of memory
 class AbstractPool {
-public:
-
+ public:
   // Empty virtual destructor for proper cleanup
-  virtual ~AbstractPool(){}
+  virtual ~AbstractPool() {}
 
   // Allocate a contiguous block of memory of the given size. If the allocation
   // is successful a non-null pointer is returned. If the allocation fails, a
@@ -32,7 +31,6 @@ public:
 
   // Returns the provided chunk of memory back into the pool
   virtual void Free(void *ptr) = 0;
-
 };
 
 }  // namespace type

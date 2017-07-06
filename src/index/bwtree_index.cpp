@@ -206,7 +206,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const std::vector<ExpressionType> &expr_list,
     ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
-
   // Only work with limit == 1 and offset == 0
   // Because that gets translated to "min"
   // But still since we could not access tuples in the table
@@ -228,7 +227,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     auto scan_itr = container.Begin(index_low_key);
     if ((scan_itr.IsEnd() == false) &&
         (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
-
       result.push_back(scan_itr->second);
     }
   } else {

@@ -40,14 +40,12 @@ class BindingContext {
   }
 
   void Rebind(oid_t old_col_id, oid_t new_col_id) {
-    const auto *ai = Find(old_col_id);
+    const auto* ai = Find(old_col_id);
     BindNew(new_col_id, ai);
     RemoveBinding(old_col_id);
   }
 
-  void RemoveBinding(oid_t col_id) {
-    mapping_.erase(col_id);
-  }
+  void RemoveBinding(oid_t col_id) { mapping_.erase(col_id); }
 
  private:
   // The current mapping of column IDs to information about the column

@@ -193,8 +193,8 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     Vector &selection_vector) const {
   // The batch we're filtering
   auto &compilation_ctx = translator_.GetCompilationContext();
-  RowBatch batch{compilation_ctx, tile_group_id_, tid_start, tid_end,
-                 selection_vector, true};
+  RowBatch batch{compilation_ctx, tile_group_id_,   tid_start,
+                 tid_end,         selection_vector, true};
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();

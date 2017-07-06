@@ -113,8 +113,8 @@ bool InsertExecutor::DExecute() {
       // tuple.
       // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(
-            current_txn, peloton::ResultType::FAILURE);
+        transaction_manager.SetTransactionResult(current_txn,
+                                                 peloton::ResultType::FAILURE);
         return false;
       }
 

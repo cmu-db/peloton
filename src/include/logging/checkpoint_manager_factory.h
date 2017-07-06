@@ -20,13 +20,12 @@ namespace logging {
 
 class CheckpointManagerFactory {
  public:
-
   static CheckpointManager& GetInstance() {
     switch (checkpointing_type_) {
-
       case CheckpointingType::ON:
-        return LogicalCheckpointManager::GetInstance(checkpointing_thread_count_);
-      
+        return LogicalCheckpointManager::GetInstance(
+            checkpointing_thread_count_);
+
       default:
         return CheckpointManager::GetInstance();
     }
@@ -41,14 +40,16 @@ class CheckpointManagerFactory {
     }
   }
 
-  inline static CheckpointingType GetCheckpointingType() { return checkpointing_type_; }
+  inline static CheckpointingType GetCheckpointingType() {
+    return checkpointing_type_;
+  }
 
-private:
+ private:
   // checkpointing type
   static CheckpointingType checkpointing_type_;
 
   static int checkpointing_thread_count_;
 };
 
-} // namespace logging
-} // namespace peloton
+}  // namespace logging
+}  // namespace peloton

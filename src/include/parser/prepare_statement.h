@@ -66,9 +66,7 @@ struct PrepareStatement : SQLStatement {
     for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival_ = i;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   char* name;
   SQLStatementList* query;

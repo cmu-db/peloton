@@ -27,15 +27,15 @@ class NumericType : public Type {
   virtual ~NumericType() = 0;
 
   // Other mathematical functions
-  virtual Value Add(const Value& left, const Value &right) const = 0;
-  virtual Value Subtract(const Value& left, const Value &right) const = 0;
-  virtual Value Multiply(const Value& left, const Value &right) const = 0;
-  virtual Value Divide(const Value& left, const Value &right) const = 0;
-  virtual Value Modulo(const Value& left, const Value &right) const = 0;
-  virtual Value Min(const Value& left, const Value &right) const = 0;
-  virtual Value Max(const Value& left, const Value &right) const = 0;
+  virtual Value Add(const Value& left, const Value& right) const = 0;
+  virtual Value Subtract(const Value& left, const Value& right) const = 0;
+  virtual Value Multiply(const Value& left, const Value& right) const = 0;
+  virtual Value Divide(const Value& left, const Value& right) const = 0;
+  virtual Value Modulo(const Value& left, const Value& right) const = 0;
+  virtual Value Min(const Value& left, const Value& right) const = 0;
+  virtual Value Max(const Value& left, const Value& right) const = 0;
   virtual Value Sqrt(const Value& val) const = 0;
-  virtual Value OperateNull(const Value& left, const Value &right) const = 0;
+  virtual Value OperateNull(const Value& left, const Value& right) const = 0;
   virtual bool IsZero(const Value& val) const = 0;
 
  protected:

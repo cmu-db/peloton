@@ -128,8 +128,7 @@ class Catalog {
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::Transaction *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t index_oid,
-                       concurrency::Transaction *txn);
+  ResultType DropIndex(oid_t index_oid, concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION

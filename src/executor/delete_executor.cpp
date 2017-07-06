@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 
@@ -36,7 +35,7 @@ namespace executor {
  */
 DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -75,7 +74,7 @@ bool DeleteExecutor::DExecute() {
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
-  
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -91,8 +90,8 @@ bool DeleteExecutor::DExecute() {
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
-
-    storage::TileGroup *tile_group = source_tile->GetBaseTile(0)->GetTileGroup();
+    storage::TileGroup *tile_group =
+        source_tile->GetBaseTile(0)->GetTileGroup();
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
@@ -102,11 +101,11 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    // if running at snapshot isolation, 
+    // if running at snapshot isolation,
     // then we need to retrieve the latest version of this tuple.
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
-      
+
       auto &manager = catalog::Manager::GetInstance();
       tile_group = manager.GetTileGroup(old_location.block).get();
       tile_group_header = tile_group->GetHeader();
@@ -114,35 +113,39 @@ bool DeleteExecutor::DExecute() {
       physical_tuple_id = old_location.offset;
     }
 
-    bool is_owner = 
-        transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
+    bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
+                                                physical_tuple_id);
 
-    bool is_written =
-        transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
+    bool is_written = transaction_manager.IsWritten(
+        current_txn, tile_group_header, physical_tuple_id);
 
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
-      // if the transaction is the owner of the tuple, then directly update in place.
+      // if the transaction is the owner of the tuple, then directly update in
+      // place.
       LOG_TRACE("The current transaction is the owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
 
     } else {
-
       bool is_ownable = is_owner ||
-          transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
+                        transaction_manager.IsOwnable(
+                            current_txn, tile_group_header, physical_tuple_id);
 
       if (is_ownable == true) {
-        // if the tuple is not owned by any transaction and is visible to current
+        // if the tuple is not owned by any transaction and is visible to
+        // current
         // transaction.
-      	LOG_TRACE("Thread is not the owner of the tuple, but still visible");
+        LOG_TRACE("Thread is not the owner of the tuple, but still visible");
 
-        bool acquire_ownership_success = is_owner ||
-            transaction_manager.AcquireOwnership(current_txn, tile_group_header, physical_tuple_id);
-
+        bool acquire_ownership_success =
+            is_owner ||
+            transaction_manager.AcquireOwnership(current_txn, tile_group_header,
+                                                 physical_tuple_id);
 
         if (acquire_ownership_success == false) {
-          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
         // if it is the latest version and not locked by other threads, then
@@ -153,24 +156,30 @@ bool DeleteExecutor::DExecute() {
         // There is a write lock acquired, but since it is not in the write set,
         // because we haven't yet put them into the write set.
         // the acquired lock can't be released when the txn is aborted.
-        // the YieldOwnership() function helps us release the acquired write lock.
+        // the YieldOwnership() function helps us release the acquired write
+        // lock.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           if (is_owner == false) {
-            // If the ownership is acquire inside this update executor, we release it here
-            transaction_manager.YieldOwnership(current_txn, tile_group_header, physical_tuple_id);
+            // If the ownership is acquire inside this update executor, we
+            // release it here
+            transaction_manager.YieldOwnership(current_txn, tile_group_header,
+                                               physical_tuple_id);
           }
-          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
-        transaction_manager.PerformDelete(current_txn, old_location, new_location);
+        transaction_manager.PerformDelete(current_txn, old_location,
+                                          new_location);
 
         executor_context_->num_processed += 1;  // deleted one
 
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
+        transaction_manager.SetTransactionResult(current_txn,
+                                                 ResultType::FAILURE);
         return false;
       }
     }

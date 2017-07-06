@@ -57,7 +57,7 @@ bool PopulateIndexExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {
-    //Get the output from seq_scan
+    // Get the output from seq_scan
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
@@ -88,8 +88,8 @@ bool PopulateIndexExecutor::DExecute() {
           tuple->SetValue(column_ids_[column_itr], val, executor_pool);
         }
 
-        ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
-                             tuple_id);
+        ItemPointer location(
+            tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(), tuple_id);
 
         // insert tuple into the index.
         ItemPointer *index_entry_ptr = nullptr;

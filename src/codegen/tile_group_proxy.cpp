@@ -71,8 +71,7 @@ const std::string& TileGroupProxy::_GetTileGroupId::GetFunctionName() {
   return kGetNextTupleSlot;
 }
 
-llvm::Function* TileGroupProxy::_GetTileGroupId::GetFunction(
-    CodeGen& codegen) {
+llvm::Function* TileGroupProxy::_GetTileGroupId::GetFunction(CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
   // Has the function already been registered?

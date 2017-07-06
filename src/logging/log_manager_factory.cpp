@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "logging/log_manager_factory.h"
 
 namespace peloton {

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 namespace peloton {
@@ -27,7 +26,7 @@ class SelectParse;
 
 class ParseNodeVisitor {
  public:
-  virtual ~ParseNodeVisitor() {};
+  virtual ~ParseNodeVisitor(){};
 
   /* TODO: implement them one by one later
   virtual void visit(const Variable *) = 0;

@@ -72,7 +72,8 @@ bool OrderByExecutor::DExecute() {
   PL_ASSERT(input_tiles_.size() > 0);
 
   // Returned tiles must be newly created physical tiles.
-  // NOTE: the schema of these tiles might not match the input tiles when some of the order by columns are not be part of the output schema
+  // NOTE: the schema of these tiles might not match the input tiles when some
+  // of the order by columns are not be part of the output schema
 
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
@@ -88,8 +89,8 @@ bool OrderByExecutor::DExecute() {
         sort_buffer_[num_tuples_returned_ + id].item_pointer.offset;
     // Insert a physical tuple into physical tile
     for (oid_t i = 0; i < output_schema_->GetColumnCount(); i++) {
-      type::Value val =
-          (input_tiles_[source_tile_id]->GetValue(source_tuple_id, output_column_ids_[i]));
+      type::Value val = (input_tiles_[source_tile_id]->GetValue(
+          source_tuple_id, output_column_ids_[i]));
       ptile.get()->SetValue(val, id, i);
     }
   }

@@ -68,7 +68,8 @@
 // void WriteOutput() {
 //   std::ofstream out("outputfile-log.summary");
 //   LOG_INFO("----------------------------------------------------------");
-//   LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, static_cast<int>(state.logging_type),
+//   LOG_INFO("%d %d %d %d %d %d", state.benchmark_type,
+//   static_cast<int>(state.logging_type),
 //            state.nvm_latency, state.pcommit_latency, state.flush_mode,
 //            state.asynchronous_mode);
 
@@ -251,7 +252,8 @@
 //   auto& log_manager = logging::LogManager::GetInstance();
 //   log_manager.SetLogDirectoryName(state.log_file_dir);
 
-//   if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+//   if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode))
+//   {
 //     log_manager.SetLogFileName(
 //         state.log_file_dir + "/" +
 //         logging::WriteAheadFrontendLogger::wal_directory_path);
@@ -310,7 +312,8 @@
 //   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
 //     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
 //     checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
-//     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
+//     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID,
+//     true);
 //     checkpoint_thread.join();
 //   }
 //   // Stop frontend logger if in a valid logging mode
@@ -382,7 +385,8 @@
 //   // Synchronize and finish recovery
 //   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
 //     checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
-//     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
+//     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID,
+//     true);
 //     cp_thread.join();
 //   }
 

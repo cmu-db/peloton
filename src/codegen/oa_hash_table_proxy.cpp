@@ -230,8 +230,8 @@ llvm::Type *OAHashEntryProxy::GetKeyValueListType(CodeGen &codegen) {
       codegen.Int32Type()};
 
   // Construct the type
-  kv_list_type = llvm::StructType::create(codegen.GetContext(), layout,
-                                          kKVListTypeName);
+  kv_list_type =
+      llvm::StructType::create(codegen.GetContext(), layout, kKVListTypeName);
   return kv_list_type;
 }
 

@@ -276,10 +276,9 @@ expression::AbstractExpression* CombinePredicates(
  * the underlying tables
  */
 
-bool ContainsJoinColumns(
-    const std::unordered_set<std::string>& l_group_alias,
-    const std::unordered_set<std::string>& r_group_alias,
-    const expression::AbstractExpression* expr) {
+bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
+                         const std::unordered_set<std::string>& r_group_alias,
+                         const expression::AbstractExpression* expr) {
   if (expr == nullptr) return false;
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
     if (ContainsJoinColumns(l_group_alias, r_group_alias, expr->GetChild(0)) ||

@@ -25,13 +25,13 @@ namespace executor {
 
 class AnalyzeExecutor : public AbstractExecutor {
  public:
-	AnalyzeExecutor(const AnalyzeExecutor &) = delete;
-	AnalyzeExecutor &operator=(const AnalyzeExecutor &) = delete;
-	AnalyzeExecutor(AnalyzeExecutor &&) = delete;
-	AnalyzeExecutor &operator=(AnalyzeExecutor &&) = delete;
+  AnalyzeExecutor(const AnalyzeExecutor &) = delete;
+  AnalyzeExecutor &operator=(const AnalyzeExecutor &) = delete;
+  AnalyzeExecutor(AnalyzeExecutor &&) = delete;
+  AnalyzeExecutor &operator=(AnalyzeExecutor &&) = delete;
 
-	AnalyzeExecutor(const planner::AbstractPlan *node,
-                 ExecutorContext *executor_context);
+  AnalyzeExecutor(const planner::AbstractPlan *node,
+                  ExecutorContext *executor_context);
 
   ~AnalyzeExecutor() {}
 
@@ -41,7 +41,7 @@ class AnalyzeExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-  ExecutorContext* executor_context_;
+  ExecutorContext *executor_context_;
 };
 
 }  // namespace executor

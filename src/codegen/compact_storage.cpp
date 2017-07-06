@@ -22,7 +22,6 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 llvm::Type *CompactStorage::Setup(
     CodeGen &codegen, const std::vector<type::Type::TypeId> &types) {
-
   // Return the constructed type if the compact storage has already been set up
   if (storage_type_ != nullptr) {
     return storage_type_;
@@ -99,14 +98,13 @@ llvm::Value *CompactStorage::StoreValues(
   // Store null bitmaps
   for (uint32_t i = 0; i < numitems; i++) {
     llvm::Value *null_addr =
-         codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, i);
+        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0, i);
     codegen->CreateStore(nulls[i], null_addr);
   }
   auto numentries = storage_format_.size();
   for (uint32_t i = 0; i < numentries; i++) {
-    llvm::Value *addr =
-        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                            numitems+i);
+    llvm::Value *addr = codegen->CreateConstInBoundsGEP2_32(
+        storage_type_, typed_ptr, 0, numitems + i);
     const auto &entry_info = storage_format_[i];
     if (entry_info.is_length)
       codegen->CreateStore(lengths[entry_info.index], addr);
@@ -126,7 +124,6 @@ llvm::Value *CompactStorage::StoreValues(
 llvm::Value *CompactStorage::LoadValues(
     CodeGen &codegen, llvm::Value *ptr,
     std::vector<codegen::Value> &output) const {
-
   const auto numitems = types_.size();
   std::vector<llvm::Value *> vals(numitems), lengths(numitems), nulls(numitems);
 
@@ -137,16 +134,16 @@ llvm::Value *CompactStorage::LoadValues(
   const auto numentries = storage_format_.size();
   for (uint32_t i = 0; i < numentries; i++) {
     const auto &entry_info = storage_format_[i];
-    llvm::Value *entry = codegen->CreateLoad(
-        codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                            numitems+i));
+    llvm::Value *entry =
+        codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+            storage_type_, typed_ptr, 0, numitems + i));
     if (entry_info.is_length) {
       lengths[entry_info.index] = entry;
     } else {
       vals[entry_info.index] = entry;
-      llvm::Value *null = codegen->CreateLoad(
-          codegen->CreateConstInBoundsGEP2_32(storage_type_, typed_ptr, 0,
-                                              entry_info.index));
+      llvm::Value *null =
+          codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+              storage_type_, typed_ptr, 0, entry_info.index));
       nulls[entry_info.index] = null;
     }
   }
@@ -165,9 +162,7 @@ llvm::Value *CompactStorage::LoadValues(
 }
 
 // Return the maximum possible bytes that this compact storage will need
-uint64_t CompactStorage::MaxStorageSize() const {
-  return storage_size_;
-}
+uint64_t CompactStorage::MaxStorageSize() const { return storage_size_; }
 
 }  // namespace codegen
 }  // namespace peloton

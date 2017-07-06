@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/macros.h"
 #include "logging/log_buffer.h"
 
@@ -28,6 +27,5 @@ bool LogBuffer::WriteData(const char *data, size_t len) {
     return true;
   }
 }
-
 }
 }

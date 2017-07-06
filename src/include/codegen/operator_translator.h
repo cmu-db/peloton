@@ -35,7 +35,8 @@ class ConsumerContext;
 // TearDownState().
 //
 // Translators are also allowed to declare helper functions. These functions
-// must be defined and implemented in the DefineAuxiliaryFunctions() method, which is
+// must be defined and implemented in the DefineAuxiliaryFunctions() method,
+// which is
 // guaranteed to be called on all operators before any other method.
 //===----------------------------------------------------------------------===//
 class OperatorTranslator {

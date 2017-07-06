@@ -146,8 +146,8 @@ STATIC_IF_INLINE int list_length(const List *l) { return l ? l->length : 0; }
  * foreach -
  *	  a convenience macro which loops through the list
  */
-#define foreach (cell, l) \
-  for ((cell) = list_head(l); (cell) != NULL; (cell) = lnext(cell))
+#define foreach \
+  (cell, l) for ((cell) = list_head(l); (cell) != NULL; (cell) = lnext(cell))
 
 /*
  * for_each_cell -

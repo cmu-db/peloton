@@ -44,16 +44,16 @@ namespace index {
  * Please refer to src/include/type/types.h for a complete list of comparison
  * operators
  */
-bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
-  for(auto t : expr_types) {
+bool IndexUtil::HasNonOptimizablePredicate(
+    const std::vector<ExpressionType> &expr_types) {
+  for (auto t : expr_types) {
     if (t == ExpressionType::COMPARE_NOTEQUAL ||
-        t == ExpressionType::COMPARE_IN       ||
-        t == ExpressionType::COMPARE_LIKE     ||
+        t == ExpressionType::COMPARE_IN || t == ExpressionType::COMPARE_LIKE ||
         t == ExpressionType::COMPARE_NOTLIKE) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -99,11 +99,11 @@ bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &ex
  * NOTE 3: This function does not guarantee it is ma11oc()-free, since it calls
  * reserve() on value_index_list.
  */
-bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
-                    const std::vector<oid_t> &tuple_column_id_list,
-                    const std::vector<ExpressionType> &expr_list,
-                    std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
-
+bool IndexUtil::FindValueIndex(
+    const IndexMetadata *metadata_p,
+    const std::vector<oid_t> &tuple_column_id_list,
+    const std::vector<ExpressionType> &expr_list,
+    std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
   // Make sure these two are consistent at least on legnth
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
@@ -117,72 +117,70 @@ bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
   // column has not seen any constraint yet
   value_index_list.resize(index_column_count,
                           std::make_pair(INVALID_OID, INVALID_OID));
-  
+
   // This is used to count how many index columns have an "==" predicate
   size_t counter = 0;
 
   // i in the common index for tuple column id, expression and value
-  for(oid_t i = 0;i < tuple_column_id_list.size();i++) {
-    
+  for (oid_t i = 0; i < tuple_column_id_list.size(); i++) {
     // This is only used to retrieve index column id
     oid_t tuple_column_id = tuple_column_id_list[i];
 
     // Map tuple column to index column
-    oid_t index_column_id = \
-      metadata_p->GetTupleToIndexMapping()[tuple_column_id];
-      
+    oid_t index_column_id =
+        metadata_p->GetTupleToIndexMapping()[tuple_column_id];
+
     // Make sure the mapping exists (i.e. the tuple column is in
     // index columns)
     PL_ASSERT(index_column_id != INVALID_OID);
     PL_ASSERT(index_column_id < index_column_count);
-    
+
     ExpressionType e_type = expr_list[i];
-    
+
     // Fill in lower bound and upper bound separately
     // Node that for "==" expression it both defines a lower bound
     // and an upper bound, so we should run if statements twice
     // rather than if ... else ...
 
-    if(DefinesLowerBound(e_type) == true) {
-      if(value_index_list[index_column_id].first == INVALID_OID) {
+    if (DefinesLowerBound(e_type) == true) {
+      if (value_index_list[index_column_id].first == INVALID_OID) {
         // The lower bound is on value i
         value_index_list[index_column_id].first = i;
       }
     }
-    
-    if(DefinesUpperBound(e_type) == true) {
-      if(value_index_list[index_column_id].second == INVALID_OID) {
+
+    if (DefinesUpperBound(e_type) == true) {
+      if (value_index_list[index_column_id].second == INVALID_OID) {
         // The upper bound is on value i
         value_index_list[index_column_id].second = i;
-        
+
         // If all constraints are equal, then everytime we set
         // an upperbound it's time to check
-        
+
         // Since we already know second should not be INVALID_OID
         // just checking whether these two equals suffices
-        if(value_index_list[index_column_id].second == \
-           value_index_list[index_column_id].first) {
+        if (value_index_list[index_column_id].second ==
+            value_index_list[index_column_id].first) {
           PL_ASSERT(value_index_list[index_column_id].second != INVALID_OID);
-          
+
           // We have seen an equality relation
           counter++;
-          
+
           // We could return since we have seen all columns being
           // filled with equality relation
           //
           // Also if this happens then all future expression does not
           // have any effect - since they
-          if(counter == index_column_count) {
+          if (counter == index_column_count) {
             return true;
           }
-        } // if current index key column is an equality
-      } // if the upperbound has not yet been filled
-    } // if current expression defines an upper bound
-  } // for all tuple column ids in the list
-    
+        }  // if current index key column is an equality
+      }    // if the upperbound has not yet been filled
+    }      // if current expression defines an upper bound
+  }        // for all tuple column ids in the list
+
   return false;
 }
-
 
 /*
  * ValuePairComparator() - Compares std::pair<Value, int>
@@ -193,21 +191,20 @@ bool IndexUtil::FindValueIndex(const IndexMetadata *metadata_p,
  */
 bool IndexUtil::ValuePairComparator(const std::pair<type::Value, int> &i,
                                     const std::pair<type::Value, int> &j) {
-
   // If first elements are equal then compare the second element
   if (i.first.CompareEquals(j.first) == type::CMP_TRUE) {
     return i.second < j.second;
   }
-  
+
   // Otherwise compare the first element for "<" or ">"
   return i.first.CompareLessThan(j.first) == type::CMP_TRUE;
 }
 
-void IndexUtil::ConstructIntervals(oid_t leading_column_id,
-                        const std::vector<type::Value> &values,
-                        const std::vector<oid_t> &key_column_ids,
-                        const std::vector<ExpressionType> &expr_types,
-          std::vector<std::pair<type::Value, type::Value>> &intervals) {
+void IndexUtil::ConstructIntervals(
+    oid_t leading_column_id, const std::vector<type::Value> &values,
+    const std::vector<oid_t> &key_column_ids,
+    const std::vector<ExpressionType> &expr_types,
+    std::vector<std::pair<type::Value, type::Value>> &intervals) {
   // Find all contrains of leading column.
   // Equal --> > < num
   // > >= --->  > num
@@ -228,7 +225,7 @@ void IndexUtil::ConstructIntervals(oid_t leading_column_id,
       // *** I could not find BETWEEN expression in types.h so did not add it
       // into the list
       PL_ASSERT(expr_types[i] == ExpressionType::COMPARE_EQUAL);
-      
+
       nums.push_back(std::pair<type::Value, int>(values[i], -1));
       nums.push_back(std::pair<type::Value, int>(values[i], 1));
     }
@@ -236,7 +233,7 @@ void IndexUtil::ConstructIntervals(oid_t leading_column_id,
 
   // Have merged all constraints in a single line, sort this line.
   std::sort(nums.begin(), nums.end(), ValuePairComparator);
-  
+
   // This enforces that there must be at least one constraint on the
   // leading column, if the search is eligible for optimization
   PL_ASSERT(nums.size() > 0);
@@ -256,13 +253,13 @@ void IndexUtil::ConstructIntervals(oid_t leading_column_id,
     if (nums[i].second > 0) {
       if (i + 1 < nums.size() && nums[i + 1].second < 0) {
         // right value
-        intervals.push_back(std::pair<type::Value, type::Value>(
-          cur, nums[i].first));
+        intervals.push_back(
+            std::pair<type::Value, type::Value>(cur, nums[i].first));
         cur = nums[i + 1].first;
       } else if (i + 1 == nums.size()) {
         // Last value while right value
-        intervals.push_back(std::pair<type::Value, type::Value>(
-          cur, nums[i].first));
+        intervals.push_back(
+            std::pair<type::Value, type::Value>(cur, nums[i].first));
         cur = type::ValueFactory::GetNullValueByType(nums[0].first.GetTypeId());
       }
     }
@@ -277,12 +274,11 @@ void IndexUtil::ConstructIntervals(oid_t leading_column_id,
   // Finish invtervals building.
 };
 
-void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
-                         const std::vector<type::Value> &values,
-                         const std::vector<oid_t> &key_column_ids,
-                         const std::vector<ExpressionType> &expr_types,
-                         std::map<oid_t, std::pair<type::Value,
-                             type::Value>> &non_leading_columns) {
+void IndexUtil::FindMaxMinInColumns(
+    oid_t leading_column_id, const std::vector<type::Value> &values,
+    const std::vector<oid_t> &key_column_ids,
+    const std::vector<ExpressionType> &expr_types,
+    std::map<oid_t, std::pair<type::Value, type::Value>> &non_leading_columns) {
   // find extreme nums on each column.
   LOG_TRACE("FindMinMax leading column %d\n", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
@@ -297,11 +293,11 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
       // Value>(Value::GetMaxValue(type),
       //                                            Value::GetMinValue(type));
       // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
-      non_leading_columns.insert(std::pair<oid_t,
-        std::pair<type::Value, type::Value>>(
-          column_id, std::pair<type::Value, type::Value>(
-            type::ValueFactory::GetNullValueByType(type),
-            type::ValueFactory::GetNullValueByType(type))));
+      non_leading_columns.insert(
+          std::pair<oid_t, std::pair<type::Value, type::Value>>(
+              column_id, std::pair<type::Value, type::Value>(
+                             type::ValueFactory::GetNullValueByType(type),
+                             type::ValueFactory::GetNullValueByType(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
@@ -315,8 +311,8 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
                 non_leading_columns[column_id].first.GetInfo().size(),
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].first
-            .CompareGreaterThan(values[i]) == type::CMP_TRUE) {
+          non_leading_columns[column_id].first.CompareGreaterThan(values[i]) ==
+              type::CMP_TRUE) {
         LOG_TRACE("Update min\n");
         non_leading_columns[column_id].first = values[i].Copy();
       }
@@ -328,8 +324,8 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
                 non_leading_columns[column_id].second.GetInfo().c_str(),
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].second.
-            CompareLessThan(values[i]) == type::CMP_TRUE) {
+          non_leading_columns[column_id].second.CompareLessThan(values[i]) ==
+              type::CMP_TRUE) {
         LOG_TRACE("Update max\n");
         non_leading_columns[column_id].second = values[i].Copy();
       }

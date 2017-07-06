@@ -29,12 +29,12 @@ configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
-
   concurrency::EpochManagerFactory::Configure(EpochType::DECENTRALIZED_EPOCH);
 
   std::unique_ptr<std::thread> epoch_thread;
 
-  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  concurrency::EpochManager &epoch_manager =
+      concurrency::EpochManagerFactory::GetInstance();
 
   epoch_manager.RegisterThread(0);
 

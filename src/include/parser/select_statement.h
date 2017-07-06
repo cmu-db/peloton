@@ -34,8 +34,7 @@ struct OrderDescription {
   virtual ~OrderDescription() {
     delete types;
 
-    for (auto expr : *exprs)
-      delete expr;
+    for (auto expr : *exprs) delete expr;
 
     delete exprs;
   }
@@ -73,8 +72,7 @@ struct GroupByDescription {
       for (auto col : *columns) delete col;
       delete columns;
     }
-    if (having != nullptr)
-      delete having;
+    if (having != nullptr) delete having;
   }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
@@ -135,9 +133,7 @@ struct SelectStatement : SQLStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   TableRef* from_table;
   bool select_distinct;

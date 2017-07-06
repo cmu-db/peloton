@@ -74,7 +74,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   std::unique_ptr<expression::AbstractExpression> new_predicate_ = nullptr;
 
   // The original predicate, if it's not nullptr
-  // we need to combine it with the undated predicate 
+  // we need to combine it with the undated predicate
   const expression::AbstractExpression *old_predicate_;
 };
 

@@ -32,7 +32,7 @@ class ValuePeeker {
     PL_ASSERT(value.GetTypeId() == Type::PARAMETER_OFFSET);
     return value.GetAs<int32_t>();
   }
-  
+
   static inline bool PeekBoolean(const Value &value) {
     PL_ASSERT(value.GetTypeId() == Type::BOOLEAN);
     return ((bool)value.GetAs<int8_t>());
@@ -78,7 +78,6 @@ class ValuePeeker {
     return value.GetData();
   }
 };
-
 
 }  // namespace type
 }  // namespace peloton

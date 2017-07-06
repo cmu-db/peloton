@@ -16,12 +16,15 @@
 #include "planner/abstract_plan.h"
 
 namespace peloton {
- std::unordered_map<std::string, QueryType> Statement::query_type_map_ {
-    {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
-    {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"SET", QueryType::QUERY_SET},
-    {"SHOW", QueryType::QUERY_SHOW}, {"INSERT", QueryType::QUERY_INSERT},
-    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE}
-  };
+std::unordered_map<std::string, QueryType> Statement::query_type_map_{
+    {"BEGIN", QueryType::QUERY_BEGIN},
+    {"COMMIT", QueryType::QUERY_COMMIT},
+    {"ROLLBACK", QueryType::QUERY_ROLLBACK},
+    {"SET", QueryType::QUERY_SET},
+    {"SHOW", QueryType::QUERY_SHOW},
+    {"INSERT", QueryType::QUERY_INSERT},
+    {"PREPARE", QueryType::QUERY_PREPARE},
+    {"EXECUTE", QueryType::QUERY_EXECUTE}};
 
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)
@@ -33,20 +36,22 @@ Statement::Statement(const std::string& statement_name,
 Statement::~Statement() {}
 
 void Statement::ParseQueryTypeString(const std::string& query_string,
-                               std::string& query_type_string) {
+                                     std::string& query_type_string) {
   std::stringstream stream(query_string);
   stream >> query_type_string;
   if (query_type_string.back() == ';') {
-    query_type_string = query_type_string.substr(0, query_type_string.length() - 1);
+    query_type_string =
+        query_type_string.substr(0, query_type_string.length() - 1);
   }
   boost::to_upper(query_type_string);
 }
 
-void Statement::MapToQueryType(const std::string& query_type_string, QueryType& query_type) {
+void Statement::MapToQueryType(const std::string& query_type_string,
+                               QueryType& query_type) {
   std::unordered_map<std::string, QueryType>::iterator it;
-  it  = query_type_map_.find(query_type_string);
+  it = query_type_map_.find(query_type_string);
   if (it != query_type_map_.end()) {
-    query_type = it -> second;
+    query_type = it->second;
   } else {
     query_type = QueryType::QUERY_OTHER;
   }

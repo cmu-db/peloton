@@ -78,7 +78,6 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-
 //===--------------------------------------------------------------------===//
 // Postgres Value Types
 // This file defines all the types that we will support
@@ -91,7 +90,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class PostgresValueType {
   INVALID = INVALID_TYPE_ID,
   BOOLEAN = 16,
-  TINYINT = 16, // BOOLEAN is an alias for TINYINT
+  TINYINT = 16,  // BOOLEAN is an alias for TINYINT
   SMALLINT = 21,
   INTEGER = 23,
   VARBINARY = 17,
@@ -403,7 +402,6 @@ std::string EpochTypeToString(EpochType type);
 EpochType StringToEpochType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const EpochType &type);
 
-
 enum class TimestampType {
   INVALID = INVALID_TYPE_ID,
   SNAPSHOT_READ = 1,
@@ -428,7 +426,6 @@ std::string VisibilityTypeToString(VisibilityType type);
 VisibilityType StringToVisibilityType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const VisibilityType &type);
 
-
 enum class VisibilityIdType {
   INVALID = INVALID_TYPE_ID,
   READ_ID = 1,
@@ -444,11 +441,11 @@ std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type);
 
 enum class IsolationLevelType {
   INVALID = INVALID_TYPE_ID,
-  SERIALIZABLE = 1,     // serializable
-  SNAPSHOT = 2,         // snapshot isolation
-  REPEATABLE_READS = 3, // repeatable reads
-  READ_COMMITTED = 4,   // read committed
-  READ_ONLY = 5         // read only
+  SERIALIZABLE = 1,      // serializable
+  SNAPSHOT = 2,          // snapshot isolation
+  REPEATABLE_READS = 3,  // repeatable reads
+  READ_COMMITTED = 4,    // read committed
+  READ_ONLY = 5          // read only
 };
 std::string IsolationLevelTypeToString(IsolationLevelType type);
 IsolationLevelType StringToIsolationLevelType(const std::string &str);
@@ -460,8 +457,8 @@ std::ostream &operator<<(std::ostream &os, const IsolationLevelType &type);
 
 enum class ConflictAvoidanceType {
   INVALID = INVALID_TYPE_ID,
-  WAIT = 1,     // wait-based
-  ABORT = 2,    // abort-based
+  WAIT = 1,   // wait-based
+  ABORT = 2,  // abort-based
 };
 std::string ConflictAvoidanceTypeToString(ConflictAvoidanceType type);
 ConflictAvoidanceType StringToConflictAvoidanceType(const std::string &str);
@@ -671,15 +668,15 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 //===--------------------------------------------------------------------===//
 
 enum class QueryType {
-  QUERY_BEGIN,                // begin query
-  QUERY_COMMIT,               // commit query
-  QUERY_ROLLBACK,             // rollback query
-  QUERY_INSERT,               // insert query
-  QUERY_SET,                  // set query
-  QUERY_SHOW,                 // show query
-  QUERY_PREPARE,	      // prepare query
-  QUERY_EXECUTE, 	      // execute query
-  QUERY_OTHER,                // other queries
+  QUERY_BEGIN,     // begin query
+  QUERY_COMMIT,    // commit query
+  QUERY_ROLLBACK,  // rollback query
+  QUERY_INSERT,    // insert query
+  QUERY_SET,       // set query
+  QUERY_SHOW,      // show query
+  QUERY_PREPARE,   // prepare query
+  QUERY_EXECUTE,   // execute query
+  QUERY_OTHER,     // other queries
 };
 
 //===--------------------------------------------------------------------===//
@@ -879,7 +876,6 @@ std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
-
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
 
@@ -900,7 +896,6 @@ std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
 
-
 enum class CheckpointingType {
   INVALID = INVALID_TYPE_ID,
   OFF = 1,  // turn off GC
@@ -909,8 +904,6 @@ enum class CheckpointingType {
 std::string CheckpointingTypeToString(CheckpointingType type);
 CheckpointingType StringToCheckpointingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
-
-
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -1165,17 +1158,16 @@ class ExprEqualCmp;
 
 // Augment abstract expression with a table alias set
 struct MultiTableExpression {
-  MultiTableExpression(
-      expression::AbstractExpression* i_expr,
-      std::unordered_set<std::string>& i_set)
+  MultiTableExpression(expression::AbstractExpression *i_expr,
+                       std::unordered_set<std::string> &i_set)
       : expr(i_expr), table_alias_set(i_set) {}
-  MultiTableExpression(const MultiTableExpression& mt_expr)
+  MultiTableExpression(const MultiTableExpression &mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
-  expression::AbstractExpression* expr;
+  expression::AbstractExpression *expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
-typedef std::vector<expression::AbstractExpression*> SingleTablePredicates;
+typedef std::vector<expression::AbstractExpression *> SingleTablePredicates;
 typedef std::vector<MultiTableExpression> MultiTablePredicates;
 
 // Mapping of Expression -> Column Offset created by operator

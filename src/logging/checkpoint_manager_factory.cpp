@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "logging/checkpoint_manager_factory.h"
 
 namespace peloton {
 namespace logging {
 
-CheckpointingType CheckpointManagerFactory::checkpointing_type_ = CheckpointingType::ON;
+CheckpointingType CheckpointManagerFactory::checkpointing_type_ =
+    CheckpointingType::ON;
 int CheckpointManagerFactory::checkpointing_thread_count_ = 1;
 
 }  // namespace gc

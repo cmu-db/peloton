@@ -167,7 +167,8 @@ bool HybridScanExecutor::DInit() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
+    throw Exception("Invalid hybrid scan type : " +
+                    HybridScanTypeToString(type_));
   }
 
   return true;
@@ -329,7 +330,8 @@ bool HybridScanExecutor::DExecute() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
+    throw Exception("Invalid hybrid scan type : " +
+                    HybridScanTypeToString(type_));
   }
 }
 

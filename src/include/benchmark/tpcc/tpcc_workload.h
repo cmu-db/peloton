@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/macros.h"
@@ -45,11 +44,12 @@ size_t GenerateWarehouseId(const size_t &thread_id);
 
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<type::Value>> ExecuteRead(executor::AbstractExecutor* executor);
+std::vector<std::vector<type::Value>> ExecuteRead(
+    executor::AbstractExecutor *executor);
 
-void ExecuteUpdate(executor::AbstractExecutor* executor);
+void ExecuteUpdate(executor::AbstractExecutor *executor);
 
-void ExecuteDelete(executor::AbstractExecutor* executor);
+void ExecuteDelete(executor::AbstractExecutor *executor);
 
 void PinToCore(size_t core);
 

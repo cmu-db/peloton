@@ -41,9 +41,8 @@ bool Configuration::IsValid() const {
     LOG_ERROR("Data directory [%s] isn't a directory", data_dir.c_str());
     return false;
   }
-  auto inputs = {GetCustomerPath(), GetLineitemPath(),
-                 GetNationPath(),   GetOrdersPath(),
-                 GetPartSuppPath(), GetPartPath(),
+  auto inputs = {GetCustomerPath(), GetLineitemPath(), GetNationPath(),
+                 GetOrdersPath(),   GetPartSuppPath(), GetPartPath(),
                  GetSupplierPath(), GetRegionPath()};
   for (const auto &input : inputs) {
     struct stat info;

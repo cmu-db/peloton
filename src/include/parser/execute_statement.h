@@ -44,9 +44,7 @@ struct ExecuteStatement : SQLStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   char* name;
   std::vector<expression::AbstractExpression*>* parameters;

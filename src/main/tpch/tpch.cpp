@@ -28,17 +28,18 @@ void Usage(FILE *out) {
           "Command line options : tpch <options> \n"
           "   -h --help              :  print help message \n"
           "   -i --input-dir         :  location of data \n"
-          "   -n --num-runs          :  the number of runs to execute for each query \n"
+          "   -n --num-runs          :  the number of runs to execute for each "
+          "query \n"
           "   -s --suffix            :  input file suffix \n"
           "   -d --dict-encode       :  dictionary encode \n"
-          "   -q --queries           :  comma-separated list of queries to run (i.g., 1,14 for Q1 and Q14) \n");
+          "   -q --queries           :  comma-separated list of queries to run "
+          "(i.g., 1,14 for Q1 and Q14) \n");
 }
 
-static struct option opts[] = {
-    {"input-dir", required_argument, NULL, 'i'},
-    {"dict-encode", optional_argument, NULL, 'd'},
-    {"queries", optional_argument, NULL, 'q'},
-    {NULL, 0, NULL, 0}};
+static struct option opts[] = {{"input-dir", required_argument, NULL, 'i'},
+                               {"dict-encode", optional_argument, NULL, 'd'},
+                               {"queries", optional_argument, NULL, 'q'},
+                               {NULL, 0, NULL, 0}};
 
 void ParseArguments(int argc, char **argv, Configuration &config) {
   config.suffix = "tbl";

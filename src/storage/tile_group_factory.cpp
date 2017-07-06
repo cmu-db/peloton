@@ -30,7 +30,7 @@ TileGroup *TileGroupFactory::GetTileGroup(
     const column_map_type &column_map, int tuple_count) {
   // Allocate the data on appropriate backend
   BackendType backend_type = BackendType::MM;
-      // logging::LoggingUtil::GetBackendType(peloton_logging_mode);
+  // logging::LoggingUtil::GetBackendType(peloton_logging_mode);
 
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,

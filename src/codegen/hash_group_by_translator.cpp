@@ -374,9 +374,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
       If is_valid_row{codegen, valid_row.GetValue()};
-      {
-        context.Consume(row);
-      }
+      { context.Consume(row); }
       is_valid_row.EndIf();
     });
 

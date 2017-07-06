@@ -21,7 +21,6 @@
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
-
 namespace peloton {
 namespace benchmark {
 namespace tpch {
@@ -145,9 +144,16 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ1Plan() const {
            {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_disc"},
            {type::Type::TypeId::BIGINT, kBigIntSize, "count_order"}})};
 
-  DirectMapList dml = {{0, {0, 0}}, {1, {0, 1}}, {2, {1, 0}}, {3, {1, 1}},
-                       {4, {1, 2}}, {5, {1, 3}}, {6, {1, 4}}, {7, {1, 5}},
-                       {8, {1, 6}}, {9, {1, 7}}};
+  DirectMapList dml = {{0, {0, 0}},
+                       {1, {0, 1}},
+                       {2, {1, 0}},
+                       {3, {1, 1}},
+                       {4, {1, 2}},
+                       {5, {1, 3}},
+                       {6, {1, 4}},
+                       {7, {1, 5}},
+                       {8, {1, 6}},
+                       {9, {1, 7}}};
 
   std::unique_ptr<const planner::ProjectInfo> agg_project{
       new planner::ProjectInfo(TargetList{}, std::move(dml))};

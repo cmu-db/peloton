@@ -27,7 +27,7 @@ typedef std::chrono::high_resolution_clock clock_;
 
 typedef std::chrono::time_point<clock_> time_point_;
 
-template<typename ResolutionRatio = std::ratio<1> >
+template <typename ResolutionRatio = std::ratio<1> >
 class Timer : public peloton::Printable {
  public:
   Timer() : elapsed_(0), invocations_(0) {}
@@ -37,10 +37,9 @@ class Timer : public peloton::Printable {
   inline void Stop() {
     end_ = clock_::now();
 
-    double duration =
-        std::chrono::duration_cast<
-            std::chrono::duration<double, ResolutionRatio> >(end_ - begin_)
-            .count();
+    double duration = std::chrono::duration_cast<
+                          std::chrono::duration<double, ResolutionRatio> >(
+                          end_ - begin_).count();
 
     elapsed_ += duration;
     invocations_++;
@@ -77,4 +76,4 @@ class Timer : public peloton::Printable {
   int invocations_;
 };
 
-} // namespace
+}  // namespace

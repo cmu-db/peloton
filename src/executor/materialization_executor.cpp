@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/materialization_executor.h"
 
 #include <memory>
@@ -48,7 +47,7 @@ void MaterializeColumnAtATime(
  */
 MaterializationExecutor::MaterializationExecutor(
     const planner::AbstractPlan *node, ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -75,7 +74,7 @@ void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-    cols_in_physical_tile) {
+        cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -101,7 +100,8 @@ void MaterializationExecutor::MaterializeByTiles(
     storage::Tile *dest_tile) {
   bool row_wise_materialization = true;
 
-  if (peloton_layout_mode == LAYOUT_TYPE_COLUMN) row_wise_materialization = false;
+  if (peloton_layout_mode == LAYOUT_TYPE_COLUMN)
+    row_wise_materialization = false;
 
   // TODO: Make this a parameter
   auto dest_tile_column_count = dest_tile->GetColumnCount();
@@ -163,7 +163,8 @@ void MaterializeRowAtAtATime(
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       old_column_offsets.push_back(old_column_offset);
-      const type::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const type::Type::TypeId old_column_type =
+          old_schema->GetType(old_column_id);
       old_column_types.push_back(old_column_type);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
       old_is_inlineds.push_back(old_is_inlined);
@@ -251,7 +252,8 @@ void MaterializeColumnAtATime(
       // Get old column information
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
-      const type::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const type::Type::TypeId old_column_type =
+          old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
 
       // Old to new column mapping
@@ -278,9 +280,8 @@ void MaterializeColumnAtATime(
       ///////////////////////////
       for (oid_t old_tuple_id : *source_tile) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
-        type::Value value = (
-          old_tile->GetValueFast(base_tuple_id, old_column_offset,
-            old_column_type, old_is_inlined));
+        type::Value value = (old_tile->GetValueFast(
+            base_tuple_id, old_column_offset, old_column_type, old_is_inlined));
 
         LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
@@ -375,7 +376,7 @@ bool MaterializationExecutor::DExecute() {
     physify_flag = node.GetPhysifyFlag();
 
     // Can't physify tile if we don't get a schema
-    if(node.GetSchema() == nullptr){
+    if (node.GetSchema() == nullptr) {
       physify_flag = false;
     }
   }

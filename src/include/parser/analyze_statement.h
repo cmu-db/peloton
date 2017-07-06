@@ -26,7 +26,7 @@ struct AnalyzeStatement : SQLStatement {
   AnalyzeStatement()
       : SQLStatement(StatementType::ANALYZE),
         analyze_table(nullptr),
-        analyze_columns(nullptr) {};
+        analyze_columns(nullptr){};
 
   // TODO: use smart pointer to avoid raw delete.
   virtual ~AnalyzeStatement() {
@@ -60,9 +60,7 @@ struct AnalyzeStatement : SQLStatement {
     return analyze_table->GetDatabaseName();
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   parser::TableRef* analyze_table;
   std::vector<char*>* analyze_columns;

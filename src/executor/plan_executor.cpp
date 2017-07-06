@@ -63,7 +63,7 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   // Use const std::vector<type::Value> &params to make it more elegant for
   // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-        BuildExecutorContext(params, txn));
+      BuildExecutorContext(params, txn));
 
   if (!FLAGS_codegen || !codegen::QueryCompiler::IsSupported(*plan)) {
     // Build the executor tree

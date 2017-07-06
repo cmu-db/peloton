@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "type/types.h"
@@ -118,13 +117,14 @@ bool HashJoinExecutor::DExecute() {
       auto right_tuples = hash_table.find(left_tuple);
 
       if (right_tuples != hash_table.end()) {
-    	// Not yet supported due to assertion in gettomg right_tuples->first
-//    	if (predicate_ != nullptr) {
-//    		auto eval = predicate_->Evaluate(&left_tuple, &right_tuples->first,
-//					executor_context_);
-//			if (eval.IsFalse())
-//				continue;
-//    	}
+        // Not yet supported due to assertion in gettomg right_tuples->first
+        //    	if (predicate_ != nullptr) {
+        //    		auto eval = predicate_->Evaluate(&left_tuple,
+        //    &right_tuples->first,
+        //					executor_context_);
+        //			if (eval.IsFalse())
+        //				continue;
+        //    	}
 
         RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_itr);
 

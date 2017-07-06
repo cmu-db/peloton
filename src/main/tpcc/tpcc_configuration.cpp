@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iomanip>
 #include <algorithm>
 #include <fstream>
@@ -37,25 +36,24 @@ void Usage(FILE *out) {
           "   -g --gc_mode           :  enable garbage collection \n"
           "   -n --gc_backend_count  :  # of gc backends \n"
           "   -l --loader_count      :  # of loaders \n"
-          "   -y --epoch             :  epoch type: centralized or decentralized \n"
-  );
+          "   -y --epoch             :  epoch type: centralized or "
+          "decentralized \n");
 }
 
 static struct option opts[] = {
-    { "index", optional_argument, NULL, 'i' },
-    { "scale_factor", optional_argument, NULL, 'k' },
-    { "duration", optional_argument, NULL, 'd' },
-    { "profile_duration", optional_argument, NULL, 'p' },
-    { "backend_count", optional_argument, NULL, 'b' },
-    { "warehouse_count", optional_argument, NULL, 'w' },
-    { "exp_backoff", no_argument, NULL, 'e' },
-    { "affinity", no_argument, NULL, 'a' },
-    { "gc_mode", no_argument, NULL, 'g' },
-    { "gc_backend_count", optional_argument, NULL, 'n' },
-    { "loader_count", optional_argument, NULL, 'n' },
-    { "epoch", optional_argument, NULL, 'y' },
-    { NULL, 0, NULL, 0 }
-};
+    {"index", optional_argument, NULL, 'i'},
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"duration", optional_argument, NULL, 'd'},
+    {"profile_duration", optional_argument, NULL, 'p'},
+    {"backend_count", optional_argument, NULL, 'b'},
+    {"warehouse_count", optional_argument, NULL, 'w'},
+    {"exp_backoff", no_argument, NULL, 'e'},
+    {"affinity", no_argument, NULL, 'a'},
+    {"gc_mode", no_argument, NULL, 'g'},
+    {"gc_backend_count", optional_argument, NULL, 'n'},
+    {"loader_count", optional_argument, NULL, 'n'},
+    {"epoch", optional_argument, NULL, 'y'},
+    {NULL, 0, NULL, 0}};
 
 void ValidateIndex(const configuration &state) {
   if (state.index != IndexType::BWTREE) {
@@ -118,7 +116,6 @@ void ValidateGCBackendCount(const configuration &state) {
   LOG_TRACE("%s : %d", "gc_backend_count", state.gc_backend_count);
 }
 
-
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.index = IndexType::BWTREE;
@@ -133,7 +130,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.gc_mode = false;
   state.gc_backend_count = 1;
   state.loader_count = 1;
-
 
   // Parse args
   while (1) {
@@ -226,8 +222,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
 }
 
-
-
 void WriteOutput() {
   std::ofstream out("outputfile.summary");
 
@@ -237,12 +231,8 @@ void WriteOutput() {
   }
 
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d :: %lf %lf %d",
-           state.scale_factor,
-           state.backend_count,
-           state.warehouse_count,
-           state.throughput,
-           state.abort_rate,
+  LOG_INFO("%lf %d %d :: %lf %lf %d", state.scale_factor, state.backend_count,
+           state.warehouse_count, state.throughput, state.abort_rate,
            total_profile_memory);
 
   out << state.scale_factor << " ";
@@ -254,9 +244,9 @@ void WriteOutput() {
 
   for (size_t round_id = 0; round_id < state.profile_throughput.size();
        ++round_id) {
-    out << "[" << std::setw(3) << std::left
-        << state.profile_duration * round_id << " - " << std::setw(3)
-        << std::left << state.profile_duration * (round_id + 1)
+    out << "[" << std::setw(3) << std::left << state.profile_duration * round_id
+        << " - " << std::setw(3) << std::left
+        << state.profile_duration * (round_id + 1)
         << " s]: " << state.profile_throughput[round_id] << " "
         << state.profile_abort_rate[round_id] << " "
         << state.profile_memory[round_id] << "\n";
@@ -264,7 +254,6 @@ void WriteOutput() {
   out.flush();
   out.close();
 }
-
 
 }  // namespace tpcc
 }  // namespace benchmark

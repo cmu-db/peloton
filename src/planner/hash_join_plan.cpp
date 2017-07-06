@@ -36,15 +36,15 @@ HashJoinPlan::HashJoinPlan(
     std::unique_ptr<const expression::AbstractExpression> &&predicate,
     std::unique_ptr<const ProjectInfo> &&proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema,
-    const std::vector<oid_t>
-        &outer_hashkeys)  // outer_hashkeys is added for IN-subquery
+    const std::vector<oid_t> &
+        outer_hashkeys)  // outer_hashkeys is added for IN-subquery
     : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                        proj_schema) {
   outer_column_ids_ = outer_hashkeys;  // added for IN-subquery
 }
 
-void HashJoinPlan::HandleSubplanBinding(
-    bool is_left, const BindingContext &input) {
+void HashJoinPlan::HandleSubplanBinding(bool is_left,
+                                        const BindingContext &input) {
   auto &keys = is_left ? left_hash_keys_ : right_hash_keys_;
   for (auto &key : keys) {
     auto *key_exp = const_cast<expression::AbstractExpression *>(key.get());

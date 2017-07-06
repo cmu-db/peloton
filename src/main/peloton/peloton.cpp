@@ -19,7 +19,6 @@
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
-
   // Parse the command line flags using GFLAGS
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
@@ -41,14 +40,13 @@ int main(int argc, char *argv[]) {
 
     // Create LibeventServer object
     peloton::wire::LibeventServer libeventserver;
-    
-    // Start Libevent Server    
+
+    // Start Libevent Server
     libeventserver.StartServer();
 
     // Teardown
     peloton::PelotonInit::Shutdown();
-  }
-  catch(peloton::ConnectionException exception){
+  } catch (peloton::ConnectionException exception) {
     // Nothing to do here!
   }
 

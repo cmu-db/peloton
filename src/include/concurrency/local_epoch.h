@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <thread>
@@ -27,11 +26,10 @@ namespace peloton {
 namespace concurrency {
 
 struct Epoch {
-  Epoch(const uint64_t epoch_id, const size_t txn_count):
-    epoch_id_(epoch_id),
-    txn_count_(txn_count) {}
+  Epoch(const uint64_t epoch_id, const size_t txn_count)
+      : epoch_id_(epoch_id), txn_count_(txn_count) {}
 
-  Epoch(const Epoch& epoch) {
+  Epoch(const Epoch &epoch) {
     this->epoch_id_ = epoch.epoch_id_;
     this->txn_count_ = epoch.txn_count_;
   }
@@ -41,35 +39,34 @@ struct Epoch {
 };
 
 struct EpochCompare {
-  bool operator()(const std::shared_ptr<Epoch> &lhs, const std::shared_ptr<Epoch> &rhs) {
+  bool operator()(const std::shared_ptr<Epoch> &lhs,
+                  const std::shared_ptr<Epoch> &rhs) {
     return lhs->epoch_id_ > rhs->epoch_id_;
   }
 };
 
 class LocalEpoch {
-
-public:
-  LocalEpoch(const size_t thread_id) : 
-    epoch_id_lower_bound_(UINT64_MAX), 
-    thread_id_(thread_id) {}
+ public:
+  LocalEpoch(const size_t thread_id)
+      : epoch_id_lower_bound_(UINT64_MAX), thread_id_(thread_id) {}
 
   bool EnterEpoch(const eid_t epoch_id, const TimestampType ts_type);
 
   void ExitEpoch(const eid_t epoch_id);
-  
+
   uint64_t GetExpiredEpochId(const uint64_t current_epoch_id);
 
-private:
+ private:
   Spinlock epoch_lock_;
-  
+
   uint64_t epoch_id_lower_bound_;
 
   size_t thread_id_;
-  
-  std::priority_queue<std::shared_ptr<Epoch>, std::vector<std::shared_ptr<Epoch>>, EpochCompare> epoch_queue_;
+
+  std::priority_queue<std::shared_ptr<Epoch>,
+                      std::vector<std::shared_ptr<Epoch>>,
+                      EpochCompare> epoch_queue_;
   std::unordered_map<uint64_t, std::shared_ptr<Epoch>> epoch_map_;
 };
-
 }
 }
-

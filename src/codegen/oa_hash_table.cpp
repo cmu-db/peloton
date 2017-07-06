@@ -46,7 +46,7 @@ OAHashTable::OAHashTable(CodeGen &codegen,
 
   // Configure the size of each HashEntry
   hash_entry_size_ = sizeof(utils::OAHashTable::HashEntry) +
-      key_storage_.MaxStorageSize() + value_size_;
+                     key_storage_.MaxStorageSize() + value_size_;
 }
 
 llvm::Value *OAHashTable::HashKey(

@@ -57,7 +57,6 @@ class PopulateIndexPlan : public AbstractPlan {
   storage::DataTable *target_table_ = nullptr;
   /** @brief Column Ids. */
   std::vector<oid_t> column_ids_;
-
 };
 }
 }

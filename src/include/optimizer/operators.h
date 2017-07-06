@@ -172,10 +172,10 @@ class LogicalDelete : public OperatorNode<LogicalDelete> {
 class LogicalUpdate : public OperatorNode<LogicalUpdate> {
  public:
   static Operator make(storage::DataTable *target_table,
-                       std::vector<peloton::parser::UpdateClause*> updates);
+                       std::vector<peloton::parser::UpdateClause *> updates);
 
   storage::DataTable *target_table;
-  std::vector<peloton::parser::UpdateClause*> updates;
+  std::vector<peloton::parser::UpdateClause *> updates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -256,7 +256,8 @@ class PhysicalFilter : public OperatorNode<PhysicalFilter> {
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -265,7 +266,8 @@ class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
 class PhysicalLeftNLJoin : public OperatorNode<PhysicalLeftNLJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -274,7 +276,8 @@ class PhysicalLeftNLJoin : public OperatorNode<PhysicalLeftNLJoin> {
 class PhysicalRightNLJoin : public OperatorNode<PhysicalRightNLJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -283,7 +286,8 @@ class PhysicalRightNLJoin : public OperatorNode<PhysicalRightNLJoin> {
 class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -292,7 +296,8 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -301,7 +306,8 @@ class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
 class PhysicalLeftHashJoin : public OperatorNode<PhysicalLeftHashJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -310,7 +316,8 @@ class PhysicalLeftHashJoin : public OperatorNode<PhysicalLeftHashJoin> {
 class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -319,7 +326,8 @@ class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
 class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
  public:
   std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(
+      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//
@@ -352,10 +360,10 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
   static Operator make(storage::DataTable *target_table,
-  std::vector<peloton::parser::UpdateClause*> updates);
+                       std::vector<peloton::parser::UpdateClause *> updates);
 
   storage::DataTable *target_table;
-  std::vector<peloton::parser::UpdateClause*> updates;
+  std::vector<peloton::parser::UpdateClause *> updates;
 };
 
 //===--------------------------------------------------------------------===//

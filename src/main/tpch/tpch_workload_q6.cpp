@@ -22,7 +22,6 @@
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
-
 namespace peloton {
 namespace benchmark {
 namespace tpch {
@@ -54,44 +53,46 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   auto discount_gt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_GREATERTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 6),
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+                                               6),
           new expression::OperatorExpression(
               ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
-              new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.07)),
-              new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.01))
-          )
-      )
-  };
+              new expression::ConstantValueExpression(
+                  type::ValueFactory::GetDecimalValue(0.07)),
+              new expression::ConstantValueExpression(
+                  type::ValueFactory::GetDecimalValue(0.01))))};
 
   auto discount_lt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 6),
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+                                               6),
           new expression::OperatorExpression(
               ExpressionType::OPERATOR_PLUS, type::Type::TypeId::DECIMAL,
-              new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.07)),
-              new expression::ConstantValueExpression(type::ValueFactory::GetDecimalValue(0.01))
-          )
-      )
-  };
+              new expression::ConstantValueExpression(
+                  type::ValueFactory::GetDecimalValue(0.07)),
+              new expression::ConstantValueExpression(
+                  type::ValueFactory::GetDecimalValue(0.01))))};
 
   auto quantity_lt = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 4),
-          new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(24))
-      )
-  };
+          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0,
+                                               4),
+          new expression::ConstantValueExpression(
+              type::ValueFactory::GetIntegerValue(24)))};
 
   auto lineitem_pred = std::unique_ptr<expression::AbstractExpression>{
-      new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
-          quantity_lt.release(),
-          new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
-              new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND, shipdate_gte.release(), shipdate_lt.release()),
-              new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND, discount_gt.release(), discount_lt.release())
-          )
-      )
-  };
+      new expression::ConjunctionExpression(
+          ExpressionType::CONJUNCTION_AND, quantity_lt.release(),
+          new expression::ConjunctionExpression(
+              ExpressionType::CONJUNCTION_AND,
+              new expression::ConjunctionExpression(
+                  ExpressionType::CONJUNCTION_AND, shipdate_gte.release(),
+                  shipdate_lt.release()),
+              new expression::ConjunctionExpression(
+                  ExpressionType::CONJUNCTION_AND, discount_gt.release(),
+                  discount_lt.release())))};
 
   //////////////////////////////////////////////////////////////////////////////
   /// THE SCAN PLAN
@@ -99,7 +100,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
 
   // Lineitem scan
   auto lineitem_scan = std::unique_ptr<planner::AbstractPlan>{
-      new planner::SeqScanPlan(&lineitem, lineitem_pred.release(), {5,6})};
+      new planner::SeqScanPlan(&lineitem, lineitem_pred.release(), {5, 6})};
 
   //////////////////////////////////////////////////////////////////////////////
   /// THE GLOBAL AGGREGATION
@@ -110,8 +111,10 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression(
           ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 0),
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 1))};
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+                                               0),
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+                                               1))};
   revenue_agg.agg_ai.type = type::Type::TypeId::DECIMAL;
 
   auto output_schema =
@@ -123,10 +126,10 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
   std::unique_ptr<const planner::ProjectInfo> agg_project{
       new planner::ProjectInfo(TargetList{}, std::move(dml))};
   auto agg_terms = {revenue_agg};
-  auto aggregation_plan = std::unique_ptr<planner::AbstractPlan>{
-      new planner::AggregatePlan(std::move(agg_project), nullptr,
-                                 std::move(agg_terms), {}, output_schema,
-                                 AggregateType::HASH)};
+  auto aggregation_plan =
+      std::unique_ptr<planner::AbstractPlan>{new planner::AggregatePlan(
+          std::move(agg_project), nullptr, std::move(agg_terms), {},
+          output_schema, AggregateType::HASH)};
 
   aggregation_plan->AddChild(std::move(lineitem_scan));
 

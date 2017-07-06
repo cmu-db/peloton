@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "concurrency/decentralized_epoch_manager.h"
@@ -22,7 +21,6 @@ class EpochManagerFactory {
  public:
   static EpochManager& GetInstance() {
     switch (epoch_) {
-
       case EpochType::DECENTRALIZED_EPOCH:
         return DecentralizedEpochManager::GetInstance();
 
@@ -31,18 +29,12 @@ class EpochManagerFactory {
     }
   }
 
-  static void Configure(EpochType epoch) {
-    epoch_ = epoch;
-  }
+  static void Configure(EpochType epoch) { epoch_ = epoch; }
 
-  static EpochType GetEpochType() {
-    return epoch_;
-  }
+  static EpochType GetEpochType() { return epoch_; }
 
  private:
   static EpochType epoch_;
-
 };
-
 }
 }

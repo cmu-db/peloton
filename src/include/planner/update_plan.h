@@ -22,87 +22,87 @@
 
 namespace peloton {
 
-  namespace expression {
-    class Expression;
+namespace expression {
+class Expression;
+}
+
+namespace storage {
+class DataTable;
+}
+
+namespace planner {
+
+class UpdatePlan : public AbstractPlan {
+ public:
+  UpdatePlan() = delete;
+
+  explicit UpdatePlan(storage::DataTable *table,
+                      std::unique_ptr<const planner::ProjectInfo> project_info);
+
+  // FIXME: Should remove when the simple_optimizer tears down
+  explicit UpdatePlan(const parser::UpdateStatement *parse_tree);
+
+  // FIXME: Should remove when the simple_optimizer tears down
+  explicit UpdatePlan(const parser::UpdateStatement *parse_tree,
+                      std::vector<oid_t> &key_column_ids,
+                      std::vector<ExpressionType> &expr_types,
+                      std::vector<type::Value> &values, oid_t &index_id);
+
+  inline ~UpdatePlan() {
+    if (where_ != nullptr) {
+      delete (where_);
+    }
+
+    for (size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
+      delete (updates_[update_itr]);
+    }
   }
 
-  namespace storage {
-    class DataTable;
+  const planner::ProjectInfo *GetProjectInfo() const {
+    return project_info_.get();
   }
 
-  namespace planner {
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::UPDATE; }
 
-    class UpdatePlan : public AbstractPlan {
-    public:
-      UpdatePlan() = delete;
+  storage::DataTable *GetTable() const { return target_table_; }
 
-      explicit UpdatePlan(storage::DataTable *table,
-                          std::unique_ptr<const planner::ProjectInfo> project_info);
+  const std::string GetInfo() const { return "UpdatePlan"; }
 
-      // FIXME: Should remove when the simple_optimizer tears down
-      explicit UpdatePlan(const parser::UpdateStatement *parse_tree);
+  void SetParameterValues(std::vector<type::Value> *values);
 
-      // FIXME: Should remove when the simple_optimizer tears down
-      explicit UpdatePlan(const parser::UpdateStatement *parse_tree,
-                          std::vector<oid_t> &key_column_ids,
-                          std::vector<ExpressionType> &expr_types,
-                          std::vector<type::Value> &values, oid_t &index_id);
+  bool GetUpdatePrimaryKey() const { return update_primary_key_; }
 
-      inline ~UpdatePlan() {
-        if (where_ != nullptr) {
-          delete (where_);
-        }
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(
+        new UpdatePlan(target_table_, std::move(project_info_->Copy())));
+  }
 
-        for (size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
-          delete (updates_[update_itr]);
-        }
-      }
+ private:
+  // Initialize private members and construct colum_ids given a UpdateStatement.
+  void BuildInitialUpdatePlan(
+      const parser::UpdateStatement *parse_tree, std::vector<oid_t> &columns,
+      concurrency::Transaction *consistentTxn = nullptr);
 
-      const planner::ProjectInfo *GetProjectInfo() const {
-        return project_info_.get();
-      }
+  /** @brief Target table. */
+  storage::DataTable *target_table_;
 
-      inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::UPDATE; }
+  /** @brief Projection info */
+  std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-      storage::DataTable *GetTable() const { return target_table_; }
+  // FIXME: Should remove when the simple_optimizer tears down
+  // Vector of Update clauses
+  std::vector<parser::UpdateClause *> updates_;
 
-      const std::string GetInfo() const { return "UpdatePlan"; }
+  // FIXME: Should remove when the simple_optimizer tears down
+  // The where condition
+  expression::AbstractExpression *where_;
 
-      void SetParameterValues(std::vector<type::Value> *values);
+  // Whether update primary key
+  bool update_primary_key_;
 
-      bool GetUpdatePrimaryKey() const { return update_primary_key_; }
+ private:
+  DISALLOW_COPY_AND_MOVE(UpdatePlan);
+};
 
-      std::unique_ptr<AbstractPlan> Copy() const {
-        return std::unique_ptr<AbstractPlan>(
-            new UpdatePlan(target_table_, std::move(project_info_->Copy())));
-      }
-
-    private:
-      // Initialize private members and construct colum_ids given a UpdateStatement.
-      void BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
-                                  std::vector<oid_t> &columns,
-                                  concurrency::Transaction *consistentTxn = nullptr);
-
-      /** @brief Target table. */
-      storage::DataTable *target_table_;
-
-      /** @brief Projection info */
-      std::unique_ptr<const planner::ProjectInfo> project_info_;
-
-      // FIXME: Should remove when the simple_optimizer tears down
-      // Vector of Update clauses
-      std::vector<parser::UpdateClause *> updates_;
-
-      // FIXME: Should remove when the simple_optimizer tears down
-      // The where condition
-      expression::AbstractExpression *where_;
-
-      // Whether update primary key
-      bool update_primary_key_;
-
-    private:
-      DISALLOW_COPY_AND_MOVE(UpdatePlan);
-    };
-
-  }  // namespace planner
+}  // namespace planner
 }  // namespace peloton

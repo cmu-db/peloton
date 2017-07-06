@@ -51,11 +51,9 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Insert and query from that table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
+                                  tuple_descriptor, rows_affected);
   TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
+                                  tuple_descriptor, rows_affected);
   EXPECT_EQ(result[0].second[0], '1');
 
   // Drop the table
@@ -65,8 +63,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   // Query from the dropped table
   result.clear();
   TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
+                                  tuple_descriptor, rows_affected);
   EXPECT_EQ(result.empty(), true);
 
   // Check the table does not exist

@@ -1339,13 +1339,15 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
     predicates = std::unique_ptr<const peloton::expression::AbstractExpression>(
         select_stmt->where_clause->Copy());
 
-  auto left_hash_key = peloton::expression::ExpressionUtil::
-      ConvertToTupleValueExpression(left_schema, left_key_col_name);
+  auto left_hash_key =
+      peloton::expression::ExpressionUtil::ConvertToTupleValueExpression(
+          left_schema, left_key_col_name);
   std::vector<std::unique_ptr<const expression::AbstractExpression>> lhash_keys;
   lhash_keys.emplace_back(left_hash_key);
 
-  auto right_hash_key = peloton::expression::ExpressionUtil::
-      ConvertToTupleValueExpression(right_schema, right_key_col_name);
+  auto right_hash_key =
+      peloton::expression::ExpressionUtil::ConvertToTupleValueExpression(
+          right_schema, right_key_col_name);
   std::vector<std::unique_ptr<const expression::AbstractExpression>> rhash_keys;
   rhash_keys.emplace_back(right_hash_key);
 

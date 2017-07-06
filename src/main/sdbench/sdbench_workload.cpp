@@ -109,8 +109,9 @@ std::vector<std::vector<oid_t>> predicate_distribution;
 
 // Bitmap for already used predicate
 #define MAX_PREDICATE_ATTR 10
-bool predicate_used[MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR]
-                   [MAX_PREDICATE_ATTR] = {};
+bool
+    predicate_used[MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR] =
+        {};
 
 std::size_t predicate_distribution_size = 0;
 
@@ -237,8 +238,7 @@ static void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
   // Go over all key_attrs
   for (auto key_attr : key_attrs) {
     key_column_ids.push_back(key_attr);
-    expr_types.push_back(
-        ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+    expr_types.push_back(ExpressionType::COMPARE_GREATERTHANOREQUALTO);
     values.push_back(type::ValueFactory::GetIntegerValue(tuple_start_offset));
 
     key_column_ids.push_back(key_attr);

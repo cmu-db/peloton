@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -76,9 +74,7 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-  
 bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   concurrency::Transaction *txn = txn_manager.BeginTransaction(thread_id);
@@ -103,9 +99,8 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
   std::vector<expression::AbstractExpression *> runtime_keys;
-  
-  for (int i = 0; i < state.operation_count; i++) {
 
+  for (int i = 0; i < state.operation_count; i++) {
     auto rng_val = rng.NextUniform();
 
     if (rng_val < state.update_ratio) {
@@ -114,14 +109,15 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<type::Value > values;
+      std::vector<type::Value> values;
 
       auto lookup_key = zipf.GetNextNumber();
 
       values.push_back(type::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
-      auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-    
+      auto ycsb_pkey_index =
+          user_table->GetIndexWithOid(user_table_pkey_index_oid);
+
       planner::IndexScanPlan::IndexScanDesc index_scan_desc(
           ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
 
@@ -142,27 +138,28 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
       for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
         if (col_itr == 1) {
           if (state.string_mode == true) {
-
             std::string update_raw_value(100, 'a');
-            type::Value update_val = type::ValueFactory::GetVarcharValue(update_raw_value).Copy();
+            type::Value update_val =
+                type::ValueFactory::GetVarcharValue(update_raw_value).Copy();
 
             planner::DerivedAttribute attr;
-            attr.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
+            attr.expr =
+                expression::ExpressionUtil::ConstantValueFactory(update_val);
             attr.attribute_info.type = attr.expr->GetValueType();
             target_list.emplace_back(col_itr, attr);
 
           } else {
-
             int update_raw_value = 1;
-            type::Value update_val = type::ValueFactory::GetIntegerValue(update_raw_value).Copy();
+            type::Value update_val =
+                type::ValueFactory::GetIntegerValue(update_raw_value).Copy();
 
             planner::DerivedAttribute attr;
-            attr.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
+            attr.expr =
+                expression::ExpressionUtil::ConstantValueFactory(update_val);
             attr.attribute_info.type = attr.expr->GetValueType();
             target_list.emplace_back(col_itr, attr);
           }
-        }
-        else {
+        } else {
           direct_map_list.emplace_back(col_itr,
                                        std::pair<oid_t, oid_t>(0, col_itr));
         }
@@ -190,14 +187,15 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<type::Value > values;
+      std::vector<type::Value> values;
 
       auto lookup_key = zipf.GetNextNumber();
 
       values.push_back(type::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
-      auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-    
+      auto ycsb_pkey_index =
+          user_table->GetIndexWithOid(user_table_pkey_index_oid);
+
       planner::IndexScanPlan::IndexScanDesc index_scan_desc(
           ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
 
@@ -211,8 +209,6 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
       executor::IndexScanExecutor index_scan_executor(&index_scan_node,
                                                       context.get());
 
-      
-      
       ExecuteRead(&index_scan_executor);
 
       if (txn->GetResult() != ResultType::SUCCESS) {
@@ -229,15 +225,13 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
 
   if (result == ResultType::SUCCESS) {
     return true;
-    
+
   } else {
     // transaction failed commitment.
-    PL_ASSERT(result == ResultType::ABORTED ||
-           result == ResultType::FAILURE);
+    PL_ASSERT(result == ResultType::ABORTED || result == ResultType::FAILURE);
     return false;
   }
 }
-
 }
 }
 }

@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef PG_QUERY_H
 #define PG_QUERY_H
 
 #include "pg_list.h"
 
 typedef struct {
-	char* message; // exception message
-	char* funcname; // source function of exception (e.g. SearchSysCache)
-	char* filename; // source of exception (e.g. parse.l)
-	int lineno; // source of exception (e.g. 104)
-	int cursorpos; // char in query at which exception occurred
-	char* context; // additional context (optional, can be NULL)
+  char* message;   // exception message
+  char* funcname;  // source function of exception (e.g. SearchSysCache)
+  char* filename;  // source of exception (e.g. parse.l)
+  int lineno;      // source of exception (e.g. 104)
+  int cursorpos;   // char in query at which exception occurred
+  char* context;   // additional context (optional, can be NULL)
 } PgQueryError;
 
 typedef struct {
@@ -48,7 +47,7 @@ typedef struct {
 } PgQueryNormalizeResult;
 
 typedef struct {
-  List *tree;
+  List* tree;
   char* stderr_buffer;
   PgQueryError* error;
 } PgQueryInternalParsetreeAndError;
@@ -71,9 +70,9 @@ void pg_query_free_parse_result(PgQueryInternalParsetreeAndError result);
 void pg_query_free_plpgsql_parse_result(PgQueryPlpgsqlParseResult result);
 void pg_query_free_fingerprint_result(PgQueryFingerprintResult result);
 
-
 // Deprecated APIs below
-void pg_query_init(void); // Deprecated as of 9.5-1.4.1, this is now run automatically as needed
+void pg_query_init(void);  // Deprecated as of 9.5-1.4.1, this is now run
+                           // automatically as needed
 
 #ifdef __cplusplus
 }

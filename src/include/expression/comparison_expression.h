@@ -35,10 +35,8 @@ class ComparisonExpression : public AbstractExpression {
                        AbstractExpression *right)
       : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
 
-  type::Value Evaluate(
-      const AbstractTuple *tuple1,
-      const AbstractTuple *tuple2,
-      executor::ExecutorContext *context) const override {
+  type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                       executor::ExecutorContext *context) const override {
     PL_ASSERT(children_.size() == 2);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
@@ -60,8 +58,7 @@ class ComparisonExpression : public AbstractExpression {
       case (ExpressionType::COMPARE_DISTINCT_FROM): {
         if (vl.IsNull() && vr.IsNull()) {
           return type::ValueFactory::GetBooleanValue(false);
-        }
-        else if (!vl.IsNull() && !vr.IsNull()) {
+        } else if (!vl.IsNull() && !vr.IsNull()) {
           return type::ValueFactory::GetBooleanValue(vl.CompareNotEquals(vr));
         }
         return type::ValueFactory::GetBooleanValue(true);

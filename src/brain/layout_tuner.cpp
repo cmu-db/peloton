@@ -82,7 +82,6 @@ std::string LayoutTuner::GetColumnMapInfo(const column_map_type& column_map) {
 }
 
 Sample GetClustererSample(const Sample& sample, oid_t column_count) {
-
   // Copy over the sample
   Sample clusterer_sample = sample;
 
@@ -90,16 +89,13 @@ Sample GetClustererSample(const Sample& sample, oid_t column_count) {
   auto& columns_accessed = sample.GetColumnsAccessed();
   std::vector<double> columns_accessed_bitmap;
 
-  for(oid_t column_itr = 0;
-      column_itr < column_count;
-      column_itr++){
-
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // Append column into sample
-    auto column_found = std::find(columns_accessed.begin(),
-                                  columns_accessed.end(),
-                                  column_itr) != columns_accessed.end();
+    auto column_found =
+        std::find(columns_accessed.begin(), columns_accessed.end(),
+                  column_itr) != columns_accessed.end();
 
-    if(column_found == true) {
+    if (column_found == true) {
       columns_accessed_bitmap.push_back(1);
     } else {
       columns_accessed_bitmap.push_back(0);

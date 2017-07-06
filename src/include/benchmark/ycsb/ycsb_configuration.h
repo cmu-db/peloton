@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -36,7 +35,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // index type
   IndexType index;
 
@@ -93,7 +91,6 @@ class configuration {
   std::vector<double> profile_abort_rate;
 
   std::vector<int> profile_memory;
-
 };
 
 extern configuration state;

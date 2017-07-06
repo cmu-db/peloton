@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdlib>
@@ -33,24 +32,24 @@ namespace peloton {
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 class LockFreeArray {
  public:
-
   LockFreeArray();
   ~LockFreeArray();
 
   // Update a item
-  bool Update(const std::size_t &offset, ValueType value);
+  bool Update(const std::size_t& offset, ValueType value);
 
   // Append an item
   bool Append(ValueType value);
 
   // Get a item
-  ValueType Find(const std::size_t &offset) const;
+  ValueType Find(const std::size_t& offset) const;
 
   // Get a valid item
-  ValueType FindValid(const std::size_t &offset, const ValueType& invalid_value) const;
+  ValueType FindValid(const std::size_t& offset,
+                      const ValueType& invalid_value) const;
 
   // Delete key from the lock_free_array
-  bool Erase(const std::size_t &offset, const ValueType& invalid_value);
+  bool Erase(const std::size_t& offset, const ValueType& invalid_value);
 
   // Returns item count in the lock_free_array
   size_t GetSize() const;
@@ -65,11 +64,10 @@ class LockFreeArray {
   bool Contains(const ValueType& value);
 
  private:
-
   // lock free array type
   typedef std::array<ValueType, LOCK_FREE_ARRAY_MAX_SIZE> lock_free_array_t;
 
-  std::atomic<std::size_t> lock_free_array_offset {0};
+  std::atomic<std::size_t> lock_free_array_offset{0};
 
   // lock free array
   std::unique_ptr<lock_free_array_t> lock_free_array;

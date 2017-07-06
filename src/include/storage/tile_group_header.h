@@ -61,10 +61,13 @@ class TileGroup;
  *
  *  STATUS:
  *  ===================
- *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty version
+ *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty
+ *version
  *  TxnID != INITIAL_TXN_ID, BeginTS != MAX_CID --> to-be-updated old version
- *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> to-be-installed new version
- *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID --> to-be-installed deleted version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID -->
+ *to-be-installed new version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID -->
+ *to-be-installed deleted version
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)

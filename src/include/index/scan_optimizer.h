@@ -312,7 +312,6 @@ class ConjunctionScanPredicate {
   inline void SetTupleColumnValueForHighKey(
       Index *index_p, const std::vector<oid_t> &column_id_list,
       const std::vector<type::Value> &new_value_list) {
-
     SetTupleColumnValueForKey(index_p, column_id_list, new_value_list,
                               high_key_p_);
 
@@ -384,8 +383,8 @@ class ConjunctionScanPredicate {
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
-    is_point_query_ = IndexUtil::FindValueIndex(metadata_p, tuple_column_id_list,
-                                     expr_list, value_index_list_);
+    is_point_query_ = IndexUtil::FindValueIndex(
+        metadata_p, tuple_column_id_list, expr_list, value_index_list_);
 
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
@@ -474,7 +473,6 @@ class ConjunctionScanPredicate {
 
     // For each item <key column index, value list index> do the binding job
     for (auto &bind_item : key_bind_list) {
-
       LOG_TRACE("bind first: %d; second: %d", bind_item.first,
                 bind_item.second);
       LOG_TRACE("bind value: %s",

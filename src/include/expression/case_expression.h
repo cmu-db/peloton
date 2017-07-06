@@ -26,18 +26,16 @@ namespace expression {
 class CaseExpression : public AbstractExpression {
  public:
   using AbsExprPtr = std::unique_ptr<AbstractExpression>;
-  using WhenClause = std::pair<AbsExprPtr,AbsExprPtr>;
+  using WhenClause = std::pair<AbsExprPtr, AbsExprPtr>;
 
   CaseExpression(type::Type::TypeId type_id,
-                 std::vector<WhenClause> &when_clauses,
-                 AbsExprPtr default_expr)
+                 std::vector<WhenClause> &when_clauses, AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
         clauses_(std::move(when_clauses)),
         default_expr_(std::move(default_expr)) {}
 
   CaseExpression(type::Type::TypeId type_id, AbsExprPtr argument,
-                 std::vector<WhenClause> &when_clauses,
-                 AbsExprPtr default_expr)
+                 std::vector<WhenClause> &when_clauses, AbsExprPtr default_expr)
       : AbstractExpression(ExpressionType::OPERATOR_CASE_EXPR, type_id),
         clauses_(std::move(when_clauses)),
         default_expr_(std::move(default_expr)) {
@@ -48,7 +46,7 @@ class CaseExpression : public AbstractExpression {
   }
 
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const override {
+                       executor::ExecutorContext *context) const override {
     for (auto &clause : clauses_) {
       auto result = clause.first->Evaluate(tuple1, tuple2, context);
       if (result.IsTrue())
@@ -61,14 +59,14 @@ class CaseExpression : public AbstractExpression {
     }
   }
 
-  AbstractExpression* Copy() const override { 
+  AbstractExpression *Copy() const override {
     std::vector<WhenClause> copies;
     for (auto &clause : clauses_)
       copies.push_back(WhenClause(AbsExprPtr(clause.first->Copy()),
                                   AbsExprPtr(clause.second->Copy())));
-	return new CaseExpression(return_value_type_, copies,
-                              default_expr_ != nullptr ?
-                                  AbsExprPtr(default_expr_->Copy()) : nullptr);
+    return new CaseExpression(
+        return_value_type_, copies,
+        default_expr_ != nullptr ? AbsExprPtr(default_expr_->Copy()) : nullptr);
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
@@ -78,14 +76,12 @@ class CaseExpression : public AbstractExpression {
   const std::vector<WhenClause> &GetWhenClauses() const { return clauses_; }
 
   AbstractExpression *GetWhenClauseCond(int index) const {
-    if (index < 0 || index >= (int)clauses_.size())
-      return nullptr;
+    if (index < 0 || index >= (int)clauses_.size()) return nullptr;
     return clauses_[index].first.get();
   }
 
   AbstractExpression *GetWhenClauseResult(int index) const {
-    if (index < 0 || index >= (int)clauses_.size())
-      return nullptr;
+    if (index < 0 || index >= (int)clauses_.size()) return nullptr;
     return clauses_[index].second.get();
   }
 

@@ -27,11 +27,14 @@ namespace sdbench {
 enum IndexUsageType {
   INDEX_USAGE_TYPE_INVALID = 0,
 
-  INDEX_USAGE_TYPE_PARTIAL_FAST = 1,    // use partially materialized indexes (fast)
-  INDEX_USAGE_TYPE_PARTIAL_MEDIUM = 2,  // use partially materialized indexes (medium)
-  INDEX_USAGE_TYPE_PARTIAL_SLOW = 3,    // use partially materialized indexes (slow)
-  INDEX_USAGE_TYPE_FULL = 4,       // use only fully materialized indexes
-  INDEX_USAGE_TYPE_NEVER = 5,      // never use ad-hoc indexes
+  INDEX_USAGE_TYPE_PARTIAL_FAST =
+      1,  // use partially materialized indexes (fast)
+  INDEX_USAGE_TYPE_PARTIAL_MEDIUM =
+      2,  // use partially materialized indexes (medium)
+  INDEX_USAGE_TYPE_PARTIAL_SLOW =
+      3,                       // use partially materialized indexes (slow)
+  INDEX_USAGE_TYPE_FULL = 4,   // use only fully materialized indexes
+  INDEX_USAGE_TYPE_NEVER = 5,  // never use ad-hoc indexes
 };
 
 enum QueryComplexityType {

@@ -54,12 +54,10 @@ bool UpdateExecutor::DInit() {
   return true;
 }
 
-bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
-                                             storage::TileGroup *tile_group, 
-                                             storage::TileGroupHeader *tile_group_header,
-                                             oid_t physical_tuple_id,
-                                             ItemPointer &old_location) {
-
+bool UpdateExecutor::PerformUpdatePrimaryKey(
+    bool is_owner, storage::TileGroup *tile_group,
+    storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
+    ItemPointer &old_location) {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -85,8 +83,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
       transaction_manager.YieldOwnership(current_txn, tile_group_header,
                                          physical_tuple_id);
     }
-    transaction_manager.SetTransactionResult(current_txn,
-                                             ResultType::FAILURE);
+    transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
     return false;
   }
   transaction_manager.PerformDelete(current_txn, old_location, new_location);
@@ -139,7 +136,7 @@ bool UpdateExecutor::DExecute() {
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
-  
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -147,10 +144,10 @@ bool UpdateExecutor::DExecute() {
 
   // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
-
-    storage::TileGroup *tile_group = source_tile->GetBaseTile(0)->GetTileGroup();
+    storage::TileGroup *tile_group =
+        source_tile->GetBaseTile(0)->GetTileGroup();
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-    
+
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
@@ -159,11 +156,11 @@ bool UpdateExecutor::DExecute() {
               visible_tuple_id, physical_tuple_id);
 
     ///////////////////////////////////////////////////////////
-    // if running at snapshot isolation, 
+    // if running at snapshot isolation,
     // then we need to retrieve the latest version of this tuple.
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
-      
+
       auto &manager = catalog::Manager::GetInstance();
       tile_group = manager.GetTileGroup(old_location.block).get();
       tile_group_header = tile_group->GetHeader();
@@ -171,7 +168,8 @@ bool UpdateExecutor::DExecute() {
       physical_tuple_id = old_location.offset;
 
       auto visibility = transaction_manager.IsVisible(
-          current_txn, tile_group_header, physical_tuple_id, VisibilityIdType::COMMIT_ID);
+          current_txn, tile_group_header, physical_tuple_id,
+          VisibilityIdType::COMMIT_ID);
       if (visibility != VisibilityType::OK) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
@@ -180,11 +178,11 @@ bool UpdateExecutor::DExecute() {
     }
     ///////////////////////////////////////////////////////////
 
-    bool is_owner = 
-        transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
+    bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
+                                                physical_tuple_id);
 
-    bool is_written = 
-        transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
+    bool is_written = transaction_manager.IsWritten(
+        current_txn, tile_group_header, physical_tuple_id);
 
     // Prepare to examine primary key
     bool ret = false;
@@ -193,13 +191,10 @@ bool UpdateExecutor::DExecute() {
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
-
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
-        ret =
-            PerformUpdatePrimaryKey(is_owner, tile_group, 
-                                    tile_group_header, physical_tuple_id,
-                                    old_location);
+        ret = PerformUpdatePrimaryKey(is_owner, tile_group, tile_group_header,
+                                      physical_tuple_id, old_location);
 
         // Examine the result
         if (ret == true) {
@@ -229,17 +224,18 @@ bool UpdateExecutor::DExecute() {
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
-      bool is_ownable =
-          is_owner || transaction_manager.IsOwnable(
-                          current_txn, tile_group_header, physical_tuple_id);
+      bool is_ownable = is_owner ||
+                        transaction_manager.IsOwnable(
+                            current_txn, tile_group_header, physical_tuple_id);
 
       if (is_ownable == true) {
         // if the tuple is not owned by any transaction and is visible to
         // current transaction.
 
         bool acquire_ownership_success =
-            is_owner || transaction_manager.AcquireOwnership(
-                            current_txn, tile_group_header, physical_tuple_id);
+            is_owner ||
+            transaction_manager.AcquireOwnership(current_txn, tile_group_header,
+                                                 physical_tuple_id);
 
         if (acquire_ownership_success == false) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -250,9 +246,8 @@ bool UpdateExecutor::DExecute() {
 
         if (update_node.GetUpdatePrimaryKey()) {
           // Update primary key
-          ret = PerformUpdatePrimaryKey(is_owner, tile_group, 
-                                        tile_group_header, physical_tuple_id, 
-                                        old_location);
+          ret = PerformUpdatePrimaryKey(is_owner, tile_group, tile_group_header,
+                                        physical_tuple_id, old_location);
 
           if (ret == true) {
             executor_context_->num_processed += 1;  // updated one
@@ -325,7 +320,6 @@ bool UpdateExecutor::DExecute() {
           executor_context_->num_processed += 1;  // updated one
         }
       } else {
-
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,

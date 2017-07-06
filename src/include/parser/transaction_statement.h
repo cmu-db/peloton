@@ -32,9 +32,7 @@ struct TransactionStatement : SQLStatement {
   TransactionStatement(CommandType type)
       : SQLStatement(StatementType::TRANSACTION), type(type) {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CommandType type;
 };

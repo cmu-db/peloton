@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iomanip>
 #include <algorithm>
 #include <iostream>
@@ -41,28 +40,27 @@ void Usage(FILE *out) {
           "   -g --gc_mode           :  enable garbage collection \n"
           "   -n --gc_backend_count  :  # of gc backends \n"
           "   -l --loader_count      :  # of loaders \n"
-          "   -y --epoch             :  epoch type: centralized or decentralized \n"
-  );
+          "   -y --epoch             :  epoch type: centralized or "
+          "decentralized \n");
 }
 
 static struct option opts[] = {
-    { "index", optional_argument, NULL, 'i' },
-    { "scale_factor", optional_argument, NULL, 'k' },
-    { "duration", optional_argument, NULL, 'd' },
-    { "profile_duration", optional_argument, NULL, 'p' },
-    { "backend_count", optional_argument, NULL, 'b' },
-    { "column_count", optional_argument, NULL, 'c' },
-    { "operation_count", optional_argument, NULL, 'o' },
-    { "update_ratio", optional_argument, NULL, 'u' },
-    { "zipf_theta", optional_argument, NULL, 'z' },
-    { "exp_backoff", no_argument, NULL, 'e' },
-    { "string_mode", no_argument, NULL, 'm' },
-    { "gc_mode", no_argument, NULL, 'g' },
-    { "gc_backend_count", optional_argument, NULL, 'n' },
-    { "loader_count", optional_argument, NULL, 'n' },
-    { "epoch", optional_argument, NULL, 'y' },
-    { NULL, 0, NULL, 0 }
-};
+    {"index", optional_argument, NULL, 'i'},
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"duration", optional_argument, NULL, 'd'},
+    {"profile_duration", optional_argument, NULL, 'p'},
+    {"backend_count", optional_argument, NULL, 'b'},
+    {"column_count", optional_argument, NULL, 'c'},
+    {"operation_count", optional_argument, NULL, 'o'},
+    {"update_ratio", optional_argument, NULL, 'u'},
+    {"zipf_theta", optional_argument, NULL, 'z'},
+    {"exp_backoff", no_argument, NULL, 'e'},
+    {"string_mode", no_argument, NULL, 'm'},
+    {"gc_mode", no_argument, NULL, 'g'},
+    {"gc_backend_count", optional_argument, NULL, 'n'},
+    {"loader_count", optional_argument, NULL, 'n'},
+    {"epoch", optional_argument, NULL, 'y'},
+    {NULL, 0, NULL, 0}};
 
 void ValidateIndex(const configuration &state) {
   if (state.index != IndexType::BWTREE && state.index != IndexType::BWTREE) {
@@ -237,7 +235,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'n':
         state.gc_backend_count = atoi(optarg);
         break;
-        
+
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -266,9 +264,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   LOG_TRACE("%s : %d", "Run exponential backoff", state.exp_backoff);
   LOG_TRACE("%s : %d", "Run string mode", state.string_mode);
   LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
-  
 }
-
 
 void WriteOutput() {
   std::ofstream out("outputfile.summary");
@@ -279,16 +275,10 @@ void WriteOutput() {
   }
 
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %lf %lf :: %lf %lf %d",
-           state.scale_factor,
-           state.backend_count,
-           state.column_count,
-           state.operation_count,
-           state.update_ratio,
-           state.zipf_theta,
-           state.throughput,
-           state.abort_rate,
-           total_profile_memory);
+  LOG_INFO("%d %d %d %d %lf %lf :: %lf %lf %d", state.scale_factor,
+           state.backend_count, state.column_count, state.operation_count,
+           state.update_ratio, state.zipf_theta, state.throughput,
+           state.abort_rate, total_profile_memory);
 
   out << state.scale_factor << " ";
   out << state.backend_count << " ";
@@ -302,9 +292,9 @@ void WriteOutput() {
 
   for (size_t round_id = 0; round_id < state.profile_throughput.size();
        ++round_id) {
-    out << "[" << std::setw(3) << std::left
-        << state.profile_duration * round_id << " - " << std::setw(3)
-        << std::left << state.profile_duration * (round_id + 1)
+    out << "[" << std::setw(3) << std::left << state.profile_duration * round_id
+        << " - " << std::setw(3) << std::left
+        << state.profile_duration * (round_id + 1)
         << " s]: " << state.profile_throughput[round_id] << " "
         << state.profile_abort_rate[round_id] << " "
         << state.profile_memory[round_id] << "\n";

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_executor.h"
@@ -26,12 +25,12 @@ namespace executor {
 
 class CreateExecutor : public AbstractExecutor {
  public:
-	CreateExecutor(const CreateExecutor &) = delete;
-	CreateExecutor &operator=(const CreateExecutor &) = delete;
-	CreateExecutor(CreateExecutor &&) = delete;
-	CreateExecutor &operator=(CreateExecutor &&) = delete;
+  CreateExecutor(const CreateExecutor &) = delete;
+  CreateExecutor &operator=(const CreateExecutor &) = delete;
+  CreateExecutor(CreateExecutor &&) = delete;
+  CreateExecutor &operator=(CreateExecutor &&) = delete;
 
-	CreateExecutor(const planner::AbstractPlan *node,
+  CreateExecutor(const planner::AbstractPlan *node,
                  ExecutorContext *executor_context);
 
   ~CreateExecutor() {}
@@ -43,7 +42,6 @@ class CreateExecutor : public AbstractExecutor {
 
  private:
   ExecutorContext *context;
-
 };
 
 }  // namespace executor

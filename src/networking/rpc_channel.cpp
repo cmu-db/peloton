@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "networking/rpc_type.h"
 #include "networking/rpc_client.h"
 #include "networking/rpc_channel.h"

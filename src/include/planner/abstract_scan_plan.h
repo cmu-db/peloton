@@ -64,9 +64,7 @@ class AbstractScan : public AbstractPlan {
     }
   }
 
-  inline bool IsForUpdate() const {
-    return is_for_update;
-  }
+  inline bool IsForUpdate() const { return is_for_update; }
 
   // Attribute binding
   void PerformBinding(BindingContext &binding_context) override;

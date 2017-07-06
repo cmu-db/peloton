@@ -188,9 +188,8 @@ class BackendStatsContext {
   void CompleteQueryMetric();
 
   // Get the mapping table of backend stat context for each thread
-  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
-    GetBackendContextMap(void);
-
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>&
+  GetBackendContextMap(void);
 };
 
 }  // namespace stats

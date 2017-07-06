@@ -26,7 +26,7 @@ class ValueFactory;
 
 class ArrayType : public Type {
  public:
-  ArrayType(): Type(Type::ARRAY){}
+  ArrayType() : Type(Type::ARRAY) {}
   ~ArrayType() {}
 
   // Get the element at a given index in this array
@@ -35,34 +35,46 @@ class ArrayType : public Type {
   Type::TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const;
 
   // Does this value exist in this array?
-  Value InList(const Value& list, const Value &object) const;
+  Value InList(const Value& list, const Value& object) const;
 
-  CmpBool CompareEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareNotEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareLessThan(const Value& left, const Value &right) const override;
-  CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
-  CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareEquals(const Value& left, const Value& right) const override;
+  CmpBool CompareNotEquals(const Value& left,
+                           const Value& right) const override;
+  CmpBool CompareLessThan(const Value& left, const Value& right) const override;
+  CmpBool CompareLessThanEquals(const Value& left,
+                                const Value& right) const override;
+  CmpBool CompareGreaterThan(const Value& left,
+                             const Value& right) const override;
+  CmpBool CompareGreaterThanEquals(const Value& left,
+                                   const Value& right) const override;
 
   Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 
-  bool IsInlined(const Value& val UNUSED_ATTRIBUTE) const override { return false; }
-  std::string ToString(const Value& val UNUSED_ATTRIBUTE) const override { return ""; }
+  bool IsInlined(const Value& val UNUSED_ATTRIBUTE) const override {
+    return false;
+  }
+  std::string ToString(const Value& val UNUSED_ATTRIBUTE) const override {
+    return "";
+  }
   size_t Hash(const Value& val UNUSED_ATTRIBUTE) const override { return 0; }
-  void HashCombine(const Value& val UNUSED_ATTRIBUTE, size_t &seed UNUSED_ATTRIBUTE) const override {}
+  void HashCombine(const Value& val UNUSED_ATTRIBUTE,
+                   size_t& seed UNUSED_ATTRIBUTE) const override {}
 
-  void SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const override {
+  void SerializeTo(const Value& val UNUSED_ATTRIBUTE,
+                   SerializeOutput& out UNUSED_ATTRIBUTE) const override {
     throw Exception("Can't serialize array types to storage");
   }
 
-  void SerializeTo(const Value& val UNUSED_ATTRIBUTE, char *storage UNUSED_ATTRIBUTE,
+  void SerializeTo(const Value& val UNUSED_ATTRIBUTE,
+                   char* storage UNUSED_ATTRIBUTE,
                    bool inlined UNUSED_ATTRIBUTE,
-                   AbstractPool *pool UNUSED_ATTRIBUTE) const override {
+                   AbstractPool* pool UNUSED_ATTRIBUTE) const override {
     throw Exception("Can't serialize array types to storage");
   }
 
-  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override { return ValueFactory::GetNullValueByType(type_id_); }
-
+  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override {
+    return ValueFactory::GetNullValueByType(type_id_);
+  }
 };
 
 }  // namespace peloton

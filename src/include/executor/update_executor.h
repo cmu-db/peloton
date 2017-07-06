@@ -36,9 +36,8 @@ class UpdateExecutor : public AbstractExecutor {
                           ExecutorContext *executor_context);
 
  private:
-  bool PerformUpdatePrimaryKey(bool is_owner, 
-                               storage::TileGroup *tile_group,
-                               storage::TileGroupHeader *tile_group_header, 
+  bool PerformUpdatePrimaryKey(bool is_owner, storage::TileGroup *tile_group,
+                               storage::TileGroupHeader *tile_group_header,
                                oid_t physical_tuple_id,
                                ItemPointer &old_location);
 

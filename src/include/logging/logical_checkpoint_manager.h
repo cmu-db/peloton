@@ -24,11 +24,13 @@ namespace logging {
 class LogicalCheckpointManager : public CheckpointManager {
  public:
   LogicalCheckpointManager(const LogicalCheckpointManager &) = delete;
-  LogicalCheckpointManager &operator=(const LogicalCheckpointManager &) = delete;
+  LogicalCheckpointManager &operator=(const LogicalCheckpointManager &) =
+      delete;
   LogicalCheckpointManager(LogicalCheckpointManager &&) = delete;
   LogicalCheckpointManager &operator=(LogicalCheckpointManager &&) = delete;
 
-  LogicalCheckpointManager(const int thread_count) : checkpointer_thread_count_(thread_count) {}
+  LogicalCheckpointManager(const int thread_count)
+      : checkpointer_thread_count_(thread_count) {}
 
   virtual ~LogicalCheckpointManager() {}
 
@@ -39,7 +41,8 @@ class LogicalCheckpointManager : public CheckpointManager {
 
   virtual void Reset() { is_running_ = false; }
 
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartLogging(
+      std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
 
   virtual void StartLogging() {}
 
@@ -53,7 +56,6 @@ class LogicalCheckpointManager : public CheckpointManager {
 
  private:
   int checkpointer_thread_count_;
-
 };
 
 }  // namespace logging

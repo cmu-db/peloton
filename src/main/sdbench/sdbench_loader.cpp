@@ -97,7 +97,8 @@ void LoadTable() {
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
 
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table_schema, allocate));
 
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       auto value = type::ValueFactory::GetIntegerValue(populate_value);

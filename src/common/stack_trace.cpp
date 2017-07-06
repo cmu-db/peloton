@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -28,7 +27,7 @@ namespace peloton {
 
 void SignalHandler(int signum) {
   // associate each signal with a signal name string.
-  const char* name = NULL;
+  const char *name = NULL;
   switch (signum) {
     case SIGABRT:
       name = "SIGABRT";
@@ -83,7 +82,7 @@ void PrintStackTrace(FILE *out, unsigned int max_frames) {
   }
 
   /// resolve addresses into strings containing "filename(function+address)",
-  char** symbol_list = backtrace_symbols(addrlist, addrlen);
+  char **symbol_list = backtrace_symbols(addrlist, addrlen);
 
   /// allocate string which will be filled with the demangled function name
   size_t func_name_size = 1024;
@@ -107,8 +106,7 @@ void PrintStackTrace(FILE *out, unsigned int max_frames) {
       }
     }
 
-    if (begin_name && begin_offset && end_offset &&
-        begin_name < begin_offset) {
+    if (begin_name && begin_offset && end_offset && begin_name < begin_offset) {
       *begin_name++ = '\0';
       *begin_offset++ = '\0';
       *end_offset = '\0';
@@ -116,8 +114,8 @@ void PrintStackTrace(FILE *out, unsigned int max_frames) {
       /// mangled name is now in [begin_name, begin_offset) and caller
       /// offset in [begin_offset, end_offset). now apply  __cxa_demangle():
       int status;
-      char *ret = abi::__cxa_demangle(begin_name, func_name.get(), &func_name_size,
-                                      &status);
+      char *ret = abi::__cxa_demangle(begin_name, func_name.get(),
+                                      &func_name_size, &status);
       if (status == 0) {
         func_name.reset(ret);  // use possibly realloc()-ed string
         ::fprintf(out, "  %s : %s+%s\n", symbol_list[i], func_name.get(),
@@ -133,7 +131,6 @@ void PrintStackTrace(FILE *out, unsigned int max_frames) {
       ::fprintf(out, "  %s\n", symbol_list[i]);
     }
   }
-
 }
 
 void RegisterSignalHandlers() {

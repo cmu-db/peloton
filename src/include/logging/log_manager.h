@@ -49,7 +49,8 @@ class LogManager {
   // Get status of whether logging threads are running or not
   bool GetStatus() { return this->is_running_; }
 
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartLogging(
+      std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
 
   virtual void StartLogging() {}
 
@@ -65,11 +66,11 @@ class LogManager {
 
   virtual void LogEnd() {}
 
-  virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) {}
-  
-  virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) {}
-  
-  virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) {}
+  virtual void LogInsert(const ItemPointer &UNUSED_ATTRIBUTE) {}
+
+  virtual void LogUpdate(const ItemPointer &UNUSED_ATTRIBUTE) {}
+
+  virtual void LogDelete(const ItemPointer &UNUSED_ATTRIBUTE) {}
 
  protected:
   volatile bool is_running_;

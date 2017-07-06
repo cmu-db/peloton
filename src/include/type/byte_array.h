@@ -40,7 +40,8 @@ namespace peloton {
 *  Copy constructor of this class just copies an internal smart pointer.
 *  You can pass around instances of this class just like smart pointer/iterator.
 * 4. No memory leaks.
-* 5. All methods are exception-safe. Nothing dangerouns happens even if Outofmemory happens.
+* 5. All methods are exception-safe. Nothing dangerouns happens even if
+*Outofmemory happens.
 * @author Hideaki Kimura <hkimura@cs.brown.edu>
 */
 template <typename T>
@@ -59,23 +60,23 @@ class GenericArray {
     resetAndExpand(length);
     assign(data, 0, length);
   };
-  
+
   // IMPORTANT : NEVER make a constructor that accepts std::string! It
   // demolishes all the significance of this class.
 
   // corresponds to "byte[] bar = bar2;" in Java. Note that this has no cost.
-  GenericArray(const GenericArray<T> &rhs) {
+  GenericArray(const GenericArray<T>& rhs) {
     data_ = rhs.data_;
     length_ = rhs.length_;
   };
-  
-  inline GenericArray<T>& operator=(const GenericArray<T> &rhs) {
+
+  inline GenericArray<T>& operator=(const GenericArray<T>& rhs) {
     data_ = rhs.data_;
     length_ = rhs.length_;
     return *this;
   }
 
-  ~GenericArray() {};
+  ~GenericArray(){};
 
   // corresponds to "(bar == null)" in Java
   bool isNull() const { return data_ == NULL; };
@@ -89,19 +90,21 @@ class GenericArray {
   // corresponds to "bar = new byte[len];" in Java
   void resetAndExpand(int newLength) {
     PL_ASSERT(newLength >= 0);
-    //data_ = boost::shared_array<T>(new T[newLength]);
+    // data_ = boost::shared_array<T>(new T[newLength]);
     data_ = std::shared_ptr<T>(new T[newLength], std::default_delete<T[]>{});
     PL_MEMSET(data_.get(), 0, newLength * sizeof(T));
     length_ = newLength;
   };
 
-  // corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar = tmp;" in Java
+  // corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar =
+  // tmp;" in Java
   void copyAndExpand(int newLength) {
     PL_ASSERT(newLength >= 0);
     PL_ASSERT(newLength > length_);
-    //boost::shared_array<T> newData(new T[newLength]);
+    // boost::shared_array<T> newData(new T[newLength]);
     std::shared_ptr<T> newData(new T[newLength], std::default_delete<T[]>{});
-    PL_MEMSET(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
+    PL_MEMSET(newData.get(), 0,
+              newLength * sizeof(T));  // makes valgrind happy.
     PL_MEMCPY(newData.get(), data_.get(), length_ * sizeof(T));
     data_ = newData;
     length_ = newLength;
@@ -120,7 +123,7 @@ class GenericArray {
     PL_MEMCPY(data_.get() + offset, assignedData, assignedLength * sizeof(T));
   };
 
-  GenericArray<T> operator+(const GenericArray<T> &tail) const {
+  GenericArray<T> operator+(const GenericArray<T>& tail) const {
     PL_ASSERT(!isNull());
     PL_ASSERT(!tail.isNull());
     GenericArray<T> concated(this->length_ + tail.length_);
@@ -142,12 +145,11 @@ class GenericArray {
   };
 
  private:
-  //boost::shared_array<T> data_;
+  // boost::shared_array<T> data_;
   std::shared_ptr<T> data_;
   int length_;
 };
 
 typedef GenericArray<char> ByteArray;
-
 }
 #endif

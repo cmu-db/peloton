@@ -38,8 +38,8 @@ bool AnalyzeExecutor::DExecute() {
 
   const planner::AnalyzePlan &node = GetPlanNode<planner::AnalyzePlan>();
 
-  storage::DataTable* target_table = node.GetTable();
-  UNUSED_ATTRIBUTE std::vector<char*> target_columns = node.GetColumnNames();
+  storage::DataTable *target_table = node.GetTable();
+  UNUSED_ATTRIBUTE std::vector<char *> target_columns = node.GetColumnNames();
 
   // LOG_TRACE("Analyzing column size %lu", target_columns.size());
 

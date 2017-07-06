@@ -43,6 +43,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
   std::unique_ptr<Statement> statement;
@@ -67,7 +69,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
@@ -75,6 +77,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
             1);
 
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
   statement.reset(new Statement(
@@ -92,7 +96,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
@@ -101,6 +105,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   // Inserting a tuple to table_a
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO table_a(aid, value) VALUES (1,1);");
   statement.reset(new Statement(
@@ -118,10 +124,12 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_a!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple to table_b
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO table_b(bid, value) VALUES (1,2);");
   statement.reset(new Statement(
@@ -139,9 +147,11 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_b!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Join ...");
   LOG_INFO("Query: SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
   statement.reset(new Statement(
@@ -158,7 +168,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Join completed!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("After Join...");
   // free the database just created

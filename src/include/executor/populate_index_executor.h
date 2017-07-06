@@ -28,7 +28,7 @@ namespace executor {
  * The executor class that populates a newly created index
  *
  * It should have a SeqScanExecutor as a child, for retrieving data
- * to be inputted the index. 
+ * to be inputted the index.
  */
 class PopulateIndexExecutor : public AbstractExecutor {
  public:

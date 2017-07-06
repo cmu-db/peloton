@@ -32,4 +32,3 @@ std::atomic<size_t> BwTreeBase::total_thread_num{0UL};
 
 }  // End index/bwtree namespace
 }  // End peloton/wangziqi2013 namespace
-

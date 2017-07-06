@@ -10,12 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "gc/gc_manager.h"
 #include "gc/transaction_level_gc_manager.h"
-
 
 namespace peloton {
 namespace gc {
@@ -24,7 +22,6 @@ class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
     switch (gc_type_) {
-
       case GarbageCollectionType::ON:
         return TransactionLevelGCManager::GetInstance(gc_thread_count_);
 
@@ -33,7 +30,7 @@ class GCManagerFactory {
     }
   }
 
-  static void Configure(const int thread_count = 1) { 
+  static void Configure(const int thread_count = 1) {
     if (thread_count == 0) {
       gc_type_ = GarbageCollectionType::OFF;
     } else {

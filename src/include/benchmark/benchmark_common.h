@@ -76,7 +76,6 @@ class FastRandom {
   unsigned long seed;
 };
 
-
 class ZipfDistribution {
  public:
   ZipfDistribution(const uint64_t &n, const double &theta)

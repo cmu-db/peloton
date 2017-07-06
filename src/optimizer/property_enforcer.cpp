@@ -46,16 +46,14 @@ void PropertyEnforcer::Visit(const PropertyDistinct *) {
   output_gexpr_ =
       std::make_shared<GroupExpression>(PhysicalDistinct::make(), child_groups);
 }
-  
+
 void PropertyEnforcer::Visit(const PropertyLimit *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ =
-    std::make_shared<GroupExpression>(PhysicalLimit::make(), child_groups);
+      std::make_shared<GroupExpression>(PhysicalLimit::make(), child_groups);
 }
-  
-void PropertyEnforcer::Visit(const PropertyPredicate *) {}
-  
 
+void PropertyEnforcer::Visit(const PropertyPredicate *) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

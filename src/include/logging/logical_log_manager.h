@@ -21,17 +21,17 @@ namespace logging {
 // logical log Manager
 //===--------------------------------------------------------------------===//
 
-
 /**
  * logging file name layout :
- * 
+ *
  * dir_name + "/" + prefix + "_" + epoch_id
  *
  *
  * logging file layout :
  *
  *  -----------------------------------------------------------------------------
- *  | txn_id | database_id | table_id | operation_type | data | ... | txn_end_flag
+ *  | txn_id | database_id | table_id | operation_type | data | ... |
+ *txn_end_flag
  *  -----------------------------------------------------------------------------
  *
  * NOTE: this layout is designed for logical logging.
@@ -47,7 +47,8 @@ class LogicalLogManager : public LogManager {
   LogicalLogManager(LogicalLogManager &&) = delete;
   LogicalLogManager &operator=(LogicalLogManager &&) = delete;
 
-  LogicalLogManager(const int thread_count) : logger_thread_count_(thread_count) {}
+  LogicalLogManager(const int thread_count)
+      : logger_thread_count_(thread_count) {}
 
   virtual ~LogicalLogManager() {}
 
@@ -56,7 +57,8 @@ class LogicalLogManager : public LogManager {
     return log_manager;
   }
 
-  // virtual void SetDirectories(const std::vector<std::string> &logging_dirs) override {
+  // virtual void SetDirectories(const std::vector<std::string> &logging_dirs)
+  // override {
   //   logger_dirs_ = logging_dirs;
 
   //   if (logging_dirs.size() > 0) {
@@ -65,8 +67,10 @@ class LogicalLogManager : public LogManager {
   //   // check the existence of logging directories.
   //   // if not exists, then create the directory.
   //   for (auto logging_dir : logging_dirs) {
-  //     if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false) {
-  //       LOG_INFO("Logging directory %s is not accessible or does not exist", logging_dir.c_str());
+  //     if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false)
+  //     {
+  //       LOG_INFO("Logging directory %s is not accessible or does not exist",
+  //       logging_dir.c_str());
   //       bool res = LoggingUtil::CreateDirectory(logging_dir.c_str(), 0700);
   //       if (res == false) {
   //         LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
@@ -84,8 +88,8 @@ class LogicalLogManager : public LogManager {
   //   return logger_dirs_;
   // }
 
-
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) override {}
+  virtual void StartLogging(
+      std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) override {}
 
   virtual void StartLogging() override {}
 
@@ -93,7 +97,8 @@ class LogicalLogManager : public LogManager {
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) override {}
 
-  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) override {}
+  virtual void DeregisterTable(const oid_t &table_id
+                                   UNUSED_ATTRIBUTE) override {}
 
   virtual size_t GetTableCount() override { return 0; }
 
@@ -101,11 +106,11 @@ class LogicalLogManager : public LogManager {
 
   virtual void LogEnd() override {}
 
-  virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) override {}
-  
-  virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) override {}
-  
-  virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) override { }
+  virtual void LogInsert(const ItemPointer &UNUSED_ATTRIBUTE) override {}
+
+  virtual void LogUpdate(const ItemPointer &UNUSED_ATTRIBUTE) override {}
+
+  virtual void LogDelete(const ItemPointer &UNUSED_ATTRIBUTE) override {}
 
  private:
   int logger_thread_count_;
@@ -122,7 +127,6 @@ class LogicalLogManager : public LogManager {
   // std::string pepoch_dir_;
 
   // const std::string pepoch_filename_ = "pepoch";
-
 };
 
 }  // namespace logging

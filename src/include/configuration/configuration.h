@@ -97,4 +97,3 @@ void PrintConfiguration();
 
 }  // End configuration namespace
 }  // End peloton namespace
-

@@ -56,7 +56,6 @@ class TPCHBenchmark {
   void RunBenchmark();
 
  private:
-
   struct QueryConfig {
    public:
     // The name of the query

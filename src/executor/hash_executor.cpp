@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <utility>
 #include <vector>
 
@@ -89,13 +88,12 @@ bool HashExecutor::DExecute() {
         // Key : container tuple with a subset of tuple attributes
         // Value : < child_tile offset, tuple offset >
         auto key = HashMapType::key_type(tile, tuple_id, &column_ids_);
-        if (hash_table_.find(key) != hash_table_.end()){
-           //If data is already present, remove from output
-           //but leave data for hash joins.
-           tile->RemoveVisibility(tuple_id);
+        if (hash_table_.find(key) != hash_table_.end()) {
+          // If data is already present, remove from output
+          // but leave data for hash joins.
+          tile->RemoveVisibility(tuple_id);
         }
-        hash_table_[key].insert(
-                    std::make_pair(child_tile_itr, tuple_id));
+        hash_table_[key].insert(std::make_pair(child_tile_itr, tuple_id));
       }
     }
 

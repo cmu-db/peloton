@@ -145,8 +145,7 @@ int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
       res_base = 0;
     else
       res_base = -1;
-  }
-  else {
+  } else {
     res = ProcessStartupPacket(pkt, proto_version);
     if (!res)
       res_base = 0;
@@ -157,7 +156,8 @@ int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
   return res_base;
 }
 
-bool PacketManager::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
+                                         int32_t proto_version) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -275,7 +275,8 @@ void PacketManager::SendDataRows(std::vector<StatementResult> &results,
   rows_affected = numrows;
 }
 
-void PacketManager::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
+void PacketManager::CompleteCommand(const std::string &query,
+                                    const QueryType &query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
   std::string tag = query;
@@ -295,9 +296,9 @@ void PacketManager::CompleteCommand(const std::string &query, const QueryType& q
       break;
     default:
       tag += " " + std::to_string(rows);
-   }     
-   PacketPutString(pkt.get(), tag);
-   responses.push_back(std::move(pkt));
+  }
+  PacketPutString(pkt.get(), tag);
+  responses.push_back(std::move(pkt));
 }
 
 /*
@@ -318,7 +319,7 @@ bool PacketManager::HardcodedExecuteFilter(QueryType query_type) {
     // Skip duplicate BEGIN
     case QueryType::QUERY_BEGIN:
       if (txn_state_ == NetworkTransactionStateType::BLOCK) {
-        return false;  
+        return false;
       }
       break;
     // Skip duuplicate Commits and Rollbacks
@@ -356,12 +357,15 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
     int rows_affected = 0;
 
     QueryType query_type;
-    Statement::MapToQueryType(query, query_type);
-      std::stringstream stream(query);
+    // # 623
+    std::string query_type_string;
+    Statement::ParseQueryTypeString(query, query_type_string);
+    Statement::MapToQueryType(query_type_string, query_type);
+    // # 623
+    std::stringstream stream(query);
 
     switch (query_type) {
-      case QueryType::QUERY_PREPARE:
-      {
+      case QueryType::QUERY_PREPARE: {
         std::string statement_name;
         stream >> statement_name;
         std::size_t pos = query.find("AS");
@@ -372,10 +376,10 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         std::shared_ptr<Statement> statement(nullptr);
 
         LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-                statement_query.c_str());
+                  statement_query.c_str());
 
-        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
-                                                 error_message);
+        statement = traffic_cop_->PrepareStatement(
+            statement_name, statement_query, error_message);
         if (statement.get() == nullptr) {
           skipped_stmt_ = true;
           SendErrorResponse(
@@ -391,8 +395,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         }
         break;
       }
-      case QueryType::QUERY_EXECUTE:
-      {
+      case QueryType::QUERY_EXECUTE: {
         std::string statement_name;
         std::shared_ptr<Statement> statement;
         std::vector<type::Value> param_values;
@@ -416,7 +419,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
           return;
         }
 
-        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        std::vector<int> result_format(statement->GetTupleDescriptor().size(),
+                                       0);
 
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
           std::string param_str = tokens.at(idx);
@@ -424,38 +428,38 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
           if (param_str.empty()) {
             continue;
           }
-          param_values.push_back(type::ValueFactory::GetVarcharValue(param_str));
+          param_values.push_back(
+              type::ValueFactory::GetVarcharValue(param_str));
         }
 
         if (param_values.size() > 0) {
           statement->GetPlanTree()->SetParameterValues(&param_values);
         }
 
-        auto status =
-                traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                             result, rows_affected, error_message, thread_id);
+        auto status = traffic_cop_->ExecuteStatement(
+            statement, param_values, unnamed, nullptr, result_format, result,
+            rows_affected, error_message, thread_id);
 
         if (status == ResultType::SUCCESS) {
           tuple_descriptor = std::move(statement->GetTupleDescriptor());
         } else {
           SendErrorResponse(
-                {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
           return;
         }
-      	break;
+        break;
       }
-      default:
-      {
+      default: {
         // execute the query using tcop
         auto status = traffic_cop_->ExecuteStatement(
             query, result, tuple_descriptor, rows_affected, error_message,
             thread_id);
 
-      // check status
+        // check status
         if (status == ResultType::FAILURE) {
           SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
           return;
         }
@@ -914,9 +918,11 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
       SendEmptyQueryResponse();
     } else {
       std::string skipped_query_type_string;
-      Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
+      Statement::ParseQueryTypeString(skipped_query_string_,
+                                      skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
-      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected);
+      CompleteCommand(skipped_query_type_string, skipped_query_type_,
+                      rows_affected);
     }
     skipped_stmt_ = false;
     return;
@@ -970,7 +976,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
       auto tuple_descriptor = statement->GetTupleDescriptor();
       SendDataRows(results, tuple_descriptor.size(), rows_affected);
       // The reponse to ExecuteCommand is the query_type string token.
-      CompleteCommand(statement->GetQueryTypeString(), query_type, rows_affected);
+      CompleteCommand(statement->GetQueryTypeString(), query_type,
+                      rows_affected);
       return;
     }
   }
@@ -1122,4 +1129,3 @@ void PacketManager::Reset() {
 
 }  // End wire namespace
 }  // End peloton namespace
-

@@ -336,8 +336,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -579,8 +579,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -820,8 +820,8 @@ void IndexScanExecutor::UpdatePredicate(
   }
 
   // Update the new value
-  index_predicate_.GetConjunctionListToSetup()[0]
-      .SetTupleColumnValue(index_.get(), key_column_ids, values);
+  index_predicate_.GetConjunctionListToSetup()[0].SetTupleColumnValue(
+      index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

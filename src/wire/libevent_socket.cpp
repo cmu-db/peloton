@@ -232,11 +232,10 @@ ReadState LibeventSocket::FillReadBuffer() {
       // we use general read function
       if (conn_SSL_context != nullptr) {
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
-                                rbuf_.GetMaxSize() - rbuf_.buf_size);
-      }
-      else {
+                              rbuf_.GetMaxSize() - rbuf_.buf_size);
+      } else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
-                        rbuf_.GetMaxSize() - rbuf_.buf_size);
+                          rbuf_.GetMaxSize() - rbuf_.buf_size);
       }
 
       if (bytes_read > 0) {
@@ -305,12 +304,11 @@ WriteState LibeventSocket::FlushWriteBuffer() {
     written_bytes = 0;
     while (written_bytes <= 0) {
       if (conn_SSL_context != nullptr) {
+        written_bytes = SSL_write(
+            conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+      } else {
         written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-      }
-      else {
-        written_bytes =
-           write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+            write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
       }
       // Write failed
       if (written_bytes < 0) {

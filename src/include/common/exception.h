@@ -388,8 +388,7 @@ class SyntaxException : public Exception {
   SyntaxException() = delete;
 
  public:
-  SyntaxException(std::string msg)
-      : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
+  SyntaxException(std::string msg) : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
 };
 
 class ConstraintException : public Exception {

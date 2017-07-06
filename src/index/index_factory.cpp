@@ -65,9 +65,9 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetBwTreeGenericKeyIndex(metadata);
     }
 
-  // -----------------------
-  // SKIP-LIST
-  // -----------------------
+    // -----------------------
+    // SKIP-LIST
+    // -----------------------
   } else if (index_type == IndexType::SKIPLIST) {
     if (ints_only) {
       index = IndexFactory::GetSkipListIntsKeyIndex(metadata);
@@ -75,9 +75,9 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetSkipListGenericKeyIndex(metadata);
     }
 
-  // -----------------------
-  // ERROR
-  // -----------------------
+    // -----------------------
+    // ERROR
+    // -----------------------
   } else {
     throw IndexException("Unsupported index scheme.");
   }

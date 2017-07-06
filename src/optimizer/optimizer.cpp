@@ -152,7 +152,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), consistentTxn);
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName(),
+            consistentTxn);
         std::vector<oid_t> column_ids;
         auto schema = target_table->GetSchema();
         for (auto column_name : create_plan->GetIndexAttributes()) {
@@ -177,8 +178,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     }
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
-      unique_ptr<planner::AbstractPlan> analyze_plan(
-          new planner::AnalyzePlan((parser::AnalyzeStatement *)tree, consistentTxn));
+      unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
+          (parser::AnalyzeStatement *)tree, consistentTxn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -192,6 +193,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
   QueryToOperatorTransformer converter;
+  //  LOG_INFO("InsertQueryTree Txn Id: %lu",
+  //  consistentTxn->GetTransactionId());
   converter.consistentTxn = consistentTxn;
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
@@ -243,11 +246,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     }
   }
 
-
   // Derive root plan
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
-
 
   auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
                                          children_plans, children_expr_map,
@@ -358,7 +359,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
   auto cols_prop = requirements.GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                       ->As<PropertyColumns>();
   auto sort_prop =
       requirements.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
 
@@ -465,7 +466,7 @@ void Optimizer::ExploreGroup(GroupID id) {
   if (memo_.GetGroupByID(id)->HasExplored()) return;
 
   for (shared_ptr<GroupExpression> gexpr :
-      memo_.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     ExploreExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetExplorationFlag();
@@ -504,7 +505,7 @@ void Optimizer::ImplementGroup(GroupID id) {
   if (memo_.GetGroupByID(id)->HasImplemented()) return;
 
   for (shared_ptr<GroupExpression> gexpr :
-      memo_.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     if (gexpr->Op().IsLogical()) ImplementExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetImplementationFlag();

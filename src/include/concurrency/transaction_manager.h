@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
@@ -46,8 +45,7 @@ class TransactionManager {
 
   virtual ~TransactionManager() {}
 
-  void Init(const ProtocolType protocol,
-            const IsolationLevelType isolation, 
+  void Init(const ProtocolType protocol, const IsolationLevelType isolation,
             const ConflictAvoidanceType conflict) {
     protocol_ = protocol;
     isolation_level_ = isolation;
@@ -55,78 +53,78 @@ class TransactionManager {
   }
 
   // This method is used for avoiding concurrent inserts.
-  bool IsOccupied(
-      Transaction *const current_txn, 
-      const void *position_ptr);
+  bool IsOccupied(Transaction *const current_txn, const void *position_ptr);
 
   VisibilityType IsVisible(
-      Transaction *const current_txn, 
+      Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id,
       const VisibilityIdType type = VisibilityIdType::READ_ID);
 
-  // This method test whether the current transaction is the owner of this version.
-  virtual bool IsOwner(
-      Transaction *const current_txn, 
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+  // This method test whether the current transaction is the owner of this
+  // version.
+  virtual bool IsOwner(Transaction *const current_txn,
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id) = 0;
 
   // This method tests whether any other transaction has owned this version.
-  virtual bool IsOwned(
+  virtual bool IsOwned(Transaction *const current_txn,
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id) = 0;
+
+  // This method tests whether the current transaction has created this version
+  // of the tuple
+  virtual bool IsWritten(
       Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // This method tests whether the current transaction has created this version of the tuple
-  virtual bool IsWritten(
-    Transaction *const current_txn,
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) = 0;
-
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
-      Transaction *const current_txn, 
+      Transaction *const current_txn,
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
   // This method is used to acquire the ownership of a tuple for a transaction.
   virtual bool AcquireOwnership(
-      Transaction *const current_txn, 
-      const storage::TileGroupHeader *const tile_group_header, 
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // This method is used by executor to yield ownership after the acquired ownership.
+  // This method is used by executor to yield ownership after the acquired
+  // ownership.
   virtual void YieldOwnership(
-      Transaction *const current_txn, 
-      // const oid_t &tile_group_id, 
-      const storage::TileGroupHeader *const tile_group_header, 
+      Transaction *const current_txn,
+      // const oid_t &tile_group_id,
+      const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // The index_entry_ptr is the address of the head node of the version chain, 
+  // The index_entry_ptr is the address of the head node of the version chain,
   // which is directly pointed by the primary index.
-  virtual void PerformInsert(Transaction *const current_txn, 
-                             const ItemPointer &location, 
+  virtual void PerformInsert(Transaction *const current_txn,
+                             const ItemPointer &location,
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
-  virtual bool PerformRead(Transaction *const current_txn, 
+  virtual bool PerformRead(Transaction *const current_txn,
                            const ItemPointer &location,
                            bool acquire_ownership = false) = 0;
 
-  virtual void PerformUpdate(Transaction *const current_txn, 
+  virtual void PerformUpdate(Transaction *const current_txn,
                              const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;
 
-  virtual void PerformDelete(Transaction *const current_txn, 
+  virtual void PerformDelete(Transaction *const current_txn,
                              const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;
 
-  virtual void PerformUpdate(Transaction *const current_txn, 
+  virtual void PerformUpdate(Transaction *const current_txn,
                              const ItemPointer &location) = 0;
 
-  virtual void PerformDelete(Transaction *const current_txn, 
+  virtual void PerformDelete(Transaction *const current_txn,
                              const ItemPointer &location) = 0;
 
-  void SetTransactionResult(Transaction *const current_txn, const ResultType result) {
+  void SetTransactionResult(Transaction *const current_txn,
+                            const ResultType result) {
     current_txn->SetResult(result);
   }
 
@@ -134,8 +132,9 @@ class TransactionManager {
     return BeginTransaction(0, type);
   }
 
-  Transaction *BeginTransaction(const size_t thread_id = 0, 
-                                const IsolationLevelType type = isolation_level_);
+  Transaction *BeginTransaction(
+      const size_t thread_id = 0,
+      const IsolationLevelType type = isolation_level_);
 
   void EndTransaction(Transaction *current_txn);
 
@@ -154,9 +153,7 @@ class TransactionManager {
     this->dirty_range_ = dirty_range;
   }
 
-  IsolationLevelType GetIsolationLevel() {
-    return isolation_level_;
-  }
+  IsolationLevelType GetIsolationLevel() { return isolation_level_; }
 
  protected:
   inline bool CidIsInDirtyRange(cid_t cid) {
@@ -171,7 +168,6 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-
 };
 }  // End storage namespace
 }  // End peloton namespace

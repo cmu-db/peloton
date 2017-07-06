@@ -366,9 +366,13 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
   PL_ASSERT(join_type_ != JoinType::INVALID);
 
   switch (join_type_) {
-    case JoinType::LEFT: { return BuildLeftJoinOutput(); }
+    case JoinType::LEFT: {
+      return BuildLeftJoinOutput();
+    }
 
-    case JoinType::RIGHT: { return BuildRightJoinOutput(); }
+    case JoinType::RIGHT: {
+      return BuildRightJoinOutput();
+    }
 
     case JoinType::OUTER: {
       bool status = BuildLeftJoinOutput();
@@ -381,10 +385,13 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
       break;
     }
 
-    case JoinType::INNER: { return false; }
+    case JoinType::INNER: {
+      return false;
+    }
 
     default: {
-      throw Exception("Unsupported join type : " + JoinTypeToString(join_type_));
+      throw Exception("Unsupported join type : " +
+                      JoinTypeToString(join_type_));
       break;
     }
   }

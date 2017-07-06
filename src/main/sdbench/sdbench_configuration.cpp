@@ -530,7 +530,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   }
 
   /// Check variability threshold
-  if(state.variability_threshold >= state.attribute_count){
+  if (state.variability_threshold >= state.attribute_count) {
     LOG_ERROR("Variability threshold higher than attribute count");
     exit(EXIT_FAILURE);
   }

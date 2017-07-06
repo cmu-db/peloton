@@ -28,7 +28,8 @@ namespace parser {
 struct DeleteStatement : SQLStatement {
   DeleteStatement()
       : SQLStatement(StatementType::DELETE),
-        table_ref(nullptr), expr(nullptr) {};
+        table_ref(nullptr),
+        expr(nullptr){};
 
   virtual ~DeleteStatement() {
     if (table_ref != nullptr) {
@@ -40,17 +41,11 @@ struct DeleteStatement : SQLStatement {
     }
   }
 
-  std::string GetTableName() const {
-    return table_ref->GetTableName();
-  }
+  std::string GetTableName() const { return table_ref->GetTableName(); }
 
-  std::string GetDatabaseName() const {
-    return table_ref->GetDatabaseName();
-  }
+  std::string GetDatabaseName() const { return table_ref->GetDatabaseName(); }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   parser::TableRef* table_ref;
   expression::AbstractExpression* expr;

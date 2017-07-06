@@ -45,8 +45,8 @@ class Statement : public Printable {
   ~Statement();
 
   static void ParseQueryTypeString(const std::string& query_string,
-                             std::string& query_type_string);
- 
+                                   std::string& query_type_string);
+
   static void MapToQueryType(const std::string& query_type_string,
                              QueryType& query_type);
 
@@ -93,7 +93,7 @@ class Statement : public Printable {
   std::string query_string_;
 
   // first token in query
-  // Keep the string token of the query_type because it is returned 
+  // Keep the string token of the query_type because it is returned
   // as responses after executing commands.
   std::string query_type_string_;
 
@@ -119,6 +119,5 @@ class Statement : public Printable {
   // containing pairs of <query_type_string, query_type>
   // use map to speed up searching
   static std::unordered_map<std::string, QueryType> query_type_map_;
-
 };
 }  // namespace peloton

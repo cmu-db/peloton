@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "type/value.h"
 #include "executor/executor_context.h"
 #include "concurrency/transaction.h"
@@ -23,8 +22,7 @@ ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
                                  const std::vector<type::Value> &params)
-    : transaction_(transaction),
-      params_(params) {}
+    : transaction_(transaction), params_(params) {}
 
 ExecutorContext::~ExecutorContext() {
   // params will be freed automatically
@@ -42,12 +40,9 @@ void ExecutorContext::SetParams(type::Value &value) {
   params_.push_back(value);
 }
 
-void ExecutorContext::ClearParams() {
-  params_.clear();
-}
+void ExecutorContext::ClearParams() { params_.clear(); }
 
 type::EphemeralPool *ExecutorContext::GetPool() {
-
   // construct pool if needed
   if (pool_.get() == nullptr) {
     pool_.reset(new type::EphemeralPool());

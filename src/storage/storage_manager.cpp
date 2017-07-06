@@ -225,13 +225,12 @@ static void predrain_fence_empty(void) {
 //   _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
 // }
 
-
 //  * pmem_drain() calls through Func_predrain_fence to do the fence.  Although
 //  * initialized to predrain_fence_empty(), once the existence of the CLWB or
 //  * CLFLUSHOPT feature is confirmed by pmem_init() at library initialization
 //  * time, Func_predrain_fence is set to predrain_fence_sfence().  That's the
 //  * most common case on modern hardware that supports persistent memory.
- 
+
 static void (*Func_predrain_fence)(void) = predrain_fence_empty;
 
 // //===--------------------------------------------------------------------===//
@@ -267,7 +266,8 @@ static void drain_no_pcommit(void) {
 //   // Special case
 //   if (lat == 0) return;
 
-//   unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ / 1000);
+//   unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ /
+//   1000);
 //   while (read_tsc() < etsc) {
 //     cpu_pause();
 //   }
@@ -314,7 +314,8 @@ StorageManager &StorageManager::GetInstance(void) {
 StorageManager::StorageManager()
     : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // // Check if we need a data pool
-  // if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
+  // if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)
+  // ==
   //         true ||
   //     peloton_logging_mode == LoggingType::INVALID) {
   //   return;

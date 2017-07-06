@@ -66,7 +66,7 @@ class CCHashTable {
 
   // Make room in the hash table to store a new key-value pair whose hash and
   // total size are equal to those provided as parameters to the function call
-  char *StoreTuple(uint64_t hash, uint32_t size);
+  char* StoreTuple(uint64_t hash, uint32_t size);
 
   // Clean up any resources this hash table has
   void Destroy();
@@ -107,7 +107,7 @@ class CCHashTable {
   //      HashTableProxy. Hopefully, you'll get a compile-time error about this.
 
   // The buckets
-  HashEntry **buckets_;
+  HashEntry** buckets_;
   // The total number of buckets
   uint64_t num_buckets_;
   // The mask we use to find the bucket a given hash falls into

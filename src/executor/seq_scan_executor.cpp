@@ -82,7 +82,6 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
-
   // Scanning over a logical tile.
   if (children_.size() == 1 &&
       // There will be a child node on the create index scenario,
@@ -149,7 +148,7 @@ bool SeqScanExecutor::DExecute() {
       // of the same index.
       index_done_ = true;
     }
-    
+
     concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
 

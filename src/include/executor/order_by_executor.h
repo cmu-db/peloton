@@ -80,7 +80,7 @@ class OrderByExecutor : public AbstractExecutor {
 
   /** Physical (not logical) schema of output tiles */
   std::unique_ptr<catalog::Schema> output_schema_;
-  
+
   /** Projected output column ids corresponding to input schema */
   std::vector<oid_t> output_column_ids_;
 

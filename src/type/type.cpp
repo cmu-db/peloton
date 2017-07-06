@@ -31,18 +31,12 @@ namespace peloton {
 namespace type {
 
 Type* Type::kTypes[] = {
-    new Type(Type::INVALID),
-    new IntegerType(Type::PARAMETER_OFFSET),
-    new BooleanType(),
-    new TinyintType(),
-    new SmallintType(),
-    new IntegerType(Type::INTEGER),
-    new BigintType(),
-    new DecimalType(),
+    new Type(Type::INVALID), new IntegerType(Type::PARAMETER_OFFSET),
+    new BooleanType(), new TinyintType(), new SmallintType(),
+    new IntegerType(Type::INTEGER), new BigintType(), new DecimalType(),
     new TimestampType(),
     new DateType(),  // not yet implemented
-    new VarlenType(Type::VARCHAR),
-    new VarlenType(Type::VARBINARY),
+    new VarlenType(Type::VARCHAR), new VarlenType(Type::VARBINARY),
     new ArrayType(),
     new Type(Type::UDT),  // not yet implemented
 };

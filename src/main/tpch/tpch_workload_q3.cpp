@@ -35,7 +35,8 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   auto &customer = db_.GetTable(TableId::Customer);
   auto &orders = db_.GetTable(TableId::Orders);
 
-  //////////////////////////////////////////////////////////////////////////////                                                              [3136/4535]
+  //////////////////////////////////////////////////////////////////////////////
+  ///[3136/4535]
   /// THE PREDICATE FOR THE SCAN OVER LINEITEM
   //////////////////////////////////////////////////////////////////////////////
 
@@ -44,20 +45,25 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   auto orderdate_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHANOREQUALTO,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 4),
-          new expression::ConstantValueExpression(type::ValueFactory::GetDateValue(_1995_03_10)))};
+          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0,
+                                               4),
+          new expression::ConstantValueExpression(
+              type::ValueFactory::GetDateValue(_1995_03_10)))};
 
   auto mktsegment_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
-          ExpressionType::COMPARE_EQUAL,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 6),
-          new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(machinery)))};
+          ExpressionType::COMPARE_EQUAL, new expression::TupleValueExpression(
+                                             type::Type::TypeId::INTEGER, 0, 6),
+          new expression::ConstantValueExpression(
+              type::ValueFactory::GetIntegerValue(machinery)))};
 
   auto shipdate_pred = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_GREATERTHAN,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 10),
-          new expression::ConstantValueExpression(type::ValueFactory::GetDateValue(_1995_03_10)))};
+          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0,
+                                               10),
+          new expression::ConstantValueExpression(
+              type::ValueFactory::GetDateValue(_1995_03_10)))};
 
   //////////////////////////////////////////////////////////////////////////////
   /// THE SCAN PLANS
@@ -65,9 +71,9 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
 
   // The table scans
   std::unique_ptr<planner::AbstractPlan> lineitem_scan{
-      new planner::SeqScanPlan(&lineitem, shipdate_pred.release(), {0,5,6})};
-  std::unique_ptr<planner::AbstractPlan> order_scan{
-      new planner::SeqScanPlan(&orders, orderdate_pred.release(), {0,1,4,7})};
+      new planner::SeqScanPlan(&lineitem, shipdate_pred.release(), {0, 5, 6})};
+  std::unique_ptr<planner::AbstractPlan> order_scan{new planner::SeqScanPlan(
+      &orders, orderdate_pred.release(), {0, 1, 4, 7})};
   std::unique_ptr<planner::AbstractPlan> customer_scan{
       new planner::SeqScanPlan(&customer, mktsegment_pred.release(), {0})};
 
@@ -83,11 +89,12 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
 
   std::unique_ptr<const planner::ProjectInfo> order_project_info{
       new planner::ProjectInfo(TargetList{}, std::move(order_dm))};
-  auto order_schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
-      {{type::Type::TypeId::INTEGER, kIntSize, "o_custkey", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
-       {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
-       {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
+  auto order_schema =
+      std::shared_ptr<const catalog::Schema>(new catalog::Schema(
+          {{type::Type::TypeId::INTEGER, kIntSize, "o_custkey", true},
+           {type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
+           {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
+           {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
   std::unique_ptr<planner::AbstractPlan> order_projection{
       new planner::ProjectionPlan(std::move(order_project_info), order_schema)};
 
@@ -99,7 +106,8 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   hash_keys.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
 
-  std::unique_ptr<planner::AbstractPlan> customer_hash_plan{new planner::HashPlan(hash_keys)};
+  std::unique_ptr<planner::AbstractPlan> customer_hash_plan{
+      new planner::HashPlan(hash_keys)};
 
   //////////////////////////////////////////////////////////////////////////////
   /// Customer - Order JOIN
@@ -110,25 +118,27 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   DirectMap dm3 = std::make_pair(2, std::make_pair(0, 3));
   DirectMapList direct_map_list = {dm1, dm2, dm3};
 
-  std::unique_ptr<const planner::ProjectInfo> projection{new planner::ProjectInfo(
-      TargetList{}, std::move(direct_map_list))};
+  std::unique_ptr<const planner::ProjectInfo> projection{
+      new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
 
   auto schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
       {{type::Type::TypeId::INTEGER, kIntSize, "o_orderkey", true},
        {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
        {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>> left_hash_keys;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      left_hash_keys;
   left_hash_keys.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1));
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>> right_hash_keys;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      right_hash_keys;
   right_hash_keys.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
 
-  std::unique_ptr<planner::AbstractPlan> cust_order_hj_plan{new planner::HashJoinPlan(
-      JoinType::INNER, nullptr, std::move(projection),
-      schema, left_hash_keys, right_hash_keys)};
+  std::unique_ptr<planner::AbstractPlan> cust_order_hj_plan{
+      new planner::HashJoinPlan(JoinType::INNER, nullptr, std::move(projection),
+                                schema, left_hash_keys, right_hash_keys)};
 
   //////////////////////////////////////////////////////////////////////////////
   /// ORDER - LINITEM HASH PLAN
@@ -138,7 +148,8 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   hash_keys2.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
 
-  std::unique_ptr<planner::AbstractPlan> cust_order_hash_plan{new planner::HashPlan(hash_keys2)};
+  std::unique_ptr<planner::AbstractPlan> cust_order_hash_plan{
+      new planner::HashPlan(hash_keys2)};
 
   //////////////////////////////////////////////////////////////////////////////
   /// ORDER - LINEITEM JOIN
@@ -152,8 +163,8 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   DirectMap dm62 = std::make_pair(5, std::make_pair(1, 2));
   DirectMapList dm_ol = {dm12, dm22, dm32, dm42, dm52, dm62};
 
-  std::unique_ptr<const planner::ProjectInfo> projection2{new planner::ProjectInfo(
-      TargetList{}, std::move(dm_ol))};
+  std::unique_ptr<const planner::ProjectInfo> projection2{
+      new planner::ProjectInfo(TargetList{}, std::move(dm_ol))};
 
   auto ol_schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
       {{type::Type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
@@ -163,17 +174,19 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
        {type::Type::TypeId::DATE, kDateSize, "o_shipddate", true},
        {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true}}));
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>> left_hash_keys2;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      left_hash_keys2;
   left_hash_keys2.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1));
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>> right_hash_keys2;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      right_hash_keys2;
   right_hash_keys2.emplace_back(
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
 
   std::unique_ptr<planner::AbstractPlan> hj_plan2{new planner::HashJoinPlan(
-      JoinType::INNER, nullptr, std::move(projection2),
-      ol_schema, left_hash_keys2, right_hash_keys2)};
+      JoinType::INNER, nullptr, std::move(projection2), ol_schema,
+      left_hash_keys2, right_hash_keys2)};
 
   //////////////////////////////////////////////////////////////////////////////
   /// AGGREGATION
@@ -182,40 +195,34 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression{
           ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
-          new expression::TupleValueExpression{type::Type::TypeId::DECIMAL, 0, 1},
+          new expression::TupleValueExpression{type::Type::TypeId::DECIMAL, 0,
+                                               1},
           new expression::OperatorExpression{
               ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
-              new expression::ConstantValueExpression{type::ValueFactory::GetDecimalValue(1.0)},
-              new expression::TupleValueExpression{type::Type::TypeId::DECIMAL, 0, 2}
-          }
-      }
-  };
-  auto agg_out_schema = std::shared_ptr<const catalog::Schema>{
-      new catalog::Schema{
+              new expression::ConstantValueExpression{
+                  type::ValueFactory::GetDecimalValue(1.0)},
+              new expression::TupleValueExpression{type::Type::TypeId::DECIMAL,
+                                                   0, 2}}}};
+  auto agg_out_schema =
+      std::shared_ptr<const catalog::Schema>{new catalog::Schema{
           {{type::Type::TypeId::INTEGER, kIntSize, "l_orderkey", true},
            {type::Type::TypeId::DATE, kDateSize, "o_orderdate", true},
            {type::Type::TypeId::INTEGER, kIntSize, "o_shippriority", true},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "revenue", true}}
-      }
-  };
+           {type::Type::TypeId::DECIMAL, kDecimalSize, "revenue", true}}}};
 
-  DirectMapList dml = {
-      {0, {0, 0}}, {1, {0, 4}}, {2, {0, 5}}, {3, {1, 0}}
-  };
+  DirectMapList dml = {{0, {0, 0}}, {1, {0, 4}}, {2, {0, 5}}, {3, {1, 0}}};
   std::unique_ptr<const planner::ProjectInfo> agg_project{
       new planner::ProjectInfo(TargetList{}, std::move(dml))};
-  std::unique_ptr<planner::AbstractPlan> agg_plan{
-      new planner::AggregatePlan(std::move(agg_project), nullptr,
-                                 {agg1}, {0, 4, 5}, agg_out_schema,
-                                 AggregateType::HASH)};
+  std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
+      std::move(agg_project), nullptr, {agg1}, {0, 4, 5}, agg_out_schema,
+      AggregateType::HASH)};
 
   //////////////////////////////////////////////////////////////////////////////
   /// SORT
   //////////////////////////////////////////////////////////////////////////////
 
   std::unique_ptr<planner::AbstractPlan> sort_plan{
-      new planner::OrderByPlan{{3,1}, {false, false}, {0,1,2,3}}
-  };
+      new planner::OrderByPlan{{3, 1}, {false, false}, {0, 1, 2, 3}}};
 
   //////////////////////////////////////////////////////////////////////////////
   /// TIE THE SHIT UP
@@ -245,7 +252,6 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ3Plan() const {
   sort_plan->AddChild(std::move(agg_plan));
 
   return sort_plan;
-
 }
 
 }  // namespace tpch

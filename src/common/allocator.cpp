@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <new>
 #include <iostream>
 #include <stdlib.h>
@@ -20,7 +19,8 @@
 
 #include "common/stack_trace.h"
 
-// We will use jemalloc at link time. jemalloc library has already mangled the symbols
+// We will use jemalloc at link time. jemalloc library has already mangled the
+// symbols
 // to be malloc, calloc, etc.
 
 namespace peloton {
@@ -58,7 +58,8 @@ void operator delete(void *location) throw() {
   return peloton::do_deletion(location);
 }
 
-void operator delete(void *location, __attribute__ ((unused)) size_t size) throw() {
+void operator delete(void *location,
+                     __attribute__((unused)) size_t size) throw() {
   return peloton::do_deletion(location);
 }
 
@@ -70,7 +71,8 @@ void operator delete[](void *location) throw() {
   return peloton::do_deletion(location);
 }
 
-void operator delete[](void *location, __attribute__ ((unused)) size_t size) throw() {
+void operator delete[](void *location,
+                       __attribute__((unused)) size_t size) throw() {
   return peloton::do_deletion(location);
 }
 

@@ -28,8 +28,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
 // functions throw exceptions.
 void Query::Execute(concurrency::Transaction &txn,
                     executor::ExecutorContext *executor_context,
-                    char *consumer_arg,
-                    RuntimeStats *stats) {
+                    char *consumer_arg, RuntimeStats *stats) {
   CodeGen codegen{GetCodeContext()};
 
   llvm::Type *runtime_state_type = runtime_state_.FinalizeType(codegen);

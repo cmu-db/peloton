@@ -156,7 +156,7 @@ class LibeventSocket {
   struct event *event = nullptr;  // libevent handle
   short event_flags;              // event flags mask
 
-  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
+  SSL *conn_SSL_context = nullptr;  // SSL context for the connection
 
   LibeventThread *thread;          // reference to the libevent thread
   PacketManager pkt_manager;       // Stores state for this socket
@@ -230,8 +230,8 @@ struct LibeventServer {
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
 
-  uint64_t port_;             // port number
-  size_t max_connections_;    // maximum number of connections
+  uint64_t port_;           // port number
+  size_t max_connections_;  // maximum number of connections
 
   std::string private_key_file_;
   std::string certificate_file_;

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/mutex.h"
@@ -27,7 +26,6 @@ namespace networking {
 //===--------------------------------------------------------------------===//
 
 class ConnectionManager {
-
  public:
   // global singleton
   static ConnectionManager& GetInstance(void);

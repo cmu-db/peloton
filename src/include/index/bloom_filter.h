@@ -26,7 +26,7 @@
 
 #define BLOOM_FILTER_ENABLED
 
-namespace peloton{
+namespace peloton {
 namespace index {
 
 /*
@@ -56,9 +56,9 @@ class BloomFilter {
   static constexpr size_t BYTE_OFFSET_MASK = 0x00000000000000F8;
 
  private:
-  #ifdef BLOOM_FILTER_ENABLED
+#ifdef BLOOM_FILTER_ENABLED
   unsigned char bit_array_0[FILTER_SIZE];
-  #endif
+#endif
 
   const ValueType **data_p;
   int value_count;
@@ -89,16 +89,17 @@ class BloomFilter {
    *
    * Seems that GCC unrolls it into movq instructions which is good
    */
-  inline BloomFilter(const ValueType **p_data_p,
-                     const ValueEqualityChecker &p_value_eq_obj = ValueEqualityChecker{},
-                     const ValueHashFunc &p_value_hash_obj = ValueHashFunc{}) :
-    data_p{p_data_p},
-    value_count{0},
-    value_eq_obj{p_value_eq_obj},
-    value_hash_obj{p_value_hash_obj} {
-    #ifdef BLOOM_FILTER_ENABLED
+  inline BloomFilter(
+      const ValueType **p_data_p,
+      const ValueEqualityChecker &p_value_eq_obj = ValueEqualityChecker{},
+      const ValueHashFunc &p_value_hash_obj = ValueHashFunc{})
+      : data_p{p_data_p},
+        value_count{0},
+        value_eq_obj{p_value_eq_obj},
+        value_hash_obj{p_value_hash_obj} {
+#ifdef BLOOM_FILTER_ENABLED
     memset(bit_array_0, 0, sizeof(bit_array_0));
-    #endif
+#endif
 
     return;
   }
@@ -106,23 +107,17 @@ class BloomFilter {
   /*
    * GetSize() - Returns the number of elements stored inside the BloomFilter
    */
-  inline int GetSize() const {
-    return value_count;
-  }
+  inline int GetSize() const { return value_count; }
 
   /*
    * Begin() - Returns a pointer to its internal array
    */
-  inline const ValueType **Begin() {
-    return data_p;
-  }
+  inline const ValueType **Begin() { return data_p; }
 
   /*
    * End() - Returns a pointer to the end of the array
    */
-  inline const ValueType **End() {
-    return data_p + value_count;
-  }
+  inline const ValueType **End() { return data_p + value_count; }
 
   /*
    * __InsertScalar() - Insert into the bloom filter using scalar instructions
@@ -146,10 +141,10 @@ class BloomFilter {
     data_p[value_count] = &value;
     value_count++;
 
-    #ifdef BLOOM_FILTER_ENABLED
-    bit_array_0[(hash_value & BYTE_OFFSET_MASK) >> 3] |= \
-      (0x1 << (hash_value & BIT_OFFSET_MASK));
-    #endif
+#ifdef BLOOM_FILTER_ENABLED
+    bit_array_0[(hash_value & BYTE_OFFSET_MASK) >> 3] |=
+        (0x1 << (hash_value & BIT_OFFSET_MASK));
+#endif
 
     return;
   }
@@ -171,22 +166,21 @@ class BloomFilter {
    * data structure (e.g. simple linear array)
    */
   inline bool __ExistsScalar(const ValueType &value) {
-
-    #ifdef BLOOM_FILTER_ENABLED
+#ifdef BLOOM_FILTER_ENABLED
     register size_t hash_value = value_hash_obj(value);
 
-    if((bit_array_0[(hash_value & BYTE_OFFSET_MASK) >> 3] & \
-      (0x1 << (hash_value & BIT_OFFSET_MASK))) == 0x00) {
+    if ((bit_array_0[(hash_value & BYTE_OFFSET_MASK) >> 3] &
+         (0x1 << (hash_value & BIT_OFFSET_MASK))) == 0x00) {
       return false;
     }
-    #endif
+#endif
 
     // We are still not sure whether the element exists or not
     // even if we reach here - though it should be a rare event
     // Maybe try searching in a probablistic data structure
 
-    for(int i = 0;i < value_count;i++) {
-      if(value_eq_obj(value, *(data_p[i])) == true) {
+    for (int i = 0; i < value_count; i++) {
+      if (value_eq_obj(value, *(data_p[i])) == true) {
         return true;
       }
     }
@@ -195,10 +189,8 @@ class BloomFilter {
     return false;
   }
 
-  inline bool Exists(const ValueType &value) {
-    return __ExistsScalar(value);
-  }
+  inline bool Exists(const ValueType &value) { return __ExistsScalar(value); }
 };
 
-} // namespace index
-} // namespace peloton
+}  // namespace index
+}  // namespace peloton

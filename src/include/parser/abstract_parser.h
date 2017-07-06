@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "parser/abstract_parse.h"
@@ -23,7 +22,6 @@ namespace parser {
 //===--------------------------------------------------------------------===//
 
 class AbstractParser {
-
  public:
   AbstractParser(const AbstractParser &) = delete;
   AbstractParser &operator=(const AbstractParser &) = delete;

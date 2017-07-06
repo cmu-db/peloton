@@ -47,7 +47,7 @@ class PacketManager {
   bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
 
   /* Routine to deal with SSL request message */
-  bool ProcessSSLRequestPacket(InputPacket *pkt);
+  bool ProcessSSLRequestPacket(InputPacket* pkt);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
@@ -131,7 +131,8 @@ class PacketManager {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type_string, const QueryType& query_type, int rows);
+  void CompleteCommand(const std::string& query_type_string,
+                       const QueryType& query_type, int rows);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse();

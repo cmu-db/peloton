@@ -77,26 +77,27 @@ class PropertyDistinct : public Property {
   std::vector<std::shared_ptr<expression::AbstractExpression>>
       distinct_column_exprs_;
 };
-  
+
 // Specify how many tuples to output
 class PropertyLimit : public Property {
  public:
-  PropertyLimit(int64_t offset, int64_t limit):offset_(offset), limit_(limit){}
-  
+  PropertyLimit(int64_t offset, int64_t limit)
+      : offset_(offset), limit_(limit) {}
+
   PropertyType Type() const override;
-  
+
   hash_t Hash() const override;
-  
+
   bool operator>=(const Property &r) const override;
-  
+
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
-  
+
   inline int64_t GetLimit() const { return limit_; }
-  
+
   inline int64_t GetOffset() const { return offset_; }
-  
+
  private:
   int64_t offset_;
   int64_t limit_;

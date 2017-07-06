@@ -66,7 +66,6 @@ bool CopyExecutor::DInit() {
   return true;
 }
 
-
 bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
   auto file = fopen(name, mode);
   if (file == NULL) {
@@ -107,7 +106,6 @@ void CopyExecutor::FlushBuffer() {
   }
   buff_ptr = 0;
 }
-
 
 void CopyExecutor::FFlushFsync() {
   // First, flush

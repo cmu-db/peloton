@@ -49,9 +49,7 @@ struct DropStatement : TableRefStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   EntityType type;
   char* database_name = nullptr;

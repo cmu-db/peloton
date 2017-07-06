@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/transaction.h"
 
 #include "common/logger.h"
@@ -95,7 +94,7 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
 void Transaction::RecordUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  
+
   if (IsInRWSet(location)) {
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
@@ -125,13 +124,12 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
 void Transaction::RecordInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  
+
   if (IsInRWSet(location)) {
     PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
     ++insert_count_;
-
   }
 }
 

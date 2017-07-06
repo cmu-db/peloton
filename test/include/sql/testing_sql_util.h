@@ -44,6 +44,12 @@ class TestingSQLUtil {
                                 std::vector<FieldInfo> &tuple_descriptor,
                                 int &rows_affected, std::string &error_message);
 
+  static ResultType ExecuteSQLQuery(const std::string query,
+                                    std::vector<StatementResult> &result,
+                                    std::vector<FieldInfo> &tuple_descriptor,
+                                    int &rows_affected);
+
+
   // Execute a SQL query end-to-end with the specific optimizer
   // Note: right now this is not executed in the context of a transaction, we
   // may want to pass a transaction pointer here if that API is exposed after

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_executor.h"
@@ -45,7 +44,8 @@ class ProjectionExecutor : public AbstractExecutor {
   /** @brief Schema of projected tuples. */
   const catalog::Schema *schema_ = nullptr;
 
-  /** @brief Flag to indicate whether the execution has finished for SELECT without FROM */
+  /** @brief Flag to indicate whether the execution has finished for SELECT
+   * without FROM */
   bool finished_ = false;
 };
 

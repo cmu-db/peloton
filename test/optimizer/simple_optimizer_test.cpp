@@ -45,6 +45,9 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
+
   LOG_TRACE("Creating table");
   LOG_TRACE(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
@@ -75,7 +78,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Table Created");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
@@ -84,6 +87,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_TRACE("Inserting a tuple...");
   LOG_TRACE(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
@@ -106,10 +111,12 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple inserted!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   // Now Create index
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_TRACE("Creating and Index");
   LOG_TRACE("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(
@@ -127,7 +134,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("INDEX CREATED!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");

@@ -27,7 +27,8 @@ namespace executor {
  * type, column type, and result type. The object is constructed in
  * memory from the provided memrory pool.
  */
-AbstractAttributeAggregator *GetAttributeAggregatorInstance(ExpressionType agg_type) {
+AbstractAttributeAggregator *GetAttributeAggregatorInstance(
+    ExpressionType agg_type) {
   AbstractAttributeAggregator *aggregator;
 
   switch (agg_type) {
@@ -91,7 +92,8 @@ type::Value AbstractAttributeAggregator::Finalize() {
  * used to retrieve pass-through values;
  * Right is the tuple holding all aggregated values.
  */
-bool Helper(const planner::AggregatePlan *node, AbstractAttributeAggregator **aggregates,
+bool Helper(const planner::AggregatePlan *node,
+            AbstractAttributeAggregator **aggregates,
             storage::AbstractTable *output_table,
             const AbstractTuple *delegate_tuple,
             executor::ExecutorContext *econtext) {
@@ -190,7 +192,8 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     LOG_TRACE("Group-by key not found. Start a new group.");
     // Allocate new aggregate list
     aggregate_list = new AggregateList();
-    aggregate_list->aggregates = new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()];
+    aggregate_list->aggregates =
+        new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()];
     // Make a deep copy of the first tuple we meet
     for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
       // first_tuple_values has the ownership
@@ -198,8 +201,8 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     };
 
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
-      aggregate_list->aggregates[aggno] =
-          GetAttributeAggregatorInstance(node->GetUniqueAggTerms()[aggno].aggtype);
+      aggregate_list->aggregates[aggno] = GetAttributeAggregatorInstance(
+          node->GetUniqueAggTerms()[aggno].aggtype);
 
       bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
       aggregate_list->aggregates[aggno]->SetDistinct(distinct);
@@ -253,7 +256,8 @@ SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
       delegate_tuple_(&delegate_tuple_values_),  // Bind value vector to wrapper
                                                  // container tuple
       num_input_columns_(num_input_columns) {
-  aggregates = new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()]();
+  aggregates =
+      new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()]();
 
   PL_ASSERT(delegate_tuple_values_.empty());
 }
@@ -307,8 +311,8 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
       // Clean up previous aggregate
       delete aggregates[aggno];
-      aggregates[aggno] =
-          GetAttributeAggregatorInstance(node->GetUniqueAggTerms()[aggno].aggtype);
+      aggregates[aggno] = GetAttributeAggregatorInstance(
+          node->GetUniqueAggTerms()[aggno].aggtype);
 
       bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
       aggregates[aggno]->SetDistinct(distinct);
@@ -357,15 +361,16 @@ PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
                                  executor::ExecutorContext *econtext)
     : AbstractAggregator(node, output_table, econtext) {
   // allocate aggregators
-  aggregates = new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()]();
+  aggregates =
+      new AbstractAttributeAggregator *[node->GetUniqueAggTerms().size()]();
 
   // initialize aggregators
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     LOG_TRACE("Aggregate term type: %s",
               ExpressionTypeToString(node->GetUniqueAggTerms()[aggno].aggtype)
                   .c_str());
-    aggregates[aggno] =
-        GetAttributeAggregatorInstance(node->GetUniqueAggTerms()[aggno].aggtype);
+    aggregates[aggno] = GetAttributeAggregatorInstance(
+        node->GetUniqueAggTerms()[aggno].aggtype);
 
     bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
     aggregates[aggno]->SetDistinct(distinct);

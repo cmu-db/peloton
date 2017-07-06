@@ -18,30 +18,29 @@
 // GENERAL
 //===----------------------------------------------------------------------===//
 
-DEFINE_bool(h,
-            false,
-            "Show help");
+DEFINE_bool(h, false, "Show help");
 
 namespace peloton {
 namespace configuration {
 
-void PrintConfiguration(){
-
-  LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
+void PrintConfiguration() {
+  LOG_INFO("%30s",
+           "//===-------------- PELOTON CONFIGURATION --------------===//");
   LOG_INFO(" ");
 
-  LOG_INFO("%30s", "//===----------------- CONNECTIONS ---------------------===//");
+  LOG_INFO("%30s",
+           "//===----------------- CONNECTIONS ---------------------===//");
   LOG_INFO(" ");
 
   LOG_INFO("%30s: %10lu", "Port", FLAGS_port);
-  LOG_INFO("%30s: %10s",  "Socket Family", FLAGS_socket_family.c_str());
+  LOG_INFO("%30s: %10s", "Socket Family", FLAGS_socket_family.c_str());
   LOG_INFO("%30s: %10lu", "Statistics", FLAGS_stats_mode);
   LOG_INFO("%30s: %10lu", "Max Connections", FLAGS_max_connections);
-  LOG_INFO("%30s: %10s",  "Code-generation", FLAGS_codegen ? "on" : "off");
+  LOG_INFO("%30s: %10s", "Code-generation", FLAGS_codegen ? "on" : "off");
 
   LOG_INFO(" ");
-  LOG_INFO("%30s", "//===---------------------------------------------------===//");
-
+  LOG_INFO("%30s",
+           "//===---------------------------------------------------===//");
 }
 
 }  // End configuration namespace
@@ -55,28 +54,21 @@ void PrintConfiguration(){
 // CONNECTIONS
 //===----------------------------------------------------------------------===//
 
-DEFINE_uint64(port,
-              15721,
-              "Peloton port (default: 15721)");
+DEFINE_uint64(port, 15721, "Peloton port (default: 15721)");
 
-DEFINE_uint64(max_connections,
-              64,
+DEFINE_uint64(max_connections, 64,
               "Maximum number of connections (default: 64)");
 
-DEFINE_string(socket_family,
-              "AF_INET",
-              "Socket family (default: AF_INET)");
+DEFINE_string(socket_family, "AF_INET", "Socket family (default: AF_INET)");
 
 DEFINE_string(private_key_file,
               // Currently use hardcoded private key path, may need to change
               // to generate file dynamically at runtime
               // The same applies to certificate file
-             "/home/vagrant/temp/server.key",
-             "path to private key file");
+              "/home/vagrant/temp/server.key", "path to private key file");
 
-DEFINE_string(certificate_file,
-             "/home/vagrant/temp/server.crt",
-             "path to certificate file");
+DEFINE_string(certificate_file, "/home/vagrant/temp/server.crt",
+              "path to certificate file");
 
 //===----------------------------------------------------------------------===//
 // RESOURCE USAGE
@@ -94,36 +86,29 @@ DEFINE_string(certificate_file,
 // CONFIGURATION
 //===----------------------------------------------------------------------===//
 
-DEFINE_bool(display_configuration,
-            false,
+DEFINE_bool(display_configuration, false,
             "Display configuration (default: false)");
 
 //===----------------------------------------------------------------------===//
 // STATISTICS
 //===----------------------------------------------------------------------===//
 
-DEFINE_uint64(stats_mode,
-              peloton::STATS_TYPE_INVALID,
+DEFINE_uint64(stats_mode, peloton::STATS_TYPE_INVALID,
               "Enable statistics collection (default: 0)");
 
 //===----------------------------------------------------------------------===//
 // AI
 //===----------------------------------------------------------------------===//
 
-DEFINE_bool(index_tuner,
-            false,
-            "Enable index tuner (default: false)");
+DEFINE_bool(index_tuner, false, "Enable index tuner (default: false)");
 
-DEFINE_bool(layout_tuner,
-            false,
-            "Enable layout tuner (default: false)");
+DEFINE_bool(layout_tuner, false, "Enable layout tuner (default: false)");
 
 //===----------------------------------------------------------------------===//
 //
 //===----------------------------------------------------------------------===//
 
-DEFINE_bool(codegen,
-            true,
+DEFINE_bool(codegen, true,
             "Enable code-generation for query execution (default: true)");
 
 // Layout mode

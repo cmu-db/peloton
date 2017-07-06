@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <thread>
@@ -29,16 +28,16 @@ namespace peloton {
 namespace concurrency {
 
 class DecentralizedEpochManager : public EpochManager {
-  DecentralizedEpochManager(const DecentralizedEpochManager&) = delete;
+  DecentralizedEpochManager(const DecentralizedEpochManager &) = delete;
 
-public:
-  DecentralizedEpochManager() : 
-    current_global_epoch_id_(1), 
-    next_txn_id_(0),
-    snapshot_global_epoch_id_(1),
-    is_running_(false) {
-      // register a default thread for handling catalog stuffs.
-      RegisterThread(0);
+ public:
+  DecentralizedEpochManager()
+      : current_global_epoch_id_(1),
+        next_txn_id_(0),
+        snapshot_global_epoch_id_(1),
+        is_running_(false) {
+    // register a default thread for handling catalog stuffs.
+    RegisterThread(0);
   }
 
   static DecentralizedEpochManager &GetInstance() {
@@ -46,9 +45,7 @@ public:
     return epoch_manager;
   }
 
-  virtual void Reset() override {
-    Reset(1);
-  }
+  virtual void Reset() override { Reset(1); }
 
   virtual void Reset(const uint64_t current_epoch_id) override {
     // epoch should be always larger than 0
@@ -57,7 +54,7 @@ public:
     next_txn_id_ = 0;
     snapshot_global_epoch_id_ = 1;
     local_epochs_.clear();
-    
+
     RegisterThread(0);
   }
 
@@ -69,7 +66,8 @@ public:
   virtual void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) override {
     LOG_TRACE("Starting epoch");
     this->is_running_ = true;
-    epoch_thread.reset(new std::thread(&DecentralizedEpochManager::Running, this));
+    epoch_thread.reset(
+        new std::thread(&DecentralizedEpochManager::Running, this));
   }
 
   virtual void StartEpoch() override {
@@ -100,11 +98,11 @@ public:
   }
 
   // a transaction enters epoch with thread id
-  virtual cid_t EnterEpoch(const size_t thread_id, const TimestampType ts_type) override;
+  virtual cid_t EnterEpoch(const size_t thread_id,
+                           const TimestampType ts_type) override;
 
   // a transaction exits epoch with thread id
   virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) override;
-
 
   virtual cid_t GetExpiredCid() override {
     uint64_t max_committed_eid = GetExpiredEpochId();
@@ -119,18 +117,14 @@ public:
 
   virtual eid_t GetCurrentEpochId() override {
     return current_global_epoch_id_.load();
-  }  
+  }
 
-private:
-
-
+ private:
   inline uint32_t GetNextTransactionId() {
     return next_txn_id_.fetch_add(1, std::memory_order_relaxed);
   }
 
-
   void Running() {
-
     PL_ASSERT(is_running_ == true);
 
     while (is_running_ == true) {
@@ -140,25 +134,21 @@ private:
     }
   }
 
-private:
-
+ private:
   // each thread holds a pointer to a local epoch.
   // it updates the local epoch to report their local time.
   Spinlock local_epoch_lock_;
   std::unordered_map<int, std::unique_ptr<LocalEpoch>> local_epochs_;
-  
+
   // the global epoch reflects the true time of the system.
   std::atomic<eid_t> current_global_epoch_id_;
   std::atomic<uint32_t> next_txn_id_;
-  
+
   // snapshot epoch is an epoch where the corresponding tuples may be still
   // visible to on-the-fly transactions
   eid_t snapshot_global_epoch_id_;
 
   bool is_running_;
-
 };
-
 }
 }
-

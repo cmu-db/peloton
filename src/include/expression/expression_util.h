@@ -464,8 +464,7 @@ class ExpressionUtil {
    * Walks an expression trees and find all TupleValueExprs in the tree
    */
   static void GetTupleValueExprs(ExprSet &expr_set, AbstractExpression *expr) {
-    if (expr == nullptr) 
-      return;
+    if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
@@ -552,11 +551,11 @@ class ExpressionUtil {
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
-      auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                          expr->GetChild(0));
+      auto left_expr =
+          ExtractJoinColumns(l_column_exprs, r_column_exprs, expr->GetChild(0));
 
-      auto right_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                           expr->GetChild(1));
+      auto right_expr =
+          ExtractJoinColumns(l_column_exprs, r_column_exprs, expr->GetChild(1));
 
       expression::AbstractExpression *root = nullptr;
 

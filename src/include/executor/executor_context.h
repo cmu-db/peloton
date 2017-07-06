@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "type/ephemeral_pool.h"
@@ -18,9 +17,9 @@
 
 namespace peloton {
 
-//class Value;
+// class Value;
 
-namespace concurrency{
+namespace concurrency {
 class Transaction;
 }
 
@@ -71,7 +70,6 @@ class ExecutorContext {
 
   // pool
   std::unique_ptr<type::EphemeralPool> pool_;
-
 };
 
 }  // namespace executor

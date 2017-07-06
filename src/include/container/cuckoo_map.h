@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdlib>
@@ -22,8 +21,8 @@
 namespace peloton {
 
 // CUCKOO_MAP_TEMPLATE_ARGUMENTS
-#define CUCKOO_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType>
+#define CUCKOO_MAP_TEMPLATE_ARGUMENTS \
+  template <typename KeyType, typename ValueType>
 
 // CUCKOO_MAP_TYPE
 #define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType>
@@ -31,7 +30,6 @@ namespace peloton {
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 class CuckooMap {
  public:
-
   CuckooMap();
   ~CuckooMap();
 
@@ -60,7 +58,6 @@ class CuckooMap {
   bool IsEmpty() const;
 
  private:
-
   // cuckoo map
   typedef cuckoohash_map<KeyType, ValueType> cuckoo_map_t;
 

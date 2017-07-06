@@ -44,8 +44,7 @@ class PostgresParser {
 
   // Parse a given query
   static parser::SQLStatementList* ParseSQLString(const char* sql);
-  static parser::SQLStatementList* ParseSQLString(
-      const std::string& sql);
+  static parser::SQLStatementList* ParseSQLString(const std::string& sql);
 
   static PostgresParser& GetInstance();
 
@@ -64,30 +63,39 @@ class PostgresParser {
     return new_str;
   }
 
-  static ColumnDefinition::FKConstrActionType CharToActionType(char &type) {
+  static ColumnDefinition::FKConstrActionType CharToActionType(char& type) {
     switch (type) {
-      case 'a':return ColumnDefinition::FKConstrActionType::NOACTION;
-      case 'r':return ColumnDefinition::FKConstrActionType::RESTRICT;
-      case 'c':return ColumnDefinition::FKConstrActionType::CASCADE;
-      case 'n':return ColumnDefinition::FKConstrActionType::SETNULL;
-      case 'd':return ColumnDefinition::FKConstrActionType::SETDEFAULT;
-      default:return ColumnDefinition::FKConstrActionType::NOACTION;
+      case 'a':
+        return ColumnDefinition::FKConstrActionType::NOACTION;
+      case 'r':
+        return ColumnDefinition::FKConstrActionType::RESTRICT;
+      case 'c':
+        return ColumnDefinition::FKConstrActionType::CASCADE;
+      case 'n':
+        return ColumnDefinition::FKConstrActionType::SETNULL;
+      case 'd':
+        return ColumnDefinition::FKConstrActionType::SETDEFAULT;
+      default:
+        return ColumnDefinition::FKConstrActionType::NOACTION;
     }
   }
 
-  static ColumnDefinition::FKConstrMatchType CharToMatchType(char &type) {
+  static ColumnDefinition::FKConstrMatchType CharToMatchType(char& type) {
     switch (type) {
-      case 'f':return ColumnDefinition::FKConstrMatchType::FULL;
-      case 'p':return ColumnDefinition::FKConstrMatchType::PARTIAL;
-      case 's':return ColumnDefinition::FKConstrMatchType::SIMPLE;
-      default:return ColumnDefinition::FKConstrMatchType::SIMPLE;
+      case 'f':
+        return ColumnDefinition::FKConstrMatchType::FULL;
+      case 'p':
+        return ColumnDefinition::FKConstrMatchType::PARTIAL;
+      case 's':
+        return ColumnDefinition::FKConstrMatchType::SIMPLE;
+      default:
+        return ColumnDefinition::FKConstrMatchType::SIMPLE;
     }
   }
 
   static bool IsAggregateFunction(std::string& fun_name) {
-    if (fun_name == "min" || fun_name == "max" ||
-        fun_name == "count" || fun_name == "avg" ||
-        fun_name == "sum")
+    if (fun_name == "min" || fun_name == "max" || fun_name == "count" ||
+        fun_name == "avg" || fun_name == "sum")
       return true;
     return false;
   }
@@ -97,8 +105,8 @@ class PostgresParser {
   //===--------------------------------------------------------------------===//
 
   // transform helper for internal parse tree
-  static parser::SQLStatementList*
-    PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt);
+  static parser::SQLStatementList* PgQueryInternalParsetreeTransform(
+      PgQueryInternalParsetreeAndError stmt);
 
   // transform helper for Alias parsenodes
   static char* AliasTransform(Alias* root);
@@ -116,7 +124,8 @@ class PostgresParser {
   static parser::TableRef* FromTransform(List* root);
 
   // transform helper for select targets
-  static std::vector<expression::AbstractExpression*>* TargetTransform(List* root);
+  static std::vector<expression::AbstractExpression*>* TargetTransform(
+      List* root);
 
   // transform helper for all expr nodes
   static expression::AbstractExpression* ExprTransform(Node* root);
@@ -155,7 +164,7 @@ class PostgresParser {
   static parser::OrderDescription* OrderByTransform(List* order);
 
   // transform helper for table column definitions
-  static parser::ColumnDefinition* ColumnDefTransform(ColumnDef *root);
+  static parser::ColumnDefinition* ColumnDefTransform(ColumnDef* root);
 
   // transform helper for create statements
   static parser::SQLStatement* CreateTransform(CreateStmt* root);
@@ -171,7 +180,7 @@ class PostgresParser {
 
   // transform helper for ListsTransform (insert multiple rows)
   static std::vector<std::vector<expression::AbstractExpression*>*>*
-      ValueListsTransform(List* root);
+  ValueListsTransform(List* root);
 
   // transform helper for insert statements
   static parser::SQLStatement* InsertTransform(InsertStmt* root);
@@ -201,7 +210,8 @@ class PostgresParser {
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
 
   // transform helper for transaction statement
-  static parser::TransactionStatement* TransactionTransform(TransactionStmt* root);
+  static parser::TransactionStatement* TransactionTransform(
+      TransactionStmt* root);
 
   // transform helper for execute statement
   static parser::ExecuteStatement* ExecuteTransform(ExecuteStmt* root);
@@ -209,7 +219,8 @@ class PostgresParser {
   // transform helper for constant values
   static expression::AbstractExpression* ValueTransform(value val);
 
-  static std::vector<expression::AbstractExpression*>* ParamListTransform(List* root);
+  static std::vector<expression::AbstractExpression*>* ParamListTransform(
+      List* root);
 
   // transform helper for execute statement
   static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);

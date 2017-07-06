@@ -22,7 +22,7 @@ ProjectionPlan::ProjectionPlan(
     : project_info_(std::move(project_info)), schema_(schema) {}
 
 void ProjectionPlan::PerformBinding(BindingContext &context) {
-  const auto& children = GetChildren();
+  const auto &children = GetChildren();
   PL_ASSERT(children.size() == 1);
 
   // Let the child do its binding first

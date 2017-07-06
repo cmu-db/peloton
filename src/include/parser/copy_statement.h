@@ -42,9 +42,7 @@ struct CopyStatement : SQLStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   TableRef* cpy_table;
 

@@ -42,12 +42,19 @@ class OperatorTransformerTests : public PelotonTest {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     stmt_list = std::move(peloton_parser.BuildParseTree(query));
     auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+    // # 623
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
 
     // Bind query
     binder::BindNodeVisitor binder;
+    // # 623
+    binder.consistentTxn = txn;
     binder.BindNameToNode(stmt);
 
     QueryToOperatorTransformer transformer;
+    // # 623
+    transformer.consistentTxn = txn;
     return std::move(transformer.ConvertToOpExpression(stmt));
   }
 
@@ -60,7 +67,11 @@ class OperatorTransformerTests : public PelotonTest {
         "SELECT %s FROM %s", true_predicates.c_str(), table_names.c_str());
     auto parsed_stmt = peloton_parser.BuildParseTree(ref_query);
     auto ref_stmt = parsed_stmt->GetStatement(0);
+    // # 623
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
     binder::BindNodeVisitor binder;
+    binder.consistentTxn = txn;
     binder.BindNameToNode(ref_stmt);
     auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
     LOG_INFO("Expected: %s", true_predicates.c_str());

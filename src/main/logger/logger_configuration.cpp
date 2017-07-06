@@ -10,7 +10,6 @@
 // //
 // //===----------------------------------------------------------------------===//
 
-
 // #include <iomanip>
 // #include <algorithm>
 // #include <sys/stat.h>
@@ -60,7 +59,8 @@
 
 // static void ValidateLoggingType(const configuration& state) {
 //   if (state.logging_type <= LoggingType::INVALID) {
-//     LOG_ERROR("Invalid logging_type :: %d", static_cast<int>(state.logging_type));
+//     LOG_ERROR("Invalid logging_type :: %d",
+//     static_cast<int>(state.logging_type));
 //     exit(EXIT_FAILURE);
 //   }
 
@@ -209,10 +209,12 @@
 //   struct stat data_stat;
 //   // Check the existence of the log directory
 //   if (stat(state.log_file_dir.c_str(), &data_stat) != 0) {
-//     LOG_ERROR("log_file_dir :: %s does not exist", state.log_file_dir.c_str());
+//     LOG_ERROR("log_file_dir :: %s does not exist",
+//     state.log_file_dir.c_str());
 //     exit(EXIT_FAILURE);
 //   } else if (!(data_stat.st_mode & S_IFDIR)) {
-//     LOG_ERROR("log_file_dir :: %s is not a directory", state.log_file_dir.c_str());
+//     LOG_ERROR("log_file_dir :: %s is not a directory",
+//     state.log_file_dir.c_str());
 //     exit(EXIT_FAILURE);
 //   }
 
@@ -261,14 +263,14 @@
 //   tpcc::state.gc_mode = false;
 //   tpcc::state.gc_backend_count = 1;
 
-
 //   // Parse args
 //   while (1) {
 //     int idx = 0;
 //     // logger - hs:x:f:l:t:q:v:r:y:
 //     // ycsb   - hemgi:k:d:p:b:c:o:u:z:n:
 //     // tpcc   - heagi:k:d:p:b:w:n:
-//     int c = getopt_long(argc, argv, "hs:x:f:l:t:q:v:r:y:emgi:k:d:p:b:c:o:u:z:n:aw:j:",
+//     int c = getopt_long(argc, argv,
+//     "hs:x:f:l:t:q:v:r:y:emgi:k:d:p:b:c:o:u:z:n:aw:j:",
 //                         opts, &idx);
 
 //     if (c == -1) break;

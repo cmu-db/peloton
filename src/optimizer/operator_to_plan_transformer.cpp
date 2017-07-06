@@ -581,8 +581,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
                           l_output_exprs.end());
       output_exprs.insert(output_exprs.end(), r_output_exprs.begin(),
                           r_output_exprs.end());
-    }
-    else
+    } else
       output_exprs.emplace_back(expr);
   }
 
@@ -593,11 +592,12 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // schema of the projections output
   vector<catalog::Column> columns;
   size_t output_size = output_exprs.size();
-  for (size_t output_offset = 0; output_offset<output_size; output_offset++) {
+  for (size_t output_offset = 0; output_offset < output_size; output_offset++) {
     auto expr = output_exprs[output_offset];
     auto expr_type = expr->GetExpressionType();
 
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr.get());
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   expr.get());
     if (expr_type == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, we can just do a direct mapping.
       if (l_child_map.count(expr))

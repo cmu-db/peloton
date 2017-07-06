@@ -31,7 +31,8 @@ class Rule {
 
   bool IsLogical() const { return logical; }
 
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr, Memo *memo) const = 0;
+  virtual bool Check(std::shared_ptr<OperatorExpression> expr,
+                     Memo *memo) const = 0;
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,

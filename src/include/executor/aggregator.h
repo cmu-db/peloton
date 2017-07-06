@@ -50,8 +50,7 @@ class AbstractAttributeAggregator {
 
  private:
   typedef std::unordered_set<type::Value, type::Value::hash,
-                             type::Value::equal_to>
-      DistinctSetType;
+                             type::Value::equal_to> DistinctSetType;
 
   DistinctSetType distinct_set_;
 
@@ -313,8 +312,8 @@ class HashAggregator : public AbstractAggregator {
 
   // Default equal_to should works well
   typedef std::unordered_map<std::vector<type::Value>, AggregateList *,
-                             ValueVectorHasher, ValueVectorCmp>
-      HashAggregateMapType;
+                             ValueVectorHasher,
+                             ValueVectorCmp> HashAggregateMapType;
 
   /** @brief Group by key values used */
   std::vector<type::Value> group_by_key_values;

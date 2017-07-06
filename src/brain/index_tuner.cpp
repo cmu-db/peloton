@@ -592,7 +592,6 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
   // Enable visibility mode
   SetVisibilityMode();
 
-
   auto tables_samples = brain::BrainUtil::LoadSamplesFile(path);
 
   // Build sample map
@@ -609,7 +608,7 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
     // Locate table in catalog
     auto table = catalog->GetTableWithName(database_name, table_name);
     PL_ASSERT(table != nullptr);
-    for (auto &sample : samples) {
+    for (auto& sample : samples) {
       table->RecordIndexSample(sample);
     }
     LOG_INFO("Added table to index tuner : %s", table_name.c_str());
@@ -620,14 +619,14 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
 }
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(const std::string &path) {
+void LoadStatsFromFile(const std::string& path) {
   LOG_INFO("LoadStatsFromFile Invoked");
 
   // Get index tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-  auto duration = 30000; // in ms
+  auto duration = 30000;  // in ms
   index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap

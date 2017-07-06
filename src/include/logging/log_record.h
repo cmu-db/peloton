@@ -24,15 +24,16 @@ namespace logging {
 
 class LogRecord {
   friend class LogRecordFactory;
-private:
-  LogRecord(LogRecordType log_type, const ItemPointer &pos, 
-            const eid_t epoch_id, const cid_t commit_id)
-    : log_record_type_(log_type), 
-      tuple_pos_(pos), 
-      eid_(epoch_id), 
-      cid_(commit_id) {}
 
-public:
+ private:
+  LogRecord(LogRecordType log_type, const ItemPointer &pos,
+            const eid_t epoch_id, const cid_t commit_id)
+      : log_record_type_(log_type),
+        tuple_pos_(pos),
+        eid_(epoch_id),
+        cid_(commit_id) {}
+
+ public:
   virtual ~LogRecord() {}
 
   inline LogRecordType GetType() const { return log_record_type_; }
@@ -49,7 +50,7 @@ public:
 
   inline cid_t GetCommitId() { return cid_; }
 
-private:
+ private:
   LogRecordType log_record_type_;
 
   ItemPointer tuple_pos_;
@@ -59,24 +60,26 @@ private:
   cid_t cid_;
 };
 
-
 class LogRecordFactory {
-public:
-  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos) {
-    PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT || 
-              log_type == LogRecordType::TUPLE_DELETE || 
+ public:
+  static LogRecord CreateTupleRecord(const LogRecordType log_type,
+                                     const ItemPointer &pos) {
+    PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
+              log_type == LogRecordType::TUPLE_DELETE ||
               log_type == LogRecordType::TUPLE_UPDATE);
     return LogRecord(log_type, pos, INVALID_EID, INVALID_CID);
   }
 
-  static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
-    PL_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN || 
+  static LogRecord CreateTxnRecord(const LogRecordType log_type,
+                                   const cid_t commit_id) {
+    PL_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN ||
               log_type == LogRecordType::TRANSACTION_COMMIT);
     return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_EID, commit_id);
   }
 
-  static LogRecord CreateEpochRecord(const LogRecordType log_type, const eid_t epoch_id) {
-    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN || 
+  static LogRecord CreateEpochRecord(const LogRecordType log_type,
+                                     const eid_t epoch_id) {
+    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN ||
               log_type == LogRecordType::EPOCH_END);
     return LogRecord(log_type, INVALID_ITEMPOINTER, epoch_id, INVALID_CID);
   }

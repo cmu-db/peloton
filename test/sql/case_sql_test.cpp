@@ -55,11 +55,12 @@ TEST_F(CaseSQLTests, Simple) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
-  LOG_DEBUG("Running SELECT a, case when a=1 then 2 else 0 end from test");	
+  LOG_DEBUG("Running SELECT a, case when a=1 then 2 else 0 end from test");
+  
   TestingSQLUtil::ExecuteSQLQuery(
-      "SELECT a, case when a=1 then 2 else 0 end from test", 
+      "SELECT a, case when a=1 then 2 else 0 end from test",
       result, tuple_descriptor, rows_changed, error_message);
-
+  
   // Check the return value
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));

@@ -35,8 +35,8 @@ class BrainUtil {
    * It's a vector because there could be more multiple samples per table.
    * TableName -> Sample
    */
-  static std::unordered_map<std::string, std::vector<brain::Sample>> LoadSamplesFile(
-      const std::string file_path) {
+  static std::unordered_map<std::string, std::vector<brain::Sample>>
+  LoadSamplesFile(const std::string file_path) {
     std::unordered_map<std::string, std::vector<brain::Sample>> samples;
 
     // Parse the input file line-by-line

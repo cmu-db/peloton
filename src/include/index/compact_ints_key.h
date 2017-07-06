@@ -20,7 +20,8 @@ namespace peloton {
 namespace index {
 
 // This is the maximum number of 8-byte slots that we will pack into a single
-// CompactIntsKey template. You should not instantiate anything with more than this
+// CompactIntsKey template. You should not instantiate anything with more than
+// this
 #define INTSKEY_MAX_SLOTS 4
 
 /*

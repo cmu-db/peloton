@@ -25,8 +25,7 @@ void AbstractExpression::DeduceExpressionName() {
   for (auto& child : children_) child->DeduceExpressionName();
 
   // Aggregate expression already has correct expr_name_
-  if (ExpressionUtil::IsAggregateExpression(exp_type_))
-    return;
+  if (ExpressionUtil::IsAggregateExpression(exp_type_)) return;
 
   auto op_str = ExpressionTypeToString(exp_type_, true);
   auto children_size = children_.size();
@@ -50,7 +49,7 @@ const std::string AbstractExpression::GetInfo() const {
   return os.str();
 }
 
-bool AbstractExpression::Equals(AbstractExpression* expr) const{
+bool AbstractExpression::Equals(AbstractExpression* expr) const {
   if (exp_type_ != expr->exp_type_ ||
       children_.size() != expr->children_.size())
     return false;

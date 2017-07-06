@@ -77,9 +77,7 @@ type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
-oid_t TileGroup::GetTileGroupId() const {
-  return tile_group_id;
-}
+oid_t TileGroup::GetTileGroupId() const { return tile_group_id; }
 
 // TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
@@ -337,14 +335,12 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
-                         oid_t column_id) {
+void TileGroup::SetValue(type::Value &value, oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
@@ -394,7 +390,8 @@ const std::string TileGroup::GetInfo() const {
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
-      os << std::endl << (*tile);
+      os << std::endl
+         << (*tile);
     }
   }
 

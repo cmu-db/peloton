@@ -529,8 +529,8 @@ const std::string LogicalTile::GetInfo() const {
  */
 void LogicalTile::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    std::unordered_map<storage::Tile *, std::vector<oid_t>>
-        &cols_in_physical_tile) {
+    std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+        cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 

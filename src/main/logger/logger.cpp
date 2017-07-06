@@ -67,7 +67,8 @@
 //   //===--------------------------------------------------------------------===//
 //   // WAL
 //   //===--------------------------------------------------------------------===//
-//   if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+//   if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode))
+//   {
 //     // Prepare a simple log file
 //     PrepareLogFile();
 
@@ -77,7 +78,8 @@
 //   //===--------------------------------------------------------------------===//
 //   // WBL
 //   //===--------------------------------------------------------------------===//
-//   else if (logging::LoggingUtil::IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
+//   else if
+//   (logging::LoggingUtil::IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
 //     LOG_ERROR("currently, we do not support write behind logging.");
 //     PL_ASSERT(false);
 //     // Test a simple log process

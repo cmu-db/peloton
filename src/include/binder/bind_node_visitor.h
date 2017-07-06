@@ -17,7 +17,6 @@
 #include "expression/constant_value_expression.h"
 #include "type/types.h"
 
-
 namespace peloton {
 namespace binder {
 

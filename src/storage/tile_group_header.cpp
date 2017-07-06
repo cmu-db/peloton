@@ -41,7 +41,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   // allocate storage space for header
   // auto &storage_manager = storage::StorageManager::GetInstance();
   // data = reinterpret_cast<char *>(
-      // storage_manager.Allocate(backend_type, header_size));
+  // storage_manager.Allocate(backend_type, header_size));
   data = new char[header_size];
   PL_ASSERT(data != nullptr);
 

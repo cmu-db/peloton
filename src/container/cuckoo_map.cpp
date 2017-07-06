@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <functional>
 #include <iostream>
 
@@ -31,29 +30,26 @@ class IndexMetric;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_TYPE::CuckooMap(){
-}
+CUCKOO_MAP_TYPE::CuckooMap() {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_TYPE::~CuckooMap(){
-}
+CUCKOO_MAP_TYPE::~CuckooMap() {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value){
+bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value) {
   auto status = cuckoo_map.insert(key, value);
   LOG_TRACE("insert status : %d", status);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value){
-  auto status =  cuckoo_map.update(key, value);
+bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value) {
+  auto status = cuckoo_map.update(key, value);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
-
+bool CUCKOO_MAP_TYPE::Erase(const KeyType &key) {
   auto status = cuckoo_map.erase(key);
   LOG_TRACE("erase status : %d", status);
 
@@ -62,31 +58,24 @@ bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Find(const KeyType &key, ValueType &value) const {
-
   auto status = cuckoo_map.find(key, value);
   LOG_TRACE("find status : %d", status);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Contains(const KeyType &key){
+bool CUCKOO_MAP_TYPE::Contains(const KeyType &key) {
   return cuckoo_map.contains(key);
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-void CUCKOO_MAP_TYPE::Clear(){
-  cuckoo_map.clear();
-}
+void CUCKOO_MAP_TYPE::Clear() { cuckoo_map.clear(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-size_t CUCKOO_MAP_TYPE::GetSize() const{
-  return cuckoo_map.size();
-}
+size_t CUCKOO_MAP_TYPE::GetSize() const { return cuckoo_map.size(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::IsEmpty() const{
-  return cuckoo_map.empty();
-}
+bool CUCKOO_MAP_TYPE::IsEmpty() const { return cuckoo_map.empty(); }
 
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;

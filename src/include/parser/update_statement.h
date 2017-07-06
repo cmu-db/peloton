@@ -80,9 +80,7 @@ struct UpdateStatement : SQLStatement {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   // TODO: switch to char* instead of TableRef
   TableRef* table;

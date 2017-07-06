@@ -87,7 +87,8 @@ class LayoutTuner {
   // Layout similarity threshold
   // NOTE:
   // This is a critical parameter. It measures the difference between the schema
-  // of a existing tilegroup and the desired schema, and normalizes this difference
+  // of a existing tilegroup and the desired schema, and normalizes this
+  // difference
   // with respect to the column count, so that it falls within [0, 1]
   // Theta should not be set to zero, otherwise it will always trigger
   // DataTable::TransformTileGroup, even if the schema is the same.
@@ -104,7 +105,6 @@ class LayoutTuner {
 
   // Desired layout tile count
   oid_t tile_count = 2;
-
 };
 
 }  // End brain namespace
