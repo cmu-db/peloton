@@ -21,6 +21,10 @@ namespace concurrency {
 class Transaction;
 }  // namespace concurrency
 
+namespace executor {
+class ExecutorContext;
+}  // namespace executor
+
 namespace storage {
 class DataTable;
 class Tuple;
@@ -37,7 +41,8 @@ namespace codegen {
 class Inserter {
  public:
   // Initializes the instance
-  void Init(concurrency::Transaction *txn, storage::DataTable *table);
+  void Init(concurrency::Transaction *txn, storage::DataTable *table,
+            executor::ExecutorContext *executor_context);
 
   // Create the tuple instance
   void CreateTuple();
@@ -65,6 +70,7 @@ class Inserter {
   // These are provided by its insert translator
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
+  executor::ExecutorContext *executor_context_;
 
   // These are created and locally managed
   std::unique_ptr<storage::Tuple> tuple_;

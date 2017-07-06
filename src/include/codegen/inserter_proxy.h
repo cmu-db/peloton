@@ -14,6 +14,7 @@
 
 #include "codegen/codegen.h"
 #include "codegen/data_table_proxy.h"
+#include "codegen/executor_context_proxy.h"
 #include "codegen/inserter.h"
 #include "codegen/tuple_proxy.h"
 #include "codegen/pool_proxy.h"
@@ -45,10 +46,10 @@ class InserterProxy {
       static const std::string kInitFnName =
 #ifdef __APPLE__
           "_ZN7peloton7codegen8Inserter4InitEPNS_11concurrency11TransactionEPNS"
-          "_7storage9DataTableE";
+          "_7storage9DataTableEPNS_8executor15ExecutorContextE";
 #else
           "_ZN7peloton7codegen8Inserter4InitEPNS_11concurrency11TransactionEPNS"
-          "_7storage9DataTableE";
+          "_7storage9DataTableEPNS_8executor15ExecutorContextE";
 #endif
       return kInitFnName;
     }
@@ -63,7 +64,8 @@ class InserterProxy {
       std::vector<llvm::Type *> fn_args = {
           InserterProxy::GetType(codegen)->getPointerTo(),
           TransactionProxy::GetType(codegen)->getPointerTo(),
-          DataTableProxy::GetType(codegen)->getPointerTo()};
+          DataTableProxy::GetType(codegen)->getPointerTo(),
+          ExecutorContextProxy::GetType(codegen)->getPointerTo()};
       llvm::FunctionType *fn_type =
           llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
       return codegen.RegisterFunction(fn_name, fn_type);

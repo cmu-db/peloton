@@ -15,6 +15,7 @@
 #include "codegen/deleter.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/deleter_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "planner/delete_plan.h"
 #include "storage/data_table.h"
@@ -49,9 +50,11 @@ void DeleteTranslator::InitializeState() {
                    {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
                     codegen.Const32(table->GetOid())});
 
+  llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
+
   // Call Deleter.Init(txn, table)
   llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  codegen.Call(DeleterProxy::Init, {deleter, txn_ptr, table_ptr});
+  codegen.Call(DeleterProxy::Init, {deleter, txn_ptr, table_ptr, executor_ptr});
 }
 
 void DeleteTranslator::Produce() const {
@@ -66,10 +69,6 @@ void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto *deleter = LoadStatePtr(deleter_state_id_);
   codegen.Call(DeleterProxy::Delete,
                {deleter, row.GetTileGroupID(), row.GetTID(codegen)});
-
-  // Increase processing count
-  auto *executor_ctx = GetCompilationContext().GetExecutorContextPtr();
-  codegen.Call(TransactionRuntimeProxy::IncreaseNumProcessed, {executor_ctx});
 }
 
 }  // namespace codegen
