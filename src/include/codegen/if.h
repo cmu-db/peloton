@@ -13,10 +13,11 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
+
+class Value;
 
 //===----------------------------------------------------------------------===//
 // A utility class to help code-generate if-then-else constructs in LLVM IR
@@ -24,10 +25,11 @@ namespace codegen {
 class If {
  public:
   // Constructor
-  If(CodeGen &cg, llvm::Value *if_condition, std::string name = "then");
+  If(CodeGen &cg, llvm::Value *if_condition, const std::string &name = "then");
+  If(CodeGen &cg, const Value &if_condition, const std::string &name = "then");
 
   // Begin the else block (provided the name _name_)
-  void ElseBlock(std::string name = "else");
+  void ElseBlock(const std::string &name = "else");
 
   // End the if/else condition
   void EndIf(llvm::BasicBlock *merge_bb = nullptr);
@@ -36,7 +38,7 @@ class If {
   // The first argument must have been generated in the "then" branch. The
   // second value must have been generated either in the "else" branch (if one
   // exists) OR must have exists before the "if" check.
-  codegen::Value BuildPHI(codegen::Value v1, codegen::Value v2);
+  Value BuildPHI(const Value &v1, const Value &v2);
   llvm::Value *BuildPHI(llvm::Value *v1, llvm::Value *v2);
 
  private:

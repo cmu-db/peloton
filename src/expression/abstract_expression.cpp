@@ -10,13 +10,54 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
 #include "expression/abstract_expression.h"
+
+#include <string>
+
+#include "codegen/type/type.h"
 #include "util/hash_util.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {
+
+bool AbstractExpression::HasParameter() const {
+  for (auto &child : children_) {
+    if (child->HasParameter()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AbstractExpression::IsNullable() const {
+  for (const auto &child : children_) {
+    if (child->IsNullable()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void AbstractExpression::PerformBinding(
+    const std::vector<const planner::BindingContext *> &binding_contexts) {
+  // Most expressions don't need attribute binding, except for those
+  // that actually reference table attributes (i.e., TVE)
+  for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+    children_[i]->PerformBinding(binding_contexts);
+  }
+}
+
+void AbstractExpression::GetUsedAttributes(
+    std::unordered_set<const planner::AttributeInfo *> &attributes) const {
+  for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+    children_[i]->GetUsedAttributes(attributes);
+  }
+}
+
+codegen::type::Type AbstractExpression::ResultType() const {
+  return codegen::type::Type{GetValueType(), IsNullable()};
+}
 
 void AbstractExpression::DeduceExpressionName() {
   // If alias exists, it will be used in TrafficCop

@@ -38,6 +38,7 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
+#include "type/types.h"
 
 
 // Logging mode
@@ -166,32 +167,32 @@ void CreateWarehouseTable() {
   std::vector<catalog::Column> warehouse_columns;
 
   auto w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "W_ID", is_inlined);
   warehouse_columns.push_back(w_id_column);
   auto w_name_column = catalog::Column(
-      type::Type::VARCHAR, warehouse_name_length, "W_NAME", is_inlined);
+      type::TypeId::VARCHAR, warehouse_name_length, "W_NAME", is_inlined);
   warehouse_columns.push_back(w_name_column);
-  auto w_street_1_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto w_street_1_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "W_STREET_1", is_inlined);
   warehouse_columns.push_back(w_street_1_column);
-  auto w_street_2_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto w_street_2_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "W_STREET_2", is_inlined);
   warehouse_columns.push_back(w_street_2_column);
   auto w_city_column =
-      catalog::Column(type::Type::VARCHAR, city_length, "W_CITY", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, city_length, "W_CITY", is_inlined);
   warehouse_columns.push_back(w_city_column);
   auto w_state_column =
-      catalog::Column(type::Type::VARCHAR, state_length, "W_STATE", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, state_length, "W_STATE", is_inlined);
   warehouse_columns.push_back(w_state_column);
   auto w_zip_column =
-      catalog::Column(type::Type::VARCHAR, zip_length, "W_ZIP", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, zip_length, "W_ZIP", is_inlined);
   warehouse_columns.push_back(w_zip_column);
   auto w_tax_column = catalog::Column(
-      type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL), "W_TAX", is_inlined);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "W_TAX", is_inlined);
   warehouse_columns.push_back(w_tax_column);
   auto w_ytd_column = catalog::Column(
-      type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL), "W_YTD", is_inlined);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "W_YTD", is_inlined);
   warehouse_columns.push_back(w_ytd_column);
 
   catalog::Schema *table_schema = new catalog::Schema(warehouse_columns);
@@ -245,38 +246,38 @@ void CreateDistrictTable() {
   std::vector<catalog::Column> district_columns;
 
   auto d_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "D_ID", is_inlined);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "D_ID", is_inlined);
   district_columns.push_back(d_id_column);
   auto d_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "D_W_ID", is_inlined);
   district_columns.push_back(d_w_id_column);
-  auto d_name_column = catalog::Column(type::Type::VARCHAR, district_name_length,
+  auto d_name_column = catalog::Column(type::TypeId::VARCHAR, district_name_length,
                                        "D_NAME", is_inlined);
   district_columns.push_back(d_name_column);
-  auto d_street_1_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto d_street_1_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "D_STREET_1", is_inlined);
   district_columns.push_back(d_street_1_column);
-  auto d_street_2_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto d_street_2_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "D_STREET_2", is_inlined);
   district_columns.push_back(d_street_2_column);
   auto d_city_column =
-      catalog::Column(type::Type::VARCHAR, city_length, "D_CITY", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, city_length, "D_CITY", is_inlined);
   district_columns.push_back(d_city_column);
   auto d_state_column =
-      catalog::Column(type::Type::VARCHAR, state_length, "D_STATE", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, state_length, "D_STATE", is_inlined);
   district_columns.push_back(d_state_column);
   auto d_zip_column =
-      catalog::Column(type::Type::VARCHAR, zip_length, "D_ZIP", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, zip_length, "D_ZIP", is_inlined);
   district_columns.push_back(d_zip_column);
   auto d_tax_column = catalog::Column(
-      type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL), "D_TAX", is_inlined);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "D_TAX", is_inlined);
   district_columns.push_back(d_tax_column);
   auto d_ytd_column = catalog::Column(
-      type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL), "D_YTD", is_inlined);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "D_YTD", is_inlined);
   district_columns.push_back(d_ytd_column);
   auto d_next_o_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "D_NEXT_O_ID", is_inlined);
   district_columns.push_back(d_next_o_id_column);
 
@@ -326,20 +327,20 @@ void CreateItemTable() {
   std::vector<catalog::Column> item_columns;
 
   auto i_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "I_ID", is_inlined);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "I_ID", is_inlined);
   item_columns.push_back(i_id_column);
   auto i_im_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "I_IM_ID", is_inlined);
   item_columns.push_back(i_im_id_column);
   auto i_name_column =
-      catalog::Column(type::Type::VARCHAR, name_length, "I_NAME", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, name_length, "I_NAME", is_inlined);
   item_columns.push_back(i_name_column);
   auto i_price_column = catalog::Column(
-      type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL), "I_PRICE", is_inlined);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "I_PRICE", is_inlined);
   item_columns.push_back(i_price_column);
   auto i_data_column =
-      catalog::Column(type::Type::VARCHAR, data_length, "I_DATA", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, data_length, "I_DATA", is_inlined);
   item_columns.push_back(i_data_column);
 
   catalog::Schema *table_schema = new catalog::Schema(item_columns);
@@ -406,76 +407,76 @@ void CreateCustomerTable() {
   std::vector<catalog::Column> customer_columns;
 
   auto c_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "C_ID", is_inlined);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "C_ID", is_inlined);
   customer_columns.push_back(c_id_column);
   auto c_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "C_D_ID", is_inlined);
   customer_columns.push_back(c_d_id_column);
   auto c_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "C_W_ID", is_inlined);
   customer_columns.push_back(c_w_id_column);
   auto c_first_name_column =
-      catalog::Column(type::Type::VARCHAR, name_length, "C_FIRST", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, name_length, "C_FIRST", is_inlined);
   customer_columns.push_back(c_first_name_column);
   auto c_middle_name_column = catalog::Column(
-      type::Type::VARCHAR, middle_name_length, "C_MIDDLE", is_inlined);
+      type::TypeId::VARCHAR, middle_name_length, "C_MIDDLE", is_inlined);
   customer_columns.push_back(c_middle_name_column);
   auto c_last_name_column =
-      catalog::Column(type::Type::VARCHAR, name_length, "C_LAST", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, name_length, "C_LAST", is_inlined);
   customer_columns.push_back(c_last_name_column);
-  auto c_street_1_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto c_street_1_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "C_STREET_1", is_inlined);
   customer_columns.push_back(c_street_1_column);
-  auto c_street_2_column = catalog::Column(type::Type::VARCHAR, street_length,
+  auto c_street_2_column = catalog::Column(type::TypeId::VARCHAR, street_length,
                                            "C_STREET_2", is_inlined);
   customer_columns.push_back(c_street_2_column);
   auto c_city_column =
-      catalog::Column(type::Type::VARCHAR, city_length, "C_CITY", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, city_length, "C_CITY", is_inlined);
   customer_columns.push_back(c_city_column);
   auto c_state_column =
-      catalog::Column(type::Type::VARCHAR, state_length, "C_STATE", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, state_length, "C_STATE", is_inlined);
   customer_columns.push_back(c_state_column);
   auto c_zip_column =
-      catalog::Column(type::Type::VARCHAR, zip_length, "C_ZIP", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, zip_length, "C_ZIP", is_inlined);
   customer_columns.push_back(c_zip_column);
   auto c_phone_column =
-      catalog::Column(type::Type::VARCHAR, phone_length, "C_PHONE", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, phone_length, "C_PHONE", is_inlined);
   customer_columns.push_back(c_phone_column);
   auto c_since_column =
-      catalog::Column(type::Type::TIMESTAMP, type::Type::GetTypeSize(type::Type::TIMESTAMP),
+      catalog::Column(type::TypeId::TIMESTAMP, type::Type::GetTypeSize(type::TypeId::TIMESTAMP),
                       "C_SINCE", is_inlined);
   customer_columns.push_back(c_since_column);
-  auto c_credit_column = catalog::Column(type::Type::VARCHAR, credit_length,
+  auto c_credit_column = catalog::Column(type::TypeId::VARCHAR, credit_length,
                                          "C_CREDIT", is_inlined);
   customer_columns.push_back(c_credit_column);
   auto c_credit_lim_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "C_CREDIT_LIM", is_inlined);
   customer_columns.push_back(c_credit_lim_column);
   auto c_discount_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "C_DISCOUNT", is_inlined);
   customer_columns.push_back(c_discount_column);
   auto c_balance_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "C_BALANCE", is_inlined);
   customer_columns.push_back(c_balance_column);
   auto c_ytd_payment_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "C_YTD_PAYMENT", is_inlined);
   customer_columns.push_back(c_ytd_payment_column);
   auto c_payment_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "C_PAYMENT_CNT", is_inlined);
   customer_columns.push_back(c_payment_column);
   auto c_delivery_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "C_DELIVERY_CNT", is_inlined);
   customer_columns.push_back(c_delivery_column);
   auto c_data_column =
-      catalog::Column(type::Type::VARCHAR, data_length, "C_DATA", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, data_length, "C_DATA", is_inlined);
   customer_columns.push_back(c_data_column);
 
   catalog::Schema *table_schema = new catalog::Schema(customer_columns);
@@ -543,34 +544,34 @@ void CreateHistoryTable() {
   std::vector<catalog::Column> history_columns;
 
   auto h_c_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "H_C_ID", is_inlined);
   history_columns.push_back(h_c_id_column);
   auto h_c_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "H_C_D_ID", is_inlined);
   history_columns.push_back(h_c_d_id_column);
   auto h_c_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "H_C_W_ID", is_inlined);
   history_columns.push_back(h_c_w_id_column);
   auto h_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "H_D_ID", is_inlined);
   history_columns.push_back(h_d_id_column);
   auto h_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "H_W_ID", is_inlined);
   history_columns.push_back(h_w_id_column);
   auto h_date_column =
-      catalog::Column(type::Type::TIMESTAMP, type::Type::GetTypeSize(type::Type::TIMESTAMP),
+      catalog::Column(type::TypeId::TIMESTAMP, type::Type::GetTypeSize(type::TypeId::TIMESTAMP),
                       "H_DATE", is_inlined);
   history_columns.push_back(h_date_column);
   auto h_amount_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "H_AMOUNT", is_inlined);
   history_columns.push_back(h_amount_column);
-  auto h_data_column = catalog::Column(type::Type::VARCHAR, history_data_length,
+  auto h_data_column = catalog::Column(type::TypeId::VARCHAR, history_data_length,
                                        "H_DATA", is_inlined);
   history_columns.push_back(h_data_column);
 
@@ -612,60 +613,60 @@ void CreateStockTable() {
   std::vector<catalog::Column> stock_columns;
 
   auto s_i_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "S_I_ID", is_inlined);
   stock_columns.push_back(s_i_id_column);
   auto s_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "S_W_ID", is_inlined);
   stock_columns.push_back(s_w_id_column);
   auto s_quantity_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "S_QUANTITY", is_inlined);
   stock_columns.push_back(s_quantity_column);
   auto s_dist_01_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_01", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_01", is_inlined);
   stock_columns.push_back(s_dist_01_column);
   auto s_dist_02_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_02", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_02", is_inlined);
   stock_columns.push_back(s_dist_02_column);
   auto s_dist_03_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_03", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_03", is_inlined);
   stock_columns.push_back(s_dist_03_column);
   auto s_dist_04_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_04", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_04", is_inlined);
   stock_columns.push_back(s_dist_04_column);
   auto s_dist_05_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_05", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_05", is_inlined);
   stock_columns.push_back(s_dist_05_column);
   auto s_dist_06_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_06", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_06", is_inlined);
   stock_columns.push_back(s_dist_06_column);
   auto s_dist_07_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_07", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_07", is_inlined);
   stock_columns.push_back(s_dist_07_column);
   auto s_dist_08_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_08", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_08", is_inlined);
   stock_columns.push_back(s_dist_08_column);
   auto s_dist_09_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_09", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_09", is_inlined);
   stock_columns.push_back(s_dist_09_column);
   auto s_dist_10_column =
-      catalog::Column(type::Type::VARCHAR, dist_length, "S_DIST_10", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, dist_length, "S_DIST_10", is_inlined);
   stock_columns.push_back(s_dist_10_column);
   auto s_ytd_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "S_YTD", is_inlined);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "S_YTD", is_inlined);
   stock_columns.push_back(s_ytd_column);
   auto s_order_cnt_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "S_ORDER_CNT", is_inlined);
   stock_columns.push_back(s_order_cnt_column);
   auto s_discount_cnt_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "S_REMOTE_CNT", is_inlined);
   stock_columns.push_back(s_discount_cnt_column);
   auto s_data_column =
-      catalog::Column(type::Type::VARCHAR, data_length, "S_DATA", is_inlined);
+      catalog::Column(type::TypeId::VARCHAR, data_length, "S_DATA", is_inlined);
   stock_columns.push_back(s_data_column);
 
   catalog::Schema *table_schema = new catalog::Schema(stock_columns);
@@ -719,34 +720,34 @@ void CreateOrdersTable() {
   std::vector<catalog::Column> orders_columns;
 
   auto o_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "O_ID", is_inlined);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "O_ID", is_inlined);
   orders_columns.push_back(o_id_column);
   auto o_c_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_C_ID", is_inlined);
   orders_columns.push_back(o_c_id_column);
   auto o_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_D_ID", is_inlined);
   orders_columns.push_back(o_d_id_column);
   auto o_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_W_ID", is_inlined);
   orders_columns.push_back(o_w_id_column);
   auto o_entry_d_column =
-      catalog::Column(type::Type::TIMESTAMP, type::Type::GetTypeSize(type::Type::TIMESTAMP),
+      catalog::Column(type::TypeId::TIMESTAMP, type::Type::GetTypeSize(type::TypeId::TIMESTAMP),
                       "O_ENTRY_D", is_inlined);
   orders_columns.push_back(o_entry_d_column);
   auto o_carrier_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_CARRIER_ID", is_inlined);
   orders_columns.push_back(o_carrier_id_column);
   auto o_ol_cnt_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_OL_CNT", is_inlined);
   orders_columns.push_back(o_ol_cnt_column);
   auto o_all_local_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "O_ALL_LOCAL", is_inlined);
   orders_columns.push_back(o_all_local_column);
 
@@ -810,15 +811,15 @@ void CreateNewOrderTable() {
   std::vector<catalog::Column> new_order_columns;
 
   auto no_o_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "NO_O_ID", is_inlined);
   new_order_columns.push_back(no_o_id_column);
   auto no_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "NO_D_ID", is_inlined);
   new_order_columns.push_back(no_d_id_column);
   auto no_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "NO_W_ID", is_inlined);
   new_order_columns.push_back(no_w_id_column);
 
@@ -876,43 +877,43 @@ void CreateOrderLineTable() {
   std::vector<catalog::Column> order_line_columns;
 
   auto ol_o_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_O_ID", is_inlined);
   order_line_columns.push_back(ol_o_id_column);
   auto ol_d_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_D_ID", is_inlined);
   order_line_columns.push_back(ol_d_id_column);
   auto ol_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_W_ID", is_inlined);
   order_line_columns.push_back(ol_w_id_column);
   auto ol_number_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_NUMBER", is_inlined);
   order_line_columns.push_back(ol_number_column);
   auto ol_i_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_I_ID", is_inlined);
   order_line_columns.push_back(ol_i_id_column);
   auto ol_supply_w_id_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_SUPPLY_W_ID", is_inlined);
   order_line_columns.push_back(ol_supply_w_id_column);
   auto ol_delivery_d_column =
-      catalog::Column(type::Type::TIMESTAMP, type::Type::GetTypeSize(type::Type::TIMESTAMP),
+      catalog::Column(type::TypeId::TIMESTAMP, type::Type::GetTypeSize(type::TypeId::TIMESTAMP),
                       "OL_DELIVERY_D", is_inlined);
   order_line_columns.push_back(ol_delivery_d_column);
   auto ol_quantity_column =
-      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                       "OL_QUANTITY", is_inlined);
   order_line_columns.push_back(ol_quantity_column);
   auto ol_amount_column =
-      catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+      catalog::Column(type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
                       "OL_AMOUNT", is_inlined);
   order_line_columns.push_back(ol_amount_column);
   auto ol_dist_info_column =
-      catalog::Column(type::Type::VARCHAR, order_line_dist_info_length,
+      catalog::Column(type::TypeId::VARCHAR, order_line_dist_info_length,
                       "OL_DIST_INFO", is_inlined);
   order_line_columns.push_back(ol_dist_info_column);
 

@@ -29,14 +29,14 @@ class TupleTests : public PelotonTest {};
 TEST_F(TupleTests, BasicTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                           true);
-  catalog::Column column2(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+  catalog::Column column2(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "B",
                           true);
-  catalog::Column column3(type::Type::TINYINT,
-                          type::Type::GetTypeSize(type::Type::TINYINT), "C",
+  catalog::Column column3(type::TypeId::TINYINT,
+                          type::Type::GetTypeSize(type::TypeId::TINYINT), "C",
                           true);
 
   columns.push_back(column1);
@@ -86,16 +86,16 @@ TEST_F(TupleTests, BasicTest) {
 TEST_F(TupleTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                           true);
-  catalog::Column column2(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+  catalog::Column column2(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "B",
                           true);
-  catalog::Column column3(type::Type::TINYINT,
-                          type::Type::GetTypeSize(type::Type::TINYINT), "C",
+  catalog::Column column3(type::TypeId::TINYINT,
+                          type::Type::GetTypeSize(type::TypeId::TINYINT), "C",
                           true);
-  catalog::Column column4(type::Type::VARCHAR, 25, "D", false);
+  catalog::Column column4(type::TypeId::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);

@@ -453,7 +453,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
       // for them, and assuming binary and text for a varchar are the same.
       if (result_format[column_itr] == 0 ||
           cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
-              type::Type::VARCHAR) {
+              type::TypeId::VARCHAR) {
         // don't let to_string function decide what NULL value is
         if (use_to_string_null == false && val.IsNull() == true) {
           // materialize Null values as 0B string
@@ -592,7 +592,7 @@ void LogicalTile::MaterializeRowAtAtATime(
     // Get old column information
     std::vector<oid_t> old_column_position_idxs;
     std::vector<size_t> old_column_offsets;
-    std::vector<type::Type::TypeId> old_column_types;
+    std::vector<type::TypeId> old_column_types;
     std::vector<bool> old_is_inlineds;
     std::vector<storage::Tile *> old_tiles;
 
@@ -615,7 +615,7 @@ void LogicalTile::MaterializeRowAtAtATime(
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       old_column_offsets.push_back(old_column_offset);
-      const type::Type::TypeId old_column_type =
+      const type::TypeId old_column_type =
           old_schema->GetType(old_column_id);
       old_column_types.push_back(old_column_type);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
@@ -703,7 +703,7 @@ void LogicalTile::MaterializeColumnAtATime(
       // Get old column information
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
-      const type::Type::TypeId old_column_type =
+      const type::TypeId old_column_type =
           old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
 

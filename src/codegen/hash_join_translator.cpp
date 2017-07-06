@@ -63,23 +63,25 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Prepare the expressions that produce the build-size keys
   join.GetLeftHashKeys(left_key_exprs_);
 
-  std::vector<type::Type::TypeId> left_key_type;
+  std::vector<type::Type> left_key_type;
   for (const auto *left_key : left_key_exprs_) {
     // Prepare the expression for translation
     context.Prepare(*left_key);
+
     // Collect the key types
-    left_key_type.push_back(left_key->GetValueType());
+    left_key_type.push_back(left_key->ResultType());
   }
 
   // Prepare the expressions that produce the probe-side keys
   join.GetRightHashKeys(right_key_exprs_);
 
-  std::vector<type::Type::TypeId> right_key_type;
+  std::vector<type::Type> right_key_type;
   for (const auto *right_key : right_key_exprs_) {
     // Prepare the expression for translation
     context.Prepare(*right_key);
+
     // Collect the key types
-    right_key_type.push_back(right_key->GetValueType());
+    right_key_type.push_back(right_key->ResultType());
   }
 
   // Prepare the predicate
@@ -109,7 +111,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Construct the format of the left side
-  std::vector<type::Type::TypeId> left_value_types;
+  std::vector<type::Type> left_value_types;
   for (const auto *left_val_ai : left_val_ais_) {
     left_value_types.push_back(left_val_ai->type);
   }
@@ -212,7 +214,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
       RowBatch::OutputTracker tracker{batch.GetSelectionVector(), write_pos};
       RowBatch::Row row = batch.GetRowAt(read_pos, &tracker);
 
-      codegen::Value row_hash{type::Type::TypeId::INTEGER,
+      codegen::Value row_hash{type::Type{peloton::type::TypeId::INTEGER, false},
                               hashes.GetValue(codegen, p)};
       row.RegisterAttributeValue(&OAHashTable::kHashAI, row_hash);
 
@@ -403,8 +405,8 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   auto *predicate = join_translator_.GetJoinPlan().GetPredicate();
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
-    auto valid_rod = row_.DeriveValue(codegen, *predicate);
-    If is_valid_row{codegen, valid_rod.GetValue()};
+    auto valid_row = row_.DeriveValue(codegen, *predicate);
+    If is_valid_row{codegen, valid_row};
     {
       // Send row up to the parent
       context_.Consume(row_);

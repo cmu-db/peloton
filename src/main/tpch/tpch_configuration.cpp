@@ -21,16 +21,16 @@ namespace benchmark {
 namespace tpch {
 
 oid_t kIntSize =
-    static_cast<oid_t>(type::Type::GetTypeSize(type::Type::TypeId::INTEGER));
+    static_cast<oid_t>(type::Type::GetTypeSize(type::TypeId::INTEGER));
 
 oid_t kDateSize =
-    static_cast<oid_t>(type::Type::GetTypeSize(type::Type::TypeId::DATE));
+    static_cast<oid_t>(type::Type::GetTypeSize(type::TypeId::DATE));
 
 oid_t kBigIntSize =
-    static_cast<oid_t>(type::Type::GetTypeSize(type::Type::TypeId::BIGINT));
+    static_cast<oid_t>(type::Type::GetTypeSize(type::TypeId::BIGINT));
 
 oid_t kDecimalSize =
-    static_cast<oid_t>(type::Type::GetTypeSize(type::Type::TypeId::DECIMAL));
+    static_cast<oid_t>(type::Type::GetTypeSize(type::TypeId::DECIMAL));
 
 bool Configuration::IsValid() const {
   struct stat info;

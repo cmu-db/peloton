@@ -30,14 +30,13 @@ void PrintConfiguration(){
   LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
   LOG_INFO(" ");
 
-  LOG_INFO("%30s", "//===----------------- CONNECTIONS ---------------------===//");
-  LOG_INFO(" ");
-
   LOG_INFO("%30s: %10lu", "Port", FLAGS_port);
   LOG_INFO("%30s: %10s",  "Socket Family", FLAGS_socket_family.c_str());
-  LOG_INFO("%30s: %10lu", "Statistics", FLAGS_stats_mode);
+  LOG_INFO("%30s: %10s", "Statistics", FLAGS_stats_mode ? "enabled" : "disabled");
   LOG_INFO("%30s: %10lu", "Max Connections", FLAGS_max_connections);
-  LOG_INFO("%30s: %10s",  "Code-generation", FLAGS_codegen ? "on" : "off");
+  LOG_INFO("%30s: %10s", "Index Tuner", FLAGS_index_tuner ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10s", "Layout Tuner", FLAGS_layout_tuner ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10s",  "Code-generation", FLAGS_codegen ? "enabled" : "disabled");
 
   LOG_INFO(" ");
   LOG_INFO("%30s", "//===---------------------------------------------------===//");
@@ -130,7 +129,7 @@ DEFINE_bool(codegen,
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
-// peloton::LoggingType peloton_logging_mode = peloton::LoggingType::INVALID;
+// peloton::LoggingType peloton_logging_mode = peloton::LoggingTypeId::INVALID;
 
 // GC mode
 peloton::GarbageCollectionType peloton_gc_mode;

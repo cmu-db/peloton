@@ -32,7 +32,7 @@ class CCHashTable : public HashTable {
   // Constructor
   CCHashTable();
   CCHashTable(CodeGen &codegen,
-              const std::vector<type::Type::TypeId> &key_type);
+              const std::vector<type::Type> &key_type);
 
   // Initialize the hash-table instance
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;

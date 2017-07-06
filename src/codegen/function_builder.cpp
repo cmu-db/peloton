@@ -83,10 +83,11 @@ llvm::Value *FunctionBuilder::GetArgumentByName(std::string name) {
 llvm::Value *FunctionBuilder::GetArgumentByPosition(uint32_t index) {
   PL_ASSERT(index < func_->arg_size());
   uint32_t pos = 0;
-  for (auto arg = func_->arg_begin(), end = func_->arg_end(); arg != end;
-       ++arg) {
+  for (auto arg_iter = func_->arg_begin(), end = func_->arg_end();
+       arg_iter != end; ++arg_iter) {
     if (pos++ == index) {
-      return arg;
+      auto &arg = *arg_iter;
+      return &arg;
     }
   }
   PL_ASSERT(false);

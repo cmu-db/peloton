@@ -17,13 +17,14 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "configuration/configuration.h"
-#include "type/type.h"
+#include "type/type_id.h"
 
 namespace peloton {
 
@@ -958,6 +959,22 @@ enum MetricType {
   PROCESSOR_METRIC = 10,
 };
 
+// All builtin operators we currently support
+enum class OperatorId : uint32_t {
+  Negation = 0,
+  Abs,
+  Add,
+  Sub,
+  Mul,
+  Div,
+  Mod,
+  LogicalAnd,
+  LogicalOr,
+};
+std::string OperatorIdToString(OperatorId op_id);
+
+enum class OnError : uint32_t { ReturnNull, Exception };
+
 static const int INVALID_FILE_DESCRIPTOR = -1;
 
 // ------------------------------------------------------------------
@@ -1112,10 +1129,10 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 // Transformers
 //===--------------------------------------------------------------------===//
 
-std::string TypeIdToString(type::Type::TypeId type);
-type::Type::TypeId StringToTypeId(const std::string &str);
+std::string TypeIdToString(type::TypeId type);
+type::TypeId StringToTypeId(const std::string &str);
 
-type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
+type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType type);
 

@@ -48,7 +48,7 @@ TEST_F(StringFunctionsTests, AsciiTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)};
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
   auto result = expression::StringFunctions::Ascii(args);
   EXPECT_TRUE(result.IsNull());
 }
@@ -71,7 +71,7 @@ TEST_F(StringFunctionsTests, ChrTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::INTEGER)};
+      type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER)};
   auto result = expression::StringFunctions::Chr(args);
   EXPECT_TRUE(result.IsNull());
 }
@@ -101,7 +101,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
         type::ValueFactory::GetVarcharValue("ccc"),
     };
-    nullargs[i] = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     auto result = expression::StringFunctions::Substr(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
@@ -120,7 +120,7 @@ TEST_F(StringFunctionsTests, CharLengthTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)};
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
   auto result = expression::StringFunctions::CharLength(args);
   EXPECT_TRUE(result.IsNull());
 }
@@ -139,7 +139,7 @@ TEST_F(StringFunctionsTests, RepeatTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR),
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR),
       type::ValueFactory::GetVarcharValue(str),
   };
   auto result = expression::StringFunctions::Repeat(args);
@@ -172,7 +172,7 @@ TEST_F(StringFunctionsTests, ReplaceTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
         type::ValueFactory::GetVarcharValue("ccc"),
     };
-    args[i] = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    args[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     auto result = expression::StringFunctions::Replace(args);
     EXPECT_TRUE(result.IsNull());
   }
@@ -195,7 +195,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
-    nullargs[i] = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     auto result = expression::StringFunctions::LTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
@@ -218,7 +218,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
-    nullargs[i] = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     auto result = expression::StringFunctions::RTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
@@ -241,7 +241,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
-    nullargs[i] = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+    nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
     auto result = expression::StringFunctions::BTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }

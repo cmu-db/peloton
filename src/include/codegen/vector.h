@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "codegen/codegen.h"
 #include "codegen/value.h"
 

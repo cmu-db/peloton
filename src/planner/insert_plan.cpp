@@ -51,7 +51,7 @@ InsertPlan::InsertPlan(
     : bulk_insert_count(insert_values->size()) {
 
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
-  params_value_type_.reset(new std::vector<type::Type::TypeId>);
+  params_value_type_.reset(new std::vector<type::TypeId>);
 
   target_table_ = table;
 
@@ -79,8 +79,8 @@ InsertPlan::InsertPlan(
                 dynamic_cast<expression::ConstantValueExpression *>(elem.get());
             type::Value const_expr_elem_val = (const_expr_elem->GetValue());
             switch (const_expr_elem->GetValueType()) {
-              case type::Type::VARCHAR:
-              case type::Type::VARBINARY:
+              case type::TypeId::VARCHAR:
+              case type::TypeId::VARBINARY:
                 tuple->SetValue(col_cntr, const_expr_elem_val, GetPlanPool());
                 break;
               default: {
@@ -119,8 +119,8 @@ InsertPlan::InsertPlan(
           // inline
           auto col_type = table_schema->GetColumn(col_cntr).GetType();
           type::AbstractPool * data_pool = nullptr;
-          if (col_type == type::Type::VARCHAR ||
-              col_type == type::Type::VARBINARY)
+          if (col_type == type::TypeId::VARCHAR ||
+              col_type == type::TypeId::VARBINARY)
             data_pool = GetPlanPool();
 
           LOG_TRACE(
@@ -185,8 +185,8 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
     // ValueTypeToString(param_type).c_str());
 
     switch (param_type) {
-      case type::Type::VARBINARY:
-      case type::Type::VARCHAR: {
+      case type::TypeId::VARBINARY:
+      case type::TypeId::VARCHAR: {
         type::Value val = (value.CastAs(param_type));
         tuples_[std::get<0>(put_loc)]
             ->SetValue(std::get<1>(put_loc), val, GetPlanPool());

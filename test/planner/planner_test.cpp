@@ -42,9 +42,9 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   // Create table
   txn = txn_manager.BeginTransaction();
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -58,7 +58,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   txn = txn_manager.BeginTransaction();
   auto parameter_expr = new expression::ParameterValueExpression(0);
   auto tuple_expr =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
@@ -113,9 +113,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // Create table
   txn = txn_manager.BeginTransaction();
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -153,7 +153,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // id = $1
   parameter_expr = new expression::ParameterValueExpression(1);
   auto tuple_expr =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
@@ -193,9 +193,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   // Create table
   txn = txn_manager.BeginTransaction();
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -271,9 +271,9 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   // Create table
   txn = txn_manager.BeginTransaction();
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

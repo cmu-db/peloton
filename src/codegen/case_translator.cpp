@@ -13,9 +13,8 @@
 #include "codegen/case_translator.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/expression_translator.h"
 #include "codegen/if.h"
-#include "codegen/type.h"
+#include "codegen/type/sql_type.h"
 
 namespace peloton {
 namespace codegen {
@@ -65,7 +64,7 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
   // default_ret will have the same type as one of the ret's from above
   codegen::Value default_ret = expr.GetDefault() != nullptr ?
       row.DeriveValue(codegen, *expr.GetDefault()) :
-      Type::GetNullValue(codegen, ret.GetType());
+      ret.GetType().GetSqlType().GetNullValue(codegen);
   branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
 
   // Push the merging block to the end and build the PHI on this merging block

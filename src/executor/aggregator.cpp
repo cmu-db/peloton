@@ -157,7 +157,7 @@ HashAggregator::HashAggregator(const planner::AggregatePlan *node,
     : AbstractAggregator(node, output_table, econtext),
       num_input_columns(num_input_columns) {}
 //  group_by_key_values.resize(node->GetGroupbyColIds().size(),
-//      type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
+//      type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER));
 //}
 
 HashAggregator::~HashAggregator() {

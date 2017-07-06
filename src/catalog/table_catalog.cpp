@@ -52,7 +52,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto table_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
   table_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
@@ -60,12 +60,12 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto table_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", false);
+      catalog::Column(type::TypeId::VARCHAR, max_name_size, "table_name", false);
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));

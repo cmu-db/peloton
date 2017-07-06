@@ -507,7 +507,7 @@ TEST_F(PostgresParserTests, StringUpdateTest) {
       ((expression::ConstantValueExpression *)value)->GetValue().ToString(),
       "2016-11-15 15:07:37");
   EXPECT_EQ(((expression::ConstantValueExpression *)value)->GetValueType(),
-            type::Type::TypeId::VARCHAR);
+            type::TypeId::VARCHAR);
 
   delete stmt_list;
 }
@@ -630,7 +630,7 @@ TEST_F(PostgresParserTests, CreateTest) {
   EXPECT_TRUE(column->unique);
   EXPECT_TRUE(column->primary);
   EXPECT_EQ(std::string(column->name.get()), "id");
-  EXPECT_EQ(type::Type::SMALLINT, column->type);
+  EXPECT_EQ(type::TypeId::SMALLINT, column->type);
   // Check Second column
   column = create_stmt->columns->at(1).get();
   EXPECT_FALSE(column->not_null);
@@ -870,8 +870,8 @@ TEST_F(PostgresParserTests, DataTypeTest) {
 
   // Check First column
   auto column = create_stmt->columns->at(0).get();
-  EXPECT_EQ("a", std::string(column->name.get()));
-  EXPECT_EQ(type::Type::VARCHAR, column->GetValueType(column->type));
+  EXPECT_EQ("a", std::string(column->name));
+  EXPECT_EQ(type::TypeId::VARCHAR, column->GetValueType(column->type));
   EXPECT_EQ(peloton::type::PELOTON_TEXT_MAX_LEN, column->varlen);
 
 

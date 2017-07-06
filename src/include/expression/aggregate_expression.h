@@ -99,7 +99,7 @@ class AggregateExpression : public AbstractExpression {
       // if count return an integer
       case ExpressionType::AGGREGATE_COUNT:
       case ExpressionType::AGGREGATE_COUNT_STAR:
-        return_value_type_ = type::Type::INTEGER;
+        return_value_type_ = type::TypeId::INTEGER;
         break;
       // return the type of the base
       case ExpressionType::AGGREGATE_MAX:
@@ -109,7 +109,7 @@ class AggregateExpression : public AbstractExpression {
         return_value_type_ = children_[0]->GetValueType();
         break;
       case ExpressionType::AGGREGATE_AVG:
-        return_value_type_ = type::Type::DECIMAL;
+        return_value_type_ = type::TypeId::DECIMAL;
         break;
       default:
         break;

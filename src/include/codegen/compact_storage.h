@@ -16,7 +16,7 @@
 
 #include "codegen/codegen.h"
 #include "codegen/value.h"
-#include "type/type.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -36,19 +36,19 @@ class CompactStorage {
 
   // Setup this storage to store the given types (in the specified order)
   llvm::Type *Setup(CodeGen &codegen,
-                    const std::vector<type::Type::TypeId> &types);
+                    const std::vector<type::Type> &types);
 
   // Store the given values into the provided storage area
-  llvm::Value *StoreValues(CodeGen &codegen, llvm::Value *ptr,
+  llvm::Value *StoreValues(CodeGen &codegen, llvm::Value *area_start,
                            const std::vector<codegen::Value> &vals) const;
 
   // Load the values stored at the given storage area into the provided
   // vector
-  llvm::Value *LoadValues(CodeGen &codegen, llvm::Value *ptr,
+  llvm::Value *LoadValues(CodeGen &codegen, llvm::Value *area_start,
                           std::vector<codegen::Value> &vals) const;
 
   // Get the maximum number of bytes this storage format will need
-  uint64_t MaxStorageSize() const;
+  uint64_t MaxStorageSize() const { return storage_size_; }
 
  private:
   friend class UpdateableStorage;
@@ -60,19 +60,23 @@ class CompactStorage {
     // The LLVM type of this entry
     llvm::Type *type;
 
-    // The index in the format that this entry is associated with
-    uint32_t index;
+    // The index in the underlying storage where this entry is stored.
+    uint32_t physical_index;
+
+    // The index in the externally visible schema this element belongs to. Or,
+    // the index where the user expects to find this element.
+    uint32_t logical_index;
 
     // Indicates whether this is the length component of a variable length entry
     bool is_length;
 
     // The size in bytes this entry occupies
-    uint32_t nbytes;
+    uint64_t num_bytes;
   };
 
  private:
   // The SQL types we store
-  std::vector<type::Type::TypeId> types_;
+  std::vector<type::Type> schema_;
 
   // The schema of the storage
   std::vector<CompactStorage::EntryInfo> storage_format_;

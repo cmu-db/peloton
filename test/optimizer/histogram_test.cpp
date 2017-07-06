@@ -124,7 +124,7 @@ TEST_F(HistogramTests, ValueTypeTest) {
   EXPECT_EQ(h.GetTotalValueCount(), 3);
   // Handle null value correctly
   type::Value invalid =
-      type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   h.Update(invalid);
   EXPECT_EQ(h.GetTotalValueCount(), 3);
   // uniform should handle small dataset

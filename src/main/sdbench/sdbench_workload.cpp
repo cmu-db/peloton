@@ -166,7 +166,7 @@ static expression::AbstractExpression *CreateSimpleScanPredicate(
   // First, create tuple value expression.
   oid_t left_tuple_idx = 0;
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER,
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER,
                                                     left_tuple_idx, key_attr);
 
   // Second, create constant value expression.
@@ -537,8 +537,8 @@ static void CopyColumn(oid_t col_itr) {
     // Prepare a tile for copying
     std::vector<catalog::Column> columns;
 
-    catalog::Column column1(type::Type::INTEGER,
-                            type::Type::GetTypeSize(type::Type::INTEGER), "A",
+    catalog::Column column1(type::TypeId::INTEGER,
+                            type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                             true);
     columns.push_back(column1);
 
@@ -731,10 +731,10 @@ static void JoinQueryHelper(
 
   // Create join predicate
   expression::TupleValueExpression *left_table_attr =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0,
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                            left_table_join_column);
   expression::TupleValueExpression *right_table_attr =
-      new expression::TupleValueExpression(type::Type::INTEGER, 1,
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1,
                                            right_table_join_column);
 
   std::unique_ptr<expression::ComparisonExpression> join_predicate(
@@ -765,8 +765,8 @@ static void JoinQueryHelper(
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t join_column_count = column_count * 2;
   for (oid_t col_itr = 0; col_itr < join_column_count; col_itr++) {
-    auto column = catalog::Column(type::Type::INTEGER,
-                                  type::Type::GetTypeSize(type::Type::INTEGER),
+    auto column = catalog::Column(type::TypeId::INTEGER,
+                                  type::Type::GetTypeSize(type::TypeId::INTEGER),
                                   "" + std::to_string(col_itr), is_inlined);
     output_columns.push_back(column);
 
@@ -887,7 +887,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     planner::AggregatePlan::AggTerm max_column_agg(
         ExpressionType::AGGREGATE_MAX,
-        expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+        expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                       col_itr),
         false);
     agg_terms.push_back(max_column_agg);
@@ -927,8 +927,8 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   col_itr = 0;
   for (auto column_id : column_ids) {
-    auto column = catalog::Column(type::Type::INTEGER,
-                                  type::Type::GetTypeSize(type::Type::INTEGER),
+    auto column = catalog::Column(type::TypeId::INTEGER,
+                                  type::Type::GetTypeSize(type::TypeId::INTEGER),
                                   std::to_string(column_id), is_inlined);
     output_columns.push_back(column);
 
@@ -1030,12 +1030,10 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
   // Build target_list: -value for update_attrs
   for (oid_t update_attr : update_attrs) {
     auto tuple_value_expression = new expression::TupleValueExpression(
-        type::Type::INTEGER, 0, update_attr);
+        type::TypeId::INTEGER, 0, update_attr);
     auto minus_value_expression =
         new expression::OperatorUnaryMinusExpression(tuple_value_expression);
-    planner::DerivedAttribute attribute;
-    attribute.expr = minus_value_expression;
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{minus_value_expression};
     target_list.emplace_back(update_attr, attribute);
   }
 
@@ -1118,9 +1116,7 @@ static void InsertHelper() {
   for (oid_t col_id = 0; col_id <= state.attribute_count; col_id++) {
     auto expression =
         expression::ExpressionUtil::ConstantValueFactory(insert_val);
-    planner::DerivedAttribute attribute;
-    attribute.expr = expression;
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
     column_ids.push_back(col_id);
   }

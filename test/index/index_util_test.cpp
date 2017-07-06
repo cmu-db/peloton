@@ -56,20 +56,20 @@ static index::Index *BuildIndex() {
   // The size of the key is:
   //   integer 4 * 3 = total 12
 
-  catalog::Column column0(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+  catalog::Column column0(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                           true);
 
-  catalog::Column column1(type::Type::VARCHAR, 1024, "B", false);
+  catalog::Column column1(type::TypeId::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column2(type::Type::DECIMAL,
-                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
+  catalog::Column column2(type::TypeId::DECIMAL,
+                          type::Type::GetTypeSize(type::TypeId::DECIMAL), "C",
                           true);
 
-  catalog::Column column3(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
+  catalog::Column column3(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "D",
                           true);
 
   // Use all four columns to build tuple schema

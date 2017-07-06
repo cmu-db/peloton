@@ -45,6 +45,10 @@ class Tuple;
 class Database;
 }
 
+namespace type {
+class AbstractPool;
+};
+
 #define TESTS_TUPLES_PER_TILEGROUP 5
 #define DEFAULT_TILEGROUP_COUNT 3
 

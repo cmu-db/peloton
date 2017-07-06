@@ -38,7 +38,7 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ1Plan() const {
   auto shipdate_predicate = std::unique_ptr<expression::AbstractExpression>{
       new expression::ComparisonExpression(
           ExpressionType::COMPARE_LESSTHANOREQUALTO,
-          new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0,
+          new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                10),
           new expression::ConstantValueExpression(
               type::ValueFactory::GetDateValue(_1998_08_28)))};
@@ -58,92 +58,92 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ1Plan() const {
   // sum(l_quantity) as sum_qty
   planner::AggregatePlan::AggTerm agg1{
       ExpressionType::AGGREGATE_SUM,
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 2)};
-  agg1.agg_ai.type = type::Type::TypeId::INTEGER;
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 2)};
+  agg1.agg_ai.type = type::TypeId::INTEGER;
 
   // sum(l_extendedprice) as sum_base_price
   planner::AggregatePlan::AggTerm agg2{
       ExpressionType::AGGREGATE_SUM,
-      new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 3)};
-  agg2.agg_ai.type = type::Type::TypeId::DECIMAL;
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 3)};
+  agg2.agg_ai.type = type::TypeId::DECIMAL;
 
   // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
   planner::AggregatePlan::AggTerm agg3{
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+          ExpressionType::OPERATOR_MULTIPLY, type::TypeId::DECIMAL,
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0,
                                                3),
           new expression::OperatorExpression(
-              ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
+              ExpressionType::OPERATOR_MINUS, type::TypeId::DECIMAL,
               new expression::ConstantValueExpression(
                   type::ValueFactory::GetDecimalValue(1.0)),
-              new expression::TupleValueExpression(type::Type::TypeId::DECIMAL,
+              new expression::TupleValueExpression(type::TypeId::DECIMAL,
                                                    0, 4)))};
-  agg3.agg_ai.type = type::Type::TypeId::DECIMAL;
+  agg3.agg_ai.type = type::TypeId::DECIMAL;
 
   // sum(l_extendedprice * (1 - l_discount) * (1 + l_tax))
   planner::AggregatePlan::AggTerm agg4{
       ExpressionType::AGGREGATE_SUM,
       new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
+          ExpressionType::OPERATOR_MULTIPLY, type::TypeId::DECIMAL,
           // l_extendedprice
-          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0,
+          new expression::TupleValueExpression(type::TypeId::DECIMAL, 0,
                                                3),
           // (1 - l_discount) * (1 + l_tax)
           new expression::OperatorExpression(
-              ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
+              ExpressionType::OPERATOR_MULTIPLY, type::TypeId::DECIMAL,
               // 1 - l_discount
               new expression::OperatorExpression(
-                  ExpressionType::OPERATOR_MINUS, type::Type::TypeId::DECIMAL,
+                  ExpressionType::OPERATOR_MINUS, type::TypeId::DECIMAL,
                   new expression::ConstantValueExpression(
                       type::ValueFactory::GetDecimalValue(1.0)),
                   new expression::TupleValueExpression(
-                      type::Type::TypeId::DECIMAL, 0, 4)),
+                      type::TypeId::DECIMAL, 0, 4)),
               // 1 + l_tax
               new expression::OperatorExpression(
-                  ExpressionType::OPERATOR_PLUS, type::Type::TypeId::DECIMAL,
+                  ExpressionType::OPERATOR_PLUS, type::TypeId::DECIMAL,
                   new expression::ConstantValueExpression(
                       type::ValueFactory::GetDecimalValue(1.0)),
                   new expression::TupleValueExpression(
-                      type::Type::TypeId::DECIMAL, 0, 5))))};
-  agg4.agg_ai.type = type::Type::TypeId::DECIMAL;
+                      type::TypeId::DECIMAL, 0, 5))))};
+  agg4.agg_ai.type = type::TypeId::DECIMAL;
 
   // avg(l_quantity)
   planner::AggregatePlan::AggTerm agg5{
       ExpressionType::AGGREGATE_AVG,
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 2)};
-  agg5.agg_ai.type = type::Type::TypeId::BIGINT;
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 2)};
+  agg5.agg_ai.type = type::TypeId::DECIMAL;
 
   // avg(l_extendedprice)
   planner::AggregatePlan::AggTerm agg6{
       ExpressionType::AGGREGATE_AVG,
-      new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 3)};
-  agg6.agg_ai.type = type::Type::TypeId::DECIMAL;
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 3)};
+  agg6.agg_ai.type = type::TypeId::DECIMAL;
 
   // avg(l_discount)
   planner::AggregatePlan::AggTerm agg7{
       ExpressionType::AGGREGATE_AVG,
-      new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 4)};
-  agg7.agg_ai.type = type::Type::TypeId::DECIMAL;
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 4)};
+  agg7.agg_ai.type = type::TypeId::DECIMAL;
 
   // count(*)
   planner::AggregatePlan::AggTerm agg8{ExpressionType::AGGREGATE_COUNT_STAR,
                                        nullptr};
-  agg8.agg_ai.type = type::Type::TypeId::BIGINT;
+  agg8.agg_ai.type = type::TypeId::BIGINT;
 
   auto output_schema =
       std::shared_ptr<const catalog::Schema>{new catalog::Schema(
-          {{type::Type::TypeId::INTEGER, kIntSize, "l_returnflag"},
-           {type::Type::TypeId::INTEGER, kIntSize, "l_linestatus"},
-           {type::Type::TypeId::INTEGER, kIntSize, "sum_qty"},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_base_price"},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_disc_price"},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "sum_charge"},
-           {type::Type::TypeId::BIGINT, kBigIntSize, "avg_qty"},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_price"},
-           {type::Type::TypeId::DECIMAL, kDecimalSize, "avg_disc"},
-           {type::Type::TypeId::BIGINT, kBigIntSize, "count_order"}})};
+          {{type::TypeId::INTEGER, kIntSize, "l_returnflag"},
+           {type::TypeId::INTEGER, kIntSize, "l_linestatus"},
+           {type::TypeId::INTEGER, kIntSize, "sum_qty"},
+           {type::TypeId::DECIMAL, kDecimalSize, "sum_base_price"},
+           {type::TypeId::DECIMAL, kDecimalSize, "sum_disc_price"},
+           {type::TypeId::DECIMAL, kDecimalSize, "sum_charge"},
+           {type::TypeId::DECIMAL, kDecimalSize, "avg_qty"},
+           {type::TypeId::DECIMAL, kDecimalSize, "avg_price"},
+           {type::TypeId::DECIMAL, kDecimalSize, "avg_disc"},
+           {type::TypeId::BIGINT, kBigIntSize, "count_order"}})};
 
   DirectMapList dml = {{0, {0, 0}}, {1, {0, 1}}, {2, {1, 0}}, {3, {1, 1}},
                        {4, {1, 2}}, {5, {1, 3}}, {6, {1, 4}}, {7, {1, 5}},

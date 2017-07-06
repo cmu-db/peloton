@@ -26,7 +26,7 @@ Sorter::Sorter() {
 }
 
 Sorter::Sorter(CodeGen &codegen,
-               const std::vector<type::Type::TypeId> &row_desc) {
+               const std::vector<type::Type> &row_desc) {
   // Configure the storage format using the provided row description
   for (const auto &value_type : row_desc) {
     storage_format_.AddType(value_type);
@@ -52,9 +52,16 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
   auto *space = codegen.CallFunc(store_func, {sorter_ptr});
 
   // Now, individually store the attributes of the tuple into the free space
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format_, space};
   for (uint32_t col_id = 0; col_id < tuple.size(); col_id++) {
-    storage_format_.SetValueAt(codegen, space, col_id, tuple[col_id]);
+    if (!null_bitmap.IsNullable(col_id)) {
+      storage_format_.SetValueSkipNull(codegen, space, col_id, tuple[col_id]);
+    } else {
+      storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
+                               null_bitmap);
+    }
   }
+  null_bitmap.WriteBack(codegen);
 }
 
 // Just make a call to utils::Sorter::Sort(...). This actually sorts the data
@@ -195,7 +202,14 @@ codegen::Value Sorter::SorterAccess::LoadRowValue(
   }
 
   const auto &storage_format = sorter_.GetStorageFormat();
-  return storage_format.GetValueAt(codegen, row.row_pos_, column_index);
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format,
+                                            row.row_pos_};
+  if (!null_bitmap.IsNullable(column_index)) {
+    return storage_format.GetValueSkipNull(codegen, row.row_pos_, column_index);
+  } else {
+    return storage_format.GetValue(codegen, row.row_pos_, column_index,
+                                   null_bitmap);
+  }
 }
 
 //===----------------------------------------------------------------------===//

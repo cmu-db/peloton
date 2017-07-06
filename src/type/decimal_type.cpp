@@ -23,19 +23,19 @@ namespace type {
 
 #define DECIMAL_COMPARE_FUNC(OP) \
   switch (right.GetTypeId()) { \
-    case Type::TINYINT: \
+    case TypeId::TINYINT: \
       return GetCmpBool(left.value_.decimal OP right.GetAs<int8_t>()); \
-    case Type::SMALLINT: \
+    case TypeId::SMALLINT: \
       return GetCmpBool(left.value_.decimal OP right.GetAs<int16_t>()); \
-    case Type::INTEGER: \
-    case Type::PARAMETER_OFFSET: \
+    case TypeId::INTEGER: \
+    case TypeId::PARAMETER_OFFSET: \
       return GetCmpBool(left.value_.decimal OP right.GetAs<int32_t>()); \
-  case Type::BIGINT: \
+  case TypeId::BIGINT: \
     return GetCmpBool(left.value_.decimal OP right.GetAs<int64_t>()); \
-  case Type::DECIMAL: \
+  case TypeId::DECIMAL: \
     return GetCmpBool(left.value_.decimal OP right.GetAs<double>()); \
-  case Type::VARCHAR: { \
-    auto r_value = right.CastAs(Type::DECIMAL); \
+  case TypeId::VARCHAR: { \
+    auto r_value = right.CastAs(TypeId::DECIMAL); \
     return GetCmpBool(left.value_.decimal OP r_value.GetAs<double>()); \
   } \
   default: \
@@ -44,18 +44,18 @@ namespace type {
 
 #define DECIMAL_MODIFY_FUNC(OP) \
   switch(right.GetTypeId()) { \
-    case Type::TINYINT: \
+    case TypeId::TINYINT: \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP right.GetAs<int8_t>()); \
-    case Type::SMALLINT: \
+    case TypeId::SMALLINT: \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP right.GetAs<int16_t>()); \
-    case Type::INTEGER: \
+    case TypeId::INTEGER: \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP right.GetAs<int32_t>()); \
-    case Type::BIGINT: \
+    case TypeId::BIGINT: \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP right.GetAs<int64_t>()); \
-    case Type::DECIMAL: \
+    case TypeId::DECIMAL: \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP right.GetAs<double>()); \
-    case Type::VARCHAR: { \
-      auto r_value = right.CastAs(Type::DECIMAL); \
+    case TypeId::VARCHAR: { \
+      auto r_value = right.CastAs(TypeId::DECIMAL); \
       return ValueFactory::GetDecimalValue(left.value_.decimal OP r_value.GetAs<double>()); \
     } \
     default: \
@@ -68,16 +68,16 @@ static inline double ValMod(double x, double y) {
 }
 
 DecimalType::DecimalType()
-  : NumericType(Type::DECIMAL) {
+  : NumericType(TypeId::DECIMAL) {
 }
 
 bool DecimalType::IsZero(const Value& val) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   return (val.value_.decimal == 0);
 }
 
 Value DecimalType::Add(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -88,7 +88,7 @@ Value DecimalType::Add(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Subtract(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -99,7 +99,7 @@ Value DecimalType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Multiply(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -110,7 +110,7 @@ Value DecimalType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Divide(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -127,7 +127,7 @@ Value DecimalType::Divide(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Modulo(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -137,18 +137,18 @@ Value DecimalType::Modulo(const Value& left, const Value &right) const {
                     "Division by zero on right-hand side");
   }
   switch(right.GetTypeId()) {
-    case Type::TINYINT:
+    case TypeId::TINYINT:
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int8_t>()));
-    case Type::SMALLINT:
+    case TypeId::SMALLINT:
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int16_t>()));
-    case Type::INTEGER:
+    case TypeId::INTEGER:
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int32_t>()));
-    case Type::BIGINT:
+    case TypeId::BIGINT:
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int64_t>()));
-    case Type::DECIMAL:
+    case TypeId::DECIMAL:
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<double>()));
-    case Type::VARCHAR: {
-      auto r_value = right.CastAs(Type::DECIMAL);
+    case TypeId::VARCHAR: {
+      auto r_value = right.CastAs(TypeId::DECIMAL);
       return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, r_value.GetAs<double>()));
     }
     default:
@@ -158,7 +158,7 @@ Value DecimalType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Min(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -169,7 +169,7 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Max(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
@@ -180,7 +180,7 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Sqrt(const Value& val) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   if (val.IsNull())
     return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
   if (val.value_.decimal < 0) {
@@ -195,7 +195,7 @@ Value DecimalType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
 }
 
 CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -206,7 +206,7 @@ CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const 
 }
 
 CmpBool DecimalType::CompareNotEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -217,7 +217,7 @@ CmpBool DecimalType::CompareNotEquals(const Value& left, const Value &right) con
 }
 
 CmpBool DecimalType::CompareLessThan(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -228,7 +228,7 @@ CmpBool DecimalType::CompareLessThan(const Value& left, const Value &right) cons
 }
 
 CmpBool DecimalType::CompareLessThanEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -239,7 +239,7 @@ CmpBool DecimalType::CompareLessThanEquals(const Value& left, const Value &right
 }
 
 CmpBool DecimalType::CompareGreaterThan(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -250,7 +250,7 @@ CmpBool DecimalType::CompareGreaterThan(const Value& left, const Value &right) c
 }
 
 CmpBool DecimalType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == Type::DECIMAL);
+  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CMP_NULL;
@@ -260,9 +260,9 @@ CmpBool DecimalType::CompareGreaterThanEquals(const Value& left, const Value &ri
   throw Exception("type error");
 }
 
-Value DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value DecimalType::CastAs(const Value& val, const TypeId type_id) const {
   switch (type_id) {
-    case Type::TINYINT: {
+    case TypeId::TINYINT: {
       if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
       if (val.GetAs<double>() > PELOTON_INT8_MAX ||
           val.GetAs<double>() < PELOTON_INT8_MIN)
@@ -270,7 +270,7 @@ Value DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
       return ValueFactory::GetTinyIntValue((int8_t)val.GetAs<double>());
     }
-    case Type::SMALLINT: {
+    case TypeId::SMALLINT: {
       if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
       if (val.GetAs<double>() > PELOTON_INT16_MAX ||
           val.GetAs<double>() < PELOTON_INT16_MIN)
@@ -278,7 +278,7 @@ Value DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
       return ValueFactory::GetSmallIntValue((int16_t)val.GetAs<double>());
     }
-    case Type::INTEGER: {
+    case TypeId::INTEGER: {
       if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
       if (val.GetAs<double>() > PELOTON_INT32_MAX ||
           val.GetAs<double>() < PELOTON_INT32_MIN)
@@ -286,7 +286,7 @@ Value DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
       return ValueFactory::GetIntegerValue((int32_t)val.GetAs<double>());
     }
-    case Type::BIGINT: {
+    case TypeId::BIGINT: {
       if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
       if (val.GetAs<double>() > PELOTON_INT64_MAX ||
           val.GetAs<double>() < PELOTON_INT64_MIN)
@@ -294,9 +294,9 @@ Value DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
           "Numeric value out of range.");
       return ValueFactory::GetBigIntValue((int64_t)val.GetAs<double>());
     }
-    case Type::DECIMAL:
+    case TypeId::DECIMAL:
       return val.Copy();
-    case Type::VARCHAR:
+    case TypeId::VARCHAR:
       if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
       return ValueFactory::GetVarcharValue(val.ToString());
     default:

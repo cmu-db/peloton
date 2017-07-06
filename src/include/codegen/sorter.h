@@ -93,7 +93,7 @@ class Sorter {
 
   // Constructor
   Sorter();
-  Sorter(CodeGen &codegen, const std::vector<type::Type::TypeId> &row_desc);
+  Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc);
 
   // Initialize the given sorter instance with the comparison function
   void Init(CodeGen &codegen, llvm::Value *sorter_ptr,

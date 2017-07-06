@@ -394,43 +394,43 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 }
 
 FieldInfo TrafficCop::GetColumnFieldForValueType(
-    std::string column_name, type::Type::TypeId column_type) {
+    std::string column_name, type::TypeId column_type) {
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
-    case type::Type::BOOLEAN:
-    case type::Type::TINYINT: {
+    case type::TypeId::BOOLEAN:
+    case type::TypeId::TINYINT: {
       field_type = PostgresValueType::BOOLEAN;
       field_size = 1;
       break;
     }
-    case type::Type::SMALLINT: {
+    case type::TypeId::SMALLINT: {
       field_type = PostgresValueType::SMALLINT;
       field_size = 2;
       break;
     }
-    case type::Type::INTEGER: {
+    case type::TypeId::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
       break;
     }
-    case type::Type::BIGINT: {
+    case type::TypeId::BIGINT: {
       field_type = PostgresValueType::BIGINT;
       field_size = 8;
       break;
     }
-    case type::Type::DECIMAL: {
+    case type::TypeId::DECIMAL: {
       field_type = PostgresValueType::DOUBLE;
       field_size = 8;
       break;
     }
-    case type::Type::VARCHAR:
-    case type::Type::VARBINARY: {
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY: {
       field_type = PostgresValueType::TEXT;
       field_size = 255;
       break;
     }
-    case type::Type::TIMESTAMP: {
+    case type::TypeId::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
       field_size = 64;  // FIXME: Bytes???
       break;

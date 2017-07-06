@@ -229,7 +229,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_type_col_id) {
           // param_types column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    type::Type::VARBINARY);
+                    type::TypeId::VARBINARY);
 
           wire::InputPacket packet(len, val);
 
@@ -245,7 +245,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_format_col_id) {
           // param_formats column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    type::Type::VARBINARY);
+                    type::TypeId::VARBINARY);
 
           wire::InputPacket packet(len, val);
 
@@ -256,7 +256,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    type::Type::VARBINARY);
+                    type::TypeId::VARBINARY);
 
           wire::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
@@ -270,10 +270,10 @@ bool CopyExecutor::DExecute() {
             auto param_value = param_values[i];
             LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
             // Avoid extra copy for varlen types
-            if (param_value.GetTypeId() == type::Type::VARBINARY) {
+            if (param_value.GetTypeId() == type::TypeId::VARBINARY) {
               const char *data = param_value.GetData();
               Copy(data, param_value.GetLength(), false);
-            } else if (param_value.GetTypeId() == type::Type::VARCHAR) {
+            } else if (param_value.GetTypeId() == type::TypeId::VARCHAR) {
               const char *data = param_value.GetData();
               // Don't write the NULL character for varchar
               Copy(data, param_value.GetLength() - 1, false);

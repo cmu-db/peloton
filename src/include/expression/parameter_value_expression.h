@@ -27,7 +27,7 @@ class ParameterValueExpression : public AbstractExpression {
  public:
   ParameterValueExpression(int value_idx)
       : AbstractExpression(ExpressionType::VALUE_PARAMETER,
-                           type::Type::PARAMETER_OFFSET),
+                           type::TypeId::PARAMETER_OFFSET),
         value_idx_(value_idx) {}
 
   int GetValueIdx() const { return value_idx_; }

@@ -15,6 +15,7 @@
 #include "codegen/if.h"
 #include "codegen/catalog_proxy.h"
 #include "codegen/transaction_runtime_proxy.h"
+#include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 
@@ -71,14 +72,13 @@ void TableScanTranslator::Produce() const {
                        {catalog_ptr, codegen.Const32(table.GetDatabaseOid()),
                         codegen.Const32(table.GetOid())});
 
-  // The output buffer for the scan
-  Vector selection_vector{LoadStateValue(selection_vector_id_),
-                          Vector::kDefaultVectorSize, codegen.Int32Type()};
+  // The selection vector for the scan
+  Vector sel_vec{LoadStateValue(selection_vector_id_),
+                 Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  // Do the vectorized scan
-  ScanConsumer scan_consumer{*this, selection_vector};
-  table_.GenerateVectorizedScan(codegen, table_ptr,
-                                selection_vector.GetCapacity(), scan_consumer);
+  // Generate the scan
+  ScanConsumer scan_consumer{*this, sel_vec};
+  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
 
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
@@ -218,8 +218,12 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     // Evaluate the predicate to determine row validity
     codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
+    // Reify the boolean value since it may be NULL
+    PL_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
+    llvm::Value *bool_val = type::Boolean::Instance().Reify(codegen, valid_row);
+
     // Set the validity of the row
-    row.SetValidity(codegen, valid_row.GetValue());
+    row.SetValidity(codegen, bool_val);
   });
 }
 

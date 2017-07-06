@@ -24,7 +24,7 @@ namespace codegen {
 const std::string &
 TransactionRuntimeProxy::_PerformVectorizedRead::GetFunctionName() {
   static const std::string kPerformVectorizedReadFnName =
-      "__ZN7peloton7codegen18TransactionRuntime21PerformVectorizedReadERNS_"
+      "_ZN7peloton7codegen18TransactionRuntime21PerformVectorizedReadERNS_"
       "11concurrency11TransactionERNS_7storage9TileGroupEjjPj";
   return kPerformVectorizedReadFnName;
 }

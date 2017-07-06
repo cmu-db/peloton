@@ -12,6 +12,8 @@
 
 #include "codegen/hash.h"
 
+#include "llvm/IR/Intrinsics.h"
+
 #include "codegen/runtime_functions_proxy.h"
 #include "common/exception.h"
 

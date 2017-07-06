@@ -32,7 +32,7 @@ class Schema : public Printable {
   //===--------------------------------------------------------------------===//
 
   // Construct schema
-  void CreateTupleSchema(const std::vector<type::Type::TypeId> &column_types,
+  void CreateTupleSchema(const std::vector<type::TypeId> &column_types,
                          const std::vector<oid_t> &column_lengths,
                          const std::vector<std::string> &column_names,
                          const std::vector<bool> &is_inlined);
@@ -90,7 +90,7 @@ class Schema : public Printable {
     return columns[column_id].GetOffset();
   }
 
-  inline type::Type::TypeId GetType(const oid_t column_id) const {
+  inline type::TypeId GetType(const oid_t column_id) const {
     return columns[column_id].GetType();
   }
 

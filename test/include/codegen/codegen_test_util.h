@@ -30,44 +30,72 @@ namespace peloton {
 namespace test {
 
 //===----------------------------------------------------------------------===//
-// Common utilities
-//===----------------------------------------------------------------------===//
-class CodegenTestUtils {
- public:
-  static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
-};
-
-//===----------------------------------------------------------------------===//
-// Common base class for all codegen tests
+// Common base class for all codegen tests. This class four test tables that all
+// the codegen components use. Their ID's are available through the TableId
+// enumeration.
 //===----------------------------------------------------------------------===//
 class PelotonCodeGenTest : public PelotonTest {
  public:
+  enum class TableId : uint32_t { _1 = 44, _2 = 45, _3 = 46, _4 = 47 };
+
   const uint32_t test_db_id = INVALID_OID;
-  const uint32_t test_table1_id = 44;
-  const uint32_t test_table2_id = 45;
-  const uint32_t test_table3_id = 46;
-  const uint32_t test_table4_id = 47;
 
   PelotonCodeGenTest();
 
   virtual ~PelotonCodeGenTest();
 
+  // Get the test database
   storage::Database &GetDatabase() const { return *test_db; }
-  storage::DataTable &GetTestTable(uint32_t table_id) const {
-    PL_ASSERT(table_id >= test_table1_id && table_id <= test_table4_id);
-    return *GetDatabase().GetTableWithOid(table_id);
+
+  // Get the test table with the given ID
+  storage::DataTable &GetTestTable(TableId table_id) const {
+    return *GetDatabase().GetTableWithOid(static_cast<uint32_t>(table_id));
   }
+
+  // Create the schema (common among all tables)
+  std::unique_ptr<catalog::Schema> CreateTestSchema() const;
 
   // Create the test tables
   void CreateTestTables();
 
   // Load the given table with the given number of rows
-  void LoadTestTable(uint32_t table_id, uint32_t num_rows);
+  void LoadTestTable(TableId table_id, uint32_t num_rows,
+                     bool insert_nulls = false);
 
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
       char *consumer_state);
+
+  //===--------------------------------------------------------------------===//
+  // Helpers
+  //===--------------------------------------------------------------------===//
+  std::unique_ptr<expression::AbstractExpression> ConstIntExpr(int64_t val);
+
+  std::unique_ptr<expression::AbstractExpression> ConstDecimalExpr(double val);
+
+  std::unique_ptr<expression::AbstractExpression> ColRefExpr(
+      type::TypeId type, uint32_t col_id);
+
+  std::unique_ptr<expression::AbstractExpression> CmpExpr(
+      ExpressionType cmp_type,
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+
+  std::unique_ptr<expression::AbstractExpression> CmpLtExpr(
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+
+  std::unique_ptr<expression::AbstractExpression> CmpGtExpr(
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+  std::unique_ptr<expression::AbstractExpression> CmpGteExpr(
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
+
+  std::unique_ptr<expression::AbstractExpression> CmpEqExpr(
+      std::unique_ptr<expression::AbstractExpression> &&left,
+      std::unique_ptr<expression::AbstractExpression> &&right);
 
  private:
   storage::Database *test_db;

@@ -70,9 +70,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
     type::Value value = (
         tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    planner::DerivedAttribute attribute;
-    attribute.expr = expression;
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
   }
 

@@ -14,13 +14,16 @@
 
 #include <string>
 
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
 
 #include "common/macros.h"
+
+namespace llvm {
+class ExecutionEngine;
+class LLVMContext;
+class Module;
+}  // namespace llvm
 
 namespace peloton {
 namespace codegen {
@@ -39,16 +42,13 @@ class CodeContext {
 
  public:
   CodeContext();
+  ~CodeContext();
 
   // Return the pointer to the LLVM function in this module given its name
-  llvm::Function *GetFunction(const std::string &fn_name) {
-    return module_->getFunction(fn_name);
-  }
+  llvm::Function *GetFunction(const std::string &fn_name) const;
 
   // Get a pointer to the JITed function of the given type
-  void *GetFunctionPointer(llvm::Function *fn) {
-    return jit_engine_->getPointerToFunction(fn);
-  }
+  void *GetFunctionPointer(llvm::Function *fn) const;
 
   // JIT the code contained within
   bool Compile();
@@ -77,9 +77,7 @@ class CodeContext {
   llvm::IRBuilder<> &GetBuilder() { return builder_; }
 
   // Get the data layout
-  const llvm::DataLayout &GetDataLayout() const {
-    return module_->getDataLayout();
-  }
+  const llvm::DataLayout &GetDataLayout() const;
 
   // Set the current function we're building
   void SetCurrentFunction(FunctionBuilder *func) { func_ = func; }

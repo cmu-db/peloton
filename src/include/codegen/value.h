@@ -13,7 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "type/type.h"
+#include "codegen/type/type.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace codegen {
@@ -27,11 +28,15 @@ class Value {
  public:
   // Constructor that provides the type and the value
   Value();
-  Value(type::Type::TypeId type, llvm::Value *value = nullptr,
+  Value(const type::Type &type, llvm::Value *value = nullptr,
         llvm::Value *length = nullptr, llvm::Value *is_null = nullptr);
 
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
   // Get the SQL type
-  type::Type::TypeId GetType() const { return type_; }
+  const type::Type &GetType() const { return type_; }
 
   // Get the LLVM value
   llvm::Value *GetValue() const { return value_; }
@@ -39,84 +44,83 @@ class Value {
   // Get the length of the varchar (if it is one)
   llvm::Value *GetLength() const { return length_; }
 
-  // Get the null indicator value
-  llvm::Value *GetNull() const { return null_; }
+  // Is this value nullable?
+  bool IsNullable() const { return GetType().nullable; }
 
-  // Return the name of the string
-  const std::string GetName() const { return value_->getName(); }
+  // Check if this value is NULL (or not NULL).
+  llvm::Value *IsNull(CodeGen &codegen) const;
+  llvm::Value *IsNotNull(CodeGen &codegen) const;
 
   //===--------------------------------------------------------------------===//
   // Comparison functions
   //===--------------------------------------------------------------------===//
-  codegen::Value CastTo(CodeGen &codegen, type::Type::TypeId to_type) const;
+  Value CastTo(CodeGen &codegen, const type::Type &to_type) const;
 
-  codegen::Value CompareEq(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareNe(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareLt(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareLte(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareGt(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value CompareGte(CodeGen &codegen, const codegen::Value &o) const;
+  Value CompareEq(CodeGen &codegen, const Value &other) const;
+  Value CompareNe(CodeGen &codegen, const Value &other) const;
+  Value CompareLt(CodeGen &codegen, const Value &other) const;
+  Value CompareLte(CodeGen &codegen, const Value &other) const;
+  Value CompareGt(CodeGen &codegen, const Value &other) const;
+  Value CompareGte(CodeGen &codegen, const Value &other) const;
 
-  static codegen::Value TestEquality(CodeGen &codegen,
-                                     const std::vector<codegen::Value> &lhs,
-                                     const std::vector<codegen::Value> &rhs);
+  static Value TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
+                            const std::vector<Value> &rhs);
 
   // Perform a comparison used for sorting. We need a stable and transitive
   // sorting comparison function here. The function returns:
   //  < 0 - if the left value comes before the right value when sorted
   //  = 0 - if the left value is equivalent to the right element
   //  > 0 - if the left value comes after the right value when sorted
-  codegen::Value CompareForSort(CodeGen &codegen,
-                                const codegen::Value &o) const;
+  Value CompareForSort(CodeGen &codegen, const Value &other) const;
 
   //===--------------------------------------------------------------------===//
   // Mathematical functions
   //===--------------------------------------------------------------------===//
 
-  enum class OnError : uint32_t { ReturnDefault, ReturnNull, Exception };
-
-  codegen::Value Add(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Sub(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Mul(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Div(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Mod(CodeGen &codegen, const codegen::Value &right,
-                     const OnError on_error = OnError::Exception) const;
-  codegen::Value Min(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value Max(CodeGen &codegen, const codegen::Value &o) const;
+  Value Add(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Sub(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Mul(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Div(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Mod(CodeGen &codegen, const Value &other,
+            const OnError on_error = OnError::Exception) const;
+  Value Min(CodeGen &codegen, const Value &other) const;
+  Value Max(CodeGen &codegen, const Value &other) const;
 
   //===--------------------------------------------------------------------===//
   // Logical/Boolean functions
   //===--------------------------------------------------------------------===//
 
-  codegen::Value LogicalAnd(CodeGen &codegen, const codegen::Value &o) const;
-  codegen::Value LogicalOr(CodeGen &codegen, const codegen::Value &o) const;
+  Value LogicalAnd(CodeGen &codegen, const Value &other) const;
+  Value LogicalOr(CodeGen &codegen, const Value &other) const;
 
   // Build a PHI node that combines all the given values (from their basic
   // blocks) into a single value
-  static codegen::Value BuildPHI(
+  static Value BuildPHI(
       CodeGen &codegen,
-      const std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> &vals);
+      const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals);
+
+  // Invoke generic unary and binary functions with a given ID
+  Value CallUnaryOp(CodeGen &codegen, OperatorId op_id) const;
+  Value CallBinaryOp(CodeGen &codegen, OperatorId op_id, const Value &other,
+                     OnError on_error) const;
 
   //===--------------------------------------------------------------------===//
   // Materialization helpers
   //===--------------------------------------------------------------------===//
 
   // Return the a representation of this value suitable for materialization
-  void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len,
-                                llvm::Value *&null) const;
+  void ValuesForMaterialization(CodeGen &codegen, llvm::Value *&val,
+                                llvm::Value *&len, llvm::Value *&null) const;
 
   // Return a value that can be constructed from the provided type and value
   // registers
-  static Value ValueFromMaterialization(type::Type::TypeId type,
+  static Value ValueFromMaterialization(const type::Type &type,
                                         llvm::Value *val, llvm::Value *len,
                                         llvm::Value *null);
-
-  // Return the null indicator
-  static llvm::Value *SetNullValue(CodeGen &codegen, const Value &value);
 
  private:
   friend class Hash;
@@ -128,7 +132,7 @@ class Value {
 
  private:
   // The SQL type
-  type::Type::TypeId type_;
+  type::Type type_;
 
   // The value
   llvm::Value *value_;
@@ -138,9 +142,6 @@ class Value {
 
   // NULL indicator (if any)
   llvm::Value *null_;
-
-  // The (optional) name of this value
-  std::string name_;
 };
 
 }  // namespace codegen

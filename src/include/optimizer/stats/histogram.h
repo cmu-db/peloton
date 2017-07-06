@@ -77,10 +77,10 @@ class Histogram {
       LOG_TRACE("Histogram update value is null");
       return;
     }
-    if (value.CheckInteger() || value.GetTypeId() == type::Type::TIMESTAMP) {
+    if (value.CheckInteger() || value.GetTypeId() == type::TypeId::TIMESTAMP) {
       int raw_value = value.GetAs<int>();
       Update(raw_value);
-    } else if (value.GetTypeId() == type::Type::DECIMAL) {
+    } else if (value.GetTypeId() == type::TypeId::DECIMAL) {
       int raw_value = value.GetAs<double>();
       Update(raw_value);
     } else {

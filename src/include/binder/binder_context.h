@@ -47,7 +47,7 @@ class BinderContext {
   static bool GetColumnPosTuple(std::string& col_name,
                                 std::tuple<oid_t, oid_t>& table_id_tuple,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
-                                type::Type::TypeId& value_type);
+                                type::TypeId& value_type);
 
   // Construct the column position tuple given only the column name and the
   // context. Also set the value type based on column type
@@ -57,7 +57,7 @@ class BinderContext {
                                 std::string& col_name,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 std::string& table_alias,
-                                type::Type::TypeId& value_type);
+                                type::TypeId& value_type);
 
   // Construct the table id tuple given the table alias
   static bool GetTableIdTuple(std::shared_ptr<BinderContext> current_context,

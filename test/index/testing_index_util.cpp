@@ -668,20 +668,20 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   // The size of the key is:
   //   integer 4 + varchar 8 = total 12
 
-  catalog::Column column1(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
                           true);
 
-  catalog::Column column2(type::Type::VARCHAR, 1024, "B", false);
+  catalog::Column column2(type::TypeId::VARCHAR, 1024, "B", false);
 
   // The following two constitutes tuple schema but does not appear in index
 
-  catalog::Column column3(type::Type::DECIMAL,
-                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
+  catalog::Column column3(type::TypeId::DECIMAL,
+                          type::Type::GetTypeSize(type::TypeId::DECIMAL), "C",
                           true);
 
-  catalog::Column column4(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
+  catalog::Column column4(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "D",
                           true);
 
   // Use the first two columns to build key schema

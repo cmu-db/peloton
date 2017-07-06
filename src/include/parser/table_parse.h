@@ -45,7 +45,7 @@ class TableParse : public AbstractParse {
 
  private:
   // Type of entity
-  EntityType entity_type_ = EntityType::INVALID;
+  EntityType entity_type_ = EntityTypeId::INVALID;
 
   // Name of entity
   std::string entity_name_;

@@ -335,14 +335,14 @@ class ConjunctionScanPredicate {
    */
   static oid_t BindValueToIndexKey(Index *index_p, const type::Value &value,
                                    storage::Tuple *index_key_p, oid_t index) {
-    type::Type::TypeId bind_type = value.GetTypeId();
+    type::TypeId bind_type = value.GetTypeId();
 
-    if (bind_type == type::Type::PARAMETER_OFFSET) {
+    if (bind_type == type::TypeId::PARAMETER_OFFSET) {
       return static_cast<oid_t>(type::ValuePeeker::PeekParameterOffset(value));
     }
 
     // This is the type of the actual column
-    type::Type::TypeId column_type = index_key_p->GetType(index);
+    type::TypeId column_type = index_key_p->GetType(index);
 
     // If the given value's type equals expected type for the column then
     // set value directly
@@ -399,7 +399,7 @@ class ConjunctionScanPredicate {
 
       // We use the type of the current index key column to get the
       // +Inf, -Inf and/or casted type for Value object
-      type::Type::TypeId index_key_column_type =
+      type::TypeId index_key_column_type =
           metadata_p->GetKeySchema()->GetType(i);
 
       // If the lower bound of this column is not specified by the predicate

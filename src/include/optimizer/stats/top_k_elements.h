@@ -574,34 +574,34 @@ class TopKElements {
    */
   void Add(const type::Value& value) {
     switch (value.GetTypeId()) {
-      case type::Type::TINYINT:
+      case type::TypeId::TINYINT:
         int8_t n_8;
         n_8 = value.GetAs<int8_t>();
         Add((int64_t)n_8, 1);
         break;
-      case type::Type::SMALLINT:
+      case type::TypeId::SMALLINT:
         int32_t n_16;
         n_16 = value.GetAs<int16_t>();
         Add((int64_t)n_16, 1);
         break;
-      case type::Type::INTEGER:
-      case type::Type::PARAMETER_OFFSET:
-      case type::Type::TIMESTAMP:
+      case type::TypeId::INTEGER:
+      case type::TypeId::PARAMETER_OFFSET:
+      case type::TypeId::TIMESTAMP:
         int32_t n_32;
         n_32 = value.GetAs<int32_t>();
         Add((int64_t)n_32, 1);
         break;
-      case type::Type::BIGINT:
+      case type::TypeId::BIGINT:
         int64_t n_64;
         n_64 = value.GetAs<int64_t>();
         Add(n_64, 1);
         break;
-      case type::Type::DECIMAL: {
+      case type::TypeId::DECIMAL: {
         std::string sd = value.ToString();
         Add(sd, 1, ApproxTopEntryElem::ElemType::DEC_TYPE);
         break;
       }
-      case type::Type::VARCHAR:
+      case type::TypeId::VARCHAR:
       default: {
         // valgrind reports error on value.ToString().c_str();
         std::string sv = value.ToString();

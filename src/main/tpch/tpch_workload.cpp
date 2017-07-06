@@ -14,6 +14,7 @@
 
 #include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/plan_executor.h"
 #include "planner/abstract_plan.h"
 #include "planner/binding_context.h"
 
@@ -168,7 +169,10 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
   codegen::QueryCompiler compiler;
   auto compiled_query = compiler.Compile(*plan, counter, &compile_stats);
 
-  codegen::Query::RuntimeStats overall_stats = {0.0, 0.0, 0.0};
+  codegen::Query::RuntimeStats overall_stats;
+  overall_stats.init_ms = 0.0;
+  overall_stats.plan_ms = 0.0;
+  overall_stats.tear_down_ms = 0.0;
   for (uint32_t i = 0; i < config_.num_runs; i++) {
     // Reset the counter for this run
     counter.ResetCount();

@@ -12,6 +12,7 @@
 
 #include "codegen/negation_translator.h"
 
+#include "codegen/type/type_system.h"
 #include "expression/operator_expression.h"
 
 namespace peloton {
@@ -29,13 +30,8 @@ Value NegationTranslator::DeriveValue(CodeGen &codegen,
                                       RowBatch::Row &row) const {
   const auto &negation_expr =
       GetExpressionAs<expression::OperatorUnaryMinusExpression>();
-
-  codegen::Value child_value =
-      row.DeriveValue(codegen, *negation_expr.GetChild(0));
-
-  codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
-
-  return zero.Sub(codegen, child_value);
+  Value child_value = row.DeriveValue(codegen, *negation_expr.GetChild(0));
+  return child_value.CallUnaryOp(codegen, OperatorId::Negation);
 }
 
 }  // namespace codegen

@@ -12,9 +12,10 @@
 
 #include "codegen/buffering_consumer.h"
 
+#include "codegen/if.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
-#include "common/logger.h"
+#include "codegen/type/sql_type.h"
 #include "planner/binding_context.h"
 
 namespace peloton {
@@ -25,7 +26,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 
 // Basic Constructor
-WrappedTuple::WrappedTuple(type::Value *vals, uint32_t num_vals)
+WrappedTuple::WrappedTuple(peloton::type::Value *vals, uint32_t num_vals)
     : ContainerTuple(&tuple_), tuple_(vals, vals + num_vals) {}
 
 // Copy Constructor
@@ -33,7 +34,7 @@ WrappedTuple::WrappedTuple(const WrappedTuple &o)
     : ContainerTuple(&tuple_), tuple_(o.tuple_) {}
 
 WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
-  expression::ContainerTuple<std::vector<type::Value>>::operator=(o);
+  expression::ContainerTuple<std::vector<peloton::type::Value>>::operator=(o);
   tuple_ = o.tuple_;
   return *this;
 }
@@ -52,7 +53,7 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
-void BufferingConsumer::BufferTuple(char *state, type::Value *vals,
+void BufferingConsumer::BufferTuple(char *state, peloton::type::Value *vals,
                                     uint32_t num_vals) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
   buffer_state->output->emplace_back(vals, num_vals);
@@ -104,71 +105,38 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
 
   for (size_t i = 0; i < output_ais_.size(); i++) {
+    // Derive the column's final value
     Value val = row.DeriveValue(codegen, output_ais_[i]);
-    switch (val.GetType()) {
-      case type::Type::TypeId::TINYINT: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputTinyInt::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::SMALLINT: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputInteger::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::TIMESTAMP: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputTimestamp::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::BIGINT: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::DECIMAL: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue()});
-        break;
-      }
-      case type::Type::TypeId::VARBINARY: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue(),
-             val.GetLength()});
-        break;
-      }
-      case type::Type::TypeId::VARCHAR: {
-        codegen.CallFunc(
-            ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen),
-            {tuple_buffer_, codegen.Const64(i), val.GetValue(),
-             val.GetLength()});
-        break;
-      }
-      default: {
-        std::string msg =
-            StringUtil::Format("Can't serialize value type '%s' at position %u",
-                               TypeIdToString(val.GetType()).c_str(), i);
-        throw Exception{msg};
-      }
+
+    PL_ASSERT(output_ais_[i]->type == val.GetType());
+    const auto &sql_type = val.GetType().GetSqlType();
+
+    // Check if it's NULL
+    Value null_val;
+    If val_is_null{codegen, val.IsNull(codegen)};
+    {
+      // If the value is NULL (i.e., has the NULL bit set), produce the NULL
+      // value for the given type.
+      null_val = sql_type.GetNullValue(codegen);
     }
+    val_is_null.EndIf();
+    val = val_is_null.BuildPHI(null_val, val);
+
+    // Output the value using the type's output function
+    auto *output_func = sql_type.GetOutputFunction(codegen, val.GetType());
+
+    // Setup the function arguments
+    std::vector<llvm::Value *> args = {tuple_buffer_, codegen.Const64(i),
+                                       val.GetValue()};
+    if (val.GetLength() != nullptr) args.push_back(val.GetLength());
+
+    // Call the function
+    codegen.CallFunc(output_func, args);
   }
 
   // Append the tuple to the output buffer (by calling BufferTuple(...))
-  std::vector<llvm::Value *> args = {GetStateValue(ctx, consumer_state_id_),
-                                     tuple_buffer_,
+  auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
+  std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
   codegen.CallFunc(_BufferTupleProxy::GetFunction(codegen), args);
 }

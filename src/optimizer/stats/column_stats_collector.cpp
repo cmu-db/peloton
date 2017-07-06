@@ -19,7 +19,7 @@ namespace optimizer {
 
 ColumnStatsCollector::ColumnStatsCollector(oid_t database_id, oid_t table_id,
                                            oid_t column_id,
-                                           type::Type::TypeId column_type,
+                                           type::TypeId column_type,
                                            std::string column_name)
     : database_id_{database_id},
       table_id_{table_id},

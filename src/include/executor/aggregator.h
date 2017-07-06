@@ -78,7 +78,7 @@ class SumAggregator : public AbstractAttributeAggregator {
 
   type::Value DFinalize() {
     if (!have_advanced)
-      return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
     return aggregate;
   }
 
@@ -122,7 +122,7 @@ class AvgAggregator : public AbstractAttributeAggregator {
 
   type::Value DFinalize() {
     if (count == 0) {
-      return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+      return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
     }
     type::Value final_result = aggregate.Divide(
         type::ValueFactory::GetDecimalValue(static_cast<double>(count)));
@@ -175,7 +175,7 @@ class CountStarAggregator : public AbstractAttributeAggregator {
 class MaxAggregator : public AbstractAttributeAggregator {
  public:
   MaxAggregator() : have_advanced(false) {
-    aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    aggregate = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
 
   void DAdvance(const type::Value &val) {
@@ -201,7 +201,7 @@ class MaxAggregator : public AbstractAttributeAggregator {
 class MinAggregator : public AbstractAttributeAggregator {
  public:
   MinAggregator() : have_advanced(false) {
-    aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    aggregate = type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
 
   void DAdvance(const type::Value &val) {

@@ -64,7 +64,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column = catalog::Column(
-          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -74,7 +74,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column = catalog::Column(
-          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -84,7 +84,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column = catalog::Column(
-          type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+          type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
@@ -93,7 +93,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(type::Type::VARCHAR,
+      auto column = catalog::Column(type::TypeId::VARCHAR,
                                     25,  // Column length.
                                     "COL_D",
                                     !is_inlined);  // inlined.

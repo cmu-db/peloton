@@ -93,11 +93,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
       (expression::TupleValueExpression*)(*selectStmt->select_list)[0].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
-  EXPECT_EQ(type::Type::TypeId::INTEGER, tupleExpr->GetValueType());
+  EXPECT_EQ(type::TypeId::INTEGER, tupleExpr->GetValueType());
   tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
-  EXPECT_EQ(type::Type::TypeId::VARCHAR, tupleExpr->GetValueType());
+  EXPECT_EQ(type::TypeId::VARCHAR, tupleExpr->GetValueType());
   
 
   // Check join condition

@@ -40,8 +40,8 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
     for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
       const auto column = schema->GetColumn(col_id);
       bool nullable = schema->AllowNull(col_id);
-      attributes_.push_back(
-          AttributeInfo{column.GetType(), nullable, col_id, column.GetName()});
+      auto type = codegen::type::Type{column.GetType(), nullable};
+      attributes_.push_back(AttributeInfo{type, col_id, column.GetName()});
     }
 
     // Perform attribute binding only for actual output columns

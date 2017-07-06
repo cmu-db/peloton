@@ -19,6 +19,11 @@
 namespace peloton {
 namespace codegen {
 
+void ValuesRuntime::OutputBoolean(char *values, uint32_t idx, bool val) {
+  type::Value *vals = reinterpret_cast<type::Value *>(values);
+  vals[idx] = type::ValueFactory::GetBooleanValue(val);
+}
+
 void ValuesRuntime::OutputTinyInt(char *values, uint32_t idx, int8_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetTinyIntValue(val);
@@ -37,6 +42,11 @@ void ValuesRuntime::OutputInteger(char *values, uint32_t idx, int32_t val) {
 void ValuesRuntime::OutputBigInt(char *values, uint32_t idx, int64_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetBigIntValue(val);
+}
+
+void ValuesRuntime::OutputDate(char *values, uint32_t idx, int32_t val) {
+  type::Value *vals = reinterpret_cast<type::Value *>(values);
+  vals[idx] = type::ValueFactory::GetDateValue(val);
 }
 
 void ValuesRuntime::OutputTimestamp(char *values, uint32_t idx, int64_t val) {

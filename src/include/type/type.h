@@ -14,7 +14,9 @@
 
 #include <cstdint>
 #include <string>
-#include "serializeio.h"
+
+#include "type/serializeio.h"
+#include "type/type_id.h"
 
 namespace peloton {
 namespace type {
@@ -27,21 +29,10 @@ enum CmpBool { CMP_FALSE = 0, CMP_TRUE = 1, CMP_NULL = 2 };
 
 class Type {
  public:
-  enum TypeId {
-    INVALID = 0,
-    PARAMETER_OFFSET,
-    BOOLEAN,
-    TINYINT,
-    SMALLINT,
-    INTEGER,
-    BIGINT,
-    DECIMAL,
-    TIMESTAMP,
-    DATE,
-    VARCHAR,
-    VARBINARY,
-    ARRAY,
-    UDT
+  struct TypeIdHasher {
+    size_t operator()(const TypeId &type_id) const {
+      return std::hash<uint32_t>{}(static_cast<uint32_t>(type_id));
+    }
   };
 
   Type(TypeId type_id) : type_id_(type_id) {}
@@ -137,7 +128,7 @@ class Type {
   // Create a copy of this value
   virtual Value Copy(const Value& val) const;
 
-  virtual Value CastAs(const Value& val, const Type::TypeId type_id) const;
+  virtual Value CastAs(const Value& val, const TypeId type_id) const;
 
   // Access the raw variable length data
   virtual const char* GetData(const Value& val) const;

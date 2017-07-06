@@ -219,15 +219,13 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto const_val = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(ExpressionType::OPERATOR_PLUS,
-                                                  type::Type::INTEGER,
+                                                  type::TypeId::INTEGER,
                                                   tuple_value_expr, const_val);
 
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
 
   Target target = std::make_pair(1, attribute);
   target_list.push_back(target);

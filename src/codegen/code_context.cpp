@@ -18,6 +18,9 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
+#if LLVM_VERSION_GE(3,9)
+#include "llvm/Transforms/Scalar/GVN.h"
+#endif
 
 #include "common/logger.h"
 
@@ -56,14 +59,11 @@ CodeContext::CodeContext()
                         .create());
   PL_ASSERT(jit_engine_ != nullptr);
 
-#if LLVM_VERSION_MINOR == 6
+#if LLVM_VERSION_EQ(3,6)
   // LLVM 3.6
   // Set the layout of the module based on what the engine is
   const llvm::DataLayout& data_layout = *jit_engine_->getDataLayout();
   module_->setDataLayout(data_layout);
-#elif LLVM_VERSION_MINOR >= 7
-  // LLVM 3.7
-  // No need to set the data layout in LLVM 3.7+
 #endif
 
   // The set of optimization passes we include
@@ -83,6 +83,26 @@ CodeContext::CodeContext()
   double_type_ = llvm::Type::getDoubleTy(*context_);
   void_type_ = llvm::Type::getVoidTy(*context_);
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
+}
+
+CodeContext::~CodeContext() {
+  // We need this empty constructor because we declared a std::unique_ptr<>
+  // on llvm::ExecutionEngine and llvm::LLVMContext that are forward-declared
+  // in the header file. To make this compile, this destructor needs to exist.
+}
+
+// Return the pointer to the LLVM function in this module given its name
+llvm::Function *CodeContext::GetFunction(const std::string &fn_name) const {
+  return module_->getFunction(fn_name);
+}
+
+// Get a pointer to the JITed function of the given type
+void *CodeContext::GetFunctionPointer(llvm::Function *fn) const {
+  return jit_engine_->getPointerToFunction(fn);
+}
+
+const llvm::DataLayout &CodeContext::GetDataLayout() const {
+  return module_->getDataLayout();
 }
 
 //===----------------------------------------------------------------------===//

@@ -54,8 +54,8 @@ void CreateTable() {
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    auto column = catalog::Column(type::Type::INTEGER,
-                                  type::Type::GetTypeSize(type::Type::INTEGER),
+    auto column = catalog::Column(type::TypeId::INTEGER,
+                                  type::Type::GetTypeSize(type::TypeId::INTEGER),
                                   "" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);

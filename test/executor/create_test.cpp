@@ -36,11 +36,11 @@ TEST_F(CreateTests, CreatingTable) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "dept_id", true);
   auto name_column =
-      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   // Schema
   std::unique_ptr<catalog::Schema> table_schema(

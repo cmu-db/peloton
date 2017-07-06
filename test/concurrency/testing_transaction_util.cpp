@@ -40,12 +40,12 @@ namespace test {
 
 storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
   value_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
@@ -88,12 +88,12 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
 
 storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
 
   // Create the table
@@ -152,10 +152,10 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
     oid_t index_oid, bool need_primary_index) {
   auto id_column =
-      catalog::Column(type::Type::INTEGER,
-                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+      catalog::Column(type::TypeId::INTEGER,
+                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
 
   // Create the table
@@ -211,9 +211,7 @@ TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     type::Value value = (tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    planner::DerivedAttribute attribute;
-    attribute.expr = expression;
-    attribute.attribute_info.type = expression->GetValueType();
+    planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
   }
 
@@ -245,7 +243,7 @@ bool TestingTransactionUtil::ExecuteInsert(
 expression::ComparisonExpression *TestingTransactionUtil::MakePredicate(
     int id) {
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression(
@@ -342,9 +340,7 @@ bool TestingTransactionUtil::ExecuteUpdate(
   DirectMapList direct_map_list;
 
   auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
   target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
@@ -385,9 +381,7 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   DirectMapList direct_map_list;
 
   auto *expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  planner::DerivedAttribute attribute;
-  attribute.expr = expr;
-  attribute.attribute_info.type = expr->GetValueType();
+  planner::DerivedAttribute attribute{expr};
   target_list.emplace_back(1, attribute);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
@@ -401,7 +395,7 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
   // Predicate
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression(
@@ -430,7 +424,7 @@ bool TestingTransactionUtil::ExecuteScan(concurrency::Transaction *transaction,
 
   // Predicate, WHERE `id`>=id1
   auto tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(id));
 

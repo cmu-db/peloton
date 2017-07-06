@@ -33,7 +33,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   context.Prepare(*plan_.GetChild(0), child_pipeline_);
 
   // Prepare all the aggregating expressions
-  auto &aggregates = plan_.GetUniqueAggTerms();
+  const auto &aggregates = plan_.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
       context.Prepare(*agg_term.expression);
@@ -41,14 +41,17 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   }
 
   // Setup the aggregation handler with the terms we use for aggregation
-  aggregation_.Setup(context.GetCodeGen(), aggregates);
+  aggregation_.Setup(context.GetCodeGen(), aggregates, true);
 
   // Create the materialization buffer where we aggregate things
   auto &codegen = GetCodeGen();
-  auto *aggregate_format = aggregation_.GetAggregateStorageFormat();
+  auto *aggregate_storage = aggregation_.GetAggregateStorage().GetStorageType();
+  PL_ASSERT(aggregate_storage->isStructTy());
+
   auto *mat_buffer_type = llvm::StructType::create(
-      codegen.GetContext(), {aggregate_format, codegen.ByteType()},
-      kMatBufferTypeName);
+      codegen.GetContext(),
+      llvm::cast<llvm::StructType>(aggregate_storage)->elements(),
+      kMatBufferTypeName, true);
 
   // Allocate state in the function argument for our materialization buffer
   auto &runtime_state = context.GetRuntimeState();
@@ -60,13 +63,17 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 }
 
 void GlobalGroupByTranslator::Produce() const {
-  // Let the child produce tuples that we aggregate in our materialization
-  // buffer (in Consume())
+  auto &codegen = GetCodeGen();
+
+  // Initialize aggregation for global aggregation
+  auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
+  aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
+
+  // Let the child produce tuples that we'll aggregate
   GetCompilationContext().Produce(*plan_.GetChild(0));
 
   // Deserialize the finalized aggregate attribute values from the buffer
   std::vector<codegen::Value> aggregate_vals;
-  auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
   aggregation_.FinalizeValues(GetCodeGen(), mat_buffer, aggregate_vals);
 
   std::vector<BufferAttributeAccess> buffer_accessors;
@@ -77,8 +84,7 @@ void GlobalGroupByTranslator::Produce() const {
     buffer_accessors.emplace_back(aggregate_vals, i);
   }
 
-  auto &codegen = GetCodeGen();
-
+  // Create a row-batch of one row, place all the attributes into the row
   Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
   RowBatch batch{GetCompilationContext(), codegen.Const32(0),
                  codegen.Const32(1), v, false};
@@ -95,44 +101,19 @@ void GlobalGroupByTranslator::Produce() const {
 
 void GlobalGroupByTranslator::Consume(ConsumerContext &,
                                       RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
-
-  // Get the attributes we'll need to advance the aggregates
-  std::vector<codegen::Value> vals;
-  for (const auto &agg_term : plan_.GetUniqueAggTerms()) {
+  // Get the updates to advance the aggregates
+  auto &aggregates = plan_.GetUniqueAggTerms();
+  std::vector<codegen::Value> vals{aggregates.size()};
+  for (uint32_t i = 0; i < aggregates.size(); i++) {
+    const auto &agg_term = aggregates[i];
     if (agg_term.expression != nullptr) {
-      vals.push_back(row.DeriveValue(codegen, *agg_term.expression));
+      vals[i] = row.DeriveValue(GetCodeGen(), *agg_term.expression);
     }
   }
 
-  auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
-  auto *mat_buffer_type = codegen.LookupTypeByName(kMatBufferTypeName);
-
-  // The buffer itself
-  auto *buf =
-      codegen->CreateConstInBoundsGEP2_32(mat_buffer_type, mat_buffer, 0, 0);
-  // Whether the buffer has been initialized with values
-  auto *initialized =
-      codegen->CreateConstInBoundsGEP2_32(mat_buffer_type, mat_buffer, 0, 1);
-
-  // Check if the buffer has been initialized. If not, create the initial values
-  // and otherwise, advance the aggregates
-  If uninitialized{codegen,
-                   codegen->CreateICmpEQ(codegen.Const8(0),
-                                         codegen->CreateLoad(initialized))};
-  {
-    // Create the initial values in the buffer with the ones provided
-    aggregation_.CreateInitialValues(codegen, buf, vals);
-    // Mark the initialized bit
-    codegen->CreateStore(codegen.Const8(1), initialized);
-  }
-  uninitialized.ElseBlock();
-  {
-    // Just advance each of the aggregates in the buffer with the provided
-    // new values
-    aggregation_.AdvanceValues(GetCodeGen(), mat_buffer, vals);
-  }
-  uninitialized.EndIf();
+  // Just advance each of the aggregates in the buffer with the provided
+  // new values
+  aggregation_.AdvanceValues(GetCodeGen(), LoadStatePtr(mat_buffer_id_), vals);
 }
 
 //===----------------------------------------------------------------------===//

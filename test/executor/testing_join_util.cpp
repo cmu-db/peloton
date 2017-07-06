@@ -31,9 +31,9 @@ expression::AbstractExpression *TestingJoinUtil::CreateJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 1);
 
   predicate = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
@@ -74,9 +74,9 @@ TestingJoinUtil::CreateComplicatedJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 1);
 
   expression::ComparisonExpression *comp_a =
       new expression::ComparisonExpression(
@@ -85,7 +85,7 @@ TestingJoinUtil::CreateComplicatedJoinPredicate() {
   // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(type::Type::DECIMAL, 0, 1);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(50.0));

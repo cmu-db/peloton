@@ -44,7 +44,7 @@ TEST_F(DecimalFunctionsTests, SqrtTest) {
   EXPECT_EQ(expected, result.GetAs<double>());
 
   // NULL CHECK
-  args = {type::ValueFactory::GetNullValueByType(type::Type::DECIMAL)};
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
   result = expression::DecimalFunctions::Sqrt(args);
   EXPECT_TRUE(result.IsNull());
 }

@@ -94,9 +94,8 @@ void UpdateTuple(storage::DataTable *table,
   TargetList target_list;
   DirectMapList direct_map_list;
 
-  planner::DerivedAttribute attribute;
-  attribute.expr = expression::ExpressionUtil::ConstantValueFactory(update_val);
-  attribute.attribute_info.type = attribute.expr->GetValueType();
+  planner::DerivedAttribute attribute{
+      expression::ExpressionUtil::ConstantValueFactory(update_val)};
   target_list.emplace_back(2, attribute);
 
   LOG_TRACE("%u", target_list.at(0).first);
@@ -116,7 +115,7 @@ void UpdateTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 < 70
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(70));
@@ -158,7 +157,7 @@ void DeleteTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(60));
@@ -217,8 +216,7 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  }
-  catch (ConstraintException &ce) {
+  } catch (ConstraintException &ce) {
     LOG_ERROR("%s", ce.what());
   }
 
@@ -302,8 +300,9 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
@@ -401,7 +400,7 @@ TEST_F(MutateTests, UpdateTest) {
 
   // ATTR = 23.5
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(type::Type::DECIMAL, 0, 2);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(23.5));

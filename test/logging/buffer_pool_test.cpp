@@ -125,9 +125,9 @@
 
 //   std::vector<catalog::Column> columns;
 
-//   catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+//   catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                           "A", true);
-//   catalog::Column column2(type::Type::VARCHAR, 1024 * 1024 * 20, "B", false);
+//   catalog::Column column2(type::TypeId::VARCHAR, 1024 * 1024 * 20, "B", false);
 
 //   columns.push_back(column1);
 //   columns.push_back(column2);

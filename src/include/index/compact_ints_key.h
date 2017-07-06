@@ -365,11 +365,11 @@ class CompactIntsKey {
                               const catalog::Schema *key_schema,
                               const storage::Tuple *tuple, size_t offset) {
     // We act depending on the length of integer types
-    type::Type::TypeId column_type =
+    type::TypeId column_type =
         key_schema->GetColumn(key_column_id).GetType();
 
     switch (column_type) {
-      case type::Type::BIGINT: {
+      case type::TypeId::BIGINT: {
         int64_t data = tuple->GetInlinedDataOfType<int64_t>(tuple_column_id);
 
         AddInteger<int64_t>(data, offset);
@@ -377,7 +377,7 @@ class CompactIntsKey {
 
         break;
       }
-      case type::Type::INTEGER: {
+      case type::TypeId::INTEGER: {
         int32_t data = tuple->GetInlinedDataOfType<int32_t>(tuple_column_id);
 
         AddInteger<int32_t>(data, offset);
@@ -385,7 +385,7 @@ class CompactIntsKey {
 
         break;
       }
-      case type::Type::SMALLINT: {
+      case type::TypeId::SMALLINT: {
         int16_t data = tuple->GetInlinedDataOfType<int16_t>(tuple_column_id);
 
         AddInteger<int16_t>(data, offset);
@@ -393,7 +393,7 @@ class CompactIntsKey {
 
         break;
       }
-      case type::Type::TINYINT: {
+      case type::TypeId::TINYINT: {
         int8_t data = tuple->GetInlinedDataOfType<int8_t>(tuple_column_id);
 
         AddInteger<int8_t>(data, offset);
@@ -509,11 +509,11 @@ class CompactIntsKey {
     oid_t column_count = key_schema->GetColumnCount();
 
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
-      type::Type::TypeId column_type =
+      type::TypeId column_type =
           key_schema->GetColumn(column_id).GetType();
 
       switch (column_type) {
-        case type::Type::BIGINT: {
+        case type::TypeId::BIGINT: {
           int64_t data = GetInteger<int64_t>(offset);
 
           tuple.SetValue(column_id, type::ValueFactory::GetBigIntValue(data));
@@ -522,7 +522,7 @@ class CompactIntsKey {
 
           break;
         }
-        case type::Type::INTEGER: {
+        case type::TypeId::INTEGER: {
           int32_t data = GetInteger<int32_t>(offset);
 
           tuple.SetValue(column_id, type::ValueFactory::GetIntegerValue(data));
@@ -531,7 +531,7 @@ class CompactIntsKey {
 
           break;
         }
-        case type::Type::SMALLINT: {
+        case type::TypeId::SMALLINT: {
           int16_t data = GetInteger<int16_t>(offset);
 
           tuple.SetValue(column_id, type::ValueFactory::GetSmallIntValue(data));
@@ -540,7 +540,7 @@ class CompactIntsKey {
 
           break;
         }
-        case type::Type::TINYINT: {
+        case type::TypeId::TINYINT: {
           int8_t data = GetInteger<int8_t>(offset);
 
           tuple.SetValue(column_id, type::ValueFactory::GetTinyIntValue(data));

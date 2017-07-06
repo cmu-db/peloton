@@ -14,6 +14,9 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#include "codegen/value.h"
+#include "codegen/type/boolean_type.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -21,7 +24,7 @@ namespace codegen {
 // Constructor. We create two BB's, one "then" BB that appears right after the
 // conditional branch
 //===----------------------------------------------------------------------===//
-If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
+If::If(CodeGen &cg, llvm::Value *if_condition, const std::string &name)
     : cg_(cg),
       fn_(cg_->GetInsertBlock()->getParent()),
       last_bb_in_then_(nullptr),
@@ -34,6 +37,9 @@ If::If(CodeGen &cg, llvm::Value *if_condition, std::string name)
   branch_ = cg_->CreateCondBr(if_condition, then_bb_, merge_bb_);
   cg_->SetInsertPoint(then_bb_);
 }
+
+If::If(CodeGen &cg, const Value &if_condition, const std::string &name)
+    : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
 void If::EndIf(llvm::BasicBlock *end_bb) {
   if (end_bb != nullptr) {
@@ -58,7 +64,7 @@ void If::EndIf(llvm::BasicBlock *end_bb) {
   cg_->SetInsertPoint(merge_bb_);
 }
 
-void If::ElseBlock(std::string name) {
+void If::ElseBlock(const std::string &name) {
   // Create an unconditional branch from where we are (from the 'then' branch)
   // to the merging block
   cg_->CreateBr(merge_bb_);
@@ -78,17 +84,17 @@ void If::ElseBlock(std::string name) {
   cg_->SetInsertPoint(else_bb_);
 }
 
-codegen::Value If::BuildPHI(codegen::Value v1, codegen::Value v2) {
+Value If::BuildPHI(const Value &v1, const Value &v2) {
   if (cg_->GetInsertBlock() != merge_bb_) {
     // The if hasn't been ended, end it now
     EndIf();
   }
   PL_ASSERT(v1.GetType() == v2.GetType());
-  std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> vals = {
+  std::vector<std::pair<Value, llvm::BasicBlock *>> vals = {
       {v1, last_bb_in_then_},
       {v2,
        last_bb_in_else_ != nullptr ? last_bb_in_else_ : branch_->getParent()}};
-  return codegen::Value::BuildPHI(cg_, vals);
+  return Value::BuildPHI(cg_, vals);
 }
 
 llvm::Value *If::BuildPHI(llvm::Value *v1, llvm::Value *v2) {

@@ -26,10 +26,10 @@ namespace expression {
 
 class OperatorExpression : public AbstractExpression {
  public:
-  OperatorExpression(ExpressionType type, type::Type::TypeId type_id)
+  OperatorExpression(ExpressionType type, type::TypeId type_id)
       : AbstractExpression(type, type_id) {}
 
-  OperatorExpression(ExpressionType type, type::Type::TypeId type_id,
+  OperatorExpression(ExpressionType type, type::TypeId type_id,
                      AbstractExpression *left, AbstractExpression *right)
       : AbstractExpression(type, type_id, left, right) {}
 
@@ -73,12 +73,12 @@ class OperatorExpression : public AbstractExpression {
     // children
     // This relies on a particular order in types.h
     if (exp_type_ == ExpressionType::OPERATOR_NOT) {
-      return_value_type_ = type::Type::BOOLEAN;
+      return_value_type_ = type::TypeId::BOOLEAN;
       return;
     }
       auto type =
         std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
-    PL_ASSERT(type <= type::Type::DECIMAL);
+    PL_ASSERT(type <= type::TypeId::DECIMAL);
     return_value_type_ = type;
   }
 

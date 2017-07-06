@@ -37,16 +37,12 @@ class AggregatePlan : public AbstractPlan {
     AttributeInfo agg_ai;
 
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
-            bool distinct = false)
-        : aggtype(et), expression(expr), distinct(distinct) {}
+            bool distinct = false);
 
-    type::Type::TypeId GetValueType() const { return agg_ai.type; }
+    // Bindings
+    void PerformBinding(BindingContext &binding_context);
 
-    bool IsNullable() const { return agg_ai.nullable; }
-
-    AggTerm Copy() const {
-      return AggTerm(aggtype, expression->Copy(), distinct);
-    }
+    AggTerm Copy() const;
   };
 
   AggregatePlan(
@@ -75,6 +71,8 @@ class AggregatePlan : public AbstractPlan {
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
+
+  bool IsGlobal() const { return GetGroupbyColIds().empty(); }
 
   const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;

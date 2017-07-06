@@ -40,7 +40,7 @@ class GenericKey {
 
   inline type::Value ToValue(const catalog::Schema *schema,
                              int column_id) const {
-    const type::Type::TypeId column_type = schema->GetType(column_id);
+    const type::TypeId column_type = schema->GetType(column_id);
     const char *data_ptr = &data[schema->GetOffset(column_id)];
     const bool is_inlined = schema->IsInlined(column_id);
     return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);

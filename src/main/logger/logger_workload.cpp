@@ -95,7 +95,7 @@
 // void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
 //   auto& log_manager = logging::LogManager::GetInstance();
 
-//   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
+//   if (peloton_checkpoint_mode != CheckpointTypeId::INVALID) {
 //     auto& checkpoint_manager =
 //         peloton::logging::CheckpointManager::GetInstance();
 
@@ -121,7 +121,7 @@
 //     }
 
 //     // start checkpointing mode after recovery
-//     if (peloton_checkpoint_mode != CheckpointType::INVALID) {
+//     if (peloton_checkpoint_mode != CheckpointTypeId::INVALID) {
 //       if (!checkpoint_manager.IsInCheckpointingMode()) {
 //         // Now, enter CHECKPOINTING mode
 //         checkpoint_manager.SetCheckpointStatus(
@@ -130,7 +130,7 @@
 //     }
 //   }
 
-//   if (peloton_logging_mode != LoggingType::INVALID) {
+//   if (peloton_logging_mode != LoggingTypeId::INVALID) {
 //     // Launching a thread for logging
 //     if (!log_manager.IsInLoggingMode()) {
 //       // Wait for standby mode
@@ -286,7 +286,7 @@
 
 //     case ASYNCHRONOUS_TYPE_DISABLED:
 //       // No logging
-//       peloton_logging_mode = LoggingType::INVALID;
+//       peloton_logging_mode = LoggingTypeId::INVALID;
 //       break;
 //     case ASYNCHRONOUS_TYPE_NO_WRITE:
 //       log_manager.SetNoWrite(true);
@@ -307,14 +307,14 @@
 //   BuildLog();
 
 //   // Stop frontend logger if in a valid logging mode
-//   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
+//   if (peloton_checkpoint_mode != CheckpointTypeId::INVALID) {
 //     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
 //     checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
 //     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
 //     checkpoint_thread.join();
 //   }
 //   // Stop frontend logger if in a valid logging mode
-//   if (peloton_logging_mode != LoggingType::INVALID) {
+//   if (peloton_logging_mode != LoggingTypeId::INVALID) {
 //     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
 //     if (log_manager.EndLogging()) {
 //       logging_thread.join();
@@ -371,7 +371,7 @@
 //   timer.Stop();
 
 //   // Synchronize and finish recovery
-//   if (peloton_logging_mode != LoggingType::INVALID) {
+//   if (peloton_logging_mode != LoggingTypeId::INVALID) {
 //     if (log_manager.EndLogging()) {
 //       thread.join();
 //     } else {
@@ -380,7 +380,7 @@
 //   }
 //   auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
 //   // Synchronize and finish recovery
-//   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
+//   if (peloton_checkpoint_mode != CheckpointTypeId::INVALID) {
 //     checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
 //     checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
 //     cp_thread.join();

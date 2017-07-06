@@ -73,7 +73,7 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       // An aggregation without any grouping clause is simpler to handle. All
       // other aggregations are handled using a hash-group-by for now.
       // TODO: Implement other (non hash) group-by algorithms
-      if (aggregate_plan.GetGroupbyColIds().size() == 0) {
+      if (aggregate_plan.IsGlobal()) {
         translator =
             new GlobalGroupByTranslator(aggregate_plan, context, pipeline);
       } else {

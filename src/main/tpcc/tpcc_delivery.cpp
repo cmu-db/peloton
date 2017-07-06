@@ -353,10 +353,8 @@ bool RunDelivery(const size_t &thread_id){
     }
     type::Value orders_update_val = type::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
 
-    planner::DerivedAttribute carrier_id;
-    carrier_id.expr =
-        expression::ExpressionUtil::ConstantValueFactory(orders_update_val);
-    carrier_id.attribute_info.type = carrier_id.expr->GetValueType();
+    planner::DerivedAttribute carrier_id{
+        expression::ExpressionUtil::ConstantValueFactory(orders_update_val)};
     orders_target_list.emplace_back(COL_IDX_O_CARRIER_ID, carrier_id);
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
@@ -412,10 +410,7 @@ bool RunDelivery(const size_t &thread_id){
     }
     type::Value order_line_update_val = type::ValueFactory::GetTimestampValue(0).Copy();
 
-    planner::DerivedAttribute delivery_id;
-    delivery_id.expr =
-        expression::ExpressionUtil::ConstantValueFactory(order_line_update_val);
-    delivery_id.attribute_info.type = delivery_id.expr->GetValueType();
+    planner::DerivedAttribute delivery_id{expression::ExpressionUtil::ConstantValueFactory(order_line_update_val)};
     order_line_target_list.emplace_back(COL_IDX_OL_DELIVERY_D, delivery_id);
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
@@ -478,17 +473,15 @@ bool RunDelivery(const size_t &thread_id){
     // Expressions
     // Tuple value expression
     auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::Type::INTEGER, 0, COL_IDX_C_BALANCE);
+      type::TypeId::INTEGER, 0, COL_IDX_C_BALANCE);
     // Constant value expression
     auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      ExpressionType::OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
+      ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, tuple_val_expr, constant_val_expr);
 
-    planner::DerivedAttribute c_balance;
-    c_balance.expr = plus_operator_expr;
-    c_balance.attribute_info.type = c_balance.expr->GetValueType();
+    planner::DerivedAttribute c_balance{plus_operator_expr};
     customer_target_list.emplace_back(COL_IDX_C_BALANCE, c_balance);
 
 

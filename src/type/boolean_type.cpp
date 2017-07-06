@@ -21,13 +21,13 @@ namespace type {
 #define BOOLEAN_COMPARE_FUNC(OP) \
   GetCmpBool(left.value_.boolean \
              OP \
-             right.CastAs(Type::BOOLEAN).value_.boolean)
+             right.CastAs(TypeId::BOOLEAN).value_.boolean)
 
-BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
+BooleanType::BooleanType() : Type(TypeId::BOOLEAN) {}
 
 CmpBool BooleanType::CompareEquals(const Value& left,
                                    const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(==);
@@ -35,7 +35,7 @@ CmpBool BooleanType::CompareEquals(const Value& left,
 
 CmpBool BooleanType::CompareNotEquals(const Value& left,
                                       const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(!=);
@@ -43,7 +43,7 @@ CmpBool BooleanType::CompareNotEquals(const Value& left,
 
 CmpBool BooleanType::CompareLessThan(const Value& left,
                                      const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(<);
@@ -51,7 +51,7 @@ CmpBool BooleanType::CompareLessThan(const Value& left,
 
 CmpBool BooleanType::CompareLessThanEquals(const Value& left,
                                            const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(<=);
@@ -59,7 +59,7 @@ CmpBool BooleanType::CompareLessThanEquals(const Value& left,
 
 CmpBool BooleanType::CompareGreaterThan(const Value& left,
                                         const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(>);
@@ -67,7 +67,7 @@ CmpBool BooleanType::CompareGreaterThan(const Value& left,
 
 CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
                                               const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
   return BOOLEAN_COMPARE_FUNC(>=);
@@ -115,11 +115,11 @@ Value BooleanType::Copy(const Value& val) const {
   return Value(type_id_, val.value_.boolean);
 }
 
-Value BooleanType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value BooleanType::CastAs(const Value& val, const TypeId type_id) const {
   switch (type_id) {
-    case Type::BOOLEAN:
+    case TypeId::BOOLEAN:
       return val.Copy();
-    case Type::VARCHAR:
+    case TypeId::VARCHAR:
       if (val.IsNull()) return ValueFactory::GetVarcharValue(nullptr, 0);
       return ValueFactory::GetVarcharValue(val.ToString());
     default:

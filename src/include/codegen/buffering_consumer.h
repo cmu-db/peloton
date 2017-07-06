@@ -31,10 +31,10 @@ namespace codegen {
 // A wrapped class for output tuples
 //===----------------------------------------------------------------------===//
 class WrappedTuple
-    : public expression::ContainerTuple<std::vector<type::Value>> {
+    : public expression::ContainerTuple<std::vector<peloton::type::Value>> {
  public:
   // Basic Constructor
-  WrappedTuple(type::Value *vals, uint32_t num_vals);
+  WrappedTuple(peloton::type::Value *vals, uint32_t num_vals);
 
   // Copy Constructor
   WrappedTuple(const WrappedTuple &o);
@@ -43,7 +43,7 @@ class WrappedTuple
   WrappedTuple &operator=(const WrappedTuple &o);
 
   // The tuple
-  std::vector<type::Value> tuple_;
+  std::vector<peloton::type::Value> tuple_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -76,7 +76,8 @@ class BufferingConsumer : public QueryResultConsumer {
   };
 
   // Called from compiled query code to buffer the tuple
-  static void BufferTuple(char *state, type::Value *vals, uint32_t num_vals);
+  static void BufferTuple(char *state, peloton::type::Value *vals,
+                          uint32_t num_vals);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

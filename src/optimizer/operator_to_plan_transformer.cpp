@@ -167,9 +167,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       // For more complex expression, we need to do evaluation in Executor
       expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                      expr.get());
-      planner::DerivedAttribute attribute;
-      attribute.expr = expr->Copy();
-      attribute.attribute_info.type = attribute.expr->GetValueType();
+      planner::DerivedAttribute attribute{expr->Copy()};
       tl.emplace_back(curr_col_offset, attribute);
     }
     (*output_expr_map_)[expr] = curr_col_offset++;
@@ -389,9 +387,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
     update_col_ids.insert(col_id);
     expression::ExpressionUtil::EvaluateExpression({table_expr_map},
                                                    update->value.get());
-    planner::DerivedAttribute attribute;
-    attribute.expr = update->value->Copy();
-    attribute.attribute_info.type = attribute.expr->GetValueType();
+    planner::DerivedAttribute attribute{update->value->Copy()};
+
     tl.emplace_back(col_id, attribute);
   }
 
@@ -516,9 +513,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
       dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
     } else {
       // For other exprs such as OperatorExpr, use target list
-      planner::DerivedAttribute attribute;
-      attribute.expr = expr->Copy();
-      attribute.attribute_info.type = attribute.expr->GetValueType();
+      planner::DerivedAttribute attribute{expr->Copy()};
       tl.emplace_back(col_pos, attribute);
     }
 
@@ -607,9 +602,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     } else {
       // For more complex expression, we need to do evaluation in Executor
 
-      planner::DerivedAttribute attribute;
-      attribute.expr = expr->Copy();
-      attribute.attribute_info.type = attribute.expr->GetValueType();
+      planner::DerivedAttribute attribute{expr->Copy()};
       tl.emplace_back(output_offset, attribute);
     }
     (*output_expr_map_)[expr] = output_offset;

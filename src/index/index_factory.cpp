@@ -38,8 +38,8 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   bool ints_only = true;
   for (auto column : metadata->key_schema->GetColumns()) {
     auto col_type = column.GetType();
-    if (col_type != type::Type::TINYINT && col_type != type::Type::SMALLINT &&
-        col_type != type::Type::INTEGER && col_type != type::Type::BIGINT) {
+    if (col_type != type::TypeId::TINYINT && col_type != type::TypeId::SMALLINT &&
+        col_type != type::TypeId::INTEGER && col_type != type::TypeId::BIGINT) {
       ints_only = false;
       break;
     }

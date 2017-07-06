@@ -77,21 +77,21 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {}
 
-  static type::Type::TypeId GetValueType(DataType type) {
+  static type::TypeId GetValueType(DataType type) {
     switch (type) {
       case INT:
       case INTEGER:
-        return type::Type::INTEGER;
+        return type::TypeId::INTEGER;
         break;
 
       case TINYINT:
-        return type::Type::TINYINT;
+        return type::TypeId::TINYINT;
         break;
       case SMALLINT:
-        return type::Type::SMALLINT;
+        return type::TypeId::SMALLINT;
         break;
       case BIGINT:
-        return type::Type::BIGINT;
+        return type::TypeId::BIGINT;
         break;
 
       // case DOUBLE:
@@ -102,11 +102,11 @@ struct ColumnDefinition {
       case DECIMAL:
       case DOUBLE:
       case FLOAT:
-        return type::Type::DECIMAL;
+        return type::TypeId::DECIMAL;
         break;
 
       case BOOLEAN:
-        return type::Type::BOOLEAN;
+        return type::TypeId::BOOLEAN;
         break;
 
       // case ADDRESS:
@@ -114,24 +114,24 @@ struct ColumnDefinition {
       //  break;
 
       case TIMESTAMP:
-        return type::Type::TIMESTAMP;
+        return type::TypeId::TIMESTAMP;
         break;
 
       case CHAR:
       case TEXT:
       case VARCHAR:
-        return type::Type::VARCHAR;
+        return type::TypeId::VARCHAR;
         break;
 
       case VARBINARY:
-        return type::Type::VARBINARY;
+        return type::TypeId::VARBINARY;
         break;
 
       case INVALID:
       case PRIMARY:
       case FOREIGN:
       default:
-        return type::Type::INVALID;
+        return type::TypeId::INVALID;
         break;
     }
   }

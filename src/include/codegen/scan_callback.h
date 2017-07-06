@@ -26,10 +26,10 @@ namespace codegen {
 // ProcessTuples() will be called to allow the client to handle processing of
 // all tuples in the provided range of TIDs.
 //===----------------------------------------------------------------------===//
-class ScanConsumer {
+class ScanCallback {
  public:
   // Virtual destructor
-  virtual ~ScanConsumer() {}
+  virtual ~ScanCallback() {}
 
   // Callback for when iteration begins over a new tile group. The second
   // parameter is a pointer to the tile group.

@@ -19,6 +19,9 @@ namespace codegen {
 
 class ValuesRuntime {
  public:
+  // Write out the given boolean value into the array at the provided index
+  static void OutputBoolean(char *values, uint32_t idx, bool val);
+
   // Write out the given tinyint value into the array at the provided index
   static void OutputTinyInt(char *values, uint32_t idx, int8_t val);
 
@@ -30,6 +33,9 @@ class ValuesRuntime {
 
   // Write out the given bigint value into the array at the provided index
   static void OutputBigInt(char *values, uint32_t idx, int64_t val);
+
+  // Write out the given date value into the array at the provided index
+  static void OutputDate(char *values, uint32_t idx, int32_t val);
 
   // Write out the given timestamp value into the array at the provided index
   static void OutputTimestamp(char *values, uint32_t idx, int64_t val);
