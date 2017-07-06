@@ -17,6 +17,8 @@
 #include <string>
 
 #include "expression/abstract_expression.h"
+#include "planner/abstract_plan.h"
+#include "parser/copy_statement.h"
 
 namespace peloton {
 
@@ -86,6 +88,9 @@ bool ContainsJoinColumns(
     const std::unordered_set<std::string>& l_group_alias,
     const std::unordered_set<std::string>& r_group_alias,
     const expression::AbstractExpression* expr);
+
+
+std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(parser::CopyStatement* copy_stmt);
 
 
 } /* namespace util */
