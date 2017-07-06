@@ -18,7 +18,8 @@
 #include "common/statement.h"
 #include "executor/copy_executor.h"
 #include "executor/seq_scan_executor.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
 #include "tcop/tcop.h"
@@ -42,7 +43,7 @@ TEST_F(CopyTests, Copying) {
   catalog->CreateDatabase("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
