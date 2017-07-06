@@ -50,9 +50,12 @@ void InsertTranslator::InitializeState() {
       {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
  
+  llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
+
   // Initialize the inserter with txn and table
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
-  std::vector<llvm::Value *> args = {inserter, txn_ptr, table_ptr};
+  std::vector<llvm::Value *> args = {inserter, txn_ptr, table_ptr,
+                                     executor_ptr};
   codegen.CallFunc(InserterProxy::_Init::GetFunction(codegen), args);
 }
 
@@ -82,12 +85,6 @@ void InsertTranslator::Produce() const {
       // Perform insert tuples set in the inserter
       auto *insert_func = InserterProxy::_Insert::GetFunction(codegen);
       codegen.CallFunc(insert_func, {inserter, tuple_ptr});
-    
-      // Post-process: Increase counter for the number of tuples processed
-      auto *processed_func =
-          TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen);
-      codegen.CallFunc(processed_func,
-          {GetCompilationContext().GetExecutorContextPtr()});
     }
   }
 }
@@ -108,12 +105,6 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   // Insert the materialized tuple, which has been created in the inserter
   auto *insert_func = InserterProxy::_InsertTuple::GetFunction(codegen);
   codegen.CallFunc(insert_func, {inserter});
-
-  // Post-process: Increase counter for the number of tuples processed
-  auto *processed_func = 
-      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen);
-  codegen.CallFunc(processed_func, 
-      {GetCompilationContext().GetExecutorContextPtr()});
 }
 
 void InsertTranslator::TearDownState() {

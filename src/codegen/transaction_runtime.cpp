@@ -63,21 +63,6 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-/**
-* @brief Delete executor.
-*
-* This function will be called from the JITed code to perform delete on the
-* specified tuple.
-* This logic is extracted from executor::delete_executor, and refactorized.
-*
-* @param tile_group_id the offset of the tile in the table where the tuple
-*        resides
-* @param tuple_id the tuple id of the tuple in current tile
-* @param txn the transaction executing this delete operation
-* @param table the table containing the tuple to be deleted
-*
-* @return true on success, false otherwise.
-*/
 bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
                                        storage::DataTable &table,
                                        uint32_t tile_group_id,
