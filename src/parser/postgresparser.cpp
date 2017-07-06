@@ -222,8 +222,7 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
     LOG_TRACE("size is : %d", target_list->length);
     //print_pg_parse_tree(target_list);
     if (IsTargetListWithVariable(target_list)) {
-      throw ParserException(
-          StringUtil::Format("Error parsing SQL statement"));
+      throw ParserException("Error parsing SQL statement");
     }
     return nullptr;
   }
@@ -542,11 +541,10 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 // It checks the type of each target and call the corresponding helpers.
 std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
     List* root) {
-  /* Statement like 'SELECT;' cannot detect by postgres parser and would lead to
-   * null list*/
+  // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
+  // null list
   if (root == nullptr) {
-      throw ParserException(
-          StringUtil::Format("Error parsing SQL statement"));
+      throw ParserException("Error parsing SQL statement");
   }
 
   std::vector<expression::AbstractExpression*>* result =
