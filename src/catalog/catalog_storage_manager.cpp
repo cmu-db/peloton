@@ -106,10 +106,14 @@ bool CatalogStorageManager::HasDatabase(oid_t db_oid) const {
   return (false);
 }
 
+void CatalogStorageManager::DestroyDatabases() {
+    LOG_TRACE("Deleting databases");
+    for (auto database : databases_) delete database;
+    LOG_TRACE("Finish deleting database");
+}
+
 CatalogStorageManager::~CatalogStorageManager() {
-  LOG_TRACE("Deleting databases");
-  for (auto database : databases_) delete database;
-  LOG_TRACE("Finish deleting database");
+
 }
 }
 }
