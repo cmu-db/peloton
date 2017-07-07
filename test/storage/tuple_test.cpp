@@ -137,7 +137,7 @@ TEST_F(TupleTests, VarcharTest) {
   try {
     tuple->SetValue(3, val3, pool);
   }
-  catch (peloton::ValueOutOfRangeException e) {}
+  catch (peloton::IncompatibleTypeException e) {}
   value3 = (tuple->GetValue(3));
   cmp = type::ValueFactory::GetBooleanValue((value3.CompareNotEquals(val3)));
   EXPECT_TRUE(cmp.IsTrue());
