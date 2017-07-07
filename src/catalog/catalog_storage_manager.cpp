@@ -12,20 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "catalog/catalog_storage_manager.h"
 
-#include <iostream>
-
-#include "catalog/database_metrics_catalog.h"
-#include "catalog/manager.h"
-#include "catalog/query_metrics_catalog.h"
-#include "catalog/table_metrics_catalog.h"
-#include "catalog/index_metrics_catalog.h"
-#include "common/exception.h"
-#include "common/macros.h"
-#include "expression/date_functions.h"
-#include "expression/string_functions.h"
-#include "expression/decimal_functions.h"
-#include "index/index_factory.h"
-#include "util/string_util.h"
 
 namespace peloton {
 namespace catalog {
