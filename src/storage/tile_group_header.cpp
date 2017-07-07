@@ -22,7 +22,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager.h"
 #include "logging/log_manager.h"
-#include "storage/storage_manager.h"
+#include "storage/backend_manager.h"
 #include "storage/tile_group_header.h"
 
 namespace peloton {
@@ -41,7 +41,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   // allocate storage space for header
   // auto &storage_manager = storage::StorageManager::GetInstance();
   // data = reinterpret_cast<char *>(
-      // storage_manager.Allocate(backend_type, header_size));
+  // storage_manager.Allocate(backend_type, header_size));
   data = new char[header_size];
   PL_ASSERT(data != nullptr);
 

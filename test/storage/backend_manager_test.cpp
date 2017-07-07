@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// storage_manager_test.cpp
+// backend_manager_test.cpp
 //
-// Identification: test/storage/storage_manager_test.cpp
+// Identification: test/storage/backend_manager_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #include "common/harness.h"
 
-#include "storage/storage_manager.h"
+#include "storage/backend_manager.h"
 
 namespace peloton {
 namespace test {
@@ -28,7 +28,7 @@ class StorageManagerTests : public PelotonTest {};
  *
  */
 TEST_F(StorageManagerTests, BasicTest) {
-  peloton::storage::StorageManager storage_manager;
+  peloton::storage::BackendManager backend_manager;
 
   std::vector<BackendType> backend_types = {BackendType::MM};
 
@@ -40,16 +40,16 @@ TEST_F(StorageManagerTests, BasicTest) {
 
     for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
       // Allocate
-      auto location = storage_manager.Allocate(backend_type, length);
+      auto location = backend_manager.Allocate(backend_type, length);
 
       // Fill it up
       PL_MEMSET(location, '-', length);
 
       // Sync
-      storage_manager.Sync(backend_type, location, length);
+      backend_manager.Sync(backend_type, location, length);
 
       // Release
-      storage_manager.Release(backend_type, location);
+      backend_manager.Release(backend_type, location);
     }
   }
 }

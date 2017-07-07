@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// storage_manager.h
+// backend_manager.h
 //
-// Identification: src/include/storage/storage_manager.h
+// Identification: src/include/storage/backend_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -36,13 +36,13 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 /// Stores data on different backends
-class StorageManager {
+class BackendManager {
  public:
   // global singleton
-  static StorageManager &GetInstance(void);
+  static BackendManager &GetInstance(void);
 
-  StorageManager();
-  ~StorageManager();
+  BackendManager();
+  ~BackendManager();
 
   void *Allocate(BackendType type, size_t size);
 
