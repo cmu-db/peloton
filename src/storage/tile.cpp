@@ -20,7 +20,7 @@
 #include "type/types.h"
 #include "type/ephemeral_pool.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "storage/storage_manager.h"
+#include "storage/backend_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
@@ -55,7 +55,7 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   // allocate tuple storage space for inlined data
   // auto &storage_manager = storage::StorageManager::GetInstance();
   // data = reinterpret_cast<char *>(
-      // storage_manager.Allocate(backend_type, tile_size));
+  // storage_manager.Allocate(backend_type, tile_size));
 
   data = new char[tile_size];
   PL_ASSERT(data != NULL);
@@ -120,8 +120,7 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
-  return type::Value::DeserializeFrom(field_location, column_type,
-                                        is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
 }
 
 /*
@@ -130,17 +129,16 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
  */
 // column offset is the actual offset of the column within the tuple slot
 type::Value Tile::GetValueFast(const oid_t tuple_offset,
-                                 const size_t column_offset,
-                                 const type::TypeId column_type,
-                                 const bool is_inlined) {
+                               const size_t column_offset,
+                               const type::TypeId column_type,
+                               const bool is_inlined) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_offset < schema.GetLength());
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
-  return type::Value::DeserializeFrom(field_location, column_type,
-                                        is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
 }
 
 /**
@@ -168,7 +166,6 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
     casted_value.SerializeTo(field_location, is_inlined, pool);
   }
 }
-
 
 /*
  * Faster way to set value
@@ -215,8 +212,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
            tuple_itr++) {
-        type::Value val =
-            (new_tile->GetValue(tuple_itr, uninlined_col_offset));
+        type::Value val = (new_tile->GetValue(tuple_itr, uninlined_col_offset));
         new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
     }

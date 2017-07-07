@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// storage_manager.cpp
+// backend_manager.cpp
 //
-// Identification: src/storage/storage_manager.cpp
+// Identification: src/storage/backend_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@
 #include "common/macros.h"
 #include "type/types.h"
 // #include "logging/logging_util.h"
-#include "storage/storage_manager.h"
+#include "storage/backend_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -225,13 +225,12 @@ static void predrain_fence_empty(void) {
 //   _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
 // }
 
-
 //  * pmem_drain() calls through Func_predrain_fence to do the fence.  Although
 //  * initialized to predrain_fence_empty(), once the existence of the CLWB or
 //  * CLFLUSHOPT feature is confirmed by pmem_init() at library initialization
 //  * time, Func_predrain_fence is set to predrain_fence_sfence().  That's the
 //  * most common case on modern hardware that supports persistent memory.
- 
+
 static void (*Func_predrain_fence)(void) = predrain_fence_empty;
 
 // //===--------------------------------------------------------------------===//
@@ -267,7 +266,8 @@ static void drain_no_pcommit(void) {
 //   // Special case
 //   if (lat == 0) return;
 
-//   unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ / 1000);
+//   unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ /
+//   1000);
 //   while (read_tsc() < etsc) {
 //     cpu_pause();
 //   }
@@ -306,15 +306,16 @@ static void (*Func_drain)(void) = drain_no_pcommit;
 #define DATA_FILE_NAME "peloton.pmem"
 
 // global singleton
-StorageManager &StorageManager::GetInstance(void) {
-  static StorageManager storage_manager;
-  return storage_manager;
+BackendManager &BackendManager::GetInstance(void) {
+  static BackendManager backend_manager;
+  return backend_manager;
 }
 
-StorageManager::StorageManager()
+BackendManager::BackendManager()
     : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // // Check if we need a data pool
-  // if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
+  // if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)
+  // ==
   //         true ||
   //     peloton_logging_mode == LoggingType::INVALID) {
   //   return;
@@ -420,7 +421,7 @@ StorageManager::StorageManager()
   // close(data_fd);
 }
 
-StorageManager::~StorageManager() {
+BackendManager::~BackendManager() {
   LOG_TRACE("Allocation count : %ld \n", allocation_count);
 
   // // Check if we need a PMEM pool
@@ -442,7 +443,7 @@ StorageManager::~StorageManager() {
   // }
 }
 
-void *StorageManager::Allocate(BackendType type, size_t size) {
+void *BackendManager::Allocate(BackendType type, size_t size) {
   // Update allocation count
   allocation_count++;
 
@@ -492,7 +493,7 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
   }
 }
 
-void StorageManager::Release(BackendType type, void *address) {
+void BackendManager::Release(BackendType type, void *address) {
   switch (type) {
     case BackendType::MM:
     case BackendType::NVM: {
@@ -512,7 +513,7 @@ void StorageManager::Release(BackendType type, void *address) {
   }
 }
 
-void StorageManager::Sync(BackendType type, void *address, size_t length) {
+void BackendManager::Sync(BackendType type, void *address, size_t length) {
   switch (type) {
     case BackendType::MM: {
       // Nothing to do here
