@@ -17,17 +17,7 @@ namespace peloton {
 namespace parser {
 
 TableRef::~TableRef() {
-  delete table_info_;
-  delete[] alias;
-  delete[] schema;
-
   delete select;
-  delete join;
-
-  if (list) {
-    for (auto ref : (*list)) delete ref;
-    delete list;
-  }
 }
 
 }  // namespace parser

@@ -109,8 +109,12 @@ class PostgresParser {
   static parser::TableRef* FromTransform(SelectStmt* root);
 
   // transform helper for select targets
+<<<<<<< 7be6c98f362bf21ebf5a8d651c96d4d05a2e1032
   static std::vector<expression::AbstractExpression*>* TargetTransform(
       List* root);
+=======
+  static std::vector<std::unique_ptr<expression::AbstractExpression>>* TargetTransform(List* root);
+>>>>>>> merge the latest code
 
   // transform helper for all expr nodes
   static expression::AbstractExpression* ExprTransform(Node* root);
@@ -167,11 +171,16 @@ class PostgresParser {
   static parser::SQLStatement* CreateDbTransform(CreatedbStmt* root);
 
   // transform helper for column name (for insert statement)
-  static std::vector<char*>* ColumnNameTransform(List* root);
+  static std::vector<std::unique_ptr<char[]>>* ColumnNameTransform(List* root);
 
   // transform helper for ListsTransform (insert multiple rows)
+<<<<<<< 7be6c98f362bf21ebf5a8d651c96d4d05a2e1032
   static std::vector<std::vector<expression::AbstractExpression*>*>*
   ValueListsTransform(List* root);
+=======
+  static std::vector<std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>>>*
+      ValueListsTransform(List* root);
+>>>>>>> merge the latest code
 
   // transform helper for insert statements
   static parser::SQLStatement* InsertTransform(InsertStmt* root);
@@ -192,7 +201,7 @@ class PostgresParser {
   static parser::UpdateStatement* UpdateTransform(UpdateStmt* update_stmt);
 
   // transform helper for update statement
-  static std::vector<parser::UpdateClause*>* UpdateTargetTransform(List* root);
+  static std::vector<std::unique_ptr<parser::UpdateClause>>* UpdateTargetTransform(List* root);
 
   // transform helper for drop statement
   static parser::DropStatement* DropTransform(DropStmt* root);
@@ -216,8 +225,12 @@ class PostgresParser {
   // transform helper for constant values
   static expression::AbstractExpression* ValueTransform(value val);
 
+<<<<<<< 7be6c98f362bf21ebf5a8d651c96d4d05a2e1032
   static std::vector<expression::AbstractExpression*>* ParamListTransform(
       List* root);
+=======
+  static std::vector<std::unique_ptr<expression::AbstractExpression>>* ParamListTransform(List* root);
+>>>>>>> merge the latest code
 
   // transform helper for execute statement
   static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);

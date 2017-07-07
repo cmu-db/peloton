@@ -63,33 +63,7 @@ struct ColumnDefinition {
       varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  virtual ~ColumnDefinition() {
-    if (primary_key) {
-      for (auto key : *primary_key) delete[](key);
-      delete primary_key;
-    }
-
-    if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[](key);
-      delete foreign_key_source;
-    }
-    if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[](key);
-      delete foreign_key_sink;
-    }
-    if (multi_unique_cols) {
-      for (auto key : *multi_unique_cols) delete[] (key);
-      delete multi_unique_cols;
-    }
-
-    delete[] name;
-    if (table_info_ != nullptr)
-      delete table_info_;
-    if (default_value != nullptr)
-      delete default_value;
-    if (check_expression != nullptr)
-      delete check_expression;
-  }
+  virtual ~ColumnDefinition() {}
 
   static type::TypeId GetValueType(DataType type) {
     switch (type) {
@@ -135,22 +109,22 @@ struct ColumnDefinition {
     }
   }
 
-  char* name = nullptr;
+  std::unique_ptr<char[]> name = nullptr;
 
   // The name of the table and its database
-  TableInfo* table_info_ = nullptr;
+  std::unique_ptr<TableInfo> table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
   bool not_null = false;
   bool primary = false;
   bool unique = false;
-  expression::AbstractExpression* default_value = nullptr;
-  expression::AbstractExpression* check_expression = nullptr;
+  std::unique_ptr<expression::AbstractExpression> default_value = nullptr;
+  std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
-  std::vector<char*>* primary_key = nullptr;
-  std::vector<char*>* foreign_key_source = nullptr;
-  std::vector<char*>* foreign_key_sink = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> primary_key = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_source = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_sink = nullptr;
 
   std::vector<char *>* multi_unique_cols = nullptr;
 
@@ -175,38 +149,7 @@ class CreateStatement : public TableRefStatement {
         if_not_exists(false),
         columns(nullptr){};
 
-  virtual ~CreateStatement() {
-    if (columns != nullptr) {
-      for (auto col : *columns) delete col;
-      delete columns;
-    }
-
-    if (index_attrs != nullptr) {
-      for (auto attr : *index_attrs) delete[] (attr);
-      delete index_attrs;
-    }
-    if (trigger_funcname) {
-      for (auto t : *trigger_funcname) delete[](t);
-      delete trigger_funcname;
-    }
-    if (trigger_args) {
-      for (auto t : *trigger_args) delete[](t);
-      delete trigger_args;
-    }
-    if (trigger_columns) {
-      for (auto t : *trigger_columns) delete[](t);
-      delete trigger_columns;
-    }
-
-    if (index_name != nullptr) {
-      delete[] (index_name);
-    }
-    if (trigger_name) {
-      delete[](trigger_name);
-    }
-    if (database_name) {
-      delete[](database_name);
-    }
+  virtual ~CreateStatement() {}
 
     if (trigger_when) {
       delete trigger_when;
@@ -218,14 +161,14 @@ class CreateStatement : public TableRefStatement {
   CreateType type;
   bool if_not_exists;
 
-  std::vector<ColumnDefinition*>* columns;
-  std::vector<char*>* index_attrs = nullptr;
+  std::unique_ptr<std::vector<std::unique_ptr<ColumnDefinition>>> columns;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> index_attrs = nullptr;
 
   IndexType index_type;
 
-  char* index_name = nullptr;
-  char* trigger_name = nullptr;
-  char* database_name = nullptr;
+  std::unique_ptr<char[]> index_name = nullptr;
+  std::unique_ptr<char[]> trigger_name = nullptr;
+  std::unique_ptr<char[]> database_name = nullptr;
 
   bool unique = false;
 

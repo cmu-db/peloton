@@ -31,48 +31,48 @@ class JoinDefinition;
 struct TableRef {
   TableRef(TableReferenceType type)
       : type(type),
-        schema(NULL),
-        table_info_(NULL),
-        alias(NULL),
-        select(NULL),
-        list(NULL),
-        join(NULL) {}
+        schema(nullptr),
+        table_info_(nullptr),
+        alias(nullptr),
+        select(nullptr),
+        list(nullptr),
+        join(nullptr) {}
 
   virtual ~TableRef();
 
   TableReferenceType type;
 
-  char* schema;
+  std::unique_ptr<char[]> schema;
 
   // Expression of database name and table name
-  TableInfo* table_info_ = nullptr;
+  std::unique_ptr<TableInfo> table_info_ = nullptr;
 
-  char* alias;
+  std::unique_ptr<char[]> alias;
 
   SelectStatement* select;
-  std::vector<TableRef*>* list;
-  JoinDefinition* join;
+  std::unique_ptr<std::vector<std::unique_ptr<TableRef>>> list;
+  std::unique_ptr<JoinDefinition> join;
 
   // Convenience accessor methods
-  inline bool HasSchema() { return schema != NULL; }
+  inline bool HasSchema() { return schema != nullptr; }
 
   // Get the name of the database of this table
   inline const char* GetDatabaseName() const {
     if (table_info_ == nullptr || table_info_->database_name == nullptr) {
       return DEFAULT_DB_NAME;
     }
-    return table_info_->database_name;
+    return table_info_->database_name.get();
   }
 
   // Get the name of the table
   inline const char* GetTableAlias() const {
-    if (alias != NULL)
-      return alias;
+    if (alias != nullptr)
+      return alias.get();
     else
-      return table_info_->table_name;
+      return table_info_->table_name.get();
   }
 
-  inline const char* GetTableName() const { return table_info_->table_name; }
+  inline const char* GetTableName() const { return table_info_->table_name.get(); }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };
@@ -81,17 +81,13 @@ struct TableRef {
 class JoinDefinition {
  public:
   JoinDefinition()
-      : left(NULL), right(NULL), condition(NULL), type(JoinType::INNER) {}
+      : left(nullptr), right(nullptr), condition(nullptr), type(JoinType::INNER) {}
 
-  virtual ~JoinDefinition() {
-    delete left;
-    delete right;
-    delete condition;
-  }
+  virtual ~JoinDefinition() {}
 
-  TableRef* left;
-  TableRef* right;
-  expression::AbstractExpression* condition;
+  std::unique_ptr<TableRef> left;
+  std::unique_ptr<TableRef> right;
+  std::unique_ptr<expression::AbstractExpression> condition;
 
   JoinType type;
 
