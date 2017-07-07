@@ -30,16 +30,9 @@ namespace parser {
 class PrepareStatement : public SQLStatement {
  public:
   PrepareStatement()
-      : SQLStatement(StatementType::PREPARE), name(NULL), query(NULL) {}
+      : SQLStatement(StatementType::PREPARE), name(nullptr), query(nullptr) {}
 
-  virtual ~PrepareStatement() {
-    if (query != nullptr) {
-      delete query;
-    }
-    if (name != nullptr) {
-      delete[] name;
-    }
-  }
+  virtual ~PrepareStatement() {}
 
   /**
    * @param vector of placeholders that the parser found
@@ -71,8 +64,8 @@ class PrepareStatement : public SQLStatement {
     v->Visit(this);
   }
 
-  char* name;
-  SQLStatementList* query;
+  std::unique_ptr<char[]> name;
+  std::unique_ptr<SQLStatementList> query;
   std::vector<std::unique_ptr<expression::ParameterValueExpression>>
       placeholders;
 };

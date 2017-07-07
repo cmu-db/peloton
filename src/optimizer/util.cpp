@@ -326,7 +326,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   }
 
   std::unique_ptr<planner::AbstractPlan> copy_plan(
-      new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
+      new planner::CopyPlan(copy_stmt->file_path.get(), deserialize_parameters));
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

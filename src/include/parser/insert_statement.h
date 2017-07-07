@@ -29,42 +29,11 @@ class InsertStatement : SQLStatement {
   InsertStatement(InsertType type)
       : SQLStatement(StatementType::INSERT),
         type(type),
-        columns(NULL),
-        insert_values(NULL),
-        select(NULL) {}
+        columns(nullptr),
+        insert_values(nullptr),
+        select(nullptr) {}
 
-  virtual ~InsertStatement() {
-    if (columns != nullptr) {
-      for (auto col : *columns) {
-        if (col != nullptr) {
-          delete[] col;
-        }
-      }
-      delete columns;
-    }
-
-    if (insert_values != nullptr) {
-      for (auto *tuple : *insert_values) {
-        for (auto *expr : *tuple) {
-          // Why?
-//          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
-            if (expr != nullptr) {
-              delete expr;
-            }
-        }
-        delete tuple;
-      }
-      delete insert_values;
-    }
-
-    if (select != nullptr) {
-      delete select;
-    }
-
-    if (table_ref_ != nullptr) {
-      delete table_ref_;
-    }
-  }
+  virtual ~InsertStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
@@ -76,13 +45,13 @@ class InsertStatement : SQLStatement {
   }
 
   InsertType type;
-  std::vector<char*>* columns;
-  std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> columns;
+  std::unique_ptr<std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>>>
       insert_values;
-  SelectStatement* select;
+  std::unique_ptr<SelectStatement> select;
 
   // Which table are we inserting into
-  TableRef* table_ref_;
+  std::unique_ptr<TableRef> table_ref_;
 };
 
 }  // namespace parser

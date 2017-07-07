@@ -50,37 +50,16 @@ class DropStatement : public TableRefStatement {
         table_name_of_trigger(cstrdup(table_name_of_trigger.c_str())),
         trigger_name(cstrdup(trigger_name.c_str())) {}
 
-
-  virtual ~DropStatement() {
-    if (database_name != nullptr) {
-      delete[] database_name;
-    }
-
-    if (index_name != nullptr) {
-      delete[] index_name;
-    }
-
-    if (prep_stmt != nullptr) {
-      delete[] prep_stmt;
-    }
-
-    if (table_name_of_trigger != nullptr) {
-      delete[] table_name_of_trigger;
-    }
-
-    if (trigger_name != nullptr) {
-      delete[] trigger_name;
-    }
-  }
+  virtual ~DropStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
   EntityType type;
-  char* database_name = nullptr;
-  char* index_name = nullptr;
-  char* prep_stmt = nullptr;
+  std::unique_ptr<char[]> database_name = nullptr;
+  std::unique_ptr<char[]> index_name = nullptr;
+  std::unique_ptr<char[]> prep_stmt = nullptr;
   bool missing;
 
   // drop trigger
