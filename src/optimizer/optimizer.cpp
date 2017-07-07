@@ -140,7 +140,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
     case StatementType::DROP: {
-      LOG_TRACE("Adding Drop plan...");
+      LOG_DEBUG("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
           new planner::DropPlan((parser::DropStatement *)tree, consistentTxn));
       ddl_plan = move(drop_plan);
@@ -148,7 +148,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     }
 
     case StatementType::CREATE: {
-      LOG_TRACE("Adding Create plan...");
+      LOG_DEBUG("Adding Create plan...");
 
       // This is adapted from the simple optimizer
       auto create_plan =
