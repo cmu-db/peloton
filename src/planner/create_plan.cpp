@@ -66,6 +66,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
           std::string(col->name), false);
+      if (!column.IsInlined()) {
+        column.SetLength(col->varlen);
+      }
       for (auto con : column_contraints) {
         column.AddConstraint(con);
       }

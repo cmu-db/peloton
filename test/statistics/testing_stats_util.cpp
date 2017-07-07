@@ -111,7 +111,8 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
     id_column.AddConstraint(constraint);
   }
   auto name_column =
-      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 256, "dept_name", false);
+
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
