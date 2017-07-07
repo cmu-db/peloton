@@ -51,7 +51,6 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
   catalog_storage_manager->AddDatabaseToStorageManager(pg_catalog);
-  //databases_.push_back(pg_catalog);
 
   // Create catalog tables
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
@@ -554,7 +553,8 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
   LOG_TRACE("Dropping database with oid: %d", database_oid);
   bool found_database = false;
   std::lock_guard<std::mutex> lock(catalog_mutex);
-  found_database = catalog_storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+  found_database =
+      catalog_storage_manager->RemoveDatabaseFromStorageManager(database_oid);
   if (!found_database) {
     LOG_TRACE("Database %d is not found!", database_oid);
     return ResultType::FAILURE;
@@ -789,19 +789,15 @@ void Catalog::AddDatabase(storage::Database *database) {
 //===--------------------------------------------------------------------===//
 
 Catalog::~Catalog() {
-
-CatalogStorageManager::GetInstance()->DestroyDatabases();
-
+  CatalogStorageManager::GetInstance()->DestroyDatabases();
 }
-
 
 //===--------------------------------------------------------------------===//
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
 void Catalog::AddFunction(
-    const std::string &name,
-    const std::vector<type::TypeId> &argument_types,
+    const std::string &name, const std::vector<type::TypeId> &argument_types,
     const type::TypeId return_type,
     type::Value (*func_ptr)(const std::vector<type::Value> &)) {
   PL_ASSERT(functions_.count(name) == 0);
@@ -827,8 +823,8 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction("substr",
-              {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                         type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
@@ -838,8 +834,8 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace",
-              {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                          type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
