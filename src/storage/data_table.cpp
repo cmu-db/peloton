@@ -501,10 +501,14 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
                                                UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::CatalogStorageManager::GetInstance()->GetTableWithOid(
-            database_oid, sink_table_id);
-
+    storage::DataTable *ref_table;
+    try{
+        ref_table = (storage::DataTable *)catalog::CatalogStorageManager::GetInstance()
+            ->GetTableWithOid(database_oid, sink_table_id);
+    } catch (CatalogException &e) {
+        LOG_TRACE("Can't find table %d! Return false", sink_table_id);
+        return false;
+    }
     int ref_table_index_count = ref_table->GetIndexCount();
 
     for (int index_itr = ref_table_index_count - 1; index_itr >= 0;

@@ -47,18 +47,22 @@ void BinderContext::AddTable(const std::string db_name,
 
 bool BinderContext::GetColumnPosTuple(
     std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
-    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
-    type::TypeId& value_type) {
-  auto db_id = std::get<0>(table_id_tuple);
-  auto table_id = std::get<1>(table_id_tuple);
-  auto schema = catalog::CatalogStorageManager::GetInstance()
+    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type) {
+    try{
+        auto db_id = std::get<0>(table_id_tuple);
+        auto table_id = std::get<1>(table_id_tuple);
+        auto schema = catalog::CatalogStorageManager::GetInstance()
                     ->GetTableWithOid(db_id, table_id)
                     ->GetSchema();
-  auto col_pos = schema->GetColumnID(col_name);
-  if (col_pos == (oid_t)-1) return false;
-  col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
-  value_type = schema->GetColumn(col_pos).GetType();
-  return true;
+        auto col_pos = schema->GetColumnID(col_name);
+        if (col_pos == (oid_t)-1) return false;
+        col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
+        value_type = schema->GetColumn(col_pos).GetType();
+        return true;
+    } catch (CatalogException &e) {
+        LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));
+        return false;
+    }
 }
 
 bool BinderContext::GetColumnPosTuple(
