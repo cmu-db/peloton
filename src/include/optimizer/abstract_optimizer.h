@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace planner {
@@ -43,6 +44,9 @@ class AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) = 0;
 
   virtual void Reset(){};
+
+  // # 623
+  concurrency::Transaction *consistentTxn;
 };
 
 }  // namespace optimizer

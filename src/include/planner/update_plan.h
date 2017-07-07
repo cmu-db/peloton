@@ -79,7 +79,8 @@ class UpdatePlan : public AbstractPlan {
  private:
   // Initialize private members and construct colum_ids given a UpdateStatement.
   void BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
-                              std::vector<oid_t> &columns);
+                              std::vector<oid_t> &columns,
+                              concurrency::Transaction *consistentTxn = nullptr);
 
   /** @brief Target table. */
   storage::DataTable *target_table_;

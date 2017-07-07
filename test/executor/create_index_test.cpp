@@ -50,31 +50,36 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
-  optimizer::Optimizer optimizer;
+
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
+  optimizer.reset(new optimizer::Optimizer);
+
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Creating table");
   LOG_INFO(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
-      "INT, dept_name TEXT);");
+          "INT, dept_name TEXT);");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("CREATE",
                                 "CREATE TABLE department_table(dept_id INT "
-                                "PRIMARY KEY, student_id INT, dept_name "
-                                "TEXT);"));
+                                    "PRIMARY KEY, student_id INT, dept_name "
+                                    "TEXT);"));
 
   auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   LOG_INFO("Building parse tree...");
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
-      "dept_name TEXT);");
+          "dept_name TEXT);");
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(create_stmt));
   LOG_INFO("Building plan tree completed!");
 
   std::vector<type::Value> params;
@@ -82,6 +87,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
+  LOG_INFO("Before Result Format...");
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
@@ -89,7 +95,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
@@ -98,27 +104,31 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
-      "VALUES (1,52,'hello_1');");
+          "VALUES (1,52,'hello_1');");
   statement.reset(new Statement("INSERT",
                                 "INSERT INTO department_table(dept_id, "
-                                "student_id, dept_name) VALUES "
-                                "(1,52,'hello_1');"));
+                                    "student_id, dept_name) VALUES "
+                                    "(1,52,'hello_1');"));
 
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
-      "(1,52,'hello_1');");
+          "(1,52,'hello_1');");
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
+
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
@@ -126,10 +136,12 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Creating and Index");
   LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(
@@ -141,7 +153,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
@@ -153,7 +166,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("INDEX CREATED!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");

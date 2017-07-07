@@ -88,11 +88,12 @@ class OptimizerSQLTests : public PelotonTest {
       }
       EXPECT_EQ(expected_plans, actual_plans);
     }
-
+    LOG_INFO("Before Exec with Opt");
     // Check plan execution results are correct
     TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query, result,
                                                  tuple_descriptor, rows_changed,
                                                  error_message);
+    LOG_INFO("After Exec with Opt");
     vector<string> actual_result;
     for (unsigned i = 0; i < result.size(); i++)
       actual_result.push_back(
@@ -124,14 +125,16 @@ class OptimizerSQLTests : public PelotonTest {
 };
 
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
+
   // Testing select star expression
   TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
                                   "444", "4", "0", "555"},
            false);
-  
+
   // Something wrong with column property.
   string query = "SELECT b from test order by c";
-   
+
+  // # 623
   // check for plan node type
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
@@ -139,6 +142,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
 
+  // # 623
   // test order by
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
@@ -165,7 +169,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   // Testing predicate
   TestUtil("SELECT c, b from test where a=1", {"333", "22"}, false);
-  
+
   // Something wrong with column property.
   query = "SELECT a, b, c from test order by a + c";
 
@@ -316,11 +320,11 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   EXPECT_EQ(3, cols.size());
   EXPECT_EQ("a", cols[0].column_name);
   EXPECT_EQ(true, cols[0].is_primary_);
-  EXPECT_EQ(type::TypeId::INTEGER, cols[0].GetType());
+  EXPECT_EQ(type::INTEGER, cols[0].GetType());
   EXPECT_EQ("b", cols[1].column_name);
-  EXPECT_EQ(type::TypeId::INTEGER, cols[1].GetType());
+  EXPECT_EQ(type::INTEGER, cols[1].GetType());
   EXPECT_EQ("c", cols[2].column_name);
-  EXPECT_EQ(type::TypeId::INTEGER, cols[2].GetType());
+  EXPECT_EQ(type::INTEGER, cols[2].GetType());
 
   // Test dropping existing table
   query = "DROP TABLE test2";

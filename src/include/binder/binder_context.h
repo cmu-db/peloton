@@ -14,6 +14,7 @@
 #include <string>
 
 #include "type/types.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -37,10 +38,12 @@ class BinderContext {
   BinderContext() { upper_context = nullptr; }
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const parser::TableRef* table_ref);
+  void AddTable(const parser::TableRef* table_ref,
+                concurrency::Transaction* consistentTxn = nullptr);
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const std::string db_name, const std::string table_name);
+  void AddTable(const std::string db_name, const std::string table_name,
+                concurrency::Transaction* consistentTxn = nullptr);
 
   // Construct the column position tuple given column name and the
   // corresponding tabld id tuple. Also set the value type

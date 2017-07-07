@@ -15,6 +15,7 @@
 #include "planner/abstract_plan.h"
 
 #include <vector>
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace storage {
@@ -37,11 +38,14 @@ class AnalyzePlan : public AbstractPlan {
 
   explicit AnalyzePlan(storage::DataTable *table);
 
-  explicit AnalyzePlan(std::string table_name);
+  explicit AnalyzePlan(std::string table_name,
+                       concurrency::Transaction *consistentTxn = nullptr);
 
-  explicit AnalyzePlan(std::string table_name, std::vector<char*> column_names);
+  explicit AnalyzePlan(std::string table_name, std::vector<char *> column_names,
+                       concurrency::Transaction *consistentTxn = nullptr);
 
-  explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree);
+  explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree,
+                       concurrency::Transaction *consistentTxn = nullptr);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ANALYZE; }
 
@@ -49,7 +53,7 @@ class AnalyzePlan : public AbstractPlan {
 
   inline std::string GetTableName() const { return table_name_; }
 
-  inline std::vector<char*> GetColumnNames() const { return column_names_; }
+  inline std::vector<char *> GetColumnNames() const { return column_names_; }
 
   const std::string GetInfo() const { return "Analyze table"; }
 
@@ -58,9 +62,9 @@ class AnalyzePlan : public AbstractPlan {
   }
 
  private:
-  storage::DataTable* target_table_ = nullptr;
+  storage::DataTable *target_table_ = nullptr;
   std::string table_name_;
-  std::vector<char*> column_names_;
+  std::vector<char *> column_names_;
 };
 
 }  // namespace planner
