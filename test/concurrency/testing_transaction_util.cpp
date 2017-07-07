@@ -12,7 +12,7 @@
 
 #include "concurrency/testing_transaction_util.h"
 
-//#include "catalog/catalog.h"
+#include "catalog/catalog.h"
 #include "catalog/catalog_storage_manager.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
@@ -187,9 +187,9 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   table->AddIndex(pkey_index);
 
   // add this table to current database
-  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
+  catalog::Catalog::GetInstance();
   LOG_INFO("the database_id is %d", database_id);
-  storage::Database *db = catalog_storage_manager->GetDatabaseWithOid(database_id);
+  storage::Database *db = catalog::CatalogStorageManager::GetInstance()->GetDatabaseWithOid(database_id);
   PL_ASSERT(db);
   db->AddTable(table);
 
