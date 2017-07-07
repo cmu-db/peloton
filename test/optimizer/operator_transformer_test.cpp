@@ -62,7 +62,7 @@ class OperatorTransformerTests : public PelotonTest {
     auto ref_stmt = parsed_stmt->GetStatement(0);
     binder::BindNodeVisitor binder;
     binder.BindNameToNode(ref_stmt);
-    auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
+    auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0).get();
     LOG_INFO("Expected: %s", true_predicates.c_str());
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
     EXPECT_TRUE(predicate->Equals(ref_expr));
@@ -113,7 +113,7 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   // Check Where
   stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
   EXPECT_NE(stmt->where_clause, nullptr);
-  CheckPredicate(stmt->where_clause,
+  CheckPredicate(stmt->where_clause.get(),
                  "test as A, test as B, test as C", "A.b = 1 AND B.c + 1 = 10");
   EXPECT_TRUE(op != nullptr);
   // Check Join Predicates

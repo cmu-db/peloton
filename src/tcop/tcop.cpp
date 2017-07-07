@@ -296,10 +296,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    for (auto stmt : sql_stmt->GetStatements()) {
+    for (auto& stmt : sql_stmt->GetStatements()) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
       if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt);
+        auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
         statement->SetTupleDescriptor(tuple_descriptor);
       }
       break;
@@ -330,15 +330,15 @@ void TrafficCop::GetDataTables(
               from_table->GetDatabaseName(), from_table->GetTableName()));
       target_tables.push_back(target_table);
     } else {
-      GetDataTables(from_table->join->left, target_tables);
-      GetDataTables(from_table->join->right, target_tables);
+      GetDataTables(from_table->join->left.get(), target_tables);
+      GetDataTables(from_table->join->right.get(), target_tables);
     }
   }
 
   // Query has multiple tables. Recursively add all tables
   else {
-    for (auto table : *(from_table->list)) {
-      GetDataTables(table, target_tables);
+    for (auto& table : *(from_table->list)) {
+      GetDataTables(table.get(), target_tables);
     }
   }
 }
@@ -362,10 +362,10 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table, target_tables);
+  GetDataTables(select_stmt->from_table.get(), target_tables);
 
   int count = 0;
-  for (auto expr : *select_stmt->select_list) {
+  for (auto& expr : *(select_stmt->select_list)) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {

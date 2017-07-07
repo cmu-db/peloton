@@ -132,9 +132,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
   auto table_info = new parser::TableInfo();
-  table_info->table_name = name;
-  table_ref->table_info_ = table_info;
-  update_statement->table = table_ref;
+  table_info->table_name.reset(name);
+  table_ref->table_info_.reset(table_info);
+  update_statement->table.reset(table_ref);
   // Value val =
   //    type::ValueFactory::GetNullValue();  // The value is not important
   // at this point
@@ -143,12 +143,12 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto update = new parser::UpdateClause();
   auto column = new char[5]();
   strcpy(column, "name");
-  update->column = column;
+  update->column.reset(column);
   auto parameter_expr = new expression::ParameterValueExpression(0);
-  update->value = parameter_expr;
-  auto updates = new std::vector<parser::UpdateClause *>();
-  updates->push_back(update);
-  update_statement->updates = updates;
+  update->value.reset(parameter_expr);
+  auto updates = new std::vector<std::unique_ptr<parser::UpdateClause>>();
+  updates->push_back(std::unique_ptr<parser::UpdateClause>(update));
+  update_statement->updates.reset(updates);
 
   // id = $1
   parameter_expr = new expression::ParameterValueExpression(1);
@@ -157,7 +157,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto cmp_expr = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
-  update_statement->where = cmp_expr;
+  update_statement->where.reset(cmp_expr);
 
   auto update_plan = new planner::UpdatePlan(update_statement);
   LOG_INFO("Plan created:\n%s", update_plan->GetInfo().c_str());
@@ -212,29 +212,30 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
-  table_ref->table_info_ = new parser::TableInfo();
-  table_ref->table_info_->table_name = name;
-  insert_statement->table_ref_ = table_ref;
-  std::vector<char *> *columns = NULL;  // will not be used
-  insert_statement->columns = columns;
+  table_ref->table_info_ .reset(new parser::TableInfo());
+  table_ref->table_info_->table_name.reset(name);
+  insert_statement->table_ref_.reset(table_ref);
+  std::vector<std::unique_ptr<char[]>> *columns = NULL;  // will not be used
+  insert_statement->columns.reset(columns);
 
   // Value val =
   //    type::ValueFactory::GetNullValue();  // The value is not important
   // at  this point
   auto parameter_expr_1 = new expression::ParameterValueExpression(0);
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
-  auto parameter_exprs = new std::vector<expression::AbstractExpression *>();
-  parameter_exprs->push_back(parameter_expr_1);
-  parameter_exprs->push_back(parameter_expr_2);
-  insert_statement->insert_values = new std::vector<
-      std::vector<peloton::expression::AbstractExpression *> *>();
-  insert_statement->insert_values->push_back(parameter_exprs);
+  auto parameter_exprs = new std::vector<std::unique_ptr<expression::AbstractExpression>>();
+  parameter_exprs->push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_1));
+  parameter_exprs->push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
+  insert_statement->insert_values.reset(new std::vector<
+      std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>>());
+  insert_statement->insert_values->push_back(
+      std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>(parameter_exprs));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
 
   planner::InsertPlan *insert_plan = new planner::InsertPlan(
-      target_table, insert_statement->columns, insert_statement->insert_values);
+      target_table, insert_statement->columns.get(), insert_statement->insert_values.get());
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
@@ -288,14 +289,16 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
-  table_ref->table_info_ = new parser::TableInfo();
-  table_ref->table_info_->table_name = name;
+  table_ref->table_info_.reset(new parser::TableInfo());
+  table_ref->table_info_->table_name.reset(name);
 
   auto id_col = new char[strlen("id") + 1], name_col = new char[strlen("name") + 1];
   strcpy(id_col, "id");
   strcpy(name_col, "name");
-  insert_statement->table_ref_ = table_ref;
-  insert_statement->columns = new std::vector<char *>{id_col, name_col};
+  insert_statement->table_ref_.reset(table_ref);
+  insert_statement->columns.reset(new std::vector<std::unique_ptr<char[]>>());
+  insert_statement->columns->push_back(std::unique_ptr<char[]>(id_col));
+  insert_statement->columns->push_back(std::unique_ptr<char[]>(name_col));
 
   // Value val =
   //    type::ValueFactory::GetNullValue();  // The value is not important
@@ -303,18 +306,19 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   auto constant_expr_1 = new expression::ConstantValueExpression(
     type::ValueFactory::GetIntegerValue(1).Copy());
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
-  auto exprs = new std::vector<expression::AbstractExpression *>();
-  exprs->push_back(constant_expr_1);
-  exprs->push_back(parameter_expr_2);
-  insert_statement->insert_values = new std::vector<
-      std::vector<peloton::expression::AbstractExpression *> *>();
-  insert_statement->insert_values->push_back(exprs);
+  auto exprs = new std::vector<std::unique_ptr<expression::AbstractExpression>>();
+  exprs->push_back(std::unique_ptr<expression::AbstractExpression>(constant_expr_1));
+  exprs->push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
+  insert_statement->insert_values.reset(
+      new std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>>());
+  insert_statement->insert_values->push_back(
+      std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>>(exprs));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
 
   planner::InsertPlan *insert_plan = new planner::InsertPlan(
-      target_table, insert_statement->columns, insert_statement->insert_values);
+      target_table, insert_statement->columns.get(), insert_statement->insert_values.get());
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")

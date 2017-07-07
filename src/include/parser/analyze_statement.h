@@ -28,16 +28,7 @@ struct AnalyzeStatement : SQLStatement {
         analyze_table(nullptr),
         analyze_columns(nullptr) {};
 
-  // TODO: use smart pointer to avoid raw delete.
-  virtual ~AnalyzeStatement() {
-    if (analyze_columns != nullptr) {
-      for (auto col : *analyze_columns) delete[] col;
-      delete analyze_columns;
-    }
-    if (analyze_table != nullptr) {
-      delete analyze_table;
-    }
-  }
+  virtual ~AnalyzeStatement() {}
 
   std::string GetTableName() const {
     if (analyze_table == nullptr) {
@@ -46,9 +37,9 @@ struct AnalyzeStatement : SQLStatement {
     return analyze_table->GetTableName();
   }
 
-  std::vector<char*> GetColumnNames() const {
+  const std::vector<std::unique_ptr<char[]>>& GetColumnNames() const {
     if (analyze_columns == nullptr) {
-      return {};
+      return NULL_COLUMN;
     }
     return (*analyze_columns);
   }
@@ -64,10 +55,11 @@ struct AnalyzeStatement : SQLStatement {
     v->Visit(this);
   }
 
-  parser::TableRef* analyze_table;
-  std::vector<char*>* analyze_columns;
+  std::unique_ptr<parser::TableRef> analyze_table;
+  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> analyze_columns;
 
   const std::string INVALID_NAME = "";
+  const std::vector<std::unique_ptr<char[]>> NULL_COLUMN = {};
 };
 
 }  // End parser namespace
