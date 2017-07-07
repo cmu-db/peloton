@@ -278,7 +278,9 @@ void PacketManager::SendDataRows(std::vector<StatementResult> &results,
 void PacketManager::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
-  std::string tag = query;
+  std::string query_type_string;
+  Statement::ParseQueryTypeString(query, query_type_string);
+  std::string tag = query_type_string ;
   switch (query_type) {
     /* After Begin, we enter a txn block */
     case QueryType::QUERY_BEGIN:
@@ -292,6 +294,9 @@ void PacketManager::CompleteCommand(const std::string &query, const QueryType& q
       break;
     case QueryType::QUERY_INSERT:
       tag += " 0 " + std::to_string(rows);
+      break;
+     case QueryType::QUERY_CREATE:
+      tag += " TABLE";
       break;
     default:
       tag += " " + std::to_string(rows);
@@ -355,9 +360,12 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
     std::string error_message;
     int rows_affected = 0;
 
+    std::string query_type_string_;
+    Statement::ParseQueryTypeString(query, query_type_string_);
+
     QueryType query_type;
-    Statement::MapToQueryType(query, query_type);
-      std::stringstream stream(query);
+    Statement::MapToQueryType(query_type_string_, query_type);
+    std::stringstream stream(query_type_string_);
 
     switch (query_type) {
       case QueryType::QUERY_PREPARE:
