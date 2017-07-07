@@ -28,14 +28,12 @@
 
 namespace peloton {
 
-
 namespace storage {
 class DataTable;
 class Database;
 }
 
 namespace catalog {
-
 
 class CatalogStorageManager {
  public:
@@ -89,17 +87,17 @@ class CatalogStorageManager {
   //===--------------------------------------------------------------------===//
 
   void AddDatabaseToStorageManager(storage::Database *db) {
-      databases_.push_back(db);
+    databases_.push_back(db);
   }
   bool RemoveDatabaseFromStorageManager(oid_t database_oid) {
-      for(auto it = databases_.begin(); it != databases_.end(); ++it){
-          if((*it)->GetOid() == database_oid){
-              delete (*it);
-              databases_.erase(it);
-              return true;
-          }
+    for (auto it = databases_.begin(); it != databases_.end(); ++it) {
+      if ((*it)->GetOid() == database_oid) {
+        delete (*it);
+        databases_.erase(it);
+        return true;
       }
-      return false;
+    }
+    return false;
   }
 
   void DestroyDatabases();
@@ -109,7 +107,6 @@ class CatalogStorageManager {
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
-
 };
 }
 }
