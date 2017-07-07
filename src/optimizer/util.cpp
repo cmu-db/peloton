@@ -20,6 +20,8 @@
 #include "catalog/schema.h"
 
 #include <vector>
+#include <include/catalog/query_metrics_catalog.h>
+#include <include/planner/copy_plan.h>
 
 namespace peloton {
 namespace optimizer {
@@ -313,6 +315,34 @@ bool ContainsJoinColumns(
   }
 
   return false;
+}
+
+std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
+    parser::CopyStatement* copy_stmt) {
+  std::string table_name(copy_stmt->cpy_table->GetTableName());
+  bool deserialize_parameters = false;
+
+  // If we're copying the query metric table, then we need to handle the
+  // deserialization of prepared stmt parameters
+  if (table_name == QUERY_METRICS_CATALOG_NAME) {
+    LOG_DEBUG("Copying the query_metric table.");
+    deserialize_parameters = true;
+  }
+
+  std::unique_ptr<planner::AbstractPlan> copy_plan(
+      new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
+
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      copy_stmt->cpy_table->GetDatabaseName(), copy_stmt->cpy_table->GetTableName());
+
+  std::unique_ptr<planner::SeqScanPlan> select_plan(
+      new planner::SeqScanPlan(target_table, nullptr, {}, false));
+  
+  LOG_DEBUG("Sequential scan plan for copy created");
+
+  // Attach it to the copy plan
+  copy_plan->AddChild(std::move(select_plan));
+  return std::move(copy_plan);
 }
 
 } /* namespace util */
