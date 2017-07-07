@@ -152,21 +152,26 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-  optimizer::Optimizer optimizer;
+
+//  optimizer::SimpleOptimizer optimizer;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
+  optimizer.reset(new optimizer::Optimizer);
+
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+
 
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
+  auto id_column = catalog::Column(type::INTEGER,
+                                   type::Type::GetTypeSize(type::INTEGER),
                                    "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
-      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      type::INTEGER, type::Type::GetTypeSize(type::INTEGER),
       "manager_id", true);
   auto name_column =
-      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, manager_id_column, name_column}));
@@ -187,23 +192,26 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,manager_id,dept_name) "
-      "VALUES (1,12,'hello_1');");
+          "VALUES (1,12,'hello_1');");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("INSERT",
                                 "INSERT INTO "
-                                "department_table(dept_id,manager_id,dept_name)"
-                                " VALUES (1,12,'hello_1');"));
+                                    "department_table(dept_id,manager_id,dept_name)"
+                                    " VALUES (1,12,'hello_1');"));
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
-      "(1,12,'hello_1');");
+          "(1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
@@ -218,12 +226,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
@@ -235,7 +245,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -246,25 +257,28 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE "
-      "dept_id = 1");
+          "dept_id = 1");
   statement.reset(new Statement("UPDATE",
                                 "UPDATE department_table SET manager_id = "
-                                "manager_id + 1 WHERE dept_id = 1"));
+                                    "manager_id + 1 WHERE dept_id = 1"));
   LOG_INFO("Building parse tree...");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = "
-      "1");
+          "1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -275,11 +289,13 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Updating primary key...");
   LOG_INFO("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   statement.reset(new Statement(
@@ -289,7 +305,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -300,12 +317,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction(txn);
+//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
+  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.single_statement_txn = true;
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
   statement.reset(new Statement(
@@ -315,7 +334,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
+  optimizer->Reset();
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -326,8 +346,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
-  txn_manager.CommitTransaction(txn);
-
+//  txn_manager.CommitTransaction(txn);
+  LOG_INFO("Tcop_txn_state size: %lu", traffic_cop.tcop_txn_state_.size());
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);

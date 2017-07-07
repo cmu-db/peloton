@@ -29,7 +29,6 @@ void BindNodeVisitor::Visit(const parser::SelectStatement *node) {
   auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
   context_->upper_context = pre_context;
-
   if (node->from_table != nullptr) node->from_table->Accept(this);
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
@@ -63,7 +62,8 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddTable(node);
+    LOG_DEBUG("Before Add Table!");
+    context_->AddTable(node, consistentTxn);
   }
 }
 
@@ -96,7 +96,8 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
-  context_->AddTable(node->GetDatabaseName(), node->GetTableName());
+  context_->AddTable(node->GetDatabaseName(), node->GetTableName(),
+                     consistentTxn);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 

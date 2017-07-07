@@ -13,6 +13,10 @@
 #include "common/logger.h"
 #include "executor/plan_executor.h"
 #include "optimizer/rule.h"
+
+
+#include "optimizer/optimizer.h"
+
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
@@ -33,7 +37,7 @@ std::mt19937 rng(rd());
 
 // Create a uniform random number
 int TestingSQLUtil::GetRandomInteger(const int lower_bound,
-                                   const int upper_bound) {
+                                     const int upper_bound) {
   std::uniform_int_distribution<> dist(lower_bound, upper_bound);
 
   int sample = dist(rng);
@@ -44,7 +48,7 @@ int TestingSQLUtil::GetRandomInteger(const int lower_bound,
 // Note: In order to see the content from the command line, you have to
 // turn-on LOG_TRACE.
 void TestingSQLUtil::ShowTable(std::string database_name,
-                             std::string table_name) {
+                               std::string table_name) {
   ExecuteSQLQuery("SELECT * FROM " + database_name + "." + table_name);
 }
 
@@ -54,6 +58,25 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_INFO("Query: %s", query.c_str());
+  // # 623
+  traffic_cop_.optimizer_.reset(new optimizer::Optimizer());
+  LOG_INFO("Tcop_txn_size: %lu", traffic_cop_.tcop_txn_state_.size());
+  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
+                                              rows_changed, error_message);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status).c_str());
+  return status;
+}
+
+// 623 Execute a SQL query end-to-end
+ResultType TestingSQLUtil::ExecuteSQLQuery(
+    const std::string query, std::vector<StatementResult> &result,
+    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed
+) {
+  LOG_INFO("Query: %s", query.c_str());
+  // # 623
+  std::string error_message;
+  LOG_INFO("Tcop_txn_size: %lu", traffic_cop_.tcop_txn_state_.size());
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
   LOG_INFO("Statement executed. Result: %s",
@@ -69,6 +92,12 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::string &error_message) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   std::vector<type::Value> params;
+  // # 623
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  traffic_cop_.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop_.single_statement_txn = true;
+  optimizer->consistentTxn = txn;
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt);
@@ -94,6 +123,14 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
+
+  // # 623
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+//  traffic_cop_.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+//  traffic_cop_.single_statement_txn = true;
+  optimizer->consistentTxn = txn;
+
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
@@ -102,7 +139,7 @@ std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer
 }
 
 ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
-                                         std::vector<StatementResult> &result) {
+                                           std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

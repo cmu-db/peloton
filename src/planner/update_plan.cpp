@@ -56,15 +56,16 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 // FIXME: Should remove when the simple_optimizer tears down
 //  Initializes the update plan without adding any child nodes and
 //  retrieves column ids for the child scan plan.
-void UpdatePlan::BuildInitialUpdatePlan(
-    const parser::UpdateStatement *parse_tree, std::vector<oid_t> &column_ids) {
+void UpdatePlan::BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
+                                        std::vector<oid_t> &column_ids,
+                                        concurrency::Transaction *consistentTxn) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   auto table_name = std::string(t_ref->GetTableName());
   auto database_name = t_ref->GetDatabaseName();
   LOG_TRACE("Update database %s table %s", database_name, table_name.c_str());
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name);
+      database_name, table_name, consistentTxn);
   PL_ASSERT(target_table_ != nullptr);
 
   for (auto update_clause : *parse_tree->updates) {

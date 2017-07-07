@@ -44,6 +44,10 @@ class TrafficCop {
   // static singleton method used by tests
   static TrafficCop &GetInstance();
 
+  // # 623
+  //  concurrency::Transaction *consistentTxn;
+  bool single_statement_txn;
+
   // reset this object
   void Reset();
 
@@ -87,15 +91,21 @@ class TrafficCop {
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
+  // for test, these should be private
+  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
+  std::stack<TcopTxnState> tcop_txn_state_;
+  ResultType CommitQueryHelper();
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
  private:
   // The optimizer used for this connection
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+//  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
-  std::stack<TcopTxnState> tcop_txn_state_;
+  //  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
+  // 623
+  //  std::stack<TcopTxnState> tcop_txn_state_;
 
  private:
   static TcopTxnState &GetDefaultTxnState();
@@ -104,7 +114,7 @@ class TrafficCop {
 
   ResultType BeginQueryHelper(const size_t thread_id);
 
-  ResultType CommitQueryHelper();
+  //  ResultType CommitQueryHelper();
 
   ResultType AbortQueryHelper();
 

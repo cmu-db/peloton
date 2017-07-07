@@ -40,9 +40,15 @@ class TestingSQLUtil {
 
   // Execute a SQL query end-to-end
   static ResultType ExecuteSQLQuery(const std::string query,
-                                std::vector<StatementResult> &result,
-                                std::vector<FieldInfo> &tuple_descriptor,
-                                int &rows_affected, std::string &error_message);
+                                    std::vector<StatementResult> &result,
+                                    std::vector<FieldInfo> &tuple_descriptor,
+                                    int &rows_affected, std::string &error_message);
+
+  static ResultType ExecuteSQLQuery(const std::string query,
+                                    std::vector<StatementResult> &result,
+                                    std::vector<FieldInfo> &tuple_descriptor,
+                                    int &rows_affected);
+
 
   // Execute a SQL query end-to-end with the specific optimizer
   // Note: right now this is not executed in the context of a transaction, we
@@ -61,7 +67,7 @@ class TestingSQLUtil {
 
   // A simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query,
-                                std::vector<StatementResult> &result);
+                                    std::vector<StatementResult> &result);
 
   // A another simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query);

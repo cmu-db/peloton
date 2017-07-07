@@ -16,6 +16,7 @@
 #include "type/types.h"
 #include "parser/table_ref.h"
 #include "planner/abstract_plan.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -64,7 +65,9 @@ class DeletePlan : public AbstractPlan {
   }
 
  private:
-  void BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet);
+  void BuildInitialDeletePlan(
+      parser::DeleteStatement *delete_statemenet,
+      concurrency::Transaction *consistentTxn = nullptr);
 
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
