@@ -20,7 +20,8 @@ namespace peloton {
     {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
     {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"SET", QueryType::QUERY_SET},
     {"SHOW", QueryType::QUERY_SHOW}, {"INSERT", QueryType::QUERY_INSERT},
-    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE}
+    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE},
+    {"CREATE", QueryType::QUERY_CREATE}
   };
 
 Statement::Statement(const std::string& statement_name,
