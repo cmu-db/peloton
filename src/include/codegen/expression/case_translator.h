@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "codegen/expression_translator.h"
+#include "codegen/expression/expression_translator.h"
 #include "expression/case_expression.h"
 
 namespace peloton {

@@ -18,7 +18,7 @@
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
 #include "codegen/runtime_state.h"
-#include "codegen/expression_translator.h"
+#include "codegen/expression/expression_translator.h"
 #include "codegen/operator_translator.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"

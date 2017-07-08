@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/conjunction_translator.h"
+#include "codegen/expression/conjunction_translator.h"
 
 #include "expression/conjunction_expression.h"
 

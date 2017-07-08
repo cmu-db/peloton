@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/negation_translator.h"
+#include "codegen/expression/negation_translator.h"
 
 #include "codegen/type/type_system.h"
 #include "expression/operator_expression.h"
