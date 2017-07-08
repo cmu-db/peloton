@@ -50,16 +50,13 @@ void ShowTable(std::string database_name, std::string table_name) {
 
   optimizer::Optimizer optimizer;
 
-
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
 //  optimizer::SimpleOptimizer optimizer;
 
 
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -73,6 +70,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  traffic_cop.CommitQueryHelper();
 }
 
 TEST_F(DeleteTests, VariousOperations) {
@@ -87,16 +85,16 @@ TEST_F(DeleteTests, VariousOperations) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
 
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(type::INTEGER,
-                                   type::Type::GetTypeSize(type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "dept_id", true);
   auto name_column =
-      catalog::Column(type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -117,9 +115,9 @@ TEST_F(DeleteTests, VariousOperations) {
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");
 
+
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
@@ -135,7 +133,6 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
@@ -149,12 +146,12 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
+  traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
-
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
@@ -167,7 +164,6 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -178,11 +174,12 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
+  traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
@@ -195,7 +192,6 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -206,13 +202,14 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
+  traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
   // Just Counting number of tuples in table
   LOG_INFO("Selecting MAX(dept_id)");
   LOG_INFO("Query: SELECT MAX(dept_id) FROM department_table;");
@@ -223,7 +220,6 @@ TEST_F(DeleteTests, VariousOperations) {
       "SELECT MAX(dept_id) FROM department_table;");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(select_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -236,10 +232,10 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Counted Tuples!");
+  traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
   // Test Another delete. Should not find any tuple to be deleted
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_id < 2");
@@ -250,7 +246,6 @@ TEST_F(DeleteTests, VariousOperations) {
       "DELETE FROM department_table WHERE dept_id < 2");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt_2));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -261,13 +256,14 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
+  traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  traffic_cop.single_statement_txn = true;
   // Now deleting end-to-end
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table");
@@ -277,7 +273,6 @@ TEST_F(DeleteTests, VariousOperations) {
       peloton_parser.BuildParseTree("DELETE FROM department_table");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  optimizer->Reset();
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -288,7 +283,9 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
+  traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
