@@ -14,7 +14,7 @@
 
 #include "codegen/aggregation.h"
 #include "codegen/compilation_context.h"
-#include "codegen/operator_translator.h"
+#include "operator_translator.h"
 #include "codegen/pipeline.h"
 
 namespace peloton {

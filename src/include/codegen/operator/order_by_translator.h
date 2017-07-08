@@ -13,7 +13,7 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "codegen/operator_translator.h"
+#include "operator_translator.h"
 #include "codegen/sorter.h"
 #include "codegen/updateable_storage.h"
 

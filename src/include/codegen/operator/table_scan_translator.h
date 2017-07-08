@@ -14,7 +14,7 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
-#include "codegen/operator_translator.h"
+#include "operator_translator.h"
 #include "codegen/scan_callback.h"
 #include "codegen/table.h"
 

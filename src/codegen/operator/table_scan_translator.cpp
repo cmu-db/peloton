@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/table_scan_translator.h"
+#include "include/codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
 #include "codegen/catalog_proxy.h"
