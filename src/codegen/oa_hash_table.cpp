@@ -12,13 +12,13 @@
 
 #include "codegen/oa_hash_table.h"
 
-#include "llvm/IR/Intrinsics.h"
+#include <llvm/IR/Intrinsics.h>
 
 #include "codegen/hash.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
+#include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
 #include "codegen/oa_hash_table_proxy.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/utils/oa_hash_table.h"
 
@@ -123,7 +123,7 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
 
   // Do wrap-around if we need to
   llvm::Value *wrap_back_index = nullptr, *wrap_back_entry_ptr = nullptr;
-  If wrap_back{codegen, codegen->CreateICmpEQ(next_index, hash_table_size)};
+  lang::If wrap_back{codegen, codegen->CreateICmpEQ(next_index, hash_table_size)};
   {
     wrap_back_index = codegen.Const64(0);
     wrap_back_entry_ptr = LoadHashTableField(codegen, hash_table, 0);
@@ -196,7 +196,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
   llvm::Value *data_ptr_inline = nullptr, *data_ptr_noninline = nullptr;
 
   // Whether kv_p equals 0x0000000000000001
-  If is_entry_single_value{codegen, IsPtrEqualTo(codegen, kv_p, 1UL),
+  lang::If is_entry_single_value{codegen, IsPtrEqualTo(codegen, kv_p, 1UL),
                            "singleValue"};
   {
     data_count_inline = codegen.Const64(1);
@@ -259,7 +259,7 @@ void OAHashTable::TranslateProbing(
   // Return the result of comparison (if ptr is 0 then the slot is free)
   llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
-  Loop probe_loop{codegen,
+  lang::Loop probe_loop{codegen,
                   status_neq_zero,
                   {{"entry", entry_ptr}, {"index", index}, {"kvl", kv_p}}};
   {
@@ -272,7 +272,7 @@ void OAHashTable::TranslateProbing(
         LoadHashEntryField(codegen, entry_ptr, 0, 1);
     llvm::Value *is_hash_match =
         codegen->CreateICmpEQ(entry_hash_value, hash_value);
-    If hash_match_branch{codegen, is_hash_match, "hashMatch"};
+    lang::If hash_match_branch{codegen, is_hash_match, "hashMatch"};
     {
       // Load the key from the HashEntry *
       std::vector<codegen::Value> entry_key{};
@@ -283,7 +283,7 @@ void OAHashTable::TranslateProbing(
       // Check if the provided key matches what's in the HashEntry
       llvm::Value *is_key_match =
           Value::TestEquality(codegen, key, entry_key).GetValue();
-      If key_match_branch{codegen, is_key_match, "keyMatch"};
+      lang::If key_match_branch{codegen, is_key_match, "keyMatch"};
       {
         if (process_value) {
           if (process_only_one_value) {
@@ -309,7 +309,7 @@ void OAHashTable::TranslateProbing(
 
             // Start a loop. Since we know at least one value exits, we build
             // a do-while loop.
-            Loop value_loop{codegen,
+            lang::Loop value_loop{codegen,
                             codegen.ConstBool(true),
                             {{"counter", loop_counter}, {"dataPtr", data_ptr}}};
             {
@@ -468,7 +468,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
   llvm::Value *bucket_cond = codegen->CreateICmpULT(entry_index, num_buckets);
 
   // (1) loop var = bucket_index; loop cond = bucket_cond
-  Loop bucket_loop{codegen,
+  lang::Loop bucket_loop{codegen,
                    bucket_cond,
                    {{"entryIndex", entry_index}, {"entryPtr", entry_ptr}}};
   {
@@ -482,7 +482,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
     llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
     // If the bucket is not free
-    If bucket_occupied{codegen, status_neq_zero, "bucketIsOccupied"};
+    lang::If bucket_occupied{codegen, status_neq_zero, "bucketIsOccupied"};
     {
       // Read keys and return the pointer to value
       std::vector<codegen::Value> entry_key{};
@@ -498,7 +498,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
       data_ptr = data_count_ptr_pair.second;
       llvm::Value *val_index = codegen.Const64(0);
 
-      Loop read_value_loop{codegen,
+      lang::Loop read_value_loop{codegen,
                            codegen.ConstBool(true),  // Always pass
                            {{"counter", val_index}, {"dataPtr", data_ptr}}};
       {
@@ -542,7 +542,7 @@ void OAHashTable::VectorizedIterate(
   llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
   num_buckets = codegen->CreateTruncOrBitCast(num_buckets, codegen.Int32Type());
 
-  VectorizedLoop vector_loop{
+  lang::VectorizedLoop vector_loop{
       codegen, num_buckets, size, {{"currEntryPtr", entry_ptr}}};
   {
     auto curr_range = vector_loop.GetCurrentRange();
@@ -551,10 +551,10 @@ void OAHashTable::VectorizedIterate(
     entry_ptr = vector_loop.GetLoopVar(0);
 
     // Initial filter loop
-    std::vector<Loop::LoopVariable> loop_vars = {{"pos", start},
+    std::vector<lang::Loop::LoopVariable> loop_vars = {{"pos", start},
                                                  {"selPos", codegen.Const32(0)},
                                                  {"currEntryPtr", entry_ptr}};
-    Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
+    lang::Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
     {
       llvm::Value *pos = filter_loop.GetLoopVar(0);
       llvm::Value *sel_pos = filter_loop.GetLoopVar(1);

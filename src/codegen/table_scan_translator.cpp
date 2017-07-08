@@ -12,7 +12,7 @@
 
 #include "codegen/table_scan_translator.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/catalog_proxy.h"
 #include "codegen/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"

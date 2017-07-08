@@ -15,9 +15,11 @@
 #include <vector>
 
 #include "codegen/codegen.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
+namespace lang {
 
 //===----------------------------------------------------------------------===//
 // A utility class to help generate loops in LLVM IR
@@ -62,5 +64,6 @@ class Loop {
   std::vector<llvm::PHINode *> phi_nodes_;
 };
 
+}  // namespace lang
 }  // namespace codegen
 }  // namespace peloton

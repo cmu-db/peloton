@@ -12,7 +12,7 @@
 
 #include "codegen/aggregation.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/bigint_type.h"
 #include "codegen/type/decimal_type.h"
@@ -302,9 +302,9 @@ void Aggregation::AdvanceValues(
     llvm::Value *curr_val =
         null_bitmap.ByteFor(codegen, aggregate_info.storage_index);
 
-    If valid_update{codegen, update_not_null};
+    lang::If valid_update{codegen, update_not_null};
     {
-      If agg_is_null{codegen, agg_null};
+      lang::If agg_is_null{codegen, agg_null};
       {
         // (2)
         switch (aggregate_info.aggregate_type) {

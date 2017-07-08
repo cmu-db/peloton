@@ -12,10 +12,10 @@
 
 #include "codegen/hash_join_translator.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/tuple_value_translator.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
 
@@ -172,7 +172,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    lang::Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =
@@ -203,9 +203,9 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
     }
 
     p = codegen.Const32(0);
-    std::vector<Loop::LoopVariable> loop_vars = {
+    std::vector<lang::Loop::LoopVariable> loop_vars = {
         {"p", p}, {"writeIdx", iter_instance.write_pos}};
-    Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
+    lang::Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
     {
       p = process_loop.GetLoopVar(0);
       llvm::Value *write_pos = process_loop.GetLoopVar(1);
@@ -406,7 +406,7 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
     auto valid_row = row_.DeriveValue(codegen, *predicate);
-    If is_valid_row{codegen, valid_row};
+    lang::If is_valid_row{codegen, valid_row};
     {
       // Send row up to the parent
       context_.Consume(row_);

@@ -14,7 +14,7 @@
 
 #include "catalog/schema.h"
 #include "codegen/data_table_proxy.h"
-#include "codegen/loop.h"
+#include "codegen/lang/loop.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "storage/data_table.h"
 
@@ -74,7 +74,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
   // Iterate over all tile groups in the table
-  Loop loop{codegen,
+  lang::Loop loop{codegen,
             codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
             {{"tileGroupIdx", tile_group_idx}}};
   {

@@ -14,8 +14,8 @@
 
 #include <string>
 
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LegacyPassManager.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LegacyPassManager.h>
 
 #include "common/macros.h"
 
