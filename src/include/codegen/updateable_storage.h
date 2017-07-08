@@ -15,6 +15,7 @@
 #include "codegen/codegen.h"
 #include "codegen/compact_storage.h"
 #include "codegen/value.h"
+#include "codegen/lang/if.h"
 
 namespace peloton {
 namespace codegen {
@@ -90,7 +91,7 @@ class UpdateableStorage {
     // Set the given bit to the provided value
     void SetNull(CodeGen &codegen, uint32_t index, llvm::Value *null_bit);
 
-    void MergeValues(If &if_clause, llvm::Value *before_if_value);
+    void MergeValues(lang::If &if_clause, llvm::Value *before_if_value);
 
     // Write all the dirty byte components
     void WriteBack(CodeGen &codegen);

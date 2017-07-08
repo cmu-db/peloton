@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include "codegen/loop.h"
+#include "codegen/lang/loop.h"
 
 namespace peloton {
 namespace codegen {
+namespace lang {
 
 //===----------------------------------------------------------------------===//
 // A convenience class for generating vectorized loops. This class behaves like
@@ -76,5 +77,6 @@ class VectorizedLoop {
   llvm::Value *end_;
 };
 
+}  // namespace lang
 }  // namespace codegen
 }  // namespace peloton

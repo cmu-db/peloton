@@ -12,10 +12,10 @@
 
 #include "codegen/hash_group_by_translator.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/projection_translator.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
 #include "common/logger.h"
 
@@ -147,7 +147,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    lang::Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =
@@ -174,9 +174,9 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
     }
 
     p = codegen.Const32(0);
-    std::vector<Loop::LoopVariable> loop_vars = {
+    std::vector<lang::Loop::LoopVariable> loop_vars = {
         {"p", p}, {"writeIdx", iter_instance.write_pos}};
-    Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
+    lang::Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
     {
       p = process_loop.GetLoopVar(0);
       llvm::Value *write_pos = process_loop.GetLoopVar(1);
@@ -373,7 +373,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      If is_valid_row{codegen, valid_row};
+      lang::If is_valid_row{codegen, valid_row};
       {
         // The row is valid, send along the pipeline
         context.Consume(row);

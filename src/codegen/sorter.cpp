@@ -12,9 +12,9 @@
 
 #include "codegen/sorter.h"
 
-#include "codegen/loop.h"
+#include "codegen/lang/loop.h"
 #include "codegen/sorter_proxy.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "codegen/vector.h"
 
 namespace peloton {
@@ -82,7 +82,7 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index, SorterAccess &access) const {
-      Loop loop{codegen,
+      lang::Loop loop{codegen,
                 codegen->CreateICmpULT(start_index, end_index),
                 {{"start", start_index}}};
       {
@@ -123,7 +123,7 @@ void Sorter::VectorizedIterate(
   llvm::Value *tuple_size = GetTupleSize(codegen);
   llvm::Value *skip = codegen->CreateMul(vec_sz, tuple_size);
 
-  VectorizedLoop loop{codegen, num_tuples, vector_size, {{"pos", start_pos}}};
+  lang::VectorizedLoop loop{codegen, num_tuples, vector_size, {{"pos", start_pos}}};
   {
     llvm::Value *curr_pos = loop.GetLoopVar(0);
     auto curr_range = loop.GetCurrentRange();

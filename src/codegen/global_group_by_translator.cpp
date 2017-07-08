@@ -12,7 +12,7 @@
 
 #include "codegen/global_group_by_translator.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
 

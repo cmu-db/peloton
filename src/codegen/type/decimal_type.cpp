@@ -12,7 +12,7 @@
 
 #include "codegen/type/decimal_type.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/value.h"
 #include "codegen/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
@@ -249,7 +249,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Decimal::Instance().GetNullValue(codegen);
@@ -306,7 +306,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Decimal::Instance().GetNullValue(codegen);
