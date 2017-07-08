@@ -189,11 +189,12 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   // add this table to current database
   catalog::Catalog::GetInstance();
   LOG_INFO("the database_id is %d", database_id);
-  storage::Database *db;
+  storage::Database *db = nullptr;
   try{
       db = catalog::CatalogStorageManager::GetInstance()->GetDatabaseWithOid(database_id);
   } catch (CatalogException &e) {
       LOG_TRACE("Can't find database %d! ", database_id);
+      return nullptr;
   }
   PL_ASSERT(db);
   db->AddTable(table);
