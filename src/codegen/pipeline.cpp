@@ -12,7 +12,7 @@
 
 #include "codegen/pipeline.h"
 
-#include "codegen/operator_translator.h"
+#include "include/codegen/operator/operator_translator.h"
 
 namespace peloton {
 namespace codegen {

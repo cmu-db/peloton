@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/order_by_translator.h"
+#include "include/codegen/operator/order_by_translator.h"
 
 #include "codegen/lang/if.h"
 #include "codegen/runtime_functions_proxy.h"

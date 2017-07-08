@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/hash_group_by_translator.h"
+#include "include/codegen/operator/hash_group_by_translator.h"
 
 #include "codegen/lang/if.h"
 #include "codegen/oa_hash_table_proxy.h"
-#include "codegen/projection_translator.h"
+#include "include/codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
 #include "common/logger.h"

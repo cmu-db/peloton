@@ -19,7 +19,7 @@
 #include "codegen/codegen.h"
 #include "codegen/runtime_state.h"
 #include "codegen/expression/expression_translator.h"
-#include "codegen/operator_translator.h"
+#include "include/codegen/operator/operator_translator.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "codegen/translator_factory.h"
