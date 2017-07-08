@@ -140,14 +140,14 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
 
   // Get table and set it to the member
   storage::DataTable *target_table;
-  try{
+  //try{
       target_table = static_cast<storage::DataTable *>(
         catalog::CatalogStorageManager::GetInstance()->GetTableWithOid(
               database_oid, table_oid));
-  } catch (CatalogException &e) {
-      LOG_TRACE("Can't find table %d! Return false", table_oid);
-      return false;
-  }
+  //} catch (CatalogException &e) {
+  //    LOG_TRACE("Can't find table %d! Return false", table_oid);
+  //    return false;
+  //}
   SetTargetTable(target_table);
 
   // Read the number of column_id and set them to column_ids_
