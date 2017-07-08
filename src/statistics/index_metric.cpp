@@ -31,8 +31,7 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
     for (auto& ch : index_name_) {
       ch = toupper(ch);
     }
-  }
-  catch (CatalogException& e) {
+  } catch (CatalogException& e) {
   }
 }
 
