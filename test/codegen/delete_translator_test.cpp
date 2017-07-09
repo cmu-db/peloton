@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"

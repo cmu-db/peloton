@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 #include "codegen/type/type.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/tinyint_type.h"
