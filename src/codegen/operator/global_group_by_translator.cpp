@@ -4,11 +4,12 @@
 //
 // global_group_by_translator.cpp
 //
-// Identification: src/codegen/global_group_by_translator.cpp
+// Identification: src/codegen/operator/global_group_by_translator.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/operator/global_group_by_translator.h"
 

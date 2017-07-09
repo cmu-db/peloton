@@ -4,11 +4,12 @@
 //
 // table_scan_translator.h
 //
-// Identification: src/include/codegen/table_scan_translator.h
+// Identification: src/include/codegen/operator/table_scan_translator.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -4,9 +4,9 @@
 //
 // runtime_functions_proxy.h
 //
-// Identification: src/include/codegen/runtime_functions_proxy.h
+// Identification: src/include/codegen/proxy/runtime_functions_proxy.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

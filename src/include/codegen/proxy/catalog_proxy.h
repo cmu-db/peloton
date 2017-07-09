@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// manager_proxy.h
+// catalog_proxy.h
 //
-// Identification: src/include/codegen/manager_proxy.h
+// Identification: src/include/codegen/proxy/catalog_proxy.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

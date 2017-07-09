@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// query_statement.cpp
+// query.cpp
 //
-// Identification: src/codegen/query_statement.cpp
+// Identification: src/codegen/query.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/query.h"
 

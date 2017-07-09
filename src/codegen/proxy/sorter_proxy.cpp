@@ -4,11 +4,12 @@
 //
 // sorter_proxy.cpp
 //
-// Identification: src/codegen/sorter_proxy.cpp
+// Identification: src/codegen/proxy/sorter_proxy.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/util/sorter.h"
