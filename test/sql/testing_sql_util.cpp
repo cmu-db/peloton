@@ -76,11 +76,12 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   // # 623
   std::string error_message;
-  LOG_INFO("Tcop_txn_size: %lu", traffic_cop_.tcop_txn_state_.size());
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status).c_str());
+
   return status;
 }
 
@@ -157,9 +158,12 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string error_message;
   int rows_changed;
 
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+
   // execute the query using tcop
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
+  auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
+
 
   return status;
 }
