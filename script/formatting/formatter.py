@@ -107,11 +107,11 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
             if header_match is None:
               return
 
-            LOG.info("Header match ")
+            LOG.debug("Header match ")
 
             header_comment = header_match.group()
             
-            LOG.info("Header comment : %s", header_comment)
+            LOG.debug("Header comment : %s", header_comment)
         
             new_file_data = file_data.replace(header_comment,"")
 
