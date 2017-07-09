@@ -124,7 +124,7 @@ ResultType TrafficCop::AbortQueryHelper() {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
-    
+
     return result;
   } else {
     LOG_INFO("SINGLE ABORTQUERYHELPER!!");
@@ -260,7 +260,7 @@ ResultType TrafficCop::ExecuteStatement(
             statement->GetQueryString().c_str());
   LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_DEBUG("Result Type %d", tcop_txn_state_.top().second);
+//  LOG_DEBUG("Result Type %d", tcop_txn_state_.top().second);
 
   try {
     switch (statement->GetQueryType()) {
@@ -317,7 +317,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     }
 
     auto txn_result = txn->GetResult();
-    LOG_DEBUG("Txn Result Type %d", txn_result);
+//    LOG_DEBUG("Txn Result Type %d", txn_result);
 
     if (single_statement_txn == true || init_failure == true ||
         txn_result == ResultType::FAILURE) {
