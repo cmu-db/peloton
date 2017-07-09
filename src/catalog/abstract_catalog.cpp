@@ -13,7 +13,7 @@
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog.h"
 #include "planner/create_plan.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "common/statement.h"
 #include "planner/seq_scan_plan.h"
@@ -41,7 +41,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   // get catalog table schema
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
-      optimizer::SimpleOptimizer().BuildPelotonPlanTree(
+      optimizer::Optimizer().BuildPelotonPlanTree(
           peloton_parser.BuildParseTree(catalog_table_ddl)));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
