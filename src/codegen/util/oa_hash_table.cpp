@@ -4,13 +4,13 @@
 //
 // oa_hash_table.cpp
 //
-// Identification: src/codegen/utils/oa_hash_table.cpp
+// Identification: src/codegen/util/oa_hash_table.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/utils/oa_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
 
 #include <string.h>
 
@@ -19,7 +19,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 // This is an estimation about how many tuples there are in the hash table when
 // one is first created. We use, by default, 8K elements. This should be
@@ -464,6 +464,6 @@ void OAHashTable::Iterator::NextEntry() {
   }
 }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

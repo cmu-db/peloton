@@ -19,7 +19,7 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 // A utility class that serves as a helper to proxy most of the methods in
-// peloton::utils::CCHashTable. It significantly reduces the pain in calling
+// peloton::util::CCHashTable. It significantly reduces the pain in calling
 // methods on HashTable instances from LLVM code.
 //===----------------------------------------------------------------------===//
 class CCHashTableProxy {

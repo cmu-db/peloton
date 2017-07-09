@@ -12,7 +12,6 @@
 
 #include "codegen/codegen_test_util.h"
 
-#include "codegen/type/type.h"
 #include "codegen/type/tinyint_type.h"
 #include "codegen/type/smallint_type.h"
 #include "codegen/type/integer_type.h"

@@ -4,7 +4,7 @@
 //
 // sorter.h
 //
-// Identification: src/include/codegen/utils/sorter.h
+// Identification: src/include/codegen/util/sorter.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // A class than enables the storage and sorting of arbitrarily sized tuples.
@@ -124,6 +124,6 @@ class Sorter {
   ComparisonFunction cmp_func_;
 };
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

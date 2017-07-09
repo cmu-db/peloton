@@ -4,7 +4,7 @@
 //
 // cc_hash_table.h
 //
-// Identification: src/include/codegen/utils/cc_hash_table.h
+// Identification: src/include/codegen/util/cc_hash_table.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 //===----------------------------------------------------------------------===//
 // This is a closed-addressing hash-table data structure that employs a dynamic
@@ -116,6 +116,6 @@ class CCHashTable {
   uint64_t num_elements_;
 };
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

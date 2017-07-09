@@ -20,7 +20,7 @@
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
-#include "codegen/utils/oa_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
 
 namespace peloton {
 namespace codegen {
@@ -48,7 +48,7 @@ OAHashTable::OAHashTable(CodeGen &codegen,
   key_storage_.Setup(codegen, key_type);
 
   // Configure the size of each HashEntry
-  hash_entry_size_ = sizeof(utils::OAHashTable::HashEntry) +
+  hash_entry_size_ = sizeof(codegen::util::OAHashTable::HashEntry) +
                      key_storage_.MaxStorageSize() + value_size_;
 }
 
@@ -402,7 +402,7 @@ void OAHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
   auto *ht_init_fn = OAHashTableProxy::_Init::GetFunction(codegen);
   auto *key_size = codegen.Const64(key_storage_.MaxStorageSize());
   auto *value_size = codegen.Const64(value_size_);
-  auto *initial_size = codegen.Const64(utils::OAHashTable::kDefaultInitialSize);
+  auto *initial_size = codegen.Const64(codegen::util::OAHashTable::kDefaultInitialSize);
   codegen.CallFunc(ht_init_fn, {ht_ptr, key_size, value_size, initial_size});
 }
 

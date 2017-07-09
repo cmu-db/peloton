@@ -4,7 +4,7 @@
 //
 // deleter.cpp
 //
-// Identification: src/codegen/utils/deleter.cpp
+// Identification: src/codegen/util/deleter.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

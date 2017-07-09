@@ -19,7 +19,7 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 // A utility class that serves as a helper to proxy most of the methods in
-// peloton::codegen::utils::OAHashTable. It significantly reduces the pain in
+// peloton::codegen::util::OAHashTable. It significantly reduces the pain in
 // calling methods on OAHashTable instances from LLVM code.
 //===----------------------------------------------------------------------===//
 class OAHashTableProxy {
