@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/operator/projection_translator.h"
 
 #include "common/logger.h"

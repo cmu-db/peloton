@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/sorter.h"
 
 #include "codegen/lang/loop.h"
@@ -26,8 +25,7 @@ Sorter::Sorter() {
   // cases when the tuple description is not known fully at construction time.
 }
 
-Sorter::Sorter(CodeGen &codegen,
-               const std::vector<type::Type> &row_desc) {
+Sorter::Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc) {
   // Configure the storage format using the provided row description
   for (const auto &value_type : row_desc) {
     storage_format_.AddType(value_type);
@@ -84,8 +82,8 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index, SorterAccess &access) const {
       lang::Loop loop{codegen,
-                codegen->CreateICmpULT(start_index, end_index),
-                {{"start", start_index}}};
+                      codegen->CreateICmpULT(start_index, end_index),
+                      {{"start", start_index}}};
       {
         llvm::Value *curr_index = loop.GetLoopVar(0);
 
@@ -124,7 +122,8 @@ void Sorter::VectorizedIterate(
   llvm::Value *tuple_size = GetTupleSize(codegen);
   llvm::Value *skip = codegen->CreateMul(vec_sz, tuple_size);
 
-  lang::VectorizedLoop loop{codegen, num_tuples, vector_size, {{"pos", start_pos}}};
+  lang::VectorizedLoop loop{
+      codegen, num_tuples, vector_size, {{"pos", start_pos}}};
   {
     llvm::Value *curr_pos = loop.GetLoopVar(0);
     auto curr_range = loop.GetCurrentRange();

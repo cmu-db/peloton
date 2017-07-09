@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/translator_factory.h"
 
 #include "codegen/expression/arithmetic_translator.h"

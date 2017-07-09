@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/operator/delete_translator.h"
 
 #include "codegen/proxy/catalog_proxy.h"

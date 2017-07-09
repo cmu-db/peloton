@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/operator/global_group_by_translator.h"
 
 #include "codegen/lang/if.h"

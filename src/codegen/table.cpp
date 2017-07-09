@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/table.h"
 
 #include "catalog/schema.h"
@@ -76,8 +75,8 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
   // Iterate over all tile groups in the table
   lang::Loop loop{codegen,
-            codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
-            {{"tileGroupIdx", tile_group_idx}}};
+                  codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
+                  {{"tileGroupIdx", tile_group_idx}}};
   {
     // Get the tile group with the given tile group ID
     tile_group_idx = loop.GetLoopVar(0);

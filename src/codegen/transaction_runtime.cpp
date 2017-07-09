@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/transaction_runtime.h"
 
 #include "concurrency/transaction.h"

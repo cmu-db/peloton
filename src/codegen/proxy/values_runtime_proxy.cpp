@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/proxy/values_runtime_proxy.h"
 
 #include "codegen/value_proxy.h"
@@ -47,7 +46,6 @@ llvm::Function *ValuesRuntimeProxy::_OutputBoolean::GetFunction(
       false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
-
 
 //===----------------------------------------------------------------------===//
 // OUTPUT TINYINT
@@ -200,8 +198,7 @@ const std::string &ValuesRuntimeProxy::_OutputDate::GetFunctionName() {
   return kOutputTimestampFnName;
 }
 
-llvm::Function *ValuesRuntimeProxy::_OutputDate::GetFunction(
-    CodeGen &codegen) {
+llvm::Function *ValuesRuntimeProxy::_OutputDate::GetFunction(CodeGen &codegen) {
   const std::string &fn_name = GetFunctionName();
 
   // Has the function already been registered?

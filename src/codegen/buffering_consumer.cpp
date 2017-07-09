@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/buffering_consumer.h"
 
 #include "codegen/lang/if.h"

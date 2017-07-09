@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/expression/expression_translator.h"
 
 #include "codegen/compilation_context.h"
@@ -23,7 +22,8 @@ namespace codegen {
 ExpressionTranslator::ExpressionTranslator(
     const expression::AbstractExpression &expression, CompilationContext &ctx)
     : expression_(expression) {
-  if (expression::ExpressionUtil::IsAggregateExpression(expression.GetExpressionType()))
+  if (expression::ExpressionUtil::IsAggregateExpression(
+          expression.GetExpressionType()))
     return;
   for (uint32_t i = 0; i < expression_.GetChildrenSize(); i++) {
     ctx.Prepare(*expression_.GetChild(i));

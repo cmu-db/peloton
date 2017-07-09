@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/type.h"
 
 #include "codegen/type/sql_type.h"

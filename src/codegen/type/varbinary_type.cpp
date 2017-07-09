@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/varbinary_type.h"
 
 #include "codegen/value.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/expression/constant_translator.h"
 
 #include "codegen/type/sql_type.h"

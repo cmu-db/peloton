@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/smallint_type.h"
 
 #include "codegen/lang/if.h"
@@ -408,13 +407,18 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastSmallInt kCastSmallInt;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::BOOLEAN, kCastSmallInt},
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::TINYINT, kCastSmallInt},
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::SMALLINT, kCastSmallInt},
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::INTEGER, kCastSmallInt},
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::BIGINT, kCastSmallInt},
-    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::DECIMAL, kCastSmallInt}};
-
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::BOOLEAN,
+     kCastSmallInt},
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::TINYINT,
+     kCastSmallInt},
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::SMALLINT,
+     kCastSmallInt},
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::INTEGER,
+     kCastSmallInt},
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::BIGINT,
+     kCastSmallInt},
+    {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::DECIMAL,
+     kCastSmallInt}};
 
 // Comparison operations
 static CompareSmallInt kCompareSmallInt;

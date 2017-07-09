@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/decimal_type.h"
 
 #include "codegen/lang/if.h"
@@ -348,12 +347,18 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastDecimal kCastDecimal;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL, kCastDecimal}};
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL,
+     kCastDecimal}};
 
 // Comparison operations
 static CompareDecimal kCompareDecimal;
@@ -377,7 +382,6 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Mul, kMulOp},
     {OperatorId::Div, kDivOp},
     {OperatorId::Mod, kModuloOp}};
-
 
 }  // anonymous namespace
 

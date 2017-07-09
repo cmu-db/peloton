@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/expression/comparison_translator.h"
 
 #include "expression/comparison_expression.h"

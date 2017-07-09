@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/query_compiler.h"
 
 #include "codegen/compilation_context.h"
@@ -56,8 +55,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       break;
     }
     case PlanNodeType::PROJECTION: {
-      if(plan.GetChildren().size() == 0)
-        return false;
+      if (plan.GetChildren().size() == 0) return false;
       break;
     }
     case PlanNodeType::HASHJOIN: {
@@ -95,9 +93,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       pred = hj_plan.GetPredicate();
       break;
     }
-    default: {
-      break;
-    }
+    default: { break; }
   }
 
   if (pred != nullptr && !IsExpressionSupported(*pred)) {

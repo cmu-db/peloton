@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/aggregation.h"
 
 #include "codegen/lang/if.h"

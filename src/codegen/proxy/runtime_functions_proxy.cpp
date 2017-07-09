@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/proxy/runtime_functions_proxy.h"
 
 #include "llvm/IR/TypeBuilder.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/operator/hash_join_translator.h"
 
 #include "codegen/proxy/oa_hash_table_proxy.h"
@@ -172,7 +171,8 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    lang::Loop prefetch_loop{codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    lang::Loop prefetch_loop{
+        codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/lang/vectorized_loop.h"
 
 #include "common/exception.h"
@@ -23,7 +22,7 @@ VectorizedLoop::VectorizedLoop(CodeGen &codegen, llvm::Value *num_elements,
                                uint32_t vector_size,
                                const std::vector<Loop::LoopVariable> &loop_vars)
     : num_elements_(
-    codegen->CreateZExtOrBitCast(num_elements, codegen.Int32Type())),
+          codegen->CreateZExtOrBitCast(num_elements, codegen.Int32Type())),
       loop_(InitLoop(codegen, num_elements_, loop_vars)),
       ended_(false),
       vector_size_(vector_size) {

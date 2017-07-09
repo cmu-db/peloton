@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/updateable_storage.h"
 
 #include "codegen/lang/if.h"

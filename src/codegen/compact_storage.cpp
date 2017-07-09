@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/compact_storage.h"
 
 #include "codegen/type/sql_type.h"
@@ -106,8 +105,8 @@ class BitmapReader {
 //===----------------------------------------------------------------------===//
 // Setup
 //===----------------------------------------------------------------------===//
-llvm::Type *CompactStorage::Setup(
-    CodeGen &codegen, const std::vector<type::Type> &types) {
+llvm::Type *CompactStorage::Setup(CodeGen &codegen,
+                                  const std::vector<type::Type> &types) {
   // Return the constructed type if the compact storage has already been set up
   if (storage_type_ != nullptr) {
     return storage_type_;
