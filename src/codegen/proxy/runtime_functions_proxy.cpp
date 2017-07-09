@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 
 #include "llvm/IR/TypeBuilder.h"
 
-#include "codegen/data_table_proxy.h"
-#include "codegen/tile_group_proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/tile_group_proxy.h"
 
 namespace peloton {
 namespace codegen {

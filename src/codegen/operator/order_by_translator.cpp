@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/operator/order_by_translator.h"
+#include "codegen/operator/order_by_translator.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/runtime_functions_proxy.h"
-#include "codegen/sorter_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/sorter_proxy.h"
 #include "codegen/type/integer_type.h"
 #include "common/logger.h"
 #include "planner/order_by_plan.h"

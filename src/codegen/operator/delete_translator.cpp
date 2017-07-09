@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/operator/delete_translator.h"
+#include "codegen/operator/delete_translator.h"
 
-#include "codegen/catalog_proxy.h"
+#include "codegen/proxy/catalog_proxy.h"
 #include "codegen/deleter.h"
-#include "codegen/deleter_proxy.h"
-#include "codegen/transaction_runtime_proxy.h"
+#include "codegen/proxy/deleter_proxy.h"
+#include "codegen/proxy/transaction_runtime_proxy.h"
 #include "planner/delete_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"

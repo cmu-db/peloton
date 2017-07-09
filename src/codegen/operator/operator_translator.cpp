@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/operator/operator_translator.h"
+#include "codegen/operator/operator_translator.h"
 
 #include "codegen/compilation_context.h"
 

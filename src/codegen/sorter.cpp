@@ -13,7 +13,7 @@
 #include "codegen/sorter.h"
 
 #include "codegen/lang/loop.h"
-#include "codegen/sorter_proxy.h"
+#include "codegen/proxy/sorter_proxy.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/vector.h"
 

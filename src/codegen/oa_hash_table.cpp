@@ -17,7 +17,7 @@
 #include "codegen/hash.h"
 #include "codegen/lang/if.h"
 #include "codegen/lang/loop.h"
-#include "codegen/oa_hash_table_proxy.h"
+#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/utils/oa_hash_table.h"
