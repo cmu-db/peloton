@@ -14,8 +14,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "data_table_proxy.h"
-#include "transaction_proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {

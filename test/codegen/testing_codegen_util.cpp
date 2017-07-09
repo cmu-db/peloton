@@ -12,8 +12,8 @@
 
 #include "codegen/testing_codegen_util.h"
 
-#include "include/codegen/proxy/runtime_functions_proxy.h"
-#include "include/codegen/proxy/values_runtime_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
 
 namespace peloton {
