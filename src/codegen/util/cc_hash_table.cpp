@@ -4,20 +4,20 @@
 //
 // cc_hash_table.cpp
 //
-// Identification: src/codegen/utils/cc_hash_table.cpp
+// Identification: src/codegen/util/cc_hash_table.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/utils/cc_hash_table.h"
+#include "codegen/util/cc_hash_table.h"
 
 #include "common/logger.h"
 #include "common/platform.h"
 
 namespace peloton {
 namespace codegen {
-namespace utils {
+namespace util {
 
 // TODO: worry about growing the table
 
@@ -169,6 +169,6 @@ bool CCHashTable::iterator::operator!=(const CCHashTable::iterator& rhs) {
 //===----------------------------------------------------------------------===//
 const char* CCHashTable::iterator::operator*() { return curr_->data; }
 
-}  // namespace utils
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton
