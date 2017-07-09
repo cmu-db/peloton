@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "codegen/codegen.h"
@@ -29,7 +28,8 @@ class If {
  public:
   // Constructor
   If(CodeGen &cg, llvm::Value *if_condition, const std::string &name = "then");
-  If(CodeGen &cg, const codegen::Value &if_condition, const std::string &name = "then");
+  If(CodeGen &cg, const codegen::Value &if_condition,
+     const std::string &name = "then");
 
   // Begin the else block (provided the name _name_)
   void ElseBlock(const std::string &name = "else");

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdint>
@@ -34,7 +33,6 @@ namespace codegen {
 // class is initialized once (through Init()) outside the main loop.
 class Deleter {
  public:
-
   // Initializer this deleter instance using the provided transaction and table.
   // All tuples to be deleted occur within the provided transaction are from
   // the provided table

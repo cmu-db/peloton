@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "codegen/codegen.h"
@@ -33,8 +32,8 @@ class ExecutorContextProxy {
     }
 
     // Type isn't cached, create a new one
-    auto *opaque_byte_array = llvm::ArrayType::get(codegen.Int8Type(),
-        sizeof(executor::ExecutorContext));
+    auto *opaque_byte_array = llvm::ArrayType::get(
+        codegen.Int8Type(), sizeof(executor::ExecutorContext));
     return llvm::StructType::create(codegen.GetContext(), {opaque_byte_array},
                                     kExecutorContextName);
   }
