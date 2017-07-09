@@ -33,7 +33,7 @@
 #include "executor/update_executor.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
@@ -152,7 +152,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
