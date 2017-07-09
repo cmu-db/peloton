@@ -96,6 +96,7 @@ ResultType TrafficCop::CommitQueryHelper() {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.CommitTransaction(txn);
+
     // # 623
     return result;
   } else {
@@ -123,6 +124,7 @@ ResultType TrafficCop::AbortQueryHelper() {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
+    
     return result;
   } else {
     LOG_INFO("SINGLE ABORTQUERYHELPER!!");
@@ -181,7 +183,7 @@ ResultType TrafficCop::ExecuteStatement(
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto txn = txn_manager.BeginTransaction(thread_id);
       // pass txn handle to optimizer_
-      (*optimizer_).consistentTxn = txn;
+      optimizer_->consistentTxn = txn;
 
       LOG_DEBUG("Begin Txn Id: %lu", txn->GetTransactionId());
 
@@ -202,7 +204,7 @@ ResultType TrafficCop::ExecuteStatement(
       if (txn == nullptr) {
         LOG_DEBUG("Begin txn failed");
       }
-      (*optimizer_).consistentTxn = txn;
+      optimizer_->consistentTxn = txn;
       LOG_DEBUG("Begin Single Txn Id: %lu", txn->GetTransactionId());
       tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
       statement = PrepareStatement(unnamed_statement, query, error_message);

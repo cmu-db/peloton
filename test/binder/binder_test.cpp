@@ -52,7 +52,7 @@ void SetupTables() {
     LOG_INFO("%s", sql.c_str());
     txn = txn_manager.BeginTransaction();
     traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-    traffic_cop.single_statement_txn = true;
+
     vector<type::Value> params;
     vector<StatementResult> result;
     vector<int> result_format;
@@ -63,6 +63,7 @@ void SetupTables() {
         statement->GetPlanTree(), params, result, result_format);
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());
+    traffic_cop.CommitQueryHelper();
   }
 //  txn_manager.CommitTransaction(txn);
 }
@@ -148,7 +149,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
-  binder.reset(new binder::BindNodeVisitor());
+  delete binder->consistentTxn;
   // # 623
   txn = txn_manager.BeginTransaction();
   binder->consistentTxn = txn;
@@ -163,7 +164,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   }
 
   // Test select from different table instances from the same physical schema
-  binder.reset(new binder::BindNodeVisitor());
+  delete binder->consistentTxn;
   // # 623
   txn = txn_manager.BeginTransaction();
   binder->consistentTxn = txn;
@@ -181,7 +182,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test alias and select_list
   LOG_INFO("Checking select_list and table alias binding");
-  binder.reset(new binder::BindNodeVisitor());
+  delete binder->consistentTxn;
   // # 623
   txn = txn_manager.BeginTransaction();
   binder->consistentTxn = txn;
@@ -195,7 +196,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
-
+  delete binder->consistentTxn;
   // Delete the test database
 //  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn = txn_manager.BeginTransaction();
@@ -226,6 +227,8 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto deleteStmt =
       dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(deleteStmt);
+
+  delete binder->consistentTxn;
 
   LOG_INFO("Checking first condition in where clause");
   auto tupleExpr =
