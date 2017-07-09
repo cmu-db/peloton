@@ -6,9 +6,10 @@
 //
 // Identification: src/codegen/util/oa_hash_table.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/util/oa_hash_table.h"
 

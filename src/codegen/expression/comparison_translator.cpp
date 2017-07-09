@@ -4,11 +4,12 @@
 //
 // comparison_translator.cpp
 //
-// Identification: src/codegen/comparison_translator.cpp
+// Identification: src/codegen/expression/comparison_translator.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/expression/comparison_translator.h"
 

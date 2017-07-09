@@ -4,11 +4,12 @@
 //
 // operator_translator.cpp
 //
-// Identification: src/codegen/operator_translator.cpp
+// Identification: src/codegen/operator/operator_translator.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/operator/operator_translator.h"
 

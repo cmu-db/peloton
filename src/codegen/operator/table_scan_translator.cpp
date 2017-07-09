@@ -4,11 +4,12 @@
 //
 // table_scan_translator.cpp
 //
-// Identification: src/codegen/table_scan_translator.cpp
+// Identification: src/codegen/operator/table_scan_translator.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "codegen/operator/table_scan_translator.h"
 
