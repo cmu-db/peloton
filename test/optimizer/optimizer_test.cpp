@@ -9,7 +9,6 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
@@ -38,7 +37,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first

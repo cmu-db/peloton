@@ -17,7 +17,7 @@
 #include "binder/bind_node_visitor.h"
 #include "parser/postgresparser.h"
 
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "tcop/tcop.h"
 
 #include <memory>
@@ -42,7 +42,7 @@ void SetupTables() {
 
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
 
   txn = txn_manager.BeginTransaction();
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",

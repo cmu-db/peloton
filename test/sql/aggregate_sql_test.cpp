@@ -16,7 +16,7 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "planner/create_plan.h"
 
 namespace peloton {
@@ -38,7 +38,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
 
   // All of these aggregates should return null
   std::vector<std::string> nullAggregates = {"MIN", "MAX", "AVG", "SUM"};
@@ -104,7 +104,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(b) from test", result,

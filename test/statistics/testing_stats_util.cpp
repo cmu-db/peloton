@@ -21,6 +21,7 @@
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
 #include "expression/expression_util.h"
+#include "optimizer/optimizer.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
@@ -43,7 +44,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   statement.reset(new Statement("SELECT", sql));
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
-      optimizer::SimpleOptimizer().BuildPelotonPlanTree(select_stmt));
+      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt));
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);

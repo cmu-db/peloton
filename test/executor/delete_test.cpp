@@ -20,7 +20,7 @@
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
@@ -47,7 +47,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   executor::ExecuteResult status;
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
@@ -71,7 +71,7 @@ TEST_F(DeleteTests, VariousOperations) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
