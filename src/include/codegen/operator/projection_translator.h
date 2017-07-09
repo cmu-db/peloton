@@ -14,7 +14,7 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "operator_translator.h"
+#include "codegen/operator/operator_translator.h"
 #include "codegen/pipeline.h"
 
 namespace peloton {

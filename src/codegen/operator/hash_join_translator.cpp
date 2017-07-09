@@ -13,7 +13,6 @@
 
 #include "codegen/operator/hash_join_translator.h"
 
-#include "codegen/lang/if.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "codegen/lang/vectorized_loop.h"

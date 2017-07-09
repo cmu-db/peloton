@@ -14,7 +14,7 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "operator_translator.h"
+#include "codegen/operator/operator_translator.h"
 #include "codegen/sorter.h"
 #include "codegen/updateable_storage.h"
 
