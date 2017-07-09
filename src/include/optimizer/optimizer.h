@@ -18,6 +18,7 @@
 #include "optimizer/column_manager.h"
 #include "optimizer/memo.h"
 #include "optimizer/property_set.h"
+#include "optimizer/rule.h"
 
 namespace peloton {
 
@@ -32,7 +33,6 @@ class AbstractPlan;
 
 namespace optimizer {
 class OperatorExpression;
-class Rule;
 }
 
 namespace optimizer {
