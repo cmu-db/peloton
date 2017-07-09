@@ -13,12 +13,16 @@
 #pragma once
 
 #include "codegen/expression/expression_translator.h"
-#include "expression/case_expression.h"
 
 namespace peloton {
 
+namespace expression {
+class CaseExpression;
+}  // namespace expression
+
 namespace codegen {
 
+/// A translator for CASE expressions.
 class CaseTranslator : public ExpressionTranslator {
  public:
   CaseTranslator(const expression::CaseExpression &expression,
