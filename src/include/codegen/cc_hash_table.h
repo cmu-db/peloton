@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "codegen/codegen.h"
@@ -32,8 +31,7 @@ class CCHashTable : public HashTable {
  public:
   // Constructor
   CCHashTable();
-  CCHashTable(CodeGen &codegen,
-              const std::vector<type::Type> &key_type);
+  CCHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type);
 
   // Initialize the hash-table instance
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;

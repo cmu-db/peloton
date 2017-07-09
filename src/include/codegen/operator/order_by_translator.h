@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "codegen/compilation_context.h"
@@ -44,7 +43,6 @@ class OrderByTranslator : public OperatorTranslator {
   std::string GetName() const override;
 
  private:
-
   // Accessor
   const planner::OrderByPlan &GetPlan() const { return plan_; }
 
@@ -59,6 +57,7 @@ class OrderByTranslator : public OperatorTranslator {
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index,
                         Sorter::SorterAccess &access) const override;
+
    private:
     // The translator
     const OrderByTranslator &translator_;
@@ -72,9 +71,10 @@ class OrderByTranslator : public OperatorTranslator {
   class SorterAttributeAccess : public RowBatch::AttributeAccess {
    public:
     SorterAttributeAccess(Sorter::SorterAccess &sorter_access,
-                               uint32_t col_index);
+                          uint32_t col_index);
     // Access the configured attributes in the provided row
     Value Access(CodeGen &codegen, RowBatch::Row &row) override;
+
    private:
     // A random access interface to the underlying sorter
     Sorter::SorterAccess &sorter_access_;

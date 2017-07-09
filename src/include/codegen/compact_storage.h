@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -36,8 +35,7 @@ class CompactStorage {
   CompactStorage() : storage_type_(nullptr) {}
 
   // Setup this storage to store the given types (in the specified order)
-  llvm::Type *Setup(CodeGen &codegen,
-                    const std::vector<type::Type> &types);
+  llvm::Type *Setup(CodeGen &codegen, const std::vector<type::Type> &types);
 
   // Store the given values into the provided storage area
   llvm::Value *StoreValues(CodeGen &codegen, llvm::Value *area_start,
