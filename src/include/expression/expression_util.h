@@ -223,9 +223,8 @@ class ExpressionUtil {
   }
 
   static AbstractExpression *OperatorFactory(
-      ExpressionType type, type::TypeId value_type,
-      AbstractExpression *expr1, AbstractExpression *expr2,
-      UNUSED_ATTRIBUTE AbstractExpression *expr3,
+      ExpressionType type, type::TypeId value_type, AbstractExpression *expr1,
+      AbstractExpression *expr2, UNUSED_ATTRIBUTE AbstractExpression *expr3,
       UNUSED_ATTRIBUTE AbstractExpression *expr4) {
     switch (type) {
       default:
@@ -464,8 +463,7 @@ class ExpressionUtil {
    * Walks an expression trees and find all TupleValueExprs in the tree
    */
   static void GetTupleValueExprs(ExprSet &expr_set, AbstractExpression *expr) {
-    if (expr == nullptr) 
-      return;
+    if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
@@ -526,6 +524,12 @@ class ExpressionUtil {
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
+    } else if (expr->GetExpressionType() ==
+               ExpressionType::OPERATOR_CASE_EXPR) {
+      auto case_expr = reinterpret_cast<expression::CaseExpression *>(expr);
+      for (size_t i = 0; i < case_expr->GetWhenClauseSize(); i++) {
+        EvaluateExpression(expr_maps, case_expr->GetWhenClauseCond(i));
+      }
     }
 
     // Decude the expression type for Non-TupleValueExpressions
@@ -552,11 +556,11 @@ class ExpressionUtil {
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
-      auto left_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                          expr->GetChild(0));
+      auto left_expr =
+          ExtractJoinColumns(l_column_exprs, r_column_exprs, expr->GetChild(0));
 
-      auto right_expr = ExtractJoinColumns(l_column_exprs, r_column_exprs,
-                                           expr->GetChild(1));
+      auto right_expr =
+          ExtractJoinColumns(l_column_exprs, r_column_exprs, expr->GetChild(1));
 
       expression::AbstractExpression *root = nullptr;
 

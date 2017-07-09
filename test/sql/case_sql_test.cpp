@@ -52,8 +52,6 @@ TEST_F(CaseSQLTests, Simple) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
 
   LOG_DEBUG("Running SELECT a, case when a=1 then 2 else 0 end from test");	
   TestingSQLUtil::ExecuteSQLQuery(
@@ -90,8 +88,6 @@ TEST_F(CaseSQLTests, SimpleWithArg) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
 
   LOG_DEBUG("Running SELECT a, case a when 1 then 2 when 2 then 3 "
             "else 100 end from test");
@@ -129,8 +125,6 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
 
   LOG_DEBUG("Running SELECT a, case a when 1 then '2' when 2 then '3' "
             "else '100' end from test");
@@ -170,8 +164,6 @@ TEST_F(CaseSQLTests, SimpleMultipleWhen) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
 
   LOG_DEBUG("Running SELECT a, case when a=1 then 2 else 0 end from test");
   TestingSQLUtil::ExecuteSQLQuery(
@@ -210,8 +202,6 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElse) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
 
   LOG_DEBUG("Running SELECT a, case when a=1 then 2 end from test");
   TestingSQLUtil::ExecuteSQLQuery(

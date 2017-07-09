@@ -31,7 +31,7 @@
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
-
+#include "optimizer/simple_optimizer.h"
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
