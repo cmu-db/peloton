@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 
 #include "codegen/value_proxy.h"
 #include "type/value.h"

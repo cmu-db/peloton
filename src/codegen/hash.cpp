@@ -14,7 +14,7 @@
 
 #include "llvm/IR/Intrinsics.h"
 
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "common/exception.h"
 
 namespace peloton {

@@ -15,7 +15,7 @@
 #include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
 #include "codegen/lang/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/integer_type.h"
 
 #include "codegen/codegen_test_util.h"

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/sorter_proxy.h"
+#include "codegen/proxy/sorter_proxy.h"
 #include "codegen/utils/sorter.h"
 
 namespace peloton {

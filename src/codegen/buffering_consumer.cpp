@@ -13,7 +13,7 @@
 #include "codegen/buffering_consumer.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
 #include "codegen/type/sql_type.h"
 #include "planner/binding_context.h"

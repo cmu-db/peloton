@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/codegen/operator/table_scan_translator.h"
+#include "codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/catalog_proxy.h"
-#include "codegen/transaction_runtime_proxy.h"
+#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"

@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/transaction_proxy.h"
+#include "data_table_proxy.h"
+#include "transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {
