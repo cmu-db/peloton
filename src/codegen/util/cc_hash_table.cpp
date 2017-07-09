@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/util/cc_hash_table.h"
 
 #include "common/logger.h"
@@ -33,7 +32,7 @@ CCHashTable::CCHashTable(uint64_t size) : num_elements_(0) {
   num_buckets_ = 1 << required_buckets_in_bits;
   bucket_mask_ = num_buckets_ - 1;
   buckets_ =
-      static_cast<HashEntry **>(malloc(sizeof(HashEntry *) * num_buckets_));
+      static_cast<HashEntry**>(malloc(sizeof(HashEntry*) * num_buckets_));
   for (uint64_t i = 0; i < num_buckets_; i++) {
     buckets_[i] = nullptr;
   }
@@ -66,9 +65,9 @@ void CCHashTable::Init() {
 // Make room for a key-value entry whose hash value and total size are equal to
 // the values provided as parameters to the method
 //===----------------------------------------------------------------------===//
-char *CCHashTable::StoreTuple(uint64_t hash, uint32_t size) {
+char* CCHashTable::StoreTuple(uint64_t hash, uint32_t size) {
   uint64_t bucket_num = hash % num_buckets_;
-  HashEntry *entry = static_cast<HashEntry*>(malloc(sizeof(HashEntry) + size));
+  HashEntry* entry = static_cast<HashEntry*>(malloc(sizeof(HashEntry) + size));
   entry->hash = hash;
   entry->next = buckets_[bucket_num];
   buckets_[bucket_num] = entry;
@@ -110,7 +109,8 @@ CCHashTable::iterator CCHashTable::end() { return iterator(*this, false); }
 //===----------------------------------------------------------------------===//
 // HashTable's iterator constructor
 //===----------------------------------------------------------------------===//
-CCHashTable::iterator::iterator(CCHashTable& table, bool begin) : table_(table) {
+CCHashTable::iterator::iterator(CCHashTable& table, bool begin)
+    : table_(table) {
   // If we're not creating an iterator that starts at the beginning, don't
   // initialize anything
   if (!begin) {

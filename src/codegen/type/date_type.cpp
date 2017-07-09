@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/date_type.h"
 
 #include "codegen/lang/if.h"
@@ -116,7 +115,8 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 
 static CastDateToTimestamp kDateToTimestamp;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP, kDateToTimestamp}};
+    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP,
+     kDateToTimestamp}};
 
 static CompareDate kCompareDate;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/row_batch.h"
 
 #include <llvm/Support/raw_ostream.h>
@@ -354,9 +353,7 @@ llvm::Value *RowBatch::GetNumTotalRows(CodeGen &codegen) {
   return num_rows_;
 }
 
-llvm::Value *RowBatch::GetTileGroupID() const {
-  return tile_group_id_;
-}
+llvm::Value *RowBatch::GetTileGroupID() const { return tile_group_id_; }
 
 void RowBatch::UpdateWritePosition(llvm::Value *sz) {
   selection_vector_.SetNumElements(sz);

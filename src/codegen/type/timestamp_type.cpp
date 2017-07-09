@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/timestamp_type.h"
 
 #include "codegen/value.h"
@@ -113,16 +112,15 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 
 static CastTimestampToDate kTimestampToDate;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::TIMESTAMP, peloton::type::TypeId::DATE, kTimestampToDate}};
+    {peloton::type::TypeId::TIMESTAMP, peloton::type::TypeId::DATE,
+     kTimestampToDate}};
 
 static CompareTimestamp kCompareTimestamp;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareTimestamp}
-};
+    {kCompareTimestamp}};
 
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable =
-    {};
+static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 }  // anonymous namespace
 

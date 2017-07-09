@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/varchar_type.h"
 
 #include "codegen/value.h"

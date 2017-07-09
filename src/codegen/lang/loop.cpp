@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/lang/loop.h"
 
 namespace peloton {
@@ -19,7 +18,7 @@ namespace lang {
 
 // Constructor
 Loop::Loop(CodeGen &cg, llvm::Value *start_condition,
-           const std::vector <Loop::LoopVariable> &loop_vars)
+           const std::vector<Loop::LoopVariable> &loop_vars)
     : cg_(cg),
       fn_(cg_->GetInsertBlock()->getParent()),
       pre_loop_bb_(cg_->GetInsertBlock()),
@@ -66,7 +65,7 @@ void Loop::LoopEnd(llvm::Value *end_condition,
 
 // Collect all the final values of the loop variables after the loop is
 // complete
-void Loop::CollectFinalLoopVariables(std::vector < llvm::Value * > &loop_vals) {
+void Loop::CollectFinalLoopVariables(std::vector<llvm::Value *> &loop_vals) {
   PL_ASSERT(last_loop_bb_ != nullptr);
   for (const auto *phi_node : phi_nodes_) {
     llvm::PHINode *end_phi =

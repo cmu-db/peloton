@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/values_runtime.h"
 
 #include "type/type_util.h"

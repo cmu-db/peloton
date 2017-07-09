@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/proxy/transaction_runtime_proxy.h"
 
 #include "codegen/proxy/executor_context_proxy.h"
@@ -69,15 +68,14 @@ llvm::Function *TransactionRuntimeProxy::_PerformDelete::GetFunction(
     return llvm_fn;
   }
 
-  std::vector<llvm::Type *> fn_args{codegen.Int32Type(),
-      TransactionProxy::GetType(codegen)->getPointerTo(),
+  std::vector<llvm::Type *> fn_args{
+      codegen.Int32Type(), TransactionProxy::GetType(codegen)->getPointerTo(),
       DataTableProxy::GetType(codegen)->getPointerTo(),
       TileGroupProxy::GetType(codegen)->getPointerTo()};
-  llvm::FunctionType *fn_type = llvm::FunctionType::get(codegen.BoolType(),
-                                                        fn_args, false);
+  llvm::FunctionType *fn_type =
+      llvm::FunctionType::get(codegen.BoolType(), fn_args, false);
   return codegen.RegisterFunction(fn_name, fn_type);
 }
-
 
 const std::string &
 TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunctionName() {

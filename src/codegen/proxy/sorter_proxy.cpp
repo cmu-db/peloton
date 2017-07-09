@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/util/sorter.h"
 

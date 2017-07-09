@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/runtime_state.h"
 #include "codegen/vector.h"
 

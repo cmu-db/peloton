@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/bigint_type.h"
 
 #include "codegen/lang/if.h"
@@ -388,12 +387,17 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastBigInt kCastBigInt;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::BOOLEAN, kCastBigInt},
-    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::TINYINT, kCastBigInt},
-    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::SMALLINT, kCastBigInt},
-    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::INTEGER, kCastBigInt},
+    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::BOOLEAN,
+     kCastBigInt},
+    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::TINYINT,
+     kCastBigInt},
+    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::SMALLINT,
+     kCastBigInt},
+    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::INTEGER,
+     kCastBigInt},
     {peloton::type::TypeId::BIGINT, peloton::type::TypeId::BIGINT, kCastBigInt},
-    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::DECIMAL, kCastBigInt}};
+    {peloton::type::TypeId::BIGINT, peloton::type::TypeId::DECIMAL,
+     kCastBigInt}};
 
 // Comparison operations
 static CompareBigInt kCompareBigInt;

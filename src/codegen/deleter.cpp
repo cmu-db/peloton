@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/deleter.h"
 
 #include "codegen/transaction_runtime.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/expression/case_translator.h"
 
 #include "codegen/compilation_context.h"
@@ -20,10 +19,9 @@
 namespace peloton {
 namespace codegen {
 
-CaseTranslator::CaseTranslator(
-    const expression::CaseExpression &expression, CompilationContext &context)
+CaseTranslator::CaseTranslator(const expression::CaseExpression &expression,
+                               CompilationContext &context)
     : ExpressionTranslator(expression, context) {
-
   // We need to prepare each component of the case
   for (const auto &clause : expression.GetWhenClauses()) {
     context.Prepare(*clause.first);
@@ -36,7 +34,6 @@ CaseTranslator::CaseTranslator(
 
 codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
                                            RowBatch::Row &row) const {
-
   // Might not appear in the output IR when all If's are optimized to Switch's
   // Potential future enhancement: Consider using Switch instead of If
   //                               It may provide more code readability
@@ -63,9 +60,10 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
 
   // Compute the default clause
   // default_ret will have the same type as one of the ret's from above
-  codegen::Value default_ret = expr.GetDefault() != nullptr ?
-      row.DeriveValue(codegen, *expr.GetDefault()) :
-      ret.GetType().GetSqlType().GetNullValue(codegen);
+  codegen::Value default_ret =
+      expr.GetDefault() != nullptr
+          ? row.DeriveValue(codegen, *expr.GetDefault())
+          : ret.GetType().GetSqlType().GetNullValue(codegen);
   branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
 
   // Push the merging block to the end and build the PHI on this merging block

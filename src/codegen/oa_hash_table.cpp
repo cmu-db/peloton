@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/oa_hash_table.h"
 
 #include <llvm/IR/Intrinsics.h>
@@ -124,7 +123,8 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
 
   // Do wrap-around if we need to
   llvm::Value *wrap_back_index = nullptr, *wrap_back_entry_ptr = nullptr;
-  lang::If wrap_back{codegen, codegen->CreateICmpEQ(next_index, hash_table_size)};
+  lang::If wrap_back{codegen,
+                     codegen->CreateICmpEQ(next_index, hash_table_size)};
   {
     wrap_back_index = codegen.Const64(0);
     wrap_back_entry_ptr = LoadHashTableField(codegen, hash_table, 0);
@@ -198,7 +198,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
 
   // Whether kv_p equals 0x0000000000000001
   lang::If is_entry_single_value{codegen, IsPtrEqualTo(codegen, kv_p, 1UL),
-                           "singleValue"};
+                                 "singleValue"};
   {
     data_count_inline = codegen.Const64(1);
     data_ptr_inline = AdvancePointer(codegen, after_key_p, 0UL);
@@ -260,9 +260,10 @@ void OAHashTable::TranslateProbing(
   // Return the result of comparison (if ptr is 0 then the slot is free)
   llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
-  lang::Loop probe_loop{codegen,
-                  status_neq_zero,
-                  {{"entry", entry_ptr}, {"index", index}, {"kvl", kv_p}}};
+  lang::Loop probe_loop{
+      codegen,
+      status_neq_zero,
+      {{"entry", entry_ptr}, {"index", index}, {"kvl", kv_p}}};
   {
     entry_ptr = probe_loop.GetLoopVar(0);
     index = probe_loop.GetLoopVar(1);
@@ -310,9 +311,10 @@ void OAHashTable::TranslateProbing(
 
             // Start a loop. Since we know at least one value exits, we build
             // a do-while loop.
-            lang::Loop value_loop{codegen,
-                            codegen.ConstBool(true),
-                            {{"counter", loop_counter}, {"dataPtr", data_ptr}}};
+            lang::Loop value_loop{
+                codegen,
+                codegen.ConstBool(true),
+                {{"counter", loop_counter}, {"dataPtr", data_ptr}}};
             {
               // Loop variables
               loop_counter = value_loop.GetLoopVar(0);
@@ -403,7 +405,8 @@ void OAHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
   auto *ht_init_fn = OAHashTableProxy::_Init::GetFunction(codegen);
   auto *key_size = codegen.Const64(key_storage_.MaxStorageSize());
   auto *value_size = codegen.Const64(value_size_);
-  auto *initial_size = codegen.Const64(codegen::util::OAHashTable::kDefaultInitialSize);
+  auto *initial_size =
+      codegen.Const64(codegen::util::OAHashTable::kDefaultInitialSize);
   codegen.CallFunc(ht_init_fn, {ht_ptr, key_size, value_size, initial_size});
 }
 
@@ -469,9 +472,10 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
   llvm::Value *bucket_cond = codegen->CreateICmpULT(entry_index, num_buckets);
 
   // (1) loop var = bucket_index; loop cond = bucket_cond
-  lang::Loop bucket_loop{codegen,
-                   bucket_cond,
-                   {{"entryIndex", entry_index}, {"entryPtr", entry_ptr}}};
+  lang::Loop bucket_loop{
+      codegen,
+      bucket_cond,
+      {{"entryIndex", entry_index}, {"entryPtr", entry_ptr}}};
   {
     entry_index = bucket_loop.GetLoopVar(0);
     entry_ptr = bucket_loop.GetLoopVar(1);
@@ -499,9 +503,10 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
       data_ptr = data_count_ptr_pair.second;
       llvm::Value *val_index = codegen.Const64(0);
 
-      lang::Loop read_value_loop{codegen,
-                           codegen.ConstBool(true),  // Always pass
-                           {{"counter", val_index}, {"dataPtr", data_ptr}}};
+      lang::Loop read_value_loop{
+          codegen,
+          codegen.ConstBool(true),  // Always pass
+          {{"counter", val_index}, {"dataPtr", data_ptr}}};
       {
         val_index = read_value_loop.GetLoopVar(0);
         data_ptr = read_value_loop.GetLoopVar(1);
@@ -552,9 +557,10 @@ void OAHashTable::VectorizedIterate(
     entry_ptr = vector_loop.GetLoopVar(0);
 
     // Initial filter loop
-    std::vector<lang::Loop::LoopVariable> loop_vars = {{"pos", start},
-                                                 {"selPos", codegen.Const32(0)},
-                                                 {"currEntryPtr", entry_ptr}};
+    std::vector<lang::Loop::LoopVariable> loop_vars = {
+        {"pos", start},
+        {"selPos", codegen.Const32(0)},
+        {"currEntryPtr", entry_ptr}};
     lang::Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
     {
       llvm::Value *pos = filter_loop.GetLoopVar(0);

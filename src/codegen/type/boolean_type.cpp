@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/type/boolean_type.h"
 
 #include "codegen/value.h"
@@ -191,7 +190,7 @@ struct LogicalOr : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Boolean::Instance() &&
-        left_type == right_type;
+           left_type == right_type;
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -217,8 +216,10 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 static CastBooleanToInteger kBooleanToInteger;
 static CastBooleanToVarchar kBooleanToVarchar;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER, kBooleanToInteger},
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR, kBooleanToVarchar}};
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER,
+     kBooleanToInteger},
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR,
+     kBooleanToVarchar}};
 
 static CompareBoolean kCompareBoolean;
 static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
@@ -229,8 +230,7 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 static LogicalAnd kLogicalAnd;
 static LogicalOr kLogicalOr;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::LogicalAnd, kLogicalAnd},
-    {OperatorId::LogicalOr, kLogicalOr}};
+    {OperatorId::LogicalAnd, kLogicalAnd}, {OperatorId::LogicalOr, kLogicalOr}};
 
 }  // anonymous namespace
 
@@ -284,8 +284,7 @@ llvm::Value *Boolean::Reify(CodeGen &codegen, const Value &bool_val) const {
     return bool_val.GetValue();
   } else {
     return codegen->CreateSelect(bool_val.IsNull(codegen),
-                                 codegen.ConstBool(false),
-                                 bool_val.GetValue());
+                                 codegen.ConstBool(false), bool_val.GetValue());
   }
 }
 

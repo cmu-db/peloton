@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/compilation_context.h"
 
 #include "codegen/proxy/catalog_proxy.h"

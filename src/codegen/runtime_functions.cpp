@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/runtime_functions.h"
 
 #include <nmmintrin.h>

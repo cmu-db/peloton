@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/cc_hash_table.h"
 
 #include "codegen/proxy/cc_hash_table_proxy.h"
@@ -97,7 +96,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
     lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
-                  "hashMatch"};
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *keys_ptr =
@@ -203,8 +202,8 @@ void CCHashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
         codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
     // (1.2)
     lang::Loop chain_loop{codegen,
-                    codegen->CreateICmpNE(bucket, null_bucket),
-                    {{"entry", bucket}}};
+                          codegen->CreateICmpNE(bucket, null_bucket),
+                          {{"entry", bucket}}};
     {
       // (1.2.1)
       llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
@@ -260,7 +259,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
     lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash),
-                  "hashMatch"};
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *iter_keys =
