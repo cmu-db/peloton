@@ -14,6 +14,7 @@
 #include "binder/binder_context.h"
 #include "parser/statements.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/case_expression.h"
 #include "expression/constant_value_expression.h"
 #include "type/types.h"
 
@@ -46,6 +47,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(const parser::CopyStatement *) override;
   void Visit(const parser::AnalyzeStatement *) override;
 
+  void Visit(expression::CaseExpression *expr) override;
   // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
 
