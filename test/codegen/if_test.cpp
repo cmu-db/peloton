@@ -18,7 +18,7 @@
 #include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/integer_type.h"
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 
 namespace peloton {
 namespace test {

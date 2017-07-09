@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 
 #include "include/codegen/proxy/runtime_functions_proxy.h"
 #include "include/codegen/proxy/values_runtime_proxy.h"
