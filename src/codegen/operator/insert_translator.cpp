@@ -4,18 +4,18 @@
 //
 // insert_translator.cpp
 //
-// Identification: src/codegen/insert_translator.cpp
+// Identification: src/codegen/operator/insert_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/catalog_proxy.h"
-#include "codegen/insert_translator.h"
-#include "codegen/inserter_proxy.h"
-#include "codegen/type.h"
-#include "codegen/transaction_runtime_proxy.h"
-#include "codegen/tuple_runtime_proxy.h"
+#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/operator/insert_translator.h"
+#include "codegen/proxy/inserter_proxy.h"
+#include "codegen/type/sql_type.h"
+#include "codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/proxy/tuple_runtime_proxy.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
@@ -132,23 +132,24 @@ void InsertTranslator::Materialize(RowBatch::Row &row, llvm::Value *data,
     auto *ai = ais.at(i);
     codegen::Value v = row.DeriveValue(codegen, ai);
     llvm::Type *val_type, *len_type;
-    Type::GetTypeForMaterialization(codegen, v.GetType(), val_type, len_type);
+    const auto &sql_type = v.GetType().GetSqlType();
+    sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
     llvm::Value *ptr = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(),
                                                            data, offset);
-    switch (v.GetType()) {
-      case type::Type::TypeId::TINYINT:
-      case type::Type::TypeId::SMALLINT:
-      case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER:
-      case type::Type::TypeId::TIMESTAMP:
-      case type::Type::TypeId::BIGINT:
-      case type::Type::TypeId::DECIMAL: {
+    switch (sql_type.TypeId()) {
+      case peloton::type::TypeId::TINYINT:
+      case peloton::type::TypeId::SMALLINT:
+      case peloton::type::TypeId::DATE:
+      case peloton::type::TypeId::INTEGER:
+      case peloton::type::TypeId::TIMESTAMP:
+      case peloton::type::TypeId::BIGINT:
+      case peloton::type::TypeId::DECIMAL: {
         auto val_ptr = codegen->CreateBitCast(ptr, val_type->getPointerTo());
         codegen->CreateStore(v.GetValue(), val_ptr);
         break;
       }
-      case type::Type::TypeId::VARBINARY:
-      case type::Type::TypeId::VARCHAR: {
+      case peloton::type::TypeId::VARBINARY:
+      case peloton::type::TypeId::VARCHAR: {
         PL_ASSERT(v.GetLength() != nullptr);
         auto func = TupleRuntimeProxy::_MaterializeVarLen::GetFunction(codegen);
         auto val_ptr = codegen->CreateBitCast(ptr, codegen.CharPtrType());
@@ -158,7 +159,7 @@ void InsertTranslator::Materialize(RowBatch::Row &row, llvm::Value *data,
       default: {
         auto msg = StringUtil::Format(
             "Can't materialize type '%s' at column position(%u)",
-            TypeIdToString(v.GetType()).c_str(), i);
+            TypeIdToString(sql_type.TypeId()).c_str(), i);
         throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
       }
     }

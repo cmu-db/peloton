@@ -4,7 +4,7 @@
 //
 // inserter_proxy.h
 //
-// Identification: src/include/codegen/inserter_proxy.h
+// Identification: src/include/codegen/proxy/inserter_proxy.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -13,12 +13,12 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/executor_context_proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/inserter.h"
-#include "codegen/tuple_proxy.h"
-#include "codegen/pool_proxy.h"
-#include "codegen/transaction_proxy.h"
+#include "codegen/proxy/tuple_proxy.h"
+#include "codegen/proxy/pool_proxy.h"
+#include "codegen/proxy/transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {

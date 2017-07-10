@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 #include "common/harness.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager.h"
@@ -22,16 +22,15 @@ namespace test {
 class InsertTranslatorTest : public PelotonCodeGenTest {
  public:
   InsertTranslatorTest() : PelotonCodeGenTest() {}
-  uint32_t TestTable1Id() { return test_table1_id; }
-  uint32_t TestTable2Id() { return test_table2_id; }
-  uint32_t TestTable3Id() { return test_table3_id; }
+  TableId TestTableId1() { return TableId::_1; }
+  TableId TestTableId2() { return TableId::_2; }
 };
 
 // Insert one tuple
 TEST_F(InsertTranslatorTest, InsertOneTuple) {
 
   // Check the pre-condition
-  auto table = &GetTestTable(TestTable1Id());
+  auto table = &GetTestTable(TestTableId1());
   auto num_tuples = table->GetTupleCount();
   EXPECT_EQ(num_tuples, 0);
 
@@ -66,10 +65,10 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
 // Insert all tuples from table2 into table1.
 // This test uses the interpreted executor, just for comparison.
 TEST_F(InsertTranslatorTest, InsertScanExecutor) {
-  auto table1 = &GetTestTable(TestTable1Id());
-  auto table2 = &GetTestTable(TestTable2Id());
+  auto table1 = &GetTestTable(TestTableId1());
+  auto table2 = &GetTestTable(TestTableId2());
 
-  LoadTestTable(TestTable2Id(), 10);
+  LoadTestTable(TestTableId2(), 10);
 
   // Insert into table1
   std::unique_ptr<planner::InsertPlan> insert_plan(
@@ -108,10 +107,10 @@ TEST_F(InsertTranslatorTest, InsertScanExecutor) {
 
 // Insert all tuples from table2 into table1.
 TEST_F(InsertTranslatorTest, InsertScanTranslator) {
-  auto table1 = &GetTestTable(TestTable1Id());
-  auto table2 = &GetTestTable(TestTable2Id());
+  auto table1 = &GetTestTable(TestTableId1());
+  auto table2 = &GetTestTable(TestTableId2());
 
-  LoadTestTable(TestTable2Id(), 10);
+  LoadTestTable(TestTableId2(), 10);
 
   // Insert plan for table1
   std::unique_ptr<planner::InsertPlan> insert_plan(
