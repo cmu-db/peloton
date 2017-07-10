@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include "task/worker.h"
-#include "../include/task/worker.h"
+#include "../../../../../../../usr/include/boost/shared_ptr.hpp"
 
 #define EMPTY_COUNT_BOUND 10
 
@@ -28,7 +28,7 @@ void Worker::StartThread(WorkerPool* current_pool){
 
 void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
   size_t empty_count = 0;
-  Task *t = nullptr;
+  std::shared_ptr<Task> t;
   while(!current_thread->shutdown_thread_ || !current_pool->task_queue_->IsEmpty()){
     // poll the queue
     if(!current_pool->task_queue_->PollTask(t)){

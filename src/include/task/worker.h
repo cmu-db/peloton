@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by tim on 09/07/17.
+//                         Peloton
 //
+// worker.h
+//
+// Identification: src/task/worker_pool.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -9,6 +17,7 @@
 #include <memory>
 
 #include "task/task.h"
+#include "../../../../../../../../usr/include/boost/shared_ptr.hpp"
 
 namespace peloton{
 namespace task{
@@ -37,7 +46,7 @@ class WorkerPool {
   WorkerPool(size_t num_threads, TaskQueue *taskQueue);
  private:
   std::vector<std::unique_ptr<Worker>> worker_threads_;
-  TaskQueue *task_queue_;
+  TaskQueue* task_queue_;
 };
 
 }
