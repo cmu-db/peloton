@@ -27,8 +27,7 @@ PROXY(Value) {
 namespace proxy {
 template <>
 struct TypeBuilder<peloton::type::Value> {
-  using Type = llvm::Type *;
-  static llvm::Type *GetType(CodeGen &codegen) {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return ValueProxy::GetType(codegen);
   }
 };

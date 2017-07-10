@@ -36,8 +36,7 @@ PROXY(Catalog) {
 namespace proxy {
 template <>
 struct TypeBuilder<catalog::Catalog> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return CatalogProxy::GetType(codegen);
   }
 };

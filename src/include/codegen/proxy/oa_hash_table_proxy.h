@@ -58,22 +58,19 @@ PROXY(OAHashTable) {
 namespace proxy {
 template <>
 struct TypeBuilder<::peloton::codegen::util::OAHashTable::KeyValueList> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return KeyValueListProxy::GetType(codegen);
   }
 };
 template <>
 struct TypeBuilder<::peloton::codegen::util::OAHashTable::HashEntry> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return OAHashEntryProxy::GetType(codegen);
   }
 };
 template <>
 struct TypeBuilder<::peloton::codegen::util::OAHashTable> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return OAHashTableProxy::GetType(codegen);
   }
 };

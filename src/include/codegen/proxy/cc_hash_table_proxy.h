@@ -65,16 +65,14 @@ PROXY(CCHashTable) {
 namespace proxy {
 template <>
 struct TypeBuilder<util::CCHashTable::HashEntry> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) {
+  static llvm::Type *GetType(CodeGen &codegen) {
     return HashEntryProxy::GetType(codegen);
   }
 };
 
 template <>
 struct TypeBuilder<util::CCHashTable> {
-  using Type = llvm::Type;
-  static Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return CCHashTableProxy::GetType(codegen);
   }
 };

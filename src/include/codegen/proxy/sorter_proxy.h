@@ -49,8 +49,7 @@ PROXY(Sorter) {
 namespace proxy {
 template <>
 struct TypeBuilder<util::Sorter> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) {
+  static llvm::Type *GetType(CodeGen &codegen) {
     return SorterProxy::GetType(codegen);
   }
 };
