@@ -13,7 +13,6 @@
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
@@ -27,6 +26,7 @@
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/database.h"
+#include "storage/storage_manager.h"
 #include "storage/tile.h"
 
 namespace peloton {
@@ -191,7 +191,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   LOG_INFO("the database_id is %d", database_id);
   storage::Database *db = nullptr;
   try{
-      db = catalog::CatalogStorageManager::GetInstance()->GetDatabaseWithOid(database_id);
+      db = storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
   } catch (CatalogException &e) {
       LOG_TRACE("Can't find database %d! ", database_id);
       return nullptr;

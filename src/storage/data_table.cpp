@@ -15,8 +15,6 @@
 
 #include "brain/clusterer.h"
 #include "brain/sample.h"
-//#include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
 #include "catalog/foreign_key.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -29,6 +27,7 @@
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
+#include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -503,7 +502,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
     try{
-        ref_table = (storage::DataTable *)catalog::CatalogStorageManager::GetInstance()
+        ref_table = (storage::DataTable *)storage::StorageManager::GetInstance()
             ->GetTableWithOid(database_oid, sink_table_id);
     } catch (CatalogException &e) {
         LOG_TRACE("Can't find table %d! Return false", sink_table_id);

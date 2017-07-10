@@ -13,11 +13,10 @@
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
-//#include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
 #include "catalog/column_stats_catalog.h"
 #include "type/value.h"
 #include "storage/data_table.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace optimizer {
@@ -272,13 +271,12 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
     return ResultType::FAILURE;
   }
 
-  auto catalog_storage_manager = catalog::CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
-  oid_t database_count = catalog_storage_manager->GetDatabaseCount();
+  oid_t database_count = storage_manager->GetDatabaseCount();
   LOG_TRACE("Database count: %u", database_count);
   for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
-    auto database =
-       catalog_storage_manager->GetDatabaseWithOffset(db_offset);
+    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
     if (database->GetDBName().compare(CATALOG_DATABASE_NAME) == 0) {
       continue;
     }

@@ -12,8 +12,8 @@
 
 #include "codegen/proxy/catalog_proxy.h"
 
-#include "catalog/catalog_storage_manager.h"
 #include "codegen/proxy/data_table_proxy.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -22,7 +22,8 @@ namespace codegen {
 // Return the LLVM type that matches the memory layout of our Database class
 //===----------------------------------------------------------------------===//
 llvm::Type* CatalogProxy::GetType(CodeGen& codegen) {
-  static const std::string kCatalogTypeName = "peloton::catalog::CatalogStorageManager";
+  static const std::string kCatalogTypeName =
+      "peloton::storage::StorageManager";
   // Check if the type is already registered in the module, if so return it
   auto* catalog_type = codegen.LookupTypeByName(kCatalogTypeName);
   if (catalog_type != nullptr) {
@@ -31,7 +32,8 @@ llvm::Type* CatalogProxy::GetType(CodeGen& codegen) {
 
   // Right now we don't need to define each individual field of storage::Catalog
   // since we only invoke functions on the class.
-  static constexpr uint64_t catalog_obj_size = sizeof(catalog::CatalogStorageManager);
+  static constexpr uint64_t catalog_obj_size =
+      sizeof(storage::StorageManager);
   /*
   static constexpr uint64_t catalog_obj_size = sizeof(std::atomic<oid_t>) +
       sizeof(lookup_dir) +
@@ -56,9 +58,9 @@ llvm::Type* CatalogProxy::GetType(CodeGen& codegen) {
 const std::string& CatalogProxy::_GetTableWithOid::GetFunctionName() {
   static const std::string kGetTableByIdFnName =
 #ifdef __APPLE__
-      "_ZNK7peloton7catalog21CatalogStorageManager15GetTableWithOidEjj";
+      "_ZNK7peloton7storage14StorageManager15GetTableWithOidEjj";
 #else
-      "_ZNK7peloton7catalog21CatalogStorageManager15GetTableWithOidEjj";
+      "_ZNK7peloton7storage14StorageManager15GetTableWithOidEjj";
 #endif
   return kGetTableByIdFnName;
 }
