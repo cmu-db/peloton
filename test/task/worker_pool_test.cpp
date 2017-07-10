@@ -18,105 +18,57 @@
 #include <iostream>
 #include <thread>
 #include <cstdio>
+#include <unistd.h>
 
 namespace peloton {
 namespace test {
 
 class WorkerPoolTests : public PelotonTest {};
-/*
-class MasterThread {
- public:
-  MasterThread(const size_t queue_size, const size_t pool_size):
-};*/
 
 void printString(std::vector<void *> args) {
   std::string *sp = static_cast<std::string *>(*args.begin());
   std::string str = *sp;
   std::thread::id id = std::this_thread::get_id();
-  LOG_INFO("thread %x get %s", id, str.c_str());
+  std::cout << "thread " << id << " get " << str.c_str() << std::endl;
 }
+
+class TaskGenerator {
+ public:
+  static std::shared_ptr<task::Task> getTask() {
+    std::vector<void *> params;
+    int len = 10;
+    char str[len + 1];
+    int i = 0;
+    for (i = 0; i < len; i++) {
+      str[i] = 'a' + rand() % 26;
+    }
+    str[10] = '\0';
+    params.push_back((void*)&(str));
+    return std::make_shared<task::Task>(printString, params);
+  }
+};
 
 void masterCallback() {
   LOG_INFO("master activate");
 }
 
-TEST_F(WorkerPoolTests, OneWorkerTest) {
-  LOG_INFO("master starts");
-  const size_t sz = 10;
-  peloton::task::TaskQueue tq(sz);
-  peloton::task::WorkerPool wp(1, &tq);
-
-  std::vector<void *> params1;
-  std::string p1 = "string1";
-  params1.push_back((void*)&p1);
-
-  std::vector<void *> params2;
-  std::string p2 = "string2";
-  params2.push_back((void *)&p2);
-
-  std::vector<shared_ptr<Task *>> task_v;
-  peloton::task::Task task1(func1, params1);
-  task_v.push_back(shared_ptr<Task>(task1));
-  peloton::task::Task task2(func1, params2);
-  task_v.push_back(shared_ptr<Task>(task2));
-
-  tq.SubmitTaskBatch(task_v);
-
-  LOG_INFO("master finishes");
-  wp.Shutdown();
-}
-
 TEST_F(WorkerPoolTests, MultiWorkerTest) {
   LOG_INFO("master starts");
   const size_t sz = 10;
-  peloton::task::TaskQueue tq(sz);
-  peloton::task::WorkerPool wp(1, &tq);
+  int task_num = 20, i = 0;
+  task::TaskQueue tq(sz);
+  task::WorkerPool wp(3, &tq);
 
-  std::vector<void *> params1;
-  std::string p1 = "string1";
-  params1.push_back((void*)&p1);
-
-  std::vector<void *> params2;
-  std::string p2 = "string2";
-  params2.push_back((void *)&p2);
-
-  std::vector<shared_ptr<Task> task_v;
-  peloton::task::Task task1(func1, params1);
-  task_v.push_back(shared_ptr<Task>(task1));
-  peloton::task::Task task2(func1, params2);
-  task_v.push_back(shared_ptr<Task>(task2));
-
+  std::vector<std::shared_ptr<task::Task>> task_v;
+  for(i = 0; i < task_num; i++) {
+    task_v.push_back(TaskGenerator::getTask());
+  }
   tq.SubmitTaskBatch(task_v);
 
   LOG_INFO("master finishes");
   wp.Shutdown();
+
 }
-/*
-TEST_F(WorkerPoolTests, ActivateTest) {
-  LOG_INFO("master starts");
-  const size_t sz = 10;
-  peloton::task::TaskQueue tq(sz);
-  peloton::task::WorkerPool wp(1, &tq);
-
-  std::vector<void *> params1;
-  std::string p1 = "func1";
-  params1.push_back((void*)&p1);
-
-  std::vector<void *> params2;
-  std::string p2 = "func2";
-  params2.push_back((void *)&p2);
-
-  std::vector<shared_ptr<Task>> task_v;
-  peloton::task::Task task1(func1, params1);
-  task_v.push_back(shared_ptr<Task>(task1));
-  peloton::task::Task task2(func1, params2);
-  task_v.push_back(shared_ptr<Task>(task2));
-
-  tq.SubmitTaskBatch(task_v);
-
-  LOG_INFO("master finishes");
-  wp.Shutdown();
-}*/
 
 } // end of test
 } // end of peloton
