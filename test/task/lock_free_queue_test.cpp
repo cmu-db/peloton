@@ -31,7 +31,7 @@ LockFreeQueue<std::shared_ptr<std::string> > queue(20);
   for (int i = 0; i < 3; ++i) {
     std::shared_ptr<std::string> tmp;
     DequeueWrapper(tmp,queue);
-    LOG_DEBUG("string is %s", tmp->c_str);
+    LOG_DEBUG("string is %s", tmp->c_str());
   }
 }
 }

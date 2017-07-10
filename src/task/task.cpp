@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <iostream>
 #include "task/task.h"
-#include "../../../../../../../usr/include/boost/shared_ptr.hpp"
+#include <memory>
 
 namespace peloton {
 namespace task {
@@ -20,8 +21,8 @@ void Task::ExecuteTask() {
   this->func_ptr_(this->func_args_);
 
   std::unique_lock <std::mutex> lock(*this->task_mutex_);
-  this->num_worker_--;
-  if (*this->num_worker_ == 0) {
+  (*num_worker_)--;
+  if ((*num_worker_) == 0) {
     this->condition_variable_->notify_all();
   }
 }
