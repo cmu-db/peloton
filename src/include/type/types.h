@@ -674,6 +674,7 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 enum class QueryType {
   QUERY_BEGIN,                // begin query
   QUERY_COMMIT,               // commit query
+  QUERY_CREATE,               // create query
   QUERY_ROLLBACK,             // rollback query
   QUERY_INSERT,               // insert query
   QUERY_SET,                  // set query
