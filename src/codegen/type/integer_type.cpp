@@ -6,15 +6,15 @@
 //
 // Identification: src/codegen/type/integer_type.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/integer_type.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/value.h"
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "common/exception.h"
 #include "type/limits.h"
@@ -288,7 +288,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Integer::Instance().GetNullValue(codegen);
@@ -344,7 +344,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Integer::Instance().GetNullValue(codegen);
@@ -386,12 +386,18 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastInteger kCastInteger;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::BOOLEAN, kCastInteger},
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::TINYINT, kCastInteger},
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::SMALLINT, kCastInteger},
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::INTEGER, kCastInteger},
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::BIGINT, kCastInteger},
-    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::DECIMAL, kCastInteger}};
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::BOOLEAN,
+     kCastInteger},
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::TINYINT,
+     kCastInteger},
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::SMALLINT,
+     kCastInteger},
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::INTEGER,
+     kCastInteger},
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::BIGINT,
+     kCastInteger},
+    {peloton::type::TypeId::INTEGER, peloton::type::TypeId::DECIMAL,
+     kCastInteger}};
 
 // Comparison operations
 static CompareInteger kCompareInteger;

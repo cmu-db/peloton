@@ -17,7 +17,7 @@
 #include "expression/operator_expression.h"
 #include "planner/seq_scan_plan.h"
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 
 namespace peloton {
 namespace test {

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/compact_storage.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,8 +35,7 @@ class CompactStorage {
   CompactStorage() : storage_type_(nullptr) {}
 
   // Setup this storage to store the given types (in the specified order)
-  llvm::Type *Setup(CodeGen &codegen,
-                    const std::vector<type::Type> &types);
+  llvm::Type *Setup(CodeGen &codegen, const std::vector<type::Type> &types);
 
   // Store the given values into the provided storage area
   llvm::Value *StoreValues(CodeGen &codegen, llvm::Value *area_start,

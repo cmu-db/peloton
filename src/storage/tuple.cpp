@@ -49,7 +49,7 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
 
   const bool is_inlined = tuple_schema_->IsInlined(column_offset);
   char *value_location = GetDataPtr(column_offset);
-  UNUSED_ATTRIBUTE int32_t column_length =
+  UNUSED_ATTRIBUTE size_t column_length =
       tuple_schema_->GetLength(column_offset);
   if (is_inlined == false)
     column_length = tuple_schema_->GetVariableLength(column_offset);
@@ -59,6 +59,11 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
 
   // Skip casting if type is same
   if (type == value.GetTypeId()) {
+    if ((type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
+        && (column_length != 0 && value.GetLength() != type::PELOTON_VALUE_NULL)
+        && value.GetLength() > column_length) {
+      throw peloton::ValueOutOfRangeException(type, column_length);
+    }
     value.SerializeTo(value_location, is_inlined, data_pool);
   } else {
     type::Value casted_value = (value.CastAs(type));

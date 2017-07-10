@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/cc_hash_table.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,8 +31,7 @@ class CCHashTable : public HashTable {
  public:
   // Constructor
   CCHashTable();
-  CCHashTable(CodeGen &codegen,
-              const std::vector<type::Type> &key_type);
+  CCHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type);
 
   // Initialize the hash-table instance
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;

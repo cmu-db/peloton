@@ -6,13 +6,13 @@
 //
 // Identification: src/codegen/pipeline.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/pipeline.h"
 
-#include "codegen/operator_translator.h"
+#include "codegen/operator/operator_translator.h"
 
 namespace peloton {
 namespace codegen {
@@ -21,9 +21,7 @@ namespace codegen {
 Pipeline::Pipeline() : pipeline_index_(0) {}
 
 // Constructor
-Pipeline::Pipeline(const OperatorTranslator *translator) {
-  Add(translator);
-}
+Pipeline::Pipeline(const OperatorTranslator *translator) { Add(translator); }
 
 // Add this translator in this pipeline
 void Pipeline::Add(const OperatorTranslator *translator) {
@@ -34,7 +32,7 @@ void Pipeline::Add(const OperatorTranslator *translator) {
 // Install a stage boundary at the input into the given translator
 void Pipeline::InstallBoundaryAtInput(const OperatorTranslator *translator) {
   // Validate the assumption
-  (void) translator;
+  (void)translator;
   PL_ASSERT(pipeline_[pipeline_index_] == translator);
   stage_boundaries_.push_back(pipeline_index_ + 1);
 }
@@ -42,7 +40,7 @@ void Pipeline::InstallBoundaryAtInput(const OperatorTranslator *translator) {
 // Install a stage boundary at the input into the given translator
 void Pipeline::InstallBoundaryAtOutput(const OperatorTranslator *translator) {
   // Validate the assumption
-  (void) translator;
+  (void)translator;
   PL_ASSERT(pipeline_[pipeline_index_] == translator);
   if (!stage_boundaries_.empty() &&
       stage_boundaries_.back() != pipeline_index_) {

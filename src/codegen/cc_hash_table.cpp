@@ -6,16 +6,16 @@
 //
 // Identification: src/codegen/cc_hash_table.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/cc_hash_table.h"
 
-#include "codegen/cc_hash_table_proxy.h"
+#include "codegen/proxy/cc_hash_table_proxy.h"
 #include "codegen/hash.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
+#include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
 #include "common/exception.h"
 
 namespace peloton {
@@ -87,7 +87,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *null =
       codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
+  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
   {
     llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
     llvm::Value *entry = chain_loop.GetLoopVar(0);
@@ -95,8 +95,8 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
     // (3.1) Check if the current iter's hash matches what we calculated earlier
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
-    If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
-                  "hashMatch"};
+    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *keys_ptr =
@@ -107,7 +107,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
 
       // (3.2.1)
       auto keys_are_equal = Value::TestEquality(codegen, key, hash_entry_keys);
-      If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
+      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
       {
         // (3.2.2) Call the probe callback since we found a matching key
         probe_callback.ProcessEntry(codegen, values_area);
@@ -192,7 +192,7 @@ void CCHashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *bucket_num = codegen.Const64(0);
   llvm::Value *bucket_cond = codegen->CreateICmpULT(bucket_num, num_buckets);
   // (1)
-  Loop bucket_loop{codegen, bucket_cond, {{"bucketNum", bucket_num}}};
+  lang::Loop bucket_loop{codegen, bucket_cond, {{"bucketNum", bucket_num}}};
   {
     // (1.1)
     bucket_num = bucket_loop.GetLoopVar(0);
@@ -201,9 +201,9 @@ void CCHashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
     llvm::Value *null_bucket =
         codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
     // (1.2)
-    Loop chain_loop{codegen,
-                    codegen->CreateICmpNE(bucket, null_bucket),
-                    {{"entry", bucket}}};
+    lang::Loop chain_loop{codegen,
+                          codegen->CreateICmpNE(bucket, null_bucket),
+                          {{"entry", bucket}}};
     {
       // (1.2.1)
       llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
@@ -250,7 +250,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *null =
       codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
+  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
   {
     llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
     llvm::Value *entry = chain_loop.GetLoopVar(0);
@@ -258,8 +258,8 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
     // (3.1) Check if the current iter's hash matches what we calculated earlier
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
-    If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash),
-                  "hashMatch"};
+    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash),
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *iter_keys =
@@ -269,7 +269,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
           key_storage_.LoadValues(codegen, iter_keys, entry_keys);
 
       auto keys_are_equal = Value::TestEquality(codegen, key, entry_keys);
-      If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
+      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
       {
         // (3.2.2) Call the probe callback since we found a matching key
         callback.ProcessEntry(codegen, key, data_area);

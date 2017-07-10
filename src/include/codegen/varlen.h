@@ -6,16 +6,16 @@
 //
 // Identification: src/include/codegen/varlen.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/if.h"
-#include "codegen/runtime_functions_proxy.h"
-#include "codegen/varlen_proxy.h"
+#include "codegen/lang/if.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/varlen_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -51,7 +51,7 @@ class Varlen {
     is_null = codegen->CreateICmpEQ(varlen_ptr_ptr, null_ptr);
 
     llvm::Value *null_data = nullptr, *null_len = nullptr;
-    If varlen_is_null{codegen, is_null};
+    lang::If varlen_is_null{codegen, is_null};
     {
       // The pointer is null
       null_data = codegen.Null(codegen.CharPtrType());

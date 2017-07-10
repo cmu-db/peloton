@@ -6,13 +6,13 @@
 //
 // Identification: src/codegen/updateable_storage.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/updateable_storage.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/type/sql_type.h"
 
 namespace peloton {
@@ -144,7 +144,7 @@ codegen::Value UpdateableStorage::GetValue(
     UpdateableStorage::NullBitmap &null_bitmap) const {
   codegen::Value null_val, read_val;
 
-  If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
+  lang::If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
   {
     // If the index has its null-bit set, return NULL
     const auto &type = schema_[index];
@@ -198,7 +198,7 @@ void UpdateableStorage::SetValue(
   llvm::Value *null = value.IsNull(codegen);
   null_bitmap.SetNull(codegen, index, null);
 
-  If val_not_null{codegen, codegen->CreateNot(null)};
+  lang::If val_not_null{codegen, codegen->CreateNot(null)};
   {
     // If the value isn't NULL, write it into storage
     SetValueSkipNull(codegen, space, index, value);
@@ -291,7 +291,7 @@ void UpdateableStorage::NullBitmap::SetNull(CodeGen &codegen, uint32_t index,
   dirty_[byte_pos] = true;
 }
 
-void UpdateableStorage::NullBitmap::MergeValues(If &if_clause,
+void UpdateableStorage::NullBitmap::MergeValues(lang::If &if_clause,
                                                 llvm::Value *before_if_value) {
   PL_ASSERT(bytes_[active_byte_pos_] != nullptr);
   bytes_[active_byte_pos_] =

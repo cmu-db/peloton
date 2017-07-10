@@ -6,13 +6,13 @@
 //
 // Identification: src/codegen/type/type_system.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/type_system.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
 #include "common/exception.h"
@@ -33,7 +33,7 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
   PL_ASSERT(value.IsNullable());
 
   Value null_val, ret_val;
-  If is_null{codegen, value.IsNull(codegen)};
+  lang::If is_null{codegen, value.IsNull(codegen)};
   {
     // If the value is NULL, return the NULL type for the target type
     null_val = to_type.GetSqlType().GetNullValue(codegen);
@@ -138,7 +138,7 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
   PL_ASSERT(val.IsNullable());
 
   Value null_val, ret_val;
-  If is_null{codegen, val.IsNull(codegen)};
+  lang::If is_null{codegen, val.IsNull(codegen)};
   {
     // If the value is NULL, return the NULL type
     null_val = val.GetType().GetSqlType().GetNullValue(codegen);
@@ -180,7 +180,7 @@ Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
   auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
 
   Value null_val, ret_val;
-  If is_null{codegen, null};
+  lang::If is_null{codegen, null};
   {
     // If either value is null, the result of the operator is null
     const auto &result_type = ResultType(left.GetType(), right.GetType());

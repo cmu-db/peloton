@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/sorter.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// This class simplifies interaction with a codegen::utils::Sorter instance from
+// This class simplifies interaction with a codegen::util::Sorter instance from
 // generated code.
 //===----------------------------------------------------------------------===//
 class Sorter {

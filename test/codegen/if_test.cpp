@@ -13,12 +13,12 @@
 #include "common/harness.h"
 
 #include "codegen/function_builder.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/integer_type.h"
 
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
 
 namespace peloton {
 namespace test {
@@ -45,7 +45,7 @@ TEST_F(IfTest, TestIfOnly) {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
     codegen::Value va, vb;
-    codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
+    codegen::lang::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
       va = {codegen::type::Integer::Instance(), cg.Const32(1)};
     }
@@ -97,7 +97,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
       code_context, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
-    codegen::Loop loop{cg,
+    codegen::lang::Loop loop{cg,
                        cg->CreateICmpULT(cg.Const32(0), param_a),
                        {{"i", cg.Const32(0)}, {"x", cg.Const32(0)}}};
     {
@@ -107,7 +107,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
       auto *divisible_by_two = cg->CreateURem(i, cg.Const32(2));
 
       llvm::Value *new_x = nullptr;
-      codegen::If pred{cg, cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
+      codegen::lang::If pred{cg, cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
       {
         new_x = cg->CreateAdd(x, cg.Const32(1));
       }
@@ -156,11 +156,11 @@ TEST_F(IfTest, ComplexNestedIf) {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
     codegen::Value vab, vc;
-    codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
+    codegen::lang::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
       // a < 10
       codegen::Value va, vb;
-      codegen::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
+      codegen::lang::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
       {
         // a < 5
         va = {codegen::type::Integer::Instance(), cg.Const32(-1)};

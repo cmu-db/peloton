@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/compilation_context.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,8 +18,8 @@
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
 #include "codegen/runtime_state.h"
-#include "codegen/expression_translator.h"
-#include "codegen/operator_translator.h"
+#include "codegen/expression/expression_translator.h"
+#include "codegen/operator/operator_translator.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "codegen/translator_factory.h"

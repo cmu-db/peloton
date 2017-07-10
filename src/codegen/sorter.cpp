@@ -6,15 +6,15 @@
 //
 // Identification: src/codegen/sorter.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/sorter.h"
 
-#include "codegen/loop.h"
-#include "codegen/sorter_proxy.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/loop.h"
+#include "codegen/proxy/sorter_proxy.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "codegen/vector.h"
 
 namespace peloton {
@@ -25,8 +25,7 @@ Sorter::Sorter() {
   // cases when the tuple description is not known fully at construction time.
 }
 
-Sorter::Sorter(CodeGen &codegen,
-               const std::vector<type::Type> &row_desc) {
+Sorter::Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc) {
   // Configure the storage format using the provided row description
   for (const auto &value_type : row_desc) {
     storage_format_.AddType(value_type);
@@ -35,7 +34,7 @@ Sorter::Sorter(CodeGen &codegen,
   storage_format_.Finalize(codegen);
 }
 
-// Just make a call to utils::Sorter::Init(...)
+// Just make a call to util::Sorter::Init(...)
 void Sorter::Init(CodeGen &codegen, llvm::Value *sorter_ptr,
                   llvm::Value *comparison_func) const {
   auto *tuple_size = codegen.Const32(storage_format_.GetStorageSize());
@@ -64,7 +63,7 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
   null_bitmap.WriteBack(codegen);
 }
 
-// Just make a call to utils::Sorter::Sort(...). This actually sorts the data
+// Just make a call to util::Sorter::Sort(...). This actually sorts the data
 // that has been inserted into the sorter instance.
 void Sorter::Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const {
   auto *sort_func = SorterProxy::_Sort::GetFunction(codegen);
@@ -82,9 +81,9 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index, SorterAccess &access) const {
-      Loop loop{codegen,
-                codegen->CreateICmpULT(start_index, end_index),
-                {{"start", start_index}}};
+      lang::Loop loop{codegen,
+                      codegen->CreateICmpULT(start_index, end_index),
+                      {{"start", start_index}}};
       {
         llvm::Value *curr_index = loop.GetLoopVar(0);
 
@@ -123,7 +122,8 @@ void Sorter::VectorizedIterate(
   llvm::Value *tuple_size = GetTupleSize(codegen);
   llvm::Value *skip = codegen->CreateMul(vec_sz, tuple_size);
 
-  VectorizedLoop loop{codegen, num_tuples, vector_size, {{"pos", start_pos}}};
+  lang::VectorizedLoop loop{
+      codegen, num_tuples, vector_size, {{"pos", start_pos}}};
   {
     llvm::Value *curr_pos = loop.GetLoopVar(0);
     auto curr_range = loop.GetCurrentRange();
@@ -141,14 +141,14 @@ void Sorter::VectorizedIterate(
   }
 }
 
-// Just make a call to utils::Sorter::Destroy(...)
+// Just make a call to util::Sorter::Destroy(...)
 void Sorter::Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const {
   codegen.CallFunc(SorterProxy::_Destroy::GetFunction(codegen), {sorter_ptr});
 }
 
 llvm::Value *Sorter::GetNumberOfStoredTuples(CodeGen &codegen,
                                              llvm::Value *sorter_ptr) const {
-  // TODO: utils::Sorter has a function to handle this ...
+  // TODO: util::Sorter has a function to handle this ...
   llvm::Value *start_pos = GetStartPosition(codegen, sorter_ptr);
   llvm::Value *end_pos = GetEndPosition(codegen, sorter_ptr);
   llvm::Value *tuple_size =

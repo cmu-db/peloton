@@ -6,26 +6,26 @@
 //
 // Identification: src/codegen/translator_factory.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/translator_factory.h"
 
-#include "codegen/arithmetic_translator.h"
-#include "codegen/case_translator.h"
-#include "codegen/comparison_translator.h"
-#include "codegen/conjunction_translator.h"
-#include "codegen/constant_translator.h"
-#include "codegen/delete_translator.h"
-#include "codegen/global_group_by_translator.h"
-#include "codegen/hash_group_by_translator.h"
-#include "codegen/hash_join_translator.h"
-#include "codegen/negation_translator.h"
-#include "codegen/order_by_translator.h"
-#include "codegen/projection_translator.h"
-#include "codegen/table_scan_translator.h"
-#include "codegen/tuple_value_translator.h"
+#include "codegen/expression/arithmetic_translator.h"
+#include "codegen/expression/case_translator.h"
+#include "codegen/expression/comparison_translator.h"
+#include "codegen/expression/conjunction_translator.h"
+#include "codegen/expression/constant_translator.h"
+#include "codegen/operator/delete_translator.h"
+#include "codegen/operator/global_group_by_translator.h"
+#include "codegen/operator/hash_group_by_translator.h"
+#include "codegen/operator/hash_join_translator.h"
+#include "codegen/expression/negation_translator.h"
+#include "codegen/operator/order_by_translator.h"
+#include "codegen/operator/projection_translator.h"
+#include "codegen/operator/table_scan_translator.h"
+#include "codegen/expression/tuple_value_translator.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"

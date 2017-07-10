@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/consumer_context.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,7 +42,6 @@ void ConsumerContext::Consume(RowBatch &batch) {
 
 // Pass this row to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch::Row &row) {
-
   // If we're at a stage boundary in the pipeline, it means the next operator
   // in the pipeline wants to operate on a batch of rows. To facilitate this,
   // we mark the given row as valid in this batch and return immediately.

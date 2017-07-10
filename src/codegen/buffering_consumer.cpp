@@ -6,14 +6,14 @@
 //
 // Identification: src/codegen/buffering_consumer.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/buffering_consumer.h"
 
-#include "codegen/if.h"
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/lang/if.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
 #include "codegen/type/sql_type.h"
 #include "planner/binding_context.h"
@@ -113,7 +113,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
 
     // Check if it's NULL
     Value null_val;
-    If val_is_null{codegen, val.IsNull(codegen)};
+    lang::If val_is_null{codegen, val.IsNull(codegen)};
     {
       // If the value is NULL (i.e., has the NULL bit set), produce the NULL
       // value for the given type.

@@ -6,17 +6,17 @@
 //
 // Identification: src/codegen/row_batch.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/row_batch.h"
 
-#include "llvm/Support/raw_ostream.h"
+#include <llvm/Support/raw_ostream.h>
 
 #include "codegen/compilation_context.h"
-#include "codegen/if.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/if.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "common/exception.h"
 #include "common/logger.h"
 
@@ -235,10 +235,10 @@ void RowBatch::Iterate(CodeGen &codegen, RowBatch::IterateCallback &cb) {
   llvm::Value *end = GetNumValidRows(codegen);
 
   // Generating the loop
-  std::vector<Loop::LoopVariable> loop_vars = {
+  std::vector<lang::Loop::LoopVariable> loop_vars = {
       {"readIdx", start}, {"writeIdx", codegen.Const32(0)}};
   llvm::Value *loop_cond = codegen->CreateICmpULT(start, end);
-  Loop batch_loop{codegen, loop_cond, loop_vars};
+  lang::Loop batch_loop{codegen, loop_cond, loop_vars};
   {
     // Pull out loop vars for convenience
     auto *batch_pos = batch_loop.GetLoopVar(0);
@@ -295,7 +295,7 @@ void RowBatch::VectorizedIterate(CodeGen &codegen,
   llvm::Value *write_pos = codegen.Const32(0);
 
   // The vectorized loop
-  VectorizedLoop vector_loop{
+  lang::VectorizedLoop vector_loop{
       codegen, num_rows, vector_size, {{"writePos", write_pos}}};
   {
     auto curr_range = vector_loop.GetCurrentRange();
@@ -353,9 +353,7 @@ llvm::Value *RowBatch::GetNumTotalRows(CodeGen &codegen) {
   return num_rows_;
 }
 
-llvm::Value *RowBatch::GetTileGroupID() const {
-  return tile_group_id_;
-}
+llvm::Value *RowBatch::GetTileGroupID() const { return tile_group_id_; }
 
 void RowBatch::UpdateWritePosition(llvm::Value *sz) {
   selection_vector_.SetNumElements(sz);

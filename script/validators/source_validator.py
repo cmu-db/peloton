@@ -70,20 +70,11 @@ SKIP_FILES_LIST = [
     "src/include/parser/sql_scanner.h", # There is a free() in comments
     "src/parser/parser_utils.cpp",
     "src/include/parser/sql_statement.h",
-    "src/include/parser/create_statement.h",
-    "src/include/parser/delete_statement.h",
-    "src/include/parser/drop_statement.h",
-    "src/include/parser/execute_statement.h",
-    "src/include/parser/import_statement.h",
-    "src/include/parser/insert_statement.h",
-    "src/include/parser/prepare_statement.h",
-    "src/include/parser/update_statement.h",
-    "src/parser/table_ref.cpp",
     "src/include/index/bloom_filter.h",
     "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
-    "src/codegen/utils/oa_hash_table.cpp",
-    "src/codegen/utils/cc_hash_table.cpp"
+    "src/codegen/util/oa_hash_table.cpp",
+    "src/codegen/util/cc_hash_table.cpp"
 ]
 
 ## ==============================================
@@ -103,14 +94,15 @@ def validate_file(file_path):
 
     file = open(abs_path, "r")
 
+    line_ctr = 1
     for line in file:
         for validator_pattern in VALIDATOR_PATTERNS:
             # Check for patterns one at a time
             if re.search(validator_pattern, line):
                 LOG.info("Invalid pattern -- " + validator_pattern + " -- found in : " + file_path)
-                LOG.info("Line :: " + line)
+                LOG.info("Line #%d :: %s" % (line_ctr, line))
                 return False
-
+        line_ctr += 1
     file.close()
     return True
 

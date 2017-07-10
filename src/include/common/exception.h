@@ -238,6 +238,12 @@ class ValueOutOfRangeException : public Exception {
                       " can't be cast as %s because the value is out of range "
                       "for the destination type " +
                       TypeIdToString(newType)) {}
+  ValueOutOfRangeException(const type::TypeId varType,
+                           const size_t length)
+      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+                  "The value is too long to fit into type " +
+                          TypeIdToString(varType) +
+                          "(" + std::to_string(length) + ")") {};
 };
 
 class ConversionException : public Exception {

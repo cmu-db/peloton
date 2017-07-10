@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/query_compiler.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,8 +55,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       break;
     }
     case PlanNodeType::PROJECTION: {
-      if(plan.GetChildren().size() == 0)
-        return false;
+      if (plan.GetChildren().size() == 0) return false;
       break;
     }
     case PlanNodeType::HASHJOIN: {
@@ -94,9 +93,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       pred = hj_plan.GetPredicate();
       break;
     }
-    default: {
-      break;
-    }
+    default: { break; }
   }
 
   if (pred != nullptr && !IsExpressionSupported(*pred)) {

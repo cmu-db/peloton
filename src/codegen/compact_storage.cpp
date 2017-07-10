@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/compact_storage.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -105,8 +105,8 @@ class BitmapReader {
 //===----------------------------------------------------------------------===//
 // Setup
 //===----------------------------------------------------------------------===//
-llvm::Type *CompactStorage::Setup(
-    CodeGen &codegen, const std::vector<type::Type> &types) {
+llvm::Type *CompactStorage::Setup(CodeGen &codegen,
+                                  const std::vector<type::Type> &types) {
   // Return the constructed type if the compact storage has already been set up
   if (storage_type_ != nullptr) {
     return storage_type_;

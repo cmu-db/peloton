@@ -6,15 +6,15 @@
 //
 // Identification: src/codegen/type/tinyint_type.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/tinyint_type.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/value.h"
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
@@ -291,7 +291,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = TinyInt::Instance().GetNullValue(codegen);
@@ -347,7 +347,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = TinyInt::Instance().GetNullValue(codegen);
@@ -390,13 +390,18 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastTinyInt kCastTinyInt;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN, kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT, kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT, kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER, kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT, kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL, kCastTinyInt}};
-
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN,
+     kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT,
+     kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT,
+     kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER,
+     kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT,
+     kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL,
+     kCastTinyInt}};
 
 // Comparison operations
 static CompareTinyInt kCompareTinyInt;

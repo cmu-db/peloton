@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/code_context.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
-#if LLVM_VERSION_GE(3,9)
+#if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif
 
@@ -59,10 +59,10 @@ CodeContext::CodeContext()
                         .create());
   PL_ASSERT(jit_engine_ != nullptr);
 
-#if LLVM_VERSION_EQ(3,6)
+#if LLVM_VERSION_EQ(3, 6)
   // LLVM 3.6
   // Set the layout of the module based on what the engine is
-  const llvm::DataLayout& data_layout = *jit_engine_->getDataLayout();
+  const llvm::DataLayout &data_layout = *jit_engine_->getDataLayout();
   module_->setDataLayout(data_layout);
 #endif
 
@@ -109,7 +109,6 @@ const llvm::DataLayout &CodeContext::GetDataLayout() const {
 // JIT the code contained within after optimizing it
 //===----------------------------------------------------------------------===//
 bool CodeContext::Compile() {
-
   // Verify the module is okay
   llvm::raw_ostream &errors = llvm::errs();
   if (llvm::verifyModule(*module_, &errors)) {
@@ -152,7 +151,7 @@ void CodeContext::DumpContents() const {
     llvm::raw_fd_ostream asm_ostream{asm_fname, error_code,
                                      llvm::sys::fs::F_RW};
     llvm::legacy::PassManager pass_manager;
-    auto* target_machine = jit_engine_->getTargetMachine();
+    auto *target_machine = jit_engine_->getTargetMachine();
     target_machine->Options.MCOptions.AsmVerbose = true;
     target_machine->addPassesToEmitFile(pass_manager, asm_ostream,
                                         llvm::TargetMachine::CGFT_AssemblyFile);

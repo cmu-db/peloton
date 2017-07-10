@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/row_batch.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #include <unordered_map>
 
 #include "codegen/codegen.h"
-#include "codegen/loop.h"
+#include "codegen/lang/loop.h"
 #include "codegen/value.h"
 #include "codegen/vector.h"
 #include "planner/attribute_info.h"

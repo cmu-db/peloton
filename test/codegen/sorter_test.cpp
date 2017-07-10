@@ -14,7 +14,7 @@
 
 #include "common/harness.h"
 #include "common/timer.h"
-#include "codegen/utils/sorter.h"
+#include "codegen/util/sorter.h"
 
 namespace peloton {
 namespace test {
@@ -89,7 +89,7 @@ class SorterTest : public PelotonTest {
   }
 
   // The sorter instance
-  codegen::utils::Sorter sorter;
+  codegen::util::Sorter sorter;
 };
 
 TEST_F(SorterTest, CanSortTuples) {

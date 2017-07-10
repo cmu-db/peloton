@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/type/boolean_type.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,7 +50,7 @@ class Boolean : public SqlType, public Singleton<Boolean> {
   // | true  | true   |
   // +-------+--------+
   //
-  llvm::Value *Reify(CodeGen &codegen, const Value &bool_val) const;
+  llvm::Value *Reify(CodeGen &codegen, const codegen::Value &bool_val) const;
 
  private:
   friend class Singleton<Boolean>;

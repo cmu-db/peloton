@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/query_compiler.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -64,7 +64,6 @@ class QueryCompiler {
   static bool IsExpressionSupported(const expression::AbstractExpression &plan);
 
  private:
-
   static bool IsSupported(const planner::AbstractPlan &plan,
                           const planner::AbstractPlan *parent);
 

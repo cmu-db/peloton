@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/deleter.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -33,7 +33,6 @@ namespace codegen {
 // class is initialized once (through Init()) outside the main loop.
 class Deleter {
  public:
-
   // Initializer this deleter instance using the provided transaction and table.
   // All tuples to be deleted occur within the provided transaction are from
   // the provided table

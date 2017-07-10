@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/transaction_runtime.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,8 +46,8 @@ class TransactionRuntime {
 
   // Perform a delete operation: see more descriptions in the .cpp file
   static bool PerformDelete(concurrency::Transaction &txn,
-                            storage::DataTable &table,
-                            uint32_t tile_group_id, uint32_t tuple_offset);
+                            storage::DataTable &table, uint32_t tile_group_id,
+                            uint32_t tuple_offset);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
   // Add other stuff for Insert/Update/Delete

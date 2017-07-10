@@ -6,15 +6,15 @@
 //
 // Identification: src/codegen/compilation_context.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/catalog_proxy.h"
-#include "codegen/transaction_proxy.h"
-#include "codegen/executor_context_proxy.h"
+#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 

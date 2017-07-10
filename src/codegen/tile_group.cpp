@@ -6,21 +6,21 @@
 //
 // Identification: src/codegen/tile_group.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/tile_group.h"
 
 #include "catalog/schema.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/scan_callback.h"
-#include "codegen/tile_group_proxy.h"
+#include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
-#include "codegen/vectorized_loop.h"
+#include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/boolean_type.h"
 
 namespace peloton {
@@ -52,9 +52,9 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
   auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
 
   llvm::Value *num_tuples = GetNumTuples(codegen, tile_group_ptr);
-  VectorizedLoop loop{codegen, num_tuples, batch_size, {}};
+  lang::VectorizedLoop loop{codegen, num_tuples, batch_size, {}};
   {
-    VectorizedLoop::Range curr_range = loop.GetCurrentRange();
+    lang::VectorizedLoop::Range curr_range = loop.GetCurrentRange();
 
     // Pass the vector to the consumer
     TileGroupAccess tile_group_access{*this, col_layouts};

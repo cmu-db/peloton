@@ -6,15 +6,15 @@
 //
 // Identification: src/codegen/type/decimal_type.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/decimal_type.h"
 
-#include "codegen/if.h"
+#include "codegen/lang/if.h"
 #include "codegen/value.h"
-#include "codegen/values_runtime_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
@@ -249,7 +249,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Decimal::Instance().GetNullValue(codegen);
@@ -306,7 +306,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = Decimal::Instance().GetNullValue(codegen);
@@ -347,12 +347,18 @@ const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
 // Explicit casting rules
 static CastDecimal kCastDecimal;
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT, kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL, kCastDecimal}};
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT,
+     kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL,
+     kCastDecimal}};
 
 // Comparison operations
 static CompareDecimal kCompareDecimal;
@@ -376,7 +382,6 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Mul, kMulOp},
     {OperatorId::Div, kDivOp},
     {OperatorId::Mod, kModuloOp}};
-
 
 }  // anonymous namespace
 

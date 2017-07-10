@@ -6,16 +6,16 @@
 //
 // Identification: src/codegen/table.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/table.h"
 
 #include "catalog/schema.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/loop.h"
-#include "codegen/runtime_functions_proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/lang/loop.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -74,9 +74,9 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
   // Iterate over all tile groups in the table
-  Loop loop{codegen,
-            codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
-            {{"tileGroupIdx", tile_group_idx}}};
+  lang::Loop loop{codegen,
+                  codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
+                  {{"tileGroupIdx", tile_group_idx}}};
   {
     // Get the tile group with the given tile group ID
     tile_group_idx = loop.GetLoopVar(0);
