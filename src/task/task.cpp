@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// network_server.cpp
+// task.cpp
 //
 // Identification: src/networking/network_server.cpp
 //
@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "task/task.h"
+#include "../../../../../../../usr/include/boost/shared_ptr.hpp"
 
 namespace peloton {
 namespace task {
@@ -25,7 +26,7 @@ void Task::ExecuteTask() {
   }
 }
 
-void TaskQueue::SubmitTask(Task *task) {
+void TaskQueue::SubmitTask(std::shared_ptr<Task> task) {
   std::mutex mutex;
   std::unique_lock <std::mutex> lock(mutex);
   std::condition_variable cv;
@@ -37,13 +38,13 @@ void TaskQueue::SubmitTask(Task *task) {
   cv.wait(lock);
 }
 
-void TaskQueue::SubmitTaskBatch(std::vector < Task * > task_vector) {
+void TaskQueue::SubmitTaskBatch(std::vector<std::shared_ptr<Task>>& task_vector) {
   std::mutex mutex;
   std::unique_lock <std::mutex> lock(mutex);
   std::condition_variable cv;
   int task_countDown = task_vector.size();
 
-  for (Task *task: task_vector) {
+  for (std::shared_ptr<Task> task: task_vector) {
     task->task_mutex_ = &mutex;
     task->condition_variable_ = &cv;
     task->num_worker_ = &task_countDown;
@@ -53,7 +54,7 @@ void TaskQueue::SubmitTaskBatch(std::vector < Task * > task_vector) {
   cv.wait(lock);
 }
 
-bool TaskQueue::PollTask(Task *task) {
+bool TaskQueue::PollTask(std::shared_ptr<Task> &task) {
   return task_queue_.Dequeue(task);
 }
 
