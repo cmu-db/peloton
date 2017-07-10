@@ -13,7 +13,6 @@
 #include "common/logger.h"
 #include "executor/plan_executor.h"
 #include "optimizer/rule.h"
-#include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"

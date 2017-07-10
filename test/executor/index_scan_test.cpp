@@ -28,7 +28,6 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/plan_executor.h"
-#include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/index_scan_plan.h"

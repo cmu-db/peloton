@@ -17,7 +17,6 @@
 #include "catalog/column_stats_catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
-#include "optimizer/simple_optimizer.h"
 #include "optimizer/stats/stats_storage.h"
 #include "planner/create_plan.h"
 #include "type/types.h"
