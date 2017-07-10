@@ -205,7 +205,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
   }
   is_entry_single_value.ElseBlock("multipleValue");
   {
-    llvm::Type *kv_list_type = OAHashEntryProxy::GetKeyValueListType(codegen);
+    llvm::Type *kv_list_type = KeyValueListProxy::GetType(codegen);
     data_count_noninline = codegen->CreateIntCast(
         codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
             kv_list_type,

@@ -13,76 +13,37 @@
 #pragma once
 
 #include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/values_runtime.h"
 
 namespace peloton {
 namespace codegen {
 
-class ValuesRuntimeProxy {
- public:
-  struct _OutputBoolean {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputTinyInt()
-  struct _OutputTinyInt {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputSmallInt()
-  struct _OutputSmallInt {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputInteger()
-  struct _OutputInteger {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputBigInt()
-  struct _OutputBigInt {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputDate()
-  struct _OutputDate {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputTimestamp()
-  struct _OutputTimestamp {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputDecimal()
-  struct _OutputDouble {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputVarchar()
-  struct _OutputVarchar {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::OutputVarbinary()
-  struct _OutputVarbinary {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around ValuesRuntime::CompareStrings()
-  struct _CompareStrings {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+PROXY(ValuesRuntime) {
+  PROXY_METHOD(OutputBoolean, &peloton::codegen::ValuesRuntime::OutputBoolean,
+               "_ZN7peloton7codegen13ValuesRuntime13OutputBooleanEPcjb");
+  PROXY_METHOD(OutputTinyInt, &peloton::codegen::ValuesRuntime::OutputTinyInt,
+               "_ZN7peloton7codegen13ValuesRuntime13OutputTinyIntEPcja");
+  PROXY_METHOD(OutputSmallInt, &peloton::codegen::ValuesRuntime::OutputSmallInt,
+               "_ZN7peloton7codegen13ValuesRuntime14OutputSmallIntEPcjs");
+  PROXY_METHOD(OutputInteger, &peloton::codegen::ValuesRuntime::OutputInteger,
+               "_ZN7peloton7codegen13ValuesRuntime13OutputIntegerEPcji");
+  PROXY_METHOD(OutputBigInt, &peloton::codegen::ValuesRuntime::OutputBigInt,
+               "_ZN7peloton7codegen13ValuesRuntime12OutputBigIntEPcjl");
+  PROXY_METHOD(OutputDate, &peloton::codegen::ValuesRuntime::OutputDate,
+               "_ZN7peloton7codegen13ValuesRuntime10OutputDateEPcji");
+  PROXY_METHOD(OutputTimestamp,
+               &peloton::codegen::ValuesRuntime::OutputTimestamp,
+               "_ZN7peloton7codegen13ValuesRuntime15OutputTimestampEPcjl");
+  PROXY_METHOD(OutputDouble, &peloton::codegen::ValuesRuntime::OutputDecimal,
+               "_ZN7peloton7codegen13ValuesRuntime13OutputDecimalEPcjd");
+  PROXY_METHOD(OutputVarchar, &peloton::codegen::ValuesRuntime::OutputVarchar,
+               "_ZN7peloton7codegen13ValuesRuntime13OutputVarcharEPcjS2_j");
+  PROXY_METHOD(OutputVarbinary,
+               &peloton::codegen::ValuesRuntime::OutputVarbinary,
+               "_ZN7peloton7codegen13ValuesRuntime15OutputVarbinaryEPcjS2_j");
+  PROXY_METHOD(CompareStrings, &peloton::codegen::ValuesRuntime::CompareStrings,
+               "_ZN7peloton7codegen13ValuesRuntime14CompareStringsEPKcjS3_j");
 };
 
 }  // namespace codegen

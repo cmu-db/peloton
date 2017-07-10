@@ -66,8 +66,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       static_cast<uint32_t>(table_.GetSchema()->GetColumnCount());
 
   llvm::Value *column_layouts = codegen->CreateAlloca(
-      RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen),
-      codegen.Const32(num_columns));
+      ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
   // Get the number of tile groups in the given table
   llvm::Value *tile_group_idx = codegen.Const64(0);

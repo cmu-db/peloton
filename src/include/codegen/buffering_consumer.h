@@ -76,8 +76,7 @@ class BufferingConsumer : public QueryResultConsumer {
   };
 
   // Called from compiled query code to buffer the tuple
-  static void BufferTuple(char *state, peloton::type::Value *vals,
-                          uint32_t num_vals);
+  static void BufferTuple(char *state, char *tuple, uint32_t num_cols);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
