@@ -46,7 +46,7 @@ class AbstractOptimizer {
   virtual void Reset(){};
 
   // # 623
-  concurrency::Transaction *consistentTxn;
+  concurrency::Transaction *consistentTxn = nullptr;
 };
 
 }  // namespace optimizer

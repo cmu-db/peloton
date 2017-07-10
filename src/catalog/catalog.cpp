@@ -750,6 +750,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
 
   if (database_oid == INVALID_OID) {
     txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+
     throw CatalogException("Database " + database_name + " is not found");
   }
 
@@ -759,16 +760,16 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
 
   if (table_oid == INVALID_OID) {
 //    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+
     throw CatalogException("Table " + table_name + " is not found");
   }
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
-
   return storage_manager->GetTableWithOid(database_oid, table_oid);
-}
 
+}
 //===--------------------------------------------------------------------===//
 // DEPRECATED
 //===--------------------------------------------------------------------===//

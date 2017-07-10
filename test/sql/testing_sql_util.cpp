@@ -128,8 +128,8 @@ std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer
   // # 623
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-//  traffic_cop_.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-//  traffic_cop_.single_statement_txn = true;
+////  traffic_cop_.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+////  traffic_cop_.single_statement_txn = true;
   optimizer->consistentTxn = txn;
 
   auto &peloton_parser = parser::PostgresParser::GetInstance();

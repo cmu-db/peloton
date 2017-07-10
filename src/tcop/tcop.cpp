@@ -138,6 +138,8 @@ ResultType TrafficCop::ExecuteStatement(
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_DEBUG("Received %s", query.c_str());
+  LOG_INFO("Received %s", query.c_str());
+  LOG_INFO("tcop_txn_state size: %lu", tcop_txn_state_.size());
 
   std::string unnamed_statement = "unnamed";
   std::shared_ptr<Statement> statement(new Statement(unnamed_statement, query));
