@@ -1,20 +1,11 @@
-DROP TABLE IF EXISTS foo 
 DROP 0
-CREATE TABLE foo(id integer PRIMARY KEY, year integer) 
 CREATE TABLE
-INSERT INTO foo VALUES(1, 100) 
 INSERT 0 1
-INSERT INTO foo VALUES(1, 200) 
 INSERT 0 0
-INSERT INTO foo VALUES(2, 200) 
 INSERT 0 1
-INSERT INTO foo VALUES(3, 300) 
 INSERT 0 1
-INSERT INTO foo VALUES(4, 400) 
 INSERT 0 1
-INSERT INTO foo VALUES(5, 400) 
 INSERT 0 1
-INSERT INTO foo VALUES(5, 500) 
 INSERT 0 0
  id | year 
 ----+------
@@ -38,7 +29,6 @@ INSERT 0 0
   5 |  400
 (3 rows)
 
-DELETE FROM foo WHERE year = 200 
 DELETE 1
  id | year 
 ----+------
@@ -48,7 +38,6 @@ DELETE 1
   5 |  400
 (4 rows)
 
-UPDATE foo SET year = 3000 WHERE id = 3 
 UPDATE 1
  id | year 
 ----+------
@@ -58,7 +47,6 @@ UPDATE 1
   5 |  400
 (4 rows)
 
-UPDATE foo SET year = 1000 WHERE year = 100 
 UPDATE 1
  id | year 
 ----+------
@@ -68,7 +56,6 @@ UPDATE 1
   5 |  400
 (4 rows)
 
-UPDATE foo SET id = 3 WHERE year = 1000 
 UPDATE 0
  id | year 
 ----+------
@@ -78,7 +65,6 @@ UPDATE 0
   5 |  400
 (4 rows)
 
-UPDATE foo SET id= 10 WHERE year = 1000 
 UPDATE 1
  id | year 
 ----+------
@@ -88,7 +74,6 @@ UPDATE 1
  10 | 1000
 (4 rows)
 
-INSERT INTO foo VALUES (2, 2000) 
 INSERT 0 1
  id | year 
 ----+------
@@ -99,7 +84,6 @@ INSERT 0 1
  10 | 1000
 (5 rows)
 
-INSERT INTO foo VALUES (4, 4000) 
 INSERT 0 0
  id | year 
 ----+------
@@ -110,7 +94,6 @@ INSERT 0 0
  10 | 1000
 (5 rows)
 
-INSERT INTO foo VALUES (1, 1000) 
 INSERT 0 1
  id | year 
 ----+------
@@ -121,4 +104,3 @@ INSERT 0 1
   5 |  400
  10 | 1000
 (6 rows)
-
