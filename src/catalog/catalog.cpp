@@ -13,7 +13,6 @@
 
 #include <iostream>
 
-#include "catalog/catalog_storage_manager.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/manager.h"
 #include "catalog/query_metrics_catalog.h"
@@ -25,6 +24,7 @@
 #include "expression/string_functions.h"
 #include "expression/decimal_functions.h"
 #include "index/index_factory.h"
+#include "storage/storage_manager.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -46,11 +46,11 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
-  catalog_storage_manager->AddDatabaseToStorageManager(pg_catalog);
+  storage_manager->AddDatabaseToStorageManager(pg_catalog);
 
   // Create catalog tables
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
@@ -155,7 +155,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   }
 
   auto pg_database = DatabaseCatalog::GetInstance();
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
   oid_t database_oid = pg_database->GetDatabaseOid(database_name, txn);
   if (database_oid != INVALID_OID) {
@@ -173,7 +173,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 
   {
     std::lock_guard<std::mutex> lock(catalog_mutex);
-    catalog_storage_manager->AddDatabaseToStorageManager(database);
+    storage_manager->AddDatabaseToStorageManager(database);
   }
 
   // Insert database record into pg_db
@@ -220,9 +220,9 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   try {
-    auto database = catalog_storage_manager->GetDatabaseWithOid(database_oid);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
 
     // Check duplicate column names
     std::set<std::string> column_names;
@@ -288,10 +288,10 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
 
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   try {
-    auto database = catalog_storage_manager->GetDatabaseWithOid(database_oid);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
     try {
       auto table = database->GetTableWithOid(table_oid);
 
@@ -431,10 +431,10 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
         "RESULT_FAILURE.");
     return ResultType::FAILURE;
   }
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   try {
-    auto database = catalog_storage_manager->GetDatabaseWithOid(database_oid);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
     try {
       auto table = database->GetTableWithOid(table_oid);
 
@@ -534,7 +534,7 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
               (int)database_oid);
     return ResultType::FAILURE;
   }
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // Drop actual tables in the database
   auto table_oids =
       TableCatalog::GetInstance()->GetTableOids(database_oid, txn);
@@ -554,7 +554,7 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
   bool found_database = false;
   std::lock_guard<std::mutex> lock(catalog_mutex);
   found_database =
-      catalog_storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
   if (!found_database) {
     LOG_TRACE("Database %d is not found!", database_oid);
     return ResultType::FAILURE;
@@ -609,10 +609,10 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
 
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
 
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   try {
-    auto database = catalog_storage_manager->GetDatabaseWithOid(database_oid);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
     // auto table = database->GetTableWithOid(table_oid);
     LOG_TRACE("Deleting table!");
     // STEP 1, read index_oids from pg_index, and iterate through
@@ -658,10 +658,10 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
   oid_t database_oid =
       TableCatalog::GetInstance()->GetDatabaseOid(table_oid, txn);
 
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   try {
-    auto database = catalog_storage_manager->GetDatabaseWithOid(database_oid);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
     try {
       auto table = database->GetTableWithOid(table_oid);
       // drop index in actual table
@@ -701,7 +701,7 @@ storage::Database *Catalog::GetDatabaseWithName(
   // FIXME: enforce caller to use txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   if (txn == nullptr) {
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
@@ -720,7 +720,7 @@ storage::Database *Catalog::GetDatabaseWithName(
     txn_manager.CommitTransaction(txn);
   }
 
-  return catalog_storage_manager->GetDatabaseWithOid(database_oid);
+  return storage_manager->GetDatabaseWithOid(database_oid);
 }
 
 /* Check table from pg_table with table_name using txn,
@@ -732,7 +732,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
                                               concurrency::Transaction *txn) {
   // FIXME: enforce caller to use txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   bool single_statement_txn = false;
   if (txn == nullptr) {
     single_statement_txn = true;
@@ -764,7 +764,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
     txn_manager.CommitTransaction(txn);
   }
 
-  return catalog_storage_manager->GetTableWithOid(database_oid, table_oid);
+  return storage_manager->GetTableWithOid(database_oid, table_oid);
 }
 
 //===--------------------------------------------------------------------===//
@@ -774,8 +774,8 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
 // This should be deprecated! this can screw up the database oid system
 void Catalog::AddDatabase(storage::Database *database) {
   std::lock_guard<std::mutex> lock(catalog_mutex);
-  auto catalog_storage_manager = CatalogStorageManager::GetInstance();
-  catalog_storage_manager->AddDatabaseToStorageManager(database);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  storage_manager->AddDatabaseToStorageManager(database);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   DatabaseCatalog::GetInstance()->InsertDatabase(
@@ -789,7 +789,7 @@ void Catalog::AddDatabase(storage::Database *database) {
 //===--------------------------------------------------------------------===//
 
 Catalog::~Catalog() {
-  CatalogStorageManager::GetInstance()->DestroyDatabases();
+  storage::StorageManager::GetInstance()->DestroyDatabases();
 }
 
 //===--------------------------------------------------------------------===//

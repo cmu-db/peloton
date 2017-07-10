@@ -12,13 +12,13 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
 #include "planner/create_plan.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
 #include "common/statement.h"
 #include "planner/seq_scan_plan.h"
 #include "executor/seq_scan_executor.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace catalog {
@@ -57,7 +57,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
 
   // set catalog_table_
   try{
-    catalog_table_ = CatalogStorageManager::GetInstance()->GetTableWithOid(
+    catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
       CATALOG_DATABASE_OID, catalog_table_oid);
   } catch (CatalogException &e) {
       LOG_TRACE("Can't find table %d! Return false", catalog_table_oid);

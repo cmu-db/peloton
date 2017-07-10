@@ -13,12 +13,12 @@
 #include <cstdio>
 
 #include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace test {
@@ -32,7 +32,7 @@ class CatalogTests : public PelotonTest {};
 TEST_F(CatalogTests, BootstrappingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
-  EXPECT_EQ(catalog::CatalogStorageManager::GetInstance()->GetDatabaseCount(), 1);
+  EXPECT_EQ(storage::StorageManager::GetInstance()->GetDatabaseCount(), 1);
   storage::Database *database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   EXPECT_NE(database, nullptr);

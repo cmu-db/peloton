@@ -13,7 +13,7 @@
 #include "codegen/query.h"
 
 #include "catalog/catalog.h"
-#include "catalog/catalog_storage_manager.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -47,7 +47,7 @@ void Query::Execute(concurrency::Transaction &txn,
   // We use this handy class to avoid complex casting and pointer manipulation
   struct FunctionArguments {
     concurrency::Transaction *txn;
-    catalog::CatalogStorageManager *catalog;
+    storage::StorageManager *catalog;
     executor::ExecutorContext *executor_context;
     char *consumer_arg;
     char rest[0];
@@ -56,7 +56,7 @@ void Query::Execute(concurrency::Transaction &txn,
   // Set up the function arguments
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
   func_args->txn = &txn;
-  func_args->catalog = catalog::CatalogStorageManager::GetInstance();
+  func_args->catalog = storage::StorageManager::GetInstance();
   func_args->executor_context = executor_context;
   func_args->consumer_arg = consumer_arg;
 

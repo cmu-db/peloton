@@ -3,27 +3,27 @@
 //
 //                         Peloton
 //
-// catalog_storage_manager.cpp
+// storage_manager.cpp
 //
-// Identification: src/catalog/catalog_storage_manager.cpp
+// Identification: src/storage/storage_manager.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "catalog/catalog_storage_manager.h"
+#include "storage/storage_manager.h"
 
 
 namespace peloton {
-namespace catalog {
+namespace storage {
 
 // Get instance of the global catalog storage manager
-CatalogStorageManager *CatalogStorageManager::GetInstance(void) {
-  static std::unique_ptr<CatalogStorageManager> global_catalog_storage_manager(
-      new CatalogStorageManager());
+StorageManager *StorageManager::GetInstance(void) {
+  static std::unique_ptr<StorageManager> global_catalog_storage_manager(
+      new StorageManager());
   return global_catalog_storage_manager.get();
 }
 
-CatalogStorageManager::CatalogStorageManager() {}
+StorageManager::StorageManager() {}
 
 //===--------------------------------------------------------------------===//
 // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
@@ -32,7 +32,7 @@ CatalogStorageManager::CatalogStorageManager() {}
 /* Find a database using its oid from storage layer,
  * throw exception if not exists
  * */
-storage::Database *CatalogStorageManager::GetDatabaseWithOid(
+Database *StorageManager::GetDatabaseWithOid(
     oid_t database_oid) const {
   for (auto database : databases_)
     if (database->GetOid() == database_oid) return database;
@@ -44,7 +44,7 @@ storage::Database *CatalogStorageManager::GetDatabaseWithOid(
 /* Find a table using its oid from storage layer,
  * throw exception if not exists
  * */
-storage::DataTable *CatalogStorageManager::GetTableWithOid(
+DataTable *StorageManager::GetTableWithOid(
     oid_t database_oid, oid_t table_oid) const {
   LOG_TRACE("Getting table with oid %d from database with oid %d", database_oid,
             table_oid);
@@ -58,7 +58,7 @@ storage::DataTable *CatalogStorageManager::GetTableWithOid(
 /* Find a index using its oid from storage layer,
  * throw exception if not exists
  * */
-index::Index *CatalogStorageManager::GetIndexWithOid(oid_t database_oid,
+index::Index *StorageManager::GetIndexWithOid(oid_t database_oid,
                                                      oid_t table_oid,
                                                      oid_t index_oid) const {
   // Lookup table from storage layer
@@ -74,7 +74,7 @@ index::Index *CatalogStorageManager::GetIndexWithOid(oid_t database_oid,
 //===--------------------------------------------------------------------===//
 
 // This is used as an iterator
-storage::Database *CatalogStorageManager::GetDatabaseWithOffset(
+Database *StorageManager::GetDatabaseWithOffset(
     oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
@@ -86,18 +86,19 @@ storage::Database *CatalogStorageManager::GetDatabaseWithOffset(
 //===--------------------------------------------------------------------===//
 
 // Only used for testing
-bool CatalogStorageManager::HasDatabase(oid_t db_oid) const {
+bool StorageManager::HasDatabase(oid_t db_oid) const {
   for (auto database : databases_)
     if (database->GetOid() == db_oid) return (true);
   return (false);
 }
 
-void CatalogStorageManager::DestroyDatabases() {
+//Invoked when catalog is destroyed
+void StorageManager::DestroyDatabases() {
   LOG_TRACE("Deleting databases");
   for (auto database : databases_) delete database;
   LOG_TRACE("Finish deleting database");
 }
 
-CatalogStorageManager::~CatalogStorageManager() {}
+StorageManager::~StorageManager() {}
 }
 }

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// catalog_storage_manager.h
+// storage_manager.h
 //
-// Identification: src/include/catalog/catalog_storage_manager.h
+// Identification: src/include/storage/storage_manager.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -18,21 +18,15 @@
 #include "storage/database.h"
 
 namespace peloton {
-
 namespace storage {
-class DataTable;
-class Database;
-}
 
-namespace catalog {
-
-class CatalogStorageManager {
+class StorageManager {
  public:
   // Global Singleton
-  static CatalogStorageManager *GetInstance(void);
+  static StorageManager *GetInstance(void);
 
   // Deconstruct the catalog database when destroying the catalog.
-  ~CatalogStorageManager();
+  ~StorageManager();
 
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONs
@@ -43,7 +37,7 @@ class CatalogStorageManager {
   */
 
   // Find a database using vector offset
-  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
+  Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
   //===--------------------------------------------------------------------===//
   // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
@@ -52,7 +46,7 @@ class CatalogStorageManager {
   /* Find a database using its oid from storage layer,
    * throw exception if not exists
    * */
-  storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
+  Database *GetDatabaseWithOid(oid_t db_oid) const;
 
   /* Find a table using its oid from storage layer,
    * throw exception if not exists
@@ -77,7 +71,7 @@ class CatalogStorageManager {
   // FUNCTIONS USED BY CATALOG
   //===--------------------------------------------------------------------===//
 
-  void AddDatabaseToStorageManager(storage::Database *db) {
+  void AddDatabaseToStorageManager(Database *db) {
     databases_.push_back(db);
   }
   bool RemoveDatabaseFromStorageManager(oid_t database_oid) {
@@ -94,10 +88,10 @@ class CatalogStorageManager {
   void DestroyDatabases();
 
  private:
-  CatalogStorageManager();
+  StorageManager();
 
   // A vector of the database pointers in the catalog
-  std::vector<storage::Database *> databases_;
+  std::vector<Database *> databases_;
 };
 }
 }
