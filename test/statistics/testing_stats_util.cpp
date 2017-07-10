@@ -165,7 +165,7 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
-      optimizer::SimpleOptimizer().BuildPelotonPlanTree(update_stmt));
+      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt));
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
 }

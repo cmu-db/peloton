@@ -34,7 +34,6 @@
 #include "planner/insert_plan.h"
 #include "parser/postgresparser.h"
 
-#include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
 #include "storage/data_table.h"
 #include "executor/create_executor.h"

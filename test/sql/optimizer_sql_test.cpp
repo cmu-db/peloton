@@ -17,7 +17,6 @@
 #include "common/harness.h"
 #include "executor/create_executor.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 #include "planner/order_by_plan.h"
 

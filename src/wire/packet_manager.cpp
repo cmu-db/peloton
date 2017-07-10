@@ -18,7 +18,6 @@
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "optimizer/simple_optimizer.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"

@@ -16,7 +16,6 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
-#include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
 namespace peloton {
