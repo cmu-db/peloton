@@ -78,5 +78,5 @@ class CostAndStatsCalculator : public OperatorVisitor {
   double output_cost_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

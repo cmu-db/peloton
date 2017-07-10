@@ -33,5 +33,5 @@ class TupleSample {
   storage::TileGroup *sampled_tuples;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton
