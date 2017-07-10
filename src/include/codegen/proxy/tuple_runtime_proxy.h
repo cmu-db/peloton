@@ -4,7 +4,7 @@
 //
 // tuple_runtime_proxy.h
 //
-// Identification: src/include/codegen/tuple_runtime_proxy.h
+// Identification: src/include/codegen/proxy/tuple_runtime_proxy.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/type.h"
-#include "codegen/pool_proxy.h"
+#include "codegen/type/type.h"
+#include "codegen/proxy/pool_proxy.h"
 
 namespace peloton {
 namespace codegen {

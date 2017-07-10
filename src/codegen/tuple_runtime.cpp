@@ -11,13 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/tuple_runtime.h"
+#include "common/macros.h"
 #include "type/abstract_pool.h"
 
 namespace peloton {
 namespace codegen {
 
 void TupleRuntime::MaterializeVarLen(char *data, uint32_t len, char *buf,
-                                     type::AbstractPool *pool) {
+                                     peloton::type::AbstractPool *pool) {
   struct varlen_t {
     uint32_t len;
     char data[];

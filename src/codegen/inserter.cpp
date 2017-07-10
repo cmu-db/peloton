@@ -31,12 +31,12 @@ void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
 void Inserter::CreateTuple() {
   PL_ASSERT(txn_ != nullptr && table_ != nullptr);
   tuple_.reset(new storage::Tuple(table_->GetSchema(), true));
-  pool_.reset(new type::EphemeralPool());
+  pool_.reset(new peloton::type::EphemeralPool());
 }
 
 char *Inserter::GetTupleData() { return tuple_->GetData(); }
 
-type::AbstractPool *Inserter::GetPool() { return pool_.get(); }
+peloton::type::AbstractPool *Inserter::GetPool() { return pool_.get(); }
 
 void Inserter::InsertTuple() { Insert(tuple_.get()); }
 

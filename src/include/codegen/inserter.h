@@ -31,6 +31,7 @@ class Tuple;
 }  // namespace storage
 
 namespace type {
+class AbstractPool;
 class EphemeralPool;
 }  // namespace type
 
@@ -51,7 +52,7 @@ class Inserter {
   char *GetTupleData();
 
   // Get the pool address
-  type::AbstractPool *GetPool();
+  peloton::type::AbstractPool *GetPool();
 
   // Insert the tuple instance
   void InsertTuple();
@@ -74,7 +75,7 @@ class Inserter {
 
   // These are created and locally managed
   std::unique_ptr<storage::Tuple> tuple_;
-  std::unique_ptr<type::EphemeralPool> pool_;
+  std::unique_ptr<peloton::type::EphemeralPool> pool_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Inserter);
