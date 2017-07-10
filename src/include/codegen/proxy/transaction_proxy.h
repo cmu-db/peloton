@@ -27,9 +27,8 @@ PROXY(Transaction) {
 
 namespace proxy {
 template <>
-struct TypeBuilder<::peloton::concurrency::Transaction> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) {
+struct TypeBuilder<concurrency::Transaction> {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return TransactionProxy::GetType(codegen);
   }
 };

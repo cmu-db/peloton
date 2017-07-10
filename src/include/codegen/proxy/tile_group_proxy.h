@@ -31,9 +31,8 @@ PROXY(TileGroup) {
 
 namespace proxy {
 template <>
-struct TypeBuilder<::peloton::storage::TileGroup> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) {
+struct TypeBuilder<storage::TileGroup> {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return TileGroupProxy::GetType(codegen);
   }
 };

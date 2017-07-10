@@ -28,8 +28,7 @@ PROXY(ExecutorContext) {
 namespace proxy {
 template <>
 struct TypeBuilder<::peloton::executor::ExecutorContext> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return ExecutorContextProxy::GetType(codegen);
   }
 };

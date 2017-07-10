@@ -51,8 +51,7 @@ PROXY(RuntimeFunctions) {
 namespace proxy {
 template <>
 struct TypeBuilder<::peloton::codegen::RuntimeFunctions::ColumnLayoutInfo> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return ColumnLayoutInfoProxy::GetType(codegen);
   }
 };

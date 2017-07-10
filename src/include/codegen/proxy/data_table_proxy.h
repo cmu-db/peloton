@@ -33,9 +33,8 @@ PROXY(DataTable) {
 
 namespace proxy {
 template <>
-struct TypeBuilder<::peloton::storage::DataTable> {
-  using Type = llvm::Type *;
-  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+struct TypeBuilder<storage::DataTable> {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return DataTableProxy::GetType(codegen);
   }
 };
