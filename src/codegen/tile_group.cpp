@@ -98,8 +98,7 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
 
   // Collect <start, stride, is_columnar> triplets of all columns
   std::vector<TileGroup::ColumnLayout> layouts;
-  auto *layout_type =
-      RuntimeFunctionsProxy::_ColumnLayoutInfo::GetType(codegen);
+  auto *layout_type = ColumnLayoutInfoProxy::GetType(codegen);
   for (uint32_t col_id = 0; col_id < num_cols; col_id++) {
     auto *start = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
         layout_type, column_layout_infos, col_id, 0));

@@ -13,34 +13,31 @@
 #pragma once
 
 #include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {
 
-class TileGroupProxy {
- public:
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(TileGroup) {
+  PROXY_MEMBER_FIELD(0, char[sizeof(storage::TileGroup)], opaque);
+  PROXY_TYPE("peloton::storage::TileGroup", char[sizeof(storage::TileGroup)]);
 
-  //===--------------------------------------------------------------------===//
-  // LLVM proxy for storage::TileGroup::GetNextTupleSlot(...)
-  //===--------------------------------------------------------------------===//
-  struct _GetNextTupleSlot {
-    // Get the symbol name
-    static const std::string &GetFunctionName();
-    // Get the actual function definition
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // LLVM proxy for storage::TileGroup::GetTileGroupId(...)
-  //===--------------------------------------------------------------------===//
-  struct _GetTileGroupId {
-    // Get the symbol name
-    static const std::string &GetFunctionName();
-    // Get the actual function definition
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  PROXY_METHOD(GetNextTupleSlot, &peloton::storage::TileGroup::GetNextTupleSlot,
+               "_ZNK7peloton7storage9TileGroup16GetNextTupleSlotEv");
+  PROXY_METHOD(GetTileGroupId, &peloton::storage::TileGroup::GetTileGroupId,
+               "_ZNK7peloton7storage9TileGroup14GetTileGroupIdEv");
 };
+
+namespace proxy {
+template <>
+struct TypeBuilder<::peloton::storage::TileGroup> {
+  using Type = llvm::Type *;
+  static Type GetType(CodeGen &codegen) {
+    return TileGroupProxy::GetType(codegen);
+  }
+};
+}  // namespace proxy
 
 }  // namespace codegen
 }  // namespace peloton

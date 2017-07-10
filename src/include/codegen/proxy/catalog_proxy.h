@@ -12,29 +12,36 @@
 
 #pragma once
 
+#include "catalog/catalog.h"
 #include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// A proxy to some of the methods in catalog::Catalog
-//===----------------------------------------------------------------------===//
-class CatalogProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our Manager class
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(Catalog) {
+  // For now, we don't need access to individual fields, so use an opaque byte
+  // array
+  PROXY_MEMBER_FIELD(0, char[sizeof(catalog::Catalog)], opaque);
 
-  //===--------------------------------------------------------------------===//
-  // A structure that proxies Catalog::GetTableWithOid()
-  //===--------------------------------------------------------------------===//
-  struct _GetTableWithOid {
-    // Return the symbol for the Manager.GetTableWithOid() function
-    static const std::string &GetFunctionName();
-    // Return the LLVM-typed function definition for Manager.GetTableWithOid()
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  // The type
+  PROXY_TYPE("peloton::catalog::Catalog", char[sizeof(catalog::Catalog)]);
+
+  // Proxy Catalog::GetTableWithOid()
+  PROXY_METHOD(GetTableWithOid, &catalog::Catalog::GetTableWithOid,
+               "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj");
 };
+
+namespace proxy {
+template <>
+struct TypeBuilder<catalog::Catalog> {
+  using Type = llvm::Type *;
+  static Type GetType(CodeGen &codegen) ALWAYS_INLINE {
+    return CatalogProxy::GetType(codegen);
+  }
+};
+}  // namespace proxy
 
 }  // namespace codegen
 }  // namespace peloton

@@ -12,55 +12,73 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/util/cc_hash_table.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// A utility class that serves as a helper to proxy most of the methods in
-// peloton::util::CCHashTable. It significantly reduces the pain in calling
-// methods on HashTable instances from LLVM code.
-//===----------------------------------------------------------------------===//
-class CCHashTableProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our HashTable
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(HashEntry) {
+  PROXY_MEMBER_FIELD(0, uint64_t, hash_val);
+  PROXY_MEMBER_FIELD(1, util::CCHashTable::HashEntry *, next);
 
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::Init()
-  //===--------------------------------------------------------------------===//
-  struct _Init {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  // We can't use PROXY_TYPE macro because we need to define a recursive struct
+  static llvm::Type *GetType(CodeGen &codegen) {
+    static const std::string kHashEntryTypeName = "peloton::CCHashEntry";
 
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::Destroy()
-  //===--------------------------------------------------------------------===//
-  struct _Destroy {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+    // Check if the hash entry is already defined in the module
+    auto *llvm_type = codegen.LookupTypeByName(kHashEntryTypeName);
+    if (llvm_type != nullptr) {
+      return llvm_type;
+    }
 
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::StoreTuple()
-  //===--------------------------------------------------------------------===//
-  struct _StoreTuple {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
+    // Define the thing (the first field is the 64bit hash, the second is the
+    // next HashEntry* pointer)
+    auto *hash_entry_type =
+        llvm::StructType::create(codegen.GetContext(), kHashEntryTypeName);
+    std::vector<llvm::Type *> elements = {
+        codegen.Int64Type(),             // The hash value
+        hash_entry_type->getPointerTo()  // The next HashEntry* pointer
+    };
+    hash_entry_type->setBody(elements, /*is_packed*/ false);
+    return hash_entry_type;
   };
 };
 
-//===----------------------------------------------------------------------===//
-// A utility class that serves as a helper to proxy the precompiled
-// CCHashTable::HashEntry methods and types.
-//===----------------------------------------------------------------------===//
-class HashEntryProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our HashEntry
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(CCHashTable) {
+  PROXY_MEMBER_FIELD(0, util::CCHashTable::HashEntry **, buckets);
+  PROXY_MEMBER_FIELD(1, uint64_t, hash_val);
+  PROXY_MEMBER_FIELD(2, uint64_t, hash_val1);
+  PROXY_MEMBER_FIELD(3, uint64_t, hash_val2);
+
+  PROXY_TYPE("peloton::CCHashTable", util::CCHashTable::HashEntry **, uint64_t,
+             uint64_t, uint64_t);
+
+  PROXY_METHOD(Init, &peloton::codegen::util::CCHashTable::Init,
+               "_ZN7peloton7codegen4util11CCHashTable4InitEv");
+  PROXY_METHOD(StoreTuple, &peloton::codegen::util::CCHashTable::StoreTuple,
+               "_ZN7peloton7codegen4util11CCHashTable10StoreTupleEmj");
+  PROXY_METHOD(Destroy, &peloton::codegen::util::CCHashTable::Destroy,
+               "_ZN7peloton7codegen4util11CCHashTable7DestroyEv");
 };
+
+namespace proxy {
+template <>
+struct TypeBuilder<util::CCHashTable::HashEntry> {
+  using Type = llvm::Type *;
+  static Type GetType(CodeGen &codegen) {
+    return HashEntryProxy::GetType(codegen);
+  }
+};
+
+template <>
+struct TypeBuilder<util::CCHashTable> {
+  using Type = llvm::Type;
+  static Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
+    return CCHashTableProxy::GetType(codegen);
+  }
+};
+}  // namespace proxy
 
 }  // namespace codegen
 }  // namespace peloton

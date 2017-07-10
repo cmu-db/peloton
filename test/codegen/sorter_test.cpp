@@ -28,17 +28,17 @@ struct TestTuple {
 };
 
 // The comparison function for TestTuples. We sort on column B.
-static int CompareTuples(const TestTuple *a, const TestTuple *b) {
-  return a->col_b - b->col_b;
+static int CompareTuplesForAscending(const char *a, const char *b) {
+  const auto *at = reinterpret_cast<const TestTuple *>(a);
+  const auto *bt = reinterpret_cast<const TestTuple *>(b);
+  return at->col_b - bt->col_b;
 }
 
 class SorterTest : public PelotonTest {
  public:
   SorterTest() {
     // Init
-    sorter.Init(
-        reinterpret_cast<int (*)(const void *, const void *)>(CompareTuples),
-        sizeof(TestTuple));
+    sorter.Init(CompareTuplesForAscending, sizeof(TestTuple));
   }
 
   ~SorterTest() {
@@ -48,12 +48,13 @@ class SorterTest : public PelotonTest {
 
   void TestSort(uint64_t num_tuples_to_insert = 10) {
     // Time this stuff
-    Timer<std::ratio<1,1000>> timer;
+    Timer<std::ratio<1, 1000>> timer;
     timer.Start();
 
     // Insert TestTuples
     for (uint32_t i = 0; i < num_tuples_to_insert; i++) {
-      TestTuple *tuple = reinterpret_cast<TestTuple *>(sorter.StoreInputTuple());
+      TestTuple *tuple =
+          reinterpret_cast<TestTuple *>(sorter.StoreInputTuple());
       tuple->col_a = rand() % 100;
       tuple->col_b = rand() % 1000;
       tuple->col_c = rand() % 10000;
