@@ -36,7 +36,7 @@ PROXY(Deleter) {
 
 namespace proxy {
 template <>
-struct TypeBuilder<::peloton::codegen::Deleter> {
+struct TypeBuilder<codegen::Deleter> {
   static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
     return DeleterProxy::GetType(codegen);
   }
