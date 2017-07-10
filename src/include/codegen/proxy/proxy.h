@@ -186,34 +186,34 @@ struct Member {
     return type;                                                              \
   }
 
-#define PROXY_METHOD(M, PTR, N)                                               \
-  struct _##M {                                                               \
-    /*static constexpr const char *k##M##FnName = "__FILL__ME__";*/           \
-    static constexpr const char *k##M##FnName = N;                            \
-    static llvm::Function *GetFunction(peloton::codegen::CodeGen &codegen) {  \
-      /* Check if the function has already been defined - return it if so */  \
-      llvm::Function *func = codegen.LookupFunction(k##M##FnName);            \
-      if (func != nullptr) {                                                  \
-        return func;                                                          \
-      }                                                                       \
-                                                                              \
-      /* Ensure the TypeBuilder for the given method actually produces an     \
-       * LLVM FunctionType */                                                 \
-      static_assert(                                                          \
-          ((std::is_pointer<decltype(PTR)>::value &&                          \
-            std::is_function<                                                 \
-                typename std::remove_pointer<decltype(PTR)>::type>::value) || \
-           std::is_member_function_pointer<decltype(PTR)>::value),            \
-          "You must provide a pointer to the function you want to proxy");    \
-                                                                              \
-      /* The function hasn't been registered. Do it now */                    \
-      llvm::PointerType *func_ptr = llvm::cast<llvm::PointerType>(            \
-          peloton::codegen::proxy::TypeBuilder<decltype(PTR)>::GetType(       \
-              codegen));                                                      \
-      llvm::FunctionType *func_type =                                         \
-          llvm::cast<llvm::FunctionType>(func_ptr->getElementType());         \
-      return codegen.RegisterFunction(k##M##FnName, func_type);               \
-    }                                                                         \
+#define PROXY_METHOD(M, PTR, N)                                                \
+  struct _##M {                                                                \
+    /*static constexpr const char *k##M##FnName = "__FILL__ME__";*/            \
+    static constexpr const char *k##M##FnName = N;                             \
+    static llvm::Function *GetFunction(peloton::codegen::CodeGen &codegen) {   \
+      /* Check if the function has already been defined - return it if so */   \
+      llvm::Function *func = codegen.LookupFunction(k##M##FnName);             \
+      if (func != nullptr) {                                                   \
+        return func;                                                           \
+      }                                                                        \
+                                                                               \
+      /* Ensure the function we're proxying is an actual function pointer or a \
+       * member function pointer */                                            \
+      static_assert(                                                           \
+          ((std::is_pointer<decltype(PTR)>::value &&                           \
+            std::is_function<                                                  \
+                typename std::remove_pointer<decltype(PTR)>::type>::value) ||  \
+           std::is_member_function_pointer<decltype(PTR)>::value),             \
+          "You must provide a pointer to the function you want to proxy");     \
+                                                                               \
+      /* The function hasn't been registered. Do it now */                     \
+      llvm::PointerType *func_ptr = llvm::cast<llvm::PointerType>(             \
+          peloton::codegen::proxy::TypeBuilder<decltype(PTR)>::GetType(        \
+              codegen));                                                       \
+      llvm::FunctionType *func_type =                                          \
+          llvm::cast<llvm::FunctionType>(func_ptr->getElementType());          \
+      return codegen.RegisterFunction(k##M##FnName, func_type);                \
+    }                                                                          \
   };
 
 }  // namespace proxy
