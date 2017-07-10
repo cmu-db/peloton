@@ -69,8 +69,8 @@ class GroupExpression {
       lowest_cost_table_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton
 
 namespace std {
 
@@ -81,4 +81,4 @@ struct hash<peloton::optimizer::GroupExpression> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} /* namespace std */
+} // namespace std

@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/column.h"
-#include "catalog/column.h"
+
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -61,5 +62,5 @@ catalog::Column GetSchemaColumnFromOptimizerColumn(Column *column) {
                          column->Inlined());
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

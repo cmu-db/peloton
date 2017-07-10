@@ -13,7 +13,6 @@
 #pragma once
 
 #include "catalog/column.h"
-#include "optimizer/operator_node.h"
 
 #include "type/types.h"
 

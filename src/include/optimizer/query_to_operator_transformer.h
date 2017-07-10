@@ -66,5 +66,5 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   bool output_inlined;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

@@ -14,7 +14,6 @@
 
 #include <typeinfo>
 
-#include "common/logger.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -56,5 +55,5 @@ class Property {
   }
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton
