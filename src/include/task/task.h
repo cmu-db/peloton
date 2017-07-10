@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// network_server.cpp
+// task.h
 //
 // Identification: src/networking/network_server.cpp
 //
@@ -15,6 +15,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
+#include <memory>
+
 #include "container/lock_free_queue.h"
 
 namespace peloton {
@@ -24,6 +26,7 @@ class Task {
   friend class TaskQueue;
 
  public:
+  inline Task() {};
   inline Task(void(*func_ptr)(std::vector<void*>),
               std::vector<void*> &func_args) :
       func_ptr_(func_ptr), func_args_(func_args) {};
@@ -41,12 +44,12 @@ class Task {
 
 class TaskQueue {
  public:
-  void SubmitTask(Task *task);
-  void SubmitTaskBatch(std::vector<Task*> task_vector);
-  bool PollTask(Task *task);
+  void SubmitTask(std::shared_ptr<Task> task);
+  void SubmitTaskBatch(std::vector<std::shared_ptr<Task>>& task_vector);
+  bool PollTask(std::shared_ptr<Task> &task);
   bool IsEmpty();
  private:
-  peloton::LockFreeQueue<Task*> task_queue_;
+  peloton::LockFreeQueue<std::shared_ptr<Task>> task_queue_;
 };
 
 }
