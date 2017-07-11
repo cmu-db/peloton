@@ -4,22 +4,18 @@
 //
 // worker_pool.cpp
 //
-// Identification: src/task/worker_pool.cpp
+// Identification: src/threadpool/worker_pool.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <unistd.h>
-
-#include "task/worker.h"
-#include "../../../../../../../usr/include/boost/shared_ptr.hpp"
+#include "threadpool/worker.h"
 
 #define EMPTY_COUNT_BOUND 10
-
+#define WORKER_PAUSE_TIME 10
 namespace peloton {
-namespace task {
+namespace threadpool {
 
 void Worker::StartThread(WorkerPool* current_pool){
   shutdown_thread_ = false;
@@ -35,11 +31,11 @@ void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
-        usleep(10);
+        usleep(WORKER_PAUSE_TIME);
       }
       continue;
     }
-    // call the task
+    // call the threadpool
     t->ExecuteTask();
     empty_count = 0;
   }
@@ -49,6 +45,8 @@ void Worker::Shutdown() {
   shutdown_thread_ = true;
   worker_thread_.join();
 }
+
+
 
 WorkerPool::WorkerPool(size_t num_threads, TaskQueue *task_queue) {
   this->task_queue_ = task_queue;
@@ -73,6 +71,5 @@ void WorkerPool::Shutdown() {
   return;
 }
 
-
-}//task
+}//threadpool
 }//peloton

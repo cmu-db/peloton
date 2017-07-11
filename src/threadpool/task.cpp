@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// task.cpp
+// threadpool.cpp
 //
 // Identification: src/networking/network_server.cpp
 //
@@ -10,12 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
-#include "task/task.h"
-#include <memory>
+#include <common/logger.h>
+#include "threadpool/task.h"
 
 namespace peloton {
-namespace task {
+namespace threadpool {
 
 void Task::ExecuteTask() {
   if (this->is_sync) {
@@ -27,48 +26,44 @@ void Task::ExecuteTask() {
 }
 
 void Task::ExecuteTaskSync() {
-  this->func_ptr_(this->func_args_);
-
+  this->func_ptr_(this->func_arg_);
   std::unique_lock <std::mutex> lock(*this->task_mutex_);
   (*num_worker_)--;
-  //std::cout << "thread: " << std::this_thread::get_id() << ", num: " << *num_worker_ << std::endl;
   if ((*num_worker_) == 0) {
     this->condition_variable_->notify_all();
   }
 }
 
 void Task::ExecuteTaskAsync() {
-  this->func_ptr_(this->func_args_);
+  this->func_ptr_(this->func_arg_);
 }
 
 // Current thread would be blocked until the call back function finishes.
-void TaskQueue::SubmitSync(void(*func_ptr_)(void *),
-                            void* func_args_) {
-  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr_, func_args_);
-  this->SubmitTask(task);
+void TaskQueue::SubmitSync(void(*func_ptr)(void *), void* func_arg) {
+  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
+  std::mutex mutex;
+  std::unique_lock <std::mutex> lock(mutex);
+  std::condition_variable cv;
+  int num_worker = 1;
+
+  task->is_sync = true;
+  task->task_mutex_ = &mutex;
+  task->condition_variable_ = &cv;
+  task->num_worker_ = &num_worker;
+  task_queue_.Enqueue(task);
+  cv.wait(lock);
 }
-// Current thread would not be blocked even if the call back function is still executing
-void TaskQueue::SubmitAsync(void(*func_ptr_)(void *),
-                            void* func_args_) {
-  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr_, func_args_);
+
+// Current thread would not be blocked even if
+// the call back function is still executing
+void TaskQueue::SubmitAsync(void(*func_ptr)(void *), void* func_arg) {
+  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
   task->is_sync = false;
   task_queue_.Enqueue(task);
 }
 
-
-void TaskQueue::SubmitTask(std::shared_ptr<Task> task) {
-  std::mutex mutex;
-  std::unique_lock <std::mutex> lock(mutex);
-  std::condition_variable cv;
-  task->is_sync = true;
-  task->task_mutex_ = &mutex;
-  task->condition_variable_ = &cv;
-
-  task_queue_.Enqueue(task);
-
-  cv.wait(lock);
-}
-
+// TODO: this function was implemented before the need is clear.
+// TODO: Not sure if we still want it?
 void TaskQueue::SubmitTaskBatch(std::vector<std::shared_ptr<Task>>& task_vector) {
   std::mutex mutex;
   std::unique_lock <std::mutex> lock(mutex);
