@@ -4,7 +4,7 @@
 //
 // worker.h
 //
-// Identification: src/task/worker_pool.cpp
+// Identification: src/threadpool/worker_pool.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,35 +15,44 @@
 #include <vector>
 #include <thread>
 #include <memory>
+#include <unistd.h>
 
-#include "task/task.h"
-#include "../../../../../../../../usr/include/boost/shared_ptr.hpp"
+#include "threadpool/task.h"
 
 namespace peloton{
-namespace task{
+namespace threadpool{
+//Forward declaration
 class WorkerPool;
+/**
+ * @class Worker
+ * @brief A worker that can execute task
+ */
 class Worker {
   friend class WorkerPool;
- public:
-  void StartThread(WorkerPool* worker_pool);
 
+  void StartThread(WorkerPool* worker_pool);
   // poll work queue, until exiting
   static void PollForWork(Worker* current_thread, WorkerPool* current_pool);
 
-  // wait for the current task to complete and shutdown the thread;
+  // wait for the current threadpool to complete and shutdown the thread;
   void Shutdown();
- private:
+
+
   volatile bool shutdown_thread_;
   std::thread worker_thread_;
 };
 
+/**
+ * @class WorkerPool
+ * @brief A worker pool that maintains a group to worker thread
+ */
 class WorkerPool {
   friend class Worker;
  public:
-  //static WorkerPool& GetInstance();
-  // submit a task for asynchronous execution.
+  // submit a threadpool for asynchronous execution.
   void Shutdown();
-  WorkerPool(size_t num_threads, TaskQueue *taskQueue);
+  WorkerPool(const size_t num_threads, TaskQueue *taskQueue);
+  ~WorkerPool(){ this->Shutdown(); }
  private:
   std::vector<std::unique_ptr<Worker>> worker_threads_;
   TaskQueue* task_queue_;
