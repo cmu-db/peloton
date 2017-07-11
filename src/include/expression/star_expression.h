@@ -33,9 +33,9 @@ class StarExpression : public AbstractExpression {
     return type::ValueFactory::GetBooleanValue(true);
   }
 
-  AbstractExpression *Copy() const { return new StarExpression(*this); }
+  AbstractExpression *Copy() const override { return new StarExpression(*this); }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   StarExpression(const AbstractExpression &other) : AbstractExpression(other) {}

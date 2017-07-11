@@ -95,8 +95,8 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
       Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(less_than_sel, 0.25);
 
-  condition = std::move(
-      ValueCondition{column_id, ExpressionType::COMPARE_GREATERTHAN, value1});
+  condition =
+      ValueCondition{column_id, ExpressionType::COMPARE_GREATERTHAN, value1};
   double greater_than_sel =
       Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(greater_than_sel, 0.75);
@@ -195,8 +195,8 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   // equal, in mcv
   double eq_sel_in_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition1);
-  condition1 = std::move(
-      ValueCondition{column_id1, ExpressionType::COMPARE_NOTEQUAL, value1});
+  condition1 =
+      ValueCondition{column_id1, ExpressionType::COMPARE_NOTEQUAL, value1};
   double neq_sel_in_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition1);
   ExpectSelectivityEqual(eq_sel_in_mcv, 0.33);
@@ -230,8 +230,8 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   double eq_sel_nin_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition2);
-  condition2 = std::move(
-      ValueCondition{column_id2, ExpressionType::COMPARE_NOTEQUAL, value2});
+  condition2 =
+      ValueCondition{column_id2, ExpressionType::COMPARE_NOTEQUAL, value2};
   double neq_sel_nin_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition2);
   // (1 - 2/3) / (3 + 7 + 50 - 10) = 1 / 150 = 0.01667

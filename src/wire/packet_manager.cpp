@@ -443,7 +443,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
                              result, rows_affected, error_message, thread_id);
 
         if (status == ResultType::SUCCESS) {
-          tuple_descriptor = std::move(statement->GetTupleDescriptor());
+          tuple_descriptor = statement->GetTupleDescriptor();
         } else {
           SendErrorResponse(
                 {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
@@ -680,12 +680,12 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   if (format_codes_number == 0) {
     // using the default text format
     result_format_ =
-        std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+        std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   } else if (format_codes_number == 1) {
     // get the format code from packet
     auto result_format = PacketGetInt(pkt, 2);
-    result_format_ = std::move(std::vector<int>(
-        statement->GetTupleDescriptor().size(), result_format));
+    result_format_ = std::vector<int>(
+        statement->GetTupleDescriptor().size(), result_format);
   } else {
     // get the format code for each column
     result_format_.clear();

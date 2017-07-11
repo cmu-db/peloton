@@ -25,13 +25,13 @@ class VarlenType : public Type {
   ~VarlenType();
   
   // Access the raw variable length data
-  const char *GetData(const Value& val) const;
+  const char *GetData(const Value& val) const override;
 
   // Access the raw varlen data stored from the tuple storage
   char *GetData(char *storage) override;
 
   // Get the length of the variable length data
-  uint32_t GetLength(const Value& val) const;
+  uint32_t GetLength(const Value& val) const override;
 
   // Comparison functions
   CmpBool CompareEquals(const Value& left, const Value &right) const override;

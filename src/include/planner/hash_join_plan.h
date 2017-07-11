@@ -53,14 +53,14 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASHJOIN; }
+  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::HASHJOIN; }
 
-  void GetOutputColumns(std::vector<oid_t> &columns) const {
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns.resize(GetSchema()->GetColumnCount());
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  const std::string GetInfo() const { return "HashJoin"; }
+  const std::string GetInfo() const override { return "HashJoin"; }
 
   const std::vector<oid_t> &GetOuterHashIds() const {
     return outer_column_ids_;
@@ -80,14 +80,14 @@ class HashJoinPlan : public AbstractJoinPlan {
     }
   }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate()->Copy());
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(GetSchema()));
     HashJoinPlan *new_plan = new HashJoinPlan(
         GetJoinType(), std::move(predicate_copy),
-        std::move(GetProjInfo()->Copy()), schema_copy, outer_column_ids_);
+        GetProjInfo()->Copy(), schema_copy, outer_column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 

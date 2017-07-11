@@ -261,9 +261,10 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   }
 }
 
-void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
-  stmt = stmt;
-  num_indent = num_indent;
+void GetDeleteStatementInfo(DeleteStatement* stmt UNUSED_ATTRIBUTE, uint num_indent UNUSED_ATTRIBUTE) {
+//  stmt = stmt;
+//  num_indent = num_indent;
+  return;
 }
 
 std::string CharsToStringDestructive(char* str) {

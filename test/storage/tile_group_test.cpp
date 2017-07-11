@@ -515,7 +515,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
       type::Value cmp = type::ValueFactory::GetBooleanValue((uninlined_col_value.CompareNotEquals(
           new_uninlined_col_value)));
       int is_value_not_same = cmp.IsTrue();
-      int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
+//      int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
+      int is_length_same = true;
       int is_pointer_same =
           uninlined_col_object_ptr == new_uninlined_col_object_ptr;
       int is_data_same = std::strcmp(uninlined_varchar_str.c_str(),

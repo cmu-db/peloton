@@ -778,7 +778,7 @@ std::unique_ptr<storage::Tile> LogicalTile::Materialize() {
   MaterializeByTiles(old_to_new_cols, tile_to_cols, dest_tile.get());
 
   // Wrap physical tile in logical tile.
-  return std::move(dest_tile);
+  return dest_tile;
 }
 
 }  // End executor namespace

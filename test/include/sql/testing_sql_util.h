@@ -73,7 +73,7 @@ class TestingSQLUtil {
       const std::vector<StatementResult> &result, size_t index) {
     std::string value(result[index].second.begin(), result[index].second.end());
 
-    return std::move(value);
+    return value;
   }
 
   // Create a random number

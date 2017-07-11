@@ -38,10 +38,10 @@ static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
 static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
 // Default cost of sorting n elements
-constexpr double default_sorting_cost(size_t n) { return n * std::log2(n); }
+  double default_sorting_cost(size_t n) { return n * std::log2(n); }
 
 // Default number of index tuple to access for n elements
-constexpr double default_index_height(size_t n) { return std::log2(n); }
+  double default_index_height(size_t n) { return std::log2(n); }
 
 //===----------------------------------------------------------------------===//
 // Cost

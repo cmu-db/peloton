@@ -7918,7 +7918,9 @@ const char kCurrentDirectoryString[] = ".\\";
 # endif  // GTEST_OS_WINDOWS_MOBILE
 #else
 const char kPathSeparator = '/';
-const char kPathSeparatorString[] = "/";
+// FIX for clang unused-const-variable warning, comment out removed kPathSeparatorString
+// Reference: https://github.com/google/googletest/blob/master/googletest/src/gtest-filepath.cc#L86
+//const char kPathSeparatorString[] = "/";
 const char kCurrentDirectoryString[] = "./";
 #endif  // GTEST_OS_WINDOWS
 

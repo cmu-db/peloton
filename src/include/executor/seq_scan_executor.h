@@ -31,12 +31,12 @@ class SeqScanExecutor : public AbstractScanExecutor {
   void UpdatePredicate(const std::vector<oid_t> &column_ids,
                        const std::vector<type::Value> &values) override;
 
-  void ResetState() { current_tile_group_offset_ = START_OID; }
+  void ResetState() override { current_tile_group_offset_ = START_OID; }
 
  protected:
-  bool DInit();
+  bool DInit() override ;
 
-  bool DExecute();
+  bool DExecute() override ;
 
  private:
   //===--------------------------------------------------------------------===//

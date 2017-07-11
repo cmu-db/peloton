@@ -40,7 +40,7 @@ class OperatorTransformerTests : public PelotonTest {
       std::string query, std::unique_ptr<parser::SQLStatementList>& stmt_list) {
     // Parse query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-    stmt_list = std::move(peloton_parser.BuildParseTree(query));
+    stmt_list = peloton_parser.BuildParseTree(query);
     auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
 
     // Bind query
@@ -48,7 +48,7 @@ class OperatorTransformerTests : public PelotonTest {
     binder.BindNameToNode(stmt);
 
     QueryToOperatorTransformer transformer;
-    return std::move(transformer.ConvertToOpExpression(stmt));
+    return transformer.ConvertToOpExpression(stmt);
   }
 
   void CheckPredicate(expression::AbstractExpression* predicate,

@@ -153,7 +153,7 @@ ResultType TrafficCop::ExecuteStatement(
 
   if (status == ResultType::SUCCESS) {
     LOG_TRACE("Execution succeeded!");
-    tuple_descriptor = std::move(statement->GetTupleDescriptor());
+    tuple_descriptor = statement->GetTupleDescriptor();
   } else {
     LOG_TRACE("Execution failed!");
   }
@@ -303,7 +303,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
-    return std::move(statement);
+    return statement;
   } catch (Exception &e) {
     error_message = e.what();
     return nullptr;

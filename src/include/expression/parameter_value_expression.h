@@ -42,7 +42,7 @@ class ParameterValueExpression : public AbstractExpression {
     return new ParameterValueExpression(value_idx_);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   int value_idx_;

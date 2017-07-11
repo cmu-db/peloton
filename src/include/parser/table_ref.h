@@ -23,8 +23,8 @@
 namespace peloton {
 namespace parser {
 
-struct SelectStatement;
-struct JoinDefinition;
+class SelectStatement;
+class JoinDefinition;
 
 //  Holds reference to tables.
 // Can be either table names or a select statement.
@@ -78,7 +78,8 @@ struct TableRef {
 };
 
 // Definition of a join table
-struct JoinDefinition {
+class JoinDefinition {
+ public:
   JoinDefinition()
       : left(NULL), right(NULL), condition(NULL), type(JoinType::INNER) {}
 

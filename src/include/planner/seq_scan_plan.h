@@ -25,7 +25,7 @@
 namespace peloton {
 
 namespace parser {
-struct SelectStatement;
+class SelectStatement;
 }
 namespace storage {
 class DataTable;
@@ -55,7 +55,7 @@ class SeqScanPlan : public AbstractScan {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output);
+  bool SerializeTo(SerializeOutput &output) const ;
   bool DeserializeFrom(SerializeInput &input);
 
   /* For init SerializeOutput */

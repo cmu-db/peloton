@@ -28,12 +28,15 @@ PELOTON_PORT = 15721
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
-def runTest(script, enableStats=False):
+def runTest(script, enableStats=False, isOSX=False):
     # Launch Peloton
     args = "-port " + str(PELOTON_PORT)
     if enableStats:
         args += " -stats_mode 1"
-    cmd = ['exec ' + PELOTON_BIN + ' ' + args]
+    if isOSX:
+        cmd = ['ASAN_OPTIONS=detect_container_overflow=0 exec ' + PELOTON_BIN + ' ' + args]
+    else:
+        cmd = ['exec ' + PELOTON_BIN + ' ' + args]
     peloton = subprocess.Popen(cmd, shell=True)
     time.sleep(3) # HACK
 
@@ -54,16 +57,15 @@ def runTest(script, enableStats=False):
 
 
 if __name__ == '__main__':
-
     if not os.path.exists(PELOTON_BIN):
         raise Exception("Unable to find Peloton binary '%s'" % PELOTON_BIN)
     if not os.path.exists(PELOTON_JDBC_SCRIPT_DIR):
         raise Exception("Unable to find JDBC script dir '%s'" % PELOTON_JDBC_SCRIPT_DIR)
 
     ## Basic
-    runTest("test_jdbc.sh")
+    runTest("test_jdbc.sh", isOSX=sys.argv[1] == 'osx')
 
     ## Stats
-    # runTest("test_jdbc.sh", enableStats=True)
+    # runTest("test_jdbc.sh", enableStats=True, sys.argv[1] == 'osx')
 
 ## MAIN

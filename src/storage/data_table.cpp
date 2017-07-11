@@ -1086,7 +1086,7 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
       column_map_stats[tile_id]++;
   }
 
-  return std::move(column_map_stats);
+  return column_map_stats;
 }
 
 void DataTable::SetDefaultLayout(const column_map_type &layout) {

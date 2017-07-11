@@ -138,7 +138,12 @@ llvm::Function *ValuesRuntimeProxy::_OutputInteger::GetFunction(
 
 const std::string &ValuesRuntimeProxy::_OutputBigInt::GetFunctionName() {
   static const std::string kOutputBigIntFnName =
+#ifdef __APPLE__
+      "_ZN7peloton7codegen13ValuesRuntime12OutputBigIntEPcjx";
+#else
       "_ZN7peloton7codegen13ValuesRuntime12OutputBigIntEPcjl";
+#endif
+
   return kOutputBigIntFnName;
 }
 
@@ -221,7 +226,11 @@ llvm::Function *ValuesRuntimeProxy::_OutputDate::GetFunction(CodeGen &codegen) {
 
 const std::string &ValuesRuntimeProxy::_OutputTimestamp::GetFunctionName() {
   static const std::string kOutputTimestampFnName =
+#ifdef __APPLE__
+      "_ZN7peloton7codegen13ValuesRuntime15OutputTimestampEPcjx";
+#else
       "_ZN7peloton7codegen13ValuesRuntime15OutputTimestampEPcjl";
+#endif
   return kOutputTimestampFnName;
 }
 
@@ -250,7 +259,7 @@ llvm::Function *ValuesRuntimeProxy::_OutputTimestamp::GetFunction(
 const std::string &ValuesRuntimeProxy::_OutputVarchar::GetFunctionName() {
   static const std::string kOutputVarcharFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
+      "_ZN7peloton7codegen13ValuesRuntime13OutputVarcharEPcjS2_j";
 #else
       "_ZN7peloton7codegen13ValuesRuntime13OutputVarcharEPcjS2_j";
 #endif

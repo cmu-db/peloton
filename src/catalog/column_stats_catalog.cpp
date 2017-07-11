@@ -169,7 +169,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
                                     most_common_vals, most_common_freqs,
                                     hist_bounds, column_name, has_index}));
 
-  return std::move(column_stats);
+  return column_stats;
 }
 
 // Return value: number of column stats

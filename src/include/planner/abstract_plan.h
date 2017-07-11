@@ -64,7 +64,7 @@ class AbstractPlan : public Printable {
 
   const AbstractPlan *GetChild(uint32_t child_index) const;
 
-  const AbstractPlan *GetParent();
+  const AbstractPlan *GetParent() const;
 
   //===--------------------------------------------------------------------===//
   // Accessors

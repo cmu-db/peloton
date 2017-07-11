@@ -30,12 +30,12 @@ class ArrayType : public Type {
   ~ArrayType() {}
 
   // Get the element at a given index in this array
-  Value GetElementAt(const Value& val, uint64_t idx) const;
+  Value GetElementAt(const Value& val, uint64_t idx) const override;
 
-  TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const;
+  TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const override;
 
   // Does this value exist in this array?
-  Value InList(const Value& list, const Value &object) const;
+  Value InList(const Value& list, const Value &object) const override;
 
   CmpBool CompareEquals(const Value& left, const Value &right) const override;
   CmpBool CompareNotEquals(const Value& left, const Value &right) const override;

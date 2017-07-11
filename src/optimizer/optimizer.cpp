@@ -121,7 +121,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 }
 
 void Optimizer::Reset() {
-  memo_ = move(Memo());
+  memo_ = Memo();
   column_manager_ = move(ColumnManager());
 }
 
@@ -185,14 +185,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = std::move(util::CreateCopyPlan(copy_parse_tree));
+      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
     default:
       is_ddl_stmt = false;
   }
 
-  return move(ddl_plan);
+  return ddl_plan;
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
@@ -207,7 +207,7 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 
 PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   QueryPropertyExtractor converter(column_manager_);
-  return move(converter.GetProperties(tree));
+  return converter.GetProperties(tree);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
@@ -231,7 +231,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   vector<PropertySet> required_input_props =
-      move(gexpr->GetInputProperties(requirements));
+      gexpr->GetInputProperties(requirements);
   PL_ASSERT(required_input_props.size() == child_groups.size());
 
   // Derive chidren plans first because they are useful in the derivation of
@@ -284,7 +284,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
   PL_ASSERT(gexpr->Op().IsPhysical());
 
   vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
-      move(DeriveChildProperties(gexpr, requirements));
+      DeriveChildProperties(gexpr, requirements);
 
   size_t num_property_pairs = output_input_property_pairs.size();
 
@@ -448,7 +448,7 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
 vector<pair<PropertySet, vector<PropertySet>>> Optimizer::DeriveChildProperties(
     shared_ptr<GroupExpression> gexpr, PropertySet requirements) {
   ChildPropertyGenerator converter(column_manager_);
-  return move(converter.GetProperties(gexpr, requirements, &memo_));
+  return converter.GetProperties(gexpr, requirements, &memo_);
 }
 
 void Optimizer::DeriveCostAndStats(

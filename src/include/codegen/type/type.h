@@ -33,7 +33,8 @@ class TypeSystem;
 // number at runtime. For variable-length fields, it will carry the length of
 // the data element. This information is needed during code generation.
 //===----------------------------------------------------------------------===//
-struct Type {
+class Type {
+ public:
   // The actual SQL type
   peloton::type::TypeId type_id;
 

@@ -113,7 +113,7 @@ class TupleValueExpression : public AbstractExpression {
     return res;
   }
 
-  virtual hash_t Hash() const;
+  virtual hash_t Hash() const override;
 
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 

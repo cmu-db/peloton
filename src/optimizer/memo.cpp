@@ -13,8 +13,6 @@
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
 
-#include <cassert>
-
 namespace peloton {
 namespace optimizer {
 
@@ -37,7 +35,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     assert(target_group == UNDEFINED_GROUP ||
            target_group == leaf->origin_group);
     gexpr->SetGroupID(leaf->origin_group);
-    return false;
+    return nullptr; // Fix for Mac support
   }
 
   // Lookup in hash table

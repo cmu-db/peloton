@@ -33,15 +33,15 @@ class HashPlan : public AbstractPlan {
 
   void PerformBinding(BindingContext &binding_context) override;
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASH; }
+  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::HASH; }
 
-  const std::string GetInfo() const { return "Hash"; }
+  const std::string GetInfo() const override { return "Hash"; }
 
   inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
     return this->hash_keys_;
   }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::vector<HashKeyPtrType> copied_hash_keys;
     for (const auto &key : hash_keys_) {
       copied_hash_keys.push_back(std::unique_ptr<HashKeyType>(key->Copy()));

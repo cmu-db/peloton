@@ -29,7 +29,7 @@ struct TestTuple {
 
 // The comparison function for TestTuples. We sort on column B.
 static int CompareTuples(const TestTuple *a, const TestTuple *b) {
-  return a->col_b < b->col_b;
+  return a->col_b - b->col_b;
 }
 
 class SorterTest : public PelotonTest {
@@ -61,7 +61,7 @@ class SorterTest : public PelotonTest {
     }
 
     timer.Stop();
-    LOG_INFO("Loading %lu tuples into sort took %.2f ms", num_tuples_to_insert,
+    LOG_INFO("Loading %llu tuples into sort took %.2f ms", (unsigned long long) num_tuples_to_insert,
              timer.GetDuration());
     timer.Reset();
     timer.Start();
@@ -70,7 +70,7 @@ class SorterTest : public PelotonTest {
     sorter.Sort();
 
     timer.Stop();
-    LOG_INFO("Sorting %lu tuples took %.2f ms", num_tuples_to_insert,
+    LOG_INFO("Sorting %llu tuples took %.2f ms", (unsigned long long) num_tuples_to_insert,
              timer.GetDuration());
 
     // Check sorted results
@@ -79,7 +79,7 @@ class SorterTest : public PelotonTest {
     for (auto iter : sorter) {
       const auto *tt = reinterpret_cast<const TestTuple *>(iter);
       if (last_col_b != std::numeric_limits<uint32_t>::max()) {
-        EXPECT_GE(last_col_b, tt->col_b);
+        EXPECT_LE(last_col_b, tt->col_b);
       }
       last_col_b = tt->col_b;
       res_tuples++;

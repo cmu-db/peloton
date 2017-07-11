@@ -21,14 +21,15 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct OrderDescription
+ * @class OrderDescription
  * @brief Description of the order by clause within a select statement
  *
  * TODO: hold multiple expressions to be sorted by
  */
 typedef enum { kOrderAsc, kOrderDesc } OrderType;
 
-struct OrderDescription {
+class OrderDescription {
+ public:
   OrderDescription() {}
 
   virtual ~OrderDescription() {
@@ -47,12 +48,13 @@ struct OrderDescription {
 };
 
 /**
- * @struct LimitDescription
+ * @class LimitDescription
  * @brief Description of the limit clause within a select statement
  */
 const int64_t kNoLimit = -1;
 const int64_t kNoOffset = -1;
-struct LimitDescription {
+class LimitDescription {
+ public:
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
 
@@ -63,9 +65,10 @@ struct LimitDescription {
 };
 
 /**
- * @struct GroupByDescription
+ * @class GroupByDescription
  */
-struct GroupByDescription {
+class GroupByDescription {
+ public:
   GroupByDescription() : columns(NULL), having(NULL) {}
 
   ~GroupByDescription() {
@@ -89,7 +92,8 @@ struct GroupByDescription {
  *
  * TODO: add union_order and union_limit
  */
-struct SelectStatement : SQLStatement {
+class SelectStatement : public SQLStatement {
+ public:
   SelectStatement()
       : SQLStatement(StatementType::SELECT),
         from_table(NULL),

@@ -64,7 +64,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
     }
   }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  inline PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::MERGEJOIN;
   }
 
@@ -72,9 +72,9 @@ class MergeJoinPlan : public AbstractJoinPlan {
     return &join_clauses_;
   }
 
-  const std::string GetInfo() const { return "MergeJoin"; }
+  const std::string GetInfo() const override { return "MergeJoin"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::vector<JoinClause> new_join_clauses;
     for (size_t i = 0; i < join_clauses_.size(); i++) {
       new_join_clauses.push_back(JoinClause(join_clauses_[i].left_->Copy(),
@@ -88,7 +88,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
         catalog::Schema::CopySchema(GetSchema()));
     MergeJoinPlan *new_plan = new MergeJoinPlan(
         GetJoinType(), std::move(predicate_copy),
-        std::move(GetProjInfo()->Copy()), schema_copy, new_join_clauses);
+        GetProjInfo()->Copy(), schema_copy, new_join_clauses);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 

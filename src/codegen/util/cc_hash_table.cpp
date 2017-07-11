@@ -79,7 +79,7 @@ char* CCHashTable::StoreTuple(uint64_t hash, uint32_t size) {
 // Clean up any resources this hash table has
 //===----------------------------------------------------------------------===//
 void CCHashTable::Destroy() {
-  LOG_DEBUG("Cleaning up hash table with %ld entries ...", num_elements_);
+  LOG_DEBUG("Cleaning up hash table with %llu entries ...", (unsigned long long) num_elements_);
   for (uint64_t i = 0; i < num_buckets_; i++) {
     uint32_t chain_length = 0;
     HashEntry* e = buckets_[i];
@@ -90,7 +90,7 @@ void CCHashTable::Destroy() {
       chain_length++;
     }
     if (chain_length > kMaxHashChainSize) {
-      LOG_DEBUG("Bucket %ld chain length = %u ...", i, chain_length);
+      LOG_DEBUG("Bucket %llu chain length = %u ...", (unsigned long long) i, chain_length);
     }
   }
   free(buckets_);

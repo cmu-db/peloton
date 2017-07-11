@@ -49,7 +49,7 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
   TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);
-  return std::move(data_table);
+  return data_table;
 }
 
 storage::DataTable *CreateTestDBAndTable() {

@@ -21,10 +21,11 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct CopyStatement
+ * @class CopyStatement
  * @brief Represents PSQL Copy statements.
  */
-struct CopyStatement : SQLStatement {
+class CopyStatement : public SQLStatement {
+ public:
   CopyStatement(CopyType type)
       : SQLStatement(StatementType::COPY),
         cpy_table(NULL),

@@ -26,6 +26,12 @@
 
 #define BLOOM_FILTER_ENABLED
 
+// disable deprecated register keyword warning for clang
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
+#endif
+
 namespace peloton{
 namespace index {
 
@@ -202,3 +208,7 @@ class BloomFilter {
 
 } // namespace index
 } // namespace peloton
+
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif

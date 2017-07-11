@@ -52,7 +52,7 @@ class ContainerTuple : public AbstractTuple {
   oid_t GetTupleId() const { return tuple_id_; }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-                UNUSED_ATTRIBUTE const type::Value &value) {}
+                UNUSED_ATTRIBUTE const type::Value &value) override {}
 
   /** @brief Get the value at the given column id. */
   type::Value GetValue(oid_t column_id) const override {
@@ -112,7 +112,7 @@ class ContainerTuple : public AbstractTuple {
   }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::stringstream os;
     os << "FIXME";
     return (os.str());
@@ -185,7 +185,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-                UNUSED_ATTRIBUTE const type::Value &value) {}
+                UNUSED_ATTRIBUTE const type::Value &value) override {}
 
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
@@ -220,7 +220,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::stringstream os;
 
     bool first = true;
@@ -275,7 +275,7 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
     return container_->GetValue(tuple_id_, column_id);
   }
 
-  void SetValue(oid_t column_id, const type::Value &value) {
+  void SetValue(oid_t column_id, const type::Value &value) override {
     type::Value val = value.Copy();
     container_->SetValue(val, tuple_id_, column_id);
   }
@@ -289,7 +289,7 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
   }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::stringstream os;
     os << "FIXME";
     return (os.str());

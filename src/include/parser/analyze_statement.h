@@ -22,7 +22,8 @@
 namespace peloton {
 namespace parser {
 
-struct AnalyzeStatement : SQLStatement {
+class AnalyzeStatement : public SQLStatement {
+ public:
   AnalyzeStatement()
       : SQLStatement(StatementType::ANALYZE),
         analyze_table(nullptr),

@@ -109,17 +109,20 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
   }
 }
 
-
+#ifndef __APPLE__
 void PinToCore(size_t core) {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(core, &cpuset);
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
+#endif
 
 void RunBackend(const size_t thread_id) {
-  
+
+#ifndef __APPLE__
   PinToCore(thread_id);
+#endif
 
   if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
     // register thread to epoch manager
@@ -255,7 +258,7 @@ void RunWorkload() {
   }
 
   for (size_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
+    thread_group.push_back(std::thread(RunBackend, thread_itr));
   }
 
   //////////////////////////////////////
@@ -391,7 +394,7 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
     }
   }
 
-  return std::move(logical_tile_values);
+  return logical_tile_values;
 }
 
 void ExecuteUpdate(executor::AbstractExecutor* executor) {

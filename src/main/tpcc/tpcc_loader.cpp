@@ -44,6 +44,12 @@
 // Logging mode
 // extern peloton::LoggingType peloton_logging_mode;
 
+// disable unused const variable warning for clang
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#endif
+
 namespace peloton {
 namespace benchmark {
 namespace tpcc {
@@ -1753,4 +1759,6 @@ void LoadTPCCDatabase() {
 }  // namespace benchmark
 }  // namespace peloton
 
-
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif

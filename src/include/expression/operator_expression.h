@@ -68,7 +68,7 @@ class OperatorExpression : public AbstractExpression {
     }
   }
 
-  void DeduceExpressionType() {
+  void DeduceExpressionType() override {
     // if we are a decimal or int we should take the highest type id of both
     // children
     // This relies on a particular order in types.h
@@ -86,7 +86,7 @@ class OperatorExpression : public AbstractExpression {
     return new OperatorExpression(*this);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   OperatorExpression(const OperatorExpression &other)
@@ -111,7 +111,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
     return new OperatorUnaryMinusExpression(*this);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)

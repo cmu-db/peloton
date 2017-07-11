@@ -63,7 +63,7 @@ namespace type {
   } // SWITCH
 
 
-static inline double ValMod(double x, double y) {
+inline double ValMod(double x, double y) {
   return x - trunc((double)x / (double)y) * y;
 }
 

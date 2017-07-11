@@ -225,7 +225,7 @@ class TopKElements {
         vec.push_back(*first);
         ++first;
       }
-      return std::move(vec);
+      return vec;
     }
 
     /*
@@ -242,7 +242,7 @@ class TopKElements {
         this->push(*first);
         ++first;
       }
-      return std::move(vec);
+      return vec;
     }
 
     /*
@@ -262,7 +262,7 @@ class TopKElements {
         vec_ret.push_back(stack.top());
         stack.pop();
       }
-      return std::move(vec_ret);
+      return vec_ret;
     }
 
     /*
@@ -286,7 +286,7 @@ class TopKElements {
         }
         stack.pop();
       }
-      return std::move(vec_ret);
+      return vec_ret;
     }
 
     /*
@@ -325,7 +325,7 @@ class TopKElements {
         vec_ret.push_back(std::make_pair(val, (double)t.approx_count));
         stack.pop();
       }
-      return std::move(vec_ret);
+      return vec_ret;
     }
 
     /*
@@ -368,7 +368,7 @@ class TopKElements {
         }
         stack.pop();
       }
-      return std::move(vec_ret);
+      return vec_ret;
     }
 
   };  // end of UpdatableQueue
@@ -789,7 +789,7 @@ class TopKElements {
    */
   ApproxTopEntry MakeApproxTopEntry(uint64_t freq, int64_t item) {
     ApproxTopEntryElem elem{item};
-    return std::move(ApproxTopEntry(elem, freq));
+    return ApproxTopEntry(elem, freq);
   }
 
   /*
@@ -797,7 +797,7 @@ class TopKElements {
    */
   ApproxTopEntry MakeApproxTopEntry(uint64_t freq, std::string item) {
     ApproxTopEntryElem elem{item};
-    return std::move(ApproxTopEntry(elem, freq));
+    return ApproxTopEntry(elem, freq);
   }
 
   /*

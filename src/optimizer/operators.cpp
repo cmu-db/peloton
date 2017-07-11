@@ -68,7 +68,7 @@ Operator LogicalFilter::make() {
 Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->join_predicate = 
-      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
+      std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
 
@@ -78,7 +78,7 @@ Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
 Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
   join->join_predicate = 
-      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
+      std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
 
@@ -88,7 +88,7 @@ Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
 Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
   join->join_predicate = 
-      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
+      std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
 
@@ -98,7 +98,7 @@ Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
 Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   join->join_predicate = 
-      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
+      std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
 
@@ -108,7 +108,7 @@ Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
 Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
   join->join_predicate = 
-      std::move(std::shared_ptr<expression::AbstractExpression>(condition));
+      std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
 

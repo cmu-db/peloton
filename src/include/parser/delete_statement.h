@@ -20,12 +20,13 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct DeleteStatement
+ * @class DeleteStatement
  * @brief Represents "DELETE FROM students WHERE grade > 3.0"
  *
  * If expr == NULL => delete all rows (truncate)
  */
-struct DeleteStatement : SQLStatement {
+class DeleteStatement : public SQLStatement {
+ public:
   DeleteStatement()
       : SQLStatement(StatementType::DELETE),
         table_ref(nullptr), expr(nullptr) {};

@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <string>
+#include <functional>
 
 #include "type/serializeio.h"
 #include "type/type_id.h"

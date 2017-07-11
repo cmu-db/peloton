@@ -1367,7 +1367,7 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
   LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
 
   std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
-  return std::move(sql_stmt);
+  return sql_stmt;
 }
 
 }  // End pgparser namespace

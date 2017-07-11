@@ -49,8 +49,8 @@ void Sorter::Init(ComparisonFunction func, uint32_t tuple_size) {
   buffer_pos_ = buffer_start_;
   buffer_end_ = buffer_start_ + kInitialBufferSize;
 
-  LOG_INFO("Initialized Sorter with size %lu KB for tuples of size %u...",
-           kInitialBufferSize / 1024, tuple_size_);
+  LOG_INFO("Initialized Sorter with size %llu KB for tuples of size %u...",
+           (unsigned long long) kInitialBufferSize / 1024, tuple_size_);
 }
 
 // StoreValue a tuple of the given size in this sorter. We return a buffer that
@@ -78,13 +78,13 @@ void Sorter::Sort() {
 
   uint64_t num_tuples = GetNumTuples();
 
-  LOG_DEBUG("Going to sort %lu tuples in sort buffer", num_tuples);
+  LOG_DEBUG("Going to sort %llu tuples in sort buffer", (unsigned long long) num_tuples);
 
   // Sort the sucker
   std::qsort(buffer_start_, num_tuples, tuple_size_, cmp_func_);
 
   timer.Stop();
-  LOG_INFO("Sorted %lu tuples in %.2f ms", num_tuples, timer.GetDuration());
+  LOG_INFO("Sorted %llu tuples in %.2f ms", (unsigned long long) num_tuples, timer.GetDuration());
 }
 
 // Release any memory we allocated from the storage manager.
@@ -112,8 +112,8 @@ void Sorter::Resize() {
 
   // Allocate double the buffer room
   uint64_t next_alloc_size = curr_alloc_size << 1;
-  LOG_DEBUG("Resizing sorter from %lu bytes to %lu bytes ...", curr_alloc_size,
-            next_alloc_size);
+  LOG_DEBUG("Resizing sorter from %llu bytes to %llu bytes ...", (unsigned long long) curr_alloc_size,
+            (unsigned long long) next_alloc_size);
 
   auto &backend_manager = storage::BackendManager::GetInstance();
 
