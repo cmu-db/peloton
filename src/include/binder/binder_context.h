@@ -70,5 +70,6 @@ class BinderContext {
   // Map table alias to <db_id, table_id>
   std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
 };
-}  // binder
-}  // peloton
+
+}  // namespace binder
+}  // namespace peloton

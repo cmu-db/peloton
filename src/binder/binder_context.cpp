@@ -13,6 +13,8 @@
 #include "binder/binder_context.h"
 
 #include "catalog/catalog.h"
+#include "catalog/schema.h"
+#include "storage/data_table.h"
 #include "storage/storage_manager.h"
 #include "parser/table_ref.h"
 
@@ -102,5 +104,6 @@ bool BinderContext::GetTableIdTuple(
   }
   return false;
 }
-}
-}
+
+}  // namespace binder
+}  // namespace peloton

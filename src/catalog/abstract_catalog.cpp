@@ -27,6 +27,7 @@
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
+#include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 

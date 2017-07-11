@@ -18,7 +18,6 @@
 #include "expression/constant_value_expression.h"
 #include "type/types.h"
 
-
 namespace peloton {
 
 namespace parser {
@@ -60,5 +59,5 @@ class BindNodeVisitor : public SqlNodeVisitor {
   std::shared_ptr<BinderContext> context_;
 };
 
-}  // binder
-}  // peloton
+}  // namespace binder
+}  // namespace peloton
