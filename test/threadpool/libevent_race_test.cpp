@@ -4,21 +4,21 @@
 //
 // worker_pool_test.cpp
 //
-// Identification: test/task/worker_pool_test.cpp
+// Identification: test/threadpool/worker_pool_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-#include "common/harness.h"
-#include "common/logger.h"
-#include "common/macros.h"
-#include "task/worker.h"
-#include "task/task.h"
 #include <iostream>
 #include <thread>
 #include <cstdio>
 #include <unistd.h>
+
+#include "common/harness.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "threadpool/worker.h"
+#include "threadpool/task.h"
 #include "event.h"
 
 #define CALL_NUM 10
@@ -34,41 +34,17 @@ namespace test {
 class WorkerPoolTests : public PelotonTest {};
 
 void shortTask(void* param) {
-  int num = *((int *)param);
-  usleep(num * 100000); // num * 0.1s
+  int* num = (int *)param;
+  (*num)--;
+  usleep(100000); // num * 0.1s
 }
 
 void longTask(void* param) {
-  int num = *((int*)param);
-  usleep(num * 1000000); // num seconds.
+  int* num = (int *)param;
+  (*num)--;
+  usleep(1000000); // num seconds.
 }
 
-// For this test, master thread should block until worker threads finish
-// all the tasks.
-TEST_F(WorkerPoolTests, MultiWorkerTest) {
-  LOG_INFO("master starts");
-  const size_t sz = 20;
-  int task_num = 4, i = 0;
-  task::TaskQueue tq(sz);
-  task::WorkerPool wp(4, &tq);
-
-  std::vector<std::shared_ptr<task::Task>> task_v;
-  std::vector<int> params;
-  for (i = 0; i < task_num; i++) {
-    params.push_back(1);
-  }
-  for(i = 0; i < task_num; i++) {
-    if (i % 2 == 0) {
-      task_v.push_back(std::make_shared<task::Task>(longTask, &params.at(i)));
-    } else {
-      task_v.push_back(std::make_shared<task::Task>(shortTask, &params.at(i)));
-    }
-  }
-  tq.SubmitTaskBatch(task_v);
-  EXPECT_EQ(0, task_v.at(0)->getWorkerNum());
-  wp.Shutdown();
-  LOG_INFO("master finishes");
-}
 
 // Callback function for MyLibeventThread
 void eventCallback(evutil_socket_t fd, short evflags, void *args);
@@ -79,9 +55,9 @@ class MyLibeventThread {
   int send_fd_;
   int receive_fd_;
   struct event *event_;
-  task::TaskQueue *task_queue_;
+  threadpool::TaskQueue *task_queue_;
  public:
-  MyLibeventThread(task::TaskQueue *task_queue) : task_queue_(task_queue) {
+  MyLibeventThread(threadpool::TaskQueue *task_queue) : task_queue_(task_queue) {
     int fds[2];
     if (pipe(fds)) {
       LOG_ERROR("Can't create notify pipe to accept connections");
@@ -102,7 +78,7 @@ class MyLibeventThread {
   int getSendfd() {
     return send_fd_;
   }
-  task::TaskQueue *getTaskQueue() {
+  threadpool::TaskQueue *getTaskQueue() {
     return task_queue_;
   }
   struct event_base *getEventBase() {
@@ -117,7 +93,7 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
                    UNUSED_ATTRIBUTE short evflags, void *args) {
   LOG_INFO("----- master activate");
   MyLibeventThread *thread = static_cast<MyLibeventThread *>(args);
-  task::TaskQueue *tq = thread->getTaskQueue();
+  threadpool::TaskQueue *tq = thread->getTaskQueue();
   char m_buf[1];
   if (read(fd, m_buf, 1) != 1) {
     LOG_ERROR("Can't read from the libevent pipe");
@@ -134,7 +110,7 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
     return;
   }
   // submit tasks into TaskQueue
-  std::vector<std::shared_ptr<task::Task>> task_v;
+  std::vector<std::shared_ptr<threadpool::Task>> task_v;
   std::vector<int> params;
   int task_num = 2, i = 0;
   for (i = 0; i < task_num; i++) {
@@ -142,9 +118,9 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   }
   for(i = 0; i < task_num; i++) {
     if (i % 2 == 0) {
-      task_v.push_back(std::make_shared<task::Task>(longTask, &params.at(i)));
+      task_v.push_back(std::make_shared<threadpool::Task>(longTask, &params.at(i)));
     } else {
-      task_v.push_back(std::make_shared<task::Task>(shortTask, &params.at(i)));
+      task_v.push_back(std::make_shared<threadpool::Task>(shortTask, &params.at(i)));
     }
   }
   tq->SubmitTaskBatch(task_v);
@@ -186,8 +162,8 @@ class CallerThread {
 TEST_F(WorkerPoolTests, LibeventActivateTest) {
   const size_t queue_size = 50;
   const size_t pool_size = 4;
-  task::TaskQueue tq(queue_size);
-  task::WorkerPool wp(pool_size, &tq);
+  threadpool::TaskQueue tq(queue_size);
+  threadpool::WorkerPool wp(pool_size, &tq);
   MyLibeventThread libeventThread(&tq);
   CallerThread callerThread(&libeventThread);
   libeventThread.startMyLibeventThread();
