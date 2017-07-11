@@ -22,6 +22,7 @@ void Task::ExecuteTask() {
 
   std::unique_lock <std::mutex> lock(*this->task_mutex_);
   (*num_worker_)--;
+  //std::cout << "thread: " << std::this_thread::get_id() << ", num: " << *num_worker_ << std::endl;
   if ((*num_worker_) == 0) {
     this->condition_variable_->notify_all();
   }
