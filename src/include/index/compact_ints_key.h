@@ -15,6 +15,7 @@
 #include <sstream>
 
 #include "util/string_util.h"
+#include "util/portable_endian.h"
 
 namespace peloton {
 namespace index {

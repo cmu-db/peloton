@@ -19,10 +19,11 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct DropStatement
+ * @class DropStatement
  * @brief Represents "DROP TABLE"
  */
-struct DropStatement : TableRefStatement {
+class DropStatement : public TableRefStatement {
+ public:
   enum EntityType {
     kDatabase,
     kTable,

@@ -116,7 +116,7 @@ class RowBatch {
       CacheKey(const expression::AbstractExpression *expr)
           : ai_(nullptr), expr_(expr) {}
       bool operator==(const CacheKey &other) const {
-        return ai_ == other.ai_ || expr_ == other.expr_;
+        return ai_ != nullptr ? ai_ == other.ai_ : expr_ == other.expr_;
       }
 
       struct Hasher {

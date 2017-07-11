@@ -76,11 +76,11 @@ class FunctionExpression : public AbstractExpression {
     return ret;
   }
 
-  AbstractExpression* Copy() const { return new FunctionExpression(*this); }
+  AbstractExpression* Copy() const override { return new FunctionExpression(*this); }
 
   std::string func_name_;
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
 
  protected:
   FunctionExpression(const FunctionExpression& other)

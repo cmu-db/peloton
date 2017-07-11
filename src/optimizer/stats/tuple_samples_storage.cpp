@@ -160,7 +160,7 @@ TupleSamplesStorage::GetTuplesWithSeqScan(storage::DataTable *data_table,
         std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
   }
 
-  return std::move(result_tiles);
+  return result_tiles;
 }
 
 /**
@@ -185,7 +185,7 @@ TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
   auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);
   txn_manager.CommitTransaction(txn);
 
-  return std::move(result_tiles);
+  return result_tiles;
 }
 
 /**

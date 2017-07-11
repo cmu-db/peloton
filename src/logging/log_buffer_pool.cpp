@@ -24,7 +24,7 @@ namespace logging {
     size_t head_idx = head_ % buffer_queue_size_;
     while (true) {
       if (head_.load() < tail_.load() - 1) {
-        if (local_buffer_queue_[head_idx] == false) {
+        if (local_buffer_queue_[head_idx].get() == nullptr) { // Fix for Mac support
           // Not any buffer allocated now
           local_buffer_queue_[head_idx].reset(new LogBuffer(thread_id_, current_eid));
         }
@@ -51,7 +51,7 @@ namespace logging {
     // The buffer pool must not be full
     PL_ASSERT(tail_idx != head_ % buffer_queue_size_);
     // The tail pos must be null
-    PL_ASSERT(local_buffer_queue_[tail_idx] == false);
+    PL_ASSERT(local_buffer_queue_[tail_idx].get() == nullptr);
     // The returned buffer must be empty
     PL_ASSERT(buf->Empty() == true);
     local_buffer_queue_[tail_idx].reset(buf.release());

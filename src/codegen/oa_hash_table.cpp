@@ -201,7 +201,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
                                  "singleValue"};
   {
     data_count_inline = codegen.Const64(1);
-    data_ptr_inline = AdvancePointer(codegen, after_key_p, 0UL);
+    data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t) 0UL);
   }
   is_entry_single_value.ElseBlock("multipleValue");
   {

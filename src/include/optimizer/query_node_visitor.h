@@ -26,7 +26,7 @@ class TransactionStatement;
 class UpdateStatement;
 class CopyStatement;
 class AnalyzeStatement;
-struct JoinDefinition;
+class JoinDefinition;
 struct TableRef;
 
 class GroupByDescription;

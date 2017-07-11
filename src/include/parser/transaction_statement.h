@@ -19,10 +19,11 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct TransactionStatement
+ * @class TransactionStatement
  * @brief Represents "BEGIN or COMMIT or ROLLBACK [TRANSACTION]"
  */
-struct TransactionStatement : SQLStatement {
+class TransactionStatement : public SQLStatement {
+ public:
   enum CommandType {
     kBegin,
     kCommit,

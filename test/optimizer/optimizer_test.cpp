@@ -59,7 +59,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   std::vector<StatementResult> result;
   std::vector<int> result_format;
   result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
 
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
@@ -85,7 +85,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
 
   result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
@@ -111,7 +111,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
 
   result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
@@ -132,7 +132,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
 
   result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
@@ -151,7 +151,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
 
-  result_format = std::move(std::vector<int>(4, 0));
+  result_format = std::vector<int>(4, 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",

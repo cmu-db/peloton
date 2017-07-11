@@ -43,11 +43,11 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   void HandleSubplanBinding(UNUSED_ATTRIBUTE bool,
                             UNUSED_ATTRIBUTE const BindingContext &) override {}
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::NESTLOOP; }
+  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::NESTLOOP; }
 
-  const std::string GetInfo() const { return "NestedLoopJoin"; }
+  const std::string GetInfo() const override { return "NestedLoopJoin"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate()->Copy());
 
@@ -56,7 +56,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
     NestedLoopJoinPlan *new_plan =
         new NestedLoopJoinPlan(GetJoinType(), std::move(predicate_copy),
-                               std::move(GetProjInfo()->Copy()), schema_copy);
+                               GetProjInfo()->Copy(), schema_copy);
 
     return std::unique_ptr<AbstractPlan>(new_plan);
   }

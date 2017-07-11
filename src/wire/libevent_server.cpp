@@ -163,7 +163,7 @@ void LibeventServer::StartServer() {
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
                                   master_thread_.get(), CONN_LISTENING);
 
-    LOG_INFO("Listening on port %lu", port_);
+    LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
     LibeventServer::GetConn(listen_fd)->CloseSocket();
 

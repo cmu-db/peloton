@@ -72,9 +72,9 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt);
-  tuple_descriptor = std::move(
-      traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0)));
-  auto result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+  tuple_descriptor =
+      traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
+  auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());

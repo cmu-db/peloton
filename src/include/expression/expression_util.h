@@ -412,7 +412,7 @@ class ExpressionUtil {
     std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(
         expr_map.size());
     for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
-    return std::move(ordered_expr);
+    return ordered_expr;
   }
 
   /**

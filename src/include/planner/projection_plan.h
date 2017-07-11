@@ -44,11 +44,11 @@ class ProjectionPlan : public AbstractPlan {
 
   inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  inline PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::PROJECTION;
   }
 
-  const std::string GetInfo() const { return "Projection"; }
+  const std::string GetInfo() const override { return "Projection"; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -57,7 +57,7 @@ class ProjectionPlan : public AbstractPlan {
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(schema_.get()));
     ProjectionPlan *new_plan =

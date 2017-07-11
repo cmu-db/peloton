@@ -342,7 +342,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
 
   // Attach it to the copy plan
   copy_plan->AddChild(std::move(select_plan));
-  return std::move(copy_plan);
+  return copy_plan;
 }
 
 } /* namespace util */

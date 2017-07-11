@@ -75,7 +75,7 @@ class ComparisonExpression : public AbstractExpression {
     return new ComparisonExpression(*this);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   ComparisonExpression(const ComparisonExpression &other)

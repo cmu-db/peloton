@@ -204,7 +204,7 @@ std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
       num_rows, cardinality, frac_null, val_array, freq_array,
       histogram_bounds));
 
-  return std::move(column_stats);
+  return column_stats;
 }
 
 /**

@@ -19,10 +19,11 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct ExecuteStatement
+ * @class ExecuteStatement
  * @brief Represents "EXECUTE ins_prep(100, "test", 2.3);"
  */
-struct ExecuteStatement : SQLStatement {
+class ExecuteStatement : public SQLStatement {
+ public:
   ExecuteStatement()
       : SQLStatement(StatementType::EXECUTE), name(NULL), parameters(NULL) {}
 

@@ -20,7 +20,8 @@
 namespace peloton {
 
 // logical physical location
-struct ItemPointer {
+class ItemPointer {
+ public:
   // block
   oid_t block;
 

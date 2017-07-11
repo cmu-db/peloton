@@ -73,7 +73,7 @@ class UpdatePlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
-        new UpdatePlan(target_table_, std::move(project_info_->Copy())));
+        new UpdatePlan(target_table_, project_info_->Copy()));
   }
 
  private:

@@ -50,7 +50,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
   clauses.push_back(expression::CaseExpression::WhenClause{
-      std::move(when_a_eq_10), std::move(ConstIntExpr(1))});
+      std::move(when_a_eq_10), ConstIntExpr(1)});
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(
@@ -115,8 +115,8 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   std::vector<expression::CaseExpression::WhenClause> clauses;
-  clauses.emplace_back(std::move(when_a_eq_10), std::move(ConstIntExpr(1)));
-  clauses.emplace_back(std::move(when_a_eq_20), std::move(ConstIntExpr(2)));
+  clauses.emplace_back(std::move(when_a_eq_10), ConstIntExpr(1));
+  clauses.emplace_back(std::move(when_a_eq_20), ConstIntExpr(2));
 
   // Set up CASE with all the When's and the default value
   expression::CaseExpression *case_expr = new expression::CaseExpression(

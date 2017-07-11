@@ -84,16 +84,20 @@ volatile bool is_running = true;
 PadInt *abort_counts;
 PadInt *commit_counts;
 
+#ifndef __APPLE__
 void PinToCore(size_t core) {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(core, &cpuset);
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
+#endif
 
 void RunBackend(const size_t thread_id) {
-  
+
+#ifndef __APPLE__
   PinToCore(thread_id);
+#endif
   
   PadInt &execution_count_ref = abort_counts[thread_id];
   PadInt &transaction_count_ref = commit_counts[thread_id];
@@ -155,7 +159,7 @@ void RunWorkload() {
 
   // Launch a group of threads
   for (size_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
+    thread_group.push_back(std::thread(RunBackend, thread_itr));
   }
 
   //////////////////////////////////////
@@ -297,7 +301,7 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
     }
   }
 
-  return std::move(logical_tile_values);
+  return logical_tile_values;
 }
 
 void ExecuteUpdate(executor::AbstractExecutor* executor) {

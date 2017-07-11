@@ -91,8 +91,8 @@ ExecuteResult PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                     logical_tile->GetInfo().c_str());  // Printing the answers
 
           std::vector<std::vector<std::string>> answer_tuples;
-          answer_tuples = std::move(
-              logical_tile->GetAllValuesAsStrings(result_format, false));
+          answer_tuples =
+              logical_tile->GetAllValuesAsStrings(result_format, false);
 
           // Construct the returned results
           for (auto &tuple : answer_tuples) {

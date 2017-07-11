@@ -51,10 +51,11 @@ class UpdateClause {
 };
 
 /**
- * @struct UpdateStatement
+ * @class UpdateStatement
  * @brief Represents "UPDATE"
  */
-struct UpdateStatement : SQLStatement {
+class UpdateStatement : public SQLStatement {
+ public:
   UpdateStatement()
       : SQLStatement(StatementType::UPDATE),
         table(NULL),

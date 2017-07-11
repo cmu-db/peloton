@@ -140,8 +140,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
     auto expr = cols_prop->GetColumn(i);
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       vector<std::shared_ptr<expression::AbstractExpression>> ordered_exprs =
-          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
-              child_expr_map));
+          expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              child_expr_map);
       output_exprs.insert(output_exprs.end(), ordered_exprs.begin(),
                           ordered_exprs.end());
     } else {
@@ -214,8 +214,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
       requirements_->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
   auto sort_columns_size = sort_prop->GetSortColumnSize();
 
-  vector<shared_ptr<expression::AbstractExpression>> ordered_exprs = move(
-      expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map));
+  vector<shared_ptr<expression::AbstractExpression>> ordered_exprs =
+      expression::ExpressionUtil::GenerateOrderedOutputExprs(child_expr_map);
   vector<oid_t> column_ids;
 
   // Construct output column offset.
@@ -258,8 +258,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
 
   PL_ASSERT(col_prop != nullptr);
 
-  output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::HASH,
-                                            &op->columns, op->having));
+  output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::HASH,
+                                            &op->columns, op->having);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
@@ -268,8 +268,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
 
   PL_ASSERT(col_prop != nullptr);
 
-  output_plan_ = move(GenerateAggregatePlan(col_prop, AggregateType::SORTED,
-                                            &op->columns, op->having));
+  output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::SORTED,
+                                            &op->columns, op->having);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
@@ -278,8 +278,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
 
   PL_ASSERT(col_prop != nullptr);
 
-  output_plan_ = move(
-      GenerateAggregatePlan(col_prop, AggregateType::PLAIN, nullptr, nullptr));
+  output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::PLAIN, nullptr, nullptr);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
@@ -325,8 +324,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
-  output_plan_ = move(
-      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false));
+  output_plan_ = GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
@@ -337,7 +335,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOuterNLJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *op) {
   output_plan_ =
-      move(GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, true));
+      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, true);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
@@ -454,7 +452,7 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
     }
   }
 
-  return move(column_ids);
+  return column_ids;
 }
 
 // Generate predicate for scan plan
@@ -544,7 +542,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
       move(proj_info), move(predicate), move(agg_terms), move(col_ids),
       output_table_schema, agg_type));
   agg_plan->AddChild(move(children_plans_[0]));
-  return move(agg_plan);
+  return agg_plan;
 }
 
 unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
@@ -566,11 +564,11 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     // Generate all output columns from child
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       vector<std::shared_ptr<expression::AbstractExpression>> l_output_exprs =
-          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
-              children_expr_map_[0]));
+          expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              children_expr_map_[0]);
       vector<std::shared_ptr<expression::AbstractExpression>> r_output_exprs =
-          move(expression::ExpressionUtil::GenerateOrderedOutputExprs(
-              children_expr_map_[1]));
+          expression::ExpressionUtil::GenerateOrderedOutputExprs(
+              children_expr_map_[1]);
       output_exprs.insert(output_exprs.end(), l_output_exprs.begin(),
                           l_output_exprs.end());
       output_exprs.insert(output_exprs.end(), r_output_exprs.begin(),
@@ -688,7 +686,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     join_plan->AddChild(move(children_plans_[0]));
     join_plan->AddChild(move(children_plans_[1]));
   }
-  return move(join_plan);
+  return join_plan;
 }
 
 void OperatorToPlanTransformer::VisitOpExpression(

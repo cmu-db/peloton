@@ -87,7 +87,9 @@ set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
 set(EXE_LIST peloton-bin ycsb tpcc sdbench tpch)
 foreach(exe_name ${EXE_LIST})
     target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
-    set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})
+    if (LINUX)
+        set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})
+    endif ()
 endforeach()
 
 # --[ benchmark

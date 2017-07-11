@@ -7,6 +7,7 @@
 # NOTE: absolute path to peloton directory is calculated from current directory
 # directory structure: peloton/scripts/testing/psql/<this_file>
 CODE_SOURCE_DIR=`dirname $0`
+OS_NAME=$1
 REF_OUT_FILE="$CODE_SOURCE_DIR/psql_ref_out.txt"
 TEMP_OUT_FILE="/tmp/psql_out-$$"
 
@@ -51,7 +52,11 @@ trap cleanup EXIT
 cd $PELOTON_DIR/build
 
 # start peloton
-bin/peloton -port $PELOTON_PORT > /dev/null &
+if [ "$OS_NAME" == "osx" ]; then
+    ASAN_OPTIONS=detect_container_overflow=0 bin/peloton -port $PELOTON_PORT > /dev/null &
+else
+    bin/peloton -port $PELOTON_PORT > /dev/null &
+fi
 PELOTON_PID=$!
 sleep 3
 

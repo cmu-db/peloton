@@ -20,11 +20,12 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct InsertStatement
+ * @class InsertStatement
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
  * 'Musterhausen', 2.3)"
  */
-struct InsertStatement : SQLStatement {
+class InsertStatement : SQLStatement {
+ public:
   InsertStatement(InsertType type)
       : SQLStatement(StatementType::INSERT),
         type(type),

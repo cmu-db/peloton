@@ -37,7 +37,7 @@ const AbstractPlan *AbstractPlan::GetChild(uint32_t child_index) const {
   return children_[child_index].get();
 }
 
-const AbstractPlan *AbstractPlan::GetParent() { return parent_; }
+const AbstractPlan *AbstractPlan::GetParent() const { return parent_; }
 
 // Get a string representation of this plan
 std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {

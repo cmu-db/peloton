@@ -100,32 +100,30 @@ class AggregatePlan : public AbstractPlan {
 
   AggregateType GetAggregateStrategy() const { return agg_strategy_; }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  inline PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::AGGREGATE_V2;
   }
 
-  void GetOutputColumns(std::vector<oid_t> &columns) const {
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns.resize(GetOutputSchema()->GetColumnCount());
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  const std::string GetInfo() const { return "AggregatePlan"; }
+  const std::string GetInfo() const override { return "AggregatePlan"; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::vector<AggTerm> copied_agg_terms;
     for (const AggTerm &term : unique_agg_terms_) {
       copied_agg_terms.push_back(term.Copy());
     }
     std::vector<oid_t> copied_groupby_col_ids(groupby_col_ids_);
 
-    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
-        predicate_->Copy());
     std::shared_ptr<const catalog::Schema> output_schema_copy(
         catalog::Schema::CopySchema(GetOutputSchema()));
     AggregatePlan *new_plan = new AggregatePlan(
-        std::move(project_info_->Copy()), std::move(predicate_copy),
+        project_info_->Copy(), std::unique_ptr<const expression::AbstractExpression>(predicate_->Copy()),
         std::move(copied_agg_terms), std::move(copied_groupby_col_ids),
         output_schema_copy, agg_strategy_);
     return std::unique_ptr<AbstractPlan>(new_plan);

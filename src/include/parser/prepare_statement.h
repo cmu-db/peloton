@@ -23,11 +23,12 @@ namespace peloton {
 namespace parser {
 
 /**
- * @struct PrepareStatement
+ * @class PrepareStatement
  * @brief Represents "PREPARE ins_prep: SELECT * FROM t1 WHERE c1 = ? AND c2 =
  * ?"
  */
-struct PrepareStatement : SQLStatement {
+class PrepareStatement : public SQLStatement {
+ public:
   PrepareStatement()
       : SQLStatement(StatementType::PREPARE), name(NULL), query(NULL) {}
 

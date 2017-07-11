@@ -233,13 +233,13 @@ std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
   // left tile is empty
   if (non_empty_tile == right_tile) {
     /* build the schema given the projection */
-    output_tile->SetSchema(std::move(
-        BuildSchemaFromRightTile(&non_empty_tile_schema, output_schema)));
+    output_tile->SetSchema(
+        BuildSchemaFromRightTile(&non_empty_tile_schema, output_schema));
   } else {
     // right tile is empty
-    output_tile->SetSchema(std::move(
+    output_tile->SetSchema(
         BuildSchemaFromLeftTile(&non_empty_tile_schema, output_schema,
-                                left_tile->GetPositionLists().size())));
+                                left_tile->GetPositionLists().size()));
   }
   return output_tile;
 }

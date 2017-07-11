@@ -56,9 +56,9 @@ class ConstantValueExpression : public AbstractExpression {
     return new ConstantValueExpression(*this);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  virtual hash_t Hash() const {
+  virtual hash_t Hash() const override {
     hash_t hash = HashUtil::Hash(&exp_type_);
     return HashUtil::CombineHashes(hash, value_.Hash());
   }

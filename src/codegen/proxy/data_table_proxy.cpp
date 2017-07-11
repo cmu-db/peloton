@@ -41,7 +41,7 @@ const std::string& DataTableProxy::_GetTileGroupCount::GetFunctionName() {
   // TODO: FIX ME
   static const std::string kGetTileGroupCount =
 #ifdef __APPLE__
-      "_ZNK7peloton7storage9DataTable17GetTileGroupCountEvy";
+      "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv";
 #else
       "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv";
 #endif

@@ -27,7 +27,15 @@ class PoolTests : public PelotonTest {};
 #define R 1
 #define RANDOM(a) (rand() % a) // Generate a random number in [0, a)
 
+// disable unused const variable warning for clang
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#endif
 const size_t str_len = 1000; // test string length
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif
 
 // Round up to block size
 size_t get_align(size_t size) {

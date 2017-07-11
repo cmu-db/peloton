@@ -181,11 +181,12 @@ struct ColumnDefinition {
 };
 
 /**
- * @struct CreateStatement
+ * @class CreateStatement
  * @brief Represents "CREATE TABLE students (name TEXT, student_number INTEGER,
  * city TEXT, grade DOUBLE)"
  */
-struct CreateStatement : TableRefStatement {
+class CreateStatement : public TableRefStatement {
+ public:
   enum CreateType { kTable, kDatabase, kIndex };
 
   CreateStatement(CreateType type)

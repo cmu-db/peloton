@@ -92,7 +92,7 @@ class AggregateExpression : public AbstractExpression {
 
   inline void SetValueIdx(int value_idx) { value_idx_ = value_idx; }
 
-  AbstractExpression* Copy() const { return new AggregateExpression(*this); }
+  AbstractExpression* Copy() const override { return new AggregateExpression(*this); }
 
   void DeduceExpressionType() override {
     switch (exp_type_) {
@@ -116,7 +116,7 @@ class AggregateExpression : public AbstractExpression {
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
 
  protected:
   AggregateExpression(const AggregateExpression& other)

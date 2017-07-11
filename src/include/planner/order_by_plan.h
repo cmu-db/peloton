@@ -51,13 +51,13 @@ class OrderByPlan : public AbstractPlan {
     return output_ais_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ORDERBY; }
+  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::ORDERBY; }
 
-  void GetOutputColumns(std::vector<oid_t> &columns) const {
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns = GetOutputColumnIds();
   }
 
-  const std::string GetInfo() const { return "OrderBy"; }
+  const std::string GetInfo() const override { return "OrderBy"; }
 
   void SetUnderlyingOrder(bool same_order) { underling_ordered_ = same_order; }
 
@@ -75,7 +75,7 @@ class OrderByPlan : public AbstractPlan {
 
   uint64_t GetLimitOffset() const { return limit_offset_; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     return std::unique_ptr<AbstractPlan>(
         new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));
   }

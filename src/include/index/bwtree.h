@@ -189,6 +189,7 @@ extern bool print_flag;
  * class BwTreeBase - Base class of BwTree that stores some common members
  */
 class BwTreeBase {
+public:
   // This is the presumed size of cache line
   static constexpr size_t CACHE_LINE_SIZE = 64;
   
@@ -302,14 +303,15 @@ class BwTreeBase {
   static_assert(sizeof(PaddedGCMetadata) == PaddedGCMetadata::ALIGNMENT, 
                 "class PaddedGCMetadata size does"
                 " not conform to the alignment!");
- 
- private: 
+
+public:
   // This is used as the garbage collection ID, and is maintained in a per
   // thread level
   // This is initialized to -1 in order to distinguish between registered 
   // threads and unregistered threads
   static thread_local int gc_id;
-  
+
+private:
   // This is used to count the number of threads participating GC process
   // We use this number to initialize GC data structure
   static std::atomic<size_t> total_thread_num;
@@ -1885,7 +1887,7 @@ class BwTree : public BwTreeBase {
     LeafMergeNode leaf_merge_node;
     LeafRemoveNode leaf_remove_node; 
   };
-  
+
   /*
    * class AllocationMeta - Metadata for maintaining preallocated space
    */
@@ -1893,10 +1895,11 @@ class BwTree : public BwTreeBase {
    public:
     // One reasonable amount of memory for each chunk is 
     // delta chain len * struct len + sizeof this struct
-    static constexpr size_t CHUNK_SIZE = \
-      sizeof(DeltaNodeUnion) * 8 + sizeof(AllocationMeta);
-    
-   private: 
+    static constexpr size_t CHUNK_SIZE() {  // Fix for Mac incomplete type error
+      return sizeof(DeltaNodeUnion) * 8 + sizeof(AllocationMeta);
+    }
+
+  private:
     // This points to the higher address end of the chunk we are 
     // allocating from
     std::atomic<char *> tail;
@@ -1963,8 +1966,8 @@ class BwTree : public BwTreeBase {
       if(meta_p != nullptr) {
         return meta_p;
       }
-      
-      char *new_chunk = new char[CHUNK_SIZE];
+
+      char *new_chunk = new char[CHUNK_SIZE()];
       AllocationMeta *expected = nullptr;
       
       // Prepare the new chunk's metadata field
@@ -1975,7 +1978,7 @@ class BwTree : public BwTreeBase {
       // and let tail points to the first byte after this chunk, and the limit
       // is the first byte after AllocationMeta
       new (new_meta_base) \
-        AllocationMeta{new_chunk + CHUNK_SIZE,                  // tail
+        AllocationMeta{new_chunk + CHUNK_SIZE(),                  // tail
                        new_chunk + sizeof(AllocationMeta)};     // limit
       
       // Always CAS with nullptr such that we will never install/replace
@@ -2269,27 +2272,27 @@ class BwTree : public BwTreeBase {
       //   1. AllocationMeta (chunk) 
       //   2. node meta 
       //   3. ElementType array
-      // basic template + ElementType element size * (node size) + CHUNK_SIZE
+      // basic template + ElementType element size * (node size) + CHUNK_SIZE()
       // Note: do not make it constant since it is going to be modified
       // after being returned
       char *alloc_base = \
         new char[sizeof(ElasticNode) + \
                    size * sizeof(ElementType) + \
-                   AllocationMeta::CHUNK_SIZE];
+                   AllocationMeta::CHUNK_SIZE()];
       assert(alloc_base != nullptr);
       
       // Initialize the AllocationMeta - tail points to the first byte inside
       // class ElasticNode; limit points to the first byte after class 
       // AllocationMeta
       new (reinterpret_cast<AllocationMeta *>(alloc_base)) \
-        AllocationMeta{alloc_base + AllocationMeta::CHUNK_SIZE,
+        AllocationMeta{alloc_base + AllocationMeta::CHUNK_SIZE(),
                        alloc_base + sizeof(AllocationMeta)};
-      
-      // The first CHUNK_SIZE byte is used by class AllocationMeta 
+
+      // The first CHUNK_SIZE() byte is used by class AllocationMeta 
       // and chunk data
       ElasticNode *node_p = \
         reinterpret_cast<ElasticNode *>( \
-          alloc_base + AllocationMeta::CHUNK_SIZE);
+          alloc_base + AllocationMeta::CHUNK_SIZE());
       
       // Call placement new to initialize all that could be initialized
       new (node_p) ElasticNode{p_type, 
@@ -2321,9 +2324,9 @@ class BwTree : public BwTreeBase {
     static AllocationMeta *GetAllocationHeader(const ElasticNode *node_p) {
       return reinterpret_cast<AllocationMeta *>( \
                reinterpret_cast<uint64_t>(node_p) - \
-                 AllocationMeta::CHUNK_SIZE);
+                 AllocationMeta::CHUNK_SIZE());
     }
-    
+
     /*
      * InlineAllocate() - Allocates a delta node in preallocated area preceeds
      *                    the data area of this ElasticNode
@@ -2331,7 +2334,7 @@ class BwTree : public BwTreeBase {
      * Note that for any given NodeType, we always know its low key and the
      * low key always points to the struct inside base node. This way, we
      * compute the offset of the low key from the begining of the struct,
-     * and then subtract it with CHUNK_SIZE to derive the address of
+     * and then subtract it with CHUNK_SIZE() to derive the address of
      * class AllocationMeta
      *
      * Note that since this function is accessed when the header is unknown
@@ -3536,7 +3539,7 @@ abort_traverse:
     NavigateSiblingChain(context_p);
 
     // If navigating sibling chain aborts then abort here
-    if((context_p->abort_flag == true)) {
+    if(context_p->abort_flag) {
       return INVALID_NODE_ID;
     }
     
@@ -4806,7 +4809,7 @@ abort_traverse:
     // Prepare new node
     /////////////////////////////////////////////////////////////////
 
-    if((leaf_node_p == nullptr)) {
+    if(leaf_node_p == nullptr) {
       leaf_node_p = \
         reinterpret_cast<LeafNode *>(ElasticNode<KeyValuePair>::\
           Get(node_p->GetItemCount(),

@@ -144,7 +144,7 @@ codegen::Value TileGroup::LoadColumn(
     sql_type.GetTypeForMaterialization(codegen, col_type, col_len_type);
     PL_ASSERT(col_type != nullptr && col_len_type == nullptr);
 
-    val = codegen->CreateLoad(col_type, col_address);
+    val = codegen->CreateLoad(col_type, codegen->CreateBitCast(col_address, col_type->getPointerTo()));
 
     if (is_nullable) {
       // To check for NULL, we need to perform a comparison between the value we

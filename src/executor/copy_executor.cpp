@@ -210,7 +210,7 @@ bool CopyExecutor::DExecute() {
     std::vector<std::vector<std::string>> answer_tuples;
     std::vector<int> result_format(col_count, 0);
     answer_tuples =
-        std::move(logical_tile->GetAllValuesAsStrings(result_format, true));
+        logical_tile->GetAllValuesAsStrings(result_format, true);
 
     // Loop over the returned results
     for (auto &tuple : answer_tuples) {

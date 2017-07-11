@@ -45,16 +45,16 @@ class AbstractScan : public AbstractPlan {
 
   inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  inline PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::ABSTRACT_SCAN;
   }
 
-  void GetOutputColumns(std::vector<oid_t> &columns) const {
+  void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns.resize(GetColumnIds().size());
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  inline const std::string GetInfo() const { return "AbstractScan"; }
+  inline const std::string GetInfo() const override { return "AbstractScan"; }
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 

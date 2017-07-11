@@ -67,7 +67,7 @@ llvm::Type *OAHashTableProxy::GetType(CodeGen &codegen) {
 const std::string &OAHashTableProxy::_Init::GetFunctionName() {
   static const std::string kInitFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen4util11OAHashTable4InitEmmm";
+      "_ZN7peloton7codegen4util11OAHashTable4InitEyyy";
 #else
       "_ZN7peloton7codegen4util11OAHashTable4InitEmmm";
 #endif
@@ -142,7 +142,7 @@ llvm::Function *OAHashTableProxy::_Destroy::GetFunction(CodeGen &codegen) {
 const std::string &OAHashTableProxy::_StoreTuple::GetFunctionName() {
   static const std::string kStoreTupleFnName =
 #ifdef __APPLE__
-      "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
+      "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEy";
 #else
       "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm";
 #endif
