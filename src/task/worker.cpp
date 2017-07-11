@@ -35,7 +35,7 @@ void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
-        usleep(1);
+        usleep(10);
       }
       continue;
     }
