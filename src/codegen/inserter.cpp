@@ -22,7 +22,7 @@ namespace codegen {
 
 void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
                     executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn != nullptr && table != nullptr);
+  PL_ASSERT(txn != nullptr && table != nullptr && executor_context != nullptr);
   txn_ = txn;
   table_ = table;
   executor_context_ = executor_context;
@@ -48,6 +48,7 @@ void Inserter::Insert(const storage::Tuple *tuple) {
     TransactionRuntime::IncreaseNumProcessed(executor_context_);
   }
 }
+
 
 void Inserter::Destroy() {
   tuple_.reset(nullptr);

@@ -15,6 +15,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/operator/operator_translator.h"
+#include "codegen/tuple.h"
 
 namespace peloton {
 
@@ -67,13 +68,11 @@ class InsertTranslator : public OperatorTranslator {
   std::string GetName() const override { return "Insert"; }
 
  private:
-  void Materialize(RowBatch::Row &row, llvm::Value *data, llvm::Value *pool) 
-      const;
-
- private:
   const planner::InsertPlan &insert_plan_;
 
   RuntimeState::StateID inserter_state_id_;
+
+  codegen::Tuple tuple_;
 };
 
 }  // namespace codegen

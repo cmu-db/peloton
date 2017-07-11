@@ -17,8 +17,8 @@
 namespace peloton {
 namespace codegen {
 
-void TupleRuntime::MaterializeVarLen(char *data, uint32_t len, char *buf,
-                                     peloton::type::AbstractPool *pool) {
+void TupleRuntime::CreateVarArea(char *data, uint32_t len, char *buf,
+                                 peloton::type::AbstractPool *pool) {
   struct varlen_t {
     uint32_t len;
     char data[];
