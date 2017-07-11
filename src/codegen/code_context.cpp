@@ -14,6 +14,8 @@
 
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
@@ -34,16 +36,25 @@ static std::atomic<uint64_t> kIdCounter{0};
 //===----------------------------------------------------------------------===//
 CodeContext::CodeContext()
     : id_(kIdCounter++),
-      context_(new llvm::LLVMContext()),
-      module_(new llvm::Module("_" + std::to_string(id_) + "_plan", *context_)),
-      builder_(*context_),
+      context_(nullptr),
+      module_(nullptr),
+      builder_(nullptr),
       func_(nullptr),
-      opt_pass_manager_(module_),
+      opt_pass_manager_(nullptr),
       jit_engine_(nullptr) {
   // Initialize JIT stuff
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
   llvm::InitializeNativeTargetAsmParser();
+
+  // Create the context
+  context_.reset(new llvm::LLVMContext());
+
+  // Create the module
+  module_ = new llvm::Module("_" + std::to_string(id_) + "_plan", *context_);
+
+  // Create the IR builder
+  builder_.reset(new llvm::IRBuilder<>(*context_));
 
   // Create the JIT engine.  We transfer ownership of the module to the engine,
   // but we retain a reference to it here so that we can lookup method
@@ -67,12 +78,13 @@ CodeContext::CodeContext()
 #endif
 
   // The set of optimization passes we include
-  opt_pass_manager_.add(llvm::createInstructionCombiningPass());
-  opt_pass_manager_.add(llvm::createReassociatePass());
-  opt_pass_manager_.add(llvm::createGVNPass());
-  opt_pass_manager_.add(llvm::createCFGSimplificationPass());
-  opt_pass_manager_.add(llvm::createAggressiveDCEPass());
-  opt_pass_manager_.add(llvm::createCFGSimplificationPass());
+  opt_pass_manager_.reset(new llvm::legacy::FunctionPassManager(module_));
+  opt_pass_manager_->add(llvm::createInstructionCombiningPass());
+  opt_pass_manager_->add(llvm::createReassociatePass());
+  opt_pass_manager_->add(llvm::createGVNPass());
+  opt_pass_manager_->add(llvm::createCFGSimplificationPass());
+  opt_pass_manager_->add(llvm::createAggressiveDCEPass());
+  opt_pass_manager_->add(llvm::createCFGSimplificationPass());
 
   // Setup the common types we need once
   bool_type_ = llvm::Type::getInt1Ty(*context_);
@@ -119,11 +131,11 @@ bool CodeContext::Compile() {
   }
 
   // Run each of our optimization passes over the functions in this module
-  opt_pass_manager_.doInitialization();
+  opt_pass_manager_->doInitialization();
   for (auto fn = module_->begin(), end = module_->end(); fn != end; fn++) {
-    opt_pass_manager_.run(*fn);
+    opt_pass_manager_->run(*fn);
   }
-  opt_pass_manager_.doFinalization();
+  opt_pass_manager_->doFinalization();
 
   // Finalize the object, this is where the JIT happens
   jit_engine_->finalizeObject();

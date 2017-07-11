@@ -48,16 +48,15 @@ HashGroupByTranslator::HashGroupByTranslator(
     // Allocate slot for prefetch array
     prefetch_vector_id_ = runtime_state.RegisterState(
         "gpPrefetchVec",
-        codegen.VectorType(codegen.Int64Type(),
-                           OAHashTable::kDefaultGroupPrefetchSize),
+        codegen.ArrayType(codegen.Int64Type(),
+                          OAHashTable::kDefaultGroupPrefetchSize),
         true);
   }
 
   // Allocate local stage for the output vector we produce
   output_vector_id_ = runtime_state.RegisterState(
       "hgbSelVec",
-      codegen.VectorType(codegen.Int32Type(), Vector::kDefaultVectorSize),
-      true);
+      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
   // Register the hash-table instance in the runtime state
   hash_table_id_ = runtime_state.RegisterState(

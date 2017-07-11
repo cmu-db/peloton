@@ -74,7 +74,7 @@ class CodeContext {
   std::string GetIR() const;
 
   // Get the IR Builder
-  llvm::IRBuilder<> &GetBuilder() { return builder_; }
+  llvm::IRBuilder<> &GetBuilder() { return *builder_; }
 
   // Get the data layout
   const llvm::DataLayout &GetDataLayout() const;
@@ -96,13 +96,13 @@ class CodeContext {
   llvm::Module *module_;
 
   // The LLVM IR Builder
-  llvm::IRBuilder<> builder_;
+  std::unique_ptr<llvm::IRBuilder<>> builder_;
 
   // The function that is currently being generated
   FunctionBuilder *func_;
 
   // The optimization pass manager
-  llvm::legacy::FunctionPassManager opt_pass_manager_;
+  std::unique_ptr<llvm::legacy::FunctionPassManager> opt_pass_manager_;
 
   // The engine we use to ultimately JIT the code in this context
   std::string err_str_;
