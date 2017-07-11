@@ -74,16 +74,16 @@ bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
 
   auto *tile_group_header = tile_group->GetHeader();
 
+  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   bool is_written =
       txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
 
-  if (is_written) {
+  if (is_owner && is_written) {
     LOG_TRACE("I am the owner of the tuple");
     txn_manager.PerformDelete(&txn, old_location);
     return true;
   }
 
-  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   bool is_ownable =
       is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
   if (!is_ownable) {
