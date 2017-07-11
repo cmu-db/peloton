@@ -38,16 +38,16 @@ class Task {
 
  public:
   inline Task() {};
-  inline Task(void(*func_ptr)(std::vector<void*>),
-              std::vector<void*> &func_args) :
+  inline Task(void(*func_ptr)(void*),
+              void* func_args) :
       func_ptr_(func_ptr), func_args_(func_args) {};
 
   void ExecuteTask();
   Result* getResult();
 
  private:
-  void(*func_ptr_)(std::vector<void *>);
-  std::vector<void*>func_args_;
+  void(*func_ptr_)(void *);
+  void* func_args_;
 
   std::mutex *task_mutex_;
   std::condition_variable *condition_variable_;

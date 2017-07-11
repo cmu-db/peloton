@@ -19,34 +19,27 @@
 #include <thread>
 #include <cstdio>
 #include <unistd.h>
-
+#include <time.h>
 namespace peloton {
 namespace test {
 
 class WorkerPoolTests : public PelotonTest {};
 
-void printString(std::vector<void *> args) {
-  std::string *sp = static_cast<std::string *>(*args.begin());
-  std::string str = *sp;
+void shortTask(void* param) {
+  int num = *((int *)param);
   std::thread::id id = std::this_thread::get_id();
-  std::cout << "thread " << id << " get " << str.c_str() << std::endl;
+  std::cout << "----- thread " << id << " starts, short " << num << std::endl;
+  usleep(num * 100000);
+  std::cout << "thread " << id << " finishes, short " << num << std::endl;
 }
 
-class TaskGenerator {
- public:
-  static std::shared_ptr<task::Task> getTask() {
-    std::vector<void *> params;
-    int len = 10;
-    char str[len + 1];
-    int i = 0;
-    for (i = 0; i < len; i++) {
-      str[i] = 'a' + rand() % 26;
-    }
-    str[10] = '\0';
-    params.push_back((void*)&(str));
-    return std::make_shared<task::Task>(printString, params);
-  }
-};
+void longTask(void* param) {
+  int num = *((int*)param);
+  std::thread::id id = std::this_thread::get_id();
+  std::cout << "----- thread " << id << " starts, long " << num << std::endl;
+  usleep(num * 10000000);
+  std::cout << "thread " << id << " finishes, long " << num << std::endl;
+}
 
 void masterCallback() {
   LOG_INFO("master activate");
@@ -54,19 +47,37 @@ void masterCallback() {
 
 TEST_F(WorkerPoolTests, MultiWorkerTest) {
   LOG_INFO("master starts");
-  const size_t sz = 10;
-  int task_num = 20, i = 0;
+  const size_t sz = 20;
+  int task_num = 4, i = 0;
   task::TaskQueue tq(sz);
-  task::WorkerPool wp(3, &tq);
+  task::WorkerPool wp(4, &tq);
 
   std::vector<std::shared_ptr<task::Task>> task_v;
+  std::vector<int> params;
+  for (i = 0; i < task_num; i++) {
+    params.push_back(1);
+  }
+  clock_t t1 = clock();
   for(i = 0; i < task_num; i++) {
-    task_v.push_back(TaskGenerator::getTask());
+    if (i % 2 == 0) {
+      task_v.push_back(std::make_shared<task::Task>(longTask, &params.at(i)));
+    } else {
+      task_v.push_back(std::make_shared<task::Task>(shortTask, &params.at(i)));
+    }
   }
   tq.SubmitTaskBatch(task_v);
-
-  LOG_INFO("master finishes");
   wp.Shutdown();
+  clock_t t2 = clock();
+  std::cout << "multithread: " << t2 - t1 << std::endl;
+  for(i = 0; i < task_num; i++) {
+    if (i % 2 == 0) {
+      longTask(&params.at(0));
+    } else {
+      shortTask(&params.at(0));
+    }
+  }
+  std::cout << "sequential: " << clock() - t2 << std::endl;
+  LOG_INFO("master finishes");
 
 }
 
