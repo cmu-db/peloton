@@ -267,7 +267,7 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 ResultType StatsStorage::AnalyzeStatsForAllTables(
     concurrency::Transaction *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to analyze all tables' stats: %s");
+    LOG_TRACE("Do not have transaction to analyze all tables' stats.");
     return ResultType::FAILURE;
   }
 
@@ -301,7 +301,7 @@ ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
                                               concurrency::Transaction *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze the table stats: %s",
-              table_name.c_str());
+              table->GetName().c_str());
     return ResultType::FAILURE;
   }
   std::unique_ptr<TableStatsCollector> table_stats_collector(

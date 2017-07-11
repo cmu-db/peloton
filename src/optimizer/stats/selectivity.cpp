@@ -42,8 +42,8 @@ double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats> &stats,
     case ExpressionType::COMPARE_DISTINCT_FROM:
       return DistinctFrom(stats, condition);
     default:
-      LOG_TRACE("Expression type %d not supported for computing selectivity",
-                type);
+      LOG_WARN("Expression type %s not supported for computing selectivity",
+                ExpressionTypeToString(condition.type).c_str());
       return DEFAULT_SELECTIVITY;
   }
 }
