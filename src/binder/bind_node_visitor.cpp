@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "binder/bind_node_visitor.h"
 
 namespace peloton {
@@ -154,5 +155,6 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
     expr->GetWhenClauseCond(i)->Accept(this);
   }
 }
-}  // binder
-}  // peloton
+
+}  // namespace binder
+}  // namespce peloton
