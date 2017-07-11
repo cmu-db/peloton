@@ -93,7 +93,7 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   // Introduce our output tuple buffer as local (on stack)
   auto *value_type = ValueProxy::GetType(codegen);
   tuple_output_state_id_ = runtime_state.RegisterState(
-      "output", codegen.VectorType(value_type, output_ais_.size()), true);
+      "output", codegen.ArrayType(value_type, output_ais_.size()), true);
 }
 
 // For each output attribute, we write out the attribute's value into the

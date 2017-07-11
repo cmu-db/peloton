@@ -26,6 +26,35 @@ CodeGen::CodeGen(CodeContext &code_context) : code_context_(code_context) {}
 
 CodeGen::~CodeGen() {}
 
+llvm::Type *CodeGen::ArrayType(llvm::Type *type, uint32_t num_elements) const {
+  return llvm::ArrayType::get(type, num_elements);
+}
+
+/// Constant wrappers for bool, int8, int16, int32, int64, strings and NULL
+llvm::Constant *CodeGen::ConstBool(bool val) const {
+  return llvm::ConstantInt::get(BoolType(), val, true);
+}
+
+llvm::Constant *CodeGen::Const8(int8_t val) const {
+  return llvm::ConstantInt::get(Int8Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const16(int16_t val) const {
+  return llvm::ConstantInt::get(Int16Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const32(int32_t val) const {
+  return llvm::ConstantInt::get(Int32Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const64(int64_t val) const {
+  return llvm::ConstantInt::get(Int64Type(), val, true);
+}
+
+llvm::Constant *CodeGen::ConstDouble(double val) const {
+  return llvm::ConstantFP::get(DoubleType(), val);
+}
+
 llvm::Constant *CodeGen::ConstString(const std::string s) const {
   // Strings are treated as arrays of bytes
   auto *str = llvm::ConstantDataArray::getString(GetContext(), s.c_str());
@@ -34,9 +63,22 @@ llvm::Constant *CodeGen::ConstString(const std::string s) const {
                                   "str");
 }
 
+llvm::Constant *CodeGen::Null(llvm::Type *type) const {
+  return llvm::Constant::getNullValue(type);
+}
+
+llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
+  return llvm::ConstantPointerNull::get(type);
+}
+
 llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
-  return GetBuilder().CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0,
-                                                 "");
+  auto &ir_builder = GetBuilder();
+  return ir_builder.CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0);
+}
+
+llvm::Value *CodeGen::CallFunc(
+    llvm::Value *fn, std::initializer_list<llvm::Value *> args) const {
+  return GetBuilder().CreateCall(fn, args);
 }
 
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
@@ -216,6 +258,8 @@ llvm::Function *CodeGen::RegisterFunction(const std::string &fn_name,
 llvm::Type *CodeGen::LookupTypeByName(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
+
+llvm::Value *CodeGen::GetState() const { return &*GetFunction()->arg_begin(); }
 
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   auto size = code_context_.GetDataLayout().getTypeSizeInBits(type) / 8;

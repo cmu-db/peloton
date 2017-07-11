@@ -101,8 +101,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // Create the output selection vector
   output_vector_id_ = runtime_state.RegisterState(
       "obSelVec",
-      codegen.VectorType(codegen.Int32Type(), Vector::kDefaultVectorSize),
-      true);
+      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
   LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }

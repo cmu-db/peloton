@@ -57,7 +57,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   auto &runtime_state = context.GetRuntimeState();
   mat_buffer_id_ = runtime_state.RegisterState("buf", mat_buffer_type);
   output_vector_id_ = runtime_state.RegisterState(
-      "ggbSelVec", codegen.VectorType(codegen.Int32Type(), 1), true);
+      "ggbSelVec", codegen.ArrayType(codegen.Int32Type(), 1), true);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
 }

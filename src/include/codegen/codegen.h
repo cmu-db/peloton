@@ -13,6 +13,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "codegen/code_context.h"
 #include "codegen/function_builder.h"
@@ -25,16 +26,14 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class CodeGen {
  public:
-  // Constructor
+  /// Constructor and destructor
   CodeGen(CodeContext &code_context);
-
-  // Destructor
   ~CodeGen();
 
-  // We forward the -> operator to LLVM's IRBuilder
-  llvm::IRBuilder<> *operator->() { return &code_context_.GetBuilder(); }
+  /// We forward the -> operator to LLVM's IRBuilder
+  llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
 
-  // Type wrappers
+  /// Type wrappers
   llvm::Type *BoolType() const { return code_context_.bool_type_; }
   llvm::Type *Int8Type() const { return code_context_.int8_type_; }
   llvm::Type *ByteType() const { return Int8Type(); }
@@ -46,40 +45,24 @@ class CodeGen {
   llvm::PointerType *CharPtrType() const {
     return code_context_.char_ptr_type_;
   }
-  llvm::Type *VectorType(llvm::Type *type, uint32_t num_elements) const {
-    return llvm::ArrayType::get(type, num_elements);
-  }
+  llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  // Constant wrappers for bool, int8, int16, int32, int64, strings and null
-  llvm::Constant *ConstBool(bool val) const {
-    return llvm::ConstantInt::get(BoolType(), val, true);
-  }
-  llvm::Constant *Const8(int8_t val) const {
-    return llvm::ConstantInt::get(Int8Type(), val, true);
-  }
-  llvm::Constant *Const16(int16_t val) const {
-    return llvm::ConstantInt::get(Int16Type(), val, true);
-  }
-  llvm::Constant *Const32(int32_t val) const {
-    return llvm::ConstantInt::get(Int32Type(), val, true);
-  }
-  llvm::Constant *Const64(int64_t val) const {
-    return llvm::ConstantInt::get(Int64Type(), val, true);
-  }
-  llvm::Constant *ConstDouble(double val) const {
-    return llvm::ConstantFP::get(DoubleType(), val);
-  }
+  /// Constant wrappers for bool, int8, int16, int32, int64, strings and null
+  llvm::Constant *ConstBool(bool val) const;
+  llvm::Constant *Const8(int8_t val) const;
+  llvm::Constant *Const16(int16_t val) const;
+  llvm::Constant *Const32(int32_t val) const;
+  llvm::Constant *Const64(int64_t val) const;
+  llvm::Constant *ConstDouble(double val) const;
   llvm::Constant *ConstString(const std::string s) const;
-  llvm::Constant *Null(llvm::Type *type) const {
-    return llvm::Constant::getNullValue(type);
-  }
-  llvm::Constant *NullPtr(llvm::PointerType *type) const {
-    return llvm::ConstantPointerNull::get(type);
-  }
-  // Wrapper for pointer for constant string
+  llvm::Constant *Null(llvm::Type *type) const;
+  llvm::Constant *NullPtr(llvm::PointerType *type) const;
+  /// Wrapper for pointer for constant string
   llvm::Value *ConstStringPtr(const std::string s) const;
 
-  // Generate a call to the function with the provided name and arguments
+  // /Generate a call to the function with the provided name and arguments
+  llvm::Value *CallFunc(llvm::Value *fn,
+                        std::initializer_list<llvm::Value *> args) const;
   llvm::Value *CallFunc(llvm::Value *fn,
                         const std::vector<llvm::Value *> &args) const;
 
@@ -115,15 +98,13 @@ class CodeGen {
   llvm::Type *LookupTypeByName(const std::string &name) const;
 
   // Get the runtime state function argument
-  llvm::Value *GetState() const { return &*GetFunction()->arg_begin(); }
+  llvm::Value *GetState() const;
 
-  // Get the LLVM context
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
-  // Return the size of the given type in bytes (returns 1 when size < 1 byte)
+  /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
 
-  // Get the context where all the code we generate resides
   CodeContext &GetCodeContext() const { return code_context_; }
 
  private:

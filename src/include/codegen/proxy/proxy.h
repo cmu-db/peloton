@@ -190,7 +190,7 @@ struct Member {
   struct _##M {                                                                \
     /*static constexpr const char *k##M##FnName = "__FILL__ME__";*/            \
     static constexpr const char *k##M##FnName = N;                             \
-    static llvm::Function *GetFunction(peloton::codegen::CodeGen &codegen) {   \
+    static llvm::Function *GetFunction(codegen::CodeGen &codegen) {            \
       /* Check if the function has already been defined - return it if so */   \
       llvm::Function *func = codegen.LookupFunction(k##M##FnName);             \
       if (func != nullptr) {                                                   \
