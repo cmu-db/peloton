@@ -18,6 +18,15 @@ namespace peloton {
 namespace task {
 
 void Task::ExecuteTask() {
+  if (this->is_sync) {
+    this->ExecuteTaskSync();
+  }
+  else {
+    this->ExecuteTaskAsync();
+  }
+}
+
+void Task::ExecuteTaskSync() {
   this->func_ptr_(this->func_args_);
 
   std::unique_lock <std::mutex> lock(*this->task_mutex_);
@@ -28,10 +37,30 @@ void Task::ExecuteTask() {
   }
 }
 
+void Task::ExecuteTaskAsync() {
+  this->func_ptr_(this->func_args_);
+}
+
+// Current thread would be blocked until the call back function finishes.
+void TaskQueue::SubmitSync(void(*func_ptr_)(void *),
+                            void* func_args_) {
+  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr_, func_args_);
+  this->SubmitTask(task);
+}
+// Current thread would not be blocked even if the call back function is still executing
+void TaskQueue::SubmitAsync(void(*func_ptr_)(void *),
+                            void* func_args_) {
+  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr_, func_args_);
+  task->is_sync = false;
+  task_queue_.Enqueue(task);
+}
+
+
 void TaskQueue::SubmitTask(std::shared_ptr<Task> task) {
   std::mutex mutex;
   std::unique_lock <std::mutex> lock(mutex);
   std::condition_variable cv;
+  task->is_sync = true;
   task->task_mutex_ = &mutex;
   task->condition_variable_ = &cv;
 
@@ -48,6 +77,7 @@ void TaskQueue::SubmitTaskBatch(std::vector<std::shared_ptr<Task>>& task_vector)
 
   for (std::shared_ptr<Task> task: task_vector) {
     task->task_mutex_ = &mutex;
+    task->is_sync = true;
     task->condition_variable_ = &cv;
     task->num_worker_ = &task_countDown;
     task_queue_.Enqueue(task);
