@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/tuple.h"
 #include "codegen/proxy/catalog_proxy.h"
-#include "codegen/operator/insert_translator.h"
 #include "codegen/proxy/inserter_proxy.h"
-#include "codegen/type/sql_type.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
-#include "codegen/proxy/tuple_runtime_proxy.h"
+#include "codegen/proxy/tuple_proxy.h"
+#include "codegen/operator/insert_translator.h"
+#include "codegen/type/sql_type.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
@@ -26,7 +27,8 @@ namespace codegen {
 InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), insert_plan_(insert_plan) {
+    : OperatorTranslator(context, pipeline), insert_plan_(insert_plan),
+      tuple_(*insert_plan.GetTable()) {
 
   // Create the translator for its child only when there is a child
   if (insert_plan.GetChildrenSize() != 0) {
@@ -78,11 +80,11 @@ void InsertTranslator::Produce() const {
 
       // Convert the tuple address to the LLVM pointer value
       auto *tuple = insert_plan_.GetTuple(i);
-      auto *tuple_int = codegen.Const64((int64_t)tuple);
-      llvm::Value *tuple_ptr = codegen->CreateIntToPtr(tuple_int,
-          TupleProxy::GetType(codegen)->getPointerTo());
+      llvm::Value *tuple_ptr =
+          codegen->CreateIntToPtr(codegen.Const64((int64_t)tuple),
+                                  TupleProxy::GetType(codegen)->getPointerTo());
  
-      // Perform insert tuples set in the inserter
+      // Perform insertion of each tuple through inserter
       auto *insert_func = InserterProxy::_Insert::GetFunction(codegen);
       codegen.CallFunc(insert_func, {inserter, tuple_ptr});
     }
@@ -91,18 +93,23 @@ void InsertTranslator::Produce() const {
 
 void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
-
-  // Materialize row values into the tuple created in the inserter
   auto *inserter = LoadStatePtr(inserter_state_id_);
+
+  auto scan =
+      static_cast<const planner::AbstractScan *>(insert_plan_.GetChild(0));
+  std::vector<const planner::AttributeInfo *> ais;
+  scan->GetAttributes(ais);
+
   auto *tuple_data_func = InserterProxy::_GetTupleData::GetFunction(codegen);
   auto *tuple_data = codegen.CallFunc(tuple_data_func, {inserter});
 
   auto *pool_func = InserterProxy::_GetPool::GetFunction(codegen);
   auto *pool = codegen.CallFunc(pool_func, {inserter});
 
-  Materialize(row, tuple_data, pool);
+  // Generate/Materialize tuple data from row and attribute informations
+  tuple_.GenerateTupleData(codegen, row, ais, tuple_data, pool);
 
-  // Insert the materialized tuple, which has been created in the inserter
+  // Call Inserter to insert the tuple data
   auto *insert_func = InserterProxy::_InsertTuple::GetFunction(codegen);
   codegen.CallFunc(insert_func, {inserter});
 }
@@ -114,56 +121,6 @@ void InsertTranslator::TearDownState() {
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
   std::vector<llvm::Value *> args = {inserter};
   codegen.CallFunc(InserterProxy::_Destroy::GetFunction(codegen), args);
-}
-
-void InsertTranslator::Materialize(RowBatch::Row &row, llvm::Value *data,
-                                   llvm::Value *pool) const {
-  auto &codegen = GetCodeGen();
-  auto scan = 
-      static_cast<const planner::AbstractScan *>(insert_plan_.GetChild(0));
-  std::vector<const planner::AttributeInfo *> ais;
-  scan->GetAttributes(ais);
-
-  auto *table = insert_plan_.GetTable();
-  auto *schema = table->GetSchema();
-  auto num_columns = schema->GetColumnCount();
-  for (oid_t i = 0; i < num_columns; i++) {
-    auto offset = schema->GetOffset(i);
-    auto *ai = ais.at(i);
-    codegen::Value v = row.DeriveValue(codegen, ai);
-    llvm::Type *val_type, *len_type;
-    const auto &sql_type = v.GetType().GetSqlType();
-    sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
-    llvm::Value *ptr = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(),
-                                                           data, offset);
-    switch (sql_type.TypeId()) {
-      case peloton::type::TypeId::TINYINT:
-      case peloton::type::TypeId::SMALLINT:
-      case peloton::type::TypeId::DATE:
-      case peloton::type::TypeId::INTEGER:
-      case peloton::type::TypeId::TIMESTAMP:
-      case peloton::type::TypeId::BIGINT:
-      case peloton::type::TypeId::DECIMAL: {
-        auto val_ptr = codegen->CreateBitCast(ptr, val_type->getPointerTo());
-        codegen->CreateStore(v.GetValue(), val_ptr);
-        break;
-      }
-      case peloton::type::TypeId::VARBINARY:
-      case peloton::type::TypeId::VARCHAR: {
-        PL_ASSERT(v.GetLength() != nullptr);
-        auto func = TupleRuntimeProxy::_MaterializeVarLen::GetFunction(codegen);
-        auto val_ptr = codegen->CreateBitCast(ptr, codegen.CharPtrType());
-        codegen.CallFunc(func, {v.GetValue(), v.GetLength(), val_ptr, pool});
-        break;
-      }
-      default: {
-        auto msg = StringUtil::Format(
-            "Can't materialize type '%s' at column position(%u)",
-            TypeIdToString(sql_type.TypeId()).c_str(), i);
-        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, msg};
-      }
-    }
-  }
 }
 
 }  // namespace codegen

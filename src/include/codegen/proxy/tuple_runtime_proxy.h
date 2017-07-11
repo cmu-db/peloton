@@ -21,14 +21,18 @@ namespace codegen {
 
 class TupleRuntimeProxy {
  public:
-  struct _MaterializeVarLen {
+  struct _CreateVarArea {
     static const std::string &GetFunctionName() {
-      static const std::string kMaterializeVarLenFnName =
-          "_ZN7peloton7codegen12TupleRuntime17MaterializeVarLenEPcjS2_PNS_4type"
+      static const std::string kCreateVarAreaFnName =
+#ifdef __APPLE__
+          "_ZN7peloton7codegen12TupleRuntime13CreateVarAreaEPcjS2_PNS_4type"
           "12AbstractPoolE";
-      return kMaterializeVarLenFnName;
+#else
+          "_ZN7peloton7codegen12TupleRuntime13CreateVarAreaEPcjS2_PNS_4type"
+          "12AbstractPoolE";
+#endif
+      return kCreateVarAreaFnName;
     }
-
     static llvm::Function *GetFunction(CodeGen &codegen) {
       const std::string &fn_name = GetFunctionName();
 

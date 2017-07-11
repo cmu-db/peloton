@@ -24,8 +24,8 @@ namespace codegen {
 
 class TupleRuntime {
  public:
-  static void MaterializeVarLen(char *data, uint32_t len, char *buf,
-                                type::AbstractPool *pool);
+  static void CreateVarArea(char *data, uint32_t len, char *buf,
+                            peloton::type::AbstractPool *pool);
 };
 
 }  // namespace codegen
