@@ -481,6 +481,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
         }
 
         row.push_back(std::string(val_binary, data_length));
+        delete[] val_binary;
       }
     }
     string_tile.push_back(row);
