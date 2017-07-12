@@ -191,13 +191,15 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        std::unique_ptr<ExecuteStatementPlanArg> arg_ptr(statement, parames, result, result_format);
+        executor::ExecuteResult status;
+        std::unique_ptr<ExecuteStatementPlanArg> arg_ptr = std::make_unique<ExecuteStatementPlanArg>
+                                                         (statement, params, result, result_format,
+                                                         status, this, thread_id);
         threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecuteStatementPlanCallBack, arg_ptr.get());
-        auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                           result, result_format,
-                                           thread_id);
-        auto status = arg_ptr->status;
-        LOG_TRACE("Statement executed. Result: %s",
+        //auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+        //                                   result, result_format,
+        //                                   thread_id);
+        LOG_DEBUG("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
         return status.m_result;
@@ -209,9 +211,15 @@ ResultType TrafficCop::ExecuteStatement(
 }
 void ExecuteStatementPlanCallBack(void* arg_ptr) {
   ExecuteStatementPlanArg arg = *(ExecuteStatementPlanArg*) arg_ptr;
-  arg.status = arg.tcop->ExecuteStatementPlan(arg.statement->GetPlanTree().get,
-                                              arg.params, arg.result, arg.result_format,
-                                              arg.thread_id);
+  #ifdef LOG_DEBUG_ENABLED
+    if (arg.statement_->GetPlanTree().get() != nullptr) {
+      LOG_DEBUG("Statement Prepared: %s", arg.statement_->GetInfo().c_str());
+      //LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+    }
+#endif
+  arg.status_ = arg.tcop_->ExecuteStatementPlan(arg.statement_->GetPlanTree().get(),
+                                              arg.params_, arg.result_, arg.result_format_,
+                                              arg.thread_id_);
 }
 
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
@@ -496,19 +504,7 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
   return std::make_tuple(field_name, static_cast<oid_t>(field_type),
                          field_size);
 }
-ExecuteStatementPlanTask::ExecuteStatementPlanTask(const std::shared_ptr<Statement> &statement,
-                         const std::vector<type::Value> &params,
-                         std::vector<StatementResult> &result,
-                         const std::vector<int> result_format,
-                         std::shared_ptr<executor::ExecuteResult> &execute_result,
-                         std::shared_ptr<TrafficCop> &tcop,
-                         const size_t thread_id = 0) :
-    statement_(statement), params_(params), result_(result), result_format_(result_format),
-    execute_result_(execute_result), tcop_(tcop), thread_id_(thread_id) {};
 
-std::shared_ptr<executor::ExecuteResult> ExecuteStatementPlanTask::getResult() {
-  return execute_result_;
-}
 
 }  // End tcop namespace
 }  // End peloton namespace
