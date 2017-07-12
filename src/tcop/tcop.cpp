@@ -32,6 +32,8 @@
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 
+#include "threadpool/mono_queue_pool.h"
+
 #include <boost/algorithm/string.hpp>
 #include <include/parser/postgresparser.h>
 
@@ -192,9 +194,12 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        auto status = ExecuteStatementPlan(statement->GetPlanTree(), params,
+        std::unique_ptr<ExecuteStatementPlanArg> arg_ptr(statement, parames, result, result_format);
+        threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecuteStatementPlanCallBack, arg_ptr.get());
+        auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
                                            result, result_format,
                                            thread_id);
+        auto status = arg_ptr->status;
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
@@ -205,6 +210,12 @@ ResultType TrafficCop::ExecuteStatement(
     error_message = e.what();
     return ResultType::FAILURE;
   }
+}
+void ExecuteStatementPlanCallBack(void* arg_ptr) {
+  ExecuteStatementPlanArg arg = *(ExecuteStatementPlanArg*) arg_ptr;
+  arg.status = arg.tcop->ExecuteStatementPlan(arg.statement->GetPlanTree().get,
+                                              arg.params, arg.result, arg.result_format,
+                                              arg.thread_id);
 }
 
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
