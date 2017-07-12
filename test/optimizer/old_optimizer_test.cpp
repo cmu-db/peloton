@@ -16,16 +16,20 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Binding Tests
+// OldOptimizerTests
+// These are really basic tests for the optimizer.
+// This was originally for the very first optimizer that we had
+// called the "SimpleOptimizer". It's dead now. We don't need it
+// anymore...
 //===--------------------------------------------------------------------===//
 
 using namespace optimizer;
 
-class SimpleOptimizerTests : public PelotonTest {};
+class OldOptimizerTests : public PelotonTest {};
 
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.
-TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
+TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping...");
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
