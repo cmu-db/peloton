@@ -131,6 +131,8 @@ std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer
 ////  traffic_cop_.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 ////  traffic_cop_.single_statement_txn = true;
   optimizer->consistentTxn = txn;
+  LOG_INFO("haoxianghua");
+  LOG_INFO("in %lu", optimizer->consistentTxn->GetTransactionId());
 
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
