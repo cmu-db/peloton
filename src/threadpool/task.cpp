@@ -12,6 +12,7 @@
 
 #include <common/logger.h>
 #include "threadpool/task.h"
+#include "../../../../../../../usr/include/c++/5/condition_variable"
 
 namespace peloton {
 namespace threadpool {
@@ -45,15 +46,16 @@ void TaskQueue::SubmitSync(void(*func_ptr)(void *), void* func_arg) {
   std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
   std::mutex mutex;
   std::unique_lock <std::mutex> lock(mutex);
-  std::condition_variable cv;
+
+  std::shared_ptr<std::condition_variable> cv = std::make_shared<std::condition_variable>();
   int num_worker = 1;
 
   task->is_sync = true;
   task->task_mutex_ = &mutex;
-  task->condition_variable_ = &cv;
+  task->condition_variable_ = cv.get();
   task->num_worker_ = &num_worker;
   task_queue_.Enqueue(task);
-  cv.wait(lock);
+  cv->wait(lock);
 }
 
 // Current thread would not be blocked even if
