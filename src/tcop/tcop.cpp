@@ -539,6 +539,19 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
   return std::make_tuple(field_name, static_cast<oid_t>(field_type),
                          field_size);
 }
+ExecuteStatementPlanTask::ExecuteStatementPlanTask(const std::shared_ptr<Statement> &statement,
+                         const std::vector<type::Value> &params,
+                         std::vector<StatementResult> &result,
+                         const std::vector<int> result_format,
+                         std::shared_ptr<executor::ExecuteResult> &execute_result,
+                         std::shared_ptr<TrafficCop> &tcop,
+                         const size_t thread_id = 0) :
+    statement_(statement), params_(params), result_(result), result_format_(result_format),
+    execute_result_(execute_result), tcop_(tcop), thread_id_(thread_id) {};
+
+std::shared_ptr<executor::ExecuteResult> ExecuteStatementPlanTask::getResult() {
+  return execute_result_;
+}
 
 }  // namespace tcop
 }  // namespace peloton

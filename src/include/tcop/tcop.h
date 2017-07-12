@@ -131,5 +131,27 @@ class TrafficCop {
                      std::vector<storage::DataTable *> &target_tables);
 };
 
-}  // namespace tcop
-}  // namespace peloton
+class ExecuteStatementPlanTask {
+ public:
+  ExecuteStatementPlanTask(const std::shared_ptr<Statement> &statement,
+                           const std::vector<type::Value> &params,
+                           std::vector<StatementResult> &result,
+                           const std::vector<int> result_format,
+                           std::shared_ptr<executor::ExecuteResult> &execute_result,
+                           std::shared_ptr<TrafficCop> &tcop,
+                           const size_t thread_id);
+  std::shared_ptr<executor::ExecuteResult> getResult();
+
+ private:
+  const std::shared_ptr<Statement> statement_;
+  const std::vector<type::Value> params_;
+  std::vector<StatementResult> result_;
+  const std::vector<int> result_format_;
+  std::shared_ptr<executor::ExecuteResult> execute_result_;
+  std::shared_ptr<TrafficCop> tcop_;
+  const size_t thread_id_;
+};
+
+
+}  // End tcop namespace
+}  // End peloton namespace
