@@ -138,9 +138,12 @@ void callerFunc(MyLibeventThread *thread) {
     buf[i] = 'A' + i;
   }
   for (i = 0; i < CALL_NUM; i++) {
-    write(thread->getSendfd(), &(buf[i]), 1);
-    LOG_INFO("caller attempts to activate network thread");
-    usleep(60000);
+    if (write(thread->getSendfd(), &(buf[i]), 1)) {
+      LOG_INFO("caller attempts to activate network thread");
+      usleep(60000);
+    } else {
+      EXPECT_EQ(false, true);
+    }
   }
   LOG_INFO("caller exits");
 }
