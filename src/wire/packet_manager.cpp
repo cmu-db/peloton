@@ -94,7 +94,7 @@ void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
 
 void PacketManager::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
-  auto new_statement = traffic_cop_->PrepareStatement(
+  auto new_statement = traffic_cop_->PrepareStatementJDBC(
       statement->GetStatementName(), statement->GetQueryString(),
       error_message);
   // But then rip out its query plan and stick it in our old statement
@@ -381,7 +381,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
                 statement_query.c_str());
 
-        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
+        statement = traffic_cop_->PrepareStatementJDBC(statement_name, statement_query,
                                                  error_message);
         if (statement.get() == nullptr) {
           skipped_stmt_ = true;
@@ -439,7 +439,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         }
 
         auto status =
-                traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                traffic_cop_->ExecuteStatementJDBC(statement, param_values, unnamed, nullptr, result_format,
                              result, rows_affected, error_message, thread_id);
 
         if (status == ResultType::SUCCESS) {
@@ -504,7 +504,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   skipped_stmt_ = false;
   Statement::ParseQueryTypeString(query_string, query_type_string);
   Statement::MapToQueryType(query_type_string, query_type);
-
+  LOG_DEBUG("Parse Statement %s", query_string.c_str());
   // For an empty query or a query to be filtered, just send parse complete
   // response and don't execute
   if (query_string == "" || HardcodedExecuteFilter(query_type) == false) {
@@ -525,7 +525,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
             query_string.c_str());
 
-  statement = traffic_cop_->PrepareStatement(statement_name, query_string,
+  statement = traffic_cop_->PrepareStatementJDBC(statement_name, query_string,
                                              error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
@@ -908,6 +908,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
 
 void PacketManager::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
+  LOG_DEBUG("HELLO ExecExecuteMessage");
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
@@ -954,7 +955,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
 
-  auto status = traffic_cop_->ExecuteStatement(
+  auto status = traffic_cop_->ExecuteStatementJDBC(
       statement, param_values, unnamed, param_stat, result_format_, results,
       rows_affected, error_message, thread_id);
 
@@ -1029,42 +1030,42 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   // we see a SYNC
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
-      LOG_TRACE("SIMPLE_QUERY_COMMAND");
+      LOG_DEBUG("SIMPLE_QUERY_COMMAND");
       ExecQueryMessage(pkt, thread_id);
       force_flush = true;
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
-      LOG_TRACE("PARSE_COMMAND");
+      LOG_DEBUG("PARSE_COMMAND");
       ExecParseMessage(pkt);
     } break;
     case NetworkMessageType::BIND_COMMAND: {
-      LOG_TRACE("BIND_COMMAND");
+      LOG_DEBUG("BIND_COMMAND");
       ExecBindMessage(pkt);
     } break;
     case NetworkMessageType::DESCRIBE_COMMAND: {
-      LOG_TRACE("DESCRIBE_COMMAND");
+      LOG_DEBUG("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt);
     } break;
     case NetworkMessageType::EXECUTE_COMMAND: {
-      LOG_TRACE("EXECUTE_COMMAND");
+      LOG_DEBUG("EXECUTE_COMMAND");
       ExecExecuteMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::SYNC_COMMAND: {
-      LOG_TRACE("SYNC_COMMAND");
+      LOG_DEBUG("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
       force_flush = true;
     } break;
     case NetworkMessageType::CLOSE_COMMAND: {
-      LOG_TRACE("CLOSE_COMMAND");
+      LOG_DEBUG("CLOSE_COMMAND");
       ExecCloseMessage(pkt);
     } break;
     case NetworkMessageType::TERMINATE_COMMAND: {
-      LOG_TRACE("TERMINATE_COMMAND");
+      LOG_DEBUG("TERMINATE_COMMAND");
       force_flush = true;
       return false;
     } break;
     case NetworkMessageType::NULL_COMMAND: {
-      LOG_TRACE("NULL");
+      LOG_DEBUG("NULL");
       force_flush = true;
       return false;
     } break;

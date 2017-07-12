@@ -86,7 +86,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
-
+  LOG_DEBUG("HANDLE DDL IN OPTIMIZER");
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt);
@@ -94,9 +94,11 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     return move(ddl_plan);
   }
   // Run binder
+  LOG_DEBUG("RUN BINDER IN OPTIMIZER");
   auto bind_node_visitor = make_shared<binder::BindNodeVisitor>();
   (*bind_node_visitor).consistentTxn = consistentTxn;
   bind_node_visitor->BindNameToNode(parse_tree);
+  LOG_DEBUG("AFTER BINDER IN OPTIMIZER");
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);
   GroupID root_id = gexpr->GetGroupID();
