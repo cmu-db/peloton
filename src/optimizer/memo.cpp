@@ -35,7 +35,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     assert(target_group == UNDEFINED_GROUP ||
            target_group == leaf->origin_group);
     gexpr->SetGroupID(leaf->origin_group);
-    return nullptr; // Fix for Mac support
+    return nullptr;
   }
 
   // Lookup in hash table

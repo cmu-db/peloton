@@ -93,9 +93,9 @@ script:
     # install peloton
     - make install
     # run psql tests
-    - bash ../script/testing/psql/psql_test.sh $TRAVIS_OS_NAME
+    - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
-    - python ../script/validators/jdbc_validator.py $TRAVIS_OS_NAME
+    - python ../script/validators/jdbc_validator.py
     # upload coverage info
     - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then echo 1; fi"
 

@@ -175,7 +175,6 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libevent
     brew install boost
     brew install jemalloc
-    brew install valgrind
     brew install lcov
     brew install libpqxx
     brew install libedit

@@ -6,6 +6,7 @@ import os
 import subprocess
 import time
 import re
+import platform
 
 ## ==============================================
 ## CONFIGURATION
@@ -63,9 +64,9 @@ if __name__ == '__main__':
         raise Exception("Unable to find JDBC script dir '%s'" % PELOTON_JDBC_SCRIPT_DIR)
 
     ## Basic
-    runTest("test_jdbc.sh", isOSX=sys.argv[1] == 'osx')
+    runTest("test_jdbc.sh", isOSX=platform.system() == 'Darwin')
 
     ## Stats
-    # runTest("test_jdbc.sh", enableStats=True, sys.argv[1] == 'osx')
+    # runTest("test_jdbc.sh", enableStats=True, platform.system() == 'Darwin')
 
 ## MAIN
