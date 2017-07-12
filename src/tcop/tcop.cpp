@@ -30,7 +30,6 @@
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/simple_optimizer.h"
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
@@ -40,15 +39,9 @@
 namespace peloton {
 namespace tcop {
 
-#define NEW_OPTIMIZER
-
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
-#ifdef NEW_OPTIMIZER
   optimizer_.reset(new optimizer::Optimizer);
-#else
-  optimizer_.reset(new optimizer::SimpleOptimizer);
-#endif
 }
 
 void TrafficCop::Reset() {
