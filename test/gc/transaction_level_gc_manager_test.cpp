@@ -12,7 +12,6 @@
 
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
-#include "catalog/catalog.h"
 #include "common/harness.h"
 #include "gc/transaction_level_gc_manager.h"
 #include "concurrency/epoch_manager.h"
@@ -20,6 +19,7 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/database.h"
+#include "storage/storage_manager.h"
 
 
 namespace peloton {
@@ -85,11 +85,11 @@ TEST_F(TransactionLevelGCManagerTests, GCTest) {
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
 
   
-  auto catalog = catalog::Catalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("DATABASE");
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
@@ -195,7 +195,7 @@ TEST_F(TransactionLevelGCManagerTests, GCTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DATABASE");
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
 }
 

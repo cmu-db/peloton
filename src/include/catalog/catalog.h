@@ -64,18 +64,6 @@ class Catalog {
 
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
-  //===--------------------------------------------------------------------===//
-  // DEPRECATED FUNCTIONs
-  //===--------------------------------------------------------------------===//
-  /*
-  * We're working right now to remove metadata from storage level and eliminate
-  * multiple copies, so those functions below will be DEPRECATED soon.
-  */
-  // Add a database
-  void AddDatabase(storage::Database *database);
-
-  // Find a database using vector offset
-  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
   //===--------------------------------------------------------------------===//
   // CREATE FUNCTIONS
@@ -152,36 +140,16 @@ class Catalog {
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &table_name,
                                        concurrency::Transaction *txn = nullptr);
-
   //===--------------------------------------------------------------------===//
-  // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
+  // DEPRECATED FUNCTIONs
   //===--------------------------------------------------------------------===//
+  /*
+  * We're working right now to remove metadata from storage level and eliminate
+  * multiple copies, so those functions below will be DEPRECATED soon.
+  */
 
-  /* Find a database using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
-
-  /* Find a table using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  storage::DataTable *GetTableWithOid(oid_t database_oid,
-                                      oid_t table_oid) const;
-
-  /* Find a index using its oid from storage layer,
-   * throw exception if not exists
-   * */
-  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
-                                oid_t index_oid) const;
-
-  //===--------------------------------------------------------------------===//
-  // HELPERS
-  //===--------------------------------------------------------------------===//
-  // Returns true if the catalog contains the given database with the id
-  bool HasDatabase(oid_t db_oid) const;
-
-  // Get the number of databases currently in the catalog
-  oid_t GetDatabaseCount();
+  // Add a database
+  void AddDatabase(storage::Database *database);
 
   //===--------------------------------------------------------------------===//
   // USER DEFINE FUNCTION
@@ -200,9 +168,6 @@ class Catalog {
 
  private:
   Catalog();
-
-  // A vector of the database pointers in the catalog
-  std::vector<storage::Database *> databases_;
 
   // Map of function names to data about functions (number of arguments,
   // function ptr, return type)

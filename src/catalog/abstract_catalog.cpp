@@ -18,6 +18,7 @@
 #include "common/statement.h"
 #include "planner/seq_scan_plan.h"
 #include "executor/seq_scan_executor.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace catalog {
@@ -55,8 +56,12 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       catalog_table_name, CATALOG_DATABASE_OID, txn);
 
   // set catalog_table_
-  catalog_table_ = Catalog::GetInstance()->GetTableWithOid(CATALOG_DATABASE_OID,
-                                                           catalog_table_oid);
+  try{
+    catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
+      CATALOG_DATABASE_OID, catalog_table_oid);
+  } catch (CatalogException &e) {
+      LOG_TRACE("Can't find table %d! Return false", catalog_table_oid);
+  }
 }
 
 /*@brief   insert tuple(reord) helper function

@@ -124,7 +124,7 @@ ResultType TupleSamplesStorage::CollectSamplesForTable(
     storage::DataTable *data_table, concurrency::Transaction *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to collect samples for table: %s",
-              table_name.c_str());
+              data_table->GetName().c_str());
     return ResultType::FAILURE;
   }
   TupleSampler tuple_sampler(data_table);

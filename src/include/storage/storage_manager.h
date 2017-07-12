@@ -6,76 +6,92 @@
 //
 // Identification: src/include/storage/storage_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include <mutex>
-
-#include "common/platform.h"
-#include "type/types.h"
+#include "catalog/database_catalog.h"
+#include "catalog/schema.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace storage {
 
-//===--------------------------------------------------------------------===//
-// Filesystem directories
-//===--------------------------------------------------------------------===//
-
-// TODO: These should be moved into a configuration file"
-#define NVM_DIR "/mnt/pmfs/"
-#define HDD_DIR "/data/"
-#define SSD_DIR "/data1/"
-
-#define TMP_DIR "/tmp/"
-
-//===--------------------------------------------------------------------===//
-// Storage Manager
-//===--------------------------------------------------------------------===//
-
-/// Stores data on different backends
 class StorageManager {
  public:
-  // global singleton
-  static StorageManager &GetInstance(void);
+  // Global Singleton
+  static StorageManager *GetInstance(void);
 
-  StorageManager();
+  // Deconstruct the catalog database when destroying the catalog.
   ~StorageManager();
 
-  void *Allocate(BackendType type, size_t size);
+  //===--------------------------------------------------------------------===//
+  // DEPRECATED FUNCTIONs
+  //===--------------------------------------------------------------------===//
+  /*
+  * We're working right now to remove metadata from storage level and eliminate
+  * multiple copies, so those functions below will be DEPRECATED soon.
+  */
 
-  void Release(BackendType type, void *address);
+  // Find a database using vector offset
+  Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
-  void Sync(BackendType type, void *address, size_t length);
+  //===--------------------------------------------------------------------===//
+  // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
+  //===--------------------------------------------------------------------===//
 
-  size_t GetMsyncCount() const { return msync_count; }
+  /* Find a database using its oid from storage layer,
+   * throw exception if not exists
+   * */
+  Database *GetDatabaseWithOid(oid_t db_oid) const;
 
-  size_t GetClflushCount() const { return clflush_count; }
+  /* Find a table using its oid from storage layer,
+   * throw exception if not exists
+   * */
+  storage::DataTable *GetTableWithOid(oid_t database_oid,
+                                      oid_t table_oid) const;
 
-  size_t GetAllocationCount() const { return allocation_count; }
+  /* Find a index using its oid from storage layer,
+   * throw exception if not exists
+   * */
+  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
+                                oid_t index_oid) const;
+
+  //===--------------------------------------------------------------------===//
+  // HELPERS
+  //===--------------------------------------------------------------------===//
+  // Returns true if the catalog contains the given database with the id
+  bool HasDatabase(oid_t db_oid) const;
+  oid_t GetDatabaseCount() { return databases_.size(); }
+
+  //===--------------------------------------------------------------------===//
+  // FUNCTIONS USED BY CATALOG
+  //===--------------------------------------------------------------------===//
+
+  void AddDatabaseToStorageManager(Database *db) {
+    databases_.push_back(db);
+  }
+  bool RemoveDatabaseFromStorageManager(oid_t database_oid) {
+    for (auto it = databases_.begin(); it != databases_.end(); ++it) {
+      if ((*it)->GetOid() == database_oid) {
+        delete (*it);
+        databases_.erase(it);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void DestroyDatabases();
 
  private:
-  // data file address
-  void *data_file_address;
+  StorageManager();
 
-  // data file lock
-  Spinlock data_file_spinlock;
-
-  // data file len
-  size_t data_file_len;
-
-  // data offset
-  size_t data_file_offset;
-
-  // stats
-  size_t msync_count = 0;
-
-  size_t clflush_count = 0;
-
-  size_t allocation_count = 0;
+  // A vector of the database pointers in the catalog
+  std::vector<Database *> databases_;
 };
-
-}  // End storage namespace
-}  // End peloton namespace
+}
+}

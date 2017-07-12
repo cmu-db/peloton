@@ -13,10 +13,10 @@
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
-#include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
 #include "type/value.h"
 #include "storage/data_table.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace optimizer {
@@ -267,17 +267,16 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 ResultType StatsStorage::AnalyzeStatsForAllTables(
     concurrency::Transaction *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to analyze all tables' stats: %s");
+    LOG_TRACE("Do not have transaction to analyze all tables' stats.");
     return ResultType::FAILURE;
   }
 
-  auto catalog = catalog::Catalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
-  oid_t database_count = catalog->GetDatabaseCount();
+  oid_t database_count = storage_manager->GetDatabaseCount();
   LOG_TRACE("Database count: %u", database_count);
   for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
-    auto database =
-        catalog::Catalog::GetInstance()->GetDatabaseWithOffset(db_offset);
+    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
     if (database->GetDBName().compare(CATALOG_DATABASE_NAME) == 0) {
       continue;
     }
@@ -302,7 +301,7 @@ ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
                                               concurrency::Transaction *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze the table stats: %s",
-              table_name.c_str());
+              table->GetName().c_str());
     return ResultType::FAILURE;
   }
   std::unique_ptr<TableStatsCollector> table_stats_collector(

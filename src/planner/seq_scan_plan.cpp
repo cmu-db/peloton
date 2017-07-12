@@ -13,13 +13,13 @@
 #include "planner/seq_scan_plan.h"
 
 #include "parser/select_statement.h"
-#include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
+#include "storage/storage_manager.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -139,9 +139,15 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   oid_t table_oid = input.ReadInt();
 
   // Get table and set it to the member
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid,
-                                                       table_oid));
+  storage::DataTable *target_table = nullptr;
+  try{
+      target_table = static_cast<storage::DataTable *>(
+        storage::StorageManager::GetInstance()->GetTableWithOid(
+              database_oid, table_oid));
+  } catch (CatalogException &e) {
+      LOG_TRACE("Can't find table %d! Return false", table_oid);
+      return false;
+  }
   SetTargetTable(target_table);
 
   // Read the number of column_id and set them to column_ids_

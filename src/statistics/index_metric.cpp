@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/index_metric.h"
-#include "catalog/catalog.h"
+#include "storage/storage_manager.h"
 #include "index/index.h"
 
 namespace peloton {
@@ -25,14 +25,13 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
       index_id_(index_id) {
   index_name_ = "";
   try {
-    auto index = catalog::Catalog::GetInstance()->GetIndexWithOid(
+    auto index = storage::StorageManager::GetInstance()->GetIndexWithOid(
         database_id, table_id, index_id);
     index_name_ = index->GetName();
     for (auto& ch : index_name_) {
       ch = toupper(ch);
     }
-  }
-  catch (CatalogException& e) {
+  } catch (CatalogException& e) {
   }
 }
 

@@ -17,11 +17,11 @@
 #include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager.h"
 
-
-#include "catalog/catalog.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
 #include "storage/database.h"
+#include "storage/storage_manager.h"
+#include "storage/tile_group.h"
+
 
 
 namespace peloton {
@@ -124,11 +124,11 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
 
   
-  auto catalog = catalog::Catalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("UPDATE_DB");
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
@@ -198,7 +198,7 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   
   // DROP!
   TestingExecutorUtil::DeleteDatabase("UPDATE_DB");
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
   for (auto &gc_thread : gc_threads) {
     gc_thread->join();
@@ -213,11 +213,11 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   std::vector<std::unique_ptr<std::thread>> gc_threads;
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto catalog = catalog::Catalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("DELETE_DB");
   oid_t db_id = database->GetOid();
-  EXPECT_TRUE(catalog->HasDatabase(db_id));
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
@@ -286,7 +286,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DELETE_DB");
-  EXPECT_FALSE(catalog->HasDatabase(db_id));
+  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
   for (auto &gc_thread : gc_threads) {
     gc_thread->join();
