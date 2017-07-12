@@ -3,17 +3,11 @@
 #define private public
 
 #include "catalog/catalog.h"
-#include "common/logger.h"
 #include "common/statement.h"
 #include "executor/create_executor.h"
-#include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/simple_optimizer.h"
 #include "parser/postgresparser.h"
-#include "planner/create_plan.h"
-#include "planner/delete_plan.h"
-#include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
 #include "tcop/tcop.h"
@@ -40,7 +34,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   LOG_TRACE("Bootstrapping completed!");
 
-  optimizer::SimpleOptimizer optimizer;
+  optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
