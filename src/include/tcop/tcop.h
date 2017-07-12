@@ -34,6 +34,9 @@ namespace tcop {
 // TRAFFIC COP
 //===--------------------------------------------------------------------===//
 
+//forward declare
+void ExecuteStatementPlanCallBack(void* arg_ptr);
+
 class TrafficCop {
   TrafficCop(TrafficCop const &) = delete;
 
@@ -131,24 +134,23 @@ class TrafficCop {
                      std::vector<storage::DataTable *> &target_tables);
 };
 
-class ExecuteStatementPlanTask {
- public:
-  ExecuteStatementPlanTask(const std::shared_ptr<Statement> &statement,
+struct ExecuteStatementPlanArg {
+  ExecuteStatementPlanArg(const std::shared_ptr<Statement> &statement,
                            const std::vector<type::Value> &params,
                            std::vector<StatementResult> &result,
                            const std::vector<int> result_format,
-                           std::shared_ptr<executor::ExecuteResult> &execute_result,
-                           std::shared_ptr<TrafficCop> &tcop,
-                           const size_t thread_id);
-  std::shared_ptr<executor::ExecuteResult> getResult();
+                           executor::ExecuteResult &status,
+                           TrafficCop* tcop,
+                           const size_t thread_id):
+    statement_(statement), params_(params), result_(result), result_format_(result_format),
+    status_(status), tcop_(tcop), thread_id_(thread_id) {};
 
- private:
   const std::shared_ptr<Statement> statement_;
-  const std::vector<type::Value> params_;
-  std::vector<StatementResult> result_;
-  const std::vector<int> result_format_;
-  std::shared_ptr<executor::ExecuteResult> execute_result_;
-  std::shared_ptr<TrafficCop> tcop_;
+  const std::vector<type::Value>& params_;
+  std::vector<StatementResult>& result_;
+  const std::vector<int>& result_format_;
+  executor::ExecuteResult& status_;
+  TrafficCop* tcop_;
   const size_t thread_id_;
 };
 

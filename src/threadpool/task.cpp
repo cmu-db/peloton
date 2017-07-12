@@ -17,12 +17,14 @@ namespace peloton {
 namespace threadpool {
 
 void Task::ExecuteTask() {
+  LOG_DEBUG("Task grab by some worker");
   if (this->is_sync) {
     this->ExecuteTaskSync();
   }
   else {
     this->ExecuteTaskAsync();
   }
+  LOG_DEBUG("Now task is done");
 }
 
 void Task::ExecuteTaskSync() {
