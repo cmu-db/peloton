@@ -261,9 +261,9 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   }
 }
 
-void GetDeleteStatementInfo(DeleteStatement* stmt UNUSED_ATTRIBUTE, uint num_indent UNUSED_ATTRIBUTE) {
-//  stmt = stmt;
-//  num_indent = num_indent;
+void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
+  inprint("InsertStatment", num_indent);
+  inprint(stmt->GetTableName().c_str(), num_indent + 1);
   return;
 }
 

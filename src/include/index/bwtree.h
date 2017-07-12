@@ -1895,7 +1895,7 @@ class BwTree : public BwTreeBase {
    public:
     // One reasonable amount of memory for each chunk is 
     // delta chain len * struct len + sizeof this struct
-    static constexpr size_t CHUNK_SIZE() {  // Fix for Mac incomplete type error
+    static constexpr size_t CHUNK_SIZE() {
       return sizeof(DeltaNodeUnion) * 8 + sizeof(AllocationMeta);
     }
 
