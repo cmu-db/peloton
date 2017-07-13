@@ -211,12 +211,6 @@ ResultType TrafficCop::ExecuteStatement(
 }
 void ExecuteStatementPlanCallBack(void* arg_ptr) {
   ExecuteStatementPlanArg arg = *(ExecuteStatementPlanArg*) arg_ptr;
-  #ifdef LOG_DEBUG_ENABLED
-    if (arg.statement_->GetPlanTree().get() != nullptr) {
-      LOG_DEBUG("Statement Prepared: %s", arg.statement_->GetInfo().c_str());
-      //LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
-    }
-#endif
   arg.status_ = arg.tcop_->ExecuteStatementPlan(arg.statement_->GetPlanTree().get(),
                                               arg.params_, arg.result_, arg.result_format_,
                                               arg.thread_id_);

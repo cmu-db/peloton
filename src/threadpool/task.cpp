@@ -12,20 +12,19 @@
 
 #include <common/logger.h>
 #include "threadpool/task.h"
-#include "../../../../../../../usr/include/c++/5/condition_variable"
 
 namespace peloton {
 namespace threadpool {
 
 void Task::ExecuteTask() {
-  LOG_DEBUG("Task grab by some worker");
+  LOG_TRACE("Task grab by some worker");
   if (this->is_sync) {
     this->ExecuteTaskSync();
   }
   else {
     this->ExecuteTaskAsync();
   }
-  LOG_DEBUG("Now task is done");
+  LOG_TRACE("Now task is done");
 }
 
 void Task::ExecuteTaskSync() {
