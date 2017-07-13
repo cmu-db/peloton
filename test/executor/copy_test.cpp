@@ -18,7 +18,8 @@
 #include "common/statement.h"
 #include "executor/copy_executor.h"
 #include "executor/seq_scan_executor.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
 #include "tcop/tcop.h"
@@ -42,8 +43,8 @@ TEST_F(CopyTests, Copying) {
   catalog->CreateDatabase("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 
-  optimizer::SimpleOptimizer optimizer;
-
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
+  optimizer.reset(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
@@ -93,15 +94,12 @@ TEST_F(CopyTests, Copying) {
   LOG_INFO("Tuples inserted!");
   traffic_cop.CommitQueryHelper();
 //  txn_manager.CommitTransaction(txn);
-  LOG_INFO("Tcop_txn_state size: %lu", traffic_cop.tcop_txn_state_.size());
 
-  // not through tcop
   // Now Copying end-to-end
   LOG_INFO("Copying a table...");
   std::string copy_sql =
       "COPY emp_db.department_table TO './copy_output.csv' DELIMITER ',';";
   txn = txn_manager.BeginTransaction();
-
   LOG_INFO("Query: %s", copy_sql.c_str());
   std::unique_ptr<Statement> statement(new Statement("COPY", copy_sql));
 
@@ -109,14 +107,8 @@ TEST_F(CopyTests, Copying) {
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
-  if (copy_stmt->is_valid == false) {
-    throw ParserException("Error parsing SQL statement");
-  }
-
   LOG_INFO("Building plan tree...");
-
-
-  auto copy_plan = optimizer.BuildPelotonPlanTree(copy_stmt);
+  auto copy_plan = optimizer->BuildPelotonPlanTree(copy_stmt);
   statement->SetPlanTree(copy_plan);
 
   LOG_INFO("Building executor tree...");
@@ -142,7 +134,6 @@ TEST_F(CopyTests, Copying) {
 
   // Check the number of bypes written
   EXPECT_EQ(copy_executor->GetTotalBytesWritten(), num_bytes_to_write);
-
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
