@@ -876,7 +876,6 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   oid_t tuple_idx = 1;  // tuple2
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     direct_map_list.push_back({col_itr, {tuple_idx, col_itr}});
-//    col_itr++;
   }
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
