@@ -97,5 +97,5 @@ script:
     # run jdbc tests
     - python ../script/validators/jdbc_validator.py
     # upload coverage info
-    - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then echo 1; fi"
+    - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then make coveralls; fi"
 
