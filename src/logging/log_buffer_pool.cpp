@@ -24,7 +24,7 @@ namespace logging {
     size_t head_idx = head_ % buffer_queue_size_;
     while (true) {
       if (head_.load() < tail_.load() - 1) {
-        if (local_buffer_queue_[head_idx].get() == nullptr) { // Fix for Mac support
+        if (local_buffer_queue_[head_idx].get() == nullptr) {
           // Not any buffer allocated now
           local_buffer_queue_[head_idx].reset(new LogBuffer(thread_id_, current_eid));
         }

@@ -51,9 +51,7 @@ void ExecuteUpdate(executor::AbstractExecutor* executor);
 
 void ExecuteDelete(executor::AbstractExecutor* executor);
 
-#ifndef __APPLE__ // https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
-    void PinToCore(size_t core);
-#endif
+void PinToCore(size_t core);
 
 }  // namespace tpcc
 }  // namespace benchmark

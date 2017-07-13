@@ -84,21 +84,22 @@ volatile bool is_running = true;
 PadInt *abort_counts;
 PadInt *commit_counts;
 
-#ifndef __APPLE__
 void PinToCore(size_t core) {
+// Mac OS X does not export interfaces that identify processors or control thread placement
+// explicit thread to processor binding is not supported.
+// Reference: https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
+#ifndef __APPLE__
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(core, &cpuset);
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
 #endif
+}
 
 void RunBackend(const size_t thread_id) {
 
-#ifndef __APPLE__
   PinToCore(thread_id);
-#endif
-  
+
   PadInt &execution_count_ref = abort_counts[thread_id];
   PadInt &transaction_count_ref = commit_counts[thread_id];
 
