@@ -15,7 +15,7 @@
 #include "codegen/codegen.h"
 #include "codegen/row_batch.h"
 #include "codegen/tile_group.h"
-
+#include "common/item_pointer.h"
 #include "type/abstract_pool.h"
 
 namespace peloton {
@@ -40,6 +40,10 @@ class Tuple {
   void GenerateTupleData(CodeGen &codegen, RowBatch::Row &row,
                          const std::vector<const planner::AttributeInfo *> &ais,
                          llvm::Value *tuple_data, llvm::Value *pool) const;
+
+  void GenerateTupleStorage(CodeGen &codegen, RowBatch::Row &row,
+      const std::vector<const planner::AttributeInfo *> &ais,
+      llvm::Value *tuple_storage, llvm::Value *pool) const;
 
  private:
   // The table associated with this generator

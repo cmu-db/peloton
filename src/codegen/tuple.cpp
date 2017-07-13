@@ -23,9 +23,9 @@ namespace codegen {
 
 Tuple::Tuple(storage::DataTable &table): table_(table) {}
 
-void Tuple::GenerateTupleData(CodeGen &codegen, RowBatch::Row &row,
+void Tuple::GenerateTupleStorage(CodeGen &codegen, RowBatch::Row &row,
     const std::vector<const planner::AttributeInfo *> &ais,
-    llvm::Value *tuple_data, llvm::Value *pool) const {
+    llvm::Value *tuple_storage, llvm::Value *pool) const {
 
   auto *schema = table_.GetSchema();
   auto num_columns = schema->GetColumnCount();
@@ -36,7 +36,7 @@ void Tuple::GenerateTupleData(CodeGen &codegen, RowBatch::Row &row,
     llvm::Type *val_type, *len_type;
     sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
     llvm::Value *ptr = 
-        codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(), tuple_data,
+        codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(), tuple_storage,
                                             offset);
     switch (sql_type.TypeId()) {
       case peloton::type::TypeId::VARBINARY:

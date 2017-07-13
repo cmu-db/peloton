@@ -100,17 +100,18 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   std::vector<const planner::AttributeInfo *> ais;
   scan->GetAttributes(ais);
 
-  auto *tuple_data_func = InserterProxy::_GetTupleData::GetFunction(codegen);
-  auto *tuple_data = codegen.CallFunc(tuple_data_func, {inserter});
+  auto *tuple_storage_func =
+      InserterProxy::_GetTupleStorage::GetFunction(codegen);
+  auto *tuple_storage = codegen.CallFunc(tuple_storage_func, {inserter});
 
   auto *pool_func = InserterProxy::_GetPool::GetFunction(codegen);
   auto *pool = codegen.CallFunc(pool_func, {inserter});
 
   // Generate/Materialize tuple data from row and attribute informations
-  tuple_.GenerateTupleData(codegen, row, ais, tuple_data, pool);
+  tuple_.GenerateTupleStorage(codegen, row, ais, tuple_storage, pool);
 
-  // Call Inserter to insert the tuple data
-  auto *insert_func = InserterProxy::_InsertTuple::GetFunction(codegen);
+  // Call Inserter to insert the reserved tuple storage area
+  auto *insert_func = InserterProxy::_InsertReserved::GetFunction(codegen);
   codegen.CallFunc(insert_func, {inserter});
 }
 
