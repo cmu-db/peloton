@@ -14,6 +14,7 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
+#include "common/item_pointer.h"
 
 namespace peloton {
 
@@ -55,10 +56,13 @@ class Inserter {
   peloton::type::AbstractPool *GetPool();
 
   // Insert the tuple instance
-  void InsertTuple();
+  void InsertReserved();
 
   // Insert a tuple
   void Insert(const storage::Tuple *tuple);
+
+  // Get the storage area that is to be reserved
+  char *GetTupleStorage();
 
   // Destroy all the resources
   void Destroy();
@@ -72,6 +76,7 @@ class Inserter {
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
   executor::ExecutorContext *executor_context_;
+  ItemPointer location_;
 
   // These are created and locally managed
   std::unique_ptr<storage::Tuple> tuple_;

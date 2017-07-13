@@ -151,15 +151,15 @@ class InserterProxy {
   };
 
 
-  struct _InsertTuple {
+  struct _InsertReserved {
     static const std::string &GetFunctionName() {
-      static const std::string kInsertTupleFnName =
+      static const std::string kInsertReservedFnName =
 #ifdef __APPLE__
-          "_ZN7peloton7codegen8Inserter11InsertTupleEv";
+          "_ZN7peloton7codegen8Inserter14InsertReservedEv";
 #else
-          "_ZN7peloton7codegen8Inserter11InsertTupleEv";
+          "_ZN7peloton7codegen8Inserter14InsertReservedEv";
 #endif
-      return kInsertTupleFnName;
+      return kInsertReservedFnName;
     }
     static llvm::Function *GetFunction(CodeGen &codegen) {
       const std::string &fn_name = GetFunctionName();
@@ -200,6 +200,32 @@ class InserterProxy {
           TupleProxy::GetType(codegen)->getPointerTo()};
       llvm::FunctionType *fn_type =
           llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
+      return codegen.RegisterFunction(fn_name, fn_type);
+    }
+  };
+
+  struct _GetTupleStorage {
+    static const std::string &GetFunctionName() {
+      static const std::string kGetTupleStorageFnName =
+#ifdef __APPLE__
+          "_ZN7peloton7codegen8Inserter15GetTupleStorageEv";
+#else
+          "_ZN7peloton7codegen8Inserter15GetTupleStorageEv";
+#endif
+      return kGetTupleStorageFnName;
+    }
+    static llvm::Function *GetFunction(CodeGen &codegen) {
+      const std::string &fn_name = GetFunctionName();
+
+      llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
+      if (llvm_fn != nullptr) {
+        return llvm_fn;
+      }
+
+      std::vector<llvm::Type *> fn_args = {
+          InserterProxy::GetType(codegen)->getPointerTo()};
+      llvm::FunctionType *fn_type = llvm::FunctionType::get(
+          codegen.CharPtrType(), fn_args, false);
       return codegen.RegisterFunction(fn_name, fn_type);
     }
   };

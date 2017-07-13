@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstdint>
+#include "common/item_pointer.h"
 
 namespace peloton {
 
@@ -54,6 +55,11 @@ class TransactionRuntime {
   static bool PerformInsert(concurrency::Transaction &txn,
                             storage::DataTable &table,
                             const storage::Tuple *tuple);
+
+  static bool PerformInsert(concurrency::Transaction &txn,
+                            storage::DataTable &table,
+                            const storage::Tuple *tuple,
+                            ItemPointer location);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
   // Add other stuff for Insert/Update/Delete

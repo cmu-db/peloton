@@ -122,6 +122,10 @@ class DataTable : public AbstractTable {
   // aggregate_executor.
   ItemPointer InsertTuple(const Tuple *tuple);
 
+  // Insert tuple with ItemPointer provided explicitly
+  bool InsertTuple(const storage::Tuple *tuple, ItemPointer location,
+      concurrency::Transaction *transaction, ItemPointer **index_entry_ptr);
+
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -280,6 +284,9 @@ class DataTable : public AbstractTable {
       const size_t active_indirection_array_count) {
     default_active_indirection_array_count_ = active_indirection_array_count;
   }
+
+  // Claim a tuple slot in a tile group
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
 
  protected:
   //===--------------------------------------------------------------------===//
