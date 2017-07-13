@@ -138,7 +138,7 @@ struct ExecuteStatementPlanArg {
   ExecuteStatementPlanArg(const std::shared_ptr<Statement> &statement,
                            const std::vector<type::Value> &params,
                            std::vector<StatementResult> &result,
-                           const std::vector<int> result_format,
+                           const std::vector<int>& result_format,
                            executor::ExecuteResult &status,
                            TrafficCop* tcop,
                            const size_t thread_id):
