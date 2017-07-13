@@ -12,6 +12,12 @@
 
 #include "threadpool/worker.h"
 
+#if defined(USE_mm_pause)
+#define PAUSE _mm_pause
+#else
+#define PAUSE usleep
+#endif
+
 #define EMPTY_COUNT_BOUND 10
 #define WORKER_PAUSE_TIME 10
 namespace peloton {
@@ -31,7 +37,7 @@ void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
-        usleep(WORKER_PAUSE_TIME);
+        PAUSE(WORKER_PAUSE_TIME);
       }
       continue;
     }
