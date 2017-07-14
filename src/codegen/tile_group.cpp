@@ -68,15 +68,13 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 // Call TileGroup::GetNextTupleSlot(...) to determine # of tuples in tile group.
 llvm::Value *TileGroup::GetNumTuples(CodeGen &codegen,
                                      llvm::Value *tile_group) const {
-  auto *tg_func = TileGroupProxy::_GetNextTupleSlot::GetFunction(codegen);
-  return codegen.CallFunc(tg_func, {tile_group});
+  return codegen.Call(TileGroupProxy::GetNextTupleSlot, {tile_group});
 }
 
 // Call TileGroup::GetTileGroupId()
 llvm::Value *TileGroup::GetTileGroupId(CodeGen &codegen,
                                        llvm::Value *tile_group) const {
-  auto tg_func = TileGroupProxy::_GetTileGroupId::GetFunction(codegen);
-  return codegen.CallFunc(tg_func, {tile_group});
+  return codegen.Call(TileGroupProxy::GetTileGroupId, {tile_group});
 }
 
 //===----------------------------------------------------------------------===//
@@ -92,8 +90,8 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
     llvm::Value *column_layout_infos) const {
   // Call RuntimeFunctions::GetTileGroupLayout()
   uint32_t num_cols = schema_.GetColumnCount();
-  codegen.CallFunc(
-      RuntimeFunctionsProxy::_GetTileGroupLayout::GetFunction(codegen),
+  codegen.Call(
+      RuntimeFunctionsProxy::GetTileGroupLayout,
       {tile_group_ptr, column_layout_infos, codegen.Const32(num_cols)});
 
   // Collect <start, stride, is_columnar> triplets of all columns

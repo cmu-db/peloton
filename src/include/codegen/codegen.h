@@ -21,6 +21,28 @@
 namespace peloton {
 namespace codegen {
 
+class CodeGen;
+
+/// A proxy to a member of a class. Users must provide both the physical
+/// position of the member in the class, and the C++ type of the member.
+template <uint32_t Pos, typename T>
+struct ProxyMember {
+  // Virtual destructor
+  virtual ~ProxyMember() {}
+};
+
+/// A proxy to a method in a class. Subclasses must implement GetFunction().
+template <typename T>
+struct ProxyMethod {
+  // Virtual destructor
+  virtual ~ProxyMethod() {}
+
+  // Hand off to the specialized template to define the LLVM function
+  llvm::Function *GetFunction(CodeGen &codegen) {
+    return static_cast<T *>(this)->GetFunction(codegen);
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // The main wrapper around LLVM's IR Builder to generate IR
 //===----------------------------------------------------------------------===//
@@ -47,7 +69,7 @@ class CodeGen {
   }
   llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  /// Constant wrappers for bool, int8, int16, int32, int64, strings and null
+  /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
   llvm::Constant *ConstBool(bool val) const;
   llvm::Constant *Const8(int8_t val) const;
   llvm::Constant *Const16(int16_t val) const;
@@ -62,9 +84,13 @@ class CodeGen {
 
   // /Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
-                        std::initializer_list<llvm::Value *> args) const;
+                        std::initializer_list<llvm::Value *> args);
   llvm::Value *CallFunc(llvm::Value *fn,
-                        const std::vector<llvm::Value *> &args) const;
+                        const std::vector<llvm::Value *> &args);
+  template <typename T>
+  llvm::Value *Call(T &proxy, const std::vector<llvm::Value *> &args) {
+    return CallFunc(proxy.GetFunction(*this), args);
+  }
 
   //===--------------------------------------------------------------------===//
   // Call C/C++ standard library functions
@@ -79,11 +105,11 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
 
   llvm::Value *CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   llvm::Value *CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   llvm::Value *CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   void ThrowIfOverflow(llvm::Value *overflow) const;
   void ThrowIfDivideByZero(llvm::Value *divide_by_zero) const;
 

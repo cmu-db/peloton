@@ -12,33 +12,23 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "storage/data_table.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(DataTable) {
-  // For now, we don't need access to individual fields, so use an opaque byte
-  // array
-  PROXY_MEMBER_FIELD(0, char[sizeof(storage::DataTable)], opaque);
+  /// We don't need access to internal fields, so use an opaque byte array
+  DECLARE_MEMBER(0, char[sizeof(storage::DataTable)], opaque);
+  DECLARE_TYPE;
 
-  PROXY_TYPE("peloton::storage::DataTable", char[sizeof(storage::DataTable)]);
-
-  // Proxy DataTable::GetTileGroupCount()
-  PROXY_METHOD(GetTileGroupCount, &storage::DataTable::GetTileGroupCount,
-               "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv");
+  /// Proxy DataTable::GetTileGroupCount()
+  DECLARE_METHOD(GetTileGroupCount);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<storage::DataTable> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return DataTableProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(DataTable, storage::DataTable);
 
 }  // namespace codegen
 }  // namespace peloton

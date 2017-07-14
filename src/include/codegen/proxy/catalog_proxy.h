@@ -13,34 +13,24 @@
 #pragma once
 
 #include "catalog/catalog.h"
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/type_builder.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(Catalog) {
-  // For now, we don't need access to individual fields, so use an opaque byte
-  // array
-  PROXY_MEMBER_FIELD(0, char[sizeof(catalog::Catalog)], opaque);
+  /// The data members of catalog::Catalog
+  /// Note: For now, we don't need access to individual fields.  Instead, we
+  /// use an opaque byte array whose size matches a catalog::Catalog object.
+  DECLARE_MEMBER(0, char[sizeof(catalog::Catalog)], opaque);
+  DECLARE_TYPE;
 
-  // The type
-  PROXY_TYPE("peloton::catalog::Catalog", char[sizeof(catalog::Catalog)]);
-
-  // Proxy Catalog::GetTableWithOid()
-  PROXY_METHOD(GetTableWithOid, &catalog::Catalog::GetTableWithOid,
-               "_ZNK7peloton7catalog7Catalog15GetTableWithOidEjj");
+  /// Proxy peloton::catalog::Catalog::GetTableWithOid()
+  DECLARE_METHOD(GetTableWithOid);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<catalog::Catalog> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return CatalogProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(Catalog, catalog::Catalog);
 
 }  // namespace codegen
 }  // namespace peloton

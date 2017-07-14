@@ -338,12 +338,10 @@ void OAHashTable::TranslateProbing(
           // AND/OR resize the KeyValueList. This branch is prepared for
           // Insert().
 
-          auto *store_func =
-              OAHashTableProxy::_StoreTuple::GetFunction(codegen);
-
           // Return value is the pointer to value region
           llvm::Value *dump_value_ptr =
-              codegen.CallFunc(store_func, {hash_table, entry_ptr, hash_value});
+              codegen.Call(OAHashTableProxy::StoreTuple,
+                           {hash_table, entry_ptr, hash_value});
 
           // Call the callback with the pointer to dump data
           key_not_found(dump_value_ptr);
@@ -378,9 +376,8 @@ void OAHashTable::TranslateProbing(
     index = final_probe_loop_vars[1];
 
     // Return value is the pointer to key-value region
-    auto *store_func = OAHashTableProxy::_StoreTuple::GetFunction(codegen);
-    llvm::Value *dump_key_ptr =
-        codegen.CallFunc(store_func, {hash_table, entry_ptr, hash_value});
+    llvm::Value *dump_key_ptr = codegen.Call(
+        OAHashTableProxy::StoreTuple, {hash_table, entry_ptr, hash_value});
 
     // First store the keys into the region in hash entry. The pointer returned
     // is where the value goes.
@@ -402,12 +399,12 @@ void OAHashTable::TranslateProbing(
 }
 
 void OAHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
-  auto *ht_init_fn = OAHashTableProxy::_Init::GetFunction(codegen);
   auto *key_size = codegen.Const64(key_storage_.MaxStorageSize());
   auto *value_size = codegen.Const64(value_size_);
   auto *initial_size =
       codegen.Const64(codegen::util::OAHashTable::kDefaultInitialSize);
-  codegen.CallFunc(ht_init_fn, {ht_ptr, key_size, value_size, initial_size});
+  codegen.Call(OAHashTableProxy::Init,
+               {ht_ptr, key_size, value_size, initial_size});
 }
 
 void OAHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
@@ -619,8 +616,7 @@ void OAHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
 }
 
 void OAHashTable::Destroy(CodeGen &codegen, llvm::Value *ht_ptr) const {
-  auto *ht_destroy_func = OAHashTableProxy::_Destroy::GetFunction(codegen);
-  codegen.CallFunc(ht_destroy_func, {ht_ptr});
+  codegen.Call(OAHashTableProxy::Destroy, {ht_ptr});
 }
 
 void OAHashTable::PrefetchBucket(CodeGen &codegen, llvm::Value *ht_ptr,

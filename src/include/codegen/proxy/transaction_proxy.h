@@ -12,27 +12,19 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "concurrency/transaction.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(Transaction) {
-  PROXY_MEMBER_FIELD(0, char[sizeof(concurrency::Transaction)], opaque);
-  PROXY_TYPE("peloton::concurrency::Transaction",
-             char[sizeof(concurrency::Transaction)]);
+  DECLARE_MEMBER(0, char[sizeof(concurrency::Transaction)], opaque);
+  DECLARE_TYPE;
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<concurrency::Transaction> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return TransactionProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(Transaction, concurrency::Transaction);
 
 }  // namespace codegen
 }  // namespace peloton

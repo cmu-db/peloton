@@ -76,13 +76,13 @@ llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
   return ir_builder.CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0);
 }
 
-llvm::Value *CodeGen::CallFunc(
-    llvm::Value *fn, std::initializer_list<llvm::Value *> args) const {
+llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
+                               std::initializer_list<llvm::Value *> args) {
   return GetBuilder().CreateCall(fn, args);
 }
 
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
-                               const std::vector<llvm::Value *> &args) const {
+                               const std::vector<llvm::Value *> &args) {
   return GetBuilder().CreateCall(fn, args);
 }
 
@@ -144,7 +144,7 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
 }
 
 llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
@@ -162,7 +162,7 @@ llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
 }
 
 llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
@@ -180,7 +180,7 @@ llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
 }
 
 llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
   llvm::Function *mul_func = llvm::Intrinsic::getDeclaration(
       &GetModule(), llvm::Intrinsic::smul_with_overflow, left->getType());

@@ -462,7 +462,7 @@ void TinyInt::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 
 llvm::Function *TinyInt::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputTinyInt::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputTinyInt.GetFunction(codegen);
 }
 
 }  // namespace type

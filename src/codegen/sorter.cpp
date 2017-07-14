@@ -38,8 +38,7 @@ Sorter::Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc) {
 void Sorter::Init(CodeGen &codegen, llvm::Value *sorter_ptr,
                   llvm::Value *comparison_func) const {
   auto *tuple_size = codegen.Const32(storage_format_.GetStorageSize());
-  codegen.CallFunc(SorterProxy::_Init::GetFunction(codegen),
-                   {sorter_ptr, comparison_func, tuple_size});
+  codegen.Call(SorterProxy::Init, {sorter_ptr, comparison_func, tuple_size});
 }
 
 // Append the given tuple into the sorter instance
@@ -47,8 +46,7 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
                     const std::vector<codegen::Value> &tuple) const {
   // First, call Sorter::StoreInputTuple() to get a handle to a contiguous
   // chunk of free space large enough to materialize a single tuple.
-  auto *store_func = SorterProxy::_StoreInputTuple::GetFunction(codegen);
-  auto *space = codegen.CallFunc(store_func, {sorter_ptr});
+  auto *space = codegen.Call(SorterProxy::StoreInputTuple, {sorter_ptr});
 
   // Now, individually store the attributes of the tuple into the free space
   UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format_, space};
@@ -66,8 +64,8 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
 // Just make a call to util::Sorter::Sort(...). This actually sorts the data
 // that has been inserted into the sorter instance.
 void Sorter::Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const {
-  auto *sort_func = SorterProxy::_Sort::GetFunction(codegen);
-  codegen.CallFunc(sort_func, {sorter_ptr});
+  //  auto *sort_func = SorterProxy::_Sort::GetFunction(codegen);
+  codegen.Call(SorterProxy::Sort, {sorter_ptr});
 }
 
 void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
@@ -143,7 +141,7 @@ void Sorter::VectorizedIterate(
 
 // Just make a call to util::Sorter::Destroy(...)
 void Sorter::Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const {
-  codegen.CallFunc(SorterProxy::_Destroy::GetFunction(codegen), {sorter_ptr});
+  codegen.Call(SorterProxy::Destroy, {sorter_ptr});
 }
 
 llvm::Value *Sorter::GetNumberOfStoredTuples(CodeGen &codegen,

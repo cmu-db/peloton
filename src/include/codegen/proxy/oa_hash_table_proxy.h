@@ -12,69 +12,46 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "codegen/util/oa_hash_table.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(KeyValueList) {
-  PROXY_MEMBER_FIELD(0, int32_t, capacity);
-  PROXY_MEMBER_FIELD(1, int32_t, size);
-  PROXY_TYPE("peloton::OAKeyValueList", int32_t, int32_t);
+  DECLARE_MEMBER(0, int32_t, capacity);
+  DECLARE_MEMBER(1, int32_t, size);
+  DECLARE_TYPE;
 };
 
 PROXY(OAHashEntry) {
-  PROXY_MEMBER_FIELD(0, util::OAHashTable::KeyValueList *, kv_list);
-  PROXY_MEMBER_FIELD(0, uint64_t, hash);
-  PROXY_TYPE("peloton::OAHashEntry", util::OAHashTable::KeyValueList *,
-             int64_t);
+  DECLARE_MEMBER(0, util::OAHashTable::KeyValueList *, kv_list);
+  DECLARE_MEMBER(0, uint64_t, hash);
+  DECLARE_TYPE;
 };
 
 PROXY(OAHashTable) {
-  PROXY_MEMBER_FIELD(0, util::OAHashTable::HashEntry *, buckets);
-  PROXY_MEMBER_FIELD(1, int64_t, num_buckets);
-  PROXY_MEMBER_FIELD(2, int64_t, bucket_mask);
-  PROXY_MEMBER_FIELD(3, int64_t, num_occupied_buckets);
-  PROXY_MEMBER_FIELD(4, int64_t, num_entries);
-  PROXY_MEMBER_FIELD(5, int64_t, resize_threshold);
-  PROXY_MEMBER_FIELD(6, int64_t, entry_size);
-  PROXY_MEMBER_FIELD(7, int64_t, key_size);
-  PROXY_MEMBER_FIELD(8, int64_t, value_size);
+  DECLARE_MEMBER(0, util::OAHashTable::HashEntry *, buckets);
+  DECLARE_MEMBER(1, int64_t, num_buckets);
+  DECLARE_MEMBER(2, int64_t, bucket_mask);
+  DECLARE_MEMBER(3, int64_t, num_occupied_buckets);
+  DECLARE_MEMBER(4, int64_t, num_entries);
+  DECLARE_MEMBER(5, int64_t, resize_threshold);
+  DECLARE_MEMBER(6, int64_t, entry_size);
+  DECLARE_MEMBER(7, int64_t, key_size);
+  DECLARE_MEMBER(8, int64_t, value_size);
 
-  PROXY_TYPE("peloton::OAHashTable", util::OAHashTable::HashEntry *, int64_t,
-             int64_t, int64_t, int64_t, int64_t, int64_t, int64_t, int64_t);
+  DECLARE_TYPE;
 
-  PROXY_METHOD(Init, &peloton::codegen::util::OAHashTable::Init,
-               "_ZN7peloton7codegen4util11OAHashTable4InitEmmm");
-  PROXY_METHOD(
-      StoreTuple, &peloton::codegen::util::OAHashTable::StoreTuple,
-      "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm");
-  PROXY_METHOD(Destroy, &peloton::codegen::util::OAHashTable::Destroy,
-               "_ZN7peloton7codegen4util11OAHashTable7DestroyEv");
+  DECLARE_METHOD(Init);
+  DECLARE_METHOD(StoreTuple);
+  DECLARE_METHOD(Destroy);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<::peloton::codegen::util::OAHashTable::KeyValueList> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return KeyValueListProxy::GetType(codegen);
-  }
-};
-template <>
-struct TypeBuilder<::peloton::codegen::util::OAHashTable::HashEntry> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return OAHashEntryProxy::GetType(codegen);
-  }
-};
-template <>
-struct TypeBuilder<::peloton::codegen::util::OAHashTable> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return OAHashTableProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(KeyValueList, util::OAHashTable::KeyValueList);
+TYPE_BUILDER(OAHashEntry, util::OAHashTable::HashEntry);
+TYPE_BUILDER(OAHashTable, util::OAHashTable);
 
 }  // namespace codegen
 }  // namespace peloton

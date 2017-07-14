@@ -476,7 +476,7 @@ void SmallInt::GetTypeForMaterialization(CodeGen &codegen,
 
 llvm::Function *SmallInt::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputSmallInt.GetFunction(codegen);
 }
 
 }  // namespace type

@@ -117,8 +117,7 @@ llvm::BasicBlock *FunctionBuilder::GetOverflowBB() {
 
   // Make a call into RuntimeFunctions::ThrowOverflowException()
   codegen->SetInsertPoint(overflow_bb_);
-  codegen.CallFunc(
-      RuntimeFunctionsProxy::_ThrowOverflowException::GetFunction(codegen), {});
+  codegen.Call(RuntimeFunctionsProxy::ThrowOverflowException, {});
   codegen->CreateUnreachable();
 
   // Restore position
@@ -150,9 +149,7 @@ llvm::BasicBlock *FunctionBuilder::GetDivideByZeroBB() {
 
   // Make a call into RuntimeFunctions::ThrowDivideByZeroException()
   codegen->SetInsertPoint(divide_by_zero_bb_);
-  codegen.CallFunc(
-      RuntimeFunctionsProxy::_ThrowDivideByZeroException::GetFunction(codegen),
-      {});
+  codegen.Call(RuntimeFunctionsProxy::ThrowDivideByZeroException, {});
   codegen->CreateUnreachable();
 
   // Restore position

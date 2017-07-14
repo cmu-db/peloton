@@ -28,17 +28,14 @@ Table::Table(storage::DataTable &table)
 // We determine tile group count by calling DataTable::GetTileGroupCount(...)
 llvm::Value *Table::GetTileGroupCount(CodeGen &codegen,
                                       llvm::Value *table_ptr) const {
-  auto *tile_group_func =
-      DataTableProxy::_GetTileGroupCount::GetFunction(codegen);
-  return codegen.CallFunc(tile_group_func, {table_ptr});
+  return codegen.Call(DataTableProxy::GetTileGroupCount, {table_ptr});
 }
 
 // We acquire a tile group instance by calling RuntimeFunctions::GetTileGroup().
 llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                                  llvm::Value *tile_group_id) const {
-  auto *get_tg_func =
-      RuntimeFunctionsProxy::_GetTileGroup::GetFunction(codegen);
-  return codegen.CallFunc(get_tg_func, {table_ptr, tile_group_id});
+  return codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
+                      {table_ptr, tile_group_id});
 }
 
 // Generate a scan over all tile groups.

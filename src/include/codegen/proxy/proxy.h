@@ -12,169 +12,35 @@
 
 #pragma once
 
-#include <type_traits>
-
 #include "codegen/codegen.h"
 
 namespace peloton {
 namespace codegen {
-namespace proxy {
 
-template <typename T>
-struct TypeBuilder {};
-
-/// void type
-template <>
-struct TypeBuilder<void> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.VoidType();
-  }
-};
-
-/// Primitive types
-
-/// bool
-template <>
-struct TypeBuilder<bool> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.BoolType();
-  }
-};
-
-/// int8
-template <>
-struct TypeBuilder<int8_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int8Type();
-  }
-};
-template <>
-struct TypeBuilder<uint8_t> : public TypeBuilder<int8_t> {};
-template <>
-struct TypeBuilder<char> : public TypeBuilder<int8_t> {};
-
-/// int16
-template <>
-struct TypeBuilder<int16_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int16Type();
-  }
-};
-template <>
-struct TypeBuilder<uint16_t> : public TypeBuilder<int16_t> {};
-
-/// int32
-template <>
-struct TypeBuilder<int32_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int32Type();
-  }
-};
-template <>
-struct TypeBuilder<uint32_t> : public TypeBuilder<int32_t> {};
-
-/// int64
-template <>
-struct TypeBuilder<int64_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int64Type();
-  }
-};
-template <>
-struct TypeBuilder<uint64_t> : public TypeBuilder<int64_t> {};
-
-/// double
-template <>
-struct TypeBuilder<double> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.DoubleType();
-  }
-};
-
-/// Const
-template <typename T>
-struct TypeBuilder<const T> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return TypeBuilder<T>::GetType(codegen);
-  }
-};
-
-/// Pointers and references
-template <typename T>
-struct TypeBuilder<T *> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return TypeBuilder<T>::GetType(codegen)->getPointerTo();
-  }
-};
-template <typename T>
-struct TypeBuilder<T &> : public TypeBuilder<T *> {};
-
-/// Fixed-length arrays
-template <typename T, uint32_t size>
-struct TypeBuilder<T[size]> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return llvm::ArrayType::get(TypeBuilder<T>::GetType(codegen), size);
-  }
-};
-
-/// Regular C-style functions
-template <typename Ret, typename... Args>
-struct TypeBuilder<Ret(Args...)> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    llvm::Type *ret_type = TypeBuilder<Ret>::GetType(codegen);
-    std::vector<llvm::Type *> arg_types = {
-        TypeBuilder<Args>::GetType(codegen)...};
-    return llvm::FunctionType::get(ret_type, arg_types, false);
-  }
-};
-
-/// C-style function pointer
-template <typename Ret, typename... Args>
-struct TypeBuilder<Ret (*)(Args...)> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    llvm::Type *ret_type = TypeBuilder<Ret>::GetType(codegen);
-    std::vector<llvm::Type *> arg_types = {
-        TypeBuilder<Args>::GetType(codegen)...};
-    return llvm::FunctionType::get(ret_type, arg_types, false)->getPointerTo();
-  }
-};
-
-/// Member functions
-template <typename R, typename T, typename... Args>
-struct TypeBuilder<R (T::*)(Args...)> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    std::vector<llvm::Type *> arg_types = {TypeBuilder<T *>::GetType(codegen)};
-    arg_types.insert(arg_types.end(), {TypeBuilder<Args>::GetType(codegen)...});
-    return llvm::FunctionType::get(TypeBuilder<R>::GetType(codegen), arg_types,
-                                   false)->getPointerTo();
-  }
-};
-template <typename R, typename T, typename... Args>
-struct TypeBuilder<R (T::*)(Args...) const>
-    : public TypeBuilder<R (T::*)(Args...)> {};
-
-/// A list of types
-template <typename... Args>
-struct TypeList {
-  static std::vector<llvm::Type *> GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return {TypeBuilder<Args>::GetType(codegen)...};
-  }
-};
-
-template <uint32_t Pos, typename T>
-struct Member {
-  using Type = T;
-};
+/// This file contains several macros that help in creating proxies to C++
+/// classes.
 
 #define PROXY(N) struct N##Proxy
 
-#define PROXY_MEMBER_FIELD(P, T, N) peloton::codegen::proxy::Member<P, T> _##N
+#define DECLARE_MEMBER(P, T, N) \
+  static const peloton::codegen::ProxyMember<P, T> _##N
 
+#define DECLARE_TYPE \
+  static llvm::Type *GetType(peloton::codegen::CodeGen &codegen);
+
+#define DECLARE_METHOD(N)                                                  \
+  struct _##N : public ProxyMethod<_##N> {                                 \
+    static const char *k##N##FnName;                                       \
+    llvm::Function *GetFunction(peloton::codegen::CodeGen &codegen) const; \
+  };                                                                       \
+  static _##N N;
+
+#define MEMBER(N) decltype(_##N)
 #define FIELDS(...) \
   (peloton::codegen::proxy::TypeList<__VA_ARGS__>::GetType(codegen))
 
-#define PROXY_TYPE(N, ...)                                                    \
-  static llvm::Type *GetType(peloton::codegen::CodeGen &codegen) {            \
+#define DEFINE_TYPE(P, N, ...)                                                \
+  llvm::Type *P##Proxy::GetType(peloton::codegen::CodeGen &codegen) {         \
     static constexpr const char *kTypeName = N;                               \
     /* Check if type has already been registered */                           \
     llvm::Type *type = codegen.LookupTypeByName(kTypeName);                   \
@@ -186,36 +52,47 @@ struct Member {
     return type;                                                              \
   }
 
-#define PROXY_METHOD(M, PTR, N)                                                \
-  struct _##M {                                                                \
-    /*static constexpr const char *k##M##FnName = "__FILL__ME__";*/            \
-    static constexpr const char *k##M##FnName = N;                             \
-    static llvm::Function *GetFunction(codegen::CodeGen &codegen) {            \
-      /* Check if the function has already been defined - return it if so */   \
-      llvm::Function *func = codegen.LookupFunction(k##M##FnName);             \
-      if (func != nullptr) {                                                   \
-        return func;                                                           \
-      }                                                                        \
-                                                                               \
-      /* Ensure the function we're proxying is an actual function pointer or a \
-       * member function pointer */                                            \
-      static_assert(                                                           \
-          ((std::is_pointer<decltype(PTR)>::value &&                           \
-            std::is_function<                                                  \
-                typename std::remove_pointer<decltype(PTR)>::type>::value) ||  \
-           std::is_member_function_pointer<decltype(PTR)>::value),             \
-          "You must provide a pointer to the function you want to proxy");     \
-                                                                               \
-      /* The function hasn't been registered. Do it now */                     \
-      llvm::PointerType *func_ptr = llvm::cast<llvm::PointerType>(             \
-          peloton::codegen::proxy::TypeBuilder<decltype(PTR)>::GetType(        \
-              codegen));                                                       \
-      llvm::FunctionType *func_type =                                          \
-          llvm::cast<llvm::FunctionType>(func_ptr->getElementType());          \
-      return codegen.RegisterFunction(k##M##FnName, func_type);                \
-    }                                                                          \
-  };
+// P: Proxy, N: method name, PTR: C++ method pointer, MNAME: mangled name
+#define DEFINE_METHOD(P, N, PTR, MNAME)                                      \
+  P##Proxy::_##N P##Proxy::N = {};                                           \
+  const char *P##Proxy::_##N::k##N##FnName = MNAME;                          \
+  llvm::Function *P##Proxy::_##N::GetFunction(                               \
+      peloton::codegen::CodeGen &codegen) const {                            \
+    /* Check if the function has already been defined - return it if so */   \
+    llvm::Function *func = codegen.LookupFunction(k##N##FnName);             \
+    if (func != nullptr) {                                                   \
+      return func;                                                           \
+    }                                                                        \
+                                                                             \
+    /* Ensure the provided function is either a function pointer or a member \
+     * function pointer                                                      \
+     * member function pointer */                                            \
+    static_assert(                                                           \
+        ((std::is_pointer<decltype(PTR)>::value &&                           \
+          std::is_function<                                                  \
+              typename std::remove_pointer<decltype(PTR)>::type>::value) ||  \
+         std::is_member_function_pointer<decltype(PTR)>::value),             \
+        "You must provide a pointer to the function you want to proxy");     \
+                                                                             \
+    /* The function hasn't been registered. Do it now */                     \
+    llvm::PointerType *func_ptr = llvm::cast<llvm::PointerType>(             \
+        peloton::codegen::proxy::TypeBuilder<decltype(PTR)>::GetType(        \
+            codegen));                                                       \
+    llvm::FunctionType *func_type =                                          \
+        llvm::cast<llvm::FunctionType>(func_ptr->getElementType());          \
+    return codegen.RegisterFunction(k##N##FnName, func_type);                \
+  }
 
-}  // namespace proxy
+#define TYPE_BUILDER(PROXY, TYPE)                                  \
+  namespace proxy {                                                \
+  template <>                                                      \
+  struct TypeBuilder<TYPE> {                                       \
+    static llvm::Type *GetType(peloton::codegen::CodeGen &codegen) \
+        ALWAYS_INLINE {                                            \
+      return PROXY##Proxy::GetType(codegen);                       \
+    }                                                              \
+  };                                                               \
+  }
+
 }  // namespace codegen
 }  // namespace peloton
