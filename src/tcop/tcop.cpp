@@ -199,7 +199,7 @@ ResultType TrafficCop::ExecuteStatement(
         //auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
         //                                   result, result_format,
         //                                   thread_id);
-        LOG_DEBUG("Statement executed. Result: %s",
+        LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
         return status.m_result;
