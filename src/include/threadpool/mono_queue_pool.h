@@ -15,7 +15,7 @@
 
 // TODO: tune these variables
 #define DEFAULT_WORKER_POOL_SIZE (std::thread::hardware_concurrency())
-#define DEFAULT_TASK_QUEUE_SIZE (std::thread::hardware_concurrency()*4)
+#define DEFAULT_TASK_QUEUE_SIZE (std::thread::hardware_concurrency() * 100)
 
 namespace peloton {
 namespace threadpool {
