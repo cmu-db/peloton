@@ -66,10 +66,10 @@ void TableScanTranslator::Produce() const {
 
   // Get the table instance from the database
   llvm::Value *catalog_ptr = GetCatalogPtr();
-  llvm::Value *table_ptr =
-      codegen.CallFunc(CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-                       {catalog_ptr, codegen.Const32(table.GetDatabaseOid()),
-                        codegen.Const32(table.GetOid())});
+  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
+  llvm::Value *table_oid = codegen.Const32(table.GetOid());
+  llvm::Value *table_ptr = codegen.Call(CatalogProxy::GetTableWithOid,
+                                        {catalog_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),
@@ -166,17 +166,13 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
 void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
-  // Get the pointer to TransactionRuntime::PerformRead(...)
-  auto *txn_perform_read =
-      TransactionRuntimeProxy::_PerformVectorizedRead::GetFunction(codegen);
-
   llvm::Value *txn = translator_.GetCompilationContext().GetTransactionPtr();
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
-  // Invoke the function
+  // Invoke TransactionRuntime::PerformRead(...)
   llvm::Value *out_idx =
-      codegen.CallFunc(txn_perform_read,
-                       {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
+      codegen.Call(TransactionRuntimeProxy::PerformVectorizedRead,
+                   {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
   selection_vector.SetNumElements(out_idx);
 }
 

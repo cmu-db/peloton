@@ -155,7 +155,7 @@ void Timestamp::GetTypeForMaterialization(CodeGen &codegen,
 
 llvm::Function *Timestamp::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputTimestamp::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputTimestamp.GetFunction(codegen);
 }
 
 }  // namespace type

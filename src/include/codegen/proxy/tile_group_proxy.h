@@ -12,31 +12,22 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(TileGroup) {
-  PROXY_MEMBER_FIELD(0, char[sizeof(storage::TileGroup)], opaque);
-  PROXY_TYPE("peloton::storage::TileGroup", char[sizeof(storage::TileGroup)]);
+  DECLARE_MEMBER(0, char[sizeof(storage::TileGroup)], opaque);
+  DECLARE_TYPE;
 
-  PROXY_METHOD(GetNextTupleSlot, &peloton::storage::TileGroup::GetNextTupleSlot,
-               "_ZNK7peloton7storage9TileGroup16GetNextTupleSlotEv");
-  PROXY_METHOD(GetTileGroupId, &peloton::storage::TileGroup::GetTileGroupId,
-               "_ZNK7peloton7storage9TileGroup14GetTileGroupIdEv");
+  DECLARE_METHOD(GetNextTupleSlot);
+  DECLARE_METHOD(GetTileGroupId);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<storage::TileGroup> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return TileGroupProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(TileGroup, storage::TileGroup);
 
 }  // namespace codegen
 }  // namespace peloton

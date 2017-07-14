@@ -47,13 +47,10 @@ struct CompareVarbinary : public TypeSystem::Comparison {
   // found to be less than, matches, or is greater than the right value.
   llvm::Value *CallCompareStrings(CodeGen &codegen, const Value &left,
                                   const Value &right) const {
-    // Get the proxy to ValuesRuntime::CompareStrings(...)
-    auto *cmp_func = ValuesRuntimeProxy::_CompareStrings::GetFunction(codegen);
-
     // Setup the function arguments and invoke the call
     std::vector<llvm::Value *> args = {left.GetValue(), left.GetLength(),
                                        right.GetValue(), right.GetLength()};
-    return codegen.CallFunc(cmp_func, args);
+    return codegen.Call(ValuesRuntimeProxy::CompareStrings, args);
   }
 
   Value DoCompareLt(CodeGen &codegen, const Value &left,
@@ -210,7 +207,7 @@ void Varbinary::GetTypeForMaterialization(CodeGen &codegen,
 llvm::Function *Varbinary::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
   // TODO: We should use the length information in the type?
-  return ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputVarbinary.GetFunction(codegen);
 }
 
 }  // namespace type

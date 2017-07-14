@@ -2,28 +2,20 @@
 //
 //                         Peloton
 //
-// varlen_proxy.h
+// value_proxy.cpp
 //
-// Identification: src/include/codegen/proxy/varlen_proxy.h
+// Identification: src/codegen/proxy/value_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
-#include "type/varlen_type.h"
+#include "codegen/proxy/value_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(Varlen) {
-  DECLARE_MEMBER(0, uint32_t, length);
-  DECLARE_MEMBER(0, const char, ptr);
-  DECLARE_TYPE;
-};
+DEFINE_TYPE(Value, "peloton::Value", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton

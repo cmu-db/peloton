@@ -12,26 +12,19 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "type/value.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(Value) {
-  PROXY_MEMBER_FIELD(0, char[sizeof(peloton::type::Value)], opaque);
-  PROXY_TYPE("peloton::Value", char[sizeof(peloton::type::Value)]);
+  DECLARE_MEMBER(0, char[sizeof(peloton::type::Value)], opaque);
+  DECLARE_TYPE;
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<peloton::type::Value> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return ValueProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(Value, peloton::type::Value);
 
 }  // namespace codegen
 }  // namespace peloton

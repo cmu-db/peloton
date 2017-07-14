@@ -12,50 +12,29 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
-#include "codegen/proxy/data_table_proxy.h"
-#include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 #include "codegen/runtime_functions.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(ColumnLayoutInfo) {
-  PROXY_MEMBER_FIELD(0, char *, col_start_ptr);
-  PROXY_MEMBER_FIELD(1, uint32_t, stride);
-  PROXY_MEMBER_FIELD(2, bool, columnar);
-  PROXY_TYPE("peloton::ColumnLayoutInfo", char *, uint32_t, bool);
+  DECLARE_MEMBER(0, char *, col_start_ptr);
+  DECLARE_MEMBER(1, uint32_t, stride);
+  DECLARE_MEMBER(2, bool, columnar);
+  DECLARE_TYPE;
 };
 
 PROXY(RuntimeFunctions) {
-  PROXY_METHOD(CRC64Hash, &peloton::codegen::RuntimeFunctions::HashCrc64,
-               "_ZN7peloton7codegen16RuntimeFunctions9HashCrc64EPKcmm");
-  PROXY_METHOD(GetTileGroup, &peloton::codegen::RuntimeFunctions::GetTileGroup,
-               "_ZN7peloton7codegen16RuntimeFunctions12GetTileGroupEPNS_"
-               "7storage9DataTableEm");
-  PROXY_METHOD(GetTileGroupLayout,
-               &peloton::codegen::RuntimeFunctions::GetTileGroupLayout,
-               "_ZN7peloton7codegen16RuntimeFunctions18GetTileGroupLayoutEPKNS_"
-               "7storage9TileGroupEPNS1_16ColumnLayoutInfoEj");
-  PROXY_METHOD(
-      ThrowDivideByZeroException,
-      &peloton::codegen::RuntimeFunctions::ThrowDivideByZeroException,
-      "_ZN7peloton7codegen16RuntimeFunctions26ThrowDivideByZeroExceptionEv");
-  PROXY_METHOD(
-      ThrowOverflowException,
-      &peloton::codegen::RuntimeFunctions::ThrowOverflowException,
-      "_ZN7peloton7codegen16RuntimeFunctions22ThrowOverflowExceptionEv");
+  DECLARE_METHOD(CRC64Hash);
+  DECLARE_METHOD(GetTileGroup);
+  DECLARE_METHOD(GetTileGroupLayout);
+  DECLARE_METHOD(ThrowDivideByZeroException);
+  DECLARE_METHOD(ThrowOverflowException);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<::peloton::codegen::RuntimeFunctions::ColumnLayoutInfo> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return ColumnLayoutInfoProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);
 
 }  // namespace codegen
 }  // namespace peloton

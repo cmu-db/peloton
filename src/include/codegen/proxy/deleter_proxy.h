@@ -12,36 +12,24 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
-#include "codegen/proxy/data_table_proxy.h"
-#include "codegen/proxy/proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
 #include "codegen/deleter.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(Deleter) {
-  PROXY_MEMBER_FIELD(0, char[sizeof(Deleter)], opaque);
+  /// We don't need access to internal fields, so use an opaque byte array
+  DECLARE_MEMBER(0, char[sizeof(Deleter)], opaque);
+  DECLARE_TYPE;
 
-  PROXY_TYPE("peloton::Deleter", char[sizeof(Deleter)]);
-
-  PROXY_METHOD(Init, &peloton::codegen::Deleter::Init,
-               "_ZN7peloton7codegen7Deleter4InitEPNS_"
-               "11concurrency11TransactionEPNS_7storage9DataTableE");
-
-  PROXY_METHOD(Delete, &peloton::codegen::Deleter::Delete,
-               "_ZN7peloton7codegen7Deleter6DeleteEjj");
+  /// Proxy Init() and Delete() in codegen::Deleter
+  DECLARE_METHOD(Init);
+  DECLARE_METHOD(Delete);
 };
 
-namespace proxy {
-template <>
-struct TypeBuilder<codegen::Deleter> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return DeleterProxy::GetType(codegen);
-  }
-};
-}  // namespace proxy
+TYPE_BUILDER(Deleter, codegen::Deleter);
 
 }  // namespace codegen
 }  // namespace peloton

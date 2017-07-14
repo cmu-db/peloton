@@ -2,28 +2,24 @@
 //
 //                         Peloton
 //
-// varlen_proxy.h
+// data_table_proxy.cpp
 //
-// Identification: src/include/codegen/proxy/varlen_proxy.h
+// Identification: src/codegen/proxy/data_table_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
-#include "type/varlen_type.h"
+#include "codegen/proxy/data_table_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(Varlen) {
-  DECLARE_MEMBER(0, uint32_t, length);
-  DECLARE_MEMBER(0, const char, ptr);
-  DECLARE_TYPE;
-};
+DEFINE_TYPE(DataTable, "storage::DataTable", MEMBER(opaque));
+
+DEFINE_METHOD(DataTable, GetTileGroupCount,
+              &storage::DataTable::GetTileGroupCount,
+              "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv");
 
 }  // namespace codegen
 }  // namespace peloton

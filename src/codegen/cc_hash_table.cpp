@@ -23,25 +23,20 @@ namespace codegen {
 
 // TODO: worry about growing the table
 
-//===----------------------------------------------------------------------===//
-// Constructor
-//===----------------------------------------------------------------------===//
+/// Constructors
+
 CCHashTable::CCHashTable() {
   // This constructor shouldn't generally be used at all, but there are
   // cases when the key-type is not known at construction time.
 }
-
-//===----------------------------------------------------------------------===//
-// Constructor
-//===----------------------------------------------------------------------===//
 CCHashTable::CCHashTable(CodeGen &codegen,
                          const std::vector<type::Type> &key_type) {
   key_storage_.Setup(codegen, key_type);
 }
 
+// To initialize a CCHashTable, call util::CCHashTable::Init()
 void CCHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
-  auto *ht_init_fn = CCHashTableProxy::_Init::GetFunction(codegen);
-  codegen.CallFunc(ht_init_fn, {ht_ptr});
+  codegen.Call(CCHashTableProxy::Init, {ht_ptr});
 }
 
 //===----------------------------------------------------------------------===//
@@ -126,10 +121,8 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *value_size = insert_callback.GetValueSize(codegen);
   llvm::Value *keys_size = codegen.Const32(key_storage_.MaxStorageSize());
   llvm::Value *needed_bytes = codegen->CreateAdd(keys_size, value_size);
-  llvm::Function *store_func =
-      CCHashTableProxy::_StoreTuple::GetFunction(codegen);
-  llvm::Value *ptr =
-      codegen.CallFunc(store_func, {ht_ptr, hash_val, needed_bytes});
+  llvm::Value *ptr = codegen.Call(CCHashTableProxy::StoreTuple,
+                                  {ht_ptr, hash_val, needed_bytes});
 
   // (5)
   llvm::Value *data_space_ptr = key_storage_.StoreValues(codegen, ptr, key);
@@ -158,10 +151,8 @@ void CCHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *keys_size = codegen.Const32(key_storage_.MaxStorageSize());
   llvm::Value *needed_bytes = codegen->CreateAdd(keys_size, value_size);
   // Invoke HashTable::StoreTuple(...)
-  llvm::Function *store_func =
-      CCHashTableProxy::_StoreTuple::GetFunction(codegen);
-  llvm::Value *ptr =
-      codegen.CallFunc(store_func, {ht_ptr, hash_val, needed_bytes});
+  llvm::Value *ptr = codegen.Call(CCHashTableProxy::StoreTuple,
+                                  {ht_ptr, hash_val, needed_bytes});
   // 'ptr' points to the space in the hash table.  StoreValue keys first,
   // calculate
   // where the
@@ -288,8 +279,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
 // register/value
 //===----------------------------------------------------------------------===//
 void CCHashTable::Destroy(CodeGen &codegen, llvm::Value *ht_ptr) const {
-  auto *ht_destroy_func = CCHashTableProxy::_Destroy::GetFunction(codegen);
-  codegen.CallFunc(ht_destroy_func, {ht_ptr});
+  codegen.Call(CCHashTableProxy::Destroy, {ht_ptr});
 }
 
 void CCHashTable::VectorizedIterate(
