@@ -4644,7 +4644,14 @@ abort_traverse:
       deleted_set{deleted_set_data_p,
                   value_eq_obj,
                   value_hash_obj};
-
+    
+    // Cast it to a temporary object for printing its value
+    //ItemPointer *t = (ItemPointer *)value;
+    // Print the value as a 64-bit integer. This gives the binary representation
+    // of an item pointer object because it consists of two uint32_t
+    //LOG_INFO("Starting delta chain traversal; block = %u; offset = %u", 
+    //         t->block, 
+    //         t->offset);
     while(1) {
       NodeType type = node_p->GetType();
 
@@ -4652,6 +4659,8 @@ abort_traverse:
         case NodeType::LeafType: {
           const LeafNode *leaf_node_p = \
             static_cast<const LeafNode *>(node_p);
+
+          //LOG_INFO("Leaf type; size = %d", leaf_node_p->GetSize());
 
           auto copy_start_it = \
             std::lower_bound(leaf_node_p->Begin(),
@@ -4669,9 +4678,12 @@ abort_traverse:
                 // Otherwise test for duplication
                 if(predicate(copy_start_it->second) == true) {
                   *predicate_satisfied = true;
+
+                  //LOG_INFO("Base node: predicate is true");
                   
                   return nullptr;
                 } else if(value_eq_obj(value, copy_start_it->second) == true) {
+                  //LOG_INFO("Base node value already exists");
                   // We will not insert anyway....
                   return &(*copy_start_it);
                 }
@@ -4696,6 +4708,11 @@ abort_traverse:
           const LeafInsertNode *insert_node_p = \
             static_cast<const LeafInsertNode *>(node_p);
 
+          //ItemPointer *t = (ItemPointer *)insert_node_p->item.second;
+          //LOG_INFO("Leaf insert delta type; block = %u; offset = %u",
+          //         t->block,
+          //         t->offset);
+
           if(KeyCmpEqual(search_key, insert_node_p->item.first)) {
             if(deleted_set.Exists(insert_node_p->item.second) == false) {
               if(present_set.Exists(insert_node_p->item.second) == false) {
@@ -4705,9 +4722,15 @@ abort_traverse:
                 if(predicate(insert_node_p->item.second) == true) {
                   *predicate_satisfied = true;
 
+                  //LOG_INFO("Insert delta predicate is true");
+
                   // Could return here since we know the predicate is satisfied
                   return nullptr;
                 } else if(value_eq_obj(value, insert_node_p->item.second) == true) {
+                  //LOG_INFO("Insert delta value already exists; value = (%u, %u); old = (%u, %u)",
+                  //         value->block, value->offset, 
+                  //         insert_node_p->item.second->block,
+                  //         insert_node_p->item.second->offset);
                   // Could also return here since we know the value exists
                   // and we could not insert anyway
                   return &insert_node_p->item;
@@ -4724,8 +4747,11 @@ abort_traverse:
           const LeafDeleteNode *delete_node_p = \
             static_cast<const LeafDeleteNode *>(node_p);
 
+          //LOG_INFO("Leaf delete delta type");
+
           if(KeyCmpEqual(search_key, delete_node_p->item.first)) {
             if(present_set.Exists(delete_node_p->item.second) == false) {
+              //LOG_INFO("See a delete delta that matches the key and value and is not in present set");
               // Even if we know the value does not exist, we still need
               // to test all predicates to the leaf base node
               deleted_set.Insert(delete_node_p->item.second);
