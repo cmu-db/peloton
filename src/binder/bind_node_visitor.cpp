@@ -12,6 +12,9 @@
 
 #include "binder/bind_node_visitor.h"
 
+#include "expression/case_expression.h"
+#include "expression/tuple_value_expression.h"
+
 namespace peloton {
 namespace binder {
 

@@ -13,12 +13,15 @@
 #include "common/sql_node_visitor.h"
 #include "binder/binder_context.h"
 #include "parser/statements.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/case_expression.h"
-#include "expression/constant_value_expression.h"
 #include "type/types.h"
 
 namespace peloton {
+
+namespace expression {
+class CaseExpression;
+class ConstantExpression;
+class TupleValueExpression;
+}  // namespace expression
 
 namespace parser {
 struct SQLStatement;
