@@ -21,7 +21,7 @@
 #include "threadpool/task.h"
 #include "event.h"
 
-#define CALL_NUM 10
+#define CALL_NUM 6
 #define EXPECT_NOTNULL(pointer) EXPECT_TRUE(pointer != NULL);
 
 //===--------------------------------------------------------------------===//
@@ -47,7 +47,8 @@ void longTask(void* param) {
 
 
 // Callback function for MyLibeventThread
-void eventCallback(evutil_socket_t fd, short evflags, void *args);
+void batchCallback(evutil_socket_t fd, short evflags, void *args);
+void syncCallback(evutil_socket_t fd, short evflags, void *args);
 
 class MyLibeventThread {
  private:
@@ -56,8 +57,9 @@ class MyLibeventThread {
   int receive_fd_;
   struct event *event_;
   threadpool::TaskQueue *task_queue_;
+  event_callback_fn func_ptr_;
  public:
-  MyLibeventThread(threadpool::TaskQueue *task_queue) : task_queue_(task_queue) {
+  MyLibeventThread(threadpool::TaskQueue *task_queue, event_callback_fn func_ptr) : task_queue_(task_queue), func_ptr_(func_ptr) {
     int fds[2];
     if (pipe(fds)) {
       LOG_ERROR("Can't create notify pipe to accept connections");
@@ -67,7 +69,7 @@ class MyLibeventThread {
     receive_fd_ = fds[0];
     libevent_base_ = event_base_new();
     event_ = event_new(libevent_base_, receive_fd_, EV_READ | EV_PERSIST,
-                       eventCallback, this);
+                       func_ptr_, this);
     event_add(event_, 0);
     LOG_INFO("Libevent thread adds read event");
   }
@@ -89,7 +91,8 @@ class MyLibeventThread {
   }
 };
 
-void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+// submit task by SubmitTaskBatch
+void batchCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
                    UNUSED_ATTRIBUTE short evflags, void *args) {
   LOG_INFO("----- master activate");
   MyLibeventThread *thread = static_cast<MyLibeventThread *>(args);
@@ -129,6 +132,34 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   LOG_INFO("master completes callback, count: %c", count);
 }
 
+// submit task by SubmitSync
+void syncCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                   UNUSED_ATTRIBUTE short evflags, void *args) {
+  LOG_INFO("----- master activate");
+  MyLibeventThread *thread = static_cast<MyLibeventThread *>(args);
+  threadpool::TaskQueue *tq = thread->getTaskQueue();
+  char m_buf[1];
+  if (read(fd, m_buf, 1) != 1) {
+    LOG_ERROR("Can't read from the libevent pipe");
+    return;
+  }
+  static char count = m_buf[0];
+  static char start = m_buf[0];
+  LOG_INFO("master read: %c, count: %c, start: %c", m_buf[0], count, start);
+  EXPECT_EQ(m_buf[0], count);
+
+  // exit the event loop if test completes
+  if (m_buf[0] == (start + CALL_NUM - 1)) {
+    event_base_loopexit(thread->getEventBase(), NULL);
+    return;
+  }
+  // submit tasks into TaskQueue
+  std::vector<std::shared_ptr<threadpool::Task>> task_v;
+  int param = 1;
+  tq->SubmitSync(longTask, &param);
+  count++;
+  LOG_INFO("master completes callback, count: %c", count);
+}
 
 // callerThread attempts to activate master thread every 0.06s.
 void callerFunc(MyLibeventThread *thread) {
@@ -162,12 +193,13 @@ class CallerThread {
 
 // For this test, libevent thread should be only activated by the callerThread
 // after its previous tasks are completed by worker threads.
-TEST_F(WorkerPoolTests, LibeventActivateTest) {
+
+TEST_F(WorkerPoolTests, LibeventBatchTaskTest) {
   const size_t queue_size = 50;
   const size_t pool_size = 4;
   threadpool::TaskQueue tq(queue_size);
   threadpool::WorkerPool wp(pool_size, &tq);
-  MyLibeventThread libeventThread(&tq);
+  MyLibeventThread libeventThread(&tq, batchCallback);
   CallerThread callerThread(&libeventThread);
   libeventThread.startMyLibeventThread();
 
@@ -177,5 +209,21 @@ TEST_F(WorkerPoolTests, LibeventActivateTest) {
   wp.Shutdown();
 }
 
+// For this test, libevent thread should be only activated by the callerThread
+// after its previous tasks are completed by worker threads.
+TEST_F(WorkerPoolTests, LibeventSyncTaskTest) {
+  const size_t queue_size = 50;
+  const size_t pool_size = 4;
+  threadpool::TaskQueue tq(queue_size);
+  threadpool::WorkerPool wp(pool_size, &tq);
+  MyLibeventThread libeventThread(&tq, syncCallback);
+  CallerThread callerThread(&libeventThread);
+  libeventThread.startMyLibeventThread();
+
+  event_free(libeventThread.getEvent());
+  event_base_free(libeventThread.getEventBase());
+
+  wp.Shutdown();
+}
 } // end of test
 } // end of peloton
