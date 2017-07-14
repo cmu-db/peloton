@@ -38,6 +38,7 @@ class Task {
   // Functions
   void ExecuteTask();
   void ExecuteTaskSync();
+  void ExecuteTaskBatchSync();
   void ExecuteTaskAsync();
 
   // Instance variables
@@ -46,7 +47,8 @@ class Task {
   void* func_arg_;
 
   // Sync variables
-  bool is_sync = false;
+  bool is_sync_ = false;
+  bool is_batch_ = false;
   std::mutex *task_mutex_;
   std::condition_variable *condition_variable_;
   int *num_worker_;
