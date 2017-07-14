@@ -15,6 +15,8 @@
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager.h"
 #include "planner/insert_plan.h"
+#include "sql/testing_sql_util.h"
+#include "optimizer/optimizer.h"
 
 namespace peloton {
 namespace test {
@@ -136,6 +138,41 @@ TEST_F(InsertTranslatorTest, InsertScanTranslator) {
   (void)results;
 
   EXPECT_EQ(table1->GetTupleCount(), table2->GetTupleCount());
+
+  // Setup the scan plan node
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_table1(
+      new planner::SeqScanPlan(table1, nullptr, {0, 1, 2, 3}));
+
+  // Do binding
+  planner::BindingContext context1;
+  seq_scan_plan_table1->PerformBinding(context1);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
+
+  // COMPILE and execute
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
+                    reinterpret_cast<char*>(buffer_table1.GetState()));
+
+  // Check that we got all the results
+  auto &results_table1 = buffer_table1.GetOutputTuples();
+
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(2).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(3).CompareEquals(
+                                type::ValueFactory::GetVarcharValue("3")));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[9].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(90)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[9].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(91)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[9].GetValue(2).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(92)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[9].GetValue(3).CompareEquals(
+                                type::ValueFactory::GetVarcharValue("93")));
 }
 
 }  // namespace test

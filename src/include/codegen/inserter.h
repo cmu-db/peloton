@@ -28,6 +28,7 @@ class ExecutorContext;
 
 namespace storage {
 class DataTable;
+class Tile;
 class Tuple;
 }  // namespace storage
 
@@ -49,8 +50,8 @@ class Inserter {
   // Create the tuple instance
   void CreateTuple();
 
-  // Get the tuple's data pointer
-  char *GetTupleData();
+  // Get the storage area that is to be reserved
+  char *ReserveTupleStorage();
 
   // Get the pool address
   peloton::type::AbstractPool *GetPool();
@@ -61,26 +62,26 @@ class Inserter {
   // Insert a tuple
   void Insert(const storage::Tuple *tuple);
 
-  // Get the storage area that is to be reserved
-  char *GetTupleStorage();
-
   // Destroy all the resources
   void Destroy();
 
  private:
   // No external constructor
-  Inserter(): txn_(nullptr), table_(nullptr), tuple_(nullptr), pool_(nullptr) {}
+  Inserter(): txn_(nullptr), table_(nullptr), executor_context_(nullptr),
+              tile_(nullptr), tuple_(nullptr) {}
 
  private:
-  // These are provided by its insert translator
+  // Provided by its insert translator
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
   executor::ExecutorContext *executor_context_;
+
+  // Set once a tuple storage is reserved
+  storage::Tile *tile_;
   ItemPointer location_;
 
-  // These are created and locally managed
+  // These are created by CreateTuple() and locally managed
   std::unique_ptr<storage::Tuple> tuple_;
-  std::unique_ptr<peloton::type::EphemeralPool> pool_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Inserter);
