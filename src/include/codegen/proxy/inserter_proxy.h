@@ -98,15 +98,15 @@ class InserterProxy {
     }
   };
 
-  struct _GetTupleData {
+  struct _ReserveTupleStorage {
     static const std::string &GetFunctionName() {
-      static const std::string kGetTupleDataFnName =
+      static const std::string kReserveTupleStorageFnName =
 #ifdef __APPLE__
-          "_ZN7peloton7codegen8Inserter12GetTupleDataEv";
+          "_ZN7peloton7codegen8Inserter19ReserveTupleStorageEv";
 #else
-          "_ZN7peloton7codegen8Inserter12GetTupleDataEv";
+          "_ZN7peloton7codegen8Inserter19ReserveTupleStorageEv";
 #endif
-      return kGetTupleDataFnName;
+      return kReserveTupleStorageFnName;
     }
     static llvm::Function *GetFunction(CodeGen &codegen) {
       const std::string &fn_name = GetFunctionName();
@@ -118,8 +118,8 @@ class InserterProxy {
 
       std::vector<llvm::Type *> fn_args = {
           InserterProxy::GetType(codegen)->getPointerTo()};
-      llvm::FunctionType *fn_type =
-          llvm::FunctionType::get(codegen.CharPtrType(), fn_args, false);
+      llvm::FunctionType *fn_type = llvm::FunctionType::get(
+          codegen.CharPtrType(), fn_args, false);
       return codegen.RegisterFunction(fn_name, fn_type);
     }
   };
@@ -200,32 +200,6 @@ class InserterProxy {
           TupleProxy::GetType(codegen)->getPointerTo()};
       llvm::FunctionType *fn_type =
           llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
-      return codegen.RegisterFunction(fn_name, fn_type);
-    }
-  };
-
-  struct _GetTupleStorage {
-    static const std::string &GetFunctionName() {
-      static const std::string kGetTupleStorageFnName =
-#ifdef __APPLE__
-          "_ZN7peloton7codegen8Inserter15GetTupleStorageEv";
-#else
-          "_ZN7peloton7codegen8Inserter15GetTupleStorageEv";
-#endif
-      return kGetTupleStorageFnName;
-    }
-    static llvm::Function *GetFunction(CodeGen &codegen) {
-      const std::string &fn_name = GetFunctionName();
-
-      llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
-      if (llvm_fn != nullptr) {
-        return llvm_fn;
-      }
-
-      std::vector<llvm::Type *> fn_args = {
-          InserterProxy::GetType(codegen)->getPointerTo()};
-      llvm::FunctionType *fn_type = llvm::FunctionType::get(
-          codegen.CharPtrType(), fn_args, false);
       return codegen.RegisterFunction(fn_name, fn_type);
     }
   };

@@ -101,7 +101,7 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   scan->GetAttributes(ais);
 
   auto *tuple_storage_func =
-      InserterProxy::_GetTupleStorage::GetFunction(codegen);
+      InserterProxy::_ReserveTupleStorage::GetFunction(codegen);
   auto *tuple_storage = codegen.CallFunc(tuple_storage_func, {inserter});
 
   auto *pool_func = InserterProxy::_GetPool::GetFunction(codegen);

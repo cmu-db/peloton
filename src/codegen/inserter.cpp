@@ -33,23 +33,22 @@ void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
 
 void Inserter::CreateTuple() {
   PL_ASSERT(txn_ != nullptr && table_ != nullptr);
-  tuple_.reset(new storage::Tuple(table_->GetSchema(), true));
-  pool_.reset(new peloton::type::EphemeralPool());
 }
 
-char *Inserter::GetTupleData() { return tuple_->GetData(); }
-
-char *Inserter::GetTupleStorage() {
+char *Inserter::ReserveTupleStorage() {
   location_ = table_->GetEmptyTupleSlot(nullptr);
   auto tile_group = table_->GetTileGroupById(location_.block);
-  auto *tile = tile_group->GetTile(0);
-  return tile->GetTupleLocation(location_.offset);
+  tile_ = tile_group->GetTile(0);
+  return tile_->GetTupleLocation(location_.offset);
 }
 
-peloton::type::AbstractPool *Inserter::GetPool() { return pool_.get(); }
+peloton::type::AbstractPool *Inserter::GetPool() {
+  PL_ASSERT(tile_ != nullptr);
+  return tile_->GetPool();
+}
 
 void Inserter::InsertReserved() {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+  PL_ASSERT(txn_ != nullptr && table_ != nullptr && executor_context_ != nullptr);
 
   auto result = TransactionRuntime::PerformInsert(*txn_, *table_, tuple_.get(),
                                                   location_);
@@ -59,7 +58,7 @@ void Inserter::InsertReserved() {
 }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+  PL_ASSERT(txn_ != nullptr && table_ != nullptr && executor_context_ != nullptr);
 
   auto result = TransactionRuntime::PerformInsert(*txn_, *table_, tuple);
   if (result == true) {
@@ -69,7 +68,6 @@ void Inserter::Insert(const storage::Tuple *tuple) {
 
 void Inserter::Destroy() {
   tuple_.reset(nullptr);
-  pool_.reset(nullptr);
 }
 
 }  // namespace codegen
