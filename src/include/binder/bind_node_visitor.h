@@ -24,7 +24,7 @@ class TupleValueExpression;
 }  // namespace expression
 
 namespace parser {
-struct SQLStatement;
+class SQLStatement;
 }  // namespace parser
 
 namespace binder {
