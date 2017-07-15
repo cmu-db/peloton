@@ -11,9 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/constraint.h"
-#include "type/types.h"
-
-#include <sstream>
 
 namespace peloton {
 namespace catalog {

@@ -263,7 +263,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       column_id++;
 
       // Create index on unique single column
-      if (column.is_unique_) {
+      if (column.IsUnique()) {
         std::string col_name = column.GetName();
         std::vector<std::string> index_attr = {col_name};
         std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
@@ -458,7 +458,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       for (auto &attr : index_attr) {
         // TODO: Shall we use pg_attribute to check column_ids instead?
         for (oid_t i = 0; i < columns.size(); ++i) {
-          if (attr == columns[i].column_name) {
+          if (attr == columns[i].GetName()) {
             key_attrs.push_back(i);
             break;
           }

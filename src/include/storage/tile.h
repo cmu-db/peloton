@@ -136,7 +136,7 @@ class Tile : public Printable {
   const catalog::Schema *GetSchema() const { return &schema; };
 
   const std::string GetColumnName(const oid_t column_index) const {
-    return schema.GetColumn(column_index).column_name;
+    return schema.GetColumn(column_index).GetName();
   }
 
   inline oid_t GetColumnCount() const { return column_count; };

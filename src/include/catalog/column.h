@@ -81,6 +81,8 @@ class Column : public Printable {
 
   inline bool IsPrimary() const { return is_primary_; }
 
+  inline bool IsUnique() const { return is_unique_; }
+
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
     if (constraint.GetType() == ConstraintType::DEFAULT) {
@@ -124,9 +126,6 @@ class Column : public Printable {
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column
   oid_t fixed_length;  //  = INVALID_OID;
-
- public:
-  // TODO: These should all be made private
 
   // if the column is inlined, this is set to 0
   // else, it is set to length of the variable length column

@@ -249,7 +249,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   auto &columns = GetTable()->GetSchema()->GetColumns();
   oid_t index = -1;
   for (oid_t i = 0; i < columns.size(); ++i) {
-    if (columns[i].column_name == col_name) {
+    if (columns[i].GetName() == col_name) {
       index = i;
       break;
     }

@@ -43,7 +43,7 @@ class Constraint : public Printable {
 
   ConstraintType GetType() const { return constraint_type; }
 
-  std::pair<ExpressionType, type::Value> GetExp() { return exp; }
+  std::pair<ExpressionType, type::Value> GetCheckExpression() { return exp; }
 
   // Offset into the list of "reference tables" in the Table.
   void SetForeignKeyListOffset(oid_t offset) { fk_list_offset = offset; }
