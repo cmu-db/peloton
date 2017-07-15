@@ -18,15 +18,13 @@
 namespace peloton {
 
 namespace parser {
-struct SQLStatement;
-}
+class SQLStatement;
+}  // namespace parser
 
 namespace optimizer {
+
 class OperatorExpression;
 class ColumnManager;
-}
-
-namespace optimizer {
 
 // Transform a query from parsed statement to operator expressions.
 class QueryToOperatorTransformer : public SqlNodeVisitor {
