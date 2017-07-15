@@ -245,7 +245,7 @@ class DataTable : public AbstractTable {
 
   bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
 
-  bool HasForeignKeys() const { return (GetForeignKeyCount() > 0); }
+  bool HasForeignKeys() const { return (foreign_keys_.empty() == false); }
 
   std::map<oid_t, oid_t> GetColumnMapStats();
 
@@ -270,12 +270,21 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-  bool CheckNulls(const storage::Tuple *tuple) const;
+  bool CheckNotNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+//                          std::vector<oid_t> cols) const;
+
+  // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
+  //              std::pair<ExpressionType, type::Value> exp) const;
+  // bool CheckUnique(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                bool check_constraint = true);
 
   // add a tile group to the table
   oid_t AddDefaultTileGroup();
