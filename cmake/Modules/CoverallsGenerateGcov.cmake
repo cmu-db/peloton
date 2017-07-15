@@ -200,12 +200,11 @@ foreach(GCDA ${GCDA_FILES})
 	# /path/to/project/root/subdir/the_file.c:creating '#path#to#project#root#subdir#the_file.c.gcov'
 	#
 	# If -p is not specified then the file is named only "the_file.c.gcov"
-  # The -r flag ensures gcov only looks are files with relative path names, and exclused files with
-  # absolute names (i.e., STL headers).
 	#
 	execute_process(
-		COMMAND ${GCOV_EXECUTABLE} -r -p -o ${GCDA_DIR} ${GCDA}
+		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA}
 		WORKING_DIRECTORY ${COV_PATH}
+		OUTPUT_QUIET
 	)
 endforeach()
 
