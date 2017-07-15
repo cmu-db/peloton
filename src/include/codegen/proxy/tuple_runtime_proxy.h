@@ -23,15 +23,15 @@ class TupleRuntimeProxy {
  public:
   struct _CreateVarArea {
     static const std::string &GetFunctionName() {
-      static const std::string kCreateVarAreaFnName =
+      static const std::string kCreateVarlenFnName =
 #ifdef __APPLE__
-          "_ZN7peloton7codegen12TupleRuntime13CreateVarAreaEPcjS2_PNS_4type"
+          "_ZN7peloton7codegen12TupleRuntime12CreateVarlenEPcjS2_PNS_4type"
           "12AbstractPoolE";
 #else
-          "_ZN7peloton7codegen12TupleRuntime13CreateVarAreaEPcjS2_PNS_4type"
+          "_ZN7peloton7codegen12TupleRuntime12CreateVarlenEPcjS2_PNS_4type"
           "12AbstractPoolE";
 #endif
-      return kCreateVarAreaFnName;
+      return kCreateVarlenFnName;
     }
     static llvm::Function *GetFunction(CodeGen &codegen) {
       const std::string &fn_name = GetFunctionName();

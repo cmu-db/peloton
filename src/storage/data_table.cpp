@@ -333,8 +333,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %u, %u", location.block, location.offset);
-
   auto result = InsertTuple(tuple, location, transaction, index_entry_ptr);
   if (result == false) {
     return INVALID_ITEMPOINTER;
@@ -342,7 +340,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   return location;
 }
 
-bool DataTable::InsertTuple(const storage::Tuple *tuple,
+bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::Transaction *transaction,
     ItemPointer **index_entry_ptr) {
   // the upper layer may not pass a index_entry_ptr (default value: nullptr)
@@ -406,7 +404,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
+bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
                                 ItemPointer location,
                                 concurrency::Transaction *transaction,
                                 ItemPointer **index_entry_ptr) {

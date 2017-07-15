@@ -47,9 +47,6 @@ class Inserter {
   void Init(concurrency::Transaction *txn, storage::DataTable *table,
             executor::ExecutorContext *executor_context);
 
-  // Create the tuple instance
-  void CreateTuple();
-
   // Get the storage area that is to be reserved
   char *ReserveTupleStorage();
 
@@ -62,13 +59,10 @@ class Inserter {
   // Insert a tuple
   void Insert(const storage::Tuple *tuple);
 
-  // Destroy all the resources
-  void Destroy();
-
  private:
   // No external constructor
   Inserter(): txn_(nullptr), table_(nullptr), executor_context_(nullptr),
-              tile_(nullptr), tuple_(nullptr) {}
+              tile_(nullptr) {}
 
  private:
   // Provided by its insert translator
@@ -77,11 +71,8 @@ class Inserter {
   executor::ExecutorContext *executor_context_;
 
   // Set once a tuple storage is reserved
-  storage::Tile *tile_;
+  std::shared_ptr<storage::Tile> tile_;
   ItemPointer location_;
-
-  // These are created by CreateTuple() and locally managed
-  std::unique_ptr<storage::Tuple> tuple_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Inserter);

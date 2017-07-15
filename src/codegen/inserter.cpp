@@ -12,45 +12,47 @@
 
 #include "codegen/inserter.h"
 #include "codegen/transaction_runtime.h"
-#include "common/item_pointer.h"
+#include "common/container_tuple.h"
 #include "executor/executor_context.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
-#include "storage/tuple.h"
-#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace codegen {
 
 void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
                     executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn != nullptr && table != nullptr && executor_context != nullptr);
+  PL_ASSERT(txn && table && executor_context);
   txn_ = txn;
   table_ = table;
   executor_context_ = executor_context;
 }
 
-void Inserter::CreateTuple() {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
-}
-
 char *Inserter::ReserveTupleStorage() {
   location_ = table_->GetEmptyTupleSlot(nullptr);
+
+  // Get tuple storage area
   auto tile_group = table_->GetTileGroupById(location_.block);
-  tile_ = tile_group->GetTile(0);
+  tile_ = tile_group->GetTileReference(0);
   return tile_->GetTupleLocation(location_.offset);
 }
 
 peloton::type::AbstractPool *Inserter::GetPool() {
-  PL_ASSERT(tile_ != nullptr);
+  PL_ASSERT(tile_);
   return tile_->GetPool();
 }
 
 void Inserter::InsertReserved() {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr && executor_context_ != nullptr);
+  PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
 
-  auto result = TransactionRuntime::PerformInsert(*txn_, *table_, tuple_.get(),
+  std::unique_ptr<executor::LogicalTile> logical_tile(
+      executor::LogicalTileFactory::WrapTiles({tile_}));
+  expression::ContainerTuple<executor::LogicalTile> tuple(logical_tile.get(),
+                                                          location_.offset);
+  auto result = TransactionRuntime::PerformInsert(*txn_, *table_, &tuple,
                                                   location_);
   if (result == true) {
     TransactionRuntime::IncreaseNumProcessed(executor_context_);
@@ -58,16 +60,12 @@ void Inserter::InsertReserved() {
 }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr && executor_context_ != nullptr);
+  PL_ASSERT(txn_ && table_ && executor_context_);
 
   auto result = TransactionRuntime::PerformInsert(*txn_, *table_, tuple);
   if (result == true) {
     TransactionRuntime::IncreaseNumProcessed(executor_context_);
   }
-}
-
-void Inserter::Destroy() {
-  tuple_.reset(nullptr);
 }
 
 }  // namespace codegen

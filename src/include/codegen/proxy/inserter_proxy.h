@@ -72,32 +72,6 @@ class InserterProxy {
     }
   };
 
-  struct _CreateTuple {
-    static const std::string &GetFunctionName() {
-      static const std::string kCreateTupleFnName =
-#ifdef __APPLE__
-          "_ZN7peloton7codegen8Inserter11CreateTupleEv";
-#else
-          "_ZN7peloton7codegen8Inserter11CreateTupleEv";
-#endif
-      return kCreateTupleFnName;
-    }
-    static llvm::Function *GetFunction(CodeGen &codegen) {
-      const std::string &fn_name = GetFunctionName();
-
-      llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
-      if (llvm_fn != nullptr) {
-        return llvm_fn;
-      }
-
-      std::vector<llvm::Type *> fn_args = {
-          InserterProxy::GetType(codegen)->getPointerTo()};
-      llvm::FunctionType *fn_type =
-          llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
-      return codegen.RegisterFunction(fn_name, fn_type);
-    }
-  };
-
   struct _ReserveTupleStorage {
     static const std::string &GetFunctionName() {
       static const std::string kReserveTupleStorageFnName =
@@ -203,33 +177,6 @@ class InserterProxy {
       return codegen.RegisterFunction(fn_name, fn_type);
     }
   };
-
-  struct _Destroy {
-    static const std::string &GetFunctionName() {
-      static const std::string kDestroyFnName =
-#ifdef __APPLE__
-          "_ZN7peloton7codegen8Inserter7DestroyEv";
-#else
-          "_ZN7peloton7codegen8Inserter7DestroyEv";
-#endif
-      return kDestroyFnName;
-    }
-    static llvm::Function *GetFunction(CodeGen &codegen) {
-      const std::string &fn_name = GetFunctionName();
-
-      llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
-      if (llvm_fn != nullptr) {
-        return llvm_fn;
-      }
-
-      std::vector<llvm::Type *> fn_args = {
-          InserterProxy::GetType(codegen)->getPointerTo()};
-      llvm::FunctionType *fn_type =
-          llvm::FunctionType::get(codegen.VoidType(), fn_args, false);
-      return codegen.RegisterFunction(fn_name, fn_type);
-    }
-  };
-
 };
 
 }  // namespace codegen
