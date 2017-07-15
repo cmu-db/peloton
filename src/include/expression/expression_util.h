@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
