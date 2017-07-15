@@ -227,7 +227,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
         printf(
             "-> COLUMN REF : %s %d not null : %d primary : %d unique %d varlen "
             "%lu \n",
-            col->name, col->type, col->not_null, col->primary, col->unique,
+            col->name, (int)col->type, col->not_null, col->primary, col->unique,
             col->varlen);
       }
     }

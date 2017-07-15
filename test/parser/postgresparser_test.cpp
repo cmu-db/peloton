@@ -264,7 +264,7 @@ TEST_F(PostgresParserTests, JoinTest) {
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     // Test for multiple table join
     if (ii == 5) {
-      auto select_stmt = 
+      auto select_stmt =
           reinterpret_cast<parser::SelectStatement *>(stmt_list->statements[0]);
       auto join_table = select_stmt->from_table;
       EXPECT_TRUE(join_table->type == TableReferenceType::JOIN);
@@ -593,7 +593,7 @@ TEST_F(PostgresParserTests, InsertTest) {
     EXPECT_EQ("foo", insert_stmt->GetTableName());
     EXPECT_TRUE(insert_stmt->insert_values != nullptr);
     EXPECT_EQ(2, insert_stmt->insert_values->size());
-    
+
     // Test NULL Value parsing
     EXPECT_TRUE(((expression::ConstantValueExpression *)
                  insert_stmt->insert_values->at(0)->at(0))->GetValue().IsNull());
@@ -613,8 +613,10 @@ TEST_F(PostgresParserTests, InsertTest) {
 TEST_F(PostgresParserTests, CreateTest) {
   std::string query =
       "CREATE TABLE Persons ("
-      "id INT NOT NULL UNIQUE, age INT PRIMARY KEY, name VARCHAR(255), c_id "
-      "INT,"
+      "id INT NOT NULL UNIQUE, "
+      "age INT PRIMARY KEY, "
+      "name VARCHAR(255), "
+      "c_id INT,"
       "PRIMARY KEY (id),"
       "FOREIGN KEY (c_id) REFERENCES country (cid));";
 
@@ -622,7 +624,7 @@ TEST_F(PostgresParserTests, CreateTest) {
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
   auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
-  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  LOG_INFO("Statement List Info:\n%s", stmt_list->GetInfo().c_str());
   // Check column definition
   EXPECT_EQ(create_stmt->columns->size(), 5);
   // Check First column
@@ -631,7 +633,7 @@ TEST_F(PostgresParserTests, CreateTest) {
   EXPECT_TRUE(column->unique);
   EXPECT_TRUE(column->primary);
   EXPECT_EQ(std::string(column->name), "id");
-  EXPECT_EQ(type::TypeId::SMALLINT, column->type);
+  EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
   // Check Second column
   column = create_stmt->columns->at(1);
   EXPECT_FALSE(column->not_null);
@@ -641,9 +643,9 @@ TEST_F(PostgresParserTests, CreateTest) {
   EXPECT_FALSE(column->primary);
   EXPECT_EQ(column->varlen, 255);
 
-  // Check Foreigh Key Constraint
+  // Check Foreign Key Constraint
   column = create_stmt->columns->at(4);
-  EXPECT_EQ(parser::ColumnDefinition::FOREIGN, column->type);
+  EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
   EXPECT_EQ("c_id", std::string(column->foreign_key_source->at(0)));
   EXPECT_EQ("cid", std::string(column->foreign_key_sink->at(0)));
   EXPECT_EQ("country", std::string(column->table_info_->table_name));

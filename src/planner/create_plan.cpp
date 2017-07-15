@@ -43,7 +43,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     for (auto col : *parse_tree->columns) {
       // The parser puts the Foreign Key information into an artificial
       // ColumnDefinition.
-      if (col->type == parser::ColumnDefinition::FOREIGN) {
+      if (col->type == parser::ColumnDefinition::DataType::FOREIGN) {
         this->ProcessForeignKeyConstraint(table_name, col);
         // XXX: Why should we always continue here?
         continue;
