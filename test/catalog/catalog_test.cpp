@@ -88,8 +88,8 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
       2, 3, 4, 5, pool.get(), txn);
-  oid_t time_stamp =
-      catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
+//   oid_t time_stamp = 
+//       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
   // inset meaningless tuple into QUERY_METRICS_CATALOG and check
   stats::QueryMetric::QueryParamBuf param;
@@ -112,7 +112,8 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetColumn(1)
                 .GetName(),
             "name");
-  EXPECT_EQ(time_stamp, 5);
+  // EXPECT_EQ(time_stamp, 5);
+  
   // We remove these tests so people can add new catalogs without breaking this
   // test...
   // 3 + 4
