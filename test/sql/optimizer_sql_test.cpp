@@ -320,13 +320,13 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   EXPECT_NE(nullptr, table);
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
-  EXPECT_EQ("a", cols[0].column_name);
-  EXPECT_EQ(true, cols[0].is_primary_);
-  EXPECT_EQ(type::INTEGER, cols[0].GetType());
-  EXPECT_EQ("b", cols[1].column_name);
-  EXPECT_EQ(type::INTEGER, cols[1].GetType());
-  EXPECT_EQ("c", cols[2].column_name);
-  EXPECT_EQ(type::INTEGER, cols[2].GetType());
+  EXPECT_EQ("a", cols[0].GetName());
+  EXPECT_EQ(true, cols[0].IsPrimary());
+  EXPECT_EQ(type::TypeId::INTEGER, cols[0].GetType());
+  EXPECT_EQ("b", cols[1].GetName());
+  EXPECT_EQ(type::TypeId::INTEGER, cols[1].GetType());
+  EXPECT_EQ("c", cols[2].GetName());
+  EXPECT_EQ(type::TypeId::INTEGER, cols[2].GetType());
 
   // Test dropping existing table
   query = "DROP TABLE test2";
