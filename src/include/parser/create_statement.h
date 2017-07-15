@@ -49,20 +49,6 @@ struct ColumnDefinition {
     VARBINARY
   };
 
-  enum FKConstrActionType {
-    NOACTION,
-    RESTRICT,
-    CASCADE,
-    SETNULL,
-    SETDEFAULT
-  };
-
-  enum FKConstrMatchType {
-    SIMPLE,
-    PARTIAL,
-    FULL
-  };
-
   ColumnDefinition(DataType type) : type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
     if (type == TEXT)

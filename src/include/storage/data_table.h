@@ -178,7 +178,11 @@ class DataTable : public AbstractTable {
 
   void DropForeignKey(const oid_t &key_offset);
 
-  oid_t GetForeignKeyCount() const;
+  size_t GetForeignKeyCount() const;
+
+  void RegisterForeignKeySource(const std::string &source_table_name);
+
+  void RemoveForeignKeySource(const std::string &source_table_name);
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -338,7 +342,10 @@ class DataTable : public AbstractTable {
   std::vector<std::set<oid_t>> indexes_columns_;
 
   // CONSTRAINTS
+  // fk constraints for which this table is the source
   std::vector<catalog::ForeignKey *> foreign_keys_;
+  // names of tables for which this table's PK is the foreign key sink
+  std::vector<std::string> foreign_key_sources_;
 
   // has a primary key ?
   std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);

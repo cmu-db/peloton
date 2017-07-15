@@ -517,9 +517,9 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_TRACE("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
-
+        LOG_INFO("BEGIN checking referred table");
+        
+        std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
@@ -877,16 +877,13 @@ oid_t DataTable::GetValidIndexCount() const {
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
-    for (auto fk_column : key->GetFKColumnNames()) {
+    for (auto fk_column : key->GetSourceColumnIds()) {
       schema->AddConstraint(fk_column, constraint);
     }
-    // TODO :: We need this one..
-    catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys_.push_back(fk);
+    foreign_keys_.push_back(key);
   }
 }
 
@@ -904,7 +901,27 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
   }
 }
 
-oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+
+// Adds to the list of tables for which this table's PK is the foreign key sink
+void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    foreign_key_sources_.push_back(source_table_name);
+  }
+}
+
+// Remove a table for which this table's PK is the foreign key sink
+void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
+      if (foreign_key_sources_[i] == source_table_name) {
+        foreign_key_sources_.erase(foreign_key_sources_.begin()+i);
+      }
+    }
+  }
+}
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(

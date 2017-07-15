@@ -854,6 +854,20 @@ std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 
+enum class FKConstrActionType {
+  NOACTION = 0,
+  RESTRICT = 1,
+  CASCADE = 2,
+  SETNULL = 3,
+  SETDEFAULT = 4
+};
+
+enum class FKConstrMatchType {
+  SIMPLE = 0,
+  PARTIAL = 1,
+  FULL = 2
+};
+
 //===--------------------------------------------------------------------===//
 // Set Operation Types
 //===--------------------------------------------------------------------===//

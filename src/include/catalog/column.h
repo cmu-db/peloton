@@ -83,9 +83,18 @@ class Column : public Printable {
 
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
-    constraints.push_back(constraint);
+    if (constraint.GetType() == ConstraintType::DEFAULT) {
+      // Add the default constraint to the front
+      constraints.insert(constraints.begin(), constraint);
+    } else {
+      constraints.push_back(constraint);
+    }
+
     if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
+    }
+    if (constraint.GetType() == ConstraintType::UNIQUE) {
+      is_unique_ = true;
     }
   }
 
@@ -131,6 +140,9 @@ class Column : public Printable {
 
   // is the column contained the primary key?
   bool is_primary_ = false;
+
+  // is the column unique
+  bool is_unique_ = false;
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;

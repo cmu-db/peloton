@@ -126,8 +126,8 @@ class Schema : public Printable {
   }
 
   inline oid_t GetColumnID(std::string col_name) const {
-    oid_t index = -1;
-    for (oid_t i = 0; i < columns.size(); ++i) {
+    oid_t index = INVALID_OID;
+    for (oid_t i = 0, cnt = columns.size(); i < cnt; ++i) {
       if (columns[i].GetName() == col_name) {
         index = i;
         break;
@@ -169,6 +169,28 @@ class Schema : public Printable {
       if (constraint.GetType() == ConstraintType::NOTNULL) return false;
     }
     return true;
+  }
+
+  // For single column default
+  inline bool AllowDefault(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Get the default value for the column
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return constraint.getDefaultValue();
+      }
+    }
+
+    return nullptr;
   }
 
   // Add constraint for column by id
