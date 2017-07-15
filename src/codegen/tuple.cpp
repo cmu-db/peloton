@@ -23,7 +23,7 @@ namespace codegen {
 
 Tuple::Tuple(storage::DataTable &table): table_(table) {}
 
-void Tuple::GenerateTupleStorage(CodeGen &codegen, RowBatch::Row &row,
+void Tuple::Generate(CodeGen &codegen, RowBatch::Row &row,
     const std::vector<const planner::AttributeInfo *> &ais,
     llvm::Value *tuple_storage, llvm::Value *pool) const {
 

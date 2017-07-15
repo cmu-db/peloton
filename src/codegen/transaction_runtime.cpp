@@ -142,7 +142,7 @@ bool TransactionRuntime::PerformInsert(concurrency::Transaction &txn,
 
 bool TransactionRuntime::PerformInsert(concurrency::Transaction &txn,
                                        storage::DataTable &table,
-                                       const storage::Tuple *tuple,
+                                       const AbstractTuple *tuple,
                                        ItemPointer location) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

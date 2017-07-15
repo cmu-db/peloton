@@ -66,10 +66,6 @@ void InsertTranslator::Produce() const {
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
   if (insert_plan_.GetChildrenSize() != 0) {
-    // Let the inserter prepare for tuple-at-a-time insertions
-    codegen.CallFunc(InserterProxy::_CreateTuple::GetFunction(codegen),
-                     {inserter});
-
     // Produce on its child(a scan), to produce the tuples to be inserted
     GetCompilationContext().Produce(*insert_plan_.GetChild(0));
   }
@@ -107,21 +103,12 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto *pool_func = InserterProxy::_GetPool::GetFunction(codegen);
   auto *pool = codegen.CallFunc(pool_func, {inserter});
 
-  // Generate/Materialize tuple data from row and attribute informations
-  tuple_.GenerateTupleStorage(codegen, row, ais, tuple_storage, pool);
+  // Generate/Materialize tuple data from row and attribute information
+  tuple_.Generate(codegen, row, ais, tuple_storage, pool);
 
   // Call Inserter to insert the reserved tuple storage area
   auto *insert_func = InserterProxy::_InsertReserved::GetFunction(codegen);
   codegen.CallFunc(insert_func, {inserter});
-}
-
-void InsertTranslator::TearDownState() {
-  auto &codegen = GetCodeGen();
- 
-  // Finalize the inserter
-  llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
-  std::vector<llvm::Value *> args = {inserter};
-  codegen.CallFunc(InserterProxy::_Destroy::GetFunction(codegen), args);
 }
 
 }  // namespace codegen
