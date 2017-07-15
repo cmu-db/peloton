@@ -61,11 +61,11 @@ class TempTable : public AbstractTable {
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
                           concurrency::Transaction *transaction,
-                          ItemPointer **index_entry_ptr = nullptr);
+                          ItemPointer **index_entry_ptr = nullptr) override;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.
-  ItemPointer InsertTuple(const Tuple *tuple);
+  ItemPointer InsertTuple(const Tuple *tuple) override;
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -73,10 +73,10 @@ class TempTable : public AbstractTable {
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
-      const std::size_t &tile_group_offset) const;
+      const std::size_t &tile_group_offset) const override ;
 
   std::shared_ptr<storage::TileGroup> GetTileGroupById(
-      const oid_t &tile_group_id) const;
+      const oid_t &tile_group_id) const override;
 
   // Number of TileGroups that the table has
   inline size_t GetTileGroupCount() const override {
