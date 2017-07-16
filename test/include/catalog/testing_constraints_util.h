@@ -111,7 +111,17 @@ class TestingConstraintsUtil {
       std::vector<std::vector<catalog::Constraint>> constraints,
       UNUSED_ATTRIBUTE std::vector<catalog::MultiConstraint> multi_constraints,
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
-      bool indexes = true) {
+      UNUSED_ATTRIBUTE bool indexes = true) {
+
+    // Create the database
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+
+    txn = txn_manager.BeginTransaction();
+    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
 
     // First populate the list of catalog::Columns that we
     // are going to need for this test
@@ -125,66 +135,68 @@ class TestingConstraintsUtil {
     // Create table.
     bool own_schema = true;
     bool adapt_table = false;
+
     storage::DataTable *table = storage::TableFactory::GetDataTable(
-        INVALID_OID, INVALID_OID, table_schema, table_name,
+        database_oid, INVALID_OID, table_schema, table_name,
         tuples_per_tilegroup_count, own_schema, adapt_table);
+    catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME)->AddTable(table);
 
-    if (indexes == true) {
-      // PRIMARY INDEX
-      std::vector<oid_t> key_attrs;
-
-      auto tuple_schema = table->GetSchema();
-      catalog::Schema *key_schema;
-      index::IndexMetadata *index_metadata;
-      bool unique;
-
-      key_attrs = {0};
-      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-      key_schema->SetIndexedColumns(key_attrs);
-
-      unique = true;
-
-      index_metadata = new index::IndexMetadata(
-          "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
-          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
-          key_schema, key_attrs, unique);
-
-      std::shared_ptr<index::Index> pkey_index(
-          index::IndexFactory::GetIndex(index_metadata));
-
-      table->AddIndex(pkey_index);
-
-      // SECONDARY INDEX
-      key_attrs = {0, 1};
-      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-      key_schema->SetIndexedColumns(key_attrs);
-
-      unique = false;
-      index_metadata = new index::IndexMetadata(
-          "secondary_btree_index", 124, table->GetOid(),
-          table->GetDatabaseOid(), IndexType::BWTREE,
-          IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-          unique);
-      std::shared_ptr<index::Index> sec_index(
-          index::IndexFactory::GetIndex(index_metadata));
-
-      table->AddIndex(sec_index);
-
-      // SECONDARY INDEX - UNIQUE INDEX
-      key_attrs = {3};
-      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-      key_schema->SetIndexedColumns(key_attrs);
-
-      unique = false;
-      index_metadata = new index::IndexMetadata(
-          "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
-          IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
-          key_schema, key_attrs, unique);
-      std::shared_ptr<index::Index> unique_index(
-          index::IndexFactory::GetIndex(index_metadata));
-
-      table->AddIndex(unique_index);
-    }
+//    if (indexes == true) {
+//      // PRIMARY INDEX
+//      std::vector<oid_t> key_attrs;
+//
+//      auto tuple_schema = table->GetSchema();
+//      catalog::Schema *key_schema;
+//      index::IndexMetadata *index_metadata;
+//      bool unique;
+//
+//      key_attrs = {0};
+//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+//      key_schema->SetIndexedColumns(key_attrs);
+//
+//      unique = true;
+//
+//      index_metadata = new index::IndexMetadata(
+//          "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
+//          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
+//          key_schema, key_attrs, unique);
+//
+//      std::shared_ptr<index::Index> pkey_index(
+//          index::IndexFactory::GetIndex(index_metadata));
+//
+//      table->AddIndex(pkey_index);
+//
+//      // SECONDARY INDEX
+//      key_attrs = {0, 1};
+//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+//      key_schema->SetIndexedColumns(key_attrs);
+//
+//      unique = false;
+//      index_metadata = new index::IndexMetadata(
+//          "secondary_btree_index", 124, table->GetOid(),
+//          table->GetDatabaseOid(), IndexType::BWTREE,
+//          IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
+//          unique);
+//      std::shared_ptr<index::Index> sec_index(
+//          index::IndexFactory::GetIndex(index_metadata));
+//
+//      table->AddIndex(sec_index);
+//
+//      // SECONDARY INDEX - UNIQUE INDEX
+//      key_attrs = {3};
+//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+//      key_schema->SetIndexedColumns(key_attrs);
+//
+//      unique = false;
+//      index_metadata = new index::IndexMetadata(
+//          "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
+//          IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
+//          key_schema, key_attrs, unique);
+//      std::shared_ptr<index::Index> unique_index(
+//          index::IndexFactory::GetIndex(index_metadata));
+//
+//      table->AddIndex(unique_index);
+//    }
 
     return table;
   };
