@@ -19,7 +19,7 @@
 namespace peloton {
 namespace catalog {
 
-void Column::SetLength(oid_t column_length) {
+void Column::SetLength(size_t column_length) {
   // Set the column length based on whether it is inlined
   if (is_inlined) {
     fixed_length = column_length;
