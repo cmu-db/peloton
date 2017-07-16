@@ -51,7 +51,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
 
   std::vector<type::Value> values = {
       type::ValueFactory::GetIntegerValue(1),
@@ -59,8 +58,15 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
       type::ValueFactory::GetDecimalValue(3.33),
       type::ValueFactory::GetVarcharValue("4444")
   };
+  std::vector<type::Value> null_values = {
+      type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER),
+      type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER),
+      type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL),
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)
+  };
 
   // Test1: Insert a tuple with column that satisfies the requirement
+  auto txn = txn_manager.BeginTransaction();
   bool hasException = false;
   try {
     TestingConstraintsUtil::ExecuteMultiInsert(
@@ -69,23 +75,25 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
     hasException = true;
   }
   EXPECT_FALSE(hasException);
-
-  // Test2: insert not a valid column violate the constraint
-  hasException = false;
-  values[3] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  try {
-    TestingConstraintsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-
-        type::ValueFactory::GetIntegerValue(-1));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
-  // commit this transaction
   txn_manager.CommitTransaction(txn);
-  // delete data_table.release();
+
+  // Test2: Set each of the columns to null one by one
+  for (int i = 0; i < (int)values.size(); i++) {
+    auto txn = txn_manager.BeginTransaction();
+    hasException = false;
+    std::vector<type::Value> new_values;
+    for (int j = 0; j < (int)values.size(); j++) {
+      new_values.push_back(i == j ? null_values[j] : values[j]);
+    }
+    try {
+      TestingConstraintsUtil::ExecuteMultiInsert(
+          txn, data_table.get(), new_values);
+    } catch (ConstraintException e) {
+      hasException = true;
+    }
+    EXPECT_TRUE(hasException);
+    txn_manager.CommitTransaction(txn);
+  } // FOR
 }
 
 //TEST_F(ConstraintsTests, MULTINOTNULLTest) {
