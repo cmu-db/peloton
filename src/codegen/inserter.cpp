@@ -57,6 +57,8 @@ void Inserter::InsertReserved() {
   if (result == true) {
     TransactionRuntime::IncreaseNumProcessed(executor_context_);
   }
+  // the tile pointer is there for an insertion, so we release it at this moment
+  tile_.reset();
 }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
