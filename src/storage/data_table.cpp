@@ -157,9 +157,13 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
       switch (type) {
         case ConstraintType::NOTNULL: {
           if (CheckNotNulls(tuple, column_itr) == false) {
-            LOG_TRACE("Not NULL constraint violated");
-            throw ConstraintException("Not NULL constraint violated : " +
-                                      std::string(tuple->GetInfo()));
+            std::string error = StringUtil::Format(
+                "%s constraint violated on column '%s' : %s",
+                ConstraintTypeToString(type).c_str(),
+                schema->GetColumn(column_itr).GetName().c_str(),
+                tuple->GetInfo().c_str()
+            );
+            throw ConstraintException(error);
           }
           break;
         }
