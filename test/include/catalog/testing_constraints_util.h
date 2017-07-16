@@ -83,18 +83,43 @@ class ProjectInfo;
 
 #define TESTS_TUPLES_PER_TILEGROUP 5
 #define DEFAULT_TILEGROUP_COUNT 3
+#define CONSTRAINTS_NUM_COLS 4
 
 namespace test {
 
 class TestingConstraintsUtil {
  public:
+
+  /** @brief Creates a basic table with allocated and populated tuples */
+  static storage::DataTable *CreateAndPopulateTable(
+      std::vector<std::vector<catalog::Constraint>> constraints,
+      std::vector<catalog::MultiConstraint> multi_constraints) {
+    const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+    storage::DataTable *table = TestingConstraintsUtil::CreateTable(
+        constraints, multi_constraints, tuple_count);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    TestingConstraintsUtil::PopulateTable(txn, table,
+                                          tuple_count * DEFAULT_TILEGROUP_COUNT);
+    txn_manager.CommitTransaction(txn);
+
+    return table;
+  };
+
   /** @brief Creates a basic table with allocated but not populated tuples */
   static storage::DataTable *CreateTable(
+      std::vector<std::vector<catalog::Constraint>> constraints,
+      UNUSED_ATTRIBUTE std::vector<catalog::MultiConstraint> multi_constraints,
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true) {
-    catalog::Schema *table_schema =
-        new catalog::Schema({GetColumnInfo(0), GetColumnInfo(1),
-                             GetColumnInfo(2), GetColumnInfo(3)});
+
+    // First populate the list of catalog::Columns that we
+    // are going to need for this test
+    std::vector<catalog::Column> columns;
+    for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
+      columns.push_back(TestingConstraintsUtil::GetColumnInfo(i, constraints[i]));
+    }
+    catalog::Schema *table_schema = new catalog::Schema(columns);
     std::string table_name("TEST_TABLE");
 
     // Create table.
@@ -287,18 +312,7 @@ class TestingConstraintsUtil {
     return executor.Execute();
   };
 
-  /** @brief Creates a basic table with allocated and populated tuples */
-  static storage::DataTable *CreateAndPopulateTable() {
-    const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-    storage::DataTable *table = TestingConstraintsUtil::CreateTable(tuple_count);
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    TestingConstraintsUtil::PopulateTable(txn, table,
-                                        tuple_count * DEFAULT_TILEGROUP_COUNT);
-    txn_manager.CommitTransaction(txn);
 
-    return table;
-  };
 
   static void PopulateTable(concurrency::Transaction *transaction,
                             storage::DataTable *table, int num_rows) {
@@ -329,61 +343,57 @@ class TestingConstraintsUtil {
     }
   };
 
-  static catalog::Column GetColumnInfo(int index) {
-    const bool is_inlined = true;
-    std::string not_null_constraint_name = "not_null";
-    std::string unique_constraint_name = "unique";
-    catalog::Column dummy_column;
-
-    // Todo: index types
-    // Todo: addDefaultValue() here
+  static catalog::Column GetColumnInfo(int index,
+                                       std::vector<catalog::Constraint> constraints) {
+    catalog::Column column;
     switch (index) {
+      // COL_A
       case 0: {
-        auto column = catalog::Column(
-            type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "COL_A", is_inlined);
-
-        column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                                 not_null_constraint_name));
-        return column;
+        column = catalog::Column(
+            type::TypeId::INTEGER,
+            type::Type::GetTypeSize(type::TypeId::INTEGER),
+            "COL_A",
+            true);
+        break;
       }
-
+      // COL_B
       case 1: {
-        auto column = catalog::Column(
-            type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "COL_B", is_inlined);
-
-        column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                                 not_null_constraint_name));
-        return column;
+        column = catalog::Column(
+            type::TypeId::INTEGER,
+            type::Type::GetTypeSize(type::TypeId::INTEGER),
+            "COL_B",
+            true);
+        break;
       }
-
+      // COL_C
       case 2: {
-        auto column = catalog::Column(
-            type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
-            "COL_C", is_inlined);
-
-        column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                                 not_null_constraint_name));
-        return column;
+        column = catalog::Column(
+            type::TypeId::DECIMAL,
+            type::Type::GetTypeSize(type::TypeId::DECIMAL),
+            "COL_C",
+            true);
+        break;
       }
-
+      // COL_D
       case 3: {
-        auto column = catalog::Column(type::TypeId::VARCHAR,
-                                      25,  // Column length.
-                                      "COL_D",
-                                      !is_inlined);  // inlined.
-
-        column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                                 not_null_constraint_name));
-        return column;
+        column = catalog::Column(
+            type::TypeId::VARCHAR,
+            25,  // Column length.
+            "COL_D",
+            false);
+        break;
       }
-
       default: {
         throw ExecutorException("Invalid column index : " +
                                 std::to_string(index));
       }
     }
+
+    // Add any constraints that we have for this mofo
+    for (auto col_const : constraints) {
+      column.AddConstraint(col_const);
+    }
+    return (column);
   };
 
   /**
