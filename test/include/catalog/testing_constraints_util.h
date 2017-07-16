@@ -86,16 +86,9 @@ class ProjectInfo;
 
 namespace test {
 
-class ConstraintsTestsUtil {
+class TestingConstraintsUtil {
  public:
   /** @brief Creates a basic table with allocated but not populated tuples */
-  /*
-  static storage::DataTable *CreateTable(
-      int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
-      bool indexes = true) {
-  return NULL;};
-    */
-
   static storage::DataTable *CreateTable(
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true) {
@@ -297,10 +290,10 @@ class ConstraintsTestsUtil {
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable() {
     const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-    storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
+    storage::DataTable *table = TestingConstraintsUtil::CreateTable(tuple_count);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    ConstraintsTestsUtil::PopulateTable(txn, table,
+    TestingConstraintsUtil::PopulateTable(txn, table,
                                         tuple_count * DEFAULT_TILEGROUP_COUNT);
     txn_manager.CommitTransaction(txn);
 
@@ -331,7 +324,7 @@ class ConstraintsTestsUtil {
       auto col4 = type::ValueFactory::GetVarcharValue(
           std::to_string(PopulatedValue(populate_value, 3)));
 
-      ConstraintsTestsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
+      TestingConstraintsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
                                           col4);
     }
   };

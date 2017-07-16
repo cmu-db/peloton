@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-#include "catalog/constraints_tests_util.h"
+#include "catalog/testing_constraints_util.h"
 
 #include "type/types.h"
 #include "catalog/catalog.h"
@@ -47,7 +47,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  140           141   142     "143"
 
   std::unique_ptr<storage::DataTable> data_table(
-      ConstraintsTestsUtil::CreateAndPopulateTable());
+      TestingConstraintsUtil::CreateAndPopulateTable());
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -63,7 +63,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Test1: Insert a tuple with column that satisfies the requirement
   bool hasException = false;
   try {
-    ConstraintsTestsUtil::ExecuteMultiInsert(
+    TestingConstraintsUtil::ExecuteMultiInsert(
         txn, data_table.get(), values);
   } catch (ConstraintException e) {
     hasException = true;
@@ -74,7 +74,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   hasException = false;
   values[3] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
+    TestingConstraintsUtil::ExecuteOneInsert(
         txn, data_table.get(),
 
         type::ValueFactory::GetIntegerValue(-1));
@@ -126,7 +126,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    ccs.push_back(type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER));
 //    ccs.push_back(type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER));
 //
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -138,7 +138,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -151,7 +151,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
 //
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -337,7 +337,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //  // Test1: insert a tuple with column  meet the constraint requirment
 //  bool hasException = false;
 //  try {
-//    ConstraintsTestsUtil::ExecuteOneInsert(
+//    TestingConstraintsUtil::ExecuteOneInsert(
 //        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
 //  } catch (ConstraintException e) {
 //    hasException = true;
@@ -347,7 +347,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //  // Test2: insert not a valid column violate the constraint
 //  hasException = false;
 //  try {
-//    ConstraintsTestsUtil::ExecuteOneInsert(
+//    TestingConstraintsUtil::ExecuteOneInsert(
 //        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
 //  } catch (ConstraintException e) {
 //    hasException = true;
@@ -388,7 +388,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //  try {
 //    // bool result = true;
 //    // result =
-//    ConstraintsTestsUtil::ExecuteOneInsert(
+//    TestingConstraintsUtil::ExecuteOneInsert(
 //        txn, table, type::ValueFactory::GetIntegerValue(10));
 //    // if (result == false) hasException = true;
 //  } catch (ConstraintException e) {
@@ -401,7 +401,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //  try {
 //    // bool result = true;
 //    // result =
-//    ConstraintsTestsUtil::ExecuteOneInsert(
+//    TestingConstraintsUtil::ExecuteOneInsert(
 //        txn, table, type::ValueFactory::GetIntegerValue(10));
 //    // if (result == false) hasException = true;
 //  } catch (ConstraintException e) {
@@ -411,7 +411,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //
 //  hasException = false;
 //  try {
-//    ConstraintsTestsUtil::ExecuteOneInsert(
+//    TestingConstraintsUtil::ExecuteOneInsert(
 //        txn, table, type::ValueFactory::GetIntegerValue(20));
 //  } catch (ConstraintException e) {
 //    hasException = true;
@@ -465,7 +465,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(11));
 //    // bool result = true;
 //    // result =
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
 //    // if (result == false) hasException = true;
 //  } catch (ConstraintException e) {
 //    hasException = true;
@@ -480,7 +480,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(11));
 //    // bool result = true;
 //    // result =
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
 //    // if (result == false) hasException = true;
 //  } catch (ConstraintException e) {
 //    hasException = true;
@@ -492,7 +492,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(12));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -567,11 +567,11 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 //    ccs.clear();
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -582,11 +582,11 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(3));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(4));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 //    ccs.clear();
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(5));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -669,11 +669,11 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 //    ccs.clear();
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
@@ -684,11 +684,11 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 //    std::vector<type::Value> ccs;
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(3));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(4));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
 //    ccs.clear();
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(2));
 //    ccs.push_back(type::ValueFactory::GetIntegerValue(5));
-//    ConstraintsTestsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+//    TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
 //  } catch (ConstraintException e) {
 //    hasException = true;
 //  }
