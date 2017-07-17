@@ -99,11 +99,17 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   // returns true for some value
   bool ret = container.ConditionalInsert(index_key, value, predicate,
                                          &predicate_satisfied);
+  //LOG_INFO("Predicate satis = %d; ret = %d", predicate_satisfied, ret);
 
   // If predicate is not satisfied then we know insertion successes
   if (predicate_satisfied == false) {
     // So it should always succeed?
-    assert(ret == true);
+    //assert(ret == true);
+    // The value already exists; however since it passes the
+    // predicate test there is no reason we should inform the caller
+    // that the value is not inserted
+    // This fixes a bug that aborted txns will block further insertion
+    ret = true;
   } else {
     assert(ret == false);
   }
