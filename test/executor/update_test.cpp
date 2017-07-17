@@ -152,8 +152,6 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-
-//  optimizer::SimpleOptimizer optimizer;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
 
@@ -193,7 +191,7 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
 
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
@@ -228,13 +226,12 @@ TEST_F(UpdateTests, UpdatingOld) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
 
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
@@ -260,12 +257,11 @@ TEST_F(UpdateTests, UpdatingOld) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
 
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
@@ -293,12 +289,11 @@ TEST_F(UpdateTests, UpdatingOld) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Updating primary key...");
   LOG_INFO("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   statement.reset(new Statement(
@@ -320,13 +315,12 @@ TEST_F(UpdateTests, UpdatingOld) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
 
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
@@ -350,8 +344,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
-  LOG_INFO("Tcop_txn_state size: %lu", traffic_cop.tcop_txn_state_.size());
+
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);

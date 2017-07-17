@@ -50,7 +50,7 @@ TEST_F(CopyTests, Copying) {
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   std::string short_string = "eeeeeeeeee";
   std::string long_string =
       short_string + short_string + short_string + short_string + short_string +

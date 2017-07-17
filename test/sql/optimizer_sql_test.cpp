@@ -141,8 +141,8 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   LOG_INFO("haoxianghua");
-  LOG_INFO("%lu", optimizer->consistentTxn->GetTransactionId());
-  delete optimizer->consistentTxn;
+  LOG_INFO("%lu", optimizer->txn->GetTransactionId());
+  delete optimizer->txn;
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);

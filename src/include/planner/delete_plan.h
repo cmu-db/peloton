@@ -67,7 +67,7 @@ class DeletePlan : public AbstractPlan {
  private:
   void BuildInitialDeletePlan(
       parser::DeleteStatement *delete_statemenet,
-      concurrency::Transaction *consistentTxn = nullptr);
+      concurrency::Transaction *txn = nullptr);
 
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;

@@ -22,9 +22,9 @@ namespace peloton {
 namespace binder {
 
 void BinderContext::AddTable(const parser::TableRef* table_ref,
-                             concurrency::Transaction* consistentTxn) {
+                             concurrency::Transaction* txn) {
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
-      table_ref->GetDatabaseName(), table_ref->GetTableName(), consistentTxn);
+      table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
 
   auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
 
@@ -38,9 +38,9 @@ void BinderContext::AddTable(const parser::TableRef* table_ref,
 
 void BinderContext::AddTable(const std::string db_name,
                              const std::string table_name,
-                             concurrency::Transaction* consistentTxn) {
+                             concurrency::Transaction* txn) {
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
-      db_name, table_name, consistentTxn);
+      db_name, table_name, txn);
 
   auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
 

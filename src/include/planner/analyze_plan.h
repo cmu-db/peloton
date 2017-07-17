@@ -15,7 +15,6 @@
 #include "planner/abstract_plan.h"
 
 #include <vector>
-#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace storage {
@@ -39,13 +38,13 @@ class AnalyzePlan : public AbstractPlan {
   explicit AnalyzePlan(storage::DataTable *table);
 
   explicit AnalyzePlan(std::string table_name,
-                       concurrency::Transaction *consistentTxn = nullptr);
+                       concurrency::Transaction *txn = nullptr);
 
   explicit AnalyzePlan(std::string table_name, std::vector<char *> column_names,
-                       concurrency::Transaction *consistentTxn = nullptr);
+                       concurrency::Transaction *txn = nullptr);
 
   explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree,
-                       concurrency::Transaction *consistentTxn = nullptr);
+                       concurrency::Transaction *txn = nullptr);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ANALYZE; }
 

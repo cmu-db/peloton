@@ -44,10 +44,6 @@ class TrafficCop {
   // static singleton method used by tests
   static TrafficCop &GetInstance();
 
-  // # 623
-  //  concurrency::Transaction *consistentTxn;
-  bool single_statement_txn;
-
   // reset this object
   void Reset();
 
@@ -107,7 +103,11 @@ class TrafficCop {
                                               const std::string &query_string,
                                               std::string &error_message);
 
+  ResultType BeginQueryHelperJDBC(const size_t thread_id);
 
+  ResultType CommitQueryHelperJDBC();
+
+  ResultType AbortQueryHelperJDBC();
 
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
@@ -121,40 +121,32 @@ class TrafficCop {
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
-  // for test, these should be private
-  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
-  std::stack<TcopTxnState> tcop_txn_state_;
+
+  void SetTcopTxnState(concurrency::Transaction * txn) {
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  }
+
   ResultType CommitQueryHelper();
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
  private:
+
   // The optimizer used for this connection
-//  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+
+  // flag of single statement txn
+  bool single_statement_txn_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  //  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
-  // 623
-  //  std::stack<TcopTxnState> tcop_txn_state_;
+  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
 
-  // for packet_manager jdbc
- public:
-// private:
+  std::stack<TcopTxnState> tcop_txn_state_;
+
   static TcopTxnState &GetDefaultTxnState();
 
   TcopTxnState &GetCurrentTxnState();
 
-  ResultType BeginQueryHelper(const size_t thread_id);
-
-  //  ResultType CommitQueryHelper();
-
   ResultType AbortQueryHelper();
-
-  ResultType BeginQueryHelperJDBC(const size_t thread_id);
-
-  ResultType CommitQueryHelperJDBC();
-
-  ResultType AbortQueryHelperJDBC();
 
   // Get all data tables from a TableRef.
   // For multi-way join

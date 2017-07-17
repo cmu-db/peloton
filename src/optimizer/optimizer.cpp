@@ -96,7 +96,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Run binder
   LOG_TRACE("RUN BINDER IN OPTIMIZER");
   auto bind_node_visitor = make_shared<binder::BindNodeVisitor>();
-  (*bind_node_visitor).consistentTxn = consistentTxn;
+  bind_node_visitor->txn = txn;
   bind_node_visitor->BindNameToNode(parse_tree);
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);
@@ -144,7 +144,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan((parser::DropStatement *)tree, consistentTxn));
+          new planner::DropPlan((parser::DropStatement *)tree, txn));
       ddl_plan = move(drop_plan);
       break;
     }
@@ -162,7 +162,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(),
-            consistentTxn);
+            txn);
         std::vector<oid_t> column_ids;
         auto schema = target_table->GetSchema();
         for (auto column_name : create_plan->GetIndexAttributes()) {
@@ -188,7 +188,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          (parser::AnalyzeStatement *)tree, consistentTxn));
+          (parser::AnalyzeStatement *)tree, txn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -208,9 +208,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
   QueryToOperatorTransformer converter;
-  //  LOG_INFO("InsertQueryTree Txn Id: %lu",
-  //  consistentTxn->GetTransactionId());
-  converter.consistentTxn = consistentTxn;
+  converter.txn = txn;
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;

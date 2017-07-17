@@ -62,8 +62,7 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
   }
   // Single table
   else {
-    LOG_DEBUG("Before Add Table!");
-    context_->AddTable(node, consistentTxn);
+    context_->AddTable(node, txn);
   }
 }
 
@@ -97,7 +96,7 @@ void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
   context_->AddTable(node->GetDatabaseName(), node->GetTableName(),
-                     consistentTxn);
+                     txn);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 

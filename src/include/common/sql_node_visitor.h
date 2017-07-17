@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "concurrency/transaction.h"
-
 namespace peloton {
 
 namespace parser {
@@ -90,7 +88,7 @@ class SqlNodeVisitor {
   virtual void Visit(expression::ParameterValueExpression *expr);
   virtual void Visit(expression::StarExpression *expr);
   virtual void Visit(expression::TupleValueExpression *expr);
-  concurrency::Transaction *consistentTxn = nullptr;
+
 };
 
 }  // namespace peloton

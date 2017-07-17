@@ -57,7 +57,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
   LOG_INFO(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
@@ -105,7 +105,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
@@ -139,7 +139,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating and Index");
   LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(

@@ -42,13 +42,13 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
 // Initializes the delete plan.
 void DeletePlan::BuildInitialDeletePlan(
     parser::DeleteStatement *delete_statemenet,
-    concurrency::Transaction *consistentTxn) {
+    concurrency::Transaction *txn) {
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = delete_statemenet->GetTableName();
   auto database_name = delete_statemenet->GetDatabaseName();
   // Get target table based on database name and table name
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name_, consistentTxn);
+      database_name, table_name_, txn);
   // if expr is null , delete all tuples from table
   if (delete_statemenet->expr == nullptr) {
     LOG_TRACE("No expression, setting truncate to true");

@@ -45,13 +45,12 @@ void SetupTables() {
 
   optimizer::Optimizer optimizer;
 
-
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
                                  "CREATE TABLE b(B1 int, b2 varchar)"};
   for (auto& sql : createTableSQLs) {
     LOG_INFO("%s", sql.c_str());
     txn = txn_manager.BeginTransaction();
-    traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+    traffic_cop.SetTcopTxnState(txn);
 
     vector<type::Value> params;
     vector<StatementResult> result;
@@ -79,7 +78,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // # 623
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  binder->consistentTxn = txn;
+  binder->txn = txn;
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
           "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -149,10 +148,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
-  delete binder->consistentTxn;
+  delete binder->txn;
   // # 623
   txn = txn_manager.BeginTransaction();
-  binder->consistentTxn = txn;
+  binder->txn = txn;
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -164,10 +163,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   }
 
   // Test select from different table instances from the same physical schema
-  delete binder->consistentTxn;
+  delete binder->txn;
   // # 623
   txn = txn_manager.BeginTransaction();
-  binder->consistentTxn = txn;
+  binder->txn = txn;
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -182,10 +181,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test alias and select_list
   LOG_INFO("Checking select_list and table alias binding");
-  delete binder->consistentTxn;
+  delete binder->txn;
   // # 623
   txn = txn_manager.BeginTransaction();
-  binder->consistentTxn = txn;
+  binder->txn = txn;
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -196,7 +195,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
-  delete binder->consistentTxn;
+  delete binder->txn;
   // Delete the test database
 //  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn = txn_manager.BeginTransaction();
@@ -222,13 +221,13 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   // # 623
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  binder->consistentTxn = txn;
+  binder->txn = txn;
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt =
       dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(deleteStmt);
 
-  delete binder->consistentTxn;
+  delete binder->txn;
 
   LOG_INFO("Checking first condition in where clause");
   auto tupleExpr =

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "common/sql_node_visitor.h"
+#include "concurrency/transaction.h"
 #include <unordered_set>
 
 namespace peloton {
@@ -52,6 +53,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(const parser::UpdateStatement *op) override;
   void Visit(const parser::CopyStatement *op) override;
   void Visit(const parser::AnalyzeStatement *op) override;
+  concurrency::Transaction *txn = nullptr;
 
  private:
   std::shared_ptr<OperatorExpression> output_expr;

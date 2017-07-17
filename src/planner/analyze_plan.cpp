@@ -22,27 +22,27 @@ namespace planner {
 AnalyzePlan::AnalyzePlan(storage::DataTable *table) : target_table_(table) {}
 
 AnalyzePlan::AnalyzePlan(std::string table_name,
-                         concurrency::Transaction *consistentTxn)
+                         concurrency::Transaction *txn)
     : table_name_(table_name) {
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name, consistentTxn);
+      DEFAULT_DB_NAME, table_name, txn);
 }
 
 AnalyzePlan::AnalyzePlan(std::string table_name,
                          std::vector<char *> column_names,
-                         concurrency::Transaction *consistentTxn)
+                         concurrency::Transaction *txn)
     : table_name_(table_name), column_names_(column_names) {
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name, consistentTxn);
+      DEFAULT_DB_NAME, table_name, txn);
 }
 
 AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
-                         concurrency::Transaction *consistentTxn) {
+                         concurrency::Transaction *txn) {
   table_name_ = analyze_stmt->GetTableName();
   column_names_ = analyze_stmt->GetColumnNames();
   if (!table_name_.empty()) {
     target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-        analyze_stmt->GetDatabaseName(), table_name_, consistentTxn);
+        analyze_stmt->GetDatabaseName(), table_name_, txn);
   }
 }
 
