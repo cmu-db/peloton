@@ -24,22 +24,22 @@ DropPlan::DropPlan(storage::DataTable *table) {
   missing = false;
 }
 
-DropPlan::DropPlan(std::string name, concurrency::Transaction *consistentTxn) {
+DropPlan::DropPlan(std::string name, concurrency::Transaction *txn) {
   table_name = name;
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name, consistentTxn);
+      DEFAULT_DB_NAME, table_name, txn);
   missing = false;
 }
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree,
-                   concurrency::Transaction *consistentTxn) {
+                   concurrency::Transaction *txn) {
   table_name = parse_tree->GetTableName();
   // Set it up for the moment , cannot seem to find it in DropStatement
   missing = parse_tree->missing;
 
   try {
     target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-        parse_tree->GetDatabaseName(), table_name, consistentTxn);
+        parse_tree->GetDatabaseName(), table_name, txn);
   } catch (CatalogException &e) {
     // Dropping a table which doesn't exist
     if (missing == false) {

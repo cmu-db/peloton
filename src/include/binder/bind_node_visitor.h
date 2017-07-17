@@ -14,6 +14,7 @@
 #include "binder/binder_context.h"
 #include "parser/statements.h"
 #include "type/types.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -57,6 +58,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(expression::CaseExpression *expr) override;
   // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
+  concurrency::Transaction *txn = nullptr;
 
  private:
   std::shared_ptr<BinderContext> context_;

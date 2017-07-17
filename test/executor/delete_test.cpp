@@ -50,13 +50,10 @@ void ShowTable(std::string database_name, std::string table_name) {
 
   optimizer::Optimizer optimizer;
 
-//  optimizer::SimpleOptimizer optimizer;
-
-
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -117,7 +114,7 @@ TEST_F(DeleteTests, VariousOperations) {
 
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
@@ -151,7 +148,7 @@ TEST_F(DeleteTests, VariousOperations) {
 
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
@@ -179,7 +176,7 @@ TEST_F(DeleteTests, VariousOperations) {
 
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
@@ -209,7 +206,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   // Just Counting number of tuples in table
   LOG_INFO("Selecting MAX(dept_id)");
   LOG_INFO("Query: SELECT MAX(dept_id) FROM department_table;");
@@ -235,7 +232,7 @@ TEST_F(DeleteTests, VariousOperations) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   // Test Another delete. Should not find any tuple to be deleted
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_id < 2");
@@ -263,7 +260,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  traffic_cop.SetTcopTxnState(txn);
   // Now deleting end-to-end
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table");

@@ -23,6 +23,7 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/value.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 

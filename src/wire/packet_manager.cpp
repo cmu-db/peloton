@@ -1030,42 +1030,42 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   // we see a SYNC
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
-      LOG_DEBUG("SIMPLE_QUERY_COMMAND");
+      LOG_TRACE("SIMPLE_QUERY_COMMAND");
       ExecQueryMessage(pkt, thread_id);
       force_flush = true;
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
-      LOG_DEBUG("PARSE_COMMAND");
+      LOG_TRACE("PARSE_COMMAND");
       ExecParseMessage(pkt);
     } break;
     case NetworkMessageType::BIND_COMMAND: {
-      LOG_DEBUG("BIND_COMMAND");
+      LOG_TRACE("BIND_COMMAND");
       ExecBindMessage(pkt);
     } break;
     case NetworkMessageType::DESCRIBE_COMMAND: {
-      LOG_DEBUG("DESCRIBE_COMMAND");
+      LOG_TRACE("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt);
     } break;
     case NetworkMessageType::EXECUTE_COMMAND: {
-      LOG_DEBUG("EXECUTE_COMMAND");
+      LOG_TRACE("EXECUTE_COMMAND");
       ExecExecuteMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::SYNC_COMMAND: {
-      LOG_DEBUG("SYNC_COMMAND");
+      LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
       force_flush = true;
     } break;
     case NetworkMessageType::CLOSE_COMMAND: {
-      LOG_DEBUG("CLOSE_COMMAND");
+      LOG_TRACE("CLOSE_COMMAND");
       ExecCloseMessage(pkt);
     } break;
     case NetworkMessageType::TERMINATE_COMMAND: {
-      LOG_DEBUG("TERMINATE_COMMAND");
+      LOG_TRACE("TERMINATE_COMMAND");
       force_flush = true;
       return false;
     } break;
     case NetworkMessageType::NULL_COMMAND: {
-      LOG_DEBUG("NULL");
+      LOG_TRACE("NULL");
       force_flush = true;
       return false;
     } break;

@@ -39,11 +39,11 @@ class BinderContext {
 
   // Update the table alias map given a table reference (in the from clause)
   void AddTable(const parser::TableRef* table_ref,
-                concurrency::Transaction* consistentTxn = nullptr);
+                concurrency::Transaction* txn = nullptr);
 
   // Update the table alias map given a table reference (in the from clause)
   void AddTable(const std::string db_name, const std::string table_name,
-                concurrency::Transaction* consistentTxn = nullptr);
+                concurrency::Transaction* txn = nullptr);
 
   // Construct the column position tuple given column name and the
   // corresponding tabld id tuple. Also set the value type
