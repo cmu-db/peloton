@@ -204,6 +204,7 @@ foreach(GCDA ${GCDA_FILES})
 	execute_process(
 		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA}
 		WORKING_DIRECTORY ${COV_PATH}
+		OUTPUT_QUIET
 	)
 endforeach()
 
