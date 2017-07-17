@@ -24,6 +24,7 @@
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
+#include "planner/abstract_plan.h"
 #include "type/type.h"
 #include "type/types.h"
 
@@ -134,26 +135,28 @@ class TrafficCop {
                      std::vector<storage::DataTable *> &target_tables);
 };
 
-struct ExecuteStatementPlanArg {
-  ExecuteStatementPlanArg(const std::shared_ptr<Statement> &statement,
-                           const std::vector<type::Value> &params,
-                           std::vector<StatementResult> &result,
-                           const std::vector<int>& result_format,
-                           executor::ExecuteResult &status,
-                           TrafficCop* tcop,
-                           const size_t thread_id):
-    statement_(statement), params_(params), result_(result), result_format_(result_format),
-    status_(status), tcop_(tcop), thread_id_(thread_id) {};
+struct ExecutePlanArg {
+  ExecutePlanArg(const planner::AbstractPlan *plan,
+                  concurrency::Transaction *txn,
+                  const std::vector<type::Value> &params,
+                  std::vector<StatementResult> &result,
+                  const std::vector<int> &result_format,
+                  executor::ExecuteResult &p_status) :
+    plan_(plan),
+    txn_(txn),
+    params_(params),
+    result_(result),
+    result_format_(result_format),
+    p_status_(p_status) { }
 
-  const std::shared_ptr<Statement> statement_;
-  const std::vector<type::Value>& params_;
-  std::vector<StatementResult>& result_;
-  const std::vector<int>& result_format_;
-  executor::ExecuteResult& status_;
-  TrafficCop* tcop_;
-  const size_t thread_id_;
+
+  const planner::AbstractPlan *plan_;
+  concurrency::Transaction *txn_;
+  const std::vector<type::Value> &params_;
+  std::vector<StatementResult> &result_;
+  const std::vector<int> &result_format_;
+  executor::ExecuteResult &p_status_;
 };
-
 
 }  // End tcop namespace
 }  // End peloton namespace
