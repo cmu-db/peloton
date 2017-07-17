@@ -48,7 +48,6 @@ class Task {
 
   // Sync variables
   bool is_sync_ = false;
-  bool is_batch_ = false;
   std::mutex *task_mutex_;
   std::condition_variable *condition_variable_;
   int *num_worker_;
