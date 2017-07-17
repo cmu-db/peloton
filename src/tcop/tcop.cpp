@@ -191,14 +191,9 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        executor::ExecuteResult status;
-        std::unique_ptr<ExecuteStatementPlanArg> arg_ptr = std::make_unique<ExecuteStatementPlanArg>
-                                                         (statement, params, result, result_format,
-                                                         status, this, thread_id);
-        threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecuteStatementPlanCallBack, arg_ptr.get());
-        //auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-        //                                   result, result_format,
-        //                                   thread_id);
+        auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+                                           result, result_format,
+                                           thread_id);
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
@@ -209,11 +204,15 @@ ResultType TrafficCop::ExecuteStatement(
     return ResultType::FAILURE;
   }
 }
-void ExecuteStatementPlanCallBack(void* arg_ptr) {
-  ExecuteStatementPlanArg arg = *(ExecuteStatementPlanArg*) arg_ptr;
-  arg.status_ = arg.tcop_->ExecuteStatementPlan(arg.statement_->GetPlanTree().get(),
-                                              arg.params_, arg.result_, arg.result_format_,
-                                              arg.thread_id_);
+
+void ExecutePlanCallBack(void* arg_ptr) {
+  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+
+  arg->p_status_ = executor::PlanExecutor::ExecutePlan(arg->plan_,
+                                                       arg->txn_,
+                                                       arg->params_,
+                                                       arg->result_,
+                                                       arg->result_format_);
 }
 
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
@@ -240,8 +239,10 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                   result_format);
+    ExecutePlanArg arg = ExecutePlanArg(plan, txn, params, result, result_format, p_status);
+    threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecutePlanCallBack, &arg);
+    // p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    //                                                result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
