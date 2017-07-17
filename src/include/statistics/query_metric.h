@@ -25,7 +25,7 @@ namespace peloton {
 
 namespace stats {
 
-// Same type defined in wire/marshal.h
+// Same type defined in networking/marshal.h
 typedef unsigned char uchar;
 
 /**

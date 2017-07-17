@@ -15,7 +15,7 @@
 #include "configuration/configuration.h"
 #include "common/init.h"
 #include "common/logger.h"
-#include "wire/libevent_server.h"
+#include "networking/network_server.h"
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
     peloton::PelotonInit::Initialize();
 
     // Create LibeventServer object
-    peloton::wire::LibeventServer libeventserver;
+    peloton::networking::NetworkServer networkserver;
     
     // Start Libevent Server    
-    libeventserver.StartServer();
+    networkserver.StartServer();
 
     // Teardown
     peloton::PelotonInit::Shutdown();

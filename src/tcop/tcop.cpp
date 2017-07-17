@@ -32,6 +32,8 @@
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 
+#include "threadpool/mono_queue_pool.h"
+
 #include <boost/algorithm/string.hpp>
 #include <include/parser/postgresparser.h>
 
@@ -203,6 +205,16 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
+void ExecutePlanCallBack(void* arg_ptr) {
+  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+
+  arg->p_status_ = executor::PlanExecutor::ExecutePlan(arg->plan_,
+                                                       arg->txn_,
+                                                       arg->params_,
+                                                       arg->result_,
+                                                       arg->result_format_);
+}
+
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
@@ -227,8 +239,10 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                   result_format);
+    ExecutePlanArg arg = ExecutePlanArg(plan, txn, params, result, result_format, p_status);
+    threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecutePlanCallBack, &arg);
+    // p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    //                                                result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
@@ -485,6 +499,7 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
   return std::make_tuple(field_name, static_cast<oid_t>(field_type),
                          field_size);
 }
+
 
 }  // End tcop namespace
 }  // End peloton namespace
