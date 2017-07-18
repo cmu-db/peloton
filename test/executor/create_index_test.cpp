@@ -86,11 +86,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
-<<<<<<< HEAD
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-=======
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
->>>>>>> pass valgrind
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",

@@ -141,6 +141,7 @@ ResultType TrafficCop::ExecuteStatement(
   if (statement.get() == nullptr) {
     if (single_statement_txn_) {
       LOG_TRACE("SINGLE ABORT!");
+      rows_changed = 0;
       return AbortQueryHelper();
     } else { // multi-statment txn
       if (tcop_txn_state_.top().second == ResultType::ABORTED) {
@@ -204,6 +205,7 @@ ResultType TrafficCop::ExecuteStatement(
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
+        LOG_INFO("rows_changed %d", rows_changed);
         return status.m_result;
     }
   } catch (Exception &e) {
@@ -487,6 +489,7 @@ ResultType TrafficCop::ExecuteStatementJDBC(
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
+        LOG_INFO("rows_changed %d", rows_changed);
         return status.m_result;
     }
   } catch (Exception &e) {
