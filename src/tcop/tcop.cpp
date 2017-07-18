@@ -83,7 +83,7 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
 
 
 ResultType TrafficCop::CommitQueryHelper() {
-  LOG_TRACE("before commit txn id: %lu",
+  LOG_INFO("before commit txn id: %lu",
            tcop_txn_state_.top().first->GetTransactionId());
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
@@ -113,14 +113,14 @@ ResultType TrafficCop::AbortQueryHelper() {
   tcop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
   if (curr_state.second != ResultType::ABORTED) {
-    LOG_TRACE("SINGLE ABORTQUERYHELPER");
+    LOG_INFO("SINGLE ABORTQUERYHELPER");
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
 
     return result;
   } else {
-    LOG_TRACE("SINGLE ABORTQUERYHELPER!!");
+    LOG_INFO("SINGLE ABORTQUERYHELPER!!");
     // otherwise, the txn has already been aborted
     return ResultType::ABORTED;
   }
@@ -144,11 +144,16 @@ ResultType TrafficCop::ExecuteStatement(
       rows_changed = 0;
       return AbortQueryHelper();
     } else { // multi-statment txn
-      if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-        return ResultType::ABORTED;
+      if (query == "COMMIT" || query == "ROLLBACK") {
+        // commit aborted txn
+        return CommitQueryHelper();
       } else {
-        tcop_txn_state_.top().second = ResultType::ABORTED;
-        return ResultType::ABORTED;
+        if (tcop_txn_state_.top().second == ResultType::ABORTED) {
+          return ResultType::ABORTED;
+        } else {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          return ResultType::ABORTED;
+        }
       }
     }
   }
