@@ -83,7 +83,7 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
 
 
 ResultType TrafficCop::CommitQueryHelper() {
-  LOG_INFO("before commit txn id: %lu",
+  LOG_TRACE("before commit txn id: %lu",
            tcop_txn_state_.top().first->GetTransactionId());
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
@@ -113,14 +113,12 @@ ResultType TrafficCop::AbortQueryHelper() {
   tcop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
   if (curr_state.second != ResultType::ABORTED) {
-    LOG_INFO("SINGLE ABORTQUERYHELPER");
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
 
     return result;
   } else {
-    LOG_INFO("SINGLE ABORTQUERYHELPER!!");
     // otherwise, the txn has already been aborted
     return ResultType::ABORTED;
   }
@@ -131,7 +129,7 @@ ResultType TrafficCop::ExecuteStatement(
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
 
-  LOG_INFO("Received %s", query.c_str());
+  LOG_TRACE("Received %s", query.c_str());
   LOG_TRACE("tcop_txn_state size: %lu", tcop_txn_state_.size());
 
   std::string unnamed_statement = "unnamed";
@@ -296,7 +294,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_INFO("Prepare Statement name: %s", statement_name.c_str());
+  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
@@ -520,7 +518,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlanJDBC(
     // get ptr to current active txn
     txn = curr_state.first;
   }
-  LOG_INFO("Transaction Id in ExecuteStatementPlan %lu",
+  LOG_TRACE("Transaction Id in ExecuteStatementPlan %lu",
             txn->GetTransactionId());
 
   // skip if already aborted
@@ -570,7 +568,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatementJDBC(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
-  LOG_INFO("Prepare Statement query: %s", query_string.c_str());
+  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
