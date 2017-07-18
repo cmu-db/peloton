@@ -205,7 +205,7 @@ ResultType TrafficCop::ExecuteStatement(
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
-        LOG_INFO("rows_changed %d", rows_changed);
+        LOG_DEBUG("rows_changed %d", rows_changed);
         return status.m_result;
     }
   } catch (Exception &e) {
@@ -332,8 +332,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
-
-  LOG_INFO("Txn Id: %llu", optimizer_->txn->GetTransactionId());
 
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -489,7 +487,6 @@ ResultType TrafficCop::ExecuteStatementJDBC(
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
         rows_changed = status.m_processed;
-        LOG_INFO("rows_changed %d", rows_changed);
         return status.m_result;
     }
   } catch (Exception &e) {

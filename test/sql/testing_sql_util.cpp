@@ -119,7 +119,6 @@ std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   optimizer->txn = txn;
-  LOG_INFO("in %lu", optimizer->txn->GetTransactionId());
 
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
