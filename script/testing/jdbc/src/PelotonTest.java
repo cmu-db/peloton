@@ -771,8 +771,7 @@ public class PelotonTest {
         System.err.println("Please specify jdbc test target: [basic|stats|copy]");
       }
       if (args[0].equals("basic")) {
-    	PelotonTest pt = new PelotonTest();
-        pt.BasicTest();
+        BasicTest();
       } else if (args[0].equals("stats")) {
         StatsTest();
       } else if (args[0].equals("copy")) {
@@ -784,35 +783,19 @@ public class PelotonTest {
       }
   }
 
-//  static public void BasicTest() throws Exception {
-//    System.out.println("Basic Tests");
-//    PelotonTest pt = new PelotonTest();
-//    pt.Init();
-//    pt.ShowTable();
-//    pt.SeqScan();
-//    pt.Scan_Test();
-//    pt.Init();
-//    pt.Batch_Insert();
-//    pt.Batch_Update();
-//    pt.Batch_Delete();
-//    pt.Invalid_SQL();
-//    pt.BlobTest();
-//    pt.Close();
-//  }
-  public void BasicTest() throws Exception {
+  static public void BasicTest() throws Exception {
     System.out.println("Basic Tests");
     PelotonTest pt = new PelotonTest();
-    System.out.println("Init");
-    conn.setAutoCommit(true);
-    Statement stmt = conn.createStatement();
-    stmt.execute("DROP TABLE IF EXISTS A;" +
-    		"DROP TABLE IF EXISTS B;");
-    stmt.execute("CREATE TABLE A (id INT PRIMARY KEY, data TEXT);");
-    stmt.execute("BEGIN;" +
-            "INSERT INTO A VALUES (1,'Fly High');" +
-            "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);" +
-            "COMMIT;");
-    stmt.execute("SELECT * FROM B;");
+    pt.Init();
+    pt.ShowTable();
+    pt.SeqScan();
+    pt.Scan_Test();
+    pt.Init();
+    pt.Batch_Insert();
+    pt.Batch_Update();
+    pt.Batch_Delete();
+    pt.Invalid_SQL();
+    pt.BlobTest();
     pt.Close();
   }
 
