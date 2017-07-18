@@ -42,17 +42,24 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
       next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
   threads.clear();
+}
+
+/*
+ * Start the threads
+ */
+void LibeventMasterThread::Start() {
+  auto &threads = GetWorkerThreads();
 
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
       EpochType::DECENTRALIZED_EPOCH) {
-    for (int thread_id = 0; thread_id < num_threads; thread_id++) {
+    for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
       concurrency::EpochManagerFactory::GetInstance().RegisterThread(thread_id);
     }
   }
 
   // create worker threads.
-  for (int thread_id = 0; thread_id < num_threads; thread_id++) {
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(
         new LibeventWorkerThread(thread_id)));
     thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
@@ -60,8 +67,27 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
   }
 
   // Wait for all threads ready to work
-  for (int thread_id = 0; thread_id < num_threads; thread_id++) {
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
     while (!threads[thread_id].get()->GetThreadIsStarted()) {
+      sleep(1);
+    }
+  }
+}
+
+/*
+ * Stop the threads
+ */
+void LibeventMasterThread::Stop() {
+  auto &threads = GetWorkerThreads();
+
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
+    threads[thread_id].get()->SetThreadIsClosed(true);
+  }
+
+  // When a thread exit loop, the is_closed flag will be set to false
+  // Wait for all threads exit loops
+  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
+    while (threads[thread_id].get()->GetThreadIsClosed()) {
       sleep(1);
     }
   }
@@ -145,23 +171,5 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
-/*
- * Exit event base loop running in all worker threads
- */
-void LibeventMasterThread::CloseConnection() {
-  auto &threads = GetWorkerThreads();
-
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->SetThreadIsClosed(true);
-  }
-
-  // When a thread exit loop, the is_closed flag will be set to false
-  // Wait for all threads exit loops
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (threads[thread_id].get()->GetThreadIsClosed()) {
-      sleep(1);
-    }
-  }
-}
-}
-}
+}  // namespace wire
+}  // namespace peloton
