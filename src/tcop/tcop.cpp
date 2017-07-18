@@ -333,7 +333,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  LOG_INFO("Txn Id: %lu", optimizer_->txn->GetTransactionId());
+  LOG_INFO("Txn Id: %llu", optimizer_->txn->GetTransactionId());
 
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -396,7 +396,7 @@ ResultType TrafficCop::ExecuteStatementJDBC(
 
   if (status == ResultType::SUCCESS) {
     LOG_TRACE("Execution succeeded!");
-    tuple_descriptor = std::move(statement->GetTupleDescriptor());
+    tuple_descriptor = statement->GetTupleDescriptor();
   } else {
     LOG_TRACE("Execution failed!");
   }
@@ -602,7 +602,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatementJDBC(
       LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
-    return std::move(statement);
+    return statement;
   } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
