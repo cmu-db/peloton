@@ -136,18 +136,14 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Something wrong with column property.
   string query = "SELECT b from test order by c";
 
-  // # 623
   // check for plan node type
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  LOG_INFO("haoxianghua");
-  LOG_INFO("%lu", optimizer->txn->GetTransactionId());
   delete optimizer->txn;
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
 
-  // # 623
   // test order by
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
