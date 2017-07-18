@@ -908,7 +908,6 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
 
 void PacketManager::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
-  LOG_DEBUG("HELLO ExecExecuteMessage");
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
