@@ -296,7 +296,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
+  LOG_INFO("Prepare Statement name: %s", statement_name.c_str());
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
@@ -329,7 +329,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     auto txn = txn_manager.BeginTransaction(thread_id);
     // pass txn handle to optimizer_
     optimizer_->txn = txn;
-    LOG_TRACE("Txn Id: %lu", txn->GetTransactionId());
+    LOG_INFO("Txn Id: %lu", txn->GetTransactionId());
     // this shouldn't happen
     if (txn == nullptr) {
       LOG_TRACE("Begin txn failed");
@@ -383,7 +383,7 @@ ResultType TrafficCop::ExecuteStatementJDBC(
 
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
-  auto statement = PrepareStatement(unnamed_statement, query, error_message);
+  auto statement = PrepareStatementJDBC(unnamed_statement, query, error_message);
 
   if (statement.get() == nullptr) {
     return ResultType::FAILURE;
@@ -394,7 +394,7 @@ ResultType TrafficCop::ExecuteStatementJDBC(
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   std::vector<type::Value> params;
   auto status =
-      ExecuteStatement(statement, params, unnamed, nullptr, result_format,
+      ExecuteStatementJDBC(statement, params, unnamed, nullptr, result_format,
                        result, rows_changed, error_message, thread_id);
 
   if (status == ResultType::SUCCESS) {
@@ -520,7 +520,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlanJDBC(
     // get ptr to current active txn
     txn = curr_state.first;
   }
-  LOG_TRACE("Transaction Id in ExecuteStatementPlan %lu",
+  LOG_INFO("Transaction Id in ExecuteStatementPlan %lu",
             txn->GetTransactionId());
 
   // skip if already aborted
@@ -570,7 +570,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatementJDBC(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
-  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
+  LOG_INFO("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));

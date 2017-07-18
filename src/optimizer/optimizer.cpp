@@ -86,7 +86,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
-  LOG_TRACE("HANDLE DDL IN OPTIMIZER");
+//  LOG_TRACE("HANDLE DDL IN OPTIMIZER");
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt);
