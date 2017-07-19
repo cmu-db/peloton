@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/properties.h"
-#include "common/macros.h"
+
+#include "optimizer/property.h"
 #include "optimizer/property_visitor.h"
 
 namespace peloton {

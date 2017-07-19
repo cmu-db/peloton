@@ -11,14 +11,25 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/abstract_catalog.h"
+
 #include "catalog/catalog.h"
-#include "planner/create_plan.h"
+#include "catalog/table_catalog.h"
+#include "common/statement.h"
+#include "index/index_factory.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
-#include "common/statement.h"
+#include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "executor/delete_executor.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
+#include "storage/database.h"
 #include "storage/storage_manager.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace catalog {

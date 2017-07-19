@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cstdio>
-
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/index_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/table_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "gtest/gtest.h"
 #include "storage/storage_manager.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace test {

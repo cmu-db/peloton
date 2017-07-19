@@ -11,6 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column.h"
+
+#include <sstream>
+
 #include "type/types.h"
 
 namespace peloton {
@@ -69,5 +72,5 @@ const std::string Column::GetInfo() const {
   return (os.str());
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

@@ -267,5 +267,5 @@ class OuterJoinToOuterHashJoin : public Rule {
       const override;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

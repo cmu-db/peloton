@@ -13,8 +13,10 @@
 #include "catalog/catalog.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
+#include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/testing_codegen_util.h"

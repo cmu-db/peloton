@@ -61,5 +61,5 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   PropertySet property_set_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

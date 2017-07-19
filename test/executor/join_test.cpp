@@ -25,6 +25,7 @@
 #include "executor/index_scan_executor.h"
 #include "executor/merge_join_executor.h"
 #include "executor/nested_loop_join_executor.h"
+#include "executor/seq_scan_executor.h"
 
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
@@ -35,6 +36,7 @@
 #include "planner/index_scan_plan.h"
 #include "planner/merge_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
+#include "planner/seq_scan_plan.h"
 
 #include "storage/data_table.h"
 #include "storage/tile.h"

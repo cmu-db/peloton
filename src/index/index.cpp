@@ -10,17 +10,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "index/index.h"
+
+#include <sstream>
+
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/exception.h"
-#include "common/logger.h"
+#include "index/scan_optimizer.h"
 #include "storage/tuple.h"
 #include "type/ephemeral_pool.h"
-
-#include "index/scan_optimizer.h"
-
-#include <algorithm>
-#include <iostream>
 
 namespace peloton {
 namespace index {

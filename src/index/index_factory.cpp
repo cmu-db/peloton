@@ -12,13 +12,14 @@
 
 #include <iostream>
 
+#include <sstream>
+
 #include "common/logger.h"
 #include "common/macros.h"
 #include "index/bwtree_index.h"
 #include "index/index_factory.h"
 #include "index/index_key.h"
 #include "index/skiplist_index.h"
-#include "type/types.h"
 
 namespace peloton {
 namespace index {

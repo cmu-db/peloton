@@ -65,5 +65,5 @@ class QueryNodeVisitor {
   virtual void Visit(const parser::AnalyzeStatement *) = 0;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

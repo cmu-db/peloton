@@ -39,5 +39,5 @@ class PropertyVisitor {
   virtual void Visit(const PropertyLimit *) = 0;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

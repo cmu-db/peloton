@@ -14,9 +14,6 @@
 
 #include <atomic>
 #include <cstring>
-#include <iostream>
-#include <queue>
-#include <vector>
 
 #include "common/item_pointer.h"
 #include "common/macros.h"

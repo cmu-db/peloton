@@ -13,6 +13,8 @@
 
 #include "concurrency/transaction.h"
 
+#include <sstream>
+
 #include "common/logger.h"
 #include "common/platform.h"
 #include "common/macros.h"
