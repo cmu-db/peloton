@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "concurrency/transaction.h"
 
 #include <vector>
 

@@ -22,7 +22,7 @@
 #include "common/statement.h"
 #include "concurrency/transaction.h"
 #include "executor/plan_executor.h"
-#include "optimizer/abstract_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
 #include "type/types.h"
@@ -128,10 +128,12 @@ class TrafficCop {
 
   ResultType CommitQueryHelper();
 
+  bool prepared_ = false;
+
  private:
 
   // The optimizer used for this connection
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+  std::unique_ptr<optimizer::Optimizer> optimizer_;
 
   // flag of single statement txn
   bool single_statement_txn_;

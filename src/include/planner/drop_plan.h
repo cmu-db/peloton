@@ -33,7 +33,7 @@ class DropPlan : public AbstractPlan {
   DropPlan() = delete;
 
   explicit DropPlan(storage::DataTable *table);
-  // # 623
+
   explicit DropPlan(std::string name,
                     concurrency::Transaction *txn = nullptr);
 
