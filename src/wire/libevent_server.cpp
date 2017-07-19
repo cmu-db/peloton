@@ -125,7 +125,7 @@ void LibeventServer::StartServer() {
 
     if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
     {
-      throw ConnectionException("Error creating SSL context.\n");
+      throw ConnectionException("Error creating SSL context.");
     }
 
     LOG_INFO("private key file path %s", private_key_file_.c_str());
@@ -151,14 +151,16 @@ void LibeventServer::StartServer() {
     if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
     {
       SSL_CTX_free(ssl_context);
-      throw ConnectionException("Failed binding socket.\n");
+      throw ConnectionException("Failed binding socket.");
     }
 
     if (listen(listen_fd, conn_backlog) < 0)
     {
       SSL_CTX_free(ssl_context);
-      throw ConnectionException("Error listening onsocket.\n");
+      throw ConnectionException("Error listening onsocket.");
     }
+
+    master_thread_->Start();
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
                                   master_thread_.get(), CONN_LISTENING);
@@ -172,9 +174,8 @@ void LibeventServer::StartServer() {
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);
-    static_cast<LibeventMasterThread *>(master_thread_.get())
-        ->CloseConnection();
 
+    master_thread_->Stop();
     LOG_INFO("Server Closed");
   }
 
@@ -193,5 +194,6 @@ void LibeventServer::CloseServer() {
  * Change port to new_port
  */
 void LibeventServer::SetPort(int new_port) { port_ = new_port; }
-}
-}
+
+}  // namespace wire
+}  // namespace peloton
