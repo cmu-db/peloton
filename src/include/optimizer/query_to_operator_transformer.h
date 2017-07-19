@@ -64,6 +64,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   type::TypeId output_type;
   int output_size;
   bool output_inlined;
+
 };
 
 } // namespace optimizer

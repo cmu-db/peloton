@@ -19,6 +19,7 @@
 #include "optimizer/memo.h"
 #include "optimizer/property_set.h"
 #include "optimizer/rule.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -57,6 +58,8 @@ class Optimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
   void Reset() override;
+
+  concurrency::Transaction *txn = nullptr;
 
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support

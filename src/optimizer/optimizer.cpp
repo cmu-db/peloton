@@ -94,7 +94,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     return move(ddl_plan);
   }
   // Run binder
-  LOG_TRACE("RUN BINDER IN OPTIMIZER");
   auto bind_node_visitor = make_shared<binder::BindNodeVisitor>();
   bind_node_visitor->txn = txn;
   bind_node_visitor->BindNameToNode(parse_tree);

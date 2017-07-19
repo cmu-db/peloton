@@ -18,6 +18,7 @@
 #include "type/types.h"
 #include "parser/table_ref.h"
 #include "catalog/schema.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 

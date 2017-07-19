@@ -75,7 +75,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Test regular table name
   LOG_INFO("Parsing sql query");
   unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
-  // # 623
+
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   binder->txn = txn;
@@ -149,7 +149,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
   delete binder->txn;
-  // # 623
+
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
   selectSQL = "SELECT * FROM A, B as A";
@@ -164,7 +164,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test select from different table instances from the same physical schema
   delete binder->txn;
-  // # 623
+
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
@@ -182,7 +182,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Test alias and select_list
   LOG_INFO("Checking select_list and table alias binding");
   delete binder->txn;
-  // # 623
+
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
@@ -197,7 +197,6 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
   delete binder->txn;
   // Delete the test database
-//  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn = txn_manager.BeginTransaction();
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -218,7 +217,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
-  // # 623
+
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   binder->txn = txn;

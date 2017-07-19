@@ -55,14 +55,14 @@ class TestingSQLUtil {
   // may want to pass a transaction pointer here if that API is exposed after
   // the refactor by Siddharth
   static ResultType ExecuteSQLQueryWithOptimizer(
-      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      std::unique_ptr<optimizer::Optimizer> &optimizer,
       const std::string query, std::vector<StatementResult> &result,
       std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
       std::string &error_message);
 
   // Generate the plan tree for a SQL query with the specific optimizer
   static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
-      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      std::unique_ptr<optimizer::Optimizer> &optimizer,
       const std::string query);
 
   // A simpler wrapper around ExecuteSQLQuery
