@@ -83,8 +83,6 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
 
 
 ResultType TrafficCop::CommitQueryHelper() {
-  LOG_TRACE("before commit txn id: %lu",
-           tcop_txn_state_.top().first->GetTransactionId());
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -130,7 +128,6 @@ ResultType TrafficCop::ExecuteStatement(
     std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
 
   LOG_TRACE("Received %s", query.c_str());
-  LOG_TRACE("tcop_txn_state size: %lu", tcop_txn_state_.size());
 
   std::string unnamed_statement = "unnamed";
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
@@ -240,8 +237,6 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // get ptr to current active txn
     txn = curr_state.first;
   }
-  LOG_TRACE("Transaction Id in ExecuteStatementPlan %lu",
-            txn->GetTransactionId());
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
@@ -305,7 +300,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // ----COMMIT, ROLLBACK, and aborted
   if (!tcop_txn_state_.empty()) {
     single_statement_txn_ = false;
-    LOG_TRACE("TOP TRANSACTION ID: %lu", tcop_txn_state_.top().first->GetTransactionId());
     // multi-statment txn has been aborted, just block it
     if (tcop_txn_state_.top().second == ResultType::ABORTED) {
       return nullptr;
@@ -327,7 +321,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     auto txn = txn_manager.BeginTransaction(thread_id);
     // pass txn handle to optimizer_
     optimizer_->txn = txn;
-    LOG_INFO("Txn Id: %lu", txn->GetTransactionId());
     // this shouldn't happen
     if (txn == nullptr) {
       LOG_TRACE("Begin txn failed");
@@ -421,8 +414,6 @@ ResultType TrafficCop::BeginQueryHelperJDBC(const size_t thread_id) {
 }
 
 ResultType TrafficCop::CommitQueryHelperJDBC() {
-  LOG_TRACE("before commit txn id: %lu",
-           tcop_txn_state_.top().first->GetTransactionId());
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -518,9 +509,6 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlanJDBC(
     // get ptr to current active txn
     txn = curr_state.first;
   }
-  LOG_TRACE("Transaction Id in ExecuteStatementPlan %lu",
-            txn->GetTransactionId());
-
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
