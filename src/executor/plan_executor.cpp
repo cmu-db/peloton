@@ -59,7 +59,6 @@ ExecuteResult PlanExecutor::ExecutePlan(
 
   PL_ASSERT(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
 
   // Use const std::vector<type::Value> &params to make it more elegant for
   // network
@@ -196,7 +195,6 @@ int PlanExecutor::ExecutePlan(
   // }
   PL_ASSERT(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
   // Use const std::vector<type::Value> &params to make it more elegant for
