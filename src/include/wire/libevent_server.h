@@ -46,6 +46,7 @@ namespace wire {
 
 // Forward Declarations
 class LibeventThread;
+class LibeventMasterThread;
 
 // Libevent Thread States
 enum ConnState {
@@ -236,7 +237,7 @@ struct LibeventServer {
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<LibeventThread> master_thread_;
+  std::shared_ptr<LibeventMasterThread> master_thread_;
   struct event_base *base_;  // libevent event_base
 
   // Flags for controlling server start/close status

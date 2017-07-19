@@ -124,9 +124,11 @@ class LibeventMasterThread : public LibeventThread {
  public:
   LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
 
-  void DispatchConnection(int new_conn_fd, short event_flags);
+  void Start();
 
-  void CloseConnection();
+  void Stop();
+
+  void DispatchConnection(int new_conn_fd, short event_flags);
 
   std::vector<std::shared_ptr<LibeventWorkerThread>> &GetWorkerThreads();
 

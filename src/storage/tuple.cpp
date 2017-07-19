@@ -61,7 +61,7 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
   if (type == value.GetTypeId()) {
     if ((type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
         && (column_length != 0 && value.GetLength() != type::PELOTON_VALUE_NULL)
-        && value.GetLength() > column_length) {
+        && value.GetLength() > column_length + 1) {      // value.GetLength() == strlen(value) + 1 because of '\0'
       throw peloton::ValueOutOfRangeException(type, column_length);
     }
     value.SerializeTo(value_location, is_inlined, data_pool);

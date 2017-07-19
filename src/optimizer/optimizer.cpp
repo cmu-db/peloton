@@ -111,15 +111,21 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Find least cost plan for root group
   OptimizeGroup(root_id, properties);
 
-  ExprMap output_expr_map;
-  auto best_plan = ChooseBestPlan(root_id, properties, &output_expr_map);
-  if (best_plan == nullptr) return nullptr;
+  try {
+    ExprMap output_expr_map;
+    auto best_plan = ChooseBestPlan(root_id, properties, &output_expr_map);
+    if (best_plan == nullptr) return nullptr;
 
-  // Reset memo after finishing the optimization
-  Reset();
-  
-  //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
-  return move(best_plan);
+    // Reset memo after finishing the optimization
+    Reset();
+
+    //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
+    return move(best_plan);
+  }
+  catch (Exception &e) {
+    Reset();
+    throw e;
+  }
 }
 
 void Optimizer::Reset() {

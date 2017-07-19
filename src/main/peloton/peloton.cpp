@@ -44,13 +44,13 @@ int main(int argc, char *argv[]) {
     
     // Start Libevent Server    
     libeventserver.StartServer();
-
-    // Teardown
-    peloton::PelotonInit::Shutdown();
   }
   catch(peloton::ConnectionException exception){
     // Nothing to do here!
   }
+
+  // Teardown
+  peloton::PelotonInit::Shutdown();
 
   return 0;
 }
