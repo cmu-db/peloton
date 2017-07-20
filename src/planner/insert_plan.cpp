@@ -12,17 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/insert_plan.h"
+
 #include "catalog/catalog.h"
-#include "catalog/column.h"
-#include "type/value.h"
-#include "parser/insert_statement.h"
-#include "parser/select_statement.h"
-#include "planner/project_info.h"
+#include "expression/constant_value_expression.h"
 #include "storage/data_table.h"
-#include "storage/tuple.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace planner {
+
 InsertPlan::InsertPlan(storage::DataTable *table, oid_t bulk_insert_count)
     : target_table_(table), bulk_insert_count(bulk_insert_count) {}
 

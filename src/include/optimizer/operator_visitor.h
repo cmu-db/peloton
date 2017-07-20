@@ -49,5 +49,5 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalAggregate *) = 0;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

@@ -75,5 +75,5 @@ class ChildPropertyGenerator : public OperatorVisitor {
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

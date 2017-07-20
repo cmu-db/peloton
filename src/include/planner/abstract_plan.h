@@ -13,10 +13,7 @@
 #pragma once
 
 #include <cstdint>
-#include <iostream>
-#include <map>
 #include <memory>
-#include <vector>
 #include <vector>
 
 #include "catalog/schema.h"

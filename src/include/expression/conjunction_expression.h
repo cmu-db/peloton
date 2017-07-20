@@ -14,6 +14,8 @@
 
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {

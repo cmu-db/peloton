@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/stats/selectivity.h"
-#include "optimizer/stats/stats_util.h"
 
-#include <cmath>
+#include "concurrency/transaction_manager_factory.h"
+
 
 namespace peloton {
 namespace optimizer {

@@ -16,7 +16,6 @@
 #include <sstream>
 #include <vector>
 
-#include "catalog/schema.h"
 #include "common/abstract_tuple.h"
 #include "common/exception.h"
 #include "common/macros.h"
@@ -222,25 +221,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   // Get a string representation for debugging
   const std::string GetInfo() const override {
     std::stringstream os;
-
-    bool first = true;
-    os << "(";
-    for (size_t i = 0; i < container_->size(); i++) {
-      if (first) {
-        first = false;
-      } else {
-        os << ", ";
-      }
-
-      type::Value val = GetValue(i);
-      if (val.IsNull()) {
-        os << "<NULL(" << TypeIdToString(val.GetTypeId()) << ")>";
-      } else {
-        os << val.ToString();
-      }
-    }
-    os << ")";
-
+    os << "FIXME";
     return (os.str());
   }
 

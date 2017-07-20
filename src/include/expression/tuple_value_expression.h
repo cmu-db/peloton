@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace expression {

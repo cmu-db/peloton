@@ -17,14 +17,14 @@
 
 namespace peloton {
 
-namespace parser {}
+namespace parser {
+class SQLStatement;
+}  // namespace parser
 
 namespace optimizer {
+
 class OperatorExpression;
 class ColumnManager;
-}
-
-namespace optimizer {
 
 // Transform a query from parsed statement to operator expressions.
 class QueryToOperatorTransformer : public SqlNodeVisitor {
@@ -64,5 +64,5 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   bool output_inlined;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

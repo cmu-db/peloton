@@ -16,7 +16,6 @@
 #include "codegen/row_batch.h"
 #include "codegen/runtime_state.h"
 #include "codegen/value.h"
-#include "planner/attribute_info.h"
 
 namespace peloton {
 

@@ -17,11 +17,12 @@
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
-#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
+#include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/insert_statement.h"
-#include "parser/select_statement.h"
 #include "planner/insert_plan.h"
 
 namespace peloton {

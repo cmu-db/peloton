@@ -15,7 +15,6 @@
 
 #include "networking/rpc_server.h"
 #include "networking/peloton_service.h"
-#include <iostream>
 
 namespace peloton {
 namespace networking {
