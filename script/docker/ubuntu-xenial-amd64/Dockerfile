@@ -1,7 +1,7 @@
 FROM ubuntu:xenial
 
 ADD . /peloton
-RUN apt-get update && apt-get -y install python-dev
+RUN apt-get update && apt-get -y install python-dev lsb-release
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 
