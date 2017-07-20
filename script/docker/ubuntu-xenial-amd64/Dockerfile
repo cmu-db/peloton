@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:xenial
 
 ADD . /peloton
 RUN apt-get update && apt-get -y install python-dev

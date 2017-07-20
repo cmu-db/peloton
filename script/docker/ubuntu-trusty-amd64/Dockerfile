@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:trusty
 
 ADD . /peloton
 RUN apt-get update && apt-get -y install python-dev
