@@ -29,12 +29,11 @@
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
-#include "optimizer/optimizer.h"
+#include "optimizer/abstract_optimizer.h"
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
 #include <include/parser/postgresparser.h>
-
 
 
 namespace peloton {
@@ -169,7 +168,7 @@ ResultType TrafficCop::ExecuteStatement(
 
   return status;
 }
-// Might be removed
+
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
@@ -223,8 +222,6 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   concurrency::Transaction *txn;
   bool init_failure = false;
   executor::ExecuteResult p_status;
-
-
   auto &curr_state = GetCurrentTxnState();
   if (tcop_txn_state_.empty()) {
     // no active txn, single-statement txn
@@ -319,8 +316,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction(thread_id);
-    // pass txn handle to optimizer_
-    optimizer_->txn = txn;
     // this shouldn't happen
     if (txn == nullptr) {
       LOG_TRACE("Begin txn failed");
@@ -336,7 +331,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       throw ParserException("Error parsing SQL statement");
     }
     LOG_TRACE("Optimizer Build Peloton Plan Tree...");
-    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt);
+    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -566,7 +561,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatementJDBC(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt);
+    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt, nullptr);
     statement->SetPlanTree(plan);
 
     // Get the tables that our plan references so that we know how to

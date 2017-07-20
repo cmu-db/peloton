@@ -58,7 +58,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
@@ -130,7 +130,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
@@ -161,7 +161,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -189,7 +189,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -217,7 +217,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "SELECT MAX(dept_id) FROM department_table;");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(select_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(select_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -243,7 +243,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "DELETE FROM department_table WHERE dept_id < 2");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt_2));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt_2, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -270,7 +270,7 @@ TEST_F(DeleteTests, VariousOperations) {
       peloton_parser.BuildParseTree("DELETE FROM department_table");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");

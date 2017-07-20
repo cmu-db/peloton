@@ -210,7 +210,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
@@ -245,7 +245,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -277,7 +277,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -303,7 +303,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -332,7 +332,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());

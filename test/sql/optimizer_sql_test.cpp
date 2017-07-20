@@ -139,7 +139,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // check for plan node type
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  delete optimizer->txn;
+
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);

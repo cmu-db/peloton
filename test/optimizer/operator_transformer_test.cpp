@@ -47,7 +47,7 @@ class OperatorTransformerTests : public PelotonTest {
     binder::BindNodeVisitor binder;
     binder.BindNameToNode(stmt);
 
-    QueryToOperatorTransformer transformer;
+    QueryToOperatorTransformer transformer(nullptr);
     return transformer.ConvertToOpExpression(stmt);
   }
 

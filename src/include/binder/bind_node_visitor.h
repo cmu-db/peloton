@@ -14,7 +14,6 @@
 #include "binder/binder_context.h"
 #include "parser/statements.h"
 #include "type/types.h"
-#include "concurrency/transaction.h"
 
 namespace peloton {
 
