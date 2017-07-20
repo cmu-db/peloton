@@ -57,14 +57,13 @@ void SetupTables() {
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
-    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree));
+    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree, txn));
     auto status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());
     traffic_cop.CommitQueryHelper();
   }
-//  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(BinderCorrectnessTest, SelectStatementTest) {
@@ -148,7 +147,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
-  delete binder->txn;
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
@@ -163,7 +162,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   }
 
   // Test select from different table instances from the same physical schema
-  delete binder->txn;
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
@@ -181,7 +180,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test alias and select_list
   LOG_INFO("Checking select_list and table alias binding");
-  delete binder->txn;
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   binder->txn = txn;
@@ -195,7 +194,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
-  delete binder->txn;
+  txn_manager.CommitTransaction(txn);
   // Delete the test database
   txn = txn_manager.BeginTransaction();
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
@@ -226,7 +225,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
       dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(deleteStmt);
 
-  delete binder->txn;
+  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("Checking first condition in where clause");
   auto tupleExpr =
@@ -239,8 +238,8 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
       ->GetChild(0);
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
+
   // Delete the test database
-//  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn = txn_manager.BeginTransaction();
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);

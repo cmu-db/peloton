@@ -44,7 +44,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   statement.reset(new Statement("SELECT", sql));
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt));
+      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, nullptr));
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
@@ -165,7 +165,7 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt));
+      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, nullptr));
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
 }

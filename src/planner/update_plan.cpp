@@ -119,7 +119,7 @@ void UpdatePlan::BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tre
 UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree)
     : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
-  BuildInitialUpdatePlan(parse_tree, column_ids);
+  BuildInitialUpdatePlan(parse_tree, column_ids, nullptr);
 
   // Set primary key update flag
   for (auto update_clause : updates_) {
@@ -144,7 +144,7 @@ UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree,
                        std::vector<type::Value> &values, oid_t &index_id)
     : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
-  BuildInitialUpdatePlan(parse_tree, column_ids);
+  BuildInitialUpdatePlan(parse_tree, column_ids, nullptr);
 
   // Set primary key update flag
   for (auto update_clause : updates_) {

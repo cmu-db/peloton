@@ -88,10 +88,9 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   traffic_cop_.SetTcopTxnState(txn);
-  optimizer->txn = txn;
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt);
+  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -115,16 +114,11 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::Optimizer> &optimizer,
     const std::string query) {
-
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  optimizer->txn = txn;
-
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
-  return optimizer->BuildPelotonPlanTree(parsed_stmt);
+  return optimizer->BuildPelotonPlanTree(parsed_stmt, nullptr);
 }
 
 ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,

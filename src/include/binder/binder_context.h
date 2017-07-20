@@ -14,12 +14,17 @@
 #include <string>
 
 #include "type/types.h"
-#include "concurrency/transaction.h"
 
 namespace peloton {
 
 namespace parser {
 struct TableRef;
+}
+
+namespace peloton {
+
+namespace concurrency {
+class Transaction;
 }
 
 namespace binder {

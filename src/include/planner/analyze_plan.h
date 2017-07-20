@@ -39,13 +39,13 @@ class AnalyzePlan : public AbstractPlan {
   explicit AnalyzePlan(storage::DataTable *table);
 
   explicit AnalyzePlan(std::string table_name,
-                       concurrency::Transaction *txn = nullptr);
+                       concurrency::Transaction *txn);
 
   explicit AnalyzePlan(std::string table_name, std::vector<char *> column_names,
-                       concurrency::Transaction *txn = nullptr);
+                       concurrency::Transaction *txn);
 
   explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree,
-                       concurrency::Transaction *txn = nullptr);
+                       concurrency::Transaction *txn);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ANALYZE; }
 

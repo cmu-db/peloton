@@ -53,13 +53,11 @@ class Optimizer : public AbstractOptimizer {
 
   Optimizer();
 
-
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree,
+      concurrency::Transaction *txn) override;
 
   void Reset() override;
-
-  concurrency::Transaction *txn = nullptr;
 
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
@@ -70,7 +68,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the DDL plan if it is a DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
-      parser::SQLStatement *tree, bool &is_ddl_stmt);
+      parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::Transaction *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
@@ -78,7 +76,8 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the root group expression for the inserted query
    */
-  std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree);
+  std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree,
+                                                   concurrency::Transaction *txn);
 
   /* GetQueryTreeRequiredProperties - get the required physical properties for
    * a peloton query tree.
