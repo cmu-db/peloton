@@ -56,6 +56,7 @@ class CostAndStatsCalculator : public OperatorVisitor {
   void Visit(const PhysicalRightHashJoin *) override;
   void Visit(const PhysicalOuterHashJoin *) override;
   void Visit(const PhysicalInsert *) override;
+  void Visit(const PhysicalInsertSelect *) override;
   void Visit(const PhysicalDelete *) override;
   void Visit(const PhysicalUpdate *) override;
   void Visit(const PhysicalHashGroupBy *) override;

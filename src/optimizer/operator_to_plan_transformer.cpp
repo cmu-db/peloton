@@ -350,6 +350,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
   output_plan_ = move(insert_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalInsertSelect *op) {
+  unique_ptr<planner::AbstractPlan> insert_plan(
+      new planner::InsertPlan(op->target_table));
+  // Add child
+  insert_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(insert_plan);
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   // TODO: Support index scan
   auto scan_plan = (planner::AbstractScan *)children_plans_[0].get();

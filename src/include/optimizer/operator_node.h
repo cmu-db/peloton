@@ -39,6 +39,7 @@ enum class OpType {
   LogicalHash,
   Limit,
   LogicalInsert,
+  LogicalInsertSelect,
   LogicalDelete,
   LogicalUpdate,
   // Separate between logical and physical ops
@@ -62,6 +63,7 @@ enum class OpType {
   RightHashJoin,
   OuterHashJoin,
   Insert,
+  InsertSelect,
   Delete,
   Update,
   Aggregate,

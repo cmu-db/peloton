@@ -94,7 +94,11 @@ void QueryPropertyExtractor::Visit(const parser::LimitDescription *limit) {
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryPropertyExtractor::Visit(
-    UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
+    UNUSED_ATTRIBUTE const parser::InsertStatement *op) {
+  if (op->select != nullptr)
+    op->select->Accept(this);
+}
+
 void QueryPropertyExtractor::Visit(const parser::DeleteStatement *op) {
   if (op->expr != nullptr) {
     property_set_.AddProperty(
