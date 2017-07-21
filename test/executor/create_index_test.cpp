@@ -131,7 +131,6 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
@@ -160,7 +159,6 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("INDEX CREATED!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");

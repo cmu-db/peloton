@@ -22,7 +22,7 @@
 #include "common/statement.h"
 #include "concurrency/transaction.h"
 #include "executor/plan_executor.h"
-#include "optimizer/optimizer.h"
+#include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
 #include "type/types.h"
@@ -77,38 +77,10 @@ class TrafficCop {
                                               std::string &error_message,
                                               const size_t thread_id = 0);
 
-  // PortalExec - Execute query string
-  ResultType ExecuteStatementJDBC(const std::string &query,
-                              std::vector<StatementResult> &result,
-                              std::vector<FieldInfo> &tuple_descriptor,
-                              int &rows_changed, std::string &error_message,
-                              const size_t thread_id = 0);
-  ResultType ExecuteStatementJDBC(
-      const std::shared_ptr<Statement> &statement,
-      const std::vector<type::Value> &params, const bool unnamed,
-      std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-      const std::vector<int> &result_format,
-      std::vector<StatementResult> &result, int &rows_change,
-      std::string &error_message, const size_t thread_id = 0);
-
-  // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
-  // statement
-  executor::ExecuteResult ExecuteStatementPlanJDBC(
-      const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-      std::vector<StatementResult> &result,
-      const std::vector<int> &result_format, const size_t thread_id = 0);
-
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<Statement> PrepareStatementJDBC(const std::string &statement_name,
+  std::shared_ptr<Statement> PrepareStatementExtended(const std::string &statement_name,
                                               const std::string &query_string,
                                               std::string &error_message);
-
-  ResultType BeginQueryHelperJDBC(const size_t thread_id);
-
-  ResultType CommitQueryHelperJDBC();
-
-  ResultType AbortQueryHelperJDBC();
-
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -126,15 +98,22 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
+  void SetPsqlFlag(bool is_psql) {
+    psql_ = is_psql;
+  }
+
   ResultType CommitQueryHelper();
 
  private:
 
   // The optimizer used for this connection
-  std::unique_ptr<optimizer::Optimizer> optimizer_;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // flag of single statement txn
   bool single_statement_txn_;
+
+  // flag of psql protocol
+  bool psql_ = true;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns

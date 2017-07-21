@@ -29,7 +29,7 @@
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
-#include "optimizer/abstract_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
@@ -93,13 +93,17 @@ ResultType TrafficCop::CommitQueryHelper() {
   // I will block following queries in that transaction until 'COMMIT' or 'ROLLBACK'
   // After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
-    // rollback
+    // txn committed
     auto result = txn_manager.CommitTransaction(txn);
     return result;
   } else {
-    // otherwise, txn committed
-    auto result = txn_manager.AbortTransaction(txn);
-    return result;
+    // otherwise, rollback
+    if (psql_) {
+      auto result = txn_manager.AbortTransaction(txn);
+      return result;
+    } else {
+      return ResultType::ABORTED;
+    }
   }
 }
 
@@ -113,7 +117,6 @@ ResultType TrafficCop::AbortQueryHelper() {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
-
     return result;
   } else {
     // otherwise, the txn has already been aborted
@@ -138,7 +141,8 @@ ResultType TrafficCop::ExecuteStatement(
       rows_changed = 0;
       return AbortQueryHelper();
     } else { // multi-statment txn
-      if (query == "COMMIT" || query == "ROLLBACK") {
+      if (statement->GetQueryType() == QueryType::QUERY_COMMIT ||
+          statement->GetQueryType() == QueryType::QUERY_ROLLBACK ) {
         // commit aborted txn
         return CommitQueryHelper();
       } else {
@@ -186,7 +190,6 @@ ResultType TrafficCop::ExecuteStatement(
             statement->GetQueryString().c_str());
   LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-//  LOG_DEBUG("Result Type %d", tcop_txn_state_.top().second);
 
   try {
     switch (statement->GetQueryType()) {
@@ -195,8 +198,12 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_COMMIT:
         return CommitQueryHelper();
       case QueryType::QUERY_ROLLBACK:
-        tcop_txn_state_.top().second = ResultType::ABORTED;
-        return CommitQueryHelper();
+        if (psql_) {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          return CommitQueryHelper();
+        } else {
+          return AbortQueryHelper();
+        }
       default:
         auto status = ExecuteStatementPlan(statement->GetPlanTree(), params,
                                            result, result_format,
@@ -234,6 +241,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // get ptr to current active txn
     txn = curr_state.first;
   }
+
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
@@ -246,32 +254,53 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     }
 
     auto txn_result = txn->GetResult();
-//    LOG_DEBUG("Txn Result Type %d", txn_result);
-
     if (single_statement_txn_ == true || init_failure == true ||
         txn_result == ResultType::FAILURE) {
-      LOG_TRACE(
-          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-          single_statement_txn, init_failure,
-          ResultTypeToString(txn_result).c_str());
-      switch (txn_result) {
-        case ResultType::SUCCESS:
-          // Commit single statement
-        LOG_TRACE("Commit Transaction");
-          p_status.m_result = CommitQueryHelper();
-          break;
+      if (psql_) {
+        LOG_TRACE(
+            "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+            single_statement_txn, init_failure,
+            ResultTypeToString(txn_result).c_str());
+        switch (txn_result) {
+          case ResultType::SUCCESS:
+            // Commit single statement
+            LOG_TRACE("Commit Transaction");
+            p_status.m_result = CommitQueryHelper();
+            break;
 
-        case ResultType::FAILURE:
-        default:
-          // Abort
-        LOG_TRACE("Abort Transaction");
-          if (single_statement_txn_ == true) {
-            LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-            p_status.m_result = AbortQueryHelper();
-          } else {
-            tcop_txn_state_.top().second = ResultType::ABORTED;
-            p_status.m_result = ResultType::ABORTED;
-          }
+          case ResultType::FAILURE:
+          default:
+            // Abort
+            LOG_TRACE("Abort Transaction");
+            if (single_statement_txn_ == true) {
+              LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+              p_status.m_result = AbortQueryHelper();
+            } else {
+              tcop_txn_state_.top().second = ResultType::ABORTED;
+              p_status.m_result = ResultType::ABORTED;
+            }
+        }
+      } else {
+        auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+        LOG_TRACE(
+            "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+            single_statement_txn, init_failure,
+            ResultTypeToString(txn_result).c_str());
+        switch (txn_result) {
+          case ResultType::SUCCESS:
+            // Commit
+            LOG_TRACE("Commit Transaction");
+            p_status.m_result = txn_manager.CommitTransaction(txn);
+            break;
+
+          case ResultType::FAILURE:
+          default:
+            // Abort
+            LOG_TRACE("Abort Transaction");
+            p_status.m_result = txn_manager.AbortTransaction(txn);
+            curr_state.second = ResultType::ABORTED;
+        }
       }
     }
   } else {
@@ -305,7 +334,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // --BEGIN
     // --single-statement transaction
     // ----prepareStatement abort
-    if (query_string == "BEGIN") {  // only begin a new transaction
+    if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
       LOG_TRACE("BEGIN");
       single_statement_txn_ = false;
@@ -361,193 +390,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 }
 
-ResultType TrafficCop::ExecuteStatementJDBC(
-    const std::string &query, std::vector<StatementResult> &result,
-    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Received %s", query.c_str());
-
-  // Prepare the statement
-  std::string unnamed_statement = "unnamed";
-  auto statement = PrepareStatementJDBC(unnamed_statement, query, error_message);
-
-  if (statement.get() == nullptr) {
-    return ResultType::FAILURE;
-  }
-
-  // Then, execute the statement
-  bool unnamed = true;
-  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  std::vector<type::Value> params;
-  auto status =
-      ExecuteStatementJDBC(statement, params, unnamed, nullptr, result_format,
-                       result, rows_changed, error_message, thread_id);
-
-  if (status == ResultType::SUCCESS) {
-    LOG_TRACE("Execution succeeded!");
-    tuple_descriptor = statement->GetTupleDescriptor();
-  } else {
-    LOG_TRACE("Execution failed!");
-  }
-
-  return status;
-}
-
-ResultType TrafficCop::BeginQueryHelperJDBC(const size_t thread_id) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction(thread_id);
-
-  // this shouldn't happen
-  if (txn == nullptr) {
-    LOG_TRACE("Begin txn failed");
-    return ResultType::FAILURE;
-  }
-
-  // initialize the current result as success
-  tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  return ResultType::SUCCESS;
-}
-
-ResultType TrafficCop::CommitQueryHelperJDBC() {
-  // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
-  // commit the txn only if it has not aborted already
-  if (curr_state.second != ResultType::ABORTED) {
-    auto txn = curr_state.first;
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto result = txn_manager.CommitTransaction(txn);
-    LOG_TRACE("final tcop_txn_state_ size() %lu", tcop_txn_state_.size());
-    return result;
-  } else {
-    // otherwise, the txn has already been aborted
-    return ResultType::ABORTED;
-  }
-}
-
-ResultType TrafficCop::AbortQueryHelperJDBC() {
-  // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
-  // explicitly abort the txn only if it has not aborted already
-  if (curr_state.second != ResultType::ABORTED) {
-    auto txn = curr_state.first;
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto result = txn_manager.AbortTransaction(txn);
-    return result;
-  } else {
-    // otherwise, the txn has already been aborted
-    return ResultType::ABORTED;
-  }
-}
-
-ResultType TrafficCop::ExecuteStatementJDBC(
-    const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
-    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
-                                                               param_stats);
-  }
-  LOG_TRACE("Execute Statement of name: %s",
-            statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement of query: %s",
-            statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement Plan:\n%s",
-            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-
-  try {
-    switch(statement->GetQueryType()) {
-      case QueryType::QUERY_BEGIN:
-        return BeginQueryHelperJDBC(thread_id);
-      case QueryType::QUERY_COMMIT:
-        return CommitQueryHelperJDBC();
-      case QueryType::QUERY_ROLLBACK:
-        return AbortQueryHelperJDBC();
-      default:
-        auto status = ExecuteStatementPlanJDBC(statement->GetPlanTree().get(), params,
-                                           result, result_format,
-                                           thread_id);
-        LOG_TRACE("Statement executed. Result: %s",
-                  ResultTypeToString(status.m_result).c_str());
-        rows_changed = status.m_processed;
-        return status.m_result;
-    }
-  } catch (Exception &e) {
-    error_message = e.what();
-    return ResultType::FAILURE;
-  }
-}
-
-executor::ExecuteResult TrafficCop::ExecuteStatementPlanJDBC(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format,
-    const size_t thread_id) {
-  concurrency::Transaction *txn;
-  bool single_statement_txn = false, init_failure = false;
-  executor::ExecuteResult p_status;
-
-  auto &curr_state = GetCurrentTxnState();
-  if (tcop_txn_state_.empty()) {
-    // no active txn, single-statement txn
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    // new txn, reset result status
-    curr_state.second = ResultType::SUCCESS;
-    txn = txn_manager.BeginTransaction(thread_id);
-    single_statement_txn = true;
-  } else {
-    // get ptr to current active txn
-    txn = curr_state.first;
-  }
-  // skip if already aborted
-  if (curr_state.second != ResultType::ABORTED) {
-    PL_ASSERT(txn);
-    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                   result_format);
-
-    if (p_status.m_result == ResultType::FAILURE) {
-      // only possible if init failed
-      init_failure = true;
-    }
-
-    auto txn_result = txn->GetResult();
-    if (single_statement_txn == true || init_failure == true ||
-        txn_result == ResultType::FAILURE) {
-      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-      LOG_TRACE(
-          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-          single_statement_txn, init_failure,
-          ResultTypeToString(txn_result).c_str());
-      switch (txn_result) {
-        case ResultType::SUCCESS:
-          // Commit
-          LOG_TRACE("Commit Transaction");
-          p_status.m_result = txn_manager.CommitTransaction(txn);
-          break;
-
-        case ResultType::FAILURE:
-        default:
-          // Abort
-          LOG_TRACE("Abort Transaction");
-          p_status.m_result = txn_manager.AbortTransaction(txn);
-          curr_state.second = ResultType::ABORTED;
-      }
-    }
-  } else {
-    // otherwise, we have already aborted
-    p_status.m_result = ResultType::ABORTED;
-  }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
-  return p_status;
-}
-
-std::shared_ptr<Statement> TrafficCop::PrepareStatementJDBC(
+std::shared_ptr<Statement> TrafficCop::PrepareStatementExtended(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
