@@ -40,7 +40,7 @@
 // Peloton port
 CONFIG_int(port,
            "Peloton port (default: 15721)",
-           15217,
+           15721,
            false, false);
 
 // Maximum number of connections
@@ -138,16 +138,15 @@ CONFIG_bool(h,
             "Show help",
             false,
             false, false);
-CONFIG_bool(help,
-            "Show help",
-            false,
-            false, false);
 
+
+// special case: -help
+DECLARE_bool(help);
 
 namespace peloton {
 namespace configuration {
 
-void initialize_configuration_manager() {
+void initialize_parameters() {
   REGISTER(port);
   REGISTER(max_connections);
   REGISTER(socket_family);
@@ -159,14 +158,17 @@ void initialize_configuration_manager() {
   REGISTER(layout_tuner);
   REGISTER(codegen);
   REGISTER(h);
-  REGISTER(help);
+
+  // special case: -help
+  peloton::configuration::ConfigurationManager* config = peloton::configuration::ConfigurationManager::GetInstance();
+  config->DefineConfig("help", &FLAGS_help, type::TypeId::BOOLEAN, "Show help", false, false, false);
 }
 
 } // End configuration namespace
 } // End peloton namespace
 
 // Layout mode
-int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
+peloton::LayoutType peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
 // peloton::LoggingType peloton_logging_mode = peloton::LoggingTypeId::INVALID;

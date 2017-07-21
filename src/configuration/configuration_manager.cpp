@@ -25,125 +25,81 @@ ConfigurationManager* ConfigurationManager::GetInstance() {
   return config_manager.get();
 }
 
-bool ConfigurationManager::GetBool(const std::string &name) {
+template<typename T>
+T ConfigurationManager::GetValue(const std::string &name) {
   auto param = config.find(name);
   if (param == config.end()) {
     throw new Exception("no such configuration: " + name);
   }
-  if (param->second.type != "bool") {
+  if (param->second.value_type != type::TypeId::BOOLEAN) {
     throw new Exception("configuration " + name + " is not a bool");
   }
-  return to_bool(param->second.value);
+  return to_value<T>(param->second.value, param->second.value_type);
 }
 
-unsigned long long ConfigurationManager::GetInt(const std::string &name) {
+template<typename T>
+void ConfigurationManager::SetValue(const std::string &name, const T &value) {
   auto param = config.find(name);
   if (param == config.end()) {
     throw new Exception("no such configuration: " + name);
   }
-  if (param->second.type != "int") {
-    throw new Exception("configuration " + name + " is not a int");
-  }
-  return to_int(param->second.value);
-}
-
-std::string ConfigurationManager::GetString(const std::string &name) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
-  }
-  return param->second.value;
-}
-
-void ConfigurationManager::SetBool(const std::string &name, bool value) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
-  }
-  if (param->second.type != "bool") {
+  if (param->second.value_type != type::TypeId::BOOLEAN) {
     throw new Exception("configuration " + name + " is not a bool");
   }
-  return param->second.value = to_string(value);
+  param->second.value = to_string(value);
 }
 
-void ConfigurationManager::SetInt(const std::string &name, unsigned long long value) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
+template<typename T>
+void ConfigurationManager::DefineConfig(const std::string &name, void* value, type::TypeId type,
+                                        const std::string &description, const T &default_value,
+                                        bool is_mutable, bool is_persistent) {
+  if (config.count(name) > 0) {
+    throw Exception("configuration " + name + " already exists");
   }
-  if (param->second.type != "int") {
-    throw new Exception("configuration " + name + " is not a int");
+  std::string value_str = "";
+  switch (type) {
+    case type::TypeId::INTEGER:
+      break;
+    case type::TypeId::BOOLEAN:
+      break;
+    case type::TypeId::VARCHAR
+      break;
   }
-  return param->second.value = to_string(value);
-}
-
-void ConfigurationManager::SetString(const std::string &name, const std::string &value) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
-  }
-  return param->second.value = value;
+  config[name] = Param(value_str,, description, type::TypeId::BOOLEAN,
+                       to_string(default_value), is_mutable, is_persistent);
 }
 
 void ConfigurationManager::InitializeCatalog() {
-  ConfigCatalog* config_catalog = ConfigCatalog::GetInstance();
+  peloton::catalog::ConfigCatalog* config_catalog = peloton::catalog::ConfigCatalog::GetInstance();
+
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  type::AbstractPool *pool = pool_.get();
+
   for (auto conf : config) {
+    config_catalog->InsertConfig(conf.first, conf.second.value, conf.second.value_type,
+                                 conf.second.desc, "", "", conf.second.default_value,
+                                 conf.second.is_mutable, conf.second.is_persistent,
+                                 pool, txn);
   }
+
+  txn_manager.CommitTransaction(txn);
 }
 
 void ConfigurationManager::PrintConfiguration() {
   LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
   LOG_INFO(" ");
 
-  LOG_INFO("%30s: %10llu", "Port", GetInt("port"));
-  LOG_INFO("%30s: %10s", "Socket Family", GetString("socket_family").c_str());
-  LOG_INFO("%30s: %10s", "Statistics", GetBool("stats_mode") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10llu", "Max Connections", GetInt("max_connections"));
-  LOG_INFO("%30s: %10s", "Index Tuner", GetBool("index_tuner") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10s", "Layout Tuner", GetBool("layout_tuner") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10s", "Code-generation", GetBool("codegen") ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10llu", "Port", GET_INT("port"));
+  LOG_INFO("%30s: %10s", "Socket Family", GET_STRING("socket_family").c_str());
+  LOG_INFO("%30s: %10s", "Statistics", GET_INT("stats_mode") ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10llu", "Max Connections", GET_INT("max_connections"));
+  LOG_INFO("%30s: %10s", "Index Tuner", GET_BOOL("index_tuner") ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10s", "Layout Tuner", GET_BOOL("layout_tuner") ? "enabled" : "disabled");
+  LOG_INFO("%30s: %10s", "Code-generation", GET_BOOL("codegen") ? "enabled" : "disabled");
 
   LOG_INFO(" ");
   LOG_INFO("%30s", "//===---------------------------------------------------===//");
-}
-
-bool ConfigurationManager::DefineBool(const std::string &name,
-                                      bool value,
-                                      const std::string &description,
-                                      bool default_value,
-                                      bool is_mutable,
-                                      bool is_persistent) {
-  if (config.count(name) > 0) {
-    throw Exception("configuration " + name + " already exists");
-  }
-  config[name] = Param(to_string(value), description, "bool",
-                       to_string(default_value), his_mutable, is_persistent);
-}
-
-bool ConfigurationManager::DefineInt(const std::string &name,
-                                     unsigned long long value,
-                                     const std::string &description,
-                                     unsigned long long default_value,
-                                     bool is_mutable,
-                                     bool is_persistent) {
-  if (config.count(name) > 0) {
-    throw Exception("configuration " + name + " already exists");
-  }
-  config[name] = Param(to_string(value), description, "int",
-                       to_string(default_value), his_mutable, is_persistent);
-}
-
-bool ConfigurationManager::DefineString(const std::string &name,
-                                        const std::string &value,
-                                        const std::string &description,
-                                        const std::string default_value,
-                                        bool is_mutable,
-                                        bool is_persistent) {
-  if (config.count(name) > 0) {
-    throw Exception("configuration " + name + " already exists");
-  }
-  config[name] = Param(value, description, "string",
-                       default_value, his_mutable, is_persistent);
 }
 
 }
