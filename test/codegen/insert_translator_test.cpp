@@ -15,6 +15,7 @@
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager.h"
 #include "planner/insert_plan.h"
+#include "planner/seq_scan_plan.h"
 #include "sql/testing_sql_util.h"
 #include "optimizer/optimizer.h"
 
@@ -62,49 +63,6 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   // Check the post-condition, i.e. verify the result
   num_tuples = table->GetTupleCount();
   EXPECT_EQ(num_tuples, 1);
-}
-
-// Insert all tuples from table2 into table1.
-// This test uses the interpreted executor, just for comparison.
-TEST_F(InsertTranslatorTest, InsertScanExecutor) {
-  auto table1 = &GetTestTable(TestTableId1());
-  auto table2 = &GetTestTable(TestTableId2());
-
-  LoadTestTable(TestTableId2(), 10);
-
-  // Insert into table1
-  std::unique_ptr<planner::InsertPlan> insert_plan(
-      new planner::InsertPlan(table1));
-
-  // Scan from table2
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(
-      new planner::SeqScanPlan(table2, nullptr, {0, 1, 2, 3}));
-
-  insert_plan->AddChild(std::move(seq_scan_plan));
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  concurrency::Transaction *txn = txn_manager.BeginTransaction();
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
-  std::unique_ptr<executor::InsertExecutor> insert_executor =
-      std::make_unique<executor::InsertExecutor>(insert_plan.get(),
-                                                 context.get());
-
-  std::unique_ptr<executor::SeqScanExecutor> scan_executor =
-      std::make_unique<executor::SeqScanExecutor>(insert_plan->GetChild(0),
-                                                  context.get());
-
-  insert_executor->AddChild(scan_executor.get());
-
-  EXPECT_TRUE(insert_executor->Init());
-  EXPECT_TRUE(insert_executor->Execute());
-
-  txn_manager.CommitTransaction(txn);
-
-  EXPECT_EQ(table1->GetTupleCount(), table2->GetTupleCount());
 }
 
 // Insert all tuples from table2 into table1.
