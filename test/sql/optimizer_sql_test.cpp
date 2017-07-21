@@ -119,7 +119,7 @@ class OptimizerSQLTests : public PelotonTest {
   }
 
  protected:
-  unique_ptr<optimizer::Optimizer> optimizer;
+  unique_ptr<optimizer::AbstractOptimizer> optimizer;
   vector<StatementResult> result;
   vector<FieldInfo> tuple_descriptor;
   string error_message;

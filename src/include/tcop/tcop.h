@@ -128,8 +128,6 @@ class TrafficCop {
 
   ResultType CommitQueryHelper();
 
-  bool prepared_ = false;
-
  private:
 
   // The optimizer used for this connection

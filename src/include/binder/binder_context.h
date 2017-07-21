@@ -21,8 +21,6 @@ namespace parser {
 struct TableRef;
 }
 
-namespace peloton {
-
 namespace concurrency {
 class Transaction;
 }
