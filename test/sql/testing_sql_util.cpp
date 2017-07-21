@@ -61,22 +61,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   return status;
 }
 
-// Execute a SQL query end-to-end
-ResultType TestingSQLUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<StatementResult> &result,
-    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed
-) {
-  LOG_INFO("Query: %s", query.c_str());
-  std::string error_message;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_changed, error_message);
-  LOG_INFO("Statement executed. Result: %s",
-           ResultTypeToString(status).c_str());
-
-  return status;
-}
-
 // Execute a SQL query end-to-end with the specific optimizer
 ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,

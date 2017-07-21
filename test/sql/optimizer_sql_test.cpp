@@ -156,7 +156,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   query = "SELECT a from test order by c desc";
 
   // check for plan node type
-//  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
@@ -175,7 +175,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   query = "SELECT a, b, c from test order by a + c";
 
   // check for plan node type
-//  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::SEQSCAN);
