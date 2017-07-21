@@ -20,12 +20,15 @@
 #include "common/thread_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
+#include "configuration/configuration_manager.h"
 
 namespace peloton {
 
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
+  configuration::ConfigurationManager* config = configuration::ConfigurationManager::GetInstance();
+
   CONNECTION_THREAD_COUNT = std::thread::hardware_concurrency();
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
@@ -46,7 +49,7 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (FLAGS_index_tuner == true) {
+  if (config->GetBool("index_tuner")) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -54,7 +57,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (FLAGS_layout_tuner == true) {
+  if (config->GetBool("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -75,14 +78,16 @@ void PelotonInit::Initialize() {
 }
 
 void PelotonInit::Shutdown() {
+  configuration::ConfigurationManager* config = configuration::ConfigurationManager::GetInstance();
+
   // shut down index tuner
-  if (FLAGS_index_tuner == true) {
+  if (config->GetBool("index_tuner")) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (FLAGS_layout_tuner == true) {
+  if (config->GetBool("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
