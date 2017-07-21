@@ -124,6 +124,20 @@ class LogicalInsertToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalInsertSelectToPhysical
+class LogicalInsertSelectToPhysical : public Rule {
+ public:
+  LogicalInsertSelectToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const
+      override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+      const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// LogicalGroupByToHashGroupBy
 class LogicalGroupByToHashGroupBy : public Rule {
  public:

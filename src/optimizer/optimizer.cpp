@@ -58,6 +58,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
   physical_implementation_rules_.emplace_back(
+      new LogicalInsertSelectToPhysical());
+  physical_implementation_rules_.emplace_back(
       new LogicalGroupByToHashGroupBy());
   physical_implementation_rules_.emplace_back(
       new LogicalGroupByToSortGroupBy());

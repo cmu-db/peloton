@@ -232,12 +232,20 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
                                                         op->GetTableName());
-
-  auto insert_expr = std::make_shared<OperatorExpression>(
-      LogicalInsert::make(target_table, op->columns, op->insert_values));
-
-  output_expr = insert_expr;
+  if (op->type == InsertType::SELECT) {
+    auto insert_expr = std::make_shared<OperatorExpression>(
+        LogicalInsertSelect::make(target_table));
+    op->select->Accept(this);
+    insert_expr->PushChild(output_expr);
+    output_expr = insert_expr;
+  }
+  else {
+    auto insert_expr = std::make_shared<OperatorExpression>(
+        LogicalInsert::make(target_table, op->columns, op->insert_values));
+    output_expr = insert_expr;
+  }
 }
+
 void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName());

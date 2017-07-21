@@ -74,6 +74,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalInsert *) override;
 
+  void Visit(const PhysicalInsertSelect *) override;
+
   void Visit(const PhysicalDelete *) override;
 
   void Visit(const PhysicalUpdate *) override;

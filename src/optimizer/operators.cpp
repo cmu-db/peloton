@@ -146,6 +146,12 @@ Operator LogicalInsert::make(
   return Operator(insert_op);
 }
 
+Operator LogicalInsertSelect::make(storage::DataTable *target_table) {
+  LogicalInsertSelect *insert_op = new LogicalInsertSelect;
+  insert_op->target_table = target_table;
+  return Operator(insert_op);
+}
+
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
@@ -344,6 +350,15 @@ Operator PhysicalInsert::make(
 }
 
 //===--------------------------------------------------------------------===//
+// PhysicalInsertSelect
+//===--------------------------------------------------------------------===//
+Operator PhysicalInsertSelect::make(storage::DataTable *target_table) {
+  PhysicalInsertSelect *insert_op = new PhysicalInsertSelect;
+  insert_op->target_table = target_table;
+  return Operator(insert_op);
+}
+
+//===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
 Operator PhysicalDelete::make(storage::DataTable *target_table) {
@@ -480,6 +495,9 @@ template <>
 void OperatorNode<LogicalInsert>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
+void OperatorNode<LogicalInsertSelect>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
 void OperatorNode<LogicalDelete>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -509,6 +527,8 @@ template <>
 std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
 template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
+template <>
+std::string OperatorNode<LogicalInsertSelect>::name_ = "LogicalInsertSelect";
 template <>
 std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
 template <>
@@ -549,6 +569,8 @@ std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
 template <>
 std::string OperatorNode<PhysicalInsert>::name_ = "PhysicalInsert";
 template <>
+std::string OperatorNode<PhysicalInsertSelect>::name_ = "PhysicalInsertSelect";
+template <>
 std::string OperatorNode<PhysicalDelete>::name_ = "PhysicalDelete";
 template <>
 std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
@@ -584,6 +606,8 @@ template <>
 OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
+template <>
+OpType OperatorNode<LogicalInsertSelect>::type_ = OpType::LogicalInsertSelect;
 template <>
 OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
 template <>
@@ -622,6 +646,8 @@ template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
 template <>
 OpType OperatorNode<PhysicalInsert>::type_ = OpType::Insert;
+template <>
+OpType OperatorNode<PhysicalInsertSelect>::type_ = OpType::InsertSelect;
 template <>
 OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
 template <>
