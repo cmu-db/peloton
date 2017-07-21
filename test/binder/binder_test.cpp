@@ -42,7 +42,6 @@ void SetupTables() {
 
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
-
   optimizer::Optimizer optimizer;
 
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
@@ -73,11 +72,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test regular table name
   LOG_INFO("Parsing sql query");
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(nullptr));
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  binder->txn = txn;
+  binder->SetTxn(txn);
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
           "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -150,7 +149,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->txn = txn;
+  binder->SetTxn(txn);
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -165,7 +164,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->txn = txn;
+  binder->SetTxn(txn);
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -183,7 +182,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->txn = txn;
+  binder->SetTxn(txn);
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -214,12 +213,11 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   oid_t tableB_oid =
       catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b")->GetOid();
 
-  string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
-
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  binder->txn = txn;
+  string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
+
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt =
       dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));

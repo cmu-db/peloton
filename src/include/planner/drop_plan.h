@@ -35,10 +35,10 @@ class DropPlan : public AbstractPlan {
   explicit DropPlan(storage::DataTable *table);
 
   explicit DropPlan(std::string name,
-                    concurrency::Transaction *txn = nullptr);
+                    concurrency::Transaction *txn);
 
   explicit DropPlan(parser::DropStatement *parse_tree,
-                    concurrency::Transaction *txn = nullptr);
+                    concurrency::Transaction *txn);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DROP; }
 

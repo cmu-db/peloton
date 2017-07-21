@@ -331,12 +331,15 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   query = "DROP TABLE test2";
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-//  try {
-//    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
-//    EXPECT_TRUE(false);
-//  } catch (Exception& e) {
-//    LOG_INFO("Correct! Exception(%s) catched", e.what());
-//  }
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  try {
+    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2", txn);
+    EXPECT_TRUE(false);
+  } catch (Exception& e) {
+    txn_manager.CommitTransaction(txn);
+    LOG_INFO("Correct! Exception(%s) catched", e.what());
+  }
 }
 
 TEST_F(OptimizerSQLTests, GroupByTest) {

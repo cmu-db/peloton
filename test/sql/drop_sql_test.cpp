@@ -66,13 +66,15 @@ TEST_F(DropSQLTests, DropTableTest) {
   EXPECT_EQ(result.empty(), true);
 
   // Check the table does not exist
-//  try {
-//    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-//                                                              "test");
-//  } catch (CatalogException &e) {
-//    table = nullptr;
-//  }
-//  EXPECT_EQ(table, nullptr);
+  txn = txn_manager.BeginTransaction();
+  try {
+    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                              "test", txn);
+  } catch (CatalogException &e) {
+    txn_manager.CommitTransaction(txn);
+    table = nullptr;
+  }
+  EXPECT_EQ(table, nullptr);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
