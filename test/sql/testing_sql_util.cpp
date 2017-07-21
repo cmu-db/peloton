@@ -79,7 +79,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
 
 // Execute a SQL query end-to-end with the specific optimizer
 ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-    std::unique_ptr<optimizer::Optimizer> &optimizer,
+    std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
@@ -112,7 +112,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 }
 
 std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
-    std::unique_ptr<optimizer::Optimizer> &optimizer,
+    std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 

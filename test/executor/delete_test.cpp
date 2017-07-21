@@ -81,10 +81,7 @@ TEST_F(DeleteTests, VariousOperations) {
 //  optimizer::SimpleOptimizer optimizer;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
-
-
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
-
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::TypeId::INTEGER,
