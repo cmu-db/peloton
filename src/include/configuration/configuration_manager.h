@@ -12,29 +12,37 @@
 
 #pragma once
 
-#include "type/types.h"
 #include <gflags/gflags.h>
+#include "type/types.h"
+#include "type/ephemeral_pool.h"
+
+#define GET_INT(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<unsigned long long>(name))
+#define GET_BOOL(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<bool>(name))
+#define GET_STRING(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<std::string>(name))
+
+#define SET_INT(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<unsigned long long>(name, value))
+#define SET_BOOL(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<bool>(name, value))
+#define SET_STRING(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<std::string>(name, value))
 
 namespace peloton {
 namespace configuration {
 
-void initialize_configuration_manager();
+void initialize_parameters();
 
 class ConfigurationManager {
 public:
   static ConfigurationManager* GetInstance();
 
-  bool GetBool(const std::string &name);
+  template<typename T>
+  T GetValue(const std::string &name);
 
-  unsigned long long GetInt(const std::string &name);
+  template<typename T>
+  void SetValue(const std::string &name, const T &value);
 
-  std::string GetString(const std::string &name);
-
-  bool SetBool(const std::string &name, bool value);
-
-  bool SetInt(const std::string &name, unsigned long long value);
-
-  bool SetString(const std::string &name, const std::string &value);
+  template<typename T>
+  void DefineConfig(const std::string &name, void* value, type::TypeId type,
+                    const std::string &description, const T &default_value,
+                    bool is_mutable, bool is_persistent);
 
   void InitializeCatalog();
 
@@ -43,65 +51,57 @@ public:
 private:
 
   struct Param {
-    std::string value, desc, type;
-    std::string default_value;
+    void* value;
+    std::string desc, default_value;
+    type::TypeId value_type;
     bool is_mutable, is_persistent;
-    Param(std::string val, std::string desc, std::string type,
+    Param() {}
+    Param(void* val, std::string desc, type::TypeId type,
           std::string default_val, bool is_mutable, bool is_persistent)
-            : value(val), desc(desc), type(type),
-              default_value(default_val),
+            : value(val), desc(desc), default_value(default_val),
+              value_type(type),
               is_mutable(is_mutable), is_persistent(is_persistent) {}
   };
 
-  std::map<std::string, Param> config;
+  std::unordered_map<std::string, Param> config;
+  std::unique_ptr<type::AbstractPool> pool_;
 
-  bool is_null(const std::string &s) {
-    return s == "";
+  ConfigurationManager() {
+    pool_.reset(new type::EphemeralPool());
   }
 
-  bool to_bool(const std::string &s) {
-    return s == "true";
-  }
-
-  unsigned long long to_int(const std::string &s) {
-    return atoll(s.data());
-  }
-
-  std::string to_string(bool value) {
-    return value ? "true" : "false";
-  }
-
-  std::string to_string(unsigned long long value) {
-    string n = "";
-    while (value) {
-      n += '0' + (value % 10);
-      value /= 10;
+  template<typename T>
+  T to_value(const std::string &s, type::TypeId type) {
+    switch (type) {
+      case type::TypeId::INTEGER:
+        return reinterpret_cast<T>(atoll(s.c_str()));
+      case type::TypeId::BOOLEAN:
+        return reinterpret_cast<T>(s == "true");
+      case type::TypeId::VARCHAR:
+        return reinterpret_cast<T>(s);
     }
-    return n == "" ? "0" : n;
+    throw new Exception("type " + type + " is not supported in configuration");
   }
 
-public:
-
-  bool DefineBool(const std::string &name,
-                  bool value,
-                  const std::string &description,
-                  bool default_value,
-                  bool is_mutable,
-                  bool is_persistent);
-
-  bool DefineInt(const std::string &name,
-                 unsigned long long value,
-                 const std::string &description,
-                 unsigned long long default_value,
-                 bool is_mutable,
-                 bool is_persistent);
-
-  bool DefineString(const std::string &name,
-                    const std::string &value,
-                    const std::string &description,
-                    const std::string default_value,
-                    bool is_mutable,
-                    bool is_persistent);
+  template<typename T>
+  std::string to_string(const T &value, type::TypeId type) {
+    std::string s = "";
+    int v;
+    switch (type) {
+      case type::TypeId::INTEGER:
+        v = reinterpret_cast<unsigned long long>(value);
+        while (v) {
+          s = char('0' + (v % 10)) + s;
+          v /= 10;
+        }
+        return s == "" ? "0" : s;
+      case type::TypeId::BOOLEAN:
+        return reinterpret_cast<bool>(value) ? "true" : "false";
+      case type::TypeId::VARCHAR:
+        return reinterpret_cast<std::string>(value);
+    }
+    throw new Exception("type " + type + " is not supported in configuration");
+  }
 };
 
 } // End configuration namespace

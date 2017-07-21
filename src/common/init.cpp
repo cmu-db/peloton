@@ -27,8 +27,6 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-  configuration::ConfigurationManager* config = configuration::ConfigurationManager::GetInstance();
-
   CONNECTION_THREAD_COUNT = std::thread::hardware_concurrency();
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
@@ -49,7 +47,7 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (config->GetBool("index_tuner")) {
+  if (GET_BOOL("index_tuner")) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -57,7 +55,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (config->GetBool("layout_tuner")) {
+  if (GET_BOOL("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -65,6 +63,7 @@ void PelotonInit::Initialize() {
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
+  configuration::ConfigurationManager::GetInstance()->InitializeCatalog();
 
   // begin a transaction
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -78,16 +77,14 @@ void PelotonInit::Initialize() {
 }
 
 void PelotonInit::Shutdown() {
-  configuration::ConfigurationManager* config = configuration::ConfigurationManager::GetInstance();
-
   // shut down index tuner
-  if (config->GetBool("index_tuner")) {
+  if (GET_BOOL("index_tuner")) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (config->GetBool("layout_tuner")) {
+  if (GET_BOOL("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }

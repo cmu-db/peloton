@@ -23,7 +23,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "configuration/configuration.h"
 #include "type/type_id.h"
 
 namespace peloton {

@@ -13,7 +13,7 @@
 #include <iostream>
 
 #include "common/harness.h"
-#include "configuration/configuration.h"
+#include "configuration/configuration_manager.h"
 
 #include <include/tcop/tcop.h>
 #include <sys/resource.h>
@@ -45,7 +45,8 @@ class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
-  FLAGS_stats_mode = STATS_TYPE_ENABLE;
+  SET_INT("stats_mode", STATS_TYPE_ENABLE);
+  
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);
   aggregator.GetAggregatedStats().ResetQueryCount();
