@@ -95,7 +95,7 @@ void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
 void PacketManager::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
   traffic_cop_->SetPsqlFlag(false);
-  auto new_statement = traffic_cop_->PrepareStatement(
+  auto new_statement = traffic_cop_->PrepareStatementExtended(
       statement->GetStatementName(), statement->GetQueryString(),
       error_message);
   // But then rip out its query plan and stick it in our old statement
@@ -382,7 +382,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
                 statement_query.c_str());
         traffic_cop_->SetPsqlFlag(false);
-        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
+        statement = traffic_cop_->PrepareStatementExtended(statement_name, statement_query,
                                                  error_message);
         if (statement.get() == nullptr) {
           skipped_stmt_ = true;

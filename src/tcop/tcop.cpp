@@ -254,33 +254,34 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     }
 
     auto txn_result = txn->GetResult();
-    if (single_statement_txn_ == true || init_failure == true ||
-        txn_result == ResultType::FAILURE) {
-      if (psql_) {
-        LOG_TRACE(
-            "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-            single_statement_txn, init_failure,
-            ResultTypeToString(txn_result).c_str());
-        switch (txn_result) {
-          case ResultType::SUCCESS:
-            // Commit single statement
-            LOG_TRACE("Commit Transaction");
-            p_status.m_result = CommitQueryHelper();
-            break;
 
-          case ResultType::FAILURE:
-          default:
-            // Abort
-            LOG_TRACE("Abort Transaction");
-            if (single_statement_txn_ == true) {
-              LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-              p_status.m_result = AbortQueryHelper();
-            } else {
-              tcop_txn_state_.top().second = ResultType::ABORTED;
-              p_status.m_result = ResultType::ABORTED;
-            }
-        }
-      } else {
+    if (psql_) {
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+          single_statement_txn, init_failure,
+          ResultTypeToString(txn_result).c_str());
+      switch (txn_result) {
+        case ResultType::SUCCESS:
+          // Commit single statement
+          LOG_TRACE("Commit Transaction");
+          p_status.m_result = CommitQueryHelper();
+          break;
+
+        case ResultType::FAILURE:
+        default:
+          // Abort
+          LOG_TRACE("Abort Transaction");
+          if (single_statement_txn_ == true) {
+            LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+            p_status.m_result = AbortQueryHelper();
+          } else {
+            tcop_txn_state_.top().second = ResultType::ABORTED;
+            p_status.m_result = ResultType::ABORTED;
+          }
+      }
+    } else {
+      if (single_statement_txn_ == true || init_failure == true ||
+          txn_result == ResultType::FAILURE) {
         auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
         LOG_TRACE(
