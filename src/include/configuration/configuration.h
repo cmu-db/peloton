@@ -146,7 +146,7 @@ DECLARE_bool(help);
 namespace peloton {
 namespace configuration {
 
-void initialize_parameters() {
+void register_parameters() {
   REGISTER(port);
   REGISTER(max_connections);
   REGISTER(socket_family);
@@ -160,8 +160,13 @@ void initialize_parameters() {
   REGISTER(h);
 
   // special case: -help
-  peloton::configuration::ConfigurationManager* config = peloton::configuration::ConfigurationManager::GetInstance();
-  config->DefineConfig("help", &FLAGS_help, type::TypeId::BOOLEAN, "Show help", false, false, false);
+  auto config = peloton::configuration::ConfigurationManager::GetInstance();
+  config->DefineConfig("help",
+                       &FLAGS_help,
+                       type::TypeId::BOOLEAN,
+                       "Show help",
+                       false,
+                       false, false);
 }
 
 } // End configuration namespace

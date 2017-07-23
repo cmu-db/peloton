@@ -15,19 +15,22 @@
 #include <gflags/gflags.h>
 #include "type/types.h"
 #include "type/ephemeral_pool.h"
+#include "common/exception.h"
+#include "catalog/config_catalog.h"
 
-#define GET_INT(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<unsigned long long>(name))
-#define GET_BOOL(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<bool>(name))
-#define GET_STRING(name) (peloton::configuration::ConfigurationManager::GetInstance()->GetValue<std::string>(name))
+uint64_t GET_INT(const std::string& name);
+bool GET_BOOL(const std::string& name);
+std::string GET_STRING(const std::string& name);
 
-#define SET_INT(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<unsigned long long>(name, value))
-#define SET_BOOL(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<bool>(name, value))
-#define SET_STRING(name, value) (peloton::configuration::ConfigurationManager::GetInstance()->SetValue<std::string>(name, value))
+void SET_INT(const std::string &name, uint64_t value);
+void SET_BOOL(const std::string &name, bool value);
+void SET_STRING(const std::string &name, const std::string &value);
 
 namespace peloton {
 namespace configuration {
 
-void initialize_parameters();
+void init_parameters(int *argc = nullptr, char ***argv = nullptr);
+void drop_parameters();
 
 class ConfigurationManager {
 public:
@@ -48,6 +51,8 @@ public:
 
   void PrintConfiguration();
 
+  void Clear();
+
 private:
 
   struct Param {
@@ -65,42 +70,50 @@ private:
 
   std::unordered_map<std::string, Param> config;
   std::unique_ptr<type::AbstractPool> pool_;
+  bool catalog_initialized;
 
   ConfigurationManager() {
+    catalog_initialized = false;
     pool_.reset(new type::EphemeralPool());
   }
 
-  template<typename T>
-  T to_value(const std::string &s, type::TypeId type) {
-    switch (type) {
-      case type::TypeId::INTEGER:
-        return reinterpret_cast<T>(atoll(s.c_str()));
-      case type::TypeId::BOOLEAN:
-        return reinterpret_cast<T>(s == "true");
-      case type::TypeId::VARCHAR:
-        return reinterpret_cast<T>(s);
-    }
-    throw new Exception("type " + type + " is not supported in configuration");
+  void insert_into_catalog(const std::string &name, const Param &param) {
+    auto config_catalog = catalog::ConfigCatalog::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    type::AbstractPool *pool = pool_.get();
+    config_catalog->DeleteConfig(name, txn);
+    config_catalog->InsertConfig(name, to_string(param.value, param.value_type),
+                                 param.value_type, param.desc,
+                                 "", "", param.default_value,
+                                 param.is_mutable, param.is_persistent,
+                                 pool, txn);
+    txn_manager.CommitTransaction(txn);
   }
 
   template<typename T>
-  std::string to_string(const T &value, type::TypeId type) {
-    std::string s = "";
-    int v;
+  T to_value(void* value_p) {
+    return *reinterpret_cast<T*>(value_p);
+  }
+
+  std::string to_string(void* value_p, type::TypeId type) {
     switch (type) {
-      case type::TypeId::INTEGER:
-        v = reinterpret_cast<unsigned long long>(value);
+      case type::TypeId::INTEGER: {
+        std::string s = "";
+        uint64_t v = to_value<uint64_t>(value_p);
         while (v) {
           s = char('0' + (v % 10)) + s;
           v /= 10;
         }
         return s == "" ? "0" : s;
+      }
       case type::TypeId::BOOLEAN:
-        return reinterpret_cast<bool>(value) ? "true" : "false";
+        return to_value<bool>(value_p) ? "true" : "false";
       case type::TypeId::VARCHAR:
-        return reinterpret_cast<std::string>(value);
+        return to_value<std::string>(value_p);
+      default:
+        throw new Exception("type is not supported in configuration");
     }
-    throw new Exception("type " + type + " is not supported in configuration");
   }
 };
 
