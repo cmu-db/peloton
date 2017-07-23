@@ -100,12 +100,12 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-    [&garbages, &tuple_counter, expired_eid]
+    [&garbages, &tuple_counter, expired_eid, this]
         (const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
       bool res = garbage_ctx->epoch_id_ <= expired_eid;
       if (res == true) {
         // TODO: carefully think about how to delete tuple from indexes!
-        // CleanUpIndexes(garbage_ctx);
+        // UnlinkVersions(garbage_ctx);
         // Add to the garbage map
         garbages.push_back(garbage_ctx);
         tuple_counter++;
@@ -128,7 +128,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
       // As a result, we can delete all the tuples from the indexes to which it belongs.
       
       // TODO: carefully think about how to delete tuple from indexes!
-      // CleanUpIndexes(garbage_ctx);
+      // UnlinkVersions(garbage_ctx);
       // Add to the garbage map
       garbages.push_back(garbage_ctx);
       tuple_counter++;
@@ -248,25 +248,20 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   return;
 }
 
-void TransactionLevelGCManager::CleanUpIndexes(
+void TransactionLevelGCManager::UnlinkVersions(
     const std::shared_ptr<GarbageContext> &garbage_ctx) {
   for (auto entry : *(garbage_ctx->gc_set_.get())) {
-    for (auto &element : entry.second) {
-      // if (element.second == true) {
-        ItemPointer location(entry.first, element.first);
-
-        DeleteFromIndexes(location, element.second);
-      // }
+    for (auto &element : entry.second) {  
+      DeleteFromIndexes(ItemPointer(entry.first, element.first), element.second);
     }
   }
 }
 
 // delete a tuple from all its indexes it belongs to.
 void TransactionLevelGCManager::DeleteFromIndexes(
-    const ItemPointer location, IndexDeletionType type UNUSED_ATTRIBUTE) {
+    const ItemPointer location, GCVersionType type) {
 
-  // only old versions are stored in the gc set.
-  // so we can safely get indirection from the indirection array.
+  // get indirection from the indirection array.
   auto tile_group =
       catalog::Manager::GetInstance().GetTileGroup(location.block);
   
@@ -288,25 +283,27 @@ void TransactionLevelGCManager::DeleteFromIndexes(
     return;
   }
 
+  if (type == GCVersionType::COMMIT_UPDATE) {
+    // the gc'd version is an old version.
+  } else if (type == GCVersionType::COMMIT_DELETE) {
+
+  } else if (type == GCVersionType::COMMIT_INS_DEL) {
+
+  } else if (type == GCVersionType::ABORT_UPDATE) {
+
+  } else if (type == GCVersionType::ABORT_DELETE) {
+
+  } else if (type == GCVersionType::ABORT_INSERT) {
+
+  } else {
+    PL_ASSERT(type == GCVersionType::ABORT_INS_DEL);
+  }
+
+
+
+  
   expression::ContainerTuple<storage::TileGroup> current_tuple(
       tile_group.get(), location.offset);
-
-  // get the version next (older) to the current version.
-  // recall that a tuple is inserted into an index only when  
-  // any change is made to the index key.
-  // Hence, we should delete a tuple from the index only if
-  // the value of the version's key field is different from
-  // that of the older version's.
-  auto older_location = tile_group_header->GetNextItemPointer(location.offset);
-
-  auto older_tile_group = 
-      catalog::Manager::GetInstance().GetTileGroup(older_location.block);
-
-  PL_ASSERT(older_tile_group != nullptr);
-
-  expression::ContainerTuple<storage::TileGroup> older_tuple(
-      older_tile_group.get(), older_location.offset);
-
 
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
@@ -314,6 +311,23 @@ void TransactionLevelGCManager::DeleteFromIndexes(
 
   // attempt to unlink the version from all the indexes.
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+
+    // get the version next (older) to the current version.
+    // recall that a tuple is inserted into an index only when  
+    // any change is made to the index key.
+    // Hence, we should delete a tuple from the index only if
+    // the value of the version's key field is different from
+    // that of the older version's.
+    auto older_location = tile_group_header->GetNextItemPointer(location.offset);
+
+    auto older_tile_group = 
+        catalog::Manager::GetInstance().GetTileGroup(older_location.block);
+
+    PL_ASSERT(older_tile_group != nullptr);
+
+    expression::ContainerTuple<storage::TileGroup> older_tuple(
+        older_tile_group.get(), older_location.offset);
+
     auto index = table->GetIndex(idx);
     if (index == nullptr) continue;
     auto index_schema = index->GetKeySchema();

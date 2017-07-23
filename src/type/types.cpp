@@ -2499,100 +2499,75 @@ std::ostream& operator<<(std::ostream& os, const RWType& type) {
 
 
 //===--------------------------------------------------------------------===//
-// GCSetType - String Utilities
+// GCVersionType - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string GCSetTypeToString(GCSetType type) {
+std::string GCVersionTypeToString(GCVersionType type) {
   switch (type) {
-    case GCSetType::INVALID: {
+    case GCVersionType::INVALID: {
       return "INVALID";
     }
-    case GCSetType::COMMITTED: {
-      return "COMMITTED";
+    case GCVersionType::COMMIT_UPDATE: {
+      return "COMMIT_UPDATE";
     }
-    case GCSetType::ABORTED: {
-      return "ABORTED";
+    case GCVersionType::COMMIT_DELETE: {
+      return "COMMIT_DELETE";
+    }
+    case GCVersionType::COMMIT_INS_DEL: {
+      return "COMMIT_INS_DEL";
+    }
+    case GCVersionType::ABORT_UPDATE: {
+      return "ABORT_UPDATE";
+    }
+    case GCVersionType::ABORT_DELETE: {
+      return "ABORT_DELETE";
+    }
+    case GCVersionType::ABORT_INSERT: {
+      return "ABORT_INSERT";
+    }
+    case GCVersionType::ABORT_INS_DEL: {
+      return "ABORT_INS_DEL";
     }
     default: {
       throw ConversionException(StringUtil::Format(
-          "No string conversion for GCSetType value '%d'",
+          "No string conversion for GCVersionType value '%d'",
           static_cast<int>(type)));
     }
   }
   return "INVALID";
 }
 
-GCSetType StringToGCSetType(const std::string& str) {
+GCVersionType StringToGCVersionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return GCSetType::INVALID;
-  } else if (upper_str == "COMMITTED") {
-    return GCSetType::COMMITTED;
-  } else if (upper_str == "ABORTED") {
-    return GCSetType::ABORTED;
+    return GCVersionType::INVALID;
+  } else if (upper_str == "COMMIT_UPDATE") {
+    return GCVersionType::COMMIT_UPDATE;
+  } else if (upper_str == "COMMIT_DELETE") {
+    return GCVersionType::COMMIT_DELETE;
+  } else if (upper_str == "COMMIT_INS_DEL") {
+    return GCVersionType::COMMIT_INS_DEL;
+  } else if (upper_str == "ABORT_UPDATE") {
+    return GCVersionType::ABORT_UPDATE;
+  } else if (upper_str == "ABORT_DELETE") {
+    return GCVersionType::ABORT_DELETE;
+  } else if (upper_str == "ABORT_INSERT") {
+    return GCVersionType::ABORT_INSERT;
+  } else if (upper_str == "ABORT_INS_DEL") {
+    return GCVersionType::ABORT_INS_DEL;
   } else {
     throw ConversionException(
-        StringUtil::Format("No GCSetType conversion from string '%s'",
+        StringUtil::Format("No GCVersionType conversion from string '%s'",
                            upper_str.c_str()));
   }
-  return GCSetType::INVALID;
+  return GCVersionType::INVALID;
 }
 
-std::ostream& operator<<(std::ostream& os, const GCSetType& type) {
-  os << GCSetTypeToString(type);
+std::ostream& operator<<(std::ostream& os, const GCVersionType& type) {
+  os << GCVersionTypeToString(type);
   return os;
 }
 
-
-//===--------------------------------------------------------------------===//
-// IndexDeletionType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string IndexDeletionTypeToString(IndexDeletionType type) {
-  switch (type) {
-    case IndexDeletionType::INVALID: {
-      return "INVALID";
-    }
-    case IndexDeletionType::SECONDARY_INDEXES: {
-      return "SECONDARY_INDEXES";
-    }
-    case IndexDeletionType::ALL_INDEXES: {
-      return "ALL_INDEXES";
-    }
-    case IndexDeletionType::NO_INDEX: {
-      return "NO_INDEX";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for IndexDeletionType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-IndexDeletionType StringToIndexDeletionType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return IndexDeletionType::INVALID;
-  } else if (upper_str == "SECONDARY_INDEXES") {
-    return IndexDeletionType::SECONDARY_INDEXES;
-  } else if (upper_str == "ALL_INDEXES") {
-    return IndexDeletionType::ALL_INDEXES;
-  } else if (upper_str == "NO_INDEX") {
-    return IndexDeletionType::NO_INDEX;
-  } else {
-    throw ConversionException(
-        StringUtil::Format("No IndexDeletionType conversion from string '%s'",
-                           upper_str.c_str()));
-  }
-  return IndexDeletionType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const IndexDeletionType& type) {
-  os << IndexDeletionTypeToString(type);
-  return os;
-}
 
 //===--------------------------------------------------------------------===//
 // Optimizer

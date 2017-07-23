@@ -843,7 +843,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
         // add old version into gc set.
         // may need to delete versions from secondary indexes.
-        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::SECONDARY_INDEXES;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
 
         log_manager.LogUpdate(new_version);
 
@@ -874,9 +874,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // we need to recycle both old and new versions.
         // we require the GC to delete tuple from index only once.
         // recycle old version, delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
-        // recycle new version (which is an empty version), do not delete from index
-        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::NO_INDEX;
+        // the gc should be responsible for recycling the newer empty version.
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
 
         log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
@@ -910,7 +909,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_INS_DEL;
 
         // no log is needed for this case
       }
@@ -981,7 +980,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         auto old_prev =
             new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
-        // check whether the previous version exists.
+        // check whether previous (new) version exists.
         if (old_prev.IsNull() == true) {
           PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
           // if we updated the latest version.
@@ -1018,8 +1017,10 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::SECONDARY_INDEXES;
+        // add the version to gc set.
+        // this version has already been unlinked from the version chain.
+        // however, the gc should further unlink it from indexes.
+        gc_set->operator[](new_version.block)[new_version.offset] = GCVersionType::ABORT_UPDATE;
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -1072,8 +1073,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::NO_INDEX;
+        // add the version to gc set.
+        gc_set->operator[](new_version.block)[new_version.offset] = GCVersionType::ABORT_DELETE;
 
       } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1084,9 +1085,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
-        // add to gc set.
-        // delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
+        // add the version to gc set.
+        // delete from index.
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::ABORT_INSERT;
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1098,7 +1099,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::ABORT_INS_DEL;
       }
     }
   }

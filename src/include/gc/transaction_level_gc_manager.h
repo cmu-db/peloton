@@ -132,9 +132,9 @@ private:
 
   bool ResetTuple(const ItemPointer &);
 
-  void CleanUpIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx);
+  void UnlinkVersions(const std::shared_ptr<GarbageContext>& garbage_ctx);
 
-  void DeleteFromIndexes(const ItemPointer location, const IndexDeletionType type);
+  void DeleteFromIndexes(const ItemPointer location, const GCVersionType type);
 
 private:
   //===--------------------------------------------------------------------===//

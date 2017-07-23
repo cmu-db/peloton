@@ -150,22 +150,9 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetExpiredCid();
   }
 
-  void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
-    this->dirty_range_ = dirty_range;
-  }
-
   IsolationLevelType GetIsolationLevel() {
     return isolation_level_;
   }
-
- protected:
-  inline bool CidIsInDirtyRange(cid_t cid) {
-    return ((cid > dirty_range_.first) & (cid <= dirty_range_.second));
-  }
-  // invisible range after failure and recovery;
-  // first value is exclusive, last value is inclusive
-  std::pair<cid_t, cid_t> dirty_range_ =
-      std::make_pair(INVALID_CID, INVALID_CID);
 
  protected:
   static ProtocolType protocol_;
