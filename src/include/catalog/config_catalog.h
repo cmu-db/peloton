@@ -64,6 +64,9 @@ public:
   std::string GetConfigValue(const std::string &name,
                              concurrency::Transaction *txn);
 
+  std::string GetDefaultValue(const std::string &name,
+                             concurrency::Transaction *txn);
+
   enum ColumnId {
     NAME = 0,
     VALUE = 1,
