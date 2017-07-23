@@ -43,7 +43,8 @@ public:
   ~ConfigCatalog();
 
   // Global Singleton
-  static ConfigCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static ConfigCatalog *GetInstance(
+          concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -62,18 +63,6 @@ public:
   //===--------------------------------------------------------------------===//
   std::string GetConfigValue(const std::string &name,
                              concurrency::Transaction *txn);
-  type::TypeId GetConfigType(const std::string &name,
-                             concurrency::Transaction *txn);
-  std::string GetMinValue(const std::string &name,
-                          concurrency::Transaction *txn);
-  std::string GetMaxValue(const std::string &name,
-                          concurrency::Transaction *txn);
-  std::string GetDefaultValue(const std::string &name,
-                          concurrency::Transaction *txn);
-  bool IsMutable(const std::string &name,
-                 concurrency::Transaction *txn);
-  bool IsPersistent(const std::string &name,
-                    concurrency::Transaction *txn);
 
   enum ColumnId {
     NAME = 0,
@@ -95,8 +84,6 @@ private:
     SECONDARY_KEY_0 = 0,
     // Add new indexes here in creation order
   };
-
-  static const size_t max_description_length = 255;
 };
 
 }  // End catalog namespace
