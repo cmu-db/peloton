@@ -63,8 +63,8 @@ DataTable *StorageManager::GetTableWithOid(
  * throw exception if not exists
  * */
 index::Index *StorageManager::GetIndexWithOid(oid_t database_oid,
-                                                     oid_t table_oid,
-                                                     oid_t index_oid) const {
+                                              oid_t table_oid,
+                                              oid_t index_oid) const {
   // Lookup table from storage layer
   auto table = GetTableWithOid(database_oid,
                                table_oid);  // Throw exception if not exists

@@ -134,7 +134,7 @@ private:
 
   void UnlinkVersions(const std::shared_ptr<GarbageContext>& garbage_ctx);
 
-  void DeleteFromIndexes(const ItemPointer location, const GCVersionType type);
+  void UnlinkVersion(const ItemPointer location, const GCVersionType type);
 
 private:
   //===--------------------------------------------------------------------===//
