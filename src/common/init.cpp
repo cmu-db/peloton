@@ -102,6 +102,7 @@ void PelotonInit::Shutdown() {
 
   // clear parameters
   configuration::drop_parameters();
+  google::ShutDownCommandLineFlags();
 }
 
 void PelotonInit::SetUpThread() {}

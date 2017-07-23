@@ -31,22 +31,12 @@ namespace peloton {
 namespace configuration {
 
 void init_parameters();
+
 void drop_parameters();
 
 class ConfigurationManager {
 public:
   static ConfigurationManager* GetInstance();
-
-  template<typename T>
-  T GetValue(const std::string &name);
-
-  template<typename T>
-  void SetValue(const std::string &name, const T &value);
-
-  template<typename T>
-  void DefineConfig(const std::string &name, void* value, type::TypeId type,
-                    const std::string &description, const T &default_value,
-                    bool is_mutable, bool is_persistent);
 
   void InitializeCatalog();
 
@@ -54,7 +44,60 @@ public:
 
   void Clear();
 
+  template<typename T>
+  T GetValue(const std::string &name) {
+    auto param = config.find(name);
+    if (param == config.end()) {
+      throw new Exception("no such configuration: " + name);
+    }
+    return to_value<T>(param->second.value);
+  }
+
+  template<typename T>
+  void SetValue(const std::string &name, const T &value) {
+    auto param = config.find(name);
+    if (param == config.end()) {
+      throw new Exception("no such configuration: " + name);
+    }
+    switch (param->second.value_type) {
+      case type::TypeId::INTEGER:
+        *(uint64_t*)(param->second.value) = *(uint64_t*)(&value);
+        break;
+      case type::TypeId::BOOLEAN:
+        *(bool*)(param->second.value) = *(bool*)(&value);
+        break;
+      case type::TypeId::VARCHAR:
+        *(std::string*)(param->second.value) = *(std::string*)(&value);
+        break;
+      default:
+        throw new Exception("unsupported type");
+    }
+    if (catalog_initialized) {
+      insert_into_catalog(param->first, param->second);
+    }
+  }
+
+  template<typename T>
+  void DefineConfig(const std::string &name, void* value, type::TypeId type,
+                    const std::string &description, const T &default_value,
+                    bool is_mutable, bool is_persistent) {
+    if (config.count(name) > 0) {
+      throw Exception("configuration " + name + " already exists");
+    }
+    T tmp(default_value);
+    config[name] = Param(value, description, type, to_string(&tmp, type),
+                         is_mutable, is_persistent);
+    if (catalog_initialized) {
+      insert_into_catalog(name, config[name]);
+    }
+  }
+
 private:
+
+  template<typename T>
+  T to_value(void* value_p) {
+    return *reinterpret_cast<T*>(value_p);
+  }
 
   struct Param {
     void* value;
@@ -73,49 +116,11 @@ private:
   std::unique_ptr<type::AbstractPool> pool_;
   bool catalog_initialized;
 
-  ConfigurationManager() {
-    catalog_initialized = false;
-    pool_.reset(new type::EphemeralPool());
-  }
+  ConfigurationManager();
 
-  void insert_into_catalog(const std::string &name, const Param &param) {
-    auto config_catalog = catalog::ConfigCatalog::GetInstance();
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    type::AbstractPool *pool = pool_.get();
-    config_catalog->DeleteConfig(name, txn);
-    config_catalog->InsertConfig(name, to_string(param.value, param.value_type),
-                                 param.value_type, param.desc,
-                                 "", "", param.default_value,
-                                 param.is_mutable, param.is_persistent,
-                                 pool, txn);
-    txn_manager.CommitTransaction(txn);
-  }
+  void insert_into_catalog(const std::string &name, const Param &param);
 
-  template<typename T>
-  T to_value(void* value_p) {
-    return *reinterpret_cast<T*>(value_p);
-  }
-
-  std::string to_string(void* value_p, type::TypeId type) {
-    switch (type) {
-      case type::TypeId::INTEGER: {
-        std::string s = "";
-        uint64_t v = to_value<uint64_t>(value_p);
-        while (v) {
-          s = char('0' + (v % 10)) + s;
-          v /= 10;
-        }
-        return s == "" ? "0" : s;
-      }
-      case type::TypeId::BOOLEAN:
-        return to_value<bool>(value_p) ? "true" : "false";
-      case type::TypeId::VARCHAR:
-        return to_value<std::string>(value_p);
-      default:
-        throw new Exception("type is not supported in configuration");
-    }
-  }
+  std::string to_string(void* value_p, type::TypeId type);
 };
 
 } // End configuration namespace

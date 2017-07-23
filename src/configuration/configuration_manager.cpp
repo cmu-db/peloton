@@ -46,54 +46,6 @@ ConfigurationManager* ConfigurationManager::GetInstance() {
   return config_manager.get();
 }
 
-template<typename T>
-T ConfigurationManager::GetValue(const std::string &name) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
-  }
-  return to_value<T>(param->second.value);
-}
-
-template<typename T>
-void ConfigurationManager::SetValue(const std::string &name, const T &value) {
-  auto param = config.find(name);
-  if (param == config.end()) {
-    throw new Exception("no such configuration: " + name);
-  }
-  switch (param->second.value_type) {
-    case type::TypeId::INTEGER:
-      *(uint64_t*)(param->second.value) = *(uint64_t*)(&value);
-      break;
-    case type::TypeId::BOOLEAN:
-      *(bool*)(param->second.value) = *(bool*)(&value);
-      break;
-    case type::TypeId::VARCHAR:
-      *(std::string*)(param->second.value) = *(std::string*)(&value);
-      break;
-    default:
-      throw new Exception("unsupported type");
-  }
-  if (catalog_initialized) {
-    insert_into_catalog(param->first, param->second);
-  }
-}
-
-template<typename T>
-void ConfigurationManager::DefineConfig(const std::string &name, void* value, type::TypeId type,
-                                        const std::string &description, const T &default_value,
-                                        bool is_mutable, bool is_persistent) {
-  if (config.count(name) > 0) {
-    throw Exception("configuration " + name + " already exists");
-  }
-  T tmp(default_value);
-  config[name] = Param(value, description, type, to_string(&tmp, type),
-                       is_mutable, is_persistent);
-  if (catalog_initialized) {
-    insert_into_catalog(name, config[name]);
-  }
-}
-
 void ConfigurationManager::InitializeCatalog() {
   auto config_catalog = peloton::catalog::ConfigCatalog::GetInstance();
 
@@ -134,6 +86,45 @@ void ConfigurationManager::Clear() {
   catalog_initialized = false;
 }
 
+void ConfigurationManager::insert_into_catalog(const std::string &name, const Param &param) {
+  auto config_catalog = catalog::ConfigCatalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  type::AbstractPool *pool = pool_.get();
+  config_catalog->DeleteConfig(name, txn);
+  config_catalog->InsertConfig(name, to_string(param.value, param.value_type),
+                               param.value_type, param.desc,
+                               "", "", param.default_value,
+                               param.is_mutable, param.is_persistent,
+                               pool, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+ConfigurationManager::ConfigurationManager() {
+  catalog_initialized = false;
+  pool_.reset(new type::EphemeralPool());
+}
+
+std::string ConfigurationManager::to_string(void* value_p, type::TypeId type) {
+  switch (type) {
+    case type::TypeId::INTEGER: {
+      std::string s = "";
+      uint64_t v = to_value<uint64_t>(value_p);
+      while (v) {
+        s = char('0' + (v % 10)) + s;
+        v /= 10;
+      }
+      return s == "" ? "0" : s;
+    }
+    case type::TypeId::BOOLEAN:
+      return to_value<bool>(value_p) ? "true" : "false";
+    case type::TypeId::VARCHAR:
+      return to_value<std::string>(value_p);
+    default:
+      throw new Exception("type is not supported in configuration");
+  }
+}
+
 void init_parameters() {
   drop_parameters();
   register_parameters();
@@ -142,7 +133,6 @@ void init_parameters() {
 void drop_parameters() {
   auto config_manager = ConfigurationManager::GetInstance();
   config_manager->Clear();
-  ::google::ShutDownCommandLineFlags();
 }
 
 }
