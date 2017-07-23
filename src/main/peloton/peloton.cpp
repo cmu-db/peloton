@@ -21,11 +21,8 @@
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
 
-  // Parse the command line flags using GFLAGS
-  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
-
-  auto config = peloton::configuration::ConfigurationManager::GetInstance();
-  peloton::configuration::initialize_parameters();
+  // Parse the command line flags
+  peloton::configuration::init_parameters(&argc, &argv);
 
   // If "-h" or "-help" is passed in, set up the help messages.
   if (GET_BOOL("h") || GET_BOOL("help")) {
@@ -36,6 +33,7 @@ int main(int argc, char *argv[]) {
 
   // Print configuration
   if (GET_BOOL("display_configuration")) {
+    auto config = peloton::configuration::ConfigurationManager::GetInstance();
     config->PrintConfiguration();
   }
 

@@ -100,8 +100,8 @@ void PelotonInit::Shutdown() {
   // shutdown protocol buf library
   google::protobuf::ShutdownProtobufLibrary();
 
-  // Shut down GFLAGS.
-  ::google::ShutDownCommandLineFlags();
+  // clear parameters
+  configuration::drop_parameters();
 }
 
 void PelotonInit::SetUpThread() {}
