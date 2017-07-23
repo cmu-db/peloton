@@ -30,7 +30,7 @@ void SET_STRING(const std::string &name, const std::string &value);
 namespace peloton {
 namespace configuration {
 
-void init_parameters(int *argc = nullptr, char ***argv = nullptr);
+void init_parameters();
 void drop_parameters();
 
 class ConfigurationManager {

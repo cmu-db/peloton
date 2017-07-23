@@ -117,10 +117,10 @@ void ConfigurationManager::PrintConfiguration() {
   LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
   LOG_INFO(" ");
 
-  LOG_INFO("%30s: %10lu", "Port", GET_INT("port"));
+  LOG_INFO("%30s: %10llu", "Port", (unsigned long long)GET_INT("port"));
   LOG_INFO("%30s: %10s", "Socket Family", GET_STRING("socket_family").c_str());
   LOG_INFO("%30s: %10s", "Statistics", GET_INT("stats_mode") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10lu", "Max Connections", GET_INT("max_connections"));
+  LOG_INFO("%30s: %10llu", "Max Connections", (unsigned long long)GET_INT("max_connections"));
   LOG_INFO("%30s: %10s", "Index Tuner", GET_BOOL("index_tuner") ? "enabled" : "disabled");
   LOG_INFO("%30s: %10s", "Layout Tuner", GET_BOOL("layout_tuner") ? "enabled" : "disabled");
   LOG_INFO("%30s: %10s", "Code-generation", GET_BOOL("codegen") ? "enabled" : "disabled");
@@ -134,13 +134,9 @@ void ConfigurationManager::Clear() {
   catalog_initialized = false;
 }
 
-void init_parameters(int *argc, char ***argv) {
+void init_parameters() {
   drop_parameters();
   register_parameters();
-
-  if (argc && argv) {
-    ::google::ParseCommandLineNonHelpFlags(argc, argv, true);
-  }
 }
 
 void drop_parameters() {
