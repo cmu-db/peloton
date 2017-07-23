@@ -132,9 +132,9 @@ private:
 
   bool ResetTuple(const ItemPointer &);
 
-  void DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx);
+  void CleanUpIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx);
 
-  void DeleteTupleFromIndexes(const ItemPointer location);
+  void DeleteFromIndexes(const ItemPointer location, const IndexDeletionType type);
 
 private:
   //===--------------------------------------------------------------------===//

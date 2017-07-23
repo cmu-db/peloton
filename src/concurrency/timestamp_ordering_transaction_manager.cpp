@@ -841,8 +841,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = false;
+        // add old version into gc set.
+        // may need to delete versions from secondary indexes.
+        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::SECONDARY_INDEXES;
 
         log_manager.LogUpdate(new_version);
 
@@ -873,9 +874,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // we need to recycle both old and new versions.
         // we require the GC to delete tuple from index only once.
         // recycle old version, delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
         // recycle new version (which is an empty version), do not delete from index
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::NO_INDEX;
 
         log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
@@ -909,7 +910,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
 
         // no log is needed for this case
       }
@@ -1018,7 +1019,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::SECONDARY_INDEXES;
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -1072,7 +1073,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        gc_set->operator[](new_version.block)[new_version.offset] = IndexDeletionType::NO_INDEX;
 
       } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1085,7 +1086,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         // add to gc set.
         // delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1097,7 +1098,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = IndexDeletionType::ALL_INDEXES;
       }
     }
   }

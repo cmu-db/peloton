@@ -2496,6 +2496,104 @@ std::ostream& operator<<(std::ostream& os, const RWType& type) {
   os << RWTypeToString(type);
   return os;
 }
+
+
+//===--------------------------------------------------------------------===//
+// GCSetType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string GCSetTypeToString(GCSetType type) {
+  switch (type) {
+    case GCSetType::INVALID: {
+      return "INVALID";
+    }
+    case GCSetType::COMMITTED: {
+      return "COMMITTED";
+    }
+    case GCSetType::ABORTED: {
+      return "ABORTED";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for GCSetType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+GCSetType StringToGCSetType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return GCSetType::INVALID;
+  } else if (upper_str == "COMMITTED") {
+    return GCSetType::COMMITTED;
+  } else if (upper_str == "ABORTED") {
+    return GCSetType::ABORTED;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No GCSetType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return GCSetType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const GCSetType& type) {
+  os << GCSetTypeToString(type);
+  return os;
+}
+
+
+//===--------------------------------------------------------------------===//
+// IndexDeletionType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string IndexDeletionTypeToString(IndexDeletionType type) {
+  switch (type) {
+    case IndexDeletionType::INVALID: {
+      return "INVALID";
+    }
+    case IndexDeletionType::SECONDARY_INDEXES: {
+      return "SECONDARY_INDEXES";
+    }
+    case IndexDeletionType::ALL_INDEXES: {
+      return "ALL_INDEXES";
+    }
+    case IndexDeletionType::NO_INDEX: {
+      return "NO_INDEX";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for IndexDeletionType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+IndexDeletionType StringToIndexDeletionType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return IndexDeletionType::INVALID;
+  } else if (upper_str == "SECONDARY_INDEXES") {
+    return IndexDeletionType::SECONDARY_INDEXES;
+  } else if (upper_str == "ALL_INDEXES") {
+    return IndexDeletionType::ALL_INDEXES;
+  } else if (upper_str == "NO_INDEX") {
+    return IndexDeletionType::NO_INDEX;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No IndexDeletionType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return IndexDeletionType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const IndexDeletionType& type) {
+  os << IndexDeletionTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//

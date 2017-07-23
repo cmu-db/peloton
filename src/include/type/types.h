@@ -1091,14 +1091,32 @@ std::string RWTypeToString(RWType type);
 RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
-enum class GCSetType { COMMITTED, ABORTED };
+enum class GCSetType { 
+  INVALID,
+  COMMITTED, 
+  ABORTED, 
+};
+std::string GCSetToString(GCSetType type);
+GCSetType StringToGCSetType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const GCSetType &type);
 
 // block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
-// block -> offset -> is_index_deletion
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> GCSet;
+
+enum class IndexDeletionType {
+  INVALID,
+  SECONDARY_INDEXES,
+  ALL_INDEXES,
+  NO_INDEX,
+};
+std::string IndexDeletionToString(IndexDeletionType type);
+IndexDeletionType StringToIndexDeletionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IndexDeletionType &type);
+
+// block -> offset -> index_deletion_type
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, IndexDeletionType>> GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle

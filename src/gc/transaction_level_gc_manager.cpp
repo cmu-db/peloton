@@ -105,7 +105,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
       bool res = garbage_ctx->epoch_id_ <= expired_eid;
       if (res == true) {
         // TODO: carefully think about how to delete tuple from indexes!
-        // DeleteFromIndexes(garbage_ctx);
+        // CleanUpIndexes(garbage_ctx);
         // Add to the garbage map
         garbages.push_back(garbage_ctx);
         tuple_counter++;
@@ -128,7 +128,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
       // As a result, we can delete all the tuples from the indexes to which it belongs.
       
       // TODO: carefully think about how to delete tuple from indexes!
-      // DeleteFromIndexes(garbage_ctx);
+      // CleanUpIndexes(garbage_ctx);
       // Add to the garbage map
       garbages.push_back(garbage_ctx);
       tuple_counter++;
@@ -248,22 +248,22 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   return;
 }
 
-void TransactionLevelGCManager::DeleteFromIndexes(
+void TransactionLevelGCManager::CleanUpIndexes(
     const std::shared_ptr<GarbageContext> &garbage_ctx) {
   for (auto entry : *(garbage_ctx->gc_set_.get())) {
     for (auto &element : entry.second) {
-      if (element.second == true) {
+      // if (element.second == true) {
         ItemPointer location(entry.first, element.first);
 
-        DeleteTupleFromIndexes(location);
-      }
+        DeleteFromIndexes(location, element.second);
+      // }
     }
   }
 }
 
 // delete a tuple from all its indexes it belongs to.
-void TransactionLevelGCManager::DeleteTupleFromIndexes(
-    const ItemPointer location) {
+void TransactionLevelGCManager::DeleteFromIndexes(
+    const ItemPointer location, IndexDeletionType type UNUSED_ATTRIBUTE) {
 
   // only old versions are stored in the gc set.
   // so we can safely get indirection from the indirection array.
