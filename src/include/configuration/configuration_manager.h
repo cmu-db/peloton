@@ -17,6 +17,7 @@
 #include "type/ephemeral_pool.h"
 #include "common/exception.h"
 #include "catalog/config_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 
 uint64_t GET_INT(const std::string& name);
 bool GET_BOOL(const std::string& name);

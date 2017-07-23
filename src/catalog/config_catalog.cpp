@@ -10,8 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
 #include "catalog/config_catalog.h"
+
+#include "catalog/catalog.h"
+#include "executor/logical_tile.h"
+#include "storage/data_table.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace catalog {
@@ -54,13 +58,13 @@ bool ConfigCatalog::InsertConfig(const std::string &name, const std::string &val
   std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetVarcharValue(name);
-  auto val1 = type::ValueFactory::GetVarcharValue(value, nullptr);
-  auto val2 = type::ValueFactory::GetVarcharValue(TypeIdToString(value_type), nullptr);
-  auto val3 = type::ValueFactory::GetVarcharValue(description, nullptr);
-  auto val4 = type::ValueFactory::GetVarcharValue(min_value, nullptr);
-  auto val5 = type::ValueFactory::GetVarcharValue(max_value, nullptr);
-  auto val6 = type::ValueFactory::GetVarcharValue(default_value, nullptr);
+  auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
+  auto val1 = type::ValueFactory::GetVarcharValue(value, pool);
+  auto val2 = type::ValueFactory::GetVarcharValue(TypeIdToString(value_type), pool);
+  auto val3 = type::ValueFactory::GetVarcharValue(description, pool);
+  auto val4 = type::ValueFactory::GetVarcharValue(min_value, pool);
+  auto val5 = type::ValueFactory::GetVarcharValue(max_value, pool);
+  auto val6 = type::ValueFactory::GetVarcharValue(default_value, pool);
   auto val7 = type::ValueFactory::GetBooleanValue(is_mutable);
   auto val8 = type::ValueFactory::GetBooleanValue(is_persistent);
 
@@ -106,131 +110,6 @@ std::string ConfigCatalog::GetConfigValue(const std::string &name,
     }
   }
   return config_value;
-}
-
-type::TypeId ConfigCatalog::GetConfigType(const std::string &name,
-                                          concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::VALUE_TYPE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  type::TypeId config_type = type::TypeId::INVALID;
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      config_type = (*result_tiles)[0]->GetValue(0, 0).GetAs<type::TypeId>();
-    }
-  }
-  return config_type;
-}
-
-std::string ConfigCatalog::GetMinValue(const std::string &name,
-                                       concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::MIN_VALUE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string min_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      min_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
-  }
-  return min_value;
-}
-
-std::string ConfigCatalog::GetMaxValue(const std::string &name,
-                                          concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::MAX_VALUE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string max_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      max_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
-  }
-  return max_value;
-}
-
-std::string ConfigCatalog::GetDefaultValue(const std::string &name,
-                                          concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::DEFAULT_VALUE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string default_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      default_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
-  }
-  return default_value;
-}
-
-bool ConfigCatalog::IsMutable(const std::string &name,
-                              concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::IS_MUTABLE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  bool is_mutable = false;
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      is_mutable = (*result_tiles)[0]->GetValue(0, 0).GetAs<bool>();
-    }
-  }
-  return is_mutable;
-}
-bool ConfigCatalog::IsPersistent(const std::string &name,
-                                 concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::IS_PERSISTENT});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  bool is_persistent = false;
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      is_persistent = (*result_tiles)[0]->GetValue(0, 0).GetAs<bool>();
-    }
-  }
-  return is_persistent;
 }
 
 }  // End catalog namespace
