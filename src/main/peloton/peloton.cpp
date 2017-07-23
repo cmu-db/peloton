@@ -22,7 +22,8 @@
 int main(int argc, char *argv[]) {
 
   // Parse the command line flags
-  peloton::configuration::init_parameters(&argc, &argv);
+  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
+  peloton::configuration::init_parameters();
 
   // If "-h" or "-help" is passed in, set up the help messages.
   if (GET_BOOL("h") || GET_BOOL("help")) {

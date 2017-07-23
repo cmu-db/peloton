@@ -33,7 +33,7 @@
 
 #include "catalog/abstract_catalog.h"
 
-#define CONFIG_CATALOG_NAME "pg_config"
+#define CONFIG_CATALOG_NAME "pg_settings"
 
 namespace peloton {
 namespace catalog {
