@@ -552,7 +552,7 @@ void ProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   statement->SetParamTypes(param_types);
 
   // Stat
-  if (GET_INT("stats_mode") != STATS_TYPE_INVALID) {
+  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
@@ -707,7 +707,7 @@ void ProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (GET_INT("stats_mode") != STATS_TYPE_INVALID && num_params > 0) {
+  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID && num_params > 0) {
     // Make a copy of format for stat collection
     stats::QueryMetric::QueryParamBuf param_format_buf;
     param_format_buf.len = format_buf_len;

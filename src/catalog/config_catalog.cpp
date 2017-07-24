@@ -6,9 +6,10 @@
 //
 // Identification: src/catalog/config_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "catalog/config_catalog.h"
 
@@ -68,15 +69,15 @@ bool ConfigCatalog::InsertConfig(const std::string &name, const std::string &val
   auto val7 = type::ValueFactory::GetBooleanValue(is_mutable);
   auto val8 = type::ValueFactory::GetBooleanValue(is_persistent);
 
-  tuple->SetValue(ColumnId::NAME, val0, pool);
-  tuple->SetValue(ColumnId::VALUE, val1, pool);
-  tuple->SetValue(ColumnId::VALUE_TYPE, val2, pool);
-  tuple->SetValue(ColumnId::DESCRIPTION, val3, pool);
-  tuple->SetValue(ColumnId::MIN_VALUE, val4, pool);
-  tuple->SetValue(ColumnId::MAX_VALUE, val5, pool);
-  tuple->SetValue(ColumnId::DEFAULT_VALUE, val6, pool);
-  tuple->SetValue(ColumnId::IS_MUTABLE, val7, pool);
-  tuple->SetValue(ColumnId::IS_PERSISTENT, val8, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::NAME), val0, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::VALUE), val1, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::VALUE_TYPE), val2, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::DESCRIPTION), val3, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::MIN_VALUE), val4, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::MAX_VALUE), val5, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::DEFAULT_VALUE), val6, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::IS_MUTABLE), val7, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::IS_PERSISTENT), val8, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -93,8 +94,8 @@ bool ConfigCatalog::DeleteConfig(const std::string &name,
 
 std::string ConfigCatalog::GetConfigValue(const std::string &name,
                                           concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::VALUE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
 
@@ -113,9 +114,9 @@ std::string ConfigCatalog::GetConfigValue(const std::string &name,
 }
 
 std::string ConfigCatalog::GetDefaultValue(const std::string &name,
-                                           concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::DEFAULT_VALUE});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+                                          concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
 

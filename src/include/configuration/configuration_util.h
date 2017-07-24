@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// configuration_utils.h
+// configuration_util.h
 //
-// Identification: src/include/configuration/configuration_utils.h
+// Identification: src/include/configuration/configuration_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

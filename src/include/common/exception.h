@@ -55,6 +55,7 @@ enum ExceptionType {
   EXCEPTION_TYPE_STAT = 20,              // stat related
   EXCEPTION_TYPE_CONNECTION = 21,        // connection related
   EXCEPTION_TYPE_SYNTAX = 22,            // syntax related
+  EXCEPTION_TYPE_CONFIGURATION = 23      // configuration related
 };
 
 class Exception : public std::runtime_error {
@@ -121,6 +122,8 @@ class Exception : public std::runtime_error {
         return "Connection";
       case EXCEPTION_TYPE_SYNTAX:
         return "Syntax";
+      case EXCEPTION_TYPE_CONFIGURATION:
+        return "Configuration";
       default:
         return "Unknown";
     }
@@ -428,4 +431,12 @@ class ConnectionException : public Exception {
       : Exception(EXCEPTION_TYPE_CONNECTION, msg) {}
 };
 
-}  // namespace peloton
+class ConfigurationException : public Exception {
+  ConfigurationException() = delete;
+
+ public:
+  ConfigurationException(std::string msg)
+      : Exception(EXCEPTION_TYPE_CONFIGURATION, msg) {}
+};
+
+}  // End peloton namespace
