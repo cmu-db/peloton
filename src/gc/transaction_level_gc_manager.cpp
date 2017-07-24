@@ -290,10 +290,15 @@ void TransactionLevelGCManager::UnlinkVersion(
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   PL_ASSERT(table != nullptr);
 
+
+  // NOTE: for now, we only consider unlinking tuple versions from primary indexes.
   if (type == GCVersionType::COMMIT_UPDATE) {
     // the gc'd version is an old version.
   } else if (type == GCVersionType::COMMIT_DELETE) {
-
+    // the gc'd version is an old version.
+    // need to recycle this version as well as its newer version,
+    // which is an empty version.
+    
   } else if (type == GCVersionType::ABORT_UPDATE) {
 
   } else if (type == GCVersionType::ABORT_DELETE) {

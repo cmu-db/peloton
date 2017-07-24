@@ -593,15 +593,16 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   }
 }
 
+// NOTE: this function is deprecated.
 void TimestampOrderingTransactionManager::PerformUpdate(
-    Transaction *const current_txn, const ItemPointer &location) {
+    Transaction *const current_txn UNUSED_ATTRIBUTE, const ItemPointer &location) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
 
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  UNUSED_ATTRIBUTE auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
             current_txn->GetTransactionId());
