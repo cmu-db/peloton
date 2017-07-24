@@ -278,7 +278,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   EXPECT_EQ(0, old_num);
 
   // there should be 1 tuple recycled
-  EXPECT_EQ(2, recycle_num);
+  EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
 
