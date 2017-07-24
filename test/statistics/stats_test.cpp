@@ -45,7 +45,7 @@ class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
-  SET_INT("stats_mode", STATS_TYPE_ENABLE);
+  Config::SET_INT("stats_mode", STATS_TYPE_ENABLE);
   
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);

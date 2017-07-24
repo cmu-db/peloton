@@ -112,7 +112,7 @@ class PelotonTest : public ::testing::Test {
     gc::GCManagerFactory::Configure(0);
 
     // initialize_parameters
-    configuration::init_parameters();
+    Config::init_parameters();
   }
 
   virtual void TearDown() {

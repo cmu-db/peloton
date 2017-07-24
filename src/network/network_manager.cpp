@@ -75,10 +75,10 @@ NetworkManager::NetworkManager() {
   master_thread_ =
       std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
-  port_ = GET_INT("port");
-  max_connections_ = GET_INT("max_connections");
-  private_key_file_ = GET_STRING("private_key_file");
-  certificate_file_ = GET_STRING("certificate_file");
+  port_ = Config::GET_INT("port");
+  max_connections_ = Config::GET_INT("max_connections");
+  private_key_file_ = Config::GET_STRING("private_key_file");
+  certificate_file_ = Config::GET_STRING("certificate_file");
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -94,7 +94,7 @@ NetworkManager::NetworkManager() {
 }
 
 void NetworkManager::StartServer() {
-  if (GET_STRING("socket_family") == "AF_INET") {
+  if (Config::GET_STRING("socket_family") == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;

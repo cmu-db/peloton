@@ -52,7 +52,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));
 
-  if (!GET_BOOL("codegen") || !codegen::QueryCompiler::IsSupported(*plan)) {
+  if (!Config::GET_BOOL("codegen") || !codegen::QueryCompiler::IsSupported(*plan)) {
     bool status;
     std::unique_ptr<executor::AbstractExecutor> executor_tree(
         BuildExecutorTree(nullptr, plan.get(), executor_context.get()));

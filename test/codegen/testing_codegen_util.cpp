@@ -31,7 +31,7 @@ namespace test {
 PelotonCodeGenTest::PelotonCodeGenTest()
     : test_db(new storage::Database(test_db_id)) {
   // initialize parameters
-  configuration::init_parameters();
+  Config::init_parameters();
 
   // Create test table
   CreateTestTables();

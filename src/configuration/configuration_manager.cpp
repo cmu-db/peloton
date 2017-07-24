@@ -6,7 +6,7 @@
 //
 // Identification: src/configuration/configuration_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 #define __PELOTON_CONFIG__
@@ -14,31 +14,43 @@
 #include "common/exception.h"
 #include "configuration/configuration_manager.h"
 #include "configuration/configuration.h"
-#include "catalog/config_catalog.h"
-
-uint64_t GET_INT(const std::string& name) {
-  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<uint64_t>(name);
-}
-bool GET_BOOL(const std::string& name) {
-  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<bool>(name);
-}
-std::string GET_STRING(const std::string& name) {
-  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<std::string>(name);
-}
-
-void SET_INT(const std::string &name, uint64_t value) {
-  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<uint64_t>(name, value);
-}
-
-void SET_BOOL(const std::string &name, bool value) {
-  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<bool>(name, value);
-}
-void SET_STRING(const std::string &name, const std::string &value) {
-  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<std::string>(name, value);
-}
 
 namespace peloton {
 namespace configuration {
+
+uint64_t Config::GET_INT(const std::string& name) {
+  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<uint64_t>(name);
+}
+
+bool Config::GET_BOOL(const std::string& name) {
+  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<bool>(name);
+}
+
+std::string Config::GET_STRING(const std::string& name) {
+  return peloton::configuration::ConfigurationManager::GetInstance()->GetValue<std::string>(name);
+}
+
+void Config::SET_INT(const std::string &name, uint64_t value) {
+  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<uint64_t>(name, value);
+}
+
+void Config::SET_BOOL(const std::string &name, bool value) {
+  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<bool>(name, value);
+}
+
+void Config::SET_STRING(const std::string &name, const std::string &value) {
+  peloton::configuration::ConfigurationManager::GetInstance()->SetValue<std::string>(name, value);
+}
+
+void Config::init_parameters() {
+  drop_parameters();
+  register_parameters();
+}
+
+void Config::drop_parameters() {
+  auto config_manager = ConfigurationManager::GetInstance();
+  config_manager->Clear();
+}
 
 ConfigurationManager* ConfigurationManager::GetInstance() {
   static std::unique_ptr<ConfigurationManager> config_manager(
@@ -65,20 +77,39 @@ void ConfigurationManager::InitializeCatalog() {
   catalog_initialized = true;
 }
 
-void ConfigurationManager::PrintConfiguration() {
-  LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
-  LOG_INFO(" ");
+const std::string ConfigurationManager::GetInfo() const {
+  std::stringstream str;
+  char buffer[256];
+  sprintf(buffer, "%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
+  str << buffer << std::endl;
+  sprintf(buffer, " ");
+  str << buffer << std::endl;
 
-  LOG_INFO("%30s: %10llu", "Port", (unsigned long long)GET_INT("port"));
-  LOG_INFO("%30s: %10s", "Socket Family", GET_STRING("socket_family").c_str());
-  LOG_INFO("%30s: %10s", "Statistics", GET_INT("stats_mode") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10llu", "Max Connections", (unsigned long long)GET_INT("max_connections"));
-  LOG_INFO("%30s: %10s", "Index Tuner", GET_BOOL("index_tuner") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10s", "Layout Tuner", GET_BOOL("layout_tuner") ? "enabled" : "disabled");
-  LOG_INFO("%30s: %10s", "Code-generation", GET_BOOL("codegen") ? "enabled" : "disabled");
+  sprintf(buffer, "%30s: %10llu", "Port", (unsigned long long)Config::GET_INT("port"));
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10s", "Socket Family", Config::GET_STRING("socket_family").c_str());
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10s", "Statistics", Config::GET_INT("stats_mode") ? "enabled" : "disabled");
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10llu", "Max Connections", (unsigned long long)Config::GET_INT("max_connections"));
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10s", "Index Tuner", Config::GET_BOOL("index_tuner") ? "enabled" : "disabled");
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10s", "Layout Tuner", Config::GET_BOOL("layout_tuner") ? "enabled" : "disabled");
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s: %10s", "Code-generation", Config::GET_BOOL("codegen") ? "enabled" : "disabled");
+  str << buffer << std::endl;
 
-  LOG_INFO(" ");
-  LOG_INFO("%30s", "//===---------------------------------------------------===//");
+  sprintf(buffer, " ");
+  str << buffer << std::endl;
+  sprintf(buffer, "%30s", "//===---------------------------------------------------===//");
+  str << buffer << std::endl;
+
+  return str.str();
+}
+
+void ConfigurationManager::Display() {
+  LOG_INFO("%s", GetInfo().c_str());
 }
 
 void ConfigurationManager::Clear() {
@@ -121,18 +152,8 @@ std::string ConfigurationManager::to_string(void* value_p, type::TypeId type) {
     case type::TypeId::VARCHAR:
       return to_value<std::string>(value_p);
     default:
-      throw new Exception("type is not supported in configuration");
+      throw new ConfigurationException("type is not supported in configuration");
   }
-}
-
-void init_parameters() {
-  drop_parameters();
-  register_parameters();
-}
-
-void drop_parameters() {
-  auto config_manager = ConfigurationManager::GetInstance();
-  config_manager->Clear();
 }
 
 }

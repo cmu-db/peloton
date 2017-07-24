@@ -2,19 +2,20 @@
 //
 //                         Peloton
 //
-// config.h
+// configuration.h
 //
-// Identification: src/include/common/config.h
+// Identification: src/include/configuration/configuration.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#pragma once
 
 // internal use only in
 // configuration/configuration_manager.cpp
 #ifdef __PELOTON_CONFIG__
 
-#include "configuration/configuration_utils.h"
+#include "configuration/configuration_util.h"
 
 //===----------------------------------------------------------------------===//
 // Use following macros to define configuration parameters

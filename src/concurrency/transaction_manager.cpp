@@ -67,7 +67,7 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
   
   }
   
-  if (GET_INT("stats_mode") != STATS_TYPE_INVALID) {
+  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .StartTimer();
@@ -105,7 +105,7 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
   delete current_txn;
   current_txn = nullptr;
   
-  if (GET_INT("stats_mode") != STATS_TYPE_INVALID) {
+  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();

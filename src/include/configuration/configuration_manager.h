@@ -6,10 +6,9 @@
 //
 // Identification: src/include/configuration/configuration_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include <gflags/gflags.h>
@@ -19,36 +18,46 @@
 #include "catalog/config_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 
-uint64_t GET_INT(const std::string& name);
-bool GET_BOOL(const std::string& name);
-std::string GET_STRING(const std::string& name);
-
-void SET_INT(const std::string &name, uint64_t value);
-void SET_BOOL(const std::string &name, bool value);
-void SET_STRING(const std::string &name, const std::string &value);
+namespace peloton {
+namespace configuration {
+  class Config;
+}}
+using peloton::configuration::Config;
 
 namespace peloton {
 namespace configuration {
 
-void init_parameters();
+class Config {
+public:
+  static uint64_t GET_INT(const std::string& name);
+  static bool GET_BOOL(const std::string& name);
+  static std::string GET_STRING(const std::string& name);
 
-void drop_parameters();
+  static void SET_INT(const std::string &name, uint64_t value);
+  static void SET_BOOL(const std::string &name, bool value);
+  static void SET_STRING(const std::string &name, const std::string &value);
 
-class ConfigurationManager {
+  static void init_parameters();
+  static void drop_parameters();
+};
+
+class ConfigurationManager : public Printable {
 public:
   static ConfigurationManager* GetInstance();
 
   void InitializeCatalog();
 
-  void PrintConfiguration();
+  const std::string GetInfo() const;
 
   void Clear();
+
+  void Display();
 
   template<typename T>
   T GetValue(const std::string &name) {
     auto param = config.find(name);
     if (param == config.end()) {
-      throw new Exception("no such configuration: " + name);
+      throw new ConfigurationException("no such configuration: " + name);
     }
     return to_value<T>(param->second.value);
   }
@@ -57,7 +66,7 @@ public:
   void SetValue(const std::string &name, const T &value) {
     auto param = config.find(name);
     if (param == config.end()) {
-      throw new Exception("no such configuration: " + name);
+      throw new ConfigurationException("no such configuration: " + name);
     }
     switch (param->second.value_type) {
       case type::TypeId::INTEGER:
@@ -70,7 +79,7 @@ public:
         *(std::string*)(param->second.value) = *(std::string*)(&value);
         break;
       default:
-        throw new Exception("unsupported type");
+        throw new ConfigurationException("unsupported type");
     }
     if (catalog_initialized) {
       insert_into_catalog(param->first, param->second);
@@ -82,7 +91,7 @@ public:
                     const std::string &description, const T &default_value,
                     bool is_mutable, bool is_persistent) {
     if (config.count(name) > 0) {
-      throw Exception("configuration " + name + " already exists");
+      throw ConfigurationException("configuration " + name + " already exists");
     }
     T tmp(default_value);
     config[name] = Param(value, description, type, to_string(&tmp, type),
@@ -125,3 +134,4 @@ private:
 
 } // End configuration namespace
 } // End peloton namespace
+

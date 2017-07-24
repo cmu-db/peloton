@@ -6,28 +6,10 @@
 //
 // Identification: src/include/catalog/config_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// pg_config
-//
-// Schema: (column offset: column_name)
-// 0: name (pkey)
-// 1: value
-// 2: value_type
-// 3: description
-// 4: min_value
-// 5: max_value
-// 6: default_value
-// 7: is_mutable
-// 8: is_persistent
-//
-// Indexes: (index offset: indexed columns)
-// 0: name (unique & primary key)
-//
-//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -67,7 +49,7 @@ public:
   std::string GetDefaultValue(const std::string &name,
                              concurrency::Transaction *txn);
 
-  enum ColumnId {
+  enum class ColumnId {
     NAME = 0,
     VALUE = 1,
     VALUE_TYPE = 2,
@@ -80,10 +62,11 @@ public:
     // Add new columns here in creation order
   };
 
+
 private:
   ConfigCatalog(concurrency::Transaction *txn);
 
-  enum IndexId {
+  enum class IndexId {
     SECONDARY_KEY_0 = 0,
     // Add new indexes here in creation order
   };

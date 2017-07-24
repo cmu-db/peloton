@@ -47,7 +47,7 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (GET_BOOL("index_tuner")) {
+  if (Config::GET_BOOL("index_tuner")) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -55,7 +55,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (GET_BOOL("layout_tuner")) {
+  if (Config::GET_BOOL("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -78,13 +78,13 @@ void PelotonInit::Initialize() {
 
 void PelotonInit::Shutdown() {
   // shut down index tuner
-  if (GET_BOOL("index_tuner")) {
+  if (Config::GET_BOOL("index_tuner")) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (GET_BOOL("layout_tuner")) {
+  if (Config::GET_BOOL("layout_tuner")) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
@@ -101,7 +101,7 @@ void PelotonInit::Shutdown() {
   google::protobuf::ShutdownProtobufLibrary();
 
   // clear parameters
-  configuration::drop_parameters();
+  Config::drop_parameters();
   google::ShutDownCommandLineFlags();
 }
 
