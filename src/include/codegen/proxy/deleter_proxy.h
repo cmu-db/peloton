@@ -15,6 +15,7 @@
 #include "codegen/codegen.h"
 #include "codegen/proxy/data_table_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
+#include "codegen/deleter.h"
 
 namespace peloton {
 namespace codegen {

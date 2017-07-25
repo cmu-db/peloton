@@ -11,17 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/util.h"
-#include "storage/data_table.h"
-#include "expression/tuple_value_expression.h"
-#include "type/value_factory.h"
-#include "expression/parameter_value_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/expression_util.h"
-#include "catalog/schema.h"
 
-#include <vector>
-#include <include/catalog/query_metrics_catalog.h>
-#include <include/planner/copy_plan.h>
+#include "catalog/query_metrics_catalog.h"
+#include "expression/expression_util.h"
+#include "planner/copy_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace optimizer {

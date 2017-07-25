@@ -12,9 +12,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <sstream>
-
 #include "common/logger.h"
 #include "common/macros.h"
 #include "index/index.h"

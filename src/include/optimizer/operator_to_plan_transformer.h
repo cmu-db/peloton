@@ -120,5 +120,5 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   ExprMap *output_expr_map_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

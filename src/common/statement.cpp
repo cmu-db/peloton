@@ -11,7 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/statement.h"
+
 #include <cstdio>
+#include <sstream>
+
 #include "common/logger.h"
 #include "planner/abstract_plan.h"
 

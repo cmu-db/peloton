@@ -12,9 +12,10 @@
 
 #pragma once
 
-#include "optimizer/column.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
+#include "optimizer/column.h"
+#include "optimizer/property.h"
 
 namespace peloton {
 namespace optimizer {
@@ -156,5 +157,5 @@ class PropertyPredicate : public Property {
   std::unique_ptr<expression::AbstractExpression> predicate_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

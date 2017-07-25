@@ -14,7 +14,7 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/operator/operator_translator.h"
-#include "codegen/pipeline.h"
+#include "codegen/consumer_context.h"
 #include "codegen/table.h"
 
 namespace peloton {
@@ -22,10 +22,6 @@ namespace peloton {
 namespace planner {
 class DeletePlan;
 }  // namespace planner
-
-namespace storage {
-class TileGroup;
-}  // namespace storage
 
 namespace codegen {
 

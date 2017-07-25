@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/binding.h"
+
+#include "common/logger.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
-
-#include <cassert>
 
 namespace peloton {
 namespace optimizer {

@@ -4,12 +4,10 @@
 #define private public
 
 #include "optimizer/properties.h"
-
+#include "optimizer/property_set.h"
 
 namespace peloton {
-
 namespace test {
-
 
 using namespace optimizer;
 
@@ -42,5 +40,5 @@ TEST_F(PropertyTests, PropertyColHashAndEqualTest){
   }
 }
 
-} /* namespace test */
-} /* namespace peloton */
+} // namespace test
+} // namespace peloton

@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "statistics/backend_stats_context.h"
+
 #include <map>
 
 #include "type/types.h"
 #include "common/statement.h"
+#include "catalog/catalog.h"
+#include "catalog/manager.h"
 #include "index/index.h"
-#include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
-#include "statistics/counter_metric.h"
-#include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "storage/tile_group.h"
 

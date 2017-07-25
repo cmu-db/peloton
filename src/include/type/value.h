@@ -23,6 +23,8 @@
 #include "type/serializeio.h"
 #include "type/type.h"
 
+#include "util/string_util.h"
+
 namespace peloton {
 namespace type {
 

@@ -12,10 +12,8 @@
 
 #pragma once
 
-#include <sstream>
+#include <iosfwd>
 #include <string>
-
-#include "util/string_util.h"
 
 namespace peloton {
 

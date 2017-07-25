@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <vector>
-
 #include "executor/drop_executor.h"
-#include "executor/executor_context.h"
-#include "common/logger.h"
+
 #include "catalog/catalog.h"
+#include "common/logger.h"
+#include "concurrency/transaction.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 namespace executor {

@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/catalog_defaults.h"
-#include "common/macros.h"
+
+#include "executor/logical_tile.h"
+#include "storage/data_table.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace catalog {

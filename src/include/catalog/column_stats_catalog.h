@@ -31,6 +31,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "catalog/abstract_catalog.h"
 
 #define COLUMN_STATS_CATALOG_NAME "pg_column_stats"

@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <iostream>
+#pragma once
 
 #include "networking/rpc_type.h"
 #include "networking/rpc_controller.h"

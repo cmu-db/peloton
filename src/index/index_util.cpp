@@ -10,17 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-
-#include "type/types.h"
-#include "common/logger.h"
-#include "type/value.h"
-#include "type/value_factory.h"
-
-#include "index/index_util.h"
 #include "index/index.h"
 
 #include <algorithm>
+#include <sstream>
+
+#include "index/index_util.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace index {

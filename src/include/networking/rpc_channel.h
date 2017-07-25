@@ -14,7 +14,6 @@
 #pragma once
 
 #include <string>
-#include <iostream>
 #include <memory>
 
 #include "networking/network_address.h"

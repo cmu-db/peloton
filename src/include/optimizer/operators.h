@@ -417,5 +417,5 @@ class PhysicalDistinct : public OperatorNode<PhysicalDistinct> {
   static Operator make();
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

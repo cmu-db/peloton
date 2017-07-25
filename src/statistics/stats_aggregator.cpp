@@ -10,19 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-#include <condition_variable>
-#include <fstream>
-#include <memory>
+#include "statistics/stats_aggregator.h"
 
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
-#include "statistics/backend_stats_context.h"
-#include "statistics/stats_aggregator.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace stats {

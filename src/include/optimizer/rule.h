@@ -43,5 +43,5 @@ class Rule {
   bool logical = false;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

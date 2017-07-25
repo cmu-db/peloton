@@ -69,5 +69,5 @@ class Memo {
   std::vector<Group> groups_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <vector>
+
 #include "optimizer/group_expression.h"
 #include "optimizer/operator_node.h"
 #include "optimizer/property.h"
-
-#include <unordered_map>
-#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -74,5 +74,5 @@ class Group {
   bool has_implemented_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

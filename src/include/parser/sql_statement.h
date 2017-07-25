@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <vector>
 
 #include "common/sql_node_visitor.h"

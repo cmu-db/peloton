@@ -85,5 +85,5 @@ class ItemBindingIterator : public BindingIterator {
   std::vector<size_t> children_bindings_pos_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

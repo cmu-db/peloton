@@ -14,6 +14,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/comparison_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"

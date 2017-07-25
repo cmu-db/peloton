@@ -12,13 +12,20 @@
 
 #pragma once
 
-#include "catalog/database_catalog.h"
-#include "catalog/schema.h"
-#include "storage/data_table.h"
-#include "storage/database.h"
+#include <vector>
+
+#include "type/types.h"
 
 namespace peloton {
+
+namespace index {
+class Index;
+}
+
 namespace storage {
+
+class Database;
+class DataTable;
 
 class StorageManager {
  public:
@@ -37,7 +44,7 @@ class StorageManager {
   */
 
   // Find a database using vector offset
-  Database *GetDatabaseWithOffset(oid_t database_offset) const;
+  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
   //===--------------------------------------------------------------------===//
   // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
@@ -46,7 +53,7 @@ class StorageManager {
   /* Find a database using its oid from storage layer,
    * throw exception if not exists
    * */
-  Database *GetDatabaseWithOid(oid_t db_oid) const;
+  storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
 
   /* Find a table using its oid from storage layer,
    * throw exception if not exists
@@ -71,19 +78,11 @@ class StorageManager {
   // FUNCTIONS USED BY CATALOG
   //===--------------------------------------------------------------------===//
 
-  void AddDatabaseToStorageManager(Database *db) {
+  void AddDatabaseToStorageManager(storage::Database *db) {
     databases_.push_back(db);
   }
-  bool RemoveDatabaseFromStorageManager(oid_t database_oid) {
-    for (auto it = databases_.begin(); it != databases_.end(); ++it) {
-      if ((*it)->GetOid() == database_oid) {
-        delete (*it);
-        databases_.erase(it);
-        return true;
-      }
-    }
-    return false;
-  }
+
+  bool RemoveDatabaseFromStorageManager(oid_t database_oid);
 
   void DestroyDatabases();
 
@@ -91,7 +90,8 @@ class StorageManager {
   StorageManager();
 
   // A vector of the database pointers in the catalog
-  std::vector<Database *> databases_;
+  std::vector<storage::Database *> databases_;
 };
-}
+
+}  // namespace
 }
