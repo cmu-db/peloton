@@ -41,6 +41,7 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalRightHashJoin *) = 0;
   virtual void Visit(const PhysicalOuterHashJoin *) = 0;
   virtual void Visit(const PhysicalInsert *) = 0;
+  virtual void Visit(const PhysicalInsertSelect *) = 0;
   virtual void Visit(const PhysicalDelete *) = 0;
   virtual void Visit(const PhysicalUpdate *) = 0;
   virtual void Visit(const PhysicalHashGroupBy *) = 0;
