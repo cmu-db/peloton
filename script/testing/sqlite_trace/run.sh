@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/bash -x
 
-bash clear.sh
+./clear.sh
 
 git clone https://github.com/lixupeng/peloton-test.git
 
-wget -O- -q http://pelotondb.io/files/data/sqlite-traces.tar.gz | tar xzv
+wget -O- -q http://pelotondb.io/files/data/sqlite-traces.tar.gz | tar xz
 
-python test.py
+python trace-replay.py
