@@ -22,6 +22,8 @@
 #include "executor/mock_executor.h"
 
 #include "type/types.h"
+#include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/schema.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -136,10 +138,12 @@ class TestingConstraintsUtil {
     bool own_schema = true;
     bool adapt_table = false;
 
+    txn = txn_manager.BeginTransaction();
     storage::DataTable *table = storage::TableFactory::GetDataTable(
         database_oid, INVALID_OID, table_schema, table_name,
         tuples_per_tilegroup_count, own_schema, adapt_table);
-    catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME)->AddTable(table);
+    catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->AddTable(table);
+    txn_manager.CommitTransaction(txn);
 
 //    if (indexes == true) {
 //      // PRIMARY INDEX

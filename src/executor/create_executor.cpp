@@ -19,6 +19,8 @@
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
 #include "type/types.h"
+#include "storage/database.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -59,7 +61,7 @@ bool CreateExecutor::DExecute() {
       // Add the foreign key constraint (or other multi-column constraints)
       if (node.GetForeignKeys().empty() == false) {
         auto catalog = catalog::Catalog::GetInstance();
-        auto db = catalog->GetDatabaseWithName(database_name);
+        auto db = catalog->GetDatabaseWithName(database_name, current_txn);
 
         auto source_table = db->GetTableWithName(table_name);
         int count = 1;

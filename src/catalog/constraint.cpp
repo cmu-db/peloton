@@ -12,6 +12,8 @@
 
 #include "catalog/constraint.h"
 
+#include <sstream>
+
 namespace peloton {
 namespace catalog {
 
