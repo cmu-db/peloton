@@ -93,8 +93,8 @@ void Sorter::Sort() {
 // Release any memory we allocated from the storage manager.
 void Sorter::Destroy() {
   if (buffer_start_ != nullptr) {
-    LOG_DEBUG("Cleaning up %lu tuples, releasing %.2lf KB", GetNumTuples(),
-              GetAllocatedSpace() / 1024.0);
+    LOG_DEBUG("Cleaning up %llu tuples, releasing %.2lf KB",
+              (unsigned long long)GetNumTuples(), GetAllocatedSpace() / 1024.0);
     auto &backend_manager = storage::BackendManager::GetInstance();
     backend_manager.Release(BackendType::MM, buffer_start_);
   }

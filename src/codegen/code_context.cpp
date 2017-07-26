@@ -41,13 +41,23 @@ class PelotonMM : public llvm::SectionMemoryManager {
 
   llvm::RuntimeDyld::SymbolInfo findSymbol(const std::string &name) override {
     LOG_TRACE("Looking up symbol '%s' ...", name.c_str());
+
+    // Check for a builtin with the exact name
     auto symbol_iter = symbols_.find(name);
     if (symbol_iter != symbols_.end()) {
-      auto *builtin = symbol_iter->second;
-      LOG_TRACE("--> Resolves to builtin @ %p", builtin);
-      auto addr = reinterpret_cast<uint64_t>(builtin);
-      auto flags = llvm::JITSymbolFlags::Exported;
-      return llvm::RuntimeDyld::SymbolInfo{addr, flags};
+      LOG_TRACE("--> Resolved to builtin @ %p", symbol_iter->second);
+      return llvm::RuntimeDyld::SymbolInfo{(uint64_t)symbol_iter->second,
+                                           llvm::JITSymbolFlags::Exported};
+    }
+
+    // Check for a builtin with the leading '_' removed
+    if (!name.empty() && name[0] == '_') {
+      symbol_iter = symbols_.find(name.substr(1));
+      if (symbol_iter != symbols_.end()) {
+        LOG_TRACE("--> Resolved to builtin @ %p", symbol_iter->second);
+        return llvm::RuntimeDyld::SymbolInfo{(uint64_t)symbol_iter->second,
+                                             llvm::JITSymbolFlags::Exported};
+      }
     }
 
     LOG_TRACE("--> Not builtin, use fallback resolution ...");
