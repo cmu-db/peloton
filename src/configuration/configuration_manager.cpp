@@ -156,5 +156,6 @@ std::string ConfigurationManager::to_string(void* value_p, type::TypeId type) {
   }
 }
 
-}
-}
+} // End configuration namespace
+} // End peloton namespace
+
