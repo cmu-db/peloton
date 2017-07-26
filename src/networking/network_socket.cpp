@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include "networking/network_server.h"
+#include "networking/network_socket.h"
 
 namespace peloton {
 namespace networking {
@@ -28,7 +28,7 @@ void NetworkSocket::Init(short event_flags, NetworkThread *thread,
   this->thread_id = thread->GetThreadID();
 
   // clear out packet
-  rpkt.Reset();
+  rpkt.clear();
   if (event == nullptr) {
     event = event_new(thread->GetEventBase(), sock_fd, event_flags,
                       EventHandler, this);
@@ -91,8 +91,9 @@ void NetworkSocket::GetSizeFromPktHeader(size_t start_index) {
   rpkt.len = rpkt.len - sizeof(int32_t);
 }
 
-bool NetworkSocket::IsReadDataAvailable(size_t bytes) {
-  return ((rbuf_.buf_ptr - 1) + bytes < rbuf_.buf_size);
+
+bool GetPacketsFromBuf() {
+
 }
 
 // The function tries to do a preliminary read to fetch the size value and
@@ -100,7 +101,7 @@ bool NetworkSocket::IsReadDataAvailable(size_t bytes) {
 // Assume: Packet length field is always 32-bit int
 bool NetworkSocket::ReadPacketHeader() {
   size_t initial_read_size = sizeof(int32_t);
-  if (pkt_manager.is_started == true) {
+  if (network_manager_.is_started == true) {
     // All packets other than the startup packet have a 5B header
     initial_read_size++;
   }
@@ -111,7 +112,7 @@ bool NetworkSocket::ReadPacketHeader() {
   }
 
   // get packet size from the header
-  if (pkt_manager.is_started == true) {
+  if (network_manager_.is_started == true) {
     // Header also contains msg type
     rpkt.msg_type =
         static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
@@ -176,8 +177,8 @@ bool NetworkSocket::ReadPacket() {
 
 WriteState NetworkSocket::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
-    auto pkt = pkt_manager.responses[next_response_].get();
+  for (; next_response_ < network_manager_.responses.size(); next_response_++) {
+    auto pkt = network_manager_.responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
@@ -187,10 +188,10 @@ WriteState NetworkSocket::WritePackets() {
   }
 
   // Done writing all packets. clear packets
-  pkt_manager.responses.clear();
+  network_manager_.responses.clear();
   next_response_ = 0;
 
-  if (pkt_manager.force_flush == true) {
+  if (network_manager_.force_flush == true) {
     return FlushWriteBuffer();
   }
   return WRITE_COMPLETE;
@@ -224,8 +225,8 @@ ReadState NetworkSocket::FillReadBuffer() {
   // return explicitly
   while (done == false) {
     if (rbuf_.buf_size == rbuf_.GetMaxSize()) {
-      // we have filled the whole buffer, exit loop
-      done = true;
+      // we have filled the whole buffer, extend the buffer.
+      ExtendBuffer(rbuf_);
     } else {
       // try to fill the available space in the buffer
       // if the connection is a SSL connection, we use SSL_read, otherwise
@@ -385,7 +386,7 @@ WriteState NetworkSocket::FlushWriteBuffer() {
   wbuf_.Reset();
 
   // we have flushed, disable force flush now
-  pkt_manager.force_flush = false;
+  network_manager_.force_flush = false;
 
   // we are ok
   return WRITE_COMPLETE;
@@ -520,7 +521,7 @@ void NetworkSocket::CloseSocket() {
 void NetworkSocket::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
-  pkt_manager.Reset();
+  network_manager_.Reset();
   state = CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;

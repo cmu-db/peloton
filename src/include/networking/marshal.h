@@ -31,10 +31,7 @@ class InputPacket {
   NetworkMessageType msg_type;         // header
   size_t len;                          // size of packet without header
   size_t ptr;                          // ByteBuf cursor
-  ByteBuf::const_iterator begin, end;  // start and end iterators of the buffer
   bool header_parsed;                  // has the header been parsed
-  bool is_initialized;                 // has the packet been initialized
-  bool is_extended;  // check if we need to use the extended buffer
 
  private:
   ByteBuf extended_buffer_;  // used to store packets that don't fit in rbuf
@@ -54,7 +51,7 @@ class InputPacket {
   }
 
   inline void Reset() {
-    is_initialized = header_parsed = is_extended = false;
+    header_parsed = false;
     len = ptr = 0;
     msg_type = NetworkMessageType::NULL_COMMAND;
     extended_buffer_.clear();
@@ -75,23 +72,10 @@ class InputPacket {
     extended_buffer_.insert(std::end(extended_buffer_), start, end);
   }
 
-  inline void InitializePacket(size_t &pkt_start_index,
-                               ByteBuf::const_iterator rbuf_begin) {
-    this->begin = rbuf_begin + pkt_start_index;
-    this->end = this->begin + len;
-    is_initialized = true;
-  }
-
   inline void InitializePacket() {
-    this->begin = extended_buffer_.begin();
-    this->end = extended_buffer_.end();
     PL_ASSERT(extended_buffer_.size() == len);
-    is_initialized = true;
   }
 
-  ByteBuf::const_iterator Begin() { return begin; }
-
-  ByteBuf::const_iterator End() { return end; }
 };
 
 struct OutputPacket {
