@@ -205,15 +205,15 @@ struct MemFn<R (*)(Args...), T, F> {
     return codegen.RegisterBuiltin(k##N##FnName, func_type, MEMFN(PTR));      \
   }
 
-#define TYPE_BUILDER(PROXY, TYPE)                                  \
-  namespace proxy {                                                \
-  template <>                                                      \
-  struct TypeBuilder<TYPE> {                                       \
-    static llvm::Type *GetType(peloton::codegen::CodeGen &codegen) \
-        ALWAYS_INLINE {                                            \
-      return PROXY##Proxy::GetType(codegen);                       \
-    }                                                              \
-  };                                                               \
+#define TYPE_BUILDER(PROXY, TYPE)                                      \
+  namespace proxy {                                                    \
+  template <>                                                          \
+  struct TypeBuilder<TYPE> {                                           \
+    static ::llvm::Type *GetType(::peloton::codegen::CodeGen &codegen) \
+        ALWAYS_INLINE {                                                \
+      return PROXY##Proxy::GetType(codegen);                           \
+    }                                                                  \
+  };                                                                   \
   }
 
 }  // namespace codegen

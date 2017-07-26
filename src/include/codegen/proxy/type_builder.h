@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/proxy/proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -33,77 +32,28 @@ namespace proxy {
 template <typename T>
 struct TypeBuilder {};
 
-/// void type
-template <>
-struct TypeBuilder<void> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.VoidType();
-  }
-};
-
-/// Primitive types
-
-/// bool
-template <>
-struct TypeBuilder<bool> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.BoolType();
-  }
-};
-
-/// int8
-template <>
-struct TypeBuilder<int8_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int8Type();
-  }
-};
-template <>
-struct TypeBuilder<uint8_t> : public TypeBuilder<int8_t> {};
-template <>
-struct TypeBuilder<char> : public TypeBuilder<int8_t> {};
-
-/// int16
-template <>
-struct TypeBuilder<int16_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int16Type();
-  }
-};
-template <>
-struct TypeBuilder<uint16_t> : public TypeBuilder<int16_t> {};
-
-/// int32
-template <>
-struct TypeBuilder<int32_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int32Type();
-  }
-};
-template <>
-struct TypeBuilder<uint32_t> : public TypeBuilder<int32_t> {};
-
-/// int64
-template <>
-struct TypeBuilder<int64_t> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.Int64Type();
-  }
-};
-template <>
-struct TypeBuilder<uint64_t> : public TypeBuilder<int64_t> {};
-template <>
-struct TypeBuilder<unsigned long long> : public TypeBuilder<int64_t> {};
-template <>
-struct TypeBuilder<long long> : public TypeBuilder<int64_t> {};
-
-/// double
-template <>
-struct TypeBuilder<double> {
-  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return codegen.DoubleType();
-  }
-};
+#define DEFINE_PRIMITIVE_BUILDER(P, N)                           \
+  template <>                                                    \
+  struct TypeBuilder<P> {                                        \
+    static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE { \
+      return codegen.N##Type();                                  \
+    }                                                            \
+  };
+DEFINE_PRIMITIVE_BUILDER(void, Void);
+DEFINE_PRIMITIVE_BUILDER(bool, Bool);
+DEFINE_PRIMITIVE_BUILDER(char, Int8);
+DEFINE_PRIMITIVE_BUILDER(signed char, Int8);
+DEFINE_PRIMITIVE_BUILDER(unsigned char, Int8);
+DEFINE_PRIMITIVE_BUILDER(short, Int16);
+DEFINE_PRIMITIVE_BUILDER(unsigned short, Int16);
+DEFINE_PRIMITIVE_BUILDER(int, Int32);
+DEFINE_PRIMITIVE_BUILDER(unsigned int, Int32);
+DEFINE_PRIMITIVE_BUILDER(long, Int64);
+DEFINE_PRIMITIVE_BUILDER(unsigned long, Int64);
+DEFINE_PRIMITIVE_BUILDER(long long, Int64);
+DEFINE_PRIMITIVE_BUILDER(unsigned long long, Int64);
+DEFINE_PRIMITIVE_BUILDER(double, Double);
+#undef DEFINE_PRIMITIVE_BUILDER
 
 /// Const
 template <typename T>
@@ -167,6 +117,9 @@ template <typename R, typename T, typename... Args>
 struct TypeBuilder<R (T::*)(Args...) const>
     : public TypeBuilder<R (T::*)(Args...)> {};
 
+template <uint32_t Pos, typename T>
+struct TypeBuilder<codegen::ProxyMember<Pos, T>> : public TypeBuilder<T> {};
+
 /// A list of types
 template <typename... Args>
 struct TypeList {
@@ -174,9 +127,6 @@ struct TypeList {
     return {TypeBuilder<Args>::GetType(codegen)...};
   }
 };
-
-template <uint32_t Pos, typename T>
-struct TypeBuilder<codegen::ProxyMember<Pos, T>> : public TypeBuilder<T> {};
 
 }  // namespace proxy
 }  // namespace codegen
