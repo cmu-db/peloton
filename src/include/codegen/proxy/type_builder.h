@@ -92,6 +92,10 @@ struct TypeBuilder<int64_t> {
 };
 template <>
 struct TypeBuilder<uint64_t> : public TypeBuilder<int64_t> {};
+template <>
+struct TypeBuilder<unsigned long long> : public TypeBuilder<int64_t> {};
+template <>
+struct TypeBuilder<long long> : public TypeBuilder<int64_t> {};
 
 /// double
 template <>
