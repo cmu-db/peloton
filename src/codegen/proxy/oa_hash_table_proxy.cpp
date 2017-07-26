@@ -29,16 +29,9 @@ DEFINE_TYPE(OAHashTable, "peloton::OAHashTable", MEMBER(buckets),
             MEMBER(resize_threshold), MEMBER(entry_size), MEMBER(key_size),
             MEMBER(value_size));
 
-DEFINE_METHOD(OAHashTable, Init, &peloton::codegen::util::OAHashTable::Init,
-              "_ZN7peloton7codegen4util11OAHashTable4InitEmmm");
-
-DEFINE_METHOD(
-    OAHashTable, StoreTuple, &peloton::codegen::util::OAHashTable::StoreTuple,
-    "_ZN7peloton7codegen4util11OAHashTable10StoreTupleEPNS2_9HashEntryEm");
-
-DEFINE_METHOD(OAHashTable, Destroy,
-              &peloton::codegen::util::OAHashTable::Destroy,
-              "_ZN7peloton7codegen4util11OAHashTable7DestroyEv");
+DEFINE_METHOD(peloton::codegen::util, OAHashTable, Init);
+DEFINE_METHOD(peloton::codegen::util, OAHashTable, StoreTuple);
+DEFINE_METHOD(peloton::codegen::util, OAHashTable, Destroy);
 
 }  // namespace codegen
 }  // namespace peloton

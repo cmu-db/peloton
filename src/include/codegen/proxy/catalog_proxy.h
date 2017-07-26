@@ -19,7 +19,7 @@
 namespace peloton {
 namespace codegen {
 
-PROXY(Catalog) {
+PROXY(StorageManager) {
   /// The data members of storage::StorageManager
   /// Note: For now, we don't need access to individual fields.  Instead, we
   /// use an opaque byte array whose size matches a catalog::Catalog object.
@@ -30,7 +30,7 @@ PROXY(Catalog) {
   DECLARE_METHOD(GetTableWithOid);
 };
 
-TYPE_BUILDER(Catalog, storage::StorageManager);
+TYPE_BUILDER(StorageManager, storage::StorageManager);
 
 }  // namespace codegen
 }  // namespace peloton

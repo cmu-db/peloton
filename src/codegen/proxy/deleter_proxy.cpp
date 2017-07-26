@@ -20,12 +20,8 @@ namespace codegen {
 
 DEFINE_TYPE(Deleter, "codegen::Deleter", MEMBER(opaque));
 
-DEFINE_METHOD(Deleter, Init, &peloton::codegen::Deleter::Init,
-              "_ZN7peloton7codegen7Deleter4InitEPNS_"
-              "11concurrency11TransactionEPNS_7storage9DataTableE");
-
-DEFINE_METHOD(Deleter, Delete, &peloton::codegen::Deleter::Delete,
-              "_ZN7peloton7codegen7Deleter6DeleteEjj");
+DEFINE_METHOD(peloton::codegen, Deleter, Init);
+DEFINE_METHOD(peloton::codegen, Deleter, Delete);
 
 }  // namespace codegen
 }  // namespace peloton

@@ -21,26 +21,11 @@ namespace codegen {
 DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo",
             MEMBER(col_start_ptr), MEMBER(stride), MEMBER(columnar));
 
-DEFINE_METHOD(RuntimeFunctions, CRC64Hash,
-              &peloton::codegen::RuntimeFunctions::HashCrc64,
-              "_ZN7peloton7codegen16RuntimeFunctions9HashCrc64EPKcmm");
-DEFINE_METHOD(RuntimeFunctions, GetTileGroup,
-              &peloton::codegen::RuntimeFunctions::GetTileGroup,
-              "_ZN7peloton7codegen16RuntimeFunctions12GetTileGroupEPNS_"
-              "7storage9DataTableEm");
-DEFINE_METHOD(RuntimeFunctions, GetTileGroupLayout,
-              &peloton::codegen::RuntimeFunctions::GetTileGroupLayout,
-              "_ZN7peloton7codegen16RuntimeFunctions18GetTileGroupLayoutEPKNS_"
-              "7storage9TileGroupEPNS1_16ColumnLayoutInfoEj");
-DEFINE_METHOD(
-    RuntimeFunctions, ThrowDivideByZeroException,
-    &peloton::codegen::RuntimeFunctions::ThrowDivideByZeroException,
-    "_ZN7peloton7codegen16RuntimeFunctions26ThrowDivideByZeroExceptionEv");
-
-DEFINE_METHOD(
-    RuntimeFunctions, ThrowOverflowException,
-    &peloton::codegen::RuntimeFunctions::ThrowOverflowException,
-    "_ZN7peloton7codegen16RuntimeFunctions22ThrowOverflowExceptionEv");
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);
 
 }  // namespace codegen
 }  // namespace peloton

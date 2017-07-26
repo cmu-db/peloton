@@ -56,15 +56,15 @@ namespace proxy {
 namespace detail {
 
 //===----------------------------------------------------------------------===//
-// The Itanium ABI does not provide the location of virtual functions. Thus, all
-// virtual method invocations go through a VirtualDispatch thunk that does the
-// heavy lifting of adjusting *this and calculating vtable offsets to invoke the
-// correct function. Since these functions are static, their address is known at
-// runtime, and is used as the entry point for the virtual function.
+// The VirtualDispatch templated struct exists to correctly proxy virtual method
+// invocations. We need this struct because the address of a virtual method
+// pointer cannot be obtained in C++, according to the Itanium ABI (see the
+// MemFn struct below to understand why). To get around this, we instantiate a
+// static function (with a known address) whose only job is to perform the
+// virtual function call given the instance object and arguments.
 //
-// You had better not be calling virtual functions from hot-loops since LLVM
-// cannot inline or optimize those calls because the function definition is not
-// available.
+// VirtualDispatch makes it possible to call virtual functions from codegen'd
+// code, though this should not be done in a hot-loop!
 //===----------------------------------------------------------------------===//
 
 template <typename X, typename T, T t>
@@ -91,16 +91,27 @@ struct VirtualDispatch<void (C::*)(Args...) const, T, MemFn> {
 };
 
 //===----------------------------------------------------------------------===//
-// MemFn returns a function pointer for the provided method/function. For
-// regular non-virtual methods and functions, this is easy and specified in the
-// Itanium ABI. For virtual functions, we use a virtual dispatch thunk (above),
-// to handle it and return the address of the thunk.
+// MemFn returns a function pointer for the provided method/function. For static
+// functions and static member methods, this is easy by just casting the pointer
+// to a void pointer.
+//
+// Non-static methods are a little trickier. The Itanium ABI stores
+// pointer-to-member functions are a 16-byte pair of 8-byte values:
+//   - ptr: If the function is not virtual, this is a regular function pointer.
+//          If the function is virtual, this value is one plus the offset of the
+//          virtual-table in the class.
+//   - adjustment: This is the byte-adjustment to the "this" pointer needed to
+//                 point to the correct class in the inheritance hierarchy.
+//
+// If the function is a regular, non-static, non-virtual method, we just return
+// the raw function pointer. If the function is a virtual method, we wrap it in
+// a VirtualDispatch thunk.
 //
 // NOTE: This only works on compilers adhering to the Itanium ABI. This includes
 //       Clang and GCC, the ones we currently care about. On Windows, this won't
 //       work.
-// NOTE: ^^^ That isn't entirely true, we also make assumptions about pointer
-//       sizes and casting rules that are not entirely standards-compliant.
+// NOTE: We also make assumptions about pointer sizes and casting rules that are
+//       not entirely standards-compliant.
 //===----------------------------------------------------------------------===//
 
 template <typename X, typename T, T t>
@@ -177,32 +188,33 @@ struct MemFn<R (*)(Args...), T, F> {
 #define MEMFN(f) \
   ::peloton::codegen::proxy::detail::MemFn<decltype(f), decltype(f), f>::Get()
 
-// P: Proxy, N: method name, PTR: C++ method pointer, MNAME: mangled name
-#define DEFINE_METHOD(P, N, PTR, MNAME)                                       \
-  P##Proxy::_##N P##Proxy::N = {};                                            \
-  const char *P##Proxy::_##N::k##N##FnName = MNAME;                           \
-  ::llvm::Function *P##Proxy::_##N::GetFunction(                              \
-      ::peloton::codegen::CodeGen &codegen) const {                           \
-    /* If the function has already been defined, return it. */                \
-    if (::llvm::Function *func = codegen.LookupBuiltin(k##N##FnName)) {       \
-      return func;                                                            \
-    }                                                                         \
-                                                                              \
-    /* Ensure either a function pointer or a member function pointer */       \
-    static_assert(                                                            \
-        ((::std::is_pointer<decltype(PTR)>::value &&                          \
-          ::std::is_function<                                                 \
-              typename ::std::remove_pointer<decltype(PTR)>::type>::value) || \
-         ::std::is_member_function_pointer<decltype(PTR)>::value),            \
-        "You must provide a pointer to the function you want to proxy");      \
-                                                                              \
-    /* The function hasn't been registered. Do it now. */                     \
-    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                  \
-        ::peloton::codegen::proxy::TypeBuilder<decltype(PTR)>::GetType(       \
-            codegen));                                                        \
-    auto *func_type =                                                         \
-        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());  \
-    return codegen.RegisterBuiltin(k##N##FnName, func_type, MEMFN(PTR));      \
+#define STR(x) #x
+
+#define DEFINE_METHOD(NS, C, F)                                                \
+  C##Proxy::_##F C##Proxy::F = {};                                             \
+  const char *C##Proxy::_##F::k##F##FnName = STR(NS::C::F);                    \
+  ::llvm::Function *C##Proxy::_##F::GetFunction(                               \
+      ::peloton::codegen::CodeGen &codegen) const {                            \
+    /* If the function has already been defined, return it. */                 \
+    if (::llvm::Function *func = codegen.LookupBuiltin(k##F##FnName)) {        \
+      return func;                                                             \
+    }                                                                          \
+                                                                               \
+    /* Ensure either a function pointer or a member function pointer */        \
+    static_assert(                                                             \
+        ((::std::is_pointer<decltype(&NS::C::F)>::value &&                     \
+          ::std::is_function<typename ::std::remove_pointer<decltype(          \
+              &NS::C::F)>::type>::value) ||                                    \
+         ::std::is_member_function_pointer<decltype(&NS::C::F)>::value),       \
+        "You must provide a pointer to the function you want to proxy");       \
+                                                                               \
+    /* The function hasn't been registered. Do it now. */                      \
+    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                   \
+        ::peloton::codegen::proxy::TypeBuilder<decltype(&NS::C::F)>::GetType(  \
+            codegen));                                                         \
+    auto *func_type =                                                          \
+        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());   \
+    return codegen.RegisterBuiltin(k##F##FnName, func_type, MEMFN(&NS::C::F)); \
   }
 
 #define TYPE_BUILDER(PROXY, TYPE)                                      \

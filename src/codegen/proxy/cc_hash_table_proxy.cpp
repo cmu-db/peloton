@@ -40,14 +40,9 @@ llvm::Type *HashEntryProxy::GetType(CodeGen &codegen) {
 DEFINE_TYPE(CCHashTable, "peloton::CCHashTable", MEMBER(buckets),
             MEMBER(num_buckets), MEMBER(bucket_mask), MEMBER(num_elements));
 
-DEFINE_METHOD(CCHashTable, Init, &util::CCHashTable::Init,
-              "_ZN7peloton7codegen4util11CCHashTable4InitEv");
-
-DEFINE_METHOD(CCHashTable, StoreTuple, &util::CCHashTable::StoreTuple,
-              "_ZN7peloton7codegen4util11CCHashTable10StoreTupleEmj");
-
-DEFINE_METHOD(CCHashTable, Destroy, &util::CCHashTable::Destroy,
-              "_ZN7peloton7codegen4util11CCHashTable7DestroyEv");
+DEFINE_METHOD(peloton::codegen::util, CCHashTable, Init);
+DEFINE_METHOD(peloton::codegen::util, CCHashTable, StoreTuple);
+DEFINE_METHOD(peloton::codegen::util, CCHashTable, Destroy);
 
 }  // namespace codegen
 }  // namespace peloton

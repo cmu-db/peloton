@@ -46,9 +46,7 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 
 PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
 
-DEFINE_METHOD(BufferingConsumer, BufferTuple,
-              &codegen::BufferingConsumer::BufferTuple,
-              "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcS2_j");
+DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 
 //===----------------------------------------------------------------------===//
 // BUFFERING CONSUMER

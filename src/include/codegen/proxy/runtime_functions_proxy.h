@@ -27,7 +27,7 @@ PROXY(ColumnLayoutInfo) {
 };
 
 PROXY(RuntimeFunctions) {
-  DECLARE_METHOD(CRC64Hash);
+  DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(ThrowDivideByZeroException);

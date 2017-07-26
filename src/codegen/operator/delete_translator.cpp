@@ -45,7 +45,7 @@ void DeleteTranslator::InitializeState() {
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
   llvm::Value *table_ptr =
-      codegen.Call(CatalogProxy::GetTableWithOid,
+      codegen.Call(StorageManagerProxy::GetTableWithOid,
                    {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
                     codegen.Const32(table->GetOid())});
 

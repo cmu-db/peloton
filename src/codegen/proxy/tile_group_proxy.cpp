@@ -17,13 +17,8 @@ namespace codegen {
 
 DEFINE_TYPE(TileGroup, "peloton::storage::TileGroup", MEMBER(opaque));
 
-DEFINE_METHOD(TileGroup, GetNextTupleSlot,
-              &peloton::storage::TileGroup::GetNextTupleSlot,
-              "_ZNK7peloton7storage9TileGroup16GetNextTupleSlotEv");
-
-DEFINE_METHOD(TileGroup, GetTileGroupId,
-              &peloton::storage::TileGroup::GetTileGroupId,
-              "_ZNK7peloton7storage9TileGroup14GetTileGroupIdEv");
+DEFINE_METHOD(peloton::storage, TileGroup, GetNextTupleSlot);
+DEFINE_METHOD(peloton::storage, TileGroup, GetTileGroupId);
 
 }  // namespace codegen
 }  // namespace peloton
