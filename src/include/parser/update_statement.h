@@ -57,9 +57,7 @@ class UpdateStatement : public SQLStatement {
         updates(nullptr),
         where(nullptr) {}
 
-  virtual ~UpdateStatement() {
-    printf("Destory UpdateStatement\n");
-  }
+  virtual ~UpdateStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
