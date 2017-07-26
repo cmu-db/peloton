@@ -12,8 +12,11 @@
 #define __PELOTON_CONFIG__
 
 #include "common/exception.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "type/ephemeral_pool.h"
 #include "configuration/configuration_manager.h"
 #include "configuration/configuration.h"
+#include "catalog/config_catalog.h"
 
 namespace peloton {
 namespace configuration {

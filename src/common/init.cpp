@@ -13,6 +13,7 @@
 #include "common/init.h"
 
 #include <google/protobuf/stubs/common.h>
+#include <gflags/gflags.h>
 
 #include "brain/index_tuner.h"
 #include "brain/layout_tuner.h"

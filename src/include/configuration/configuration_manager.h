@@ -11,12 +11,9 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
-#include <gflags/gflags.h>
 #include "type/types.h"
-#include "type/ephemeral_pool.h"
 #include "common/exception.h"
-#include "catalog/config_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "common/printable.h"
 
 namespace peloton {
 namespace configuration {
@@ -134,4 +131,3 @@ private:
 
 } // End configuration namespace
 } // End peloton namespace
-
