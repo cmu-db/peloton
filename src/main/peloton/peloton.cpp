@@ -12,6 +12,7 @@
 
 #include <iostream>
 
+#include <gflags/gflags.h>
 #include "configuration/configuration_manager.h"
 #include "wire/libevent_server.h"
 #include "common/init.h"
