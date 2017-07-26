@@ -73,9 +73,9 @@ void *PrepareStatementTest(int port) {
 
     // test prepared statement already in statement cache
     // LOG_INFO("[Prepare statement cache]
-    // %d",conn->pkt_manager.ExistCachedStatement("searchstmt"));
+    // %d",conn->network_manager_.ExistCachedStatement("searchstmt"));
     EXPECT_EQ(R.size(), 1);
-    EXPECT_TRUE(conn->pkt_manager.ExistCachedStatement("searchstmt"));
+    EXPECT_TRUE(conn->network_manager_.ExistCachedStatement("searchstmt"));
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

@@ -53,7 +53,7 @@ void *SimpleQueryTest(int port) {
         peloton::networking::NetworkServer::GetConn(
             peloton::networking::NetworkServer::recent_connfd);
 
-    EXPECT_EQ(conn->pkt_manager.is_started, true);
+    EXPECT_EQ(conn->network_manager_.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -94,7 +94,7 @@ void *RollbackTest(int port) {
         peloton::wire::LibeventServer::GetConn(
             peloton::wire::LibeventServer::recent_connfd);
 
-    EXPECT_EQ(conn->pkt_manager.is_started, true);
+    EXPECT_EQ(conn->network_manager_.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");

@@ -129,7 +129,7 @@ void StateMachine(NetworkSocket *conn) {
       case CONN_PROCESS: {
         bool status;
 
-        if(conn->pkt_manager.ssl_sent) {
+        if(conn->network_manager_.ssl_sent) {
             // start SSL handshake
             // TODO: consider free conn_SSL_context
             conn->conn_SSL_context = SSL_new(NetworkServer::ssl_context);
@@ -146,7 +146,7 @@ void StateMachine(NetworkSocket *conn) {
               conn->TransitState(CONN_CLOSED);
             }
             LOG_ERROR("SSL handshake completed");
-            conn->pkt_manager.ssl_sent = false;
+            conn->network_manager_.ssl_sent = false;
         }
 
         if (conn->rpkt.header_parsed == false) {
@@ -169,19 +169,19 @@ void StateMachine(NetworkSocket *conn) {
         }
         PL_ASSERT(conn->rpkt.is_initialized == true);
 
-        if (conn->pkt_manager.is_started == false) {
+        if (conn->network_manager_.is_started == false) {
           // We need to handle startup packet first
-          int status_res = conn->pkt_manager.ProcessInitialPacket(&conn->rpkt);
+          int status_res = conn->network_manager_.ProcessInitialPacket(&conn->rpkt);
           status = (status_res != 0);
           if (status_res == 1) {
-            conn->pkt_manager.is_started = true;
+            conn->network_manager_.is_started = true;
           }
           else if (status_res == -1){
-            conn->pkt_manager.ssl_sent = true;
+            conn->network_manager_.ssl_sent = true;
           }
         } else {
           // Process all other packets
-          status = conn->pkt_manager.ProcessPacket(&conn->rpkt,
+          status = conn->network_manager_.ProcessPacket(&conn->rpkt,
                                                    (size_t)conn->thread_id);
         }
 
