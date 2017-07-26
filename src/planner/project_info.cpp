@@ -175,5 +175,45 @@ std::string ProjectInfo::Debug() const {
   return (buffer.str());
 }
 
+bool ProjectInfo::CheckEquality(const planner::DerivedAttribute &A,
+                                const planner::DerivedAttribute &B) const {
+  if (A.attribute_info.type != B.attribute_info.type)
+    return false;
+  if (A.attribute_info.attribute_id != B.attribute_info.attribute_id)
+    return false;
+  return A.expr->Equals(B.expr);
+}
+
+bool ProjectInfo::Equals(const planner::ProjectInfo &other) const {
+  // compare TargetList
+  size_t tl_size = GetTargetList().size();
+  if (tl_size != other.GetTargetList().size())
+    return false;
+  for (size_t i = 0; i < tl_size; i++) {
+    Target t = GetTargetList().at(i);
+    Target target_t = other.GetTargetList().at(i);
+    if (t.first != target_t.first)
+      return false;
+    if (!CheckEquality(t.second, target_t.second))
+      return false;
+  }
+
+  // compare DirectMapList
+  size_t dml_size = GetDirectMapList().size();
+  if (dml_size != other.GetDirectMapList().size())
+    return false;
+  for (size_t i = 0; i < dml_size; i++) {
+    DirectMap dm = GetDirectMapList().at(i);
+    DirectMap target_dm = other.GetDirectMapList().at(i);
+    if (dm.first != target_dm.first)
+      return false;
+    else if (dm.second.first != target_dm.second.first)
+      return false;
+    else if (dm.second.second != target_dm.second.second)
+      return false;
+  }
+  return true;
+}
+
 }  // namespace planner
 }  // namespace peloton

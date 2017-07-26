@@ -63,6 +63,23 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
     std::vector<const BindingContext *> inputs = {&input_context};
     GetProjectInfo()->PerformRebinding(binding_context, inputs);
   }
+
+bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::UpdatePlan &>(plan);
+  if (!GetTable()->Equals(*other.GetTable()))
+    return false;
+
+  auto *proj_info = GetProjectInfo();
+  if (proj_info && !proj_info->Equals(*other.GetProjectInfo()))
+    return false;
+
+  if (GetUpdatePrimaryKey() != other.GetUpdatePrimaryKey())
+    return false;
+
+  return AbstractPlan::Equals(plan);
 }
 
 }  // namespace planner

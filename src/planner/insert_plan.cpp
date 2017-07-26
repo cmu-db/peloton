@@ -171,5 +171,29 @@ void InsertPlan::PerformBinding(BindingContext &binding_context) {
   // Binding is not required if there is no child
 }
 
+bool InsertPlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::InsertPlan &>(plan);
+  if (!GetTable()->Equals(*other.GetTable()))
+    return false;
+
+  auto *proj_info = GetProjectInfo();
+  if (proj_info && !proj_info->Equals(*other.GetProjectInfo()))
+    return false;
+
+  auto bulk_insert_count = GetBulkInsertCount();
+  if (bulk_insert_count != other.GetBulkInsertCount())
+    return false;
+  for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
+    auto is_equal = GetTuple(i)->Compare(*other.GetTuple(i));
+    if (is_equal == false)
+      return false;
+  }
+
+  return AbstractPlan::Equals(plan);
+}
+
 }  // namespace planner
 }  // namespace peloton

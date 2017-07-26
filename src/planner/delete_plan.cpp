@@ -27,5 +27,21 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
+bool DeletePlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::DeletePlan &>(plan);
+  // compare table
+  if (!GetTable()->Equals(*other.GetTable()))
+    return false;
+
+  // compare truncate
+  if (GetTruncate() != other.GetTruncate())
+    return false;
+
+  return AbstractPlan::Equals(plan);
+}
+
 }  // namespace planner
 }  // namespace peloton

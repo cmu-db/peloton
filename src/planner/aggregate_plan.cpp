@@ -121,5 +121,71 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+bool AggregatePlan::AreEqual(
+    const std::vector<planner::AggregatePlan::AggTerm> &A,
+    const std::vector<planner::AggregatePlan::AggTerm> &B) const {
+  if (A.size() != B.size())
+    return false;
+  for (size_t i = 0; i < A.size(); i++) {
+    if (A.at(i).aggtype != B.at(i).aggtype)
+      return false;
+    auto *expr = A.at(i).expression;
+    if (expr && !expr->Equals(B.at(i).expression))
+      return false;
+    if (A.at(i).distinct != B.at(i).distinct)
+      return false;
+  }
+  return true;
+}
+
+bool AggregatePlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType()) {
+    return false;
+  }
+
+  auto &other = reinterpret_cast<planner::AggregatePlan &>(plan);
+  // compare project_info
+  auto *proj_info = GetProjectInfo();
+  if (proj_info && !proj_info->Equals(*other.GetProjectInfo())) {
+    LOG_TRACE("Project informations are not equal");
+    return false;
+  }
+
+  // compare predicate
+  auto *expr = GetPredicate();
+  if (expr && !expr->Equals(other.GetPredicate())) {
+    LOG_TRACE("Predicates are not equal");
+    return false;
+  }
+
+  // compare unique_agg_term
+  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms())) {
+    LOG_TRACE("Aggregate terms are not equal");
+    return false;
+  }
+
+  // compare groupby_col_ids
+  size_t group_by_col_ids_count = GetGroupbyColIds().size();
+  if (group_by_col_ids_count != other.GetGroupbyColIds().size()) {
+    return false;
+  }
+  for (size_t i = 0; i < group_by_col_ids_count; i++) {
+    if (GetGroupbyColIds().at(i) != other.GetGroupbyColIds().at(i))
+      return false;
+  }
+
+  // compare output_schema
+  if (*GetOutputSchema() != *other.GetOutputSchema()) {
+    return false;
+  }
+
+  // compare aggregate_strategy
+  if (GetAggregateStrategy() != other.GetAggregateStrategy()) {
+    return false;
+  }
+
+  return AbstractPlan::Equals(plan);
+}
+
 }  // namespace planner
 }  // namespace peloton
