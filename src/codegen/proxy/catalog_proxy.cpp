@@ -18,12 +18,10 @@ namespace peloton {
 namespace codegen {
 
 // Define the proxy type with the single opaque member field
-DEFINE_TYPE(Catalog, "peloton::storage::StorageManager", MEMBER(opaque));
+DEFINE_TYPE(StorageManager, "peloton::storage::StorageManager", MEMBER(opaque));
 
 // Define a method that proxies catalog::Catalog::GetTableWithOid()
-DEFINE_METHOD(Catalog, GetTableWithOid,
-              &storage::StorageManager::GetTableWithOid,
-              "_ZNK7peloton7storage14StorageManager15GetTableWithOidEjj");
+DEFINE_METHOD(peloton::storage, StorageManager, GetTableWithOid);
 
 }  // namespace codegen
 }  // namespace peloton

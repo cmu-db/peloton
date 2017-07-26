@@ -17,9 +17,7 @@ namespace codegen {
 
 DEFINE_TYPE(DataTable, "storage::DataTable", MEMBER(opaque));
 
-DEFINE_METHOD(DataTable, GetTileGroupCount,
-              &storage::DataTable::GetTileGroupCount,
-              "_ZNK7peloton7storage9DataTable17GetTileGroupCountEv");
+DEFINE_METHOD(peloton::storage, DataTable, GetTileGroupCount);
 
 }  // namespace codegen
 }  // namespace peloton

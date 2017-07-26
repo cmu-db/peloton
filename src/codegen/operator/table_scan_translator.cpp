@@ -68,7 +68,7 @@ void TableScanTranslator::Produce() const {
   llvm::Value *catalog_ptr = GetCatalogPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr = codegen.Call(CatalogProxy::GetTableWithOid,
+  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
                                         {catalog_ptr, db_oid, table_oid});
 
   // The selection vector for the scan

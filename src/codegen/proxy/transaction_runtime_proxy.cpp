@@ -21,23 +21,9 @@
 namespace peloton {
 namespace codegen {
 
-/// PerformVectorizedRead()
-DEFINE_METHOD(TransactionRuntime, PerformVectorizedRead,
-              &peloton::codegen::TransactionRuntime::PerformVectorizedRead,
-              "_ZN7peloton7codegen18TransactionRuntime21PerformVectorizedReadE"
-              "RNS_11concurrency11TransactionERNS_7storage9TileGroupEjjPj");
-
-/// PerformDelete()
-DEFINE_METHOD(TransactionRuntime, PerformDelete,
-              &peloton::codegen::TransactionRuntime::PerformDelete,
-              "_ZN7peloton7codegen18TransactionRuntime13PerformDeleteERNS_"
-              "11concurrency11TransactionERNS_7storage9DataTableEjj");
-
-/// IncreaseNumProcessed()
-DEFINE_METHOD(TransactionRuntime, IncreaseNumProcessed,
-              &peloton::codegen::TransactionRuntime::IncreaseNumProcessed,
-              "_ZN7peloton7codegen18TransactionRuntime20IncreaseNumProcessedEP"
-              "NS_8executor15ExecutorContextE");
+DEFINE_METHOD(peloton::codegen, TransactionRuntime, PerformVectorizedRead);
+DEFINE_METHOD(peloton::codegen, TransactionRuntime, PerformDelete);
+DEFINE_METHOD(peloton::codegen, TransactionRuntime, IncreaseNumProcessed);
 
 }  // namespace codegen
 }  // namespace peloton

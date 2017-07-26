@@ -26,7 +26,7 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(OutputBigInt);
   DECLARE_METHOD(OutputDate);
   DECLARE_METHOD(OutputTimestamp);
-  DECLARE_METHOD(OutputDouble);
+  DECLARE_METHOD(OutputDecimal);
   DECLARE_METHOD(OutputVarchar);
   DECLARE_METHOD(OutputVarbinary);
   DECLARE_METHOD(CompareStrings);

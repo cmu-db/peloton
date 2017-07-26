@@ -17,49 +17,17 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_METHOD(ValuesRuntime, OutputBoolean,
-              &peloton::codegen::ValuesRuntime::OutputBoolean,
-              "_ZN7peloton7codegen13ValuesRuntime13OutputBooleanEPcjb");
-
-DEFINE_METHOD(ValuesRuntime, OutputTinyInt,
-              &peloton::codegen::ValuesRuntime::OutputTinyInt,
-              "_ZN7peloton7codegen13ValuesRuntime13OutputTinyIntEPcja");
-
-DEFINE_METHOD(ValuesRuntime, OutputSmallInt,
-              &peloton::codegen::ValuesRuntime::OutputSmallInt,
-              "_ZN7peloton7codegen13ValuesRuntime14OutputSmallIntEPcjs");
-
-DEFINE_METHOD(ValuesRuntime, OutputInteger,
-              &peloton::codegen::ValuesRuntime::OutputInteger,
-              "_ZN7peloton7codegen13ValuesRuntime13OutputIntegerEPcji");
-
-DEFINE_METHOD(ValuesRuntime, OutputBigInt,
-              &peloton::codegen::ValuesRuntime::OutputBigInt,
-              "_ZN7peloton7codegen13ValuesRuntime12OutputBigIntEPcjl");
-
-DEFINE_METHOD(ValuesRuntime, OutputDate,
-              &peloton::codegen::ValuesRuntime::OutputDate,
-              "_ZN7peloton7codegen13ValuesRuntime10OutputDateEPcji");
-
-DEFINE_METHOD(ValuesRuntime, OutputTimestamp,
-              &peloton::codegen::ValuesRuntime::OutputTimestamp,
-              "_ZN7peloton7codegen13ValuesRuntime15OutputTimestampEPcjl");
-
-DEFINE_METHOD(ValuesRuntime, OutputDouble,
-              &peloton::codegen::ValuesRuntime::OutputDecimal,
-              "_ZN7peloton7codegen13ValuesRuntime13OutputDecimalEPcjd");
-
-DEFINE_METHOD(ValuesRuntime, OutputVarchar,
-              &peloton::codegen::ValuesRuntime::OutputVarchar,
-              "_ZN7peloton7codegen13ValuesRuntime13OutputVarcharEPcjS2_j");
-
-DEFINE_METHOD(ValuesRuntime, OutputVarbinary,
-              &peloton::codegen::ValuesRuntime::OutputVarbinary,
-              "_ZN7peloton7codegen13ValuesRuntime15OutputVarbinaryEPcjS2_j");
-
-DEFINE_METHOD(ValuesRuntime, CompareStrings,
-              &peloton::codegen::ValuesRuntime::CompareStrings,
-              "_ZN7peloton7codegen13ValuesRuntime14CompareStringsEPKcjS3_j");
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputBoolean);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputTinyInt);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputSmallInt);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputInteger);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputBigInt);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputDate);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputTimestamp);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputDecimal);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputVarchar);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputVarbinary);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, CompareStrings);
 
 }  // namespace codegen
 }  // namespace peloton

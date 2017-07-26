@@ -33,7 +33,7 @@ CompilationContext::CompilationContext(Query &query,
   auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
   txn_state_id_ = runtime_state.RegisterState("transaction", txn_type);
 
-  auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
+  auto *catalog_ptr_type = StorageManagerProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
 
   auto *executor_context_type =

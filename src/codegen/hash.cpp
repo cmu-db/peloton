@@ -168,7 +168,7 @@ llvm::Value *Hash::ComputeCRC32Hash(CodeGen &codegen,
 
   // Now hash the strings
   for (auto &varlen : varlens) {
-    crc = codegen.Call(RuntimeFunctionsProxy::CRC64Hash,
+    crc = codegen.Call(RuntimeFunctionsProxy::HashCrc64,
                        {varlen.val, varlen.len, crc});
   }
 
