@@ -59,7 +59,17 @@ void AbstractPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
-};
+}
+
+bool AbstractPlan::Equals(AbstractPlan &plan) const {
+  for (unsigned int i = 0; i < GetChildren().size(); i++) {
+    bool is_equal = GetChild(i)->Equals(*(AbstractPlan *)plan.GetChild(i));
+    if (is_equal == false) {
+      return false;
+    }
+  }
+  return true;
+}
 
 }  // namespace planner
 }  // namespace peloton

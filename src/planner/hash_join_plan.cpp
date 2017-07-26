@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // hash_join_plan.cpp
 //
@@ -68,6 +68,55 @@ void HashJoinPlan::HandleSubplanBinding(bool is_left,
     auto *key_exp = const_cast<expression::AbstractExpression *>(key.get());
     key_exp->PerformBinding({&input});
   }
+}
+
+bool HashJoinPlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::HashJoinPlan &>(plan);
+  // compare join_type
+  if (GetJoinType() != other.GetJoinType())
+    return false;
+
+  // compare predicate
+  auto *exp = GetPredicate();
+  if (exp && !exp->Equals(other.GetPredicate()))
+    return false;
+
+  // compare proj_info
+  auto *proj_info = GetProjInfo();
+  if (proj_info && !proj_info->Equals(*other.GetProjInfo()))
+    return false;
+
+  // compare proj_schema
+  if (*GetSchema() != *other.GetSchema())
+    return false;
+
+  std::vector<const expression::AbstractExpression *> keys, target_keys;
+  GetLeftHashKeys(keys);
+  other.GetLeftHashKeys(target_keys);
+  size_t keys_count = keys.size();
+  if (keys_count != target_keys.size())
+    return false;
+  for (size_t i = 0; i < keys_count; i++) {
+    if (!keys.at(i)->Equals(target_keys.at(i)))
+      return false;
+  }
+
+  keys.clear();
+  target_keys.clear();
+  GetRightHashKeys(keys);
+  other.GetRightHashKeys(target_keys);
+  keys_count = keys.size();
+  if (keys_count != target_keys.size())
+    return false;
+  for (size_t i = 0; i < keys_count; i++) {
+    if (!keys.at(i)->Equals(target_keys.at(i)))
+      return false;
+  }
+
+  return AbstractPlan::Equals(plan);
 }
 
 }  // namespace planner

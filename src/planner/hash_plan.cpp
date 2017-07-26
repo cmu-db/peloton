@@ -31,5 +31,21 @@ void HashPlan::GetOutputColumns (std::vector<oid_t> &columns) const {
   GetChild(0)->GetOutputColumns(columns);
 }
 
+bool HashPlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::HashPlan &>(plan);
+  auto hash_key_size = GetHashKeys().size();
+  if (hash_key_size != other.GetHashKeys().size())
+    return false;
+  for (size_t i = 0; i < hash_key_size; i++) {
+    if (!GetHashKeys().at(i).get()->Equals(other.GetHashKeys().at(i).get()))
+      return false;
+  }
+
+  return AbstractPlan::Equals(plan);
+}
+
 }  // namespace planner
 }  // namespace peloton
