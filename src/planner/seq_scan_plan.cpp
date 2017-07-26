@@ -17,6 +17,7 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
@@ -263,6 +264,37 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
+}
+
+bool SeqScanPlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType()) {
+    return false;
+  }
+
+  auto &other = reinterpret_cast<planner::SeqScanPlan &>(plan);
+  // compare table
+  if (!GetTable()->Equals(*other.GetTable()))
+    return false;
+
+  // compare predicate
+  auto *expr = GetPredicate();
+  if (expr && !expr->Equals(other.GetPredicate()))
+    return false;
+
+  // compare column_ids
+  size_t column_id_count = GetColumnIds().size();
+  if (column_id_count != other.GetColumnIds().size())
+    return false;
+  for (size_t i = 0; i < column_id_count; i++) {
+    if (GetColumnIds()[i] != other.GetColumnIds()[i])
+      return false;
+  }
+
+  // compare is_for_update
+  if (IsForUpdate() != other.IsForUpdate())
+    return false;
+
+  return AbstractPlan::Equals(plan);
 }
 
 }  // namespace planner

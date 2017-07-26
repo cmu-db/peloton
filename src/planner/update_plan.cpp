@@ -43,5 +43,23 @@ void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
+bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
+  if (GetPlanNodeType() != plan.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::UpdatePlan &>(plan);
+  if (!GetTable()->Equals(*other.GetTable()))
+    return false;
+
+  auto *proj_info = GetProjectInfo();
+  if (proj_info && !proj_info->Equals(*other.GetProjectInfo()))
+    return false;
+
+  if (GetUpdatePrimaryKey() != other.GetUpdatePrimaryKey())
+    return false;
+
+  return AbstractPlan::Equals(plan);
+}
+
 }  // namespace planner
 }  // namespace peloton
