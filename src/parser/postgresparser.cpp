@@ -1242,8 +1242,8 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
     case SETOP_NONE:
       result = new parser::SelectStatement();
       try {
-        result->select_list = TargetTransform(root->targetList);
-        result->from_table = FromTransform(root);
+        result->select_list.reset(TargetTransform(root->targetList));
+        result->from_table.reset(FromTransform(root));
       } catch (ParserException &e) {
         delete (result);
         throw e;
