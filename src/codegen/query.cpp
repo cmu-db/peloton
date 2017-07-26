@@ -123,15 +123,15 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
   LOG_TRACE("Setting up Query ...");
 
   // Get pointers to the JITed functions
-  init_func_ = (compiled_function_t)code_context_.GetFunctionPointer(
+  init_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.init_func);
   PL_ASSERT(init_func_ != nullptr);
 
-  plan_func_ = (compiled_function_t)code_context_.GetFunctionPointer(
+  plan_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.plan_func);
   PL_ASSERT(plan_func_ != nullptr);
 
-  tear_down_func_ = (compiled_function_t)code_context_.GetFunctionPointer(
+  tear_down_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.tear_down_func);
   PL_ASSERT(tear_down_func_ != nullptr);
 

@@ -13,6 +13,7 @@
 #include "codegen/buffering_consumer.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/proxy/proxy.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/sql_type.h"
@@ -40,7 +41,17 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 }
 
 //===----------------------------------------------------------------------===//
-// RESULT BUFFERING CONSUMER
+// BufferTuple() Proxy
+//===----------------------------------------------------------------------===//
+
+PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
+
+DEFINE_METHOD(BufferingConsumer, BufferTuple,
+              &codegen::BufferingConsumer::BufferTuple,
+              "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcS2_j");
+
+//===----------------------------------------------------------------------===//
+// BUFFERING CONSUMER
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
@@ -58,28 +69,6 @@ void BufferingConsumer::BufferTuple(char *state, char *tuple,
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
   buffer_state->output->emplace_back(
       reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
-}
-
-// Get a proxy to BufferingConsumer::BufferTuple(...)
-llvm::Function *BufferingConsumer::_BufferTupleProxy::GetFunction(
-    CodeGen &codegen) {
-  const std::string &fn_name =
-#ifdef __APPLE__
-      "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcS2_j";
-#else
-      "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcS2_j";
-#endif
-
-  // Has the function already been registered?
-  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
-  if (llvm_fn != nullptr) {
-    return llvm_fn;
-  }
-
-  std::vector<llvm::Type *> args = {codegen.CharPtrType(),
-                                    codegen.CharPtrType(), codegen.Int32Type()};
-  auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), args, false);
-  return codegen.RegisterFunction(fn_name, fn_type);
 }
 
 // Create two pieces of state: a pointer to the output tuple vector and an
@@ -140,8 +129,8 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
-  codegen.CallFunc(_BufferTupleProxy::GetFunction(codegen), args);
+  codegen.Call(BufferingConsumerProxy::BufferTuple, args);
 }
 
-}  // namespace test
+}  // namespace codegen
 }  // namespace peloton
