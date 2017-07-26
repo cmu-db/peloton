@@ -13,9 +13,9 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LegacyPassManager.h>
 
 #include "common/macros.h"
 
@@ -23,6 +23,10 @@ namespace llvm {
 class ExecutionEngine;
 class LLVMContext;
 class Module;
+
+namespace legacy {
+class FunctionPassManager;
+}  // namespace legacy
 }  // namespace llvm
 
 namespace peloton {
@@ -39,19 +43,42 @@ class FunctionBuilder;
 class CodeContext {
   friend class CodeGen;
   friend class FunctionBuilder;
+  friend class PelotonMM;
 
  public:
+  using FuncPtr = void *;
+
   CodeContext();
   ~CodeContext();
 
-  // Return the pointer to the LLVM function in this module given its name
-  llvm::Function *GetFunction(const std::string &fn_name) const;
+  /// Register a function that will be defined in this context
+  void RegisterFunction(llvm::Function *func);
 
-  // Get a pointer to the JITed function of the given type
-  void *GetFunctionPointer(llvm::Function *fn) const;
+  /// Register a function that is defined externally
+  void RegisterExternalFunction(llvm::Function *func_decl,
+                                llvm::Function *external, FuncPtr func_impl);
 
-  // JIT the code contained within
+  /// Register a built-in C/C++ function
+  void RegisterBuiltin(llvm::Function *func_decl, FuncPtr func_impl);
+
+  /// Lookup a builtin function that has been registered in this context
+  llvm::Function *LookupBuiltin(const std::string &name) const {
+    auto iter = builtins_.find(name);
+    return iter != builtins_.end() ? iter->second : nullptr;
+  }
+
+  /// Compile all the code contained in this context
   bool Compile();
+
+  /// Retrieve the raw function pointer to the provided compiled LLVM function
+  FuncPtr GetRawFunctionPointer(llvm::Function *fn) const {
+    for (size_t i = 0; i < functions_.size(); i++) {
+      if (functions_[i].first == fn) {
+        return functions_[i].second;
+      }
+    }
+    return nullptr;
+  }
 
   // Dump the contents of all the code in this context
   void DumpContents() const;
@@ -64,10 +91,10 @@ class CodeContext {
   uint64_t GetID() const { return id_; }
 
   // Get the context
-  llvm::LLVMContext &GetContext() { return *context_; }
+  llvm::LLVMContext &GetContext() const { return *context_; }
 
   // Get the module
-  llvm::Module &GetModule() { return *module_; }
+  llvm::Module &GetModule() const { return *module_; }
 
  private:
   // Get the raw IR in text form
@@ -102,11 +129,11 @@ class CodeContext {
   FunctionBuilder *func_;
 
   // The optimization pass manager
-  std::unique_ptr<llvm::legacy::FunctionPassManager> opt_pass_manager_;
+  std::unique_ptr<llvm::legacy::FunctionPassManager> pass_manager_;
 
-  // The engine we use to ultimately JIT the code in this context
+  // The JIT compilation engine
   std::string err_str_;
-  std::unique_ptr<llvm::ExecutionEngine> jit_engine_;
+  std::unique_ptr<llvm::ExecutionEngine> engine_;
 
   // Handy types we reuse often enough to cache here
   llvm::Type *bool_type_;
@@ -117,6 +144,16 @@ class CodeContext {
   llvm::Type *double_type_;
   llvm::Type *void_type_;
   llvm::PointerType *char_ptr_type_;
+
+  // All C/C++ builtin functions and their implementations
+  std::unordered_map<std::string, llvm::Function *> builtins_;
+
+  // The functions needed in this module, and their implementations. If the
+  // function has not been compiled yet, the function pointer will be NULL. The
+  // function pointers are populated in Compile()
+  std::vector<std::pair<llvm::Function *, FuncPtr>> functions_;
+
+  std::unordered_map<std::string, FuncPtr> function_symbols_;
 
  private:
   // This class cannot be copy or move-constructed

@@ -66,7 +66,7 @@ void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
   EXPECT_TRUE(code_context.Compile());
 
   typedef void (*func)(CType);
-  func f = (func)code_context.GetFunctionPointer(function.GetFunction());
+  func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());
   EXPECT_THROW(f(0), DivideByZeroException);
 }
 
@@ -133,7 +133,7 @@ void OverflowTest(const codegen::type::Type &data_type, ExpressionType op) {
   EXPECT_TRUE(code_context.Compile());
 
   typedef void (*func)(CType);
-  func f = (func)code_context.GetFunctionPointer(function.GetFunction());
+  func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());
   EXPECT_THROW(f(2), std::overflow_error);
 }
 

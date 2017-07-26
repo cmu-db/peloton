@@ -24,8 +24,6 @@ namespace codegen {
 
 CodeGen::CodeGen(CodeContext &code_context) : code_context_(code_context) {}
 
-CodeGen::~CodeGen() {}
-
 llvm::Type *CodeGen::ArrayType(llvm::Type *type, uint32_t num_elements) const {
   return llvm::ArrayType::get(type, num_elements);
 }
@@ -73,7 +71,7 @@ llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
 
 llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
   auto &ir_builder = GetBuilder();
-  return ir_builder.CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0);
+  return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
 
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
@@ -89,20 +87,21 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
 llvm::Value *CodeGen::CallMalloc(uint32_t size, uint32_t alignment) {
   llvm::Value *mem_ptr = nullptr;
   if (alignment == 0) {
-    auto *malloc_fn = LookupFunction("malloc");
+    auto *malloc_fn = LookupBuiltin("malloc");
     if (malloc_fn == nullptr) {
-      malloc_fn = RegisterFunction(
-          "malloc",
-          llvm::TypeBuilder<void *(size_t), false>::get(GetContext()));
+      malloc_fn = RegisterBuiltin(
+          "malloc", llvm::TypeBuilder<void *(size_t), false>::get(GetContext()),
+          reinterpret_cast<void *>(malloc));
     }
     mem_ptr = CallFunc(malloc_fn, {Const64(size)});
   } else {
     // Caller wants an aligned malloc
-    auto *aligned_alloc_fn = LookupFunction("aligned_alloc");
+    auto *aligned_alloc_fn = LookupBuiltin("aligned_alloc");
     if (aligned_alloc_fn == nullptr) {
-      aligned_alloc_fn = RegisterFunction(
+      aligned_alloc_fn = RegisterBuiltin(
           "aligned_alloc",
-          llvm::TypeBuilder<void *(size_t, size_t), false>::get(GetContext()));
+          llvm::TypeBuilder<void *(size_t, size_t), false>::get(GetContext()),
+          reinterpret_cast<void *>(aligned_alloc));
     }
     mem_ptr = CallFunc(aligned_alloc_fn, {Const64(size), Const64(alignment)});
   }
@@ -115,21 +114,22 @@ llvm::Value *CodeGen::CallMalloc(uint32_t size, uint32_t alignment) {
 }
 
 llvm::Value *CodeGen::CallFree(llvm::Value *ptr) {
-  auto *free_fn = LookupFunction("free");
+  auto *free_fn = LookupBuiltin("free");
   if (free_fn == nullptr) {
-    free_fn = RegisterFunction(
-        "free", llvm::TypeBuilder<void(void *), false>::get(GetContext()));
+    free_fn = RegisterBuiltin(
+        "free", llvm::TypeBuilder<void(void *), false>::get(GetContext()),
+        reinterpret_cast<void *>(free));
   }
   return CallFunc(free_fn, {ptr});
 }
 
 llvm::Value *CodeGen::CallPrintf(const std::string &format,
                                  const std::vector<llvm::Value *> &args) {
-  auto *printf_fn = LookupFunction("printf");
+  auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
-    printf_fn = RegisterFunction(
-        "printf",
-        llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()));
+    printf_fn = RegisterBuiltin(
+        "printf", llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()),
+        reinterpret_cast<void *>(printf));
   }
   auto &ir_builder = code_context_.GetBuilder();
   auto *format_str =
@@ -233,34 +233,35 @@ void CodeGen::ThrowIfDivideByZero(llvm::Value *divide_by_zero) const {
   builder.SetInsertPoint(no_div0_bb);
 }
 
-// Lookup a function in the module with the given name
-llvm::Function *CodeGen::LookupFunction(const std::string &fn_name) const {
-  return GetModule().getFunction(fn_name);
-}
-
 // Register the given function symbol and the LLVM function type it represents
-llvm::Function *CodeGen::RegisterFunction(const std::string &fn_name,
-                                          llvm::FunctionType *fn_type) {
+llvm::Function *CodeGen::RegisterBuiltin(const std::string &fn_name,
+                                         llvm::FunctionType *fn_type,
+                                         void *func_impl) {
   // Check if this is already registered as a built in, quit if to
-  auto *builtin = LookupFunction(fn_name);
+  auto *builtin = LookupBuiltin(fn_name);
   if (builtin != nullptr) {
     return builtin;
   }
 
   // TODO: Function attributes here
-  // We need to create an LLVM function for this guy
-  auto &module = GetModule();
-  auto *fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage,
-                                    fn_name, &module);
-  return fn;
+  // Construct the function
+  auto *function = llvm::Function::Create(
+      fn_type, llvm::Function::ExternalLinkage, fn_name, &GetModule());
+
+  // Register the function in the context
+  code_context_.RegisterBuiltin(function, func_impl);
+
+  // That's it
+  return function;
 }
 
-llvm::Type *CodeGen::LookupTypeByName(const std::string &name) const {
+llvm::Type *CodeGen::LookupType(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
 
 llvm::Value *CodeGen::GetState() const { return &*GetFunction()->arg_begin(); }
 
+// Return the number of bytes needed to store the given type
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   auto size = code_context_.GetDataLayout().getTypeSizeInBits(type) / 8;
   return size != 0 ? size : 1;

@@ -38,7 +38,7 @@ TEST_F(FunctionBuilderTest, ConstructSingleFunction) {
   ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(void);
-  func_t fn = (func_t)code_context.GetFunctionPointer(func.GetFunction());
+  func_t fn = (func_t) code_context.GetRawFunctionPointer(func.GetFunction());
   ASSERT_EQ(fn(), magic_num);
 }
 
@@ -75,7 +75,7 @@ TEST_F(FunctionBuilderTest, ConstructNestedFunction) {
 
     // Now call the @test function that was we just constructed, then return 44
     auto *main_arg = main.GetArgumentByPosition(0);
-    auto *ret = cg.CallFunc(code_context.GetFunction("test"), {main_arg});
+    auto *ret = cg.CallFunc(test.GetFunction(), {main_arg});
     main.ReturnAndFinish(ret);
   }
 
@@ -83,7 +83,7 @@ TEST_F(FunctionBuilderTest, ConstructNestedFunction) {
   ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(uint32_t);
-  func_t fn = (func_t)code_context.GetFunctionPointer(main.GetFunction());
+  func_t fn = (func_t) code_context.GetRawFunctionPointer(main.GetFunction());
   ASSERT_EQ(fn(1), 44);
 }
 

@@ -28,14 +28,14 @@ class CodeGen;
 template <uint32_t Pos, typename T>
 struct ProxyMember {
   // Virtual destructor
-  virtual ~ProxyMember() {}
+  virtual ~ProxyMember() = default;
 };
 
 /// A proxy to a method in a class. Subclasses must implement GetFunction().
 template <typename T>
 struct ProxyMethod {
   // Virtual destructor
-  virtual ~ProxyMethod() {}
+  virtual ~ProxyMethod() = default;
 
   // Hand off to the specialized template to define the LLVM function
   llvm::Function *GetFunction(CodeGen &codegen) {
@@ -49,8 +49,8 @@ struct ProxyMethod {
 class CodeGen {
  public:
   /// Constructor and destructor
-  CodeGen(CodeContext &code_context);
-  ~CodeGen();
+  explicit CodeGen(CodeContext &code_context);
+  ~CodeGen() = default;
 
   /// We forward the -> operator to LLVM's IRBuilder
   llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
@@ -88,7 +88,8 @@ class CodeGen {
   llvm::Value *CallFunc(llvm::Value *fn,
                         const std::vector<llvm::Value *> &args);
   template <typename T>
-  llvm::Value *Call(T &proxy, const std::vector<llvm::Value *> &args) {
+  llvm::Value *Call(ProxyMethod<T> &proxy,
+                    const std::vector<llvm::Value *> &args) {
     return CallFunc(proxy.GetFunction(*this), args);
   }
 
@@ -101,9 +102,11 @@ class CodeGen {
                           const std::vector<llvm::Value *> &args);
 
   //===--------------------------------------------------------------------===//
-  // Arithmetic with overflow logic
+  // Arithmetic with overflow logic - These methods perform the desired math op,
+  // on the provided left and right argument and return the result of the op
+  // and set the overflow_but out-parameter. It is up to the caller to decide
+  // how to handle an overflow.
   //===--------------------------------------------------------------------===//
-
   llvm::Value *CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
                                    llvm::Value *&overflow_bit);
   llvm::Value *CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
@@ -116,20 +119,23 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   // Function lookup and registration
   //===--------------------------------------------------------------------===//
+  llvm::Type *LookupType(const std::string &name) const;
+  llvm::Function *LookupBuiltin(const std::string &fn_name) const {
+    return code_context_.LookupBuiltin(fn_name);
+  }
+  llvm::Function *RegisterBuiltin(const std::string &fn_name,
+                                  llvm::FunctionType *fn_type, void *func_impl);
 
-  llvm::Function *LookupFunction(const std::string &fn_name) const;
-  llvm::Function *RegisterFunction(const std::string &fn_name,
-                                   llvm::FunctionType *fn_type);
-
-  llvm::Type *LookupTypeByName(const std::string &name) const;
-
-  // Get the runtime state function argument
+  /// Get the runtime state function argument
   llvm::Value *GetState() const;
-
-  llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
   /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+  llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
   CodeContext &GetCodeContext() const { return code_context_; }
 
@@ -146,7 +152,6 @@ class CodeGen {
   // Get the LLVM module
   llvm::Module &GetModule() const { return code_context_.GetModule(); }
 
- private:
   // Get the LLVM IR Builder (also accessible through the -> operator overload)
   llvm::IRBuilder<> &GetBuilder() const { return code_context_.GetBuilder(); }
 

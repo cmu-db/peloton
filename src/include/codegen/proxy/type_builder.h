@@ -172,7 +172,7 @@ struct TypeList {
 };
 
 template <uint32_t Pos, typename T>
-struct TypeBuilder<ProxyMember<Pos, T>> : public TypeBuilder<T> {};
+struct TypeBuilder<codegen::ProxyMember<Pos, T>> : public TypeBuilder<T> {};
 
 }  // namespace proxy
 }  // namespace codegen

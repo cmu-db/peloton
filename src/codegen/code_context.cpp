@@ -14,7 +14,6 @@
 
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_os_ostream.h"
@@ -24,24 +23,52 @@
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif
 
+#include "common/exception.h"
 #include "common/logger.h"
 
 namespace peloton {
 namespace codegen {
 
+/// Atomic plan ID counter
 static std::atomic<uint64_t> kIdCounter{0};
 
-//===----------------------------------------------------------------------===//
-// Constructor
-//===----------------------------------------------------------------------===//
+namespace {
+class PelotonMM : public llvm::SectionMemoryManager {
+ public:
+  explicit PelotonMM(
+      const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols)
+      : symbols_(symbols) {}
+
+  llvm::RuntimeDyld::SymbolInfo findSymbol(const std::string &name) override {
+    LOG_TRACE("Looking up symbol '%s' ...", name.c_str());
+    auto symbol_iter = symbols_.find(name);
+    if (symbol_iter != symbols_.end()) {
+      auto *builtin = symbol_iter->second;
+      LOG_TRACE("--> Resolves to builtin @ %p", builtin);
+      auto addr = reinterpret_cast<uint64_t>(builtin);
+      auto flags = llvm::JITSymbolFlags::Exported;
+      return llvm::RuntimeDyld::SymbolInfo{addr, flags};
+    }
+
+    LOG_TRACE("--> Not builtin, use fallback resolution ...");
+    return llvm::SectionMemoryManager::findSymbol(name);
+  }
+
+ private:
+  // The code context
+  const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols_;
+};
+}  // anonymous namespace
+
+/// Constructor
 CodeContext::CodeContext()
     : id_(kIdCounter++),
       context_(nullptr),
       module_(nullptr),
       builder_(nullptr),
       func_(nullptr),
-      opt_pass_manager_(nullptr),
-      jit_engine_(nullptr) {
+      pass_manager_(nullptr),
+      engine_(nullptr) {
   // Initialize JIT stuff
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
@@ -61,30 +88,23 @@ CodeContext::CodeContext()
   // references etc.
   std::unique_ptr<llvm::Module> m{module_};
   module_ = m.get();
-  jit_engine_.reset(llvm::EngineBuilder(std::move(m))
-                        .setEngineKind(llvm::EngineKind::JIT)
-                        .setMCJITMemoryManager(
-                             llvm::make_unique<llvm::SectionMemoryManager>())
-                        .setMCPU(llvm::sys::getHostCPUName())
-                        .setErrorStr(&err_str_)
-                        .create());
-  PL_ASSERT(jit_engine_ != nullptr);
-
-#if LLVM_VERSION_EQ(3, 6)
-  // LLVM 3.6
-  // Set the layout of the module based on what the engine is
-  const llvm::DataLayout &data_layout = *jit_engine_->getDataLayout();
-  module_->setDataLayout(data_layout);
-#endif
+  engine_.reset(llvm::EngineBuilder(std::move(m))
+                    .setEngineKind(llvm::EngineKind::JIT)
+                    .setMCJITMemoryManager(
+                         llvm::make_unique<PelotonMM>(function_symbols_))
+                    .setMCPU(llvm::sys::getHostCPUName())
+                    .setErrorStr(&err_str_)
+                    .create());
+  PL_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
-  opt_pass_manager_.reset(new llvm::legacy::FunctionPassManager(module_));
-  opt_pass_manager_->add(llvm::createInstructionCombiningPass());
-  opt_pass_manager_->add(llvm::createReassociatePass());
-  opt_pass_manager_->add(llvm::createGVNPass());
-  opt_pass_manager_->add(llvm::createCFGSimplificationPass());
-  opt_pass_manager_->add(llvm::createAggressiveDCEPass());
-  opt_pass_manager_->add(llvm::createCFGSimplificationPass());
+  pass_manager_.reset(new llvm::legacy::FunctionPassManager(module_));
+  pass_manager_->add(llvm::createInstructionCombiningPass());
+  pass_manager_->add(llvm::createReassociatePass());
+  pass_manager_->add(llvm::createGVNPass());
+  pass_manager_->add(llvm::createCFGSimplificationPass());
+  pass_manager_->add(llvm::createAggressiveDCEPass());
+  pass_manager_->add(llvm::createCFGSimplificationPass());
 
   // Setup the common types we need once
   bool_type_ = llvm::Type::getInt1Ty(*context_);
@@ -97,29 +117,54 @@ CodeContext::CodeContext()
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
 }
 
+/// Destructor
 CodeContext::~CodeContext() {
   // We need this empty constructor because we declared a std::unique_ptr<>
   // on llvm::ExecutionEngine and llvm::LLVMContext that are forward-declared
   // in the header file. To make this compile, this destructor needs to exist.
 }
 
-// Return the pointer to the LLVM function in this module given its name
-llvm::Function *CodeContext::GetFunction(const std::string &fn_name) const {
-  return module_->getFunction(fn_name);
+void CodeContext::RegisterFunction(llvm::Function *func) {
+  PL_ASSERT(func->getParent() == &GetModule() &&
+            "The provided function is part of a different context and module");
+  // Insert the function without an implementation
+  functions_.emplace_back(func, nullptr);
 }
 
-// Get a pointer to the JITed function of the given type
-void *CodeContext::GetFunctionPointer(llvm::Function *fn) const {
-  return jit_engine_->getPointerToFunction(fn);
+void CodeContext::RegisterExternalFunction(
+    llvm::Function *func_decl, UNUSED_ATTRIBUTE llvm::Function *external,
+    CodeContext::FuncPtr func_impl) {
+  PL_ASSERT(func_decl->isDeclaration() &&
+            "The first argument must be a function declaration");
+  PL_ASSERT(!external->isDeclaration() &&
+            "The second argument must be a full LLVM function definition that "
+            "exists in an external module");
+  PL_ASSERT(func_decl->getName() == external->getName() &&
+            "The declaration and definition functions have different names!");
+  PL_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
+  functions_.emplace_back(func_decl, func_impl);
 }
 
-const llvm::DataLayout &CodeContext::GetDataLayout() const {
-  return module_->getDataLayout();
+void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
+                                  CodeContext::FuncPtr func_impl) {
+  const auto name = func_decl->getName();
+  if (LookupBuiltin(name) != nullptr) {
+    LOG_DEBUG("Builtin '%s' already registered, skipping ...", name.data());
+    return;
+  }
+
+  // Sanity check
+  PL_ASSERT(func_decl->isDeclaration() &&
+            "You cannot provide a function definition for a builtin function");
+
+  // Register the builtin function
+  builtins_[name] = func_decl;
+
+  // Register the builtin symbol by name
+  function_symbols_[name] = func_impl;
 }
 
-//===----------------------------------------------------------------------===//
-// JIT the code contained within after optimizing it
-//===----------------------------------------------------------------------===//
+/// Optimize and JIT compile all the functions that were created in this context
 bool CodeContext::Compile() {
   // Verify the module is okay
   llvm::raw_ostream &errors = llvm::errs();
@@ -130,21 +175,31 @@ bool CodeContext::Compile() {
     return false;
   }
 
-  // Run each of our optimization passes over the functions in this module
-  opt_pass_manager_->doInitialization();
-  for (auto fn = module_->begin(), end = module_->end(); fn != end; fn++) {
-    opt_pass_manager_->run(*fn);
+  // Run the optimization passes over each function in this module
+  pass_manager_->doInitialization();
+  for (auto &func_iter : functions_) {
+    pass_manager_->run(*func_iter.first);
   }
-  opt_pass_manager_->doFinalization();
+  pass_manager_->doFinalization();
 
-  // Finalize the object, this is where the JIT happens
-  jit_engine_->finalizeObject();
+  // Functions and module have been optimized, now JIT compile the module
+  engine_->finalizeObject();
+
+  // Pull out the compiled function implementations
+  for (auto &func_iter : functions_) {
+    func_iter.second = engine_->getPointerToFunction(func_iter.first);
+  }
 
   // Log the module
   LOG_TRACE("%s\n", GetIR().c_str());
 
   // All is well
   return true;
+}
+
+/// Get the module's layout
+const llvm::DataLayout &CodeContext::GetDataLayout() const {
+  return module_->getDataLayout();
 }
 
 void CodeContext::DumpContents() const {
@@ -163,7 +218,7 @@ void CodeContext::DumpContents() const {
     llvm::raw_fd_ostream asm_ostream{asm_fname, error_code,
                                      llvm::sys::fs::F_RW};
     llvm::legacy::PassManager pass_manager;
-    auto *target_machine = jit_engine_->getTargetMachine();
+    auto *target_machine = engine_->getTargetMachine();
     target_machine->Options.MCOptions.AsmVerbose = true;
     target_machine->addPassesToEmitFile(pass_manager, asm_ostream,
                                         llvm::TargetMachine::CGFT_AssemblyFile);

@@ -20,7 +20,7 @@ llvm::Type *HashEntryProxy::GetType(CodeGen &codegen) {
   static const std::string kHashEntryTypeName = "peloton::CCHashEntry";
 
   // Check if the hash entry is already defined in the module
-  auto *llvm_type = codegen.LookupTypeByName(kHashEntryTypeName);
+  auto *llvm_type = codegen.LookupType(kHashEntryTypeName);
   if (llvm_type != nullptr) {
     return llvm_type;
   }
