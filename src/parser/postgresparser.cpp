@@ -902,7 +902,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       // Transform Regular Column
       ColumnDefinition* temp =
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
-      result->columns->push_back(std::move(std::unique_ptr<ColumnDefinition>(temp)));
+      result->columns->push_back(std::unique_ptr<ColumnDefinition>(temp));
     } else if (node->type == T_Constraint) {
       // Transform Constraints
       auto constraint = reinterpret_cast<Constraint*>(node);
@@ -921,7 +921,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         for (auto attr_cell = constraint->fk_attrs->head; attr_cell != nullptr;
              attr_cell = attr_cell->next) {
           value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
-          col->foreign_key_source->push_back(std::move(std::unique_ptr<char[]>(cstrdup(attr_val->val.str))));
+          col->foreign_key_source->push_back(std::unique_ptr<char[]>(cstrdup(attr_val->val.str)));
         }
         // Transform Primary key attributes
         for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
@@ -939,7 +939,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         // Match type
         col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
 
-        result->columns->push_back(std::move(std::unique_ptr<ColumnDefinition>(col)));
+        result->columns->push_back(std::unique_ptr<ColumnDefinition>(col));
       } else {
         throw NotImplementedException(StringUtil::Format(
             "Constraint of type %d not supported yet", node->type));
@@ -975,7 +975,7 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   for (auto cell = root->indexParams->head; cell != nullptr;
        cell = cell->next) {
     char* index_attr = reinterpret_cast<IndexElem*>(cell->data.ptr_value)->name;
-    result->index_attrs->push_back(std::move(std::unique_ptr<char[]>(cstrdup(index_attr))));
+    result->index_attrs->push_back(std::unique_ptr<char[]>(cstrdup(index_attr)));
   }
   result->index_type = IndexType::BWTREE;
   result->table_info_.reset(new TableInfo());
@@ -1191,7 +1191,7 @@ PostgresParser::ParamListTransform(List* root) {
         new std::vector<std::unique_ptr<expression::AbstractExpression>>();
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    result->push_back(std::move(std::unique_ptr<expression::AbstractExpression>(ConstTransform((A_Const*)(cell->data.ptr_value)))));
+    result->push_back(std::unique_ptr<expression::AbstractExpression>(ConstTransform((A_Const*)(cell->data.ptr_value))));
   }
 
   return result;
