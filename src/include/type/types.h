@@ -1106,8 +1106,8 @@ enum class GCVersionType {
   ABORT_INSERT,
   ABORT_INS_DEL,
 };
-std::string GCSetToString(GCVersionType type);
-GCVersionType StringToGCSetType(const std::string &str);
+std::string GCVersionTypeToString(GCVersionType type);
+GCVersionType StringToGCVersionType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const GCVersionType &type);
 
 // block -> offset -> type
