@@ -63,6 +63,26 @@ public:
 
   virtual ~TransactionLevelGCManager() { }
 
+  virtual void Reset() override {
+    unlink_queues_.clear();
+    local_unlink_queues_.clear();
+
+    unlink_queues_.reserve(gc_thread_count_);
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
+        new LockFreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
+      );
+      unlink_queues_.push_back(unlink_queue);
+      local_unlink_queues_.emplace_back();
+    }
+
+    reclaim_maps_.clear();
+    reclaim_maps_.resize(gc_thread_count_);
+    recycle_queue_map_.clear();
+
+    is_running_ = false;
+  }
+
   static TransactionLevelGCManager& GetInstance(const int thread_count = 1) {
     static TransactionLevelGCManager gc_manager(thread_count);
     return gc_manager;
