@@ -12,13 +12,11 @@
 
 #include <cstdio>
 
-#include "common/harness.h"
-#include "common/logger.h"
 #include "catalog/catalog.h"
-#include "planner/create_plan.h"
+#include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
-
-#include "gtest/gtest.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 namespace test {

@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "optimizer/property.h"
-
 #include <memory>
 #include <vector>
+
+#include "optimizer/property.h"
 
 namespace peloton {
 namespace optimizer {
@@ -50,8 +50,8 @@ class PropertySet {
   std::vector<std::shared_ptr<Property>> properties_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer 
+} // namespace peloton 
 
 namespace std {
 
@@ -61,4 +61,5 @@ struct hash<peloton::optimizer::PropertySet> {
   typedef std::size_t result_type;
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
-}
+
+}  // namespace std

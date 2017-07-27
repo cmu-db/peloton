@@ -103,6 +103,10 @@ void CostAndStatsCalculator::Visit(const PhysicalInsert *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };
+void CostAndStatsCalculator::Visit(const PhysicalInsertSelect *) {
+  // TODO: Replace with more accurate cost
+  output_cost_ = 0;
+};
 void CostAndStatsCalculator::Visit(const PhysicalDelete *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;

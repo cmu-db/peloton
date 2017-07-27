@@ -29,14 +29,12 @@
 #define QUERY_METRIC_QUEUE_SIZE 100000
 
 namespace peloton {
-class Statement;
-}
 
-namespace peloton {
+class Statement;
 
 namespace index {
 class IndexMetadata;
-}
+}  // namespace index
 
 namespace stats {
 

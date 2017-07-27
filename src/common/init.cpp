@@ -9,22 +9,17 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "catalog/catalog.h"
 
 #include "common/init.h"
-#include "common/thread_pool.h"
-
-#include "configuration/configuration.h"
-
-#include "brain/index_tuner.h"
-#include "brain/layout_tuner.h"
-#include "concurrency/epoch_manager_factory.h"
-#include "gc/gc_manager_factory.h"
-#include "storage/data_table.h"
 
 #include <google/protobuf/stubs/common.h>
 
-#include <thread>
+#include "brain/index_tuner.h"
+#include "brain/layout_tuner.h"
+#include "catalog/catalog.h"
+#include "common/thread_pool.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 

@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -10,11 +9,16 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "storage/storage_manager.h"
 
+#include "storage/database.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace storage {
+
+StorageManager::~StorageManager() {}
 
 // Get instance of the global catalog storage manager
 StorageManager *StorageManager::GetInstance(void) {
@@ -99,6 +103,16 @@ void StorageManager::DestroyDatabases() {
   LOG_TRACE("Finish deleting database");
 }
 
-StorageManager::~StorageManager() {}
+bool StorageManager::RemoveDatabaseFromStorageManager(oid_t database_oid) {
+  for (auto it = databases_.begin(); it != databases_.end(); ++it) {
+    if ((*it)->GetOid() == database_oid) {
+      delete (*it);
+      databases_.erase(it);
+      return true;
+    }
+  }
+  return false;
 }
-}
+
+}  // namespace storage
+}  // namespace peloton

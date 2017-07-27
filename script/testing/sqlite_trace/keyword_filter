@@ -1,0 +1,6 @@
+CASE
+BETWEEN
+<>
+IS
+\(SELECT
+ABS

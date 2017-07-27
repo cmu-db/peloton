@@ -42,5 +42,5 @@ class ColumnManager {
   std::map<ColumnID, Column *> id_to_column;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

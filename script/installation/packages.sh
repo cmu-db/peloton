@@ -6,8 +6,8 @@ UNAME=$(uname | tr "[:upper:]" "[:lower:]")
 if [ "$UNAME" == "linux" ]; then
     # If available, use LSB to identify distribution
     if [ -f /etc/lsb-release -o -d /etc/lsb-release.d ]; then
-        export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
-        DISTRO_VER=$(lsb_release -r | cut -d: -f2 | sed s/'^\t'//)
+        export DISTRO=$(lsb_release -is)
+        DISTRO_VER=$(lsb_release -rs)
     # Otherwise, use release info file
     else
         export DISTRO=$(ls -d /etc/[A-Za-z]*[_-][rv]e[lr]* | grep -v "lsb" | cut -d'/' -f3 | cut -d'-' -f1 | cut -d'_' -f1)

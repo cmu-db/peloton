@@ -12,7 +12,7 @@
 
 #include "optimizer/column_manager.h"
 
-#include <tuple>
+#include "common/logger.h"
 
 namespace peloton {
 namespace optimizer {

@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -62,11 +61,11 @@ class TempTable : public AbstractTable {
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
                           concurrency::Transaction *transaction,
-                          ItemPointer **index_entry_ptr = nullptr);
+                          ItemPointer **index_entry_ptr = nullptr) override;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.
-  ItemPointer InsertTuple(const Tuple *tuple);
+  ItemPointer InsertTuple(const Tuple *tuple) override;
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -74,47 +73,45 @@ class TempTable : public AbstractTable {
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
-      const std::size_t &tile_group_offset) const;
+      const std::size_t &tile_group_offset) const override ;
 
   std::shared_ptr<storage::TileGroup> GetTileGroupById(
-      const oid_t &tile_group_id) const;
+      const oid_t &tile_group_id) const override;
 
   // Number of TileGroups that the table has
-  inline size_t GetTileGroupCount() const { return (tile_groups_.size()); }
+  inline size_t GetTileGroupCount() const override {
+    return tile_groups_.size();
+  }
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  std::string GetName() const {
-    std::ostringstream os;
-    os << "TEMP_TABLE[" << table_oid << "]";
-    return (os.str());
-  }
+  std::string GetName() const override;
 
-  inline bool HasPrimaryKey() const { return (false); }
+  inline bool HasPrimaryKey() const override { return (false); }
 
-  inline bool HasUniqueConstraints() const { return (false); }
+  inline bool HasUniqueConstraints() const override { return (false); }
 
-  inline bool HasForeignKeys() const { return (false); }
+  inline bool HasForeignKeys() const override { return (false); }
 
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
 
-  inline void IncreaseTupleCount(const size_t &amount) {
+  inline void IncreaseTupleCount(const size_t &amount) override {
     number_of_tuples_ += amount;
   }
 
-  inline void DecreaseTupleCount(const size_t &amount) {
+  inline void DecreaseTupleCount(const size_t &amount) override {
     number_of_tuples_ -= amount;
   }
 
-  inline void SetTupleCount(const size_t &num_tuples) {
+  inline void SetTupleCount(const size_t &num_tuples) override {
     number_of_tuples_ = num_tuples;
   }
 
-  inline size_t GetTupleCount() const { return (number_of_tuples_); }
+  inline size_t GetTupleCount() const override { return number_of_tuples_; }
 
  protected:
   //===--------------------------------------------------------------------===//

@@ -9,7 +9,11 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "binder/bind_node_visitor.h"
+
+#include "expression/case_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace binder {
@@ -102,7 +106,10 @@ void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
 void BindNodeVisitor::Visit(const parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(const parser::CopyStatement *) {}
 void BindNodeVisitor::Visit(const parser::CreateStatement *) {}
-void BindNodeVisitor::Visit(const parser::InsertStatement *) {}
+void BindNodeVisitor::Visit(const parser::InsertStatement *node) {
+  if (node->select != nullptr) node->select->Accept(this);
+  context_ = nullptr;
+}
 void BindNodeVisitor::Visit(const parser::DropStatement *) {}
 void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
 void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
@@ -154,5 +161,6 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
     expr->GetWhenClauseCond(i)->Accept(this);
   }
 }
-}  // binder
-}  // peloton
+
+}  // namespace binder
+}  // namespce peloton

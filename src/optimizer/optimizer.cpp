@@ -36,6 +36,8 @@
 #include "planner/populate_index_plan.h"
 #include "planner/analyze_plan.h"
 
+#include "storage/data_table.h"
+
 #include "binder/bind_node_visitor.h"
 
 using std::vector;
@@ -57,6 +59,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
+  physical_implementation_rules_.emplace_back(
+      new LogicalInsertSelectToPhysical());
   physical_implementation_rules_.emplace_back(
       new LogicalGroupByToHashGroupBy());
   physical_implementation_rules_.emplace_back(

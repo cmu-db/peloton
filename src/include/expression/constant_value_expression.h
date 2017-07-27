@@ -14,6 +14,7 @@
 
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
+#include "type/value.h"
 #include "util/hash_util.h"
 
 namespace peloton {

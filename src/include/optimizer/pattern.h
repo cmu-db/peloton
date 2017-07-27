@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "optimizer/operator_node.h"
-
 #include <vector>
 #include <memory>
+
+#include "optimizer/operator_node.h"
 
 namespace peloton {
 namespace optimizer {
@@ -35,5 +35,5 @@ class Pattern {
   std::vector<std::shared_ptr<Pattern>> children;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

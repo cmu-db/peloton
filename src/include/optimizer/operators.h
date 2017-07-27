@@ -156,6 +156,13 @@ class LogicalInsert : public OperatorNode<LogicalInsert> {
   std::vector<std::vector<peloton::expression::AbstractExpression *> *> *values;
 };
 
+class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
+ public:
+  static Operator make(storage::DataTable *target_table);
+
+  storage::DataTable *target_table;
+};
+
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
@@ -337,6 +344,13 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
   std::vector<std::vector<peloton::expression::AbstractExpression *> *> *values;
 };
 
+class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
+ public:
+  static Operator make(storage::DataTable *target_table);
+
+  storage::DataTable *target_table;
+};
+
 //===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
@@ -352,7 +366,7 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
   static Operator make(storage::DataTable *target_table,
-  std::vector<peloton::parser::UpdateClause*> updates);
+      std::vector<peloton::parser::UpdateClause*> updates);
 
   storage::DataTable *target_table;
   std::vector<peloton::parser::UpdateClause*> updates;
@@ -403,5 +417,5 @@ class PhysicalDistinct : public OperatorNode<PhysicalDistinct> {
   static Operator make();
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

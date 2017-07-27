@@ -39,6 +39,7 @@ enum class OpType {
   LogicalHash,
   Limit,
   LogicalInsert,
+  LogicalInsertSelect,
   LogicalDelete,
   LogicalUpdate,
   // Separate between logical and physical ops
@@ -62,6 +63,7 @@ enum class OpType {
   RightHashJoin,
   OuterHashJoin,
   Insert,
+  InsertSelect,
   Delete,
   Update,
   Aggregate,
@@ -157,8 +159,8 @@ class Operator {
   std::shared_ptr<BaseOperatorNode> node;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton
 
 namespace std {
 
@@ -169,4 +171,4 @@ struct hash<peloton::optimizer::BaseOperatorNode> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} /* namespace std */
+} // namespace std

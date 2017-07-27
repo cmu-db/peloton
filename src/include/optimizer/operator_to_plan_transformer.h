@@ -74,6 +74,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalInsert *) override;
 
+  void Visit(const PhysicalInsertSelect *) override;
+
   void Visit(const PhysicalDelete *) override;
 
   void Visit(const PhysicalUpdate *) override;
@@ -118,5 +120,5 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   ExprMap *output_expr_map_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

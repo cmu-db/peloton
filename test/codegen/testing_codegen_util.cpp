@@ -15,6 +15,11 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/value_proxy.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "expression/comparison_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace test {
