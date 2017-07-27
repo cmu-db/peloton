@@ -15,7 +15,7 @@ The steps are _greatly_ simplified by using several provided macros.
 **Example**: To illustrate the process, let's run through an example.
 Assume you have a C++ class as follows:
 
-```
+```C++
 namespace me {
 
 // Your fancy class
@@ -42,7 +42,7 @@ To call functions on `MyStruct`, we'll need to define a proxy. Create
 `src/include/codegen/proxy/mystruct_proxy.h` with the following
 contents:
 
-```
+```C++
 #include "codegen/proxy/proxy.h"
 
 #include "mystruct.h"
@@ -81,7 +81,7 @@ To link this altogether, you need to link the `Init` function in
 `MyStructProxy` to `MyStruct::Init` in C++. Create
 `src/codegen/proxy/mystruct_proxy.cpp` with the following contents:
 
-```
+```C++
 #include "codegen/proxy/mystruct_proxy.h"
 
 DEFINE_METHOD(me, MyStruct, Init);
