@@ -48,5 +48,5 @@ class PropertyEnforcer : public PropertyVisitor {
   PropertySet *input_properties_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

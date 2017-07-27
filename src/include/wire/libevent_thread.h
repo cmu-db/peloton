@@ -24,11 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>
 #include <vector>
 
 #include <sys/file.h>
-#include <fstream>
 
 #include "common/exception.h"
 #include "common/logger.h"
@@ -126,9 +124,11 @@ class LibeventMasterThread : public LibeventThread {
  public:
   LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
 
-  void DispatchConnection(int new_conn_fd, short event_flags);
+  void Start();
 
-  void CloseConnection();
+  void Stop();
+
+  void DispatchConnection(int new_conn_fd, short event_flags);
 
   std::vector<std::shared_ptr<LibeventWorkerThread>> &GetWorkerThreads();
 

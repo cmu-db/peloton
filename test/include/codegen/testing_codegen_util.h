@@ -22,6 +22,8 @@
 #include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
 #include "planner/binding_context.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
 
 #include "common/harness.h"
 #include "executor/testing_executor_util.h"

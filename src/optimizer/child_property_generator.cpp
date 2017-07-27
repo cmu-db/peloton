@@ -88,6 +88,12 @@ void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
+void ChildPropertyGenerator::Visit(const PhysicalInsertSelect *){
+  // Let child fulfil all the required properties
+  vector<PropertySet> child_input_properties{requirements_};
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+}
 void ChildPropertyGenerator::Visit(const PhysicalUpdate *) {
   // Let child fulfil all the required properties
   vector<PropertySet> child_input_properties{requirements_};

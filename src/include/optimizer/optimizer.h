@@ -229,5 +229,5 @@ class Optimizer : public AbstractOptimizer {
   std::vector<std::unique_ptr<Rule>> physical_implementation_rules_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

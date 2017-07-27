@@ -9,23 +9,25 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "catalog/catalog.h"
 
-#include <iostream>
-
+#include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/manager.h"
+#include "catalog/column_catalog.h"
+#include "catalog/index_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
-#include "common/exception.h"
-#include "common/macros.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "expression/date_functions.h"
 #include "expression/string_functions.h"
 #include "expression/decimal_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
-#include "util/string_util.h"
+#include "storage/table_factory.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace catalog {

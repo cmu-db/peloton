@@ -11,12 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/stats/stats_storage.h"
+
+#include "catalog/catalog.h"
+#include "catalog/column_stats_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
-#include "catalog/column_stats_catalog.h"
-#include "type/value.h"
-#include "storage/data_table.h"
 #include "storage/storage_manager.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace optimizer {

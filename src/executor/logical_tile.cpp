@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/logical_tile.h"
+
 #include <algorithm>
-#include <iostream>
+#include <sstream>
 
 #include "catalog/schema.h"
 #include "common/macros.h"
-#include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"

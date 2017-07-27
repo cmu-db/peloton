@@ -41,5 +41,5 @@ class OperatorExpression {
   std::vector<std::shared_ptr<OperatorExpression>> children;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+} // namespace optimizer
+} // namespace peloton

@@ -140,6 +140,7 @@ ResultType TrafficCop::ExecuteStatement(
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
 
   if (statement.get() == nullptr) {
+    rows_changed = 0;
     return ResultType::FAILURE;
   }
 

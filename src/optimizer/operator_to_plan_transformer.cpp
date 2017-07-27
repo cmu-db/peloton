@@ -10,22 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "planner/aggregate_plan.h"
-#include "planner/update_plan.h"
+#include "optimizer/operator_to_plan_transformer.h"
 
 #include "optimizer/operator_expression.h"
-#include "optimizer/operator_to_plan_transformer.h"
-#include "optimizer/util.h"
-#include "planner/hash_join_plan.h"
-#include "planner/nested_loop_join_plan.h"
-#include "planner/projection_plan.h"
-#include "planner/order_by_plan.h"
-#include "planner/limit_plan.h"
+#include "planner/aggregate_plan.h"
+#include "planner/delete_plan.h"
 #include "planner/hash_plan.h"
+#include "planner/hash_join_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/limit_plan.h"
+#include "planner/nested_loop_join_plan.h"
+#include "planner/order_by_plan.h"
 #include "planner/index_scan_plan.h"
-#include "planner/abstract_join_plan.h"
-#include "expression/aggregate_expression.h"
+#include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
+#include "storage/data_table.h"
 
 using std::vector;
 using std::make_pair;
@@ -347,6 +347,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
   unique_ptr<planner::AbstractPlan> insert_plan(
       new planner::InsertPlan(op->target_table, op->columns, op->values));
+  output_plan_ = move(insert_plan);
+}
+
+void OperatorToPlanTransformer::Visit(const PhysicalInsertSelect *op) {
+  unique_ptr<planner::AbstractPlan> insert_plan(
+      new planner::InsertPlan(op->target_table));
+  // Add child
+  insert_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(insert_plan);
 }
 

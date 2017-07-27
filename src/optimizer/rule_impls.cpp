@@ -257,6 +257,34 @@ void LogicalInsertToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalInsertSelectToPhysical
+LogicalInsertSelectToPhysical::LogicalInsertSelectToPhysical() {
+  physical = true;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalInsertSelect);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(child);
+}
+
+bool LogicalInsertSelectToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
+  (void)plan;
+  (void)memo;
+  return true;
+}
+
+void LogicalInsertSelectToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalInsertSelect *insert_op = input->Op().As<LogicalInsertSelect>();
+  auto result =
+      std::make_shared<OperatorExpression>(PhysicalInsertSelect::make(
+          insert_op->target_table));
+  PL_ASSERT(input->Children().size() == 1);
+  result->PushChild(input->Children().at(0));
+  transformed.push_back(result);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// LogicalGroupByToHashGroupBy
 LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
   physical = true;

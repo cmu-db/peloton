@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <cstring>
+
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
