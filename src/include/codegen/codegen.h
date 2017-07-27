@@ -94,10 +94,8 @@ class CodeGen {
   }
 
   //===--------------------------------------------------------------------===//
-  // Call C/C++ standard library functions
+  // C/C++ standard library functions
   //===--------------------------------------------------------------------===//
-  llvm::Value *CallMalloc(uint32_t size, uint32_t alignment = 0);
-  llvm::Value *CallFree(llvm::Value *ptr);
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
 
