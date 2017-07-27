@@ -96,14 +96,14 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE");
+  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE0");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "TABLE", db_id, INVALID_OID, 1234, true));
+    TestingTransactionUtil::CreateTable(num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -203,7 +203,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("DATABASE");
+  TestingExecutorUtil::DeleteDatabase("DATABASE0");
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
 }
@@ -222,14 +222,14 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE");
+  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE1");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "TABLE", db_id, INVALID_OID, 1234, true));
+    TestingTransactionUtil::CreateTable(num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -361,7 +361,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("DATABASE");
+  TestingExecutorUtil::DeleteDatabase("DATABASE1");
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
 }
