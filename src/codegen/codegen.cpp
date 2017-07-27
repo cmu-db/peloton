@@ -84,45 +84,6 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
   return GetBuilder().CreateCall(fn, args);
 }
 
-llvm::Value *CodeGen::CallMalloc(uint32_t size, uint32_t alignment) {
-  llvm::Value *mem_ptr = nullptr;
-  if (alignment == 0) {
-    auto *malloc_fn = LookupBuiltin("malloc");
-    if (malloc_fn == nullptr) {
-      malloc_fn = RegisterBuiltin(
-          "malloc", llvm::TypeBuilder<void *(size_t), false>::get(GetContext()),
-          reinterpret_cast<void *>(malloc));
-    }
-    mem_ptr = CallFunc(malloc_fn, {Const64(size)});
-  } else {
-    // Caller wants an aligned malloc
-    auto *aligned_alloc_fn = LookupBuiltin("aligned_alloc");
-    if (aligned_alloc_fn == nullptr) {
-      aligned_alloc_fn = RegisterBuiltin(
-          "aligned_alloc",
-          llvm::TypeBuilder<void *(size_t, size_t), false>::get(GetContext()),
-          reinterpret_cast<void *>(aligned_alloc));
-    }
-    mem_ptr = CallFunc(aligned_alloc_fn, {Const64(size), Const64(alignment)});
-  }
-
-  // Zero-out the allocated space
-  GetBuilder().CreateMemSet(mem_ptr, Null(ByteType()), size, alignment);
-
-  // We're done
-  return mem_ptr;
-}
-
-llvm::Value *CodeGen::CallFree(llvm::Value *ptr) {
-  auto *free_fn = LookupBuiltin("free");
-  if (free_fn == nullptr) {
-    free_fn = RegisterBuiltin(
-        "free", llvm::TypeBuilder<void(void *), false>::get(GetContext()),
-        reinterpret_cast<void *>(free));
-  }
-  return CallFunc(free_fn, {ptr});
-}
-
 llvm::Value *CodeGen::CallPrintf(const std::string &format,
                                  const std::vector<llvm::Value *> &args) {
   auto *printf_fn = LookupBuiltin("printf");
