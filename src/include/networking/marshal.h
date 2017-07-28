@@ -24,17 +24,18 @@
 namespace peloton {
 namespace networking {
 
-class NetworkSocket;
+class NetworkManager;
 
 class InputPacket {
  public:
   NetworkMessageType msg_type;         // header
   size_t len;                          // size of packet without header
   size_t ptr;                          // ByteBuf cursor
+  ByteBuf::const_iterator begin, end;  // start and end iterators of the buffer
   bool header_parsed;                  // has the header been parsed
 
  private:
-  ByteBuf extended_buffer_;  // used to store packets that don't fit in rbuf
+  ByteBuf buffer_;  // used to store packets
 
  public:
   // reserve buf's size as maximum packet size
@@ -45,8 +46,8 @@ class InputPacket {
     Reset();
     // Copy the data from string to packet buf
     this->len = len;
-    extended_buffer_.resize(len);
-    PL_MEMCPY(extended_buffer_.data(), val.data(), len);
+    buffer_.resize(len);
+    PL_MEMCPY(buffer_.data(), val.data(), len);
     InitializePacket();
   }
 
@@ -54,28 +55,33 @@ class InputPacket {
     header_parsed = false;
     len = ptr = 0;
     msg_type = NetworkMessageType::NULL_COMMAND;
-    extended_buffer_.clear();
+    buffer_.clear();
   }
 
-  inline void ReserveExtendedBuffer() {
+  inline void ReserveBuffer() {
     // grow the buffer's capacity to len
-    extended_buffer_.reserve(len);
+    buffer_.reserve(len);
   }
 
   /* checks how many more bytes the extended packet requires */
   inline size_t ExtendedBytesRequired() {
-    return len - extended_buffer_.size();
+    return len - buffer_.size();
   }
 
   inline void AppendToExtendedBuffer(ByteBuf::const_iterator start,
                                      ByteBuf::const_iterator end) {
-    extended_buffer_.insert(std::end(extended_buffer_), start, end);
+    buffer_.insert(std::end(buffer_), start, end);
   }
 
   inline void InitializePacket() {
-    PL_ASSERT(extended_buffer_.size() == len);
+    this->begin = buffer_.begin();
+    this->end = buffer_.end();
+    PL_ASSERT(buffer_.size() == len);
   }
 
+  ByteBuf::const_iterator Begin() { return begin; }
+
+  ByteBuf::const_iterator End() { return end; }
 };
 
 struct OutputPacket {

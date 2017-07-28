@@ -2,7 +2,7 @@
 // Created by tim on 25/07/17.
 //
 
-#include "network_socket.h"
+#include "network_manager.h"
 
 #pragma once
 namespace peloton {
@@ -13,13 +13,13 @@ namespace networking {
  */
 class PacketManager {
  public:
-  enum PacketManagerResultType {
+  enum PacketReadState {
     PacketDone,
     PacketNotDone,
     PacketEnd
   };
 
-  virtual PacketManagerResultType GetPacketFromBuffer(Buffer&, std::unique_ptr<InputPacket>&);
+  virtual PacketReadState GetPacketFromBuffer(Buffer&, std::unique_ptr<InputPacket>&);
 
  protected:
   static size_t initial_read_size_;
@@ -32,7 +32,7 @@ class PostgresPacketManager : public PacketManager {
     initial_read_size_ = sizeof(int32_t);
   }
 
-  PacketManagerResultType
+  PacketReadState
   GetPacketFromBuffer(Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt);
 
  protected:
@@ -42,8 +42,13 @@ class PostgresPacketManager : public PacketManager {
     return ((rbuf.buf_ptr - 1) + bytes < rbuf.buf_size);
   }
 
+  // The function tries to do a preliminary read to fetch the size value and
+  // then reads the rest of the packet.
+  // Assume: Packet length field is always 32-bit int
   bool ReadPacketHeader(Buffer& rbuf);
 
+  // Tries to read the contents of a single packet, returns true on success, false
+  // on failure.
   bool ReadPacket(Buffer& rbuf);
 
   virtual bool IsEndPacket();

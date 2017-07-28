@@ -7,7 +7,7 @@
 namespace peloton {
 namespace networking {
 
-PacketManager::PacketManagerResultType
+PacketManager::PacketReadState
 PostgresPacketManager::GetPacketFromBuffer(
     Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt) {
 
@@ -59,7 +59,7 @@ bool PostgresPacketManager::ReadPacketHeader(
 
   GetSizeFromPktHeader(rbuf.buf_ptr + 1, rbuf);
 
-  rpkt_->ReserveExtendedBuffer();
+  rpkt_->ReserveBuffer();
 
   // we have processed the data, move buffer pointer
   rbuf.buf_ptr += initial_read_size_;
@@ -67,6 +67,7 @@ bool PostgresPacketManager::ReadPacketHeader(
 
   return true;
 }
+
 bool PostgresPacketManager::ReadPacket(Buffer& rbuf) {
   // extended packet mode
   auto bytes_available = rbuf.buf_size - rbuf.buf_ptr;

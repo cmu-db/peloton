@@ -35,7 +35,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "networking/network_thread.h"
-#include "networking/network_manager.h"
+#include "networking/protocol_handler.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -51,14 +51,15 @@ class NetworkThread;
 
 // Network Thread States
 enum ConnState {
-  CONN_LISTENING,  // State that listens for new connections
-  CONN_READ,       // State that reads data from the network
-  CONN_WRITE,      // State the writes data to the network
-  CONN_WAIT,       // State for waiting for some event to happen
-  CONN_PROCESS,    // State that runs the wire protocol on received data
-  CONN_CLOSING,    // State for closing the client connection
-  CONN_CLOSED,     // State for closed connection
-  CONN_INVALID,    // Invalid STate
+  CONN_LISTENING,         // State that listens for new connections
+  CONN_READ,              // State that reads data from the network
+  CONN_WRITE,             // State the writes data to the network
+  CONN_WAIT,              // State for waiting for some event to happen
+  CONN_PROCESS,           // State that runs the wire protocol on received data
+  CONN_CLOSING,           // State for closing the client connection
+  CONN_CLOSED,            // State for closed connection
+  CONN_INVALID,           // Invalid State
+  CONN_PARSE_PACKET,      // State for parsing packet from buffers
 };
 
 enum ReadState {
@@ -85,7 +86,7 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 /* Helpers */
 
 /* Runs the state machine for the protocol. Invoked by event handler callback */
-void StateMachine(NetworkSocket *conn);
+void StateMachine(NetworkManager *network_manager);
 
 /* Set the socket to non-blocking mode */
 inline void SetNonBlocking(evutil_socket_t fd) {
@@ -143,7 +144,7 @@ struct NetworkServer {
  public:
   NetworkServer();
 
-  static NetworkSocket *GetConn(const int &connfd);
+  static NetworkManager *GetConn(const int &connfd);
 
   static void CreateNewConn(const int &connfd, short ev_flags,
                             NetworkThread *thread, ConnState init_state);
@@ -169,7 +170,7 @@ struct NetworkServer {
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::unordered_map<int, std::unique_ptr<NetworkSocket>> &
+  static std::unordered_map<int, std::unique_ptr<NetworkManager>> &
   GetGlobalSocketList();
 };
 

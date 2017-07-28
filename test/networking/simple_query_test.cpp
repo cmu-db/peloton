@@ -49,11 +49,11 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::networking::NetworkSocket *conn =
+    peloton::networking::NetworkManager *conn =
         peloton::networking::NetworkServer::GetConn(
             peloton::networking::NetworkServer::recent_connfd);
 
-    EXPECT_EQ(conn->network_manager_.is_started, true);
+    EXPECT_EQ(conn->protocol_handler_.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -94,7 +94,7 @@ void *RollbackTest(int port) {
         peloton::wire::LibeventServer::GetConn(
             peloton::wire::LibeventServer::recent_connfd);
 
-    EXPECT_EQ(conn->network_manager_.is_started, true);
+    EXPECT_EQ(conn->protocol_handler_.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");

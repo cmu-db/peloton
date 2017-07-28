@@ -25,7 +25,7 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
-#include "networking/network_manager.h"
+#include "networking/protocol_handler.h"
 
 namespace peloton {
 namespace brain {
@@ -385,9 +385,9 @@ void IndexTuner::AddIndexes(
         // Tell all our PacketManagers back up in the front-end that they need
         // to replan their PreparedStatements that reference this index's table!
         // At some point the PreparedStatement handles should be moved out of
-        // the NetworkManager and into some more sane that doesn't require us
+        // the ProtocolHandler and into some more sane that doesn't require us
         // to start up the networking layer to test...
-        for (auto pm : networking::NetworkManager::GetNetworkManagers()) {
+        for (auto pm : networking::ProtocolHandler::GetNetworkManagers()) {
           pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
         }  // FOR
       }

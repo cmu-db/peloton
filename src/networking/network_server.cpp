@@ -27,16 +27,16 @@ namespace networking {
 int NetworkServer::recent_connfd = -1;
 SSL_CTX *NetworkServer::ssl_context = nullptr;
 
-std::unordered_map<int, std::unique_ptr<NetworkSocket>> &
+std::unordered_map<int, std::unique_ptr<NetworkManager>> &
 NetworkServer::GetGlobalSocketList() {
   // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<NetworkSocket>>
+  static std::unordered_map<int, std::unique_ptr<NetworkManager>>
       global_socket_list;
 
   return global_socket_list;
 }
 
-NetworkSocket *NetworkServer::GetConn(const int &connfd) {
+NetworkManager *NetworkServer::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
   if (global_socket_list.find(connfd) != global_socket_list.end()) {
     return global_socket_list.at(connfd).get();
@@ -54,7 +54,7 @@ void NetworkServer::CreateNewConn(const int &connfd, short ev_flags,
     LOG_INFO("create new connection: id = %d", connfd);
   }
   global_socket_list[connfd].reset(
-      new NetworkSocket(connfd, ev_flags, thread, init_state));
+      new NetworkManager(connfd, ev_flags, thread, init_state));
   thread->SetThreadSockFd(connfd);
 }
 
