@@ -292,8 +292,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   if (!tcop_txn_state_.empty()) {
     single_statement_txn_ = false;
     // multi-statment txn has been aborted, just block it
+    // cannot return nullptr in case that commit cannot be execute
     if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-      return nullptr;
+      return statement;
     }
   } else {
     // --BEGIN
