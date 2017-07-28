@@ -104,7 +104,9 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm3.7 \
+        llvm \
+        llvm-devel \
+        llvm-static \
         libedit-devel \
         postgresql
 
