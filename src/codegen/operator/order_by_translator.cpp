@@ -12,6 +12,7 @@
 
 #include "codegen/operator/order_by_translator.h"
 
+#include "codegen/function_builder.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/type/integer_type.h"

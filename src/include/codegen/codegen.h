@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "codegen/code_context.h"
-#include "codegen/function_builder.h"
 
 namespace peloton {
 namespace codegen {
@@ -133,6 +132,7 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
+
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
   CodeContext &GetCodeContext() const { return code_context_; }
@@ -141,11 +141,6 @@ class CodeGen {
   friend class Hash;
   friend class Value;
   friend class OAHashTable;
-
-  // Get the current function we're generating code into
-  llvm::Function *GetFunction() const {
-    return code_context_.GetCurrentFunction()->GetFunction();
-  }
 
   // Get the LLVM module
   llvm::Module &GetModule() const { return code_context_.GetModule(); }
