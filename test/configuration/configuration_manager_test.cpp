@@ -36,8 +36,8 @@ TEST_F(ConfigurationManagerTests, InitializationTest) {
 
   // test port (int)
   auto txn = txn_manager.BeginTransaction();
-  uint64_t port = ConfigurationUtil::GET_INT(ConfigurationId::port);
-  uint64_t port_default = (uint64_t)atoll(settings_catalog->GetDefaultValue("port", txn).c_str());
+  int32_t port = ConfigurationUtil::GET_INT(ConfigurationId::port);
+  int32_t port_default = atoi(settings_catalog->GetDefaultValue("port", txn).c_str());
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(port, port_default);
 
@@ -68,18 +68,16 @@ TEST_F(ConfigurationManagerTests, ModificationTest) {
 
   // modify int
   auto txn = txn_manager.BeginTransaction();
-  uint64_t value1 = ConfigurationUtil::GET_INT(ConfigurationId::port);
-  uint64_t value2 = (uint64_t)(atoll(settings_catalog->
-                               GetSettingValue("port", txn).c_str()));
+  int32_t value1 = ConfigurationUtil::GET_INT(ConfigurationId::port);
+  int32_t value2 = atoi(settings_catalog->GetSettingValue("port", txn).c_str());
   EXPECT_EQ(value1, value2);
   txn_manager.CommitTransaction(txn);
 
   ConfigurationUtil::SET_INT(ConfigurationId::port, 12345);
 
   txn = txn_manager.BeginTransaction();
-  uint64_t value3 = ConfigurationUtil::GET_INT(ConfigurationId::port);
-  uint64_t value4 = (uint64_t)(atoll(settings_catalog->
-          GetSettingValue("port", txn).c_str()));
+  int32_t value3 = ConfigurationUtil::GET_INT(ConfigurationId::port);
+  int32_t value4 = atoi(settings_catalog->GetSettingValue("port", txn).c_str());
   EXPECT_EQ(value3, 12345);
   EXPECT_EQ(value3, value4);
   txn_manager.CommitTransaction(txn);

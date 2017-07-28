@@ -12,14 +12,6 @@
 
 
 //===----------------------------------------------------------------------===//
-// Use following macros to define configuration parameters
-//===----------------------------------------------------------------------===//
-// CONFIG_int(name, description, default_value, is_mutable, is_persistent)
-// CONFIG_bool(name, description, default_value, is_mutable, is_persistent)
-// CONFIG_string(name, description, default_value, is_mutable, is_persistent)
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
 // FILE LOCATIONS
 //===----------------------------------------------------------------------===//
 
