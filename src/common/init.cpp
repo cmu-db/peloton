@@ -21,6 +21,7 @@
 #include "common/thread_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
+#include "configuration/configuration_util.h"
 #include "configuration/configuration_manager.h"
 
 namespace peloton {
@@ -48,7 +49,7 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (Config::GET_BOOL("index_tuner")) {
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -56,7 +57,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (Config::GET_BOOL("layout_tuner")) {
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::layout_tuner)) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -64,7 +65,7 @@ void PelotonInit::Initialize() {
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
-  configuration::ConfigurationManager::GetInstance()->InitializeCatalog();
+  ConfigurationManager::GetInstance()->InitializeCatalog();
 
   // begin a transaction
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -79,13 +80,13 @@ void PelotonInit::Initialize() {
 
 void PelotonInit::Shutdown() {
   // shut down index tuner
-  if (Config::GET_BOOL("index_tuner")) {
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::index_tuner)) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (Config::GET_BOOL("layout_tuner")) {
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::layout_tuner)) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
@@ -102,7 +103,6 @@ void PelotonInit::Shutdown() {
   google::protobuf::ShutdownProtobufLibrary();
 
   // clear parameters
-  Config::drop_parameters();
   google::ShutDownCommandLineFlags();
 }
 

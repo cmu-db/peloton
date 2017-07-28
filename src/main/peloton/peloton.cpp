@@ -13,7 +13,7 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
-#include "configuration/configuration_manager.h"
+#include "configuration/configuration_util.h"
 #include "wire/libevent_server.h"
 #include "common/init.h"
 #include "common/logger.h"
@@ -25,19 +25,18 @@ int main(int argc, char *argv[]) {
 
   // Parse the command line flags
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
-  Config::init_parameters();
 
   // If "-h" or "-help" is passed in, set up the help messages.
-  if (Config::GET_BOOL("h") || Config::GET_BOOL("help")) {
-    Config::SET_BOOL("help", true);
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::h) || ConfigurationUtil::GET_BOOL(ConfigurationId::help)) {
+    ConfigurationUtil::SET_BOOL(ConfigurationId::help, true);
     ::google::SetUsageMessage("Usage Info: \n");
     ::google::HandleCommandLineHelpFlags();
   }
 
   // Print configuration
-  if (Config::GET_BOOL("display_configuration")) {
+  if (ConfigurationUtil::GET_BOOL(ConfigurationId::display_configuration)) {
     auto config = peloton::configuration::ConfigurationManager::GetInstance();
-    config->Display();
+    config->ShowInfo();
   }
 
   try {

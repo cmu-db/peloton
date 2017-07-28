@@ -30,7 +30,6 @@
 
 #include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
-#include "configuration/configuration_manager.h"
 
 namespace peloton {
 
@@ -111,8 +110,6 @@ class PelotonTest : public ::testing::Test {
     // turn off gc under test mode
     gc::GCManagerFactory::Configure(0);
 
-    // initialize_parameters
-    Config::init_parameters();
   }
 
   virtual void TearDown() {

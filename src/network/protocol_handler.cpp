@@ -26,12 +26,8 @@
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-<<<<<<< f576f83b4761cdc7f65a2429f21586bf63b46cea:src/network/protocol_handler.cpp
 #include "network/marshal.h"
-=======
-#include "wire/marshal.h"
-#include "configuration/configuration_manager.h"
->>>>>>> debug:src/wire/packet_manager.cpp
+#include "configuration/configuration_util.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
@@ -552,7 +548,7 @@ void ProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   statement->SetParamTypes(param_types);
 
   // Stat
-  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID) {
+  if (ConfigurationUtil::GET_INT(ConfigurationId::stats_mode) != STATS_TYPE_INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
@@ -707,7 +703,8 @@ void ProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (Config::GET_INT("stats_mode") != STATS_TYPE_INVALID && num_params > 0) {
+  if (ConfigurationUtil::GET_INT(ConfigurationId::stats_mode) != STATS_TYPE_INVALID
+      && num_params > 0) {
     // Make a copy of format for stat collection
     stats::QueryMetric::QueryParamBuf param_format_buf;
     param_format_buf.len = format_buf_len;
