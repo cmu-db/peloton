@@ -12,6 +12,7 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include "codegen/function_builder.h"
 #include "codegen/type/tinyint_type.h"
 #include "codegen/type/smallint_type.h"
 #include "codegen/type/integer_type.h"

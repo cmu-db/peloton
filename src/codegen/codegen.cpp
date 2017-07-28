@@ -19,6 +19,8 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 
+#include "codegen/function_builder.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -220,7 +222,13 @@ llvm::Type *CodeGen::LookupType(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
 
-llvm::Value *CodeGen::GetState() const { return &*GetFunction()->arg_begin(); }
+llvm::Value *CodeGen::GetState() const {
+  auto *func_builder = code_context_.GetCurrentFunction();
+  PL_ASSERT(func_builder != nullptr);
+
+  // The first argument of the function is always the runtime state
+  return func_builder->GetArgumentByPosition(0);
+}
 
 // Return the number of bytes needed to store the given type
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
