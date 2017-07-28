@@ -39,29 +39,46 @@ class PelotonMM : public llvm::SectionMemoryManager {
       const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols)
       : symbols_(symbols) {}
 
-  llvm::RuntimeDyld::SymbolInfo findSymbol(const std::string &name) override {
+#if LLVM_VERSION_GE(4, 0)
+#define RET_TYPE llvm::JITSymbol
+#define BUILD_RET_TYPE(addr) \
+  (RET_TYPE{(llvm::JITTargetAddress)addr, llvm::JITSymbolFlags::Exported})
+#else
+#define RET_TYPE llvm::RuntimeDyld::SymbolInfo
+#define BUILD_RET_TYPE(addr) \
+  (RET_TYPE{(uint64_t)addr, llvm::JITSymbolFlags::Exported})
+#endif
+  RET_TYPE findSymbol(const std::string &name) override {
     LOG_TRACE("Looking up symbol '%s' ...", name.c_str());
+    if (auto *builtin = LookupSymbol(name)) {
+      LOG_TRACE("--> Resolved to builtin @ %p", builtin);
+      return BUILD_RET_TYPE(builtin);
+    }
 
+    LOG_TRACE("--> Not builtin, use fallback resolution ...");
+    return llvm::SectionMemoryManager::findSymbol(name);
+  }
+#undef RET_TYPE
+#undef BUILD_RET_TYPE
+
+ private:
+  void *LookupSymbol(const std::string &name) const {
     // Check for a builtin with the exact name
     auto symbol_iter = symbols_.find(name);
     if (symbol_iter != symbols_.end()) {
-      LOG_TRACE("--> Resolved to builtin @ %p", symbol_iter->second);
-      return llvm::RuntimeDyld::SymbolInfo{(uint64_t)symbol_iter->second,
-                                           llvm::JITSymbolFlags::Exported};
+      return symbol_iter->second;
     }
 
     // Check for a builtin with the leading '_' removed
     if (!name.empty() && name[0] == '_') {
       symbol_iter = symbols_.find(name.substr(1));
       if (symbol_iter != symbols_.end()) {
-        LOG_TRACE("--> Resolved to builtin @ %p", symbol_iter->second);
-        return llvm::RuntimeDyld::SymbolInfo{(uint64_t)symbol_iter->second,
-                                             llvm::JITSymbolFlags::Exported};
+        return symbol_iter->second;
       }
     }
 
-    LOG_TRACE("--> Not builtin, use fallback resolution ...");
-    return llvm::SectionMemoryManager::findSymbol(name);
+    // Nothing
+    return nullptr;
   }
 
  private:
