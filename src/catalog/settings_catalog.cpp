@@ -1,18 +1,4 @@
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// config_catalog.cpp
-//
-// Identification: src/catalog/config_catalog.cpp
-//
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-
-#include "catalog/config_catalog.h"
-
+#include "catalog/settings_catalog.h"
 #include "catalog/catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
@@ -21,40 +7,41 @@
 namespace peloton {
 namespace catalog {
 
-ConfigCatalog *ConfigCatalog::GetInstance(concurrency::Transaction *txn) {
-  static std::unique_ptr<ConfigCatalog> config_catalog(new ConfigCatalog(txn));
+SettingsCatalog *SettingsCatalog::GetInstance(concurrency::Transaction *txn) {
+  static std::unique_ptr<SettingsCatalog> config_catalog(new SettingsCatalog(txn));
   return config_catalog.get();
 }
 
-ConfigCatalog::ConfigCatalog(concurrency::Transaction *txn)
+SettingsCatalog::SettingsCatalog(concurrency::Transaction *txn)
         : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                                  "." CONFIG_CATALOG_NAME
-                                  " ("
-                                  "name   VARCHAR NOT NULL, "
-                                  "value  VARCHAR NOT NULL, "
-                                  "value_type   VARCHAR NOT NULL, "
-                                  "description  VARCHAR, "
-                                  "min_value    VARCHAR, "
-                                  "max_value    VARCHAR, "
-                                  "default_value    VARCHAR NOT NULL, "
-                                  "is_mutable   BOOL NOT NULL, "
-                                  "is_persistent  BOOL NOT NULL);",
+                          "." SETTINGS_CATALOG_NAME
+                          " ("
+                          "name   VARCHAR NOT NULL, "
+                          "value  VARCHAR NOT NULL, "
+                          "value_type   VARCHAR NOT NULL, "
+                          "description  VARCHAR, "
+                          "min_value    VARCHAR, "
+                          "max_value    VARCHAR, "
+                          "default_value    VARCHAR NOT NULL, "
+                          "is_mutable   BOOL NOT NULL, "
+                          "is_persistent  BOOL NOT NULL);",
                           txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-          CATALOG_DATABASE_NAME, CONFIG_CATALOG_NAME,
-          {"name"}, CONFIG_CATALOG_NAME "_skey0",
+          CATALOG_DATABASE_NAME, SETTINGS_CATALOG_NAME,
+          {"name"}, SETTINGS_CATALOG_NAME "_skey0",
           false, IndexType::BWTREE, txn);
 }
 
-ConfigCatalog::~ConfigCatalog() {}
+SettingsCatalog::~SettingsCatalog() {}
 
-bool ConfigCatalog::InsertConfig(const std::string &name, const std::string &value,
-                                 type::TypeId value_type, const std::string &description,
-                                 const std::string &min_value, const std::string &max_value,
-                                 const std::string &default_value,
-                                 bool is_mutable, bool is_persistent,
-                                 type::AbstractPool *pool, concurrency::Transaction *txn) {
+bool SettingsCatalog::InsertSetting(
+    const std::string &name, const std::string &value,
+    type::TypeId value_type, const std::string &description,
+    const std::string &min_value, const std::string &max_value,
+    const std::string &default_value,
+    bool is_mutable, bool is_persistent,
+    type::AbstractPool *pool, concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -83,8 +70,8 @@ bool ConfigCatalog::InsertConfig(const std::string &name, const std::string &val
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool ConfigCatalog::DeleteConfig(const std::string &name,
-                                 concurrency::Transaction *txn) {
+bool SettingsCatalog::DeleteSetting(const std::string &name,
+                                    concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of config_name
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -92,8 +79,8 @@ bool ConfigCatalog::DeleteConfig(const std::string &name,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string ConfigCatalog::GetConfigValue(const std::string &name,
-                                          concurrency::Transaction *txn) {
+std::string SettingsCatalog::GetSettingValue(const std::string &name,
+                                             concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
@@ -113,7 +100,7 @@ std::string ConfigCatalog::GetConfigValue(const std::string &name,
   return config_value;
 }
 
-std::string ConfigCatalog::GetDefaultValue(const std::string &name,
+std::string SettingsCatalog::GetDefaultValue(const std::string &name,
                                           concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
