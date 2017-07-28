@@ -9,6 +9,8 @@
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
+
 #include <include/catalog/catalog.h>
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"

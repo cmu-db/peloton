@@ -2,13 +2,15 @@
 //
 //                         Peloton
 //
-// configuration_util.h
+// configuration_macro.h
 //
-// Identification: src/include/configuration/configuration_util.h
+// Identification: src/include/configuration/configuration_macro.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
+
 #ifdef __CONFIG_GFLAGS_DEFINE__
   #ifdef CONFIG_int
     #undef CONFIG_int

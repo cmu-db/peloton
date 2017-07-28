@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// configuration_util.cpp
+//
+// Identification: src/configuration/configuration_util.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include <gflags/gflags.h>
 
 #include "type/value_factory.h"

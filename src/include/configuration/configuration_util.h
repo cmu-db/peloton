@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// configuration_util.h
+//
+// Identification: src/include/configuration/configuration_util.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "configuration/configuration_type.h"

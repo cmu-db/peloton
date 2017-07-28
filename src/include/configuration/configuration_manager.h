@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// configuration_manager.h
+//
+// Identification: src/include/configuration/configuration_manager.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include <map>
