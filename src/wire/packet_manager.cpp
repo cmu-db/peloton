@@ -94,8 +94,7 @@ void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
 
 void PacketManager::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
-  traffic_cop_->SetPsqlFlag(false);
-  auto new_statement = traffic_cop_->PrepareStatementExtended(
+  auto new_statement = traffic_cop_->PrepareStatement(
       statement->GetStatementName(), statement->GetQueryString(),
       error_message);
   // But then rip out its query plan and stick it in our old statement
@@ -381,8 +380,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 
         LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
                 statement_query.c_str());
-        traffic_cop_->SetPsqlFlag(false);
-        statement = traffic_cop_->PrepareStatementExtended(statement_name, statement_query,
+
+        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
                                                  error_message);
         if (statement.get() == nullptr) {
           skipped_stmt_ = true;
@@ -438,7 +437,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
         if (param_values.size() > 0) {
           statement->GetPlanTree()->SetParameterValues(&param_values);
         }
-        traffic_cop_->SetPsqlFlag(false);
+
         auto status =
                 traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                              result, rows_affected, error_message, thread_id);
@@ -456,7 +455,6 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       default:
       {
         // execute the query using tcop
-        traffic_cop_->SetPsqlFlag(true);
         auto status = traffic_cop_->ExecuteStatement(
             query, result, tuple_descriptor, rows_affected, error_message,
             thread_id);
@@ -526,8 +524,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
   LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
             query_string.c_str());
-  traffic_cop_->SetPsqlFlag(false);
-  statement = traffic_cop_->PrepareStatementExtended(statement_name, query_string,
+  statement = traffic_cop_->PrepareStatement(statement_name, query_string,
                                              error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
@@ -955,7 +952,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
-  traffic_cop_->SetPsqlFlag(false);
+
   auto status = traffic_cop_->ExecuteStatement(
       statement, param_values, unnamed, param_stat, result_format_, results,
       rows_affected, error_message, thread_id);

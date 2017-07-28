@@ -80,6 +80,22 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
+ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
+  if (tcop_txn_state_.empty()) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction(thread_id);
+
+    // this shouldn't happen
+    if (txn == nullptr) {
+      LOG_DEBUG("Begin txn failed");
+      return ResultType::FAILURE;
+    }
+
+    // initialize the current result as success
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  }
+  return ResultType::SUCCESS;
+}
 
 ResultType TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
@@ -94,16 +110,10 @@ ResultType TrafficCop::CommitQueryHelper() {
   // After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    auto result = txn_manager.CommitTransaction(txn);
-    return result;
+    return txn_manager.CommitTransaction(txn);
   } else {
     // otherwise, rollback
-    if (psql_) {
-      auto result = txn_manager.AbortTransaction(txn);
-      return result;
-    } else {
-      return ResultType::ABORTED;
-    }
+    return txn_manager.AbortTransaction(txn);
   }
 }
 
@@ -133,27 +143,9 @@ ResultType TrafficCop::ExecuteStatement(
 
   std::string unnamed_statement = "unnamed";
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
-  // After prepareStatement, statements that might be aborted in prepareStatement will be filtered out.
-  // for example, create a table but that table exists; drop a table but that table has been dropped
   if (statement.get() == nullptr) {
-    if (single_statement_txn_) {
-      LOG_TRACE("SINGLE ABORT!");
-      rows_changed = 0;
-      return AbortQueryHelper();
-    } else { // multi-statment txn
-      if (statement->GetQueryType() == QueryType::QUERY_COMMIT ||
-          statement->GetQueryType() == QueryType::QUERY_ROLLBACK ) {
-        // commit aborted txn
-        return CommitQueryHelper();
-      } else {
-        if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-          return ResultType::ABORTED;
-        } else {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          return ResultType::ABORTED;
-        }
-      }
-    }
+    rows_changed = 0;
+    return ResultType::FAILURE;
   }
   // Then, execute the statement
   bool unnamed = true;
@@ -194,16 +186,11 @@ ResultType TrafficCop::ExecuteStatement(
   try {
     switch (statement->GetQueryType()) {
       case QueryType::QUERY_BEGIN:
-        return ResultType::SUCCESS;
+        return BeginQueryHelper(thread_id);
       case QueryType::QUERY_COMMIT:
         return CommitQueryHelper();
       case QueryType::QUERY_ROLLBACK:
-        if (psql_) {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          return CommitQueryHelper();
-        } else {
-          return AbortQueryHelper();
-        }
+        return AbortQueryHelper();
       default:
         auto status = ExecuteStatementPlan(statement->GetPlanTree(), params,
                                            result, result_format,
@@ -256,53 +243,28 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     auto txn_result = txn->GetResult();
     if (single_statement_txn_ == true || init_failure == true ||
         txn_result == ResultType::FAILURE) {
-      if (psql_) {
-        LOG_TRACE(
-            "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-            single_statement_txn, init_failure,
-            ResultTypeToString(txn_result).c_str());
-        switch (txn_result) {
-          case ResultType::SUCCESS:
-            // Commit single statement
-            LOG_TRACE("Commit Transaction");
-            p_status.m_result = CommitQueryHelper();
-            break;
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+          single_statement_txn, init_failure,
+          ResultTypeToString(txn_result).c_str());
+      switch (txn_result) {
+        case ResultType::SUCCESS:
+          // Commit single statement
+          LOG_TRACE("Commit Transaction");
+          p_status.m_result = CommitQueryHelper();
+          break;
 
-          case ResultType::FAILURE:
-          default:
-            // Abort
-            LOG_TRACE("Abort Transaction");
-            if (single_statement_txn_ == true) {
-              LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-              p_status.m_result = AbortQueryHelper();
-            } else {
-              tcop_txn_state_.top().second = ResultType::ABORTED;
-              p_status.m_result = ResultType::ABORTED;
-            }
-        }
-      } else {
-
-        auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-        LOG_TRACE(
-            "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-            single_statement_txn, init_failure,
-            ResultTypeToString(txn_result).c_str());
-        switch (txn_result) {
-          case ResultType::SUCCESS:
-            // Commit
-            LOG_TRACE("Commit Transaction");
-            p_status.m_result = txn_manager.CommitTransaction(txn);
-            break;
-
-          case ResultType::FAILURE:
-          default:
-            // Abort
-            LOG_TRACE("Abort Transaction");
-            p_status.m_result = txn_manager.AbortTransaction(txn);
-            curr_state.second = ResultType::ABORTED;
-        }
-
+        case ResultType::FAILURE:
+        default:
+          // Abort
+          LOG_TRACE("Abort Transaction");
+          if (single_statement_txn_ == true) {
+            LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+            p_status.m_result = AbortQueryHelper();
+          } else {
+            tcop_txn_state_.top().second = ResultType::ABORTED;
+            p_status.m_result = ResultType::ABORTED;
+          }
       }
     }
   } else {
@@ -326,6 +288,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // --multi-statements except BEGIN in a transaction
   // ----not aborted
   // ----COMMIT, ROLLBACK, and aborted
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   if (!tcop_txn_state_.empty()) {
     single_statement_txn_ = false;
     // multi-statment txn has been aborted, just block it
@@ -345,7 +308,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       LOG_TRACE("SINGLE TXN");
       single_statement_txn_ = true;
     }
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction(thread_id);
     // this shouldn't happen
     if (txn == nullptr) {
@@ -388,55 +350,17 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     return statement;
   } catch (Exception &e) {
     error_message = e.what();
-    return nullptr;
-  }
-}
-
-std::shared_ptr<Statement> TrafficCop::PrepareStatementExtended(
-    const std::string &statement_name, const std::string &query_string,
-    UNUSED_ATTRIBUTE std::string &error_message) {
-  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
-  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
-
-  std::shared_ptr<Statement> statement(
-      new Statement(statement_name, query_string));
-  try {
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-    if (sql_stmt->is_valid == false) {
-      throw ParserException("Error parsing SQL statement");
-    }
-    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt, nullptr);
-    statement->SetPlanTree(plan);
-
-    // Get the tables that our plan references so that we know how to
-    // invalidate it at a later point when the catalog changes
-    const std::set<oid_t> table_oids =
-        planner::PlanUtil::GetTablesReferenced(plan.get());
-    statement->SetReferencedTables(table_oids);
-
-    for (auto stmt : sql_stmt->GetStatements()) {
-      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt);
-        statement->SetTupleDescriptor(tuple_descriptor);
+    if (single_statement_txn_) {
+      LOG_DEBUG("SINGLE ABORT!");
+      AbortQueryHelper();
+    } else { // multi-statment txn
+      if (tcop_txn_state_.top().second != ResultType::ABORTED) {
+        tcop_txn_state_.top().second = ResultType::ABORTED;
       }
-      break;
     }
-
-#ifdef LOG_DEBUG_ENABLED
-    if (statement->GetPlanTree().get() != nullptr) {
-      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
-    }
-#endif
-    return statement;
-  } catch (Exception &e) {
-    error_message = e.what();
     return nullptr;
   }
 }
-
 
 void TrafficCop::GetDataTables(
     parser::TableRef *from_table,

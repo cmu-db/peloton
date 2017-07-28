@@ -77,11 +77,6 @@ class TrafficCop {
                                               std::string &error_message,
                                               const size_t thread_id = 0);
 
-  // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<Statement> PrepareStatementExtended(const std::string &statement_name,
-                                              const std::string &query_string,
-                                              std::string &error_message);
-
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
 
@@ -124,6 +119,8 @@ class TrafficCop {
   static TcopTxnState &GetDefaultTxnState();
 
   TcopTxnState &GetCurrentTxnState();
+
+  ResultType BeginQueryHelper(const size_t thread_id);
 
   ResultType AbortQueryHelper();
 
