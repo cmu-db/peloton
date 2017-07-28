@@ -51,7 +51,7 @@ void *PrepareStatementTest(int port) {
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::networking::NetworkSocket *conn =
+    peloton::networking::NetworkManager *conn =
         peloton::networking::NetworkServer::GetConn(
             peloton::networking::NetworkServer::recent_connfd);
 
@@ -73,9 +73,9 @@ void *PrepareStatementTest(int port) {
 
     // test prepared statement already in statement cache
     // LOG_INFO("[Prepare statement cache]
-    // %d",conn->network_manager_.ExistCachedStatement("searchstmt"));
+    // %d",conn->protocol_handler_.ExistCachedStatement("searchstmt"));
     EXPECT_EQ(R.size(), 1);
-    EXPECT_TRUE(conn->network_manager_.ExistCachedStatement("searchstmt"));
+    EXPECT_TRUE(conn->protocol_handler_.ExistCachedStatement("searchstmt"));
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

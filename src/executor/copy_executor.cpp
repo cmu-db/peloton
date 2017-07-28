@@ -235,7 +235,7 @@ bool CopyExecutor::DExecute() {
 
           // Read param types
           types.resize(num_params);
-          networking::NetworkManager::ReadParamType(&packet, num_params, types);
+          networking::ProtocolHandler::ReadParamType(&packet, num_params, types);
 
           // Write all the types to output file
           for (int i = 0; i < num_params; i++) {
@@ -251,7 +251,7 @@ bool CopyExecutor::DExecute() {
 
           // Read param formats
           formats.resize(num_params);
-          networking::NetworkManager::ReadParamFormat(&packet, num_params, formats);
+          networking::ProtocolHandler::ReadParamFormat(&packet, num_params, formats);
 
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
@@ -261,7 +261,7 @@ bool CopyExecutor::DExecute() {
           networking::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
           param_values.resize(num_params);
-          networking::NetworkManager::ReadParamValue(&packet, num_params, types,
+          networking::ProtocolHandler::ReadParamValue(&packet, num_params, types,
                                               bind_parameters, param_values,
                                               formats);
 
