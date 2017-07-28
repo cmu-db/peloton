@@ -97,6 +97,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         bison \
         flex \
         libevent-devel \
+        openssl-devel \
         boost-devel \
         jemalloc-devel \
         valgrind \
