@@ -105,7 +105,7 @@ void ConfigurationManager::SetValue(ConfigurationId id, const type::Value &value
   param->second.value = value;
   switch (value.GetTypeId()) {
     case type::TypeId::INTEGER:
-      *(uint64_t*)param->second.gflags_ptr = value.GetAs<uint64_t>();
+      *(int32_t*)param->second.gflags_ptr = value.GetAs<int32_t>();
       break;
     case type::TypeId::BOOLEAN:
       *(bool*)param->second.gflags_ptr = value.GetAs<bool>();
