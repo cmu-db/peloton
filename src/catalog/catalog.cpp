@@ -749,7 +749,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
 
   if (database_oid == INVALID_OID) {
-    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+//    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
     throw CatalogException("Database " + database_name + " is not found");
   }
 
