@@ -62,18 +62,16 @@ void InsertTranslator::InitializeState() {
 }
 
 void InsertTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
-  auto *inserter = LoadStatePtr(inserter_state_id_);
-
   if (insert_plan_.GetChildrenSize() != 0) {
     // Produce on its child(a scan), to produce the tuples to be inserted
     GetCompilationContext().Produce(*insert_plan_.GetChild(0));
   }
   else {
-    // Let the inserter have all the tuple references to be inserted
+    auto &codegen = GetCodeGen();
+    auto *inserter = LoadStatePtr(inserter_state_id_);
+
     auto num_tuples = insert_plan_.GetBulkInsertCount();
     for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
-
       // Convert the tuple address to the LLVM pointer value
       auto *tuple = insert_plan_.GetTuple(i);
       llvm::Value *tuple_ptr =
