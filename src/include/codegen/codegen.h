@@ -76,11 +76,11 @@ class CodeGen {
   llvm::Constant *Const32(int32_t val) const;
   llvm::Constant *Const64(int64_t val) const;
   llvm::Constant *ConstDouble(double val) const;
-  llvm::Constant *ConstString(const std::string s) const;
+  llvm::Constant *ConstString(const std::string &s) const;
   llvm::Constant *Null(llvm::Type *type) const;
   llvm::Constant *NullPtr(llvm::PointerType *type) const;
   /// Wrapper for pointer for constant string
-  llvm::Value *ConstStringPtr(const std::string s) const;
+  llvm::Value *ConstStringPtr(const std::string &s) const;
 
   // /Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,

@@ -53,9 +53,9 @@ llvm::Constant *CodeGen::ConstDouble(double val) const {
   return llvm::ConstantFP::get(DoubleType(), val);
 }
 
-llvm::Constant *CodeGen::ConstString(const std::string s) const {
+llvm::Constant *CodeGen::ConstString(const std::string &s) const {
   // Strings are treated as arrays of bytes
-  auto *str = llvm::ConstantDataArray::getString(GetContext(), s.c_str());
+  auto *str = llvm::ConstantDataArray::getString(GetContext(), s);
   return new llvm::GlobalVariable(GetModule(), str->getType(), true,
                                   llvm::GlobalValue::InternalLinkage, str,
                                   "str");
@@ -69,7 +69,7 @@ llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
   return llvm::ConstantPointerNull::get(type);
 }
 
-llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
+llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
   auto &ir_builder = GetBuilder();
   return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
