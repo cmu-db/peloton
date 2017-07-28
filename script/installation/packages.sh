@@ -95,7 +95,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    sudo dnf install -y git \
+    sudo dnf install -y \
+        git \
         gcc-c++ \
         cmake \
         gflags-devel \
