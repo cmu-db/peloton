@@ -48,10 +48,8 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 void Inserter::InsertReserved() {
   PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
 
-  std::unique_ptr<executor::LogicalTile> logical_tile(
-      executor::LogicalTileFactory::WrapTiles({tile_}));
-  expression::ContainerTuple<executor::LogicalTile> tuple(logical_tile.get(),
-                                                          location_.offset);
+  expression::ContainerTuple<storage::TileGroup> tuple(
+      table_->GetTileGroupById(location_.block).get(), location_.offset);
   auto result = TransactionRuntime::PerformInsert(*txn_, *table_, &tuple,
                                                   location_);
   if (result == true) {
