@@ -53,6 +53,8 @@ class QueryCache : public Singleton<QueryCache> {
 
   void Remove(const oid_t table_oid);
 
+  void RemoveCache(const oid_t table_oid);
+
  private:
   friend class Singleton<QueryCache>;
 
