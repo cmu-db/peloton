@@ -59,6 +59,10 @@ class UpdatePlan : public AbstractPlan {
     return ais_;
   }
 
+  bool Equals(planner::AbstractPlan &plan) const override;
+  bool operator==(AbstractPlan &rhs) const override;
+  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+
  private:
   storage::DataTable *target_table_;
 

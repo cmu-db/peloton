@@ -96,6 +96,14 @@ class ProjectInfo {
         new ProjectInfo(std::move(new_target_list), std::move(new_map_list)));
   }
 
+  bool Equals(const planner::ProjectInfo &plan) const;
+  bool operator==(const ProjectInfo &rhs) const;
+  bool operator!=(const ProjectInfo &rhs) const { return !(*this == rhs); }
+
+ private:
+  bool AreEqual(const planner::DerivedAttribute &A,
+                const planner::DerivedAttribute &B) const;
+
  private:
   TargetList target_list_;
 

@@ -32,19 +32,23 @@ void HashPlan::GetOutputColumns (std::vector<oid_t> &columns) const {
 }
 
 bool HashPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
-    return false;
+  return (*this == plan);
+}
 
-  auto &other = reinterpret_cast<planner::HashPlan &>(plan);
+bool HashPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+    return false;
+ 
+  auto &other = reinterpret_cast<planner::HashPlan &>(rhs);
   auto hash_key_size = GetHashKeys().size();
   if (hash_key_size != other.GetHashKeys().size())
     return false;
   for (size_t i = 0; i < hash_key_size; i++) {
-    if (!GetHashKeys().at(i).get()->Equals(other.GetHashKeys().at(i).get()))
+    if (*GetHashKeys().at(i).get() != *other.GetHashKeys().at(i).get())
       return false;
   }
-
-  return AbstractPlan::Equals(plan);
+ 
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

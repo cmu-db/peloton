@@ -13,35 +13,20 @@
 #include "codegen/query_cache.h"
 #include "catalog/catalog.h"
 #include "codegen/codegen_test_util.h"
-#include "codegen/plan_comparator.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
+#include "planner/aggregate_plan.h"
+#include "planner/hash_plan.h"
+#include "planner/hash_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test the correctness of plan comparator and query
-// cache by generating pairs of same/different plans of different kinds and
-// testing
-// the comparison result and whether the same plan can successfully find cache.
-// The schema of the table is as follows:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the test table is loaded with 64 rows of random values.
-// The right table is loaded with 256 rows of random values.
-//===----------------------------------------------------------------------===//
 typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
 
 class QueryCacheTest : public PelotonCodeGenTest {
@@ -53,7 +38,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
   uint32_t TestTableId() { return test_table1_id; }
-  uint32_t RightTableId() const { return test_table2_id; }
+  uint32_t RightTableId() { return test_table2_id; }
 
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
@@ -186,6 +171,8 @@ class QueryCacheTest : public PelotonCodeGenTest {
 };
 
 TEST_F(QueryCacheTest, SimpleCache) {
+
+  // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> scan1 = GetSeqScanPlan();
   std::shared_ptr<planner::SeqScanPlan> scan2 = GetSeqScanPlan();
 
@@ -195,8 +182,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
   scan2->PerformBinding(context2);
 
   // Check the plan is the same
-  auto ret = codegen::PlanComparator::Compare(*scan1, *scan2);
-  EXPECT_EQ(ret, 0);
+  auto ret = scan1->Equals(*scan2);
+  EXPECT_EQ(ret, true);
 
   // Execute a new query
   codegen::BufferingConsumer buffer1{{0}, context1};
@@ -204,6 +191,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
                          reinterpret_cast<char*>(buffer1.GetState()));
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results1.size());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
 
   // Execute a query cached
   codegen::BufferingConsumer buffer2{{0}, context2};
@@ -213,6 +201,11 @@ TEST_F(QueryCacheTest, SimpleCache) {
   EXPECT_EQ(NumRowsInTestTable() - 4, results2.size());
 
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+
+  // PelotonCodeTest dies after each TEST_F()
+  // So, we delete the cache
+  codegen::QueryCache::Instance().ClearCache();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 }
 
 TEST_F(QueryCacheTest, CacheSeqScanPlan) {
@@ -224,17 +217,16 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   // Do binding
   planner::BindingContext context1;
   scan1->PerformBinding(context1);
-
   planner::BindingContext context2;
   scan2->PerformBinding(context2);
 
-  int ret = codegen::PlanComparator::Compare(*scan1, *scan2);
-  EXPECT_EQ(ret, 0);
+  auto ret = scan1->Equals(*scan2);
+  EXPECT_EQ(ret, true);
 
   codegen::BufferingConsumer buffer1{{0, 1, 2}, context1};
 
   CompileAndExecuteCache(scan1, buffer1,
-                             reinterpret_cast<char*>(buffer1.GetState()));
+                         reinterpret_cast<char*>(buffer1.GetState()));
 
   // Check that we got all the results
   const auto& results1 = buffer1.GetOutputTuples();
@@ -246,7 +238,7 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
 
   codegen::BufferingConsumer buffer2{{0, 1, 2}, context2};
   CompileAndExecuteCache(scan2, buffer2,
-                             reinterpret_cast<char*>(buffer2.GetState()));
+                         reinterpret_cast<char*>(buffer2.GetState()));
 
   const auto& results2 = buffer2.GetOutputTuples();
   EXPECT_EQ(1, results2.size());
@@ -255,7 +247,12 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
 
-  EXPECT_EQ(2, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+
+  // PelotonCodeTest dies after each TEST_F()
+  // So, we delete the cache
+  codegen::QueryCache::Instance().ClearCache();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 }
 
 TEST_F(QueryCacheTest, CacheHashJoinPlan) {
@@ -267,8 +264,8 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   hj_plan1->PerformBinding(context1);
   hj_plan2->PerformBinding(context2);
 
-  int ret = codegen::PlanComparator::Compare(*hj_plan2, *hj_plan1);
-  EXPECT_EQ(ret, 0);
+  bool is_equal = hj_plan1->Equals(*hj_plan2);
+  EXPECT_EQ(is_equal, true);
 
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer1{{0, 1, 2, 3}, context1};
@@ -306,7 +303,12 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
               type::CMP_TRUE);
   }
-  EXPECT_EQ(3, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+
+  // PelotonCodeTest dies after each TEST_F()
+  // So, we delete the cache
+  codegen::QueryCache::Instance().ClearCache();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 }
 
 TEST_F(QueryCacheTest, CacheOrderByPlan) {
@@ -337,13 +339,11 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   order_by_plan_2->PerformBinding(context2);
   order_by_plan_3->PerformBinding(context3);
 
-  int ret = codegen::PlanComparator::Compare(*order_by_plan_1.get(),
-                                             *order_by_plan_2.get());
-  EXPECT_EQ(ret, 0);
+  auto is_equal = order_by_plan_1->Equals(*order_by_plan_2.get());
+  EXPECT_EQ(is_equal, true);
 
-  ret = (codegen::PlanComparator::Compare(*order_by_plan_1.get(),
-                                          *order_by_plan_3.get()) == 0);
-  EXPECT_EQ(ret, 0);
+  is_equal = order_by_plan_1->Equals(*order_by_plan_3.get());
+  EXPECT_EQ(is_equal, false);
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
   codegen::BufferingConsumer buffer2{{0, 1}, context2};
@@ -371,11 +371,17 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
         return is_gte == type::CMP_TRUE;
       }));
 
-  ret = (codegen::QueryCache::Instance().Find(std::move(order_by_plan_3)) ==
-         nullptr);
-  EXPECT_EQ(ret, 1);
+  auto found =
+      (codegen::QueryCache::Instance().Find(std::move(order_by_plan_3)) ==
+          nullptr);
+  EXPECT_EQ(found, 1);
 
-  EXPECT_EQ(4, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+
+  // PelotonCodeTest dies after each TEST_F()
+  // So, we delete the cache
+  codegen::QueryCache::Instance().ClearCache();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 }
 
 TEST_F(QueryCacheTest, CacheAggregatePlan) {
@@ -384,9 +390,10 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   planner::BindingContext context1, context2;
   agg_plan1->PerformBinding(context1);
   agg_plan2->PerformBinding(context2);
-  int ret = codegen::PlanComparator::Compare(*agg_plan1, *agg_plan2);
-  EXPECT_EQ(ret, 0);
-  EXPECT_EQ(4, codegen::QueryCache::Instance().GetSize());
+
+  auto is_equal = agg_plan1->Equals(*agg_plan2);
+  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
   codegen::BufferingConsumer buffer2{{0, 1}, context2};
@@ -397,7 +404,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   // Check results
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(results1.size(), 59);
-  EXPECT_EQ(5, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(agg_plan2, buffer2,
@@ -407,15 +414,16 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_EQ(results2.size(), 59);
 
   // Clean the query cache and leaves only one query
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
   codegen::QueryCache::Instance().ClearCache();
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 
   // Check the correctness of LRU
   auto agg_plan3 = GetAggregatePlan();
   planner::BindingContext context3;
   agg_plan3->PerformBinding(context3);
-  ret = codegen::QueryCache::Instance().Find(agg_plan3) == nullptr ? 0 : 1;
-  EXPECT_EQ(ret, 0);
+  auto found = (codegen::QueryCache::Instance().Find(agg_plan3) != nullptr);
+  EXPECT_EQ(found, false);
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 }
 
 TEST_F(QueryCacheTest, PerformanceBenchmark) {
@@ -447,7 +455,7 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
     codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
     // COMPILE and execute with cache
     CompileAndExecuteCache(plan, buffer,
-                               reinterpret_cast<char*>(buffer.GetState()));
+                           reinterpret_cast<char*>(buffer.GetState()));
   }
   timer2.Stop();
 
