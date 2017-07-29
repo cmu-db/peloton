@@ -126,6 +126,12 @@ class Schema : public Printable {
     return columns[column_id];
   }
 
+  /**
+   * For the given column name, return its offset in this table.
+   * If the column does not exist, it will return INVALID_OID
+   * @param col_name
+   * @return
+   */
   inline oid_t GetColumnID(std::string col_name) const {
     oid_t index = INVALID_OID;
     for (oid_t i = 0, cnt = columns.size(); i < cnt; ++i) {

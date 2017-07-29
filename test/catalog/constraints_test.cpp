@@ -28,6 +28,10 @@
 
 #define DEFAULT_VALUE 11111
 
+#define CONSTRAINT_NOTNULL_TEST
+#define CONSTRAINT_DEFAULT_TEST
+//#define CONSTRAINT_CHECK_TEST
+
 namespace peloton {
 namespace test {
 
@@ -37,6 +41,7 @@ namespace test {
 
 class ConstraintsTests : public PelotonTest {};
 
+#ifdef CONSTRAINT_NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {
   // First, generate the table with index
   // this table has 15 rows:
@@ -103,20 +108,23 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
     txn_manager.CommitTransaction(txn);
   } // FOR
 }
+#endif
 
+#ifdef CONSTRAINT_DEFAULT_TEST
 TEST_F(ConstraintsTests, DEFAULTTEST) {
   // Set all of the columns to be NOT NULL
   std::vector<std::vector<catalog::Constraint>> constraints;
   for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
     // COL_A
     if (i == 0) {
-      constraints.push_back({ catalog::Constraint(ConstraintType::PRIMARY,
-                                                  "pkey") });
+      constraints.push_back(
+          { catalog::Constraint(ConstraintType::PRIMARY, "pkey") });
     }
     // COL_B
     else if (i == 1) {
       catalog::Constraint default_const(ConstraintType::DEFAULT, "default");
-      default_const.addDefaultValue(type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
+      default_const.addDefaultValue(
+          type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
       constraints.push_back({ });
     }
     // COL_C + COL_D
@@ -136,144 +144,149 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
   // Test1: Insert a tuple without the second column defined
   // It should get set with the default value
-  TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO TEST_TABLE "
-          "(col_a, col_c, col_d) "
-          "VALUES "
-          "(9999, 2.2, 'xxx');",
-      result, tuple_descriptor, rows_affected, error_message
+  std::string sql = StringUtil::Format(
+                    "INSERT INTO %s (col_a, col_c, col_d) "
+                    "VALUES (9999, 2.2, 'xxx');", CONSTRAINTS_TEST_TABLE);
+  auto status = TestingSQLUtil::ExecuteSQLQuery(
+      sql, result, tuple_descriptor, rows_affected, error_message
   );
-  EXPECT_EQ(result[0].second[0], '1');
+  EXPECT_EQ(ResultType::SUCCESS, status);
 
-  TestingSQLUtil::ExecuteSQLQuery(
-      "SELECT * FROM TEST_TABLE WHERE col_a = 9999",
-      result, tuple_descriptor, rows_affected, error_message);
-  EXPECT_EQ(result[0].second[0], '1');
-  std::string resultStr(result[0].second.begin(), result[0].second.end());
+  sql = StringUtil::Format("SELECT col_d FROM %s WHERE col_a = 9999",
+                           CONSTRAINTS_TEST_TABLE);
+  status = TestingSQLUtil::ExecuteSQLQuery(
+      sql, result, tuple_descriptor, rows_affected, error_message);
+  EXPECT_EQ(ResultType::SUCCESS, status);
+  // EXPECT_EQ(result[0].second[0], '1');
+  std::string resultStr = TestingSQLUtil::GetResultValueAsString(result, 0);
   LOG_INFO("OUTPUT:\n%s", resultStr.c_str());
-
 }
+#endif
 
-//TEST_F(ConstraintsTests, CHECKTest) {
-//  // First, generate the table with index
-//  // this table has 15 rows:
-//  //  int(primary)  int   double  var(22) (unique)
-//  //  0             1     2       "3"
-//  //  10            11    12      "13"
-//  //  20            21    22      "23"
-//  //  .....
-//  //  140           141   142     "143"
-//
-//  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
-//  auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
-//  type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
-//  constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
-//  column1.AddConstraint(constraints);
-//  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
-//  catalog::Schema *table_schema = new catalog::Schema({column1});
-//  std::string table_name("TEST_TABLE");
-//  bool own_schema = true;
-//  bool adapt_table = false;
-//  storage::DataTable *table = storage::TableFactory::GetDataTable(
-//      INVALID_OID, INVALID_OID, table_schema, table_name,
-//      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-//  std::unique_ptr<storage::DataTable> data_table(table);
-//
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//
-//  // begin this transaction
-//  auto txn = txn_manager.BeginTransaction();
-//  // Test1: insert a tuple with column  meet the constraint requirment
-//  bool hasException = false;
-//  try {
-//    TestingConstraintsUtil::ExecuteOneInsert(
-//        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
-//  } catch (ConstraintException e) {
-//    hasException = true;
-//  }
-//  EXPECT_FALSE(hasException);
-//
-//  // Test2: insert not a valid column violate the constraint
-//  hasException = false;
-//  try {
-//    TestingConstraintsUtil::ExecuteOneInsert(
-//        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
-//  } catch (ConstraintException e) {
-//    hasException = true;
-//  }
-//  EXPECT_TRUE(hasException);
-//
-//  // commit this transaction
-//  txn_manager.CommitTransaction(txn);
-//  delete data_table.release();
-//}
+#ifdef CONSTRAINT_CHECK_TEST
+TEST_F(ConstraintsTests, CHECKTest) {
+  // First, generate the table with index
+  // this table has 15 rows:
+  //  int(primary)  int   double  var(22) (unique)
+  //  0             1     2       "3"
+  //  10            11    12      "13"
+  //  20            21    22      "23"
+  //  .....
+  //  140           141   142     "143"
 
-//TEST_F(ConstraintsTests, UNIQUETest) {
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto catalog = catalog::Catalog::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-//  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
-//  auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "B", false, 1);
-//
-//  auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
-//  column1.AddConstraint(constraints);
-//  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
-//  std::unique_ptr<catalog::Schema> table_schema(
-//      new catalog::Schema({column1, column2}));
-//  std::string table_name("TEST_TABLE");
-//  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
-//                                               std::move(table_schema), txn);
-//  txn_manager.CommitTransaction(txn);
-//  storage::Database *database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-//  storage::DataTable *table = database->GetTableWithName(table_name);
-//
-//  // table->AddUNIQUEIndex();
-//
-//  txn = txn_manager.BeginTransaction();
-//  // begin this transaction
-//  // Test1: insert a tuple with column  meet the unique requirment
-//  bool hasException = false;
-//  try {
-//    // bool result = true;
-//    // result =
-//    TestingConstraintsUtil::ExecuteOneInsert(
-//        txn, table, type::ValueFactory::GetIntegerValue(10));
-//    // if (result == false) hasException = true;
-//  } catch (ConstraintException e) {
-//    hasException = true;
-//  }
-//  EXPECT_FALSE(hasException);
-//
-//  // Test2: insert not a valid column violate the constraint
-//  hasException = false;
-//  try {
-//    // bool result = true;
-//    // result =
-//    TestingConstraintsUtil::ExecuteOneInsert(
-//        txn, table, type::ValueFactory::GetIntegerValue(10));
-//    // if (result == false) hasException = true;
-//  } catch (ConstraintException e) {
-//    hasException = true;
-//  }
-//  EXPECT_TRUE(hasException);
-//
-//  hasException = false;
-//  try {
-//    TestingConstraintsUtil::ExecuteOneInsert(
-//        txn, table, type::ValueFactory::GetIntegerValue(20));
-//  } catch (ConstraintException e) {
-//    hasException = true;
-//  }
-//  EXPECT_FALSE(hasException);
-//
-//  // commit this transaction
-//  txn_manager.CommitTransaction(txn);
-//
-//  txn = txn_manager.BeginTransaction();
-//  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-//  txn_manager.CommitTransaction(txn);
-//}
+  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
+  auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
+  type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
+  constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
+  column1.AddConstraint(constraints);
+  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  catalog::Schema *table_schema = new catalog::Schema({column1});
+  std::string table_name("TEST_TABLE");
+  bool own_schema = true;
+  bool adapt_table = false;
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, table_schema, table_name,
+      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  std::unique_ptr<storage::DataTable> data_table(table);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // begin this transaction
+  auto txn = txn_manager.BeginTransaction();
+  // Test1: insert a tuple with column  meet the constraint requirment
+  bool hasException = false;
+  try {
+    TestingConstraintsUtil::ExecuteOneInsert(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    TestingConstraintsUtil::ExecuteOneInsert(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
+}
+#endif
+
+#ifdef CONSTRAINT_UNIQUE_TEST
+TEST_F(ConstraintsTests, UNIQUETest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
+  auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "B", false, 1);
+
+  auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
+  column1.AddConstraint(constraints);
+  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({column1, column2}));
+  std::string table_name("TEST_TABLE");
+  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
+                                               std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  storage::Database *database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
+  storage::DataTable *table = database->GetTableWithName(table_name);
+
+  // table->AddUNIQUEIndex();
+
+  txn = txn_manager.BeginTransaction();
+  // begin this transaction
+  // Test1: insert a tuple with column  meet the unique requirment
+  bool hasException = false;
+  try {
+    // bool result = true;
+    // result =
+    TestingConstraintsUtil::ExecuteOneInsert(
+        txn, table, type::ValueFactory::GetIntegerValue(10));
+    // if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    // bool result = true;
+    // result =
+    TestingConstraintsUtil::ExecuteOneInsert(
+        txn, table, type::ValueFactory::GetIntegerValue(10));
+    // if (result == false) hasException = true;
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  hasException = false;
+  try {
+    TestingConstraintsUtil::ExecuteOneInsert(
+        txn, table, type::ValueFactory::GetIntegerValue(20));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+#endif
 
 //TEST_F(ConstraintsTests, MULTIUNIQUETest) {
 //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

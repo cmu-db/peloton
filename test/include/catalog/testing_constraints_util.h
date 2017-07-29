@@ -83,6 +83,7 @@ namespace planner {
 class ProjectInfo;
 }
 
+#define CONSTRAINTS_TEST_TABLE "test_table"
 #define TESTS_TUPLES_PER_TILEGROUP 5
 #define DEFAULT_TILEGROUP_COUNT 3
 #define CONSTRAINTS_NUM_COLS 4
@@ -98,7 +99,7 @@ class TestingConstraintsUtil {
       std::vector<catalog::MultiConstraint> multi_constraints) {
     const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
     storage::DataTable *table = TestingConstraintsUtil::CreateTable(
-        constraints, multi_constraints, tuple_count);
+        constraints, multi_constraints);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     TestingConstraintsUtil::PopulateTable(txn, table,
@@ -112,17 +113,13 @@ class TestingConstraintsUtil {
   static storage::DataTable *CreateTable(
       std::vector<std::vector<catalog::Constraint>> constraints,
       UNUSED_ATTRIBUTE std::vector<catalog::MultiConstraint> multi_constraints,
-      int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       UNUSED_ATTRIBUTE bool indexes = true) {
 
     // Create the database
+    auto catalog = catalog::Catalog::GetInstance();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    txn_manager.CommitTransaction(txn);
-
-    txn = txn_manager.BeginTransaction();
-    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(DEFAULT_DB_NAME, txn);
+    catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
 
     // First populate the list of catalog::Columns that we
@@ -131,19 +128,24 @@ class TestingConstraintsUtil {
     for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
       columns.push_back(TestingConstraintsUtil::GetColumnInfo(i, constraints[i]));
     }
-    catalog::Schema *table_schema = new catalog::Schema(columns);
-    std::string table_name("TEST_TABLE");
+    std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
+    std::string table_name(CONSTRAINTS_TEST_TABLE);
 
     // Create table.
-    bool own_schema = true;
-    bool adapt_table = false;
+    txn = txn_manager.BeginTransaction();
+    auto result = catalog->CreateTable(DEFAULT_DB_NAME,
+                                       table_name,
+                                       std::move(table_schema),
+                                       txn,
+                                       false);
+    txn_manager.CommitTransaction(txn);
+    EXPECT_EQ(ResultType::SUCCESS, result);
 
     txn = txn_manager.BeginTransaction();
-    storage::DataTable *table = storage::TableFactory::GetDataTable(
-        database_oid, INVALID_OID, table_schema, table_name,
-        tuples_per_tilegroup_count, own_schema, adapt_table);
-    catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->AddTable(table);
+    auto db = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+    storage::DataTable *table = db->GetTableWithName(table_name);
     txn_manager.CommitTransaction(txn);
+    EXPECT_NE(nullptr, table);
 
 //    if (indexes == true) {
 //      // PRIMARY INDEX
@@ -304,7 +306,7 @@ class TestingConstraintsUtil {
     return executor.Execute();
   };
 
-  /** @brief Insert a tupl with 3 columns' value specified */
+  /** @brief Insert a tuple with 3 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3) {
@@ -368,7 +370,7 @@ class TestingConstraintsUtil {
         column = catalog::Column(
             type::TypeId::INTEGER,
             type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "COL_A",
+            "col_a",
             true);
         break;
       }
@@ -377,7 +379,7 @@ class TestingConstraintsUtil {
         column = catalog::Column(
             type::TypeId::INTEGER,
             type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "COL_B",
+            "col_b",
             true);
         break;
       }
@@ -386,7 +388,7 @@ class TestingConstraintsUtil {
         column = catalog::Column(
             type::TypeId::DECIMAL,
             type::Type::GetTypeSize(type::TypeId::DECIMAL),
-            "COL_C",
+            "col_c",
             true);
         break;
       }
@@ -395,7 +397,7 @@ class TestingConstraintsUtil {
         column = catalog::Column(
             type::TypeId::VARCHAR,
             25,  // Column length.
-            "COL_D",
+            "col_d",
             false);
         break;
       }
