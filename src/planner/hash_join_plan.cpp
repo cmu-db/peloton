@@ -53,52 +53,61 @@ void HashJoinPlan::HandleSubplanBinding(
 }
 
 bool HashJoinPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+  return (*this == plan);
+}
+
+bool HashJoinPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::HashJoinPlan &>(plan);
-  // compare join_type
+  auto &other = reinterpret_cast<planner::HashJoinPlan &>(rhs);
   if (GetJoinType() != other.GetJoinType())
     return false;
 
-  // compare predicate
-  auto *exp = GetPredicate();
-  if (exp && !exp->Equals(other.GetPredicate()))
+  // Prodicate
+  auto *pred = GetPredicate();
+  auto *other_pred = other.GetPredicate();
+  if ((pred == nullptr && other_pred != nullptr) ||
+      (pred != nullptr && other_pred == nullptr))
+    return false;
+  if (pred && *pred != *other_pred)
     return false;
 
-  // compare proj_info
+  // Project Info
   auto *proj_info = GetProjInfo();
-  if (proj_info && !proj_info->Equals(*other.GetProjInfo()))
+  auto *other_proj_info = other.GetProjInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr))
+    return false;
+  if (proj_info && *proj_info != *other_proj_info)
     return false;
 
-  // compare proj_schema
-  if (*GetSchema() != *other.GetSchema())
-    return false;
-
-  std::vector<const expression::AbstractExpression *> keys, target_keys;
+  // Left hash keys
+  std::vector<const expression::AbstractExpression *> keys, other_keys;
   GetLeftHashKeys(keys);
-  other.GetLeftHashKeys(target_keys);
+  other.GetLeftHashKeys(other_keys);
   size_t keys_count = keys.size();
-  if (keys_count != target_keys.size())
+  if (keys_count != other_keys.size())
     return false;
   for (size_t i = 0; i < keys_count; i++) {
-    if (!keys.at(i)->Equals(target_keys.at(i)))
+    if (*keys.at(i) != *other_keys.at(i))
       return false;
   }
 
+  // Right hash keys
   keys.clear();
-  target_keys.clear();
+  other_keys.clear();
   GetRightHashKeys(keys);
-  other.GetRightHashKeys(target_keys);
+  other.GetRightHashKeys(other_keys);
   keys_count = keys.size();
-  if (keys_count != target_keys.size())
+  if (keys_count != other_keys.size())
     return false;
   for (size_t i = 0; i < keys_count; i++) {
-    if (!keys.at(i)->Equals(target_keys.at(i)))
+    if (*keys.at(i) != *other_keys.at(i))
       return false;
   }
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

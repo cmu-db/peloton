@@ -1,13 +1,12 @@
-
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // projection_plan.cpp
 //
-// Identification: /peloton/src/planner/projection_plan.cpp
+// Identification: src/planner/projection_plan.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,21 +35,23 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
 }
 
 bool ProjectionPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+  return (*this == plan);
+}
+
+bool ProjectionPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::ProjectionPlan &>(plan);
+  auto &other = reinterpret_cast<planner::ProjectionPlan &>(rhs);
   // compare proj_info
-  auto *proj = GetProjectInfo();
-  auto *target_proj = other.GetProjectInfo();
-  if (proj == nullptr && target_proj != nullptr)
+  auto *proj_info = GetProjectInfo();
+  auto *other_proj_info = other.GetProjectInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr))
     return false;
-  if (!(proj == nullptr && target_proj == nullptr)) {
-    if (!proj->Equals(*target_proj))
-      return false;
-  }
+  if (proj_info && *proj_info != *other_proj_info)
+    return false;
 
-  // compare proj_schema
   if (*GetSchema() == *other.GetSchema())
     return false;
 
@@ -63,7 +64,7 @@ bool ProjectionPlan::Equals(planner::AbstractPlan &plan) const {
       return false;
   }
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

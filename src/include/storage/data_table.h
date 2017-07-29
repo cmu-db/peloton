@@ -281,6 +281,10 @@ class DataTable : public AbstractTable {
     default_active_indirection_array_count_ = active_indirection_array_count;
   }
 
+  bool Equals(const storage::DataTable &other) const;
+  bool operator==(const DataTable &rhs) const;
+  bool operator!=(const DataTable &rhs) const { return !(*this == rhs); }
+
  protected:
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS

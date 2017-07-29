@@ -45,11 +45,15 @@ void OrderByPlan::PerformBinding(BindingContext &binding_context) {
 }
 
 bool OrderByPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+  return (*this == plan);
+}
+
+bool OrderByPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::OrderByPlan &>(plan);
-  // compare sort_keys
+  auto &other = reinterpret_cast<planner::OrderByPlan &>(rhs);
+  // Sort Keys 
   size_t sort_keys_count = GetSortKeys().size();
   if (sort_keys_count != other.GetSortKeys().size())
     return false;
@@ -58,7 +62,7 @@ bool OrderByPlan::Equals(planner::AbstractPlan &plan) const {
       return false;
   }
 
-  // compare descend_flags
+  // Descend Flags
   size_t descend_flags_count = GetDescendFlags().size();
   if (descend_flags_count != other.GetDescendFlags().size())
     return false;
@@ -67,7 +71,7 @@ bool OrderByPlan::Equals(planner::AbstractPlan &plan) const {
       return false;
   }
 
-  // compare output_column_ids
+  // Output Column Ids
   size_t column_id_count = GetOutputColumnIds().size();
   if (column_id_count != other.GetOutputColumnIds().size())
     return false;
@@ -76,7 +80,7 @@ bool OrderByPlan::Equals(planner::AbstractPlan &plan) const {
       return false;
   }
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

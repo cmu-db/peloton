@@ -208,28 +208,45 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
-bool InsertPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+
+bool InsertPlan::Equals(AbstractPlan &plan) const {
+  return (*this == plan);
+}
+
+bool InsertPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::InsertPlan &>(plan);
-  if (!GetTable()->Equals(*other.GetTable()))
+  auto &other = reinterpret_cast<planner::InsertPlan &>(rhs);
+  auto *table = GetTable();
+  auto *other_table = other.GetTable();
+  PL_ASSERT(table && other_table);
+  if (*table != *other_table)
     return false;
 
-  auto *proj_info = GetProjectInfo();
-  if (proj_info && !proj_info->Equals(*other.GetProjectInfo()))
-    return false;
-
-  auto bulk_insert_count = GetBulkInsertCount();
-  if (bulk_insert_count != other.GetBulkInsertCount())
-    return false;
-  for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
-    auto is_equal = GetTuple(i)->Compare(*other.GetTuple(i));
-    if (is_equal == false)
+  if (GetChildren().size() == 0) {
+    if (other.GetChildren().size() != 0)
       return false;
+
+    auto *proj_info = GetProjectInfo();
+    auto *other_proj_info = other.GetProjectInfo();
+    if ((proj_info == nullptr && other_proj_info != nullptr) ||
+        (proj_info != nullptr && other_proj_info == nullptr))
+      return false;
+    if (proj_info && *proj_info != *other_proj_info)
+      return false;
+
+    auto bulk_insert_count = GetBulkInsertCount();
+    if (bulk_insert_count != other.GetBulkInsertCount())
+      return false;
+    for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
+      auto is_equal = GetTuple(i)->Compare(*other.GetTuple(i));
+      if (is_equal == false)
+        return false;
+    }
   }
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

@@ -13,11 +13,12 @@
 #pragma once
 
 #include <list>
-#include "codegen/plan_comparator.h"
 #include "codegen/query.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace codegen {
+
 // Query cache implementation that maps an AbstractPlan with a CodeGen query
 // using LRU eviction policy. The cache is implemented as a singleton.
 // Potential future enhancements:
@@ -33,19 +34,10 @@ class QueryCache {
     return query_cache;
   }
 
-  Query* Find(const std::shared_ptr<planner::AbstractPlan>& key) {
-    auto it = cache_map_.find(key);
-    if (it == cache_map_.end()) return nullptr;
-
-    query_list_.splice(query_list_.begin(), query_list_, it->second);
-    return it->second->second.get();
-  }
+  Query* Find(const std::shared_ptr<planner::AbstractPlan>& key);
 
   void Add(const std::shared_ptr<planner::AbstractPlan>& key,
-           std::unique_ptr<Query> val) {
-    query_list_.push_front(make_pair(key, std::move(val)));
-    cache_map_.insert(make_pair(key, query_list_.begin()));
-  }
+           std::unique_ptr<Query> val);
 
   size_t GetCacheSize() { return max_size_; }
 
@@ -58,6 +50,8 @@ class QueryCache {
 
   void ClearCache() { cache_map_.clear(); }
 
+  void RemoveCache(const oid_t table_oid);
+
  private:
   // Can't consturct
   QueryCache() {}
@@ -66,7 +60,7 @@ class QueryCache {
   struct Compare {
     bool operator()(const std::shared_ptr<planner::AbstractPlan>& a,
                     const std::shared_ptr<planner::AbstractPlan>& b) const {
-      return (PlanComparator::Compare(*a.get(), *b.get()) < 0);
+      return !(*a.get() == *b.get());
     }
   };
 

@@ -91,13 +91,31 @@ const std::string AbstractExpression::GetInfo() const {
   return os.str();
 }
 
-bool AbstractExpression::Equals(AbstractExpression* expr) const{
-  if (exp_type_ != expr->exp_type_ ||
-      children_.size() != expr->children_.size())
+bool AbstractExpression::Equals(const AbstractExpression *expr) const {
+  if (expr == nullptr)
     return false;
+  return (*this == *expr);
+}
+
+bool AbstractExpression::AreEqual(const AbstractExpression *expr1,
+                                  const AbstractExpression *expr2) const {
+  if (expr1 == nullptr && expr2 == nullptr)
+    return true;
+  if (expr1 == nullptr && expr2 != nullptr)
+    return false;
+  return expr1->Equals(expr2);
+}
+
+bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
+  if (exp_type_ != rhs.exp_type_ ||
+      children_.size() != rhs.children_.size())
+    return false;
+
   for (unsigned i = 0; i < children_.size(); i++) {
-    if (!children_[i]->Equals(expr->children_[i].get())) return false;
+    if (!children_[i]->Equals(rhs.children_[i].get()))
+      return false;
   }
+
   return true;
 }
 

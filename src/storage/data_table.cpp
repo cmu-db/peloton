@@ -1200,5 +1200,19 @@ void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
       catalog::TriggerCatalog::GetInstance()->GetTriggers(table_oid, txn);
 }
 
-}  // namespace storage
-}  // namespace peloton
+bool DataTable::Equals(const storage::DataTable &other) const {
+  return (*this == other);
+}
+
+bool DataTable::operator==(const DataTable &rhs) const {
+  if (GetName() != rhs.GetName())
+    return false;
+  if (GetDatabaseOid() != rhs.GetDatabaseOid())
+    return false;
+  if (GetOid() != rhs.GetOid())
+    return false;
+  return true;
+}
+
+}  // End storage namespace
+}  // End peloton namespace

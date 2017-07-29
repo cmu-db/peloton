@@ -267,34 +267,43 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
 }
 
 bool SeqScanPlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType()) {
-    return false;
-  }
+  return (*this == plan);
+}
 
-  auto &other = reinterpret_cast<planner::SeqScanPlan &>(plan);
-  // compare table
-  if (!GetTable()->Equals(*other.GetTable()))
+bool SeqScanPlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  // compare predicate
-  auto *expr = GetPredicate();
-  if (expr && !expr->Equals(other.GetPredicate()))
+  auto &other = reinterpret_cast<planner::SeqScanPlan &>(rhs);
+  auto *table = GetTable();
+  auto *other_table = other.GetTable();
+  PL_ASSERT(table && other_table);
+  if (*table != *other_table)
     return false;
 
-  // compare column_ids
+  // Predicate
+  auto *pred = GetPredicate();
+  auto *other_pred = other.GetPredicate();
+  if ((pred == nullptr && other_pred != nullptr) ||
+      (pred != nullptr && other_pred == nullptr))
+    return false;
+  if (pred && *pred != *other_pred)
+    return false;
+
+  // Column Ids
   size_t column_id_count = GetColumnIds().size();
   if (column_id_count != other.GetColumnIds().size())
     return false;
   for (size_t i = 0; i < column_id_count; i++) {
-    if (GetColumnIds()[i] != other.GetColumnIds()[i])
+    if (GetColumnIds()[i] != other.GetColumnIds()[i]) {
       return false;
+    }
   }
 
-  // compare is_for_update
   if (IsForUpdate() != other.IsForUpdate())
     return false;
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

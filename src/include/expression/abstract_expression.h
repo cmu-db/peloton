@@ -127,7 +127,13 @@ class AbstractExpression : public Printable {
 
   const std::string GetInfo() const;
 
-  virtual bool Equals(AbstractExpression *expr) const;
+  virtual bool Equals(const AbstractExpression *expr) const;
+  virtual bool AreEqual(const AbstractExpression *expr1,
+                        const AbstractExpression *expr2) const;
+  virtual bool operator==(const AbstractExpression &rhs) const;
+  virtual bool operator!=(const AbstractExpression &rhs) const {
+    return !(*this == rhs);
+  }
 
   virtual hash_t Hash() const;
 

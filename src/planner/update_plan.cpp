@@ -44,21 +44,34 @@ void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
 }
 
 bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+  return (*this == plan);
+}
+
+bool UpdatePlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::UpdatePlan &>(plan);
-  if (!GetTable()->Equals(*other.GetTable()))
+  auto &other = reinterpret_cast<planner::UpdatePlan &>(rhs);
+  auto *table = GetTable();
+  auto *other_table = other.GetTable();
+  PL_ASSERT(table && other_table);
+  if (*table != *other_table)
     return false;
 
+  // Project info
   auto *proj_info = GetProjectInfo();
-  if (proj_info && !proj_info->Equals(*other.GetProjectInfo()))
+  auto *other_proj_info = other.GetProjectInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr))
+    return false;
+  if (proj_info && *proj_info != *other_proj_info)
     return false;
 
+  // Update primary key
   if (GetUpdatePrimaryKey() != other.GetUpdatePrimaryKey())
     return false;
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner
