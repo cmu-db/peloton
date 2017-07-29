@@ -28,19 +28,24 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
 }
 
 bool DeletePlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType())
+  return (*this == plan);
+}
+
+bool DeletePlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::DeletePlan &>(plan);
-  // compare table
-  if (!GetTable()->Equals(*other.GetTable()))
+  auto &other = reinterpret_cast<planner::DeletePlan &>(rhs);
+  auto *table = GetTable();
+  auto *other_table = other.GetTable();
+  PL_ASSERT(table && other_table);
+  if (*table != *other_table)
     return false;
 
-  // compare truncate
   if (GetTruncate() != other.GetTruncate())
     return false;
 
-  return AbstractPlan::Equals(plan);
+  return AbstractPlan::operator==(rhs);
 }
 
 }  // namespace planner

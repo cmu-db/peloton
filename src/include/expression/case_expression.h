@@ -103,6 +103,33 @@ class CaseExpression : public AbstractExpression {
     }
   }
 
+  bool Equals(const AbstractExpression *expr) const {
+    if (expr == nullptr)
+      return false;
+    return (*this == *expr);
+  }
+
+  bool operator==(const AbstractExpression &rhs) const override {
+    auto &other = (expression::CaseExpression &)rhs;
+    auto clause_size = GetWhenClauseSize();
+    if (clause_size != other.GetWhenClauseSize())
+      return false;
+
+    for (size_t i = 0; i < clause_size; i++) {
+      if (*GetWhenClauseCond(i) != *other.GetWhenClauseCond(i))
+        return false;
+
+      if (*GetWhenClauseResult(i) != *other.GetWhenClauseResult(i))
+        return false;
+    }
+
+    return AbstractExpression::AreEqual(GetDefault(), other.GetDefault());
+  }
+
+  bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
  private:
   // The list of case-when clauses
   std::vector<WhenClause> clauses_;

@@ -139,52 +139,51 @@ bool AggregatePlan::AreEqual(
 }
 
 bool AggregatePlan::Equals(planner::AbstractPlan &plan) const {
-  if (GetPlanNodeType() != plan.GetPlanNodeType()) {
-    return false;
-  }
+  return (*this == plan);
+}
 
-  auto &other = reinterpret_cast<planner::AggregatePlan &>(plan);
-  // compare project_info
+bool AggregatePlan::operator==(AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+    return false;
+
+  auto &other = reinterpret_cast<planner::AggregatePlan &>(rhs);
+
+  // Predicate
+  auto *pred = GetPredicate();
+  auto *other_pred = other.GetPredicate();
+  if ((pred == nullptr && other_pred != nullptr) ||
+      (pred != nullptr && other_pred == nullptr))
+    return false;
+  if (pred && *pred != *other_pred)
+    return false;
+
+  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms()))
+    return false;
+
+  // Project Info
   auto *proj_info = GetProjectInfo();
-  if (proj_info && !proj_info->Equals(*other.GetProjectInfo())) {
-    LOG_TRACE("Project informations are not equal");
+  auto *other_proj_info = other.GetProjectInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr))
     return false;
-  }
-
-  // compare predicate
-  auto *expr = GetPredicate();
-  if (expr && !expr->Equals(other.GetPredicate())) {
-    LOG_TRACE("Predicates are not equal");
+  if (proj_info && *proj_info != *other_proj_info)
     return false;
-  }
 
-  // compare unique_agg_term
-  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms())) {
-    LOG_TRACE("Aggregate terms are not equal");
-    return false;
-  }
-
-  // compare groupby_col_ids
   size_t group_by_col_ids_count = GetGroupbyColIds().size();
-  if (group_by_col_ids_count != other.GetGroupbyColIds().size()) {
+  if (group_by_col_ids_count != other.GetGroupbyColIds().size())
     return false;
-  }
   for (size_t i = 0; i < group_by_col_ids_count; i++) {
     if (GetGroupbyColIds().at(i) != other.GetGroupbyColIds().at(i))
       return false;
   }
 
-  // compare output_schema
-  if (*GetOutputSchema() != *other.GetOutputSchema()) {
+  if (*GetOutputSchema() != *other.GetOutputSchema())
     return false;
-  }
 
-  // compare aggregate_strategy
-  if (GetAggregateStrategy() != other.GetAggregateStrategy()) {
+  if (GetAggregateStrategy() != other.GetAggregateStrategy())
     return false;
-  }
 
-  return AbstractPlan::Equals(plan);
+  return (AbstractPlan::operator==(rhs));
 }
 
 }  // namespace planner

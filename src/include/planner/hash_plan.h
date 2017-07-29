@@ -51,6 +51,10 @@ class HashPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new HashPlan(copied_hash_keys));
   }
 
+  bool Equals(planner::AbstractPlan &plan) const override;
+  bool operator==(AbstractPlan &rhs) const override;
+  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+
  private:
   std::vector<HashKeyPtrType> hash_keys_;
 

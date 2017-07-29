@@ -62,11 +62,16 @@ void AbstractPlan::SetParameterValues(std::vector<type::Value> *values) {
 }
 
 bool AbstractPlan::Equals(AbstractPlan &plan) const {
-  for (unsigned int i = 0; i < GetChildren().size(); i++) {
-    bool is_equal = GetChild(i)->Equals(*(AbstractPlan *)plan.GetChild(i));
-    if (is_equal == false) {
+  return (AbstractPlan::operator==(plan));
+}
+
+bool AbstractPlan::operator==(AbstractPlan &rhs) const {
+  auto num = GetChildren().size();
+  if (num != rhs.GetChildren().size())
+    return false;
+  for (unsigned int i = 0; i < num; i++) {
+    if (*GetChild(i) != *(AbstractPlan *)rhs.GetChild(i))
       return false;
-    }
   }
   return true;
 }

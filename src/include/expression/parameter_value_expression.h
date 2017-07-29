@@ -44,6 +44,23 @@ class ParameterValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  bool Equals(const AbstractExpression *expr) const override {
+    if (expr == nullptr)
+      return false;
+    return (*this == *expr);
+  }
+
+  bool operator==(const AbstractExpression &rhs) const override {
+    auto &other = (ParameterValueExpression &)rhs;
+    if (value_idx_ != other.GetValueIdx())
+      return false;
+    return true;
+  }
+
+  bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
  protected:
   int value_idx_;
 
