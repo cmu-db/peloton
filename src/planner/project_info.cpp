@@ -185,10 +185,6 @@ bool ProjectInfo::AreEqual(const planner::DerivedAttribute &A,
   return *A.expr == *B.expr;
 }
 
-bool ProjectInfo::Equals(const ProjectInfo &other) const {
-  return (*this == other);
-}
-
 bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   // TargetList
   size_t tl_size = GetTargetList().size();

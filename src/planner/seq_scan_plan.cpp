@@ -266,10 +266,6 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
-bool SeqScanPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool SeqScanPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
