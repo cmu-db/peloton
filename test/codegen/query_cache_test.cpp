@@ -77,7 +77,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   // FROM left_table
   // JOIN right_table ON left_table.a = right_table.a
   std::shared_ptr<planner::HashJoinPlan> GetHashJoinPlan() {
-   DirectMap dm1 = std::make_pair(0, std::make_pair(0, 0));
+    DirectMap dm1 = std::make_pair(0, std::make_pair(0, 0));
     DirectMap dm2 = std::make_pair(1, std::make_pair(1, 0));
     DirectMap dm3 = std::make_pair(2, std::make_pair(0, 1));
     DirectMap dm4 = std::make_pair(3, std::make_pair(1, 2));
@@ -182,8 +182,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
   scan2->PerformBinding(context2);
 
   // Check the plan is the same
-  auto ret = scan1->Equals(*scan2);
-  EXPECT_EQ(ret, true);
+  auto is_equal = (*scan1.get() == *scan2.get());
+  EXPECT_EQ(is_equal, true);
 
   // Execute a new query
   codegen::BufferingConsumer buffer1{{0}, context1};
@@ -214,14 +214,14 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   auto scan1 = GetSeqScanPlanWithPredicate();
   auto scan2 = GetSeqScanPlanWithPredicate();
 
-  // Do binding
   planner::BindingContext context1;
   scan1->PerformBinding(context1);
   planner::BindingContext context2;
   scan2->PerformBinding(context2);
 
-  auto ret = scan1->Equals(*scan2);
-  EXPECT_EQ(ret, true);
+  // Check the plan is the same
+  auto is_equal = (*scan1.get() == *scan2.get());
+  EXPECT_EQ(is_equal, true);
 
   codegen::BufferingConsumer buffer1{{0, 1, 2}, context1};
 
@@ -264,7 +264,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   hj_plan1->PerformBinding(context1);
   hj_plan2->PerformBinding(context2);
 
-  bool is_equal = hj_plan1->Equals(*hj_plan2);
+  bool is_equal = (*hj_plan1.get() == *hj_plan2.get());
   EXPECT_EQ(is_equal, true);
 
   // We collect the results of the query into an in-memory buffer
@@ -339,10 +339,10 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   order_by_plan_2->PerformBinding(context2);
   order_by_plan_3->PerformBinding(context3);
 
-  auto is_equal = order_by_plan_1->Equals(*order_by_plan_2.get());
+  bool is_equal = (*order_by_plan_1.get() == *order_by_plan_2.get());
   EXPECT_EQ(is_equal, true);
 
-  is_equal = order_by_plan_1->Equals(*order_by_plan_3.get());
+  is_equal = (*order_by_plan_1.get() == *order_by_plan_3.get());
   EXPECT_EQ(is_equal, false);
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
@@ -391,7 +391,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   agg_plan1->PerformBinding(context1);
   agg_plan2->PerformBinding(context2);
 
-  auto is_equal = agg_plan1->Equals(*agg_plan2);
+  auto is_equal = (*agg_plan1.get() == *agg_plan2.get());
   EXPECT_EQ(is_equal, true);
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
 
@@ -434,7 +434,6 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
   timer1.Start();
   for (int i = 0; i < 10; i++) {
     auto plan = GetHashJoinPlan();
-    // Do binding
     planner::BindingContext context;
     plan->PerformBinding(context);
     // We collect the results of the query into an in-memory buffer
@@ -448,7 +447,6 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
   timer2.Start();
   for (int i = 0; i < 10; i++) {
     auto plan = GetHashJoinPlan();
-    // Do binding
     planner::BindingContext context;
     plan->PerformBinding(context);
     // We collect the results of the query into an in-memory buffer

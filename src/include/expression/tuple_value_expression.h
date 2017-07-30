@@ -100,12 +100,6 @@ class TupleValueExpression : public AbstractExpression {
     return new TupleValueExpression(*this);
   }
 
-  virtual bool Equals(const AbstractExpression *expr) const override {
-    if (expr == nullptr)
-      return false;
-    return (*this == *expr);
-  }
-
   virtual bool operator==(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;

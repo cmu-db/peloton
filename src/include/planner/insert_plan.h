@@ -97,7 +97,6 @@ class InsertPlan : public AbstractPlan {
     return dummy;
   }
 
-  bool Equals(planner::AbstractPlan &plan) const override;
   bool operator==(AbstractPlan &rhs) const override;
   bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
 

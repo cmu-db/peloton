@@ -27,10 +27,6 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
-bool DeletePlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool DeletePlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

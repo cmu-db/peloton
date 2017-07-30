@@ -61,10 +61,6 @@ void AbstractPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
-bool AbstractPlan::Equals(AbstractPlan &plan) const {
-  return (AbstractPlan::operator==(plan));
-}
-
 bool AbstractPlan::operator==(AbstractPlan &rhs) const {
   auto num = GetChildren().size();
   if (num != rhs.GetChildren().size())
