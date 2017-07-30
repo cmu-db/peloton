@@ -43,10 +43,6 @@ void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
-bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool UpdatePlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

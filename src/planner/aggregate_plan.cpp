@@ -130,16 +130,12 @@ bool AggregatePlan::AreEqual(
     if (A.at(i).aggtype != B.at(i).aggtype)
       return false;
     auto *expr = A.at(i).expression;
-    if (expr && !expr->Equals(B.at(i).expression))
+    if (expr && (*expr != *B.at(i).expression))
       return false;
     if (A.at(i).distinct != B.at(i).distinct)
       return false;
   }
   return true;
-}
-
-bool AggregatePlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
 }
 
 bool AggregatePlan::operator==(AbstractPlan &rhs) const {

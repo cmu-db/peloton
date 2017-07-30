@@ -52,10 +52,6 @@ void HashJoinPlan::HandleSubplanBinding(
   }
 }
 
-bool HashJoinPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool HashJoinPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

@@ -127,7 +127,6 @@ class AbstractExpression : public Printable {
 
   const std::string GetInfo() const;
 
-  virtual bool Equals(const AbstractExpression *expr) const;
   virtual bool AreEqual(const AbstractExpression *expr1,
                         const AbstractExpression *expr2) const;
   virtual bool operator==(const AbstractExpression &rhs) const;
@@ -207,7 +206,7 @@ class ExprEqualCmp {
  public:
   inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
                          std::shared_ptr<AbstractExpression> expr2) const {
-    return expr1->Equals(expr2.get());
+    return (*expr1.get() == *expr2.get());
   }
 };
 

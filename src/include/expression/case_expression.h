@@ -103,12 +103,6 @@ class CaseExpression : public AbstractExpression {
     }
   }
 
-  bool Equals(const AbstractExpression *expr) const {
-    if (expr == nullptr)
-      return false;
-    return (*this == *expr);
-  }
-
   bool operator==(const AbstractExpression &rhs) const override {
     auto &other = (expression::CaseExpression &)rhs;
     auto clause_size = GetWhenClauseSize();

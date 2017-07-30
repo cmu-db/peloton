@@ -34,10 +34,6 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
   GetProjectInfo()->PerformRebinding(context, inputs);
 }
 
-bool ProjectionPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool ProjectionPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

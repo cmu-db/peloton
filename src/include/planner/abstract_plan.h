@@ -113,7 +113,6 @@ class AbstractPlan : public Printable {
   }
   virtual int SerializeSize() { return 0; }
 
-  virtual bool Equals(AbstractPlan &plan) const;
   virtual bool operator==(AbstractPlan &rhs) const;
   virtual bool operator!=(AbstractPlan &rhs) const { return !(*this == rhs); }
 

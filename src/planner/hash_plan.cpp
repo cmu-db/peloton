@@ -27,10 +27,6 @@ void HashPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
-bool HashPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool HashPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

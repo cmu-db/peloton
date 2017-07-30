@@ -73,6 +73,8 @@ class QueryCache {
     }
   }
 
+  oid_t GetOidFromPlan(const planner::AbstractPlan &plan);
+
  private:
   std::list<std::pair<std::shared_ptr<planner::AbstractPlan>,
                       std::unique_ptr<Query>>> query_list_;

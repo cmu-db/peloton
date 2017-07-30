@@ -91,7 +91,6 @@ class HashJoinPlan : public AbstractJoinPlan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
-  bool Equals(planner::AbstractPlan &plan) const override;
   bool operator==(AbstractPlan &rhs) const override;
   bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
 

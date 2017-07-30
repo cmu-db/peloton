@@ -44,10 +44,6 @@ void OrderByPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
-bool OrderByPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 bool OrderByPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
