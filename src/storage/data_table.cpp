@@ -16,6 +16,8 @@
 #include "brain/clusterer.h"
 #include "brain/sample.h"
 #include "catalog/foreign_key.h"
+#include "catalog/table_catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"

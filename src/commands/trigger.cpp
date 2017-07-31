@@ -16,6 +16,7 @@
 #include "common/logger.h"
 #include "expression/constant_value_expression.h"
 #include "catalog/column_catalog.h"
+#include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -169,30 +170,30 @@ expression::AbstractExpression *Trigger::DeserializeWhen(std::string fire_condit
     auto column_type = atoi(v[left_info_begin_index + 2].c_str());
     auto column_id = atoi(v[left_info_begin_index + 3].c_str());
     // 0 means use the first tuple in the arguments
-    left_exp = new expression::TupleValueExpression((type::Type::TypeId) column_type, 0, column_id);
+    left_exp = new expression::TupleValueExpression((type::TypeId) column_type, 0, column_id);
 
   } else if (v[left_info_begin_index] == "VALUE_CONSTANT") {
     LOG_DEBUG("left side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[left_info_begin_index + 1].c_str());
     type::Value left_value;
-    switch ((type::Type::TypeId) value_type) {
-      case type::Type::INTEGER:
+    switch ((type::TypeId) value_type) {
+      case type::TypeId::INTEGER:
         left_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::TINYINT:
+      case type::TypeId::TINYINT:
         left_value = type::ValueFactory::GetTinyIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::SMALLINT:
+      case type::TypeId::SMALLINT:
         left_value = type::ValueFactory::GetSmallIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::BIGINT:
+      case type::TypeId::BIGINT:
         left_value = type::ValueFactory::GetBigIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::DECIMAL:
+      case type::TypeId::DECIMAL:
         left_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      default:LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId) value_type);
+      default:LOG_ERROR("value type %d is not supported in trigger", (type::TypeId) value_type);
         break;
     }
     left_exp = new expression::ConstantValueExpression(left_value);
@@ -208,30 +209,30 @@ expression::AbstractExpression *Trigger::DeserializeWhen(std::string fire_condit
     auto column_type = atoi(v[right_info_begin_index + 2].c_str());
     auto column_id = atoi(v[right_info_begin_index + 3].c_str());
     // 1 means use the second tuple in the arguments
-    right_exp = new expression::TupleValueExpression((type::Type::TypeId) column_type, 1, column_id);
+    right_exp = new expression::TupleValueExpression((type::TypeId) column_type, 1, column_id);
 
   } else if (v[right_info_begin_index] == "VALUE_CONSTANT") {
     LOG_DEBUG("right side is a value constant expression");
     // potential bug! what if index overflow?
     auto value_type = atoi(v[right_info_begin_index + 1].c_str());
     type::Value right_value;
-    switch ((type::Type::TypeId) value_type) {
-      case type::Type::INTEGER:
+    switch ((type::TypeId) value_type) {
+      case type::TypeId::INTEGER:
         right_value = type::ValueFactory::GetIntegerValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::TINYINT:
+      case type::TypeId::TINYINT:
         right_value = type::ValueFactory::GetTinyIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::SMALLINT:
+      case type::TypeId::SMALLINT:
         right_value = type::ValueFactory::GetSmallIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::BIGINT:
+      case type::TypeId::BIGINT:
         right_value = type::ValueFactory::GetBigIntValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      case type::Type::DECIMAL:
+      case type::TypeId::DECIMAL:
         right_value = type::ValueFactory::GetDecimalValue(atoi(v[right_info_begin_index + 2].c_str()));
         break;
-      default:LOG_ERROR("value type %d is not supported in trigger", (type::Type::TypeId) value_type);
+      default:LOG_ERROR("value type %d is not supported in trigger", (type::TypeId) value_type);
         break;
     }
     right_exp = new expression::ConstantValueExpression(right_value);

@@ -13,6 +13,7 @@
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "catalog/catalog_defaults.h"
+#include "executor/logical_tile.h"
 #include "common/macros.h"
 #include "common/logger.h"
 
@@ -166,18 +167,17 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  // carefull! the result tile could be null!
-  if (result_tiles == nullptr) {
-    LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-  }
-
   oid_t trigger_oid = INVALID_OID;
-  if (result_tiles != nullptr) {
-    trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<int16_t>();
+  if (result_tiles->size() == 0) {
+    LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
   }
-
+  else {
+    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<int16_t>();
+    }
+  }
   return trigger_oid;
 }
 

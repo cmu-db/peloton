@@ -676,12 +676,8 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-<<<<<<< 1db655d3a10cec21649fba7ef65b60adfd2131db
   } else if (upper_str == "COMPARE_NOTEQUAL"
       || upper_str == "!=" || upper_str == "<>") {
-=======
-  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=" || upper_str == "<>") {
->>>>>>> Revert unnecessary formatting
     return ExpressionType::COMPARE_NOTEQUAL;
   } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
@@ -1779,7 +1775,6 @@ std::string ProtocolTypeToString(ProtocolType type) {
   switch (type) {
     case ProtocolType::INVALID: {
       return "INVALID";
-<<<<<<< 1db655d3a10cec21649fba7ef65b60adfd2131db
     }
     case ProtocolType::TIMESTAMP_ORDERING: {
       return "TIMESTAMP_ORDERING";
@@ -1788,29 +1783,6 @@ std::string ProtocolTypeToString(ProtocolType type) {
       throw ConversionException(
           StringUtil::Format("No string conversion for ProtocolType value '%d'",
                              static_cast<int>(type)));
-=======
-
-      // WAL Based
-    case LoggingType::NVM_WAL:
-      return "NVM_WAL";
-    case LoggingType::SSD_WAL:
-      return "SSD_WAL";
-    case LoggingType::HDD_WAL:
-      return "HDD_WAL";
-
-      // WBL Based
-    case LoggingType::NVM_WBL:
-      return "NVM_WBL";
-    case LoggingType::SSD_WBL:
-      return "SSD_WBL";
-    case LoggingType::HDD_WBL:
-      return "HDD_WBL";
-
-    default: {
-      throw ConversionException(
-        StringUtil::Format("No string conversion for LoggingType value '%d'",
-                           static_cast<int>(type)));
->>>>>>> Revert unnecessary formatting
     }
   }
   return "INVALID";
@@ -1824,11 +1796,7 @@ ProtocolType StringToProtocolType(const std::string &str) {
     return ProtocolType::TIMESTAMP_ORDERING;
   } else {
     throw ConversionException(StringUtil::Format(
-<<<<<<< 1db655d3a10cec21649fba7ef65b60adfd2131db
         "No ProtocolType conversion from string '%s'", upper_str.c_str()));
-=======
-      "No LoggingType conversion from string '%s'", upper_str.c_str()));
->>>>>>> Revert unnecessary formatting
   }
   return ProtocolType::INVALID;
 }
@@ -1941,15 +1909,9 @@ std::string VisibilityTypeToString(VisibilityType type) {
       return "OK";
     }
     default: {
-<<<<<<< 1db655d3a10cec21649fba7ef65b60adfd2131db
       throw ConversionException(
           StringUtil::Format("No string conversion for VisibilityType value '%d'",
                              static_cast<int>(type)));
-=======
-      throw ConversionException(StringUtil::Format(
-        "No string conversion for CheckpointType value '%d'",
-        static_cast<int>(type)));
->>>>>>> Revert unnecessary formatting
     }
   }
   return "INVALID";

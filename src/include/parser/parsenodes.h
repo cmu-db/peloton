@@ -366,10 +366,6 @@ typedef enum ConstrType /* types of constraints */
 #define FKCONSTR_MATCH_PARTIAL 'p'
 #define FKCONSTR_MATCH_SIMPLE 's'
 
-typedef struct Constraint {
-  NodeTag type;
-  ConstrType contype; /* see above */
-
 typedef struct Constraint
 {
   NodeTag		type;

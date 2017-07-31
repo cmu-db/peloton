@@ -14,10 +14,12 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "commands/trigger.h"
-#include "executor/create_executor.h"
+#include "executor/executors.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
+#include "planner/insert_plan.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace test {
@@ -41,11 +43,11 @@ class TriggerTests : public PelotonTest {
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
     // Insert a table first
-    auto id_column = catalog::Column(type::Type::INTEGER,
-                                     type::Type::GetTypeSize(type::Type::INTEGER),
+    auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                     type::Type::GetTypeSize(type::TypeId::INTEGER),
                                      col_1, true);
     auto name_column =
-      catalog::Column(type::Type::VARCHAR, 32, col_2, false);
+      catalog::Column(type::TypeId::VARCHAR, 32, col_2, false);
 
     // Schema
     std::unique_ptr<catalog::Schema> table_schema(

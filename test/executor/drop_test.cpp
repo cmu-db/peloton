@@ -86,11 +86,11 @@ TEST_F(DropTests, DroppingTrigger) {
   auto txn = txn_manager.BeginTransaction();
 
   // Create a table first
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "dept_id", true);
   auto name_column =
-    catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+    catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
     new catalog::Schema({id_column, name_column}));

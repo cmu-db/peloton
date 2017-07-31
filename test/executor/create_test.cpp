@@ -22,6 +22,8 @@
 #include "storage/data_table.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/postgresparser.h"
+#include "parser/pg_trigger.h"
 
 #include "gtest/gtest.h"
 
@@ -86,11 +88,11 @@ TEST_F(CreateTests, CreatingTrigger) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "balance", true);
   auto name_column =
-      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   // Schema
   std::unique_ptr<catalog::Schema> table_schema(
@@ -223,11 +225,11 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "balance", true);
   auto name_column =
-    catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+    catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   // Schema
   std::unique_ptr<catalog::Schema> table_schema(
@@ -319,11 +321,11 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
                                    "balance", true);
   auto name_column =
-      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   // Schema
   std::unique_ptr<catalog::Schema> table_schema(
