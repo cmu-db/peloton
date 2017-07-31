@@ -1,3 +1,4 @@
+
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -29,8 +30,8 @@ namespace logging {
     LogBufferPool &operator=(const LogBufferPool &&) = delete;
 
   public:
-    LogBufferPool(const size_t thread_id) : 
-      head_(0), 
+    LogBufferPool(const size_t thread_id) :
+      head_(0),
       tail_(buffer_queue_size_),
       thread_id_(thread_id),
       local_buffer_queue_(buffer_queue_size_) {}
@@ -53,7 +54,7 @@ namespace logging {
     static const size_t buffer_queue_size_ = 16;
     std::atomic<size_t> head_;
     std::atomic<size_t> tail_;
-    
+
     size_t thread_id_;
 
     std::vector<std::unique_ptr<LogBuffer>> local_buffer_queue_;

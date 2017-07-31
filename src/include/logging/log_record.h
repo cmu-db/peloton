@@ -46,6 +46,8 @@ public:
 
   inline const ItemPointer &GetItemPointer() { return tuple_pos_; }
 
+  inline const ItemPointer &GetOldItemPointer() { return old_tuple_pos_; }
+
   inline eid_t GetEpochId() { return eid_; }
 
   inline cid_t GetCommitId() { return cid_; }
@@ -54,6 +56,8 @@ private:
   LogRecordType log_record_type_;
 
   ItemPointer tuple_pos_;
+  
+  ItemPointer old_tuple_pos_;
 
   eid_t eid_;
 

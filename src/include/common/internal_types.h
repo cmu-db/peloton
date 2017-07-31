@@ -876,6 +876,18 @@ std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_PHYLOG = 1,
+  CHECKPOINT_TYPE_PHYSICAL = 2,
+};
+
+enum TimerType {
+  TIMER_OFF = 0,
+  TIMER_SUMMARY,
+  TIMER_DISTRIBUTION,
+};
+
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
 
