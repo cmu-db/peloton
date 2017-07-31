@@ -110,5 +110,5 @@ class CaseExpression : public AbstractExpression {
   AbsExprPtr default_expr_;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

@@ -526,5 +526,5 @@ void LibeventSocket::Reset() {
   next_response_ = 0;
 }
 
-}  // End wire namespace
-}  // End peloton namespace
+}  // namespace wire
+}  // namespace peloton

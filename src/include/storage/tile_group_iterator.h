@@ -62,5 +62,5 @@ class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
   oid_t tile_group_itr_;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

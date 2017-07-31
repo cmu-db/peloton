@@ -86,5 +86,5 @@ class IndexUtil {
 
 
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

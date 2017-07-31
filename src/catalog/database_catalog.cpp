@@ -149,5 +149,5 @@ oid_t DatabaseCatalog::GetDatabaseOid(const std::string &database_name,
   return database_oid;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

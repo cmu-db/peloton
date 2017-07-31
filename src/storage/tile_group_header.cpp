@@ -241,5 +241,5 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
   return active_tuple_slots;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

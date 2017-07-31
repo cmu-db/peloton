@@ -49,5 +49,5 @@ class IndexFactory {
   static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

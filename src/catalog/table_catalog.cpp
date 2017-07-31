@@ -266,5 +266,5 @@ std::vector<std::string> TableCatalog::GetTableNames(
   return table_names;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

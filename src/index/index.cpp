@@ -389,5 +389,5 @@ bool Index::IsDirty() const { return dirty; }
  */
 void Index::ResetDirty() { dirty = false; }
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

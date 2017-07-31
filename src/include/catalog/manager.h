@@ -108,5 +108,5 @@ class Manager {
   static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

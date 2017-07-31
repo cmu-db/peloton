@@ -40,5 +40,5 @@ class TransactionStatement : public SQLStatement {
   CommandType type;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

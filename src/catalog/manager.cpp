@@ -82,5 +82,5 @@ void Manager::ClearIndirectionArray() {
   indirection_array_locator_.Clear(empty_indirection_array_);
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

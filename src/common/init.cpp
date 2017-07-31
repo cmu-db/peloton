@@ -106,4 +106,4 @@ void PelotonInit::SetUpThread() {}
 
 void PelotonInit::TearDownThread() {}
 
-}  // End peloton namespace
+}  // namespace peloton

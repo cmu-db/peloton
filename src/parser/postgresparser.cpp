@@ -1370,5 +1370,5 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
   return sql_stmt;
 }
 
-}  // End pgparser namespace
-}  // End peloton namespace
+}  // namespace pgparser
+}  // namespace peloton

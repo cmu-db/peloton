@@ -91,5 +91,5 @@ class Database : public Printable {
   std::mutex database_mutex;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

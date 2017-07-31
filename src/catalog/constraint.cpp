@@ -25,5 +25,5 @@ const std::string Constraint::GetInfo() const {
   return os.str();
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

@@ -316,5 +316,5 @@ bool Schema::operator==(const Schema &other) const {
 
 bool Schema::operator!=(const Schema &other) const { return !(*this == other); }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

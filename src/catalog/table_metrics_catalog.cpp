@@ -81,5 +81,5 @@ bool TableMetricsCatalog::DeleteTableMetrics(oid_t table_oid,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

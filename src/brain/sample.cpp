@@ -129,5 +129,5 @@ bool Sample::operator==(const Sample &other) const {
   return true;
 }
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

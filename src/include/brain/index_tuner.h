@@ -188,5 +188,5 @@ class IndexTuner {
   bool visibility_mode_ = false;
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

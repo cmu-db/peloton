@@ -119,5 +119,5 @@ const std::string AbstractTable::GetInfo() const {
   return output.str();
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

@@ -223,5 +223,5 @@ class TileGroup : public Printable {
   column_map_type column_map;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

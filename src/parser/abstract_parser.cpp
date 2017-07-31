@@ -23,5 +23,5 @@ AbstractParser::~AbstractParser() {
   // Nothing to do here !
 }
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

@@ -446,5 +446,5 @@ const std::string Tuple::GetInfo() const {
   return os.str();
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

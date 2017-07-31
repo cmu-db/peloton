@@ -61,5 +61,5 @@ class DropStatement : public TableRefStatement {
   bool missing;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

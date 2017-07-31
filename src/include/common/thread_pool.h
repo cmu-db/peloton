@@ -99,4 +99,4 @@ class ThreadPool {
   std::vector<std::unique_ptr<std::thread>> dedicated_threads_;
 };
 
-}  // End peloton namespace
+}  // namespace peloton

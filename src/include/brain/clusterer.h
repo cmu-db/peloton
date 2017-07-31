@@ -90,5 +90,5 @@ class Clusterer : public Printable {
   oid_t sample_column_count_;
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

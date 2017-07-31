@@ -636,5 +636,5 @@ void LoadStatsFromFile(const std::string &path) {
   return;
 }
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

@@ -366,5 +366,5 @@ std::vector<oid_t> IndexCatalog::GetIndexedAttributes(
   return key_attrs;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

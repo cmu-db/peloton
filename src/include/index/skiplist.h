@@ -27,5 +27,5 @@ class SkipList {
   // TODO: Add your declarations here
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

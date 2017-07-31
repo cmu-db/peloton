@@ -1113,5 +1113,5 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   return ResultType::ABORTED;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

@@ -782,5 +782,5 @@ std::unique_ptr<storage::Tile> LogicalTile::Materialize() {
   return dest_tile;
 }
 
-}  // End executor namespace
-}  // End peloton namespace
+}  // namespace executor
+}  // namespace peloton

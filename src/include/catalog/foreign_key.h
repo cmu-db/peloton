@@ -76,5 +76,5 @@ class ForeignKey {
   std::string fk_name;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

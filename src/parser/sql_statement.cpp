@@ -74,5 +74,5 @@ const std::string SQLStatementList::GetInfo() const {
   return os.str();
 }
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

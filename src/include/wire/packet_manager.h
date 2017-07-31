@@ -225,5 +225,5 @@ class PacketManager {
   static std::mutex packet_managers_mutex_;
 };
 
-}  // End wire namespace
-}  // End peloton namespace
+}  // namespace wire
+}  // namespace peloton
