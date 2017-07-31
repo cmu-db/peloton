@@ -182,5 +182,5 @@ TEST_F(TimestampValueTests, CastTest) {
   EXPECT_FALSE(result.IsNull());
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

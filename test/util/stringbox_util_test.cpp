@@ -50,5 +50,5 @@ TEST_F(StringBoxUtilTests, BoxTest) {
   CheckBox(result, "Today I didn't", 4);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

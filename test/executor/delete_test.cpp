@@ -257,5 +257,5 @@ TEST_F(DeleteTests, VariousOperations) {
   txn_manager.CommitTransaction(txn);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

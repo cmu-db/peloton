@@ -165,5 +165,5 @@ TEST_F(HyperLogLogTests, DataTypeTest) {
   hll.EstimateCardinality();
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

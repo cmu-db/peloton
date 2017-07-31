@@ -103,5 +103,5 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
   LOG_INFO("Peloton has shut down");
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

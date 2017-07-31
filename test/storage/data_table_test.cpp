@@ -91,5 +91,5 @@ TEST_F(DataTableTests, GlobalTableTest) {
   delete data_table_pointer;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

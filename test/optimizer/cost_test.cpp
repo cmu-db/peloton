@@ -123,5 +123,5 @@ TEST_F(CostTests, ConjunctionTest) {
   EXPECT_LE(output->num_rows, 11626);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

@@ -44,5 +44,5 @@ TEST_F(ContainerTupleTests, VectorValue) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

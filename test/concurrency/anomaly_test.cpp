@@ -807,5 +807,5 @@ TEST_F(AnomalyTests, StressTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

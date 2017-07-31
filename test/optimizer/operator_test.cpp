@@ -71,5 +71,5 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
   delete having;
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

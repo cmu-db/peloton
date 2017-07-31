@@ -103,5 +103,5 @@ TEST_F(TileTests, BasicTest) {
   delete schema;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

@@ -192,5 +192,5 @@ TEST_F(StringUtilTests, SplitTest) {
   }  // FOR
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

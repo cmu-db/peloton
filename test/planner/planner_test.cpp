@@ -338,5 +338,5 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
 }
 
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

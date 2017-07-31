@@ -104,5 +104,5 @@ TEST_F(TempTableTests, InsertTest) {
   EXPECT_EQ(tuple_count, found_tuple_count);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

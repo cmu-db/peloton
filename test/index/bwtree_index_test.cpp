@@ -65,5 +65,5 @@ TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(IndexType::BWTREE);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

@@ -123,5 +123,5 @@ class PelotonTest : public ::testing::Test {
   }
 };
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

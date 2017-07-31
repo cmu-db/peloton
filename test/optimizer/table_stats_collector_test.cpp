@@ -141,5 +141,5 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

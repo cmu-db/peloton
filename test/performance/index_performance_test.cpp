@@ -372,5 +372,5 @@ TEST_F(IndexPerformanceTests, BwTreeMultiThreadedTest) {
 //  TestIndexPerformance(IndexType::BTREE);
 //}
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

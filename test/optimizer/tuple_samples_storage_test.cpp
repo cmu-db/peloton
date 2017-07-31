@@ -165,5 +165,5 @@ TEST_F(TupleSamplesStorageTests, CollectSamplesForTableTest) {
                                             data_table->GetOid());
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton
