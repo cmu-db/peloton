@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// log_manager.h
+// log_manager.cpp
 //
-// Identification: src/include/logging/log_manager.h
+// Identification: src/backend/logging/loggers/log_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,68 +12,88 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-#include <thread>
+#include <string>
+#include <cmath>
 
-#include "common/item_pointer.h"
-#include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "concurrency/transaction.h"
+#include "logging/worker_context.h"
 
 namespace peloton {
+
+namespace storage {
+  class TileGroupHeader;
+}
+
 namespace logging {
 
-//===--------------------------------------------------------------------===//
-// log Manager
-//===--------------------------------------------------------------------===//
 
+/* Per worker thread local context */
+extern thread_local WorkerContext* tl_worker_ctx;
+
+// loggers are created before workers.
 class LogManager {
- public:
   LogManager(const LogManager &) = delete;
   LogManager &operator=(const LogManager &) = delete;
   LogManager(LogManager &&) = delete;
   LogManager &operator=(LogManager &&) = delete;
 
-  LogManager() : is_running_(false) {}
+public:
+  LogManager() : global_persist_epoch_id_(INVALID_EID) {}
 
   virtual ~LogManager() {}
 
-  static LogManager &GetInstance() {
-    static LogManager log_manager;
-    return log_manager;
+  virtual void SetDirectories(const std::vector<std::string> &logging_dirs) = 0;
+
+  virtual const std::vector<std::string> &GetDirectories() = 0;
+
+  void SetRecoveryThreadCount(const size_t &recovery_thread_count) {
+    recovery_thread_count_ = recovery_thread_count;
   }
 
-  void Reset() { is_running_ = false; }
+  virtual void RegisterWorker() = 0;
+  virtual void DeregisterWorker() = 0;
 
-  // Get status of whether logging threads are running or not
-  bool GetStatus() { return this->is_running_; }
+  virtual void DoRecovery(const size_t &begin_eid) = 0;
 
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartLoggers() = 0;
+  virtual void StopLoggers() = 0;
 
-  virtual void StartLogging() {}
+  virtual void StartTxn(concurrency::Transaction *txn);
 
-  virtual void StopLogging() {}
+  virtual void FinishPendingTxn();
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  void MarkTupleCommitEpochId(storage::TileGroupHeader *tg_header, oid_t tuple_slot);
 
-  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  size_t GetPersistEpochId() {
+    return global_persist_epoch_id_.load();
+  }
 
-  virtual size_t GetTableCount() { return 0; }
+protected:
+  // Don't delete the returned pointer
+  inline LogBuffer * RegisterNewBufferToEpoch(std::unique_ptr<LogBuffer> log_buffer_ptr) {
+    LOG_TRACE("Worker %d Register buffer to epoch %d", (int) tl_worker_ctx->worker_id, (int) tl_worker_ctx->current_commit_eid);
+    PL_ASSERT(log_buffer_ptr && log_buffer_ptr->Empty());
+    PL_ASSERT(tl_worker_ctx);
+    size_t eid_idx = tl_worker_ctx->current_commit_eid % concurrency::EpochManager::GetEpochQueueCapacity();
+    tl_worker_ctx->per_epoch_buffer_ptrs[eid_idx].push(std::move(log_buffer_ptr));
+    return tl_worker_ctx->per_epoch_buffer_ptrs[eid_idx].top().get();
+  }
 
-  virtual void LogBegin() {}
 
-  virtual void LogEnd() {}
+  inline size_t HashToLogger(oid_t worker_id) {
+    return ((size_t) worker_id) % logger_count_;
+  }
 
-  virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) {}
-  
-  virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) {}
-  
-  virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) {}
 
- protected:
-  volatile bool is_running_;
+protected:
+  size_t logger_count_;
+
+  size_t recovery_thread_count_ = 1;
+
+  std::atomic<size_t> global_persist_epoch_id_;
+
 };
 
-}  // namespace logging
-}  // namespace peloton
+}
+}

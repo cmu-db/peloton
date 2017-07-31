@@ -1,3 +1,4 @@
+
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -17,6 +18,9 @@
 #include <vector>
 
 #include "type/types.h"
+#include "common/macros.h"
+#include "common/logger.h"
+#include "common/platform.h"
 
 namespace peloton {
 namespace concurrency {
@@ -26,6 +30,15 @@ class EpochManager {
 
 public:
   EpochManager() {}
+
+  static inline size_t GetEpochQueueCapacity() {return 40960;}
+
+  size_t GetEpochLengthInMicroSecQuarter() const {
+      return (int)(1000 * 1000 / 4); //epoch_duration_millisec_
+    }
+  size_t GetEpochDurationMilliSecond() const {
+      return (int)(1000); //epoch_duration_millisec_
+    }
 
   // TODO: stop epoch threads before resetting epoch id.
   virtual void Reset() = 0;
@@ -39,6 +52,7 @@ public:
   virtual void StartEpoch() = 0;
 
   virtual void StopEpoch() = 0;
+
 
   //====================================================
   // designed for decentralized epoch manager
@@ -55,7 +69,7 @@ public:
 
   virtual eid_t GetNextEpochId() = 0;
 
-  virtual eid_t GetCurrentEpochId() = 0;  
+  virtual eid_t GetCurrentEpochId() = 0;
 
   virtual cid_t GetExpiredCid() = 0;
 
@@ -63,4 +77,3 @@ public:
 
 }
 }
-
