@@ -78,7 +78,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params, result,
+    auto status = traffic_cop_.ExecuteStatementPlan(plan, params, result,
                                                     result_format);
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
