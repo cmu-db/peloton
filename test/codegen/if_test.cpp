@@ -47,10 +47,12 @@ TEST_F(IfTest, TestIfOnly) {
     codegen::Value va, vb;
     codegen::lang::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
+      // a < 10
       va = {codegen::type::Integer::Instance(), cg.Const32(1)};
     }
     cond.ElseBlock();
     {
+      // a >= 10
       vb = {codegen::type::Integer::Instance(), cg.Const32(0)};
     }
     cond.EndIf();
@@ -61,7 +63,7 @@ TEST_F(IfTest, TestIfOnly) {
 
   typedef int (*ftype)(int);
 
-  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
   ASSERT_TRUE(f != nullptr);
 
@@ -98,8 +100,8 @@ TEST_F(IfTest, TestIfInsideLoop) {
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
     codegen::lang::Loop loop{cg,
-                       cg->CreateICmpULT(cg.Const32(0), param_a),
-                       {{"i", cg.Const32(0)}, {"x", cg.Const32(0)}}};
+                             cg->CreateICmpULT(cg.Const32(0), param_a),
+                             {{"i", cg.Const32(0)}, {"x", cg.Const32(0)}}};
     {
       llvm::Value *i = loop.GetLoopVar(0);
       llvm::Value *x = loop.GetLoopVar(1);
@@ -107,8 +109,10 @@ TEST_F(IfTest, TestIfInsideLoop) {
       auto *divisible_by_two = cg->CreateURem(i, cg.Const32(2));
 
       llvm::Value *new_x = nullptr;
-      codegen::lang::If pred{cg, cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
+      codegen::lang::If pred{cg,
+                             cg->CreateICmpEQ(cg.Const32(0), divisible_by_two)};
       {
+        // i is divisible by 2
         new_x = cg->CreateAdd(x, cg.Const32(1));
       }
       pred.EndIf();
@@ -128,7 +132,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
 
   typedef int (*ftype)(int);
 
-  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
   ASSERT_EQ(5, f(10));
 }
 
@@ -186,7 +190,7 @@ TEST_F(IfTest, ComplexNestedIf) {
 
   typedef int (*ftype)(int);
 
-  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
   ASSERT_TRUE(f != nullptr);
 

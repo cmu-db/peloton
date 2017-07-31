@@ -13,8 +13,9 @@
 #include "codegen/buffering_consumer.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
-#include "codegen/value_proxy.h"
 #include "codegen/type/sql_type.h"
 #include "planner/binding_context.h"
 
@@ -40,7 +41,15 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 }
 
 //===----------------------------------------------------------------------===//
-// RESULT BUFFERING CONSUMER
+// BufferTuple() Proxy
+//===----------------------------------------------------------------------===//
+
+PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
+
+DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
+
+//===----------------------------------------------------------------------===//
+// BUFFERING CONSUMER
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
@@ -53,33 +62,11 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
-void BufferingConsumer::BufferTuple(char *state, peloton::type::Value *vals,
-                                    uint32_t num_vals) {
+void BufferingConsumer::BufferTuple(char *state, char *tuple,
+                                    uint32_t num_cols) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(vals, num_vals);
-}
-
-// Get a proxy to BufferingConsumer::BufferTuple(...)
-llvm::Function *BufferingConsumer::_BufferTupleProxy::GetFunction(
-    CodeGen &codegen) {
-  const std::string &fn_name =
-#ifdef __APPLE__
-      "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcPNS_4type5ValueEj";
-#else
-      "_ZN7peloton7codegen17BufferingConsumer11BufferTupleEPcPNS_4type5ValueEj";
-#endif
-
-  // Has the function already been registered?
-  llvm::Function *llvm_fn = codegen.LookupFunction(fn_name);
-  if (llvm_fn != nullptr) {
-    return llvm_fn;
-  }
-
-  std::vector<llvm::Type *> args = {
-      codegen.CharPtrType(), ValueProxy::GetType(codegen)->getPointerTo(),
-      codegen.Int32Type()};
-  auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), args, false);
-  return codegen.RegisterFunction(fn_name, fn_type);
+  buffer_state->output->emplace_back(
+      reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
 }
 
 // Create two pieces of state: a pointer to the output tuple vector and an
@@ -93,7 +80,7 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   // Introduce our output tuple buffer as local (on stack)
   auto *value_type = ValueProxy::GetType(codegen);
   tuple_output_state_id_ = runtime_state.RegisterState(
-      "output", codegen.VectorType(value_type, output_ais_.size()), true);
+      "output", codegen.ArrayType(value_type, output_ais_.size()), true);
 }
 
 // For each output attribute, we write out the attribute's value into the
@@ -103,6 +90,8 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                       RowBatch::Row &row) const {
   auto &codegen = ctx.GetCodeGen();
   auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
+  tuple_buffer_ =
+      codegen->CreatePointerCast(tuple_buffer_, codegen.CharPtrType());
 
   for (size_t i = 0; i < output_ais_.size(); i++) {
     // Derive the column's final value
@@ -126,7 +115,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     auto *output_func = sql_type.GetOutputFunction(codegen, val.GetType());
 
     // Setup the function arguments
-    std::vector<llvm::Value *> args = {tuple_buffer_, codegen.Const64(i),
+    std::vector<llvm::Value *> args = {tuple_buffer_, codegen.Const32(i),
                                        val.GetValue()};
     if (val.GetLength() != nullptr) args.push_back(val.GetLength());
 
@@ -138,8 +127,8 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
-  codegen.CallFunc(_BufferTupleProxy::GetFunction(codegen), args);
+  codegen.Call(BufferingConsumerProxy::BufferTuple, args);
 }
 
-}  // namespace test
+}  // namespace codegen
 }  // namespace peloton

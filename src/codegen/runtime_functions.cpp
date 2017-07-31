@@ -62,7 +62,7 @@ uint64_t RuntimeFunctions::HashCrc64(const char *buf, uint64_t length,
 //       off. This means we could be touching free'd data. This must be fixed.
 //===----------------------------------------------------------------------===//
 storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
-                                                   oid_t tile_group_index) {
+                                                   uint64_t tile_group_index) {
   auto tile_group = table->GetTileGroup(tile_group_index);
   return tile_group.get();
 }

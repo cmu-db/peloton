@@ -15,6 +15,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/lang/if.h"
 #include "codegen/type/sql_type.h"
+#include "expression/case_expression.h"
 
 namespace peloton {
 namespace codegen {
@@ -34,9 +35,7 @@ CaseTranslator::CaseTranslator(const expression::CaseExpression &expression,
 
 codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
                                            RowBatch::Row &row) const {
-  // Might not appear in the output IR when all If's are optimized to Switch's
-  // Potential future enhancement: Consider using Switch instead of If
-  //                               It may provide more code readability
+  // The basic block where each of the WHEN clauses merge into
   llvm::BasicBlock *merge_bb =
       llvm::BasicBlock::Create(codegen.GetContext(), "caseMerge");
 
@@ -44,7 +43,7 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
 
   const auto &expr = GetExpressionAs<expression::CaseExpression>();
 
-  // Handle all the When Cluases
+  // Handle all the WHEN clauses. We generate an IF for each WHEN clause.
   codegen::Value ret;
   for (uint32_t i = 0; i < expr.GetWhenClauseSize(); i++) {
     codegen::Value cond = row.DeriveValue(codegen, *expr.GetWhenClauseCond(i));

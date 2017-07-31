@@ -12,32 +12,23 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// A utility class that serves as a helper to proxy the precompiled DataTable
-// class. It significantly eases the pain in invoking DataTable methods from
-// LLVM code.
-//===----------------------------------------------------------------------===//
-class DataTableProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our Table class
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(DataTable) {
+  /// We don't need access to internal fields, so use an opaque byte array
+  DECLARE_MEMBER(0, char[sizeof(storage::DataTable)], opaque);
+  DECLARE_TYPE;
 
-  //===--------------------------------------------------------------------===//
-  // The proxy for DataTable::GetTileGroupCount()
-  //===--------------------------------------------------------------------===//
-  struct _GetTileGroupCount {
-    // Return the symbol for the DataTable.GetTileGroupCount() function
-    static const std::string &GetFunctionName();
-    // Return the LLVM-typed function definition for
-    // DataTable.GetTileGroupCount()
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  /// Proxy DataTable::GetTileGroupCount()
+  DECLARE_METHOD(GetTileGroupCount);
 };
+
+TYPE_BUILDER(DataTable, storage::DataTable);
 
 }  // namespace codegen
 }  // namespace peloton

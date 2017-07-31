@@ -12,6 +12,7 @@
 
 #include "codegen/operator/delete_translator.h"
 
+#include "codegen/deleter.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/deleter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
@@ -43,15 +44,14 @@ void DeleteTranslator::InitializeState() {
 
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-      {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
-       codegen.Const32(table->GetOid())});
+  llvm::Value *table_ptr =
+      codegen.Call(StorageManagerProxy::GetTableWithOid,
+                   {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+                    codegen.Const32(table->GetOid())});
 
   // Call Deleter.Init(txn, table)
   llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  std::vector<llvm::Value *> args = {deleter, txn_ptr, table_ptr};
-  codegen.CallFunc(DeleterProxy::_Init::GetFunction(codegen), args);
+  codegen.Call(DeleterProxy::Init, {deleter, txn_ptr, table_ptr});
 }
 
 void DeleteTranslator::Produce() const {
@@ -64,15 +64,12 @@ void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Call Deleter::Delete(tile_group_id, tuple_offset)
   auto *deleter = LoadStatePtr(deleter_state_id_);
-  auto args = {deleter, row.GetTileGroupID(), row.GetTID(codegen)};
-  auto *delete_func = DeleterProxy::_Delete::GetFunction(codegen);
-  codegen.CallFunc(delete_func, args);
+  codegen.Call(DeleterProxy::Delete,
+               {deleter, row.GetTileGroupID(), row.GetTID(codegen)});
 
   // Increase processing count
-  auto *processed_func =
-      TransactionRuntimeProxy::_IncreaseNumProcessed::GetFunction(codegen);
-  codegen.CallFunc(processed_func,
-                   {GetCompilationContext().GetExecutorContextPtr()});
+  auto *executor_ctx = GetCompilationContext().GetExecutorContextPtr();
+  codegen.Call(TransactionRuntimeProxy::IncreaseNumProcessed, {executor_ctx});
 }
 
 }  // namespace codegen

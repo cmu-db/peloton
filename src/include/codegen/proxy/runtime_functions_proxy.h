@@ -12,50 +12,29 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "codegen/runtime_functions.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// The class that proxies various runtime utility functions that can be called
-// from a compiled LLVM plan.
-//===----------------------------------------------------------------------===//
-class RuntimeFunctionsProxy {
- public:
-  struct _CRC64Hash {
-    // Get the LLVM function definition/wrapper to our crc64Hash() function
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  struct _GetTileGroup {
-    // Get the LLVM function definition/wrapper to
-    // RuntimeFunctions::GetTileGroup(DataTable*, oid_t)
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  struct _ColumnLayoutInfo {
-    static llvm::Type *GetType(CodeGen &codegen);
-  };
-
-  struct _GetTileGroupLayout {
-    // Get the LLVM function definition/wrapper to
-    // RuntimeFunctions::GetTileGroupLayout()
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  struct _ThrowDivideByZeroException {
-    // Get the LLVM function definition/wrapper to our
-    // ThrowDivideByZeroException() function
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  struct _ThrowOverflowException {
-    // Get the LLVM function definition/wrapper to our
-    // ThrowOverflowException() function
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+PROXY(ColumnLayoutInfo) {
+  DECLARE_MEMBER(0, char *, col_start_ptr);
+  DECLARE_MEMBER(1, uint32_t, stride);
+  DECLARE_MEMBER(2, bool, columnar);
+  DECLARE_TYPE;
 };
+
+PROXY(RuntimeFunctions) {
+  DECLARE_METHOD(HashCrc64);
+  DECLARE_METHOD(GetTileGroup);
+  DECLARE_METHOD(GetTileGroupLayout);
+  DECLARE_METHOD(ThrowDivideByZeroException);
+  DECLARE_METHOD(ThrowOverflowException);
+};
+
+TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);
 
 }  // namespace codegen
 }  // namespace peloton

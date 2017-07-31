@@ -70,14 +70,8 @@ class BufferingConsumer : public QueryResultConsumer {
     return runtime_state.LoadStateValue(ctx.GetCodeGen(), id);
   }
 
-  // A proxy to BufferTuple(...)
-  struct _BufferTupleProxy {
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
   // Called from compiled query code to buffer the tuple
-  static void BufferTuple(char *state, peloton::type::Value *vals,
-                          uint32_t num_vals);
+  static void BufferTuple(char *state, char *tuple, uint32_t num_cols);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

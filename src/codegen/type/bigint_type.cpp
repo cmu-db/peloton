@@ -454,7 +454,7 @@ void BigInt::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 
 llvm::Function *BigInt::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputBigInt.GetFunction(codegen);
 }
 
 }  // namespace type

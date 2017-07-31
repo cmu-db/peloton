@@ -13,28 +13,48 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "codegen/code_context.h"
-#include "codegen/function_builder.h"
 
 namespace peloton {
 namespace codegen {
+
+class CodeGen;
+
+/// A proxy to a member of a class. Users must provide both the physical
+/// position of the member in the class, and the C++ type of the member.
+template <uint32_t Pos, typename T>
+struct ProxyMember {
+  // Virtual destructor
+  virtual ~ProxyMember() = default;
+};
+
+/// A proxy to a method in a class. Subclasses must implement GetFunction().
+template <typename T>
+struct ProxyMethod {
+  // Virtual destructor
+  virtual ~ProxyMethod() = default;
+
+  // Hand off to the specialized template to define the LLVM function
+  llvm::Function *GetFunction(CodeGen &codegen) {
+    return static_cast<T *>(this)->GetFunction(codegen);
+  }
+};
 
 //===----------------------------------------------------------------------===//
 // The main wrapper around LLVM's IR Builder to generate IR
 //===----------------------------------------------------------------------===//
 class CodeGen {
  public:
-  // Constructor
-  CodeGen(CodeContext &code_context);
+  /// Constructor and destructor
+  explicit CodeGen(CodeContext &code_context);
+  ~CodeGen() = default;
 
-  // Destructor
-  ~CodeGen();
+  /// We forward the -> operator to LLVM's IRBuilder
+  llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
 
-  // We forward the -> operator to LLVM's IRBuilder
-  llvm::IRBuilder<> *operator->() { return &code_context_.GetBuilder(); }
-
-  // Type wrappers
+  /// Type wrappers
   llvm::Type *BoolType() const { return code_context_.bool_type_; }
   llvm::Type *Int8Type() const { return code_context_.int8_type_; }
   llvm::Type *ByteType() const { return Int8Type(); }
@@ -46,84 +66,75 @@ class CodeGen {
   llvm::PointerType *CharPtrType() const {
     return code_context_.char_ptr_type_;
   }
-  llvm::Type *VectorType(llvm::Type *type, uint32_t num_elements) const {
-    return llvm::ArrayType::get(type, num_elements);
-  }
+  llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  // Constant wrappers for bool, int8, int16, int32, int64, strings and null
-  llvm::Constant *ConstBool(bool val) const {
-    return llvm::ConstantInt::get(BoolType(), val, true);
-  }
-  llvm::Constant *Const8(int8_t val) const {
-    return llvm::ConstantInt::get(Int8Type(), val, true);
-  }
-  llvm::Constant *Const16(int16_t val) const {
-    return llvm::ConstantInt::get(Int16Type(), val, true);
-  }
-  llvm::Constant *Const32(int32_t val) const {
-    return llvm::ConstantInt::get(Int32Type(), val, true);
-  }
-  llvm::Constant *Const64(int64_t val) const {
-    return llvm::ConstantInt::get(Int64Type(), val, true);
-  }
-  llvm::Constant *ConstDouble(double val) const {
-    return llvm::ConstantFP::get(DoubleType(), val);
-  }
-  llvm::Constant *ConstString(const std::string s) const;
-  llvm::Constant *Null(llvm::Type *type) const {
-    return llvm::Constant::getNullValue(type);
-  }
-  llvm::Constant *NullPtr(llvm::PointerType *type) const {
-    return llvm::ConstantPointerNull::get(type);
-  }
-  // Wrapper for pointer for constant string
-  llvm::Value *ConstStringPtr(const std::string s) const;
+  /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
+  llvm::Constant *ConstBool(bool val) const;
+  llvm::Constant *Const8(int8_t val) const;
+  llvm::Constant *Const16(int16_t val) const;
+  llvm::Constant *Const32(int32_t val) const;
+  llvm::Constant *Const64(int64_t val) const;
+  llvm::Constant *ConstDouble(double val) const;
+  llvm::Constant *ConstString(const std::string &s) const;
+  llvm::Constant *Null(llvm::Type *type) const;
+  llvm::Constant *NullPtr(llvm::PointerType *type) const;
+  /// Wrapper for pointer for constant string
+  llvm::Value *ConstStringPtr(const std::string &s) const;
 
-  // Generate a call to the function with the provided name and arguments
+  // /Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
-                        const std::vector<llvm::Value *> &args) const;
+                        std::initializer_list<llvm::Value *> args);
+  llvm::Value *CallFunc(llvm::Value *fn,
+                        const std::vector<llvm::Value *> &args);
+  template <typename T>
+  llvm::Value *Call(ProxyMethod<T> &proxy,
+                    const std::vector<llvm::Value *> &args) {
+    return CallFunc(proxy.GetFunction(*this), args);
+  }
 
   //===--------------------------------------------------------------------===//
-  // Call C/C++ standard library functions
+  // C/C++ standard library functions
   //===--------------------------------------------------------------------===//
-  llvm::Value *CallMalloc(uint32_t size, uint32_t alignment = 0);
-  llvm::Value *CallFree(llvm::Value *ptr);
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
 
   //===--------------------------------------------------------------------===//
-  // Arithmetic with overflow logic
+  // Arithmetic with overflow logic - These methods perform the desired math op,
+  // on the provided left and right argument and return the result of the op
+  // and set the overflow_but out-parameter. It is up to the caller to decide
+  // how to handle an overflow.
   //===--------------------------------------------------------------------===//
-
   llvm::Value *CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   llvm::Value *CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   llvm::Value *CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
-                                   llvm::Value *&overflow_bit) const;
+                                   llvm::Value *&overflow_bit);
   void ThrowIfOverflow(llvm::Value *overflow) const;
   void ThrowIfDivideByZero(llvm::Value *divide_by_zero) const;
 
   //===--------------------------------------------------------------------===//
   // Function lookup and registration
   //===--------------------------------------------------------------------===//
+  llvm::Type *LookupType(const std::string &name) const;
+  llvm::Function *LookupBuiltin(const std::string &fn_name) const {
+    return code_context_.LookupBuiltin(fn_name);
+  }
+  llvm::Function *RegisterBuiltin(const std::string &fn_name,
+                                  llvm::FunctionType *fn_type, void *func_impl);
 
-  llvm::Function *LookupFunction(const std::string &fn_name) const;
-  llvm::Function *RegisterFunction(const std::string &fn_name,
-                                   llvm::FunctionType *fn_type);
+  /// Get the runtime state function argument
+  llvm::Value *GetState() const;
 
-  llvm::Type *LookupTypeByName(const std::string &name) const;
-
-  // Get the runtime state function argument
-  llvm::Value *GetState() const { return &*GetFunction()->arg_begin(); }
-
-  // Get the LLVM context
-  llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
-
-  // Return the size of the given type in bytes (returns 1 when size < 1 byte)
+  /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
 
-  // Get the context where all the code we generate resides
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
+  llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
+
   CodeContext &GetCodeContext() const { return code_context_; }
 
  private:
@@ -131,15 +142,9 @@ class CodeGen {
   friend class Value;
   friend class OAHashTable;
 
-  // Get the current function we're generating code into
-  llvm::Function *GetFunction() const {
-    return code_context_.GetCurrentFunction()->GetFunction();
-  }
-
   // Get the LLVM module
   llvm::Module &GetModule() const { return code_context_.GetModule(); }
 
- private:
   // Get the LLVM IR Builder (also accessible through the -> operator overload)
   llvm::IRBuilder<> &GetBuilder() const { return code_context_.GetBuilder(); }
 

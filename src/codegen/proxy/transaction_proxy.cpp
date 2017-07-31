@@ -2,28 +2,20 @@
 //
 //                         Peloton
 //
-// varlen_proxy.h
+// transaction_proxy.cpp
 //
-// Identification: src/include/codegen/proxy/varlen_proxy.h
+// Identification: src/codegen/proxy/transaction_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
-#include "type/varlen_type.h"
+#include "codegen/proxy/transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(Varlen) {
-  DECLARE_MEMBER(0, uint32_t, length);
-  DECLARE_MEMBER(0, const char, ptr);
-  DECLARE_TYPE;
-};
+DEFINE_TYPE(Transaction, "peloton::concurrency::Transaction", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton

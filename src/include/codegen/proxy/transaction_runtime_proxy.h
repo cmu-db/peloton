@@ -12,31 +12,18 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-class TransactionRuntimeProxy {
- public:
-  // The proxy around TransactionRuntime::PerformVectorizedRead()
-  struct _PerformVectorizedRead {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around TransactionRuntime::PerformDelete()
-  struct _PerformDelete {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  // The proxy around TransactionRuntime::IncreaseNumProcessed()
-  struct _IncreaseNumProcessed {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+PROXY(TransactionRuntime) {
+  /// We only need to proxy PerformVectorizedRead(), PerformDelete(), and
+  /// IncreaseNumProcessed() in codegen::TransactionRuntime.
+  DECLARE_METHOD(PerformVectorizedRead);
+  DECLARE_METHOD(PerformDelete);
+  DECLARE_METHOD(IncreaseNumProcessed);
 };
 
-}  // namepsace codegen
+}  // namespace codegen
 }  // namespace peloton

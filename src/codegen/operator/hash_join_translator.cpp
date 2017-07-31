@@ -46,8 +46,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 
     // Allocate slot for prefetch array
     prefetch_vector_id_ = runtime_state.RegisterState(
-        "hjPFVec", codegen.VectorType(codegen.Int64Type(),
-                                      OAHashTable::kDefaultGroupPrefetchSize),
+        "hjPFVec", codegen.ArrayType(codegen.Int64Type(),
+                                     OAHashTable::kDefaultGroupPrefetchSize),
         true);
   }
 

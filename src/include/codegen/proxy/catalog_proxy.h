@@ -12,29 +12,25 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// A proxy to some of the methods in catalog::Catalog
-//===----------------------------------------------------------------------===//
-class CatalogProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our Manager class
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(StorageManager) {
+  /// The data members of storage::StorageManager
+  /// Note: For now, we don't need access to individual fields.  Instead, we
+  /// use an opaque byte array whose size matches a catalog::Catalog object.
+  DECLARE_MEMBER(0, char[sizeof(storage::StorageManager)], opaque);
+  DECLARE_TYPE;
 
-  //===--------------------------------------------------------------------===//
-  // A structure that proxies Catalog::GetTableWithOid()
-  //===--------------------------------------------------------------------===//
-  struct _GetTableWithOid {
-    // Return the symbol for the Manager.GetTableWithOid() function
-    static const std::string &GetFunctionName();
-    // Return the LLVM-typed function definition for Manager.GetTableWithOid()
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  /// Proxy peloton::storage::StorageManager::GetTableWithOid()
+  DECLARE_METHOD(GetTableWithOid);
 };
+
+TYPE_BUILDER(StorageManager, storage::StorageManager);
 
 }  // namespace codegen
 }  // namespace peloton

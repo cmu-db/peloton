@@ -19,75 +19,80 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 
+#include "codegen/function_builder.h"
+
 namespace peloton {
 namespace codegen {
 
 CodeGen::CodeGen(CodeContext &code_context) : code_context_(code_context) {}
 
-CodeGen::~CodeGen() {}
+llvm::Type *CodeGen::ArrayType(llvm::Type *type, uint32_t num_elements) const {
+  return llvm::ArrayType::get(type, num_elements);
+}
 
-llvm::Constant *CodeGen::ConstString(const std::string s) const {
+/// Constant wrappers for bool, int8, int16, int32, int64, strings and NULL
+llvm::Constant *CodeGen::ConstBool(bool val) const {
+  return llvm::ConstantInt::get(BoolType(), val, true);
+}
+
+llvm::Constant *CodeGen::Const8(int8_t val) const {
+  return llvm::ConstantInt::get(Int8Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const16(int16_t val) const {
+  return llvm::ConstantInt::get(Int16Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const32(int32_t val) const {
+  return llvm::ConstantInt::get(Int32Type(), val, true);
+}
+
+llvm::Constant *CodeGen::Const64(int64_t val) const {
+  return llvm::ConstantInt::get(Int64Type(), val, true);
+}
+
+llvm::Constant *CodeGen::ConstDouble(double val) const {
+  return llvm::ConstantFP::get(DoubleType(), val);
+}
+
+llvm::Constant *CodeGen::ConstString(const std::string &s) const {
   // Strings are treated as arrays of bytes
-  auto *str = llvm::ConstantDataArray::getString(GetContext(), s.c_str());
+  auto *str = llvm::ConstantDataArray::getString(GetContext(), s);
   return new llvm::GlobalVariable(GetModule(), str->getType(), true,
                                   llvm::GlobalValue::InternalLinkage, str,
                                   "str");
 }
 
-llvm::Value *CodeGen::ConstStringPtr(const std::string s) const {
-  return GetBuilder().CreateConstInBoundsGEP2_32(NULL, ConstString(s), 0, 0,
-                                                 "");
+llvm::Constant *CodeGen::Null(llvm::Type *type) const {
+  return llvm::Constant::getNullValue(type);
+}
+
+llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
+  return llvm::ConstantPointerNull::get(type);
+}
+
+llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
+  auto &ir_builder = GetBuilder();
+  return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
 
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
-                               const std::vector<llvm::Value *> &args) const {
+                               std::initializer_list<llvm::Value *> args) {
   return GetBuilder().CreateCall(fn, args);
 }
 
-llvm::Value *CodeGen::CallMalloc(uint32_t size, uint32_t alignment) {
-  llvm::Value *mem_ptr = nullptr;
-  if (alignment == 0) {
-    auto *malloc_fn = LookupFunction("malloc");
-    if (malloc_fn == nullptr) {
-      malloc_fn = RegisterFunction(
-          "malloc",
-          llvm::TypeBuilder<void *(size_t), false>::get(GetContext()));
-    }
-    mem_ptr = CallFunc(malloc_fn, {Const64(size)});
-  } else {
-    // Caller wants an aligned malloc
-    auto *aligned_alloc_fn = LookupFunction("aligned_alloc");
-    if (aligned_alloc_fn == nullptr) {
-      aligned_alloc_fn = RegisterFunction(
-          "aligned_alloc",
-          llvm::TypeBuilder<void *(size_t, size_t), false>::get(GetContext()));
-    }
-    mem_ptr = CallFunc(aligned_alloc_fn, {Const64(size), Const64(alignment)});
-  }
-
-  // Zero-out the allocated space
-  GetBuilder().CreateMemSet(mem_ptr, Null(ByteType()), size, alignment);
-
-  // We're done
-  return mem_ptr;
-}
-
-llvm::Value *CodeGen::CallFree(llvm::Value *ptr) {
-  auto *free_fn = LookupFunction("free");
-  if (free_fn == nullptr) {
-    free_fn = RegisterFunction(
-        "free", llvm::TypeBuilder<void(void *), false>::get(GetContext()));
-  }
-  return CallFunc(free_fn, {ptr});
+llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
+                               const std::vector<llvm::Value *> &args) {
+  return GetBuilder().CreateCall(fn, args);
 }
 
 llvm::Value *CodeGen::CallPrintf(const std::string &format,
                                  const std::vector<llvm::Value *> &args) {
-  auto *printf_fn = LookupFunction("printf");
+  auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
-    printf_fn = RegisterFunction(
-        "printf",
-        llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()));
+    printf_fn = RegisterBuiltin(
+        "printf", llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()),
+        reinterpret_cast<void *>(printf));
   }
   auto &ir_builder = code_context_.GetBuilder();
   auto *format_str =
@@ -102,7 +107,7 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
 }
 
 llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
@@ -120,7 +125,7 @@ llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
 }
 
 llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
@@ -138,7 +143,7 @@ llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
 }
 
 llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
-                                          llvm::Value *&overflow_bit) const {
+                                          llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());
   llvm::Function *mul_func = llvm::Intrinsic::getDeclaration(
       &GetModule(), llvm::Intrinsic::smul_with_overflow, left->getType());
@@ -191,32 +196,41 @@ void CodeGen::ThrowIfDivideByZero(llvm::Value *divide_by_zero) const {
   builder.SetInsertPoint(no_div0_bb);
 }
 
-// Lookup a function in the module with the given name
-llvm::Function *CodeGen::LookupFunction(const std::string &fn_name) const {
-  return GetModule().getFunction(fn_name);
-}
-
 // Register the given function symbol and the LLVM function type it represents
-llvm::Function *CodeGen::RegisterFunction(const std::string &fn_name,
-                                          llvm::FunctionType *fn_type) {
+llvm::Function *CodeGen::RegisterBuiltin(const std::string &fn_name,
+                                         llvm::FunctionType *fn_type,
+                                         void *func_impl) {
   // Check if this is already registered as a built in, quit if to
-  auto *builtin = LookupFunction(fn_name);
+  auto *builtin = LookupBuiltin(fn_name);
   if (builtin != nullptr) {
     return builtin;
   }
 
   // TODO: Function attributes here
-  // We need to create an LLVM function for this guy
-  auto &module = GetModule();
-  auto *fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage,
-                                    fn_name, &module);
-  return fn;
+  // Construct the function
+  auto *function = llvm::Function::Create(
+      fn_type, llvm::Function::ExternalLinkage, fn_name, &GetModule());
+
+  // Register the function in the context
+  code_context_.RegisterBuiltin(function, func_impl);
+
+  // That's it
+  return function;
 }
 
-llvm::Type *CodeGen::LookupTypeByName(const std::string &name) const {
+llvm::Type *CodeGen::LookupType(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
 
+llvm::Value *CodeGen::GetState() const {
+  auto *func_builder = code_context_.GetCurrentFunction();
+  PL_ASSERT(func_builder != nullptr);
+
+  // The first argument of the function is always the runtime state
+  return func_builder->GetArgumentByPosition(0);
+}
+
+// Return the number of bytes needed to store the given type
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   auto size = code_context_.GetDataLayout().getTypeSizeInBits(type) / 8;
   return size != 0 ? size : 1;

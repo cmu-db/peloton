@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <assert.h>
@@ -125,16 +124,16 @@ namespace peloton {
 //===----------------------------------------------------------------------===//
 
 // Macros to disable copying and moving
-#define DISALLOW_COPY(cname) \
+#define DISALLOW_COPY(cname)     \
   cname(const cname &) = delete; \
   cname &operator=(const cname &) = delete;
 
 #define DISALLOW_MOVE(cname) \
-  cname(cname &&) = delete; \
+  cname(cname &&) = delete;  \
   cname &operator=(cname &&) = delete;
 
 #define DISALLOW_COPY_AND_MOVE(cname) \
-  DISALLOW_COPY(cname); \
+  DISALLOW_COPY(cname);               \
   DISALLOW_MOVE(cname);
 
 //===----------------------------------------------------------------------===//
@@ -142,7 +141,8 @@ namespace peloton {
 //===----------------------------------------------------------------------===//
 
 #define LLVM_VERSION_GE(major, minor) \
-  (LLVM_VERSION_MAJOR >= (major) && LLVM_VERSION_MINOR >= (minor))
+  (LLVM_VERSION_MAJOR > (major) ||    \
+   (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR >= (minor)))
 
 #define LLVM_VERSION_EQ(major, minor) \
   (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR == (minor))

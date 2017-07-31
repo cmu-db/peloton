@@ -39,12 +39,12 @@ namespace util {
 //===----------------------------------------------------------------------===//
 class Sorter {
  private:
-  // We (arbitrarily) allocate 4MB of buffer space upon initialization
-  static constexpr uint64_t kInitialBufferSize = 1 * 1024 * 1024 * 4;
+  // We (arbitrarily) allocate 32KB of buffer space upon initialization
+  static constexpr uint64_t kInitialBufferSize = 32 * 1024;
 
  public:
-  typedef int (*ComparisonFunction)(const void *left_tuple,
-                                    const void *right_tuple);
+  typedef int (*ComparisonFunction)(const char *left_tuple,
+                                    const char *right_tuple);
 
   // Constructor
   Sorter();

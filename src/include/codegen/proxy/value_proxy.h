@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tile_group_proxy.h
+// value_proxy.h
 //
-// Identification: src/include/codegen/proxy/tile_group_proxy.h
+// Identification: src/include/codegen/proxy/value_proxy.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -14,20 +14,17 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "storage/tile_group.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(TileGroup) {
-  DECLARE_MEMBER(0, char[sizeof(storage::TileGroup)], opaque);
+PROXY(Value) {
+  DECLARE_MEMBER(0, char[sizeof(peloton::type::Value)], opaque);
   DECLARE_TYPE;
-
-  DECLARE_METHOD(GetNextTupleSlot);
-  DECLARE_METHOD(GetTileGroupId);
 };
 
-TYPE_BUILDER(TileGroup, storage::TileGroup);
+TYPE_BUILDER(Value, peloton::type::Value);
 
 }  // namespace codegen
 }  // namespace peloton

@@ -40,7 +40,7 @@ class RuntimeFunctions {
   // Get the tile group with the given index from the table.  We can't use
   // the version in DataTable because we need to strip off the shared_ptr
   static storage::TileGroup *GetTileGroup(storage::DataTable *table,
-                                          oid_t tile_group_index);
+                                          uint64_t tile_group_index);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

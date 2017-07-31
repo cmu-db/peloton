@@ -12,55 +12,37 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "codegen/util/cc_hash_table.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// A utility class that serves as a helper to proxy most of the methods in
-// peloton::util::CCHashTable. It significantly reduces the pain in calling
-// methods on HashTable instances from LLVM code.
-//===----------------------------------------------------------------------===//
-class CCHashTableProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our HashTable
-  static llvm::Type *GetType(CodeGen &codegen);
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::Init()
-  //===--------------------------------------------------------------------===//
-  struct _Init {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::Destroy()
-  //===--------------------------------------------------------------------===//
-  struct _Destroy {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for CCHashTable::StoreTuple()
-  //===--------------------------------------------------------------------===//
-  struct _StoreTuple {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+/// The proxy for CCHashTable::HashEntry
+PROXY(HashEntry) {
+  DECLARE_MEMBER(0, uint64_t, hash_val);
+  DECLARE_MEMBER(1, util::CCHashTable::HashEntry *, next);
+  DECLARE_TYPE;
 };
 
-//===----------------------------------------------------------------------===//
-// A utility class that serves as a helper to proxy the precompiled
-// CCHashTable::HashEntry methods and types.
-//===----------------------------------------------------------------------===//
-class HashEntryProxy {
- public:
-  // Return the LLVM type that matches the memory layout of our HashEntry
-  static llvm::Type *GetType(CodeGen &codegen);
+/// The proxy for CCHashTable
+PROXY(CCHashTable) {
+  DECLARE_MEMBER(0, util::CCHashTable::HashEntry **, buckets);
+  DECLARE_MEMBER(1, uint64_t, num_buckets);
+  DECLARE_MEMBER(2, uint64_t, bucket_mask);
+  DECLARE_MEMBER(3, uint64_t, num_elements);
+  DECLARE_TYPE;
+
+  // Proxy Init(), StoreTuple(), and Destroy() in util::CCHashTable
+  DECLARE_METHOD(Init);
+  DECLARE_METHOD(StoreTuple);
+  DECLARE_METHOD(Destroy);
 };
+
+/// The type builders for HashEntry and CCHashTable
+TYPE_BUILDER(HashEntry, util::CCHashTable::HashEntry);
+TYPE_BUILDER(CCHashTable, util::CCHashTable);
 
 }  // namespace codegen
 }  // namespace peloton

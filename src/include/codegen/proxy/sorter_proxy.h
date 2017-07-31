@@ -12,48 +12,29 @@
 
 #pragma once
 
-#include "codegen/codegen.h"
+#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "codegen/util/sorter.h"
 
 namespace peloton {
 namespace codegen {
 
-class SorterProxy {
- public:
-  // Get the LLVM type for peloton::codegen::util::Sorter
-  static llvm::Type *GetType(CodeGen &codegen);
+PROXY(Sorter) {
+  DECLARE_MEMBER(0, char *, buffer_start);
+  DECLARE_MEMBER(1, char *, buffer_pos);
+  DECLARE_MEMBER(2, char *, buffer_end);
+  DECLARE_MEMBER(3, uint32_t, tuple_size);
+  DECLARE_MEMBER(4, char *, comp_fn);
+  DECLARE_TYPE;
 
-  //===--------------------------------------------------------------------===//
-  // The proxy for codegen::util::Sorter::Init()
-  //===--------------------------------------------------------------------===//
-  struct _Init {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for codegen::util::Sorter::StoreInputTuple()
-  //===--------------------------------------------------------------------===//
-  struct _StoreInputTuple {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for codegen::util::Sorter::Sort()
-  //===--------------------------------------------------------------------===//
-  struct _Sort {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
-
-  //===--------------------------------------------------------------------===//
-  // The proxy for codegen::util::Sorter::Destroy()
-  //===--------------------------------------------------------------------===//
-  struct _Destroy {
-    static const std::string &GetFunctionName();
-    static llvm::Function *GetFunction(CodeGen &codegen);
-  };
+  // Proxy Init(), StoreInputTuple(), Sort(), and Destroy()
+  DECLARE_METHOD(Init);
+  DECLARE_METHOD(StoreInputTuple);
+  DECLARE_METHOD(Sort);
+  DECLARE_METHOD(Destroy);
 };
+
+TYPE_BUILDER(Sorter, util::Sorter);
 
 }  // namespace codegen
 }  // namespace peloton

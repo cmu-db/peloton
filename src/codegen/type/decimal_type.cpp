@@ -420,7 +420,7 @@ void Decimal::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 llvm::Function *Decimal::GetOutputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
   // TODO: We should be using the precision/scale in the output function
-  return ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen);
+  return ValuesRuntimeProxy::OutputDecimal.GetFunction(codegen);
 }
 
 }  // namespace type
