@@ -277,7 +277,12 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
 
   EXPECT_EQ(0, old_num);
 
-  // there should be 1 tuple recycled
+  // there should be two versions to be recycled by the GC:
+  // the deleted version and the empty version.
+  // however, the txn will explicitly pass one version (the deleted
+  // version) to the GC manager.
+  // The GC itself should be responsible for recycling the 
+  // empty version.
   EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();

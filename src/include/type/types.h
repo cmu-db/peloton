@@ -1078,6 +1078,7 @@ typedef std::bitset<max_col_count> ColBitmap;
 // read-write set
 //===--------------------------------------------------------------------===//
 
+// this enum is to identify the operations performed by the transaction.
 enum class RWType {
   INVALID,
   READ,
@@ -1095,16 +1096,16 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
-
+//this enum is to identify why the version should be GC'd.
 enum class GCVersionType { 
   INVALID,
-  COMMIT_UPDATE,
-  COMMIT_DELETE,
-  COMMIT_INS_DEL,
-  ABORT_UPDATE, 
-  ABORT_DELETE,
-  ABORT_INSERT,
-  ABORT_INS_DEL,
+  COMMIT_UPDATE, // a version that is updated during txn commit.
+  COMMIT_DELETE, // a version that is deleted during txn commit.
+  COMMIT_INS_DEL, // a version that is inserted and deleted during txn commit.
+  ABORT_UPDATE, // a version that is updated during txn abort.
+  ABORT_DELETE, // a version that is deleted during txn abort.
+  ABORT_INSERT, // a version that is inserted during txn abort.
+  ABORT_INS_DEL, // a version that is inserted and deleted during txn commit.
 };
 std::string GCVersionTypeToString(GCVersionType type);
 GCVersionType StringToGCVersionType(const std::string &str);

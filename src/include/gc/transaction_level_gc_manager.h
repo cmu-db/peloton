@@ -63,6 +63,7 @@ public:
 
   virtual ~TransactionLevelGCManager() { }
 
+  // this function cleans up all the member variables in the class object.
   virtual void Reset() override {
     unlink_queues_.clear();
     local_unlink_queues_.clear();
@@ -152,8 +153,12 @@ private:
 
   bool ResetTuple(const ItemPointer &);
 
+  // this function iterates the gc context and unlinks every version 
+  // from the indexes.
+  // this function will call the UnlinkVersion() function.
   void UnlinkVersions(const std::shared_ptr<GarbageContext>& garbage_ctx);
 
+  // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
 
 private:
