@@ -32,7 +32,7 @@ class LoggingUtil {
   static bool CreateDirectory(const char *dir_name, int mode);
 
   static bool RemoveDirectory(const char *dir_name, bool only_remove_file);
-
+  
   static void FFlushFsync(FileHandle &file_handle);
 
   static bool OpenFile(const char *name, const char *mode,
