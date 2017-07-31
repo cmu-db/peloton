@@ -13,7 +13,8 @@
 #pragma once
 
 #include "logging/checkpoint_manager.h"
-#include "logging/logical_checkpoint_manager.h"
+#include "logging/phylog_checkpoint_manager.h"
+#include "logging/dummy_checkpoint_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -25,10 +26,11 @@ class CheckpointManagerFactory {
     switch (checkpointing_type_) {
 
       case CheckpointingType::ON:
-        return LogicalCheckpointManager::GetInstance(checkpointing_thread_count_);
-      
+          return PhyLogCheckpointManager::GetInstance();
       default:
-        return CheckpointManager::GetInstance();
+//      return LogicalCheckpointManager::GetInstance(checkpointing_thread_count_);
+      
+        return DummyCheckpointManager::GetInstance();
     }
   }
 
