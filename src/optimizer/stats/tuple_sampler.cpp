@@ -120,5 +120,5 @@ std::vector<std::unique_ptr<storage::Tuple>> &TupleSampler::GetSampledTuples() {
   return sampled_tuples;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

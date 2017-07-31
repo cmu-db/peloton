@@ -180,5 +180,5 @@ std::shared_ptr<OperatorExpression> ItemBindingIterator::Next() {
   return current_binding_;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

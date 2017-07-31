@@ -129,5 +129,5 @@ void QueryPropertyExtractor::Visit(
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::AnalyzeStatement *op) {}
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

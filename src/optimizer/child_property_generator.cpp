@@ -431,5 +431,5 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
 
   output_.push_back(make_pair(provided_property, child_input_propertys));
 }
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

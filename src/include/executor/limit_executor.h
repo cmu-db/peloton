@@ -50,5 +50,5 @@ class LimitExecutor : public AbstractExecutor {
   size_t num_returned_ = 0;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

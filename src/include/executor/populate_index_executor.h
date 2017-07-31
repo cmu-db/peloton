@@ -60,5 +60,5 @@ class PopulateIndexExecutor : public AbstractExecutor {
   bool done_ = false;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

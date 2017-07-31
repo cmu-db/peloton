@@ -19,5 +19,5 @@ namespace optimizer {
 // Stats
 //===--------------------------------------------------------------------===//
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

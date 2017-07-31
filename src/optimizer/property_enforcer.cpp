@@ -57,5 +57,5 @@ void PropertyEnforcer::Visit(const PropertyPredicate *) {}
   
 
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

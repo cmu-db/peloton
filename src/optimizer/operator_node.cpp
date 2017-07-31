@@ -70,5 +70,5 @@ bool Operator::operator==(const Operator &r) {
 
 bool Operator::defined() const { return node != nullptr; }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

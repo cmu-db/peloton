@@ -702,5 +702,5 @@ void OperatorToPlanTransformer::VisitOpExpression(
   op->Op().Accept(this);
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

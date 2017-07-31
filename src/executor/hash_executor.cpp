@@ -118,5 +118,5 @@ bool HashExecutor::DExecute() {
   return false;
 }
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

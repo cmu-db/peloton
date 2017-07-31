@@ -147,5 +147,5 @@ class Cost {
       std::vector<oid_t>& columns);
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

@@ -60,4 +60,4 @@ class HashUtil {
 };
 
 
-} /* namespace peloton */
+}  // namespace peloton

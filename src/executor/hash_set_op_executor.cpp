@@ -188,5 +188,5 @@ bool HashSetOpExecutor::CalculateCopies(HashSetOpMapType &htable) {
   return true;
 }
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

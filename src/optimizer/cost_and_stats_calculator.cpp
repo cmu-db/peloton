@@ -132,5 +132,5 @@ void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
   output_cost_ = 0;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

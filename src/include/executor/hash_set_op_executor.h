@@ -89,5 +89,5 @@ class HashSetOpExecutor : public AbstractExecutor {
   size_t next_tile_to_return_ = 0;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

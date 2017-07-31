@@ -95,5 +95,5 @@ class StatsUtil {
     return hash[0];
   }
 };
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

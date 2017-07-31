@@ -234,5 +234,5 @@ bool OrderByExecutor::DoSort() {
   return true;
 }
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

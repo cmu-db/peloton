@@ -21,6 +21,7 @@
 namespace peloton {
 namespace optimizer {
 namespace util {
+
 /**
  * This function checks whether the current expression can enable index
  * scan for the statement. If it is index searchable, returns true and
@@ -340,6 +341,6 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   return copy_plan;
 }
 
-} /* namespace util */
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace util
+}  // namespace optimizer
+}  // namespace peloton
