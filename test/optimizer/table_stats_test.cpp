@@ -97,5 +97,5 @@ TEST_F(TableStatsTests, UpdateTests) {
   EXPECT_EQ(table_stats.GetColumnStats("col2"), nullptr);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

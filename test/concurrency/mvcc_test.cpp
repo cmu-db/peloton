@@ -166,5 +166,5 @@ TEST_F(MVCCTests, VersionChainTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

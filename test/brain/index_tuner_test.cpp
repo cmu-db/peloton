@@ -144,5 +144,5 @@ TEST_F(IndexTunerTests, BasicTest) {
 
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

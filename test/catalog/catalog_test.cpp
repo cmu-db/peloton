@@ -219,5 +219,5 @@ TEST_F(CatalogTests, DroppingCatalog) {
   EXPECT_NE(catalog, nullptr);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

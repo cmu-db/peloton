@@ -58,5 +58,5 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
   EXPECT_EQ(allocated_tilegroup_count, actual_tile_group_count);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

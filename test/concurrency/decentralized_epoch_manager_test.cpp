@@ -137,6 +137,6 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 }
 
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton
 

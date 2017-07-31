@@ -950,5 +950,5 @@ TEST_F(PostgresParserTests, CaseTest) {
 }
 
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

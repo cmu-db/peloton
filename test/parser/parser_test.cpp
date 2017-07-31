@@ -423,5 +423,5 @@ TEST_F(ParserTests, WrongQueryTest) {
     EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()), Exception);
   }
 }
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

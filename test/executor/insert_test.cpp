@@ -147,5 +147,5 @@ TEST_F(InsertTests, InsertRecord) {
   txn_manager.CommitTransaction(txn);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

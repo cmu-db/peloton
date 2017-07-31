@@ -74,5 +74,5 @@ TEST_F(ThreadPoolTests, BasicTest) {
   thread_pool.Shutdown();
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

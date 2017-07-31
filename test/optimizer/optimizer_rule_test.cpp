@@ -63,5 +63,5 @@ TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   EXPECT_EQ(outputs.size(), 1);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

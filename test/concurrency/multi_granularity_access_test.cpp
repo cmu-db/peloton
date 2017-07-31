@@ -227,5 +227,5 @@ TEST_F(MultiGranularityAccessTests, MultiTransactionTest) {
  }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

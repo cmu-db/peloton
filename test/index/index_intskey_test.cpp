@@ -240,5 +240,5 @@ TEST_F(IndexIntsKeyTests, IndexIntsKeyTest) {
 // IndexIntsKeyHelper(IndexType::BTREE);
 // }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

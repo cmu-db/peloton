@@ -54,5 +54,5 @@ TEST_F(StorageManagerTests, BasicTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

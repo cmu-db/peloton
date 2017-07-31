@@ -163,6 +163,6 @@
 // //   txn_manager.AbortTransaction(txn);
 // // }
 
-// }  // End test namespace
-// }  // End peloton namespace
+// }  // namespace test
+// }  // namespace peloton
 

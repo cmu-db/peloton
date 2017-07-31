@@ -59,5 +59,5 @@ type::AbstractPool* TestingHarness::GetTestingPool() {
 
 oid_t TestingHarness::GetNextTileGroupId() { return ++tile_group_id_counter; }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

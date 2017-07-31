@@ -297,5 +297,5 @@ TEST_F(SerializableTransactionTests, AbortTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

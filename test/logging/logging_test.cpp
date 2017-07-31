@@ -379,6 +379,6 @@
 //   log_manager.EndLogging();
 // }
 
-// }  // End test namespace
-// }  // End peloton namespace
+// }  // namespace test
+// }  // namespace peloton
 // >>>>>>> master

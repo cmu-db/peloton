@@ -212,5 +212,5 @@ TEST_F(BooleanValueTests, CastTest) {
                peloton::Exception);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

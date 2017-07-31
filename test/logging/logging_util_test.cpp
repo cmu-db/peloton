@@ -31,5 +31,5 @@
 //   EXPECT_EQ(status, true);
 // }
 
-// }  // End test namespace
-// }  // End peloton namespace
+// }  // namespace test
+// }  // namespace peloton
