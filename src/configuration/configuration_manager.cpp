@@ -96,6 +96,11 @@ void ConfigurationManager::DefineConfig(
 }
 
 type::Value ConfigurationManager::GetValue(ConfigurationId id) {
+  // TODO: Look up the value from catalog
+  // Because querying a catalog table needs to create a new transaction and
+  // creating transaction needs to get config values,
+  // it will be a infinite recursion here.
+
   auto param = config.find(id);
   return param->second.value;
 }
