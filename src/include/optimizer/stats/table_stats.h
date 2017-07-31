@@ -88,5 +88,5 @@ class TableStats {
       col_name_to_stats_map_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

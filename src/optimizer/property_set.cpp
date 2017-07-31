@@ -94,5 +94,5 @@ hash_t PropertySet::Hash() const {
   return hash;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

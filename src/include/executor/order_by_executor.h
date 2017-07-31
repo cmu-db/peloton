@@ -114,5 +114,5 @@ class OrderByExecutor : public AbstractExecutor {
   uint64_t limit_offset_ = 0;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

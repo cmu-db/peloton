@@ -59,5 +59,5 @@ class HyperLogLog {
   libcount::HLL* hll_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

@@ -229,5 +229,5 @@ size_t Cost::GetEstimatedGroupByRows(
   return static_cast<size_t>(rows + max_cardinality / 2);
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

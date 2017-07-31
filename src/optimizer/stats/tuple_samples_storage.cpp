@@ -222,5 +222,5 @@ void TupleSamplesStorage::GetColumnSamples(
   }
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

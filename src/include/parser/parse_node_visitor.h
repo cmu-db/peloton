@@ -47,5 +47,5 @@ class ParseNodeVisitor {
   virtual void visit(const SelectParse *) = 0;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

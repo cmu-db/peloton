@@ -58,5 +58,5 @@ double ColumnStatsCollector::GetFracNull() {
   return (static_cast<double>(null_count_) / total_count_);
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

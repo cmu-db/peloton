@@ -69,5 +69,5 @@ Column *ColumnManager::AddExprColumn(type::TypeId type, int size,
   return col;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

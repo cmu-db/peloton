@@ -49,5 +49,5 @@ class ProjectionExecutor : public AbstractExecutor {
   bool finished_ = false;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

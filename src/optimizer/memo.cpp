@@ -87,5 +87,5 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   return new_group_id;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

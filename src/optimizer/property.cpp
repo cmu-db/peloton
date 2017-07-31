@@ -29,5 +29,5 @@ bool Property::operator>=(const Property &r) const {
   return Type() == r.Type();
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

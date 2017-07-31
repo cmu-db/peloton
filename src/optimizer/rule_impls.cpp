@@ -726,5 +726,5 @@ void OuterJoinToOuterHashJoin::Transform(
   return;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

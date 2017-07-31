@@ -86,5 +86,5 @@ bool GroupExpression::operator==(const GroupExpression &r) {
   return eq;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

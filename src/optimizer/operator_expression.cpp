@@ -35,5 +35,5 @@ OperatorExpression::Children() const {
 
 const Operator &OperatorExpression::Op() const { return op; }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

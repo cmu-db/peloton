@@ -248,5 +248,5 @@ std::string PropertyPredicate::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton
