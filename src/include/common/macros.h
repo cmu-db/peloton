@@ -147,4 +147,4 @@ namespace peloton {
 #define LLVM_VERSION_EQ(major, minor) \
   (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR == (minor))
 
-}  // End peloton namespace
+}  // namespace peloton

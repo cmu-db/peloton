@@ -143,4 +143,4 @@ void RegisterSignalHandlers() {
   signal(SIGFPE, SignalHandler);
 }
 
-}  // End peloton namespace
+}  // namespace peloton

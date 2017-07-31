@@ -57,5 +57,5 @@ class DeleteStatement : public SQLStatement {
   expression::AbstractExpression* expr;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

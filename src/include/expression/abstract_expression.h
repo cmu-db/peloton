@@ -213,5 +213,5 @@ class ExprHasher {
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

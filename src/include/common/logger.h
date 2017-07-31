@@ -178,6 +178,6 @@ inline void outputLogHeader_(const char *file, int line, const char *func,
             type);
 }
 
-}  // End peloton namespace
+}  // namespace peloton
 
 #endif

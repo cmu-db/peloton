@@ -93,5 +93,5 @@ class UpdateStatement : public SQLStatement {
   expression::AbstractExpression* where = nullptr;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

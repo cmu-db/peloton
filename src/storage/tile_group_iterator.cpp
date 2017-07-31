@@ -32,5 +32,5 @@ bool TileGroupIterator::HasNext() {
   return (tile_group_itr_ < table_->GetTileGroupCount());
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

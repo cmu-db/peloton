@@ -79,5 +79,5 @@ class TableMetricsCatalog : public AbstractCatalog {
   };
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

@@ -545,5 +545,5 @@ void BackendManager::Sync(BackendType type, void *address, size_t length) {
   }
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

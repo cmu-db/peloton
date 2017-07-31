@@ -174,5 +174,5 @@ int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
   return num_params;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

@@ -198,5 +198,5 @@ void LayoutTuner::ClearTables() {
   }
 }
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

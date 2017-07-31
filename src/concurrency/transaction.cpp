@@ -183,5 +183,5 @@ const std::string Transaction::GetInfo() const {
   return os.str();
 }
 
-}  // End concurrency namespace
-}  // End peloton namespace
+}  // namespace concurrency
+}  // namespace peloton

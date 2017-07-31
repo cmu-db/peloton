@@ -378,5 +378,5 @@ class DataTable : public AbstractTable {
   static oid_t invalid_tile_group_id;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

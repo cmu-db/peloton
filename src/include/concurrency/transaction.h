@@ -190,5 +190,5 @@ class Transaction : public Printable {
 
 };
 
-}  // End concurrency namespace
-}  // End peloton namespace
+}  // namespace concurrency
+}  // namespace peloton

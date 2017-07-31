@@ -265,4 +265,4 @@ bool ConnectionManager::DeleteConn(Connection* conn) {
 }
 
 }  // End peloton networking
-}  // End peloton namespace
+}  // namespace peloton

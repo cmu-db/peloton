@@ -522,5 +522,5 @@ TupleIterator Tile::GetIterator() { return TupleIterator(this); }
 //	return NULL;
 //}
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

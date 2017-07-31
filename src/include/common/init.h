@@ -33,4 +33,4 @@ class PelotonInit {
   static void TearDownThread();
 };
 
-}  // End peloton namespace
+}  // namespace peloton

@@ -70,4 +70,4 @@ class ConnectionManager {
 };
 
 }  // End peloton networking
-}  // End peloton namespace
+}  // namespace peloton

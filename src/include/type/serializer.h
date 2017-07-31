@@ -256,4 +256,4 @@ class ExportSerializeOutput {
   size_t capacity_;
 };
 
-}  // End peloton namespace
+}  // namespace peloton

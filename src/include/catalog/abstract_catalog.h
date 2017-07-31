@@ -89,5 +89,5 @@ class AbstractCatalog {
   storage::DataTable *catalog_table_;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

@@ -638,5 +638,5 @@ class CompactIntsHasher {
   }
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

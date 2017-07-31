@@ -136,5 +136,5 @@ std::string TempTable::GetName() const {
   return (os.str());
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

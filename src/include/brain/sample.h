@@ -105,8 +105,8 @@ class Sample : public Printable {
 
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton
 
 namespace std {
 

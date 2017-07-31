@@ -404,5 +404,5 @@ class Index : public Printable {
   std::atomic<size_t> indexed_tile_group_offset;
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

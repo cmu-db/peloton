@@ -160,5 +160,5 @@ template class SkipListIndex<
 template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparator,
                              TupleKeyEqualityChecker, ItemPointerComparator>;
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

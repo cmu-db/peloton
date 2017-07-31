@@ -44,5 +44,5 @@ class TableFactory {
   static bool DropDataTable(oid_t database_oid, oid_t table_oid);
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

@@ -181,5 +181,5 @@ void Database::setDBName(const std::string &database_name) {
   Database::database_name = database_name;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

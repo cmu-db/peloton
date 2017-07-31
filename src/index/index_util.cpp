@@ -358,5 +358,5 @@ std::string IndexUtil::Debug(Index *index) {
   return (os.str());
 }
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

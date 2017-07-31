@@ -1127,6 +1127,6 @@ void PacketManager::Reset() {
   traffic_cop_->Reset();
 }
 
-}  // End wire namespace
-}  // End peloton namespace
+}  // namespace wire
+}  // namespace peloton
 

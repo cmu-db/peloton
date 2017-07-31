@@ -55,5 +55,5 @@ class CopyStatement : public SQLStatement {
   char delimiter;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

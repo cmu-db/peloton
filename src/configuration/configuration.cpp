@@ -43,8 +43,8 @@ void PrintConfiguration(){
 
 }
 
-}  // End configuration namespace
-}  // End peloton namespace
+}  // namespace configuration
+}  // namespace peloton
 
 //===----------------------------------------------------------------------===//
 // FILE LOCATIONS

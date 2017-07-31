@@ -53,5 +53,5 @@ class ExecuteStatement : public SQLStatement {
   std::vector<expression::AbstractExpression*>* parameters;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

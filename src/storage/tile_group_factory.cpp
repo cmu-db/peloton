@@ -45,5 +45,5 @@ TileGroup *TileGroupFactory::GetTileGroup(
   return tile_group;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

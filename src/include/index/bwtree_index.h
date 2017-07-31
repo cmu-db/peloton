@@ -121,5 +121,5 @@ class BWTreeIndex : public Index {
   MapType container;
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

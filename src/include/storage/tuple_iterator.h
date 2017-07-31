@@ -81,5 +81,5 @@ class TupleIterator : public Iterator<Tuple> {
   oid_t tuple_length;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

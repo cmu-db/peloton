@@ -55,5 +55,5 @@ bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
   return true;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

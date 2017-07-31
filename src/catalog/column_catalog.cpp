@@ -335,5 +335,5 @@ type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
   return column_type;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

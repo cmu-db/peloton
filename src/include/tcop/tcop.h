@@ -115,5 +115,5 @@ class TrafficCop {
                      std::vector<storage::DataTable *> &target_tables);
 };
 
-}  // End tcop namespace
-}  // End peloton namespace
+}  // namespace tcop
+}  // namespace peloton

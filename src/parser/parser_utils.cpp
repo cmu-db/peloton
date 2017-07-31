@@ -279,5 +279,5 @@ std::string CharsToStringDestructive(char* str) {
   }
 }
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

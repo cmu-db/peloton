@@ -155,5 +155,5 @@ const std::string Clusterer::GetInfo() const {
   return os.str();
 }
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

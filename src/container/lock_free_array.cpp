@@ -153,4 +153,4 @@ template class LockFreeArray<std::shared_ptr<storage::IndirectionArray>>;
 
 template class LockFreeArray<oid_t>;
 
-}  // End peloton namespace
+}  // namespace peloton

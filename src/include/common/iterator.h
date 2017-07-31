@@ -29,4 +29,4 @@ class Iterator {
   virtual ~Iterator() {}
 };
 
-}  // End peloton namespace
+}  // namespace peloton
