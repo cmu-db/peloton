@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/delete_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,14 +19,12 @@
 
 namespace peloton {
 
-namespace parser {
-class DeleteStatement;
-}
 namespace storage {
 class DataTable;
 }
+
 namespace expression {
-class Expression;
+class AbstractExpression;
 }
 namespace concurrency {
 class Transaction;
@@ -39,48 +37,37 @@ class DeletePlan : public AbstractPlan {
   DeletePlan() = delete;
 
   ~DeletePlan() {
-    if (expr_ != nullptr) {
-      delete expr_;
+    if (predicate_ != nullptr) {
+      delete predicate_;
     }
   }
 
-  explicit DeletePlan(storage::DataTable *table, bool truncate);
+  DeletePlan(storage::DataTable *table, bool truncate);
 
-  explicit DeletePlan(storage::DataTable *table,
-                      const expression::AbstractExpression *predicate);
-
-  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::DELETE; }
+  DeletePlan(storage::DataTable *table,
+             const expression::AbstractExpression *predicate);
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  const std::string GetInfo() const override { return "DeletePlan"; }
+  bool GetTruncate() const { return truncate_; }
 
   void SetParameterValues(std::vector<type::Value> *values) override;
 
-  bool GetTruncate() const { return truncate; }
+  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::DELETE; }
 
-  expression::AbstractExpression *GetPredicate() { return expr_; }
+  const std::string GetInfo() const override { return "DeletePlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const override {
     return std::unique_ptr<AbstractPlan>(
-        new DeletePlan(target_table_, truncate));
+        new DeletePlan(target_table_, truncate_));
   }
 
  private:
-  void BuildInitialDeletePlan(
-      parser::DeleteStatement *delete_statemenet,
-      concurrency::Transaction *txn);
-
-  /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 
-  // TODO: should be deleted after refacor
-  std::string table_name_;
+  expression::AbstractExpression *predicate_ = nullptr;
 
-  expression::AbstractExpression *expr_ = nullptr;
-
-  /** @brief Truncate table. */
-  bool truncate = false;
+  bool truncate_ = false;
 
  private:
   DISALLOW_COPY_AND_MOVE(DeletePlan);

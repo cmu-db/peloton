@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// drop_plan.cpp
+// delete_plan.cpp
 //
-// Identification: src/planner/drop_plan.cpp
+// Identification: src/planner/delete_plan.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,16 +17,6 @@
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
 
-#include "planner/abstract_plan.h"
-#include "planner/abstract_scan_plan.h"
-#include "planner/index_scan_plan.h"
-#include "planner/seq_scan_plan.h"
-
-#include "planner/abstract_plan.h"
-#include "planner/abstract_scan_plan.h"
-#include "planner/index_scan_plan.h"
-#include "planner/seq_scan_plan.h"
-
 namespace peloton {
 
 namespace expression {
@@ -35,49 +25,24 @@ class TupleValueExpression;
 namespace planner {
 
 DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
-    : target_table_(table), truncate(truncate) {
+    : target_table_(table), truncate_(truncate) {
   LOG_TRACE("Creating a Delete Plan");
 }
 
-// Initializes the delete plan.
-void DeletePlan::BuildInitialDeletePlan(
-    parser::DeleteStatement *delete_statemenet,
-    concurrency::Transaction *txn) {
-  LOG_TRACE("Creating a Delete Plan");
-  table_name_ = delete_statemenet->GetTableName();
-  auto database_name = delete_statemenet->GetDatabaseName();
-  // Get target table based on database name and table name
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name_, txn);
-  // if expr is null , delete all tuples from table
-  if (delete_statemenet->expr == nullptr) {
-    LOG_TRACE("No expression, setting truncate to true");
-    expr_ = nullptr;
-    truncate = true;
-
-  } else {
-    expr_ = delete_statemenet->expr->Copy();
-    LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
-    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
-                                                    expr_);
-  }
-}
-
-// Creates the delete plan. The index plan should be added outside
+// Creates the delete plan. The scan plan should be added outside
 DeletePlan::DeletePlan(storage::DataTable *table,
-                       const expression::AbstractExpression *predicate) {
-  target_table_ = table;
-
+                       const expression::AbstractExpression *predicate)
+    : target_table_(table) {
   // if expr is null , delete all tuples from table
   if (predicate == nullptr) {
     LOG_TRACE("No expression, setting truncate to true");
-    expr_ = nullptr;
-    truncate = true;
+    predicate = nullptr;
+    truncate_ = true;
   } else {
-    expr_ = predicate->Copy();
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
+    predicate_ = predicate->Copy();
     expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
-                                                    expr_);
+                                                    predicate_);
   }
 }
 
