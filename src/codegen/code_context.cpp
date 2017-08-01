@@ -19,7 +19,7 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
-#if LLVM_VERSION_GE(3, 9) || LLVM_VERSION_GE(4, 0)
+#if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif
 
