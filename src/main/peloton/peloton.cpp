@@ -17,22 +17,17 @@
 #include "common/logger.h"
 #include "wire/libevent_server.h"
 
-// workaround a bug in the EPEL packaging of gflags
-#ifndef GFLAGS_NAMESPACE
-#define GFLAGS_NAMESPACE gflags
-#endif
-
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
 
   // Parse the command line flags using GFLAGS
-  ::GFLAGS_NAMESPACE::ParseCommandLineNonHelpFlags(&argc, &argv, true);
+  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
   // If "-h" or "-help" is passed in, set up the help messages.
   if (FLAGS_help || FLAGS_h) {
     FLAGS_help = true;
-    ::GFLAGS_NAMESPACE::SetUsageMessage("Usage Info: \n");
-    ::GFLAGS_NAMESPACE::HandleCommandLineHelpFlags();
+    ::google::SetUsageMessage("Usage Info: \n");
+    ::google::HandleCommandLineHelpFlags();
   }
 
   // Print configuration

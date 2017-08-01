@@ -21,11 +21,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 
-// workround a bug in the EPEL packaging of gflags
-#ifndef GFLAGS_NAMESPACE
-#define GFLAGS_NAMESPACE gflags
-#endif
-
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -104,7 +99,7 @@ void PelotonInit::Shutdown() {
   google::protobuf::ShutdownProtobufLibrary();
 
   // Shut down GFLAGS.
-  ::GFLAGS_NAMESPACE::ShutDownCommandLineFlags();
+  ::google::ShutDownCommandLineFlags();
 }
 
 void PelotonInit::SetUpThread() {}
