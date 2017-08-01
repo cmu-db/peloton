@@ -152,8 +152,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
-  optimizer.reset(new optimizer::Optimizer);
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   // Create a table first
   LOG_INFO("Creating a table...");

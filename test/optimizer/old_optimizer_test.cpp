@@ -131,11 +131,14 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("INDEX CREATED!");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
   // Expected 1 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
+  txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   // Test update tuple with index scan
   LOG_TRACE("Updating a tuple...");
   LOG_TRACE(
@@ -143,8 +146,10 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
           "52");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
-  auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt, nullptr);
+  auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt, txn);
+  txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   // Check scan plan
   ASSERT_FALSE(update_plan == nullptr);
   EXPECT_EQ(update_plan->GetPlanNodeType(), PlanNodeType::UPDATE);
@@ -153,16 +158,19 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
 
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_name = 'CS'");
-  update_plan = optimizer.BuildPelotonPlanTree(update_stmt, nullptr);
+  update_plan = optimizer.BuildPelotonPlanTree(update_stmt, txn);
   EXPECT_EQ(update_plan->GetChildren().front()->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
+  txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   // Test delete tuple with index scan
   LOG_TRACE("Deleting a tuple...");
   LOG_TRACE("Query: DELETE FROM department_table WHERE student_id = 52");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE student_id = 52");
-  auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt, nullptr);
+  auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Check scan plan
   EXPECT_EQ(del_plan->GetPlanNodeType(), PlanNodeType::DELETE);
@@ -170,11 +178,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   EXPECT_EQ(del_scan_plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   del_plan = nullptr;
 
+  txn = txn_manager.BeginTransaction();
   // Test delete tuple with seq scan
   auto delete_stmt_seq = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq, nullptr);
   auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 
   // free the database just created

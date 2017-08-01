@@ -19,7 +19,6 @@
 #include "optimizer/memo.h"
 #include "optimizer/property_set.h"
 #include "optimizer/rule.h"
-#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -34,6 +33,10 @@ class AbstractPlan;
 
 namespace optimizer {
 class OperatorExpression;
+}
+
+namespace concurrency {
+class Transaction;
 }
 
 namespace optimizer {

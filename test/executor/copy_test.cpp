@@ -43,8 +43,7 @@ TEST_F(CopyTests, Copying) {
   catalog->CreateDatabase("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
-  optimizer.reset(new optimizer::Optimizer);
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
@@ -93,7 +92,6 @@ TEST_F(CopyTests, Copying) {
   }
   LOG_INFO("Tuples inserted!");
   traffic_cop.CommitQueryHelper();
-//  txn_manager.CommitTransaction(txn);
 
   // Now Copying end-to-end
   LOG_INFO("Copying a table...");

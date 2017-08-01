@@ -13,7 +13,6 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
-#include "concurrency/transaction.h"
 
 #include <vector>
 
@@ -26,6 +25,9 @@ class AnalyzeStatement;
 }
 namespace catalog {
 class Schema;
+}
+namespace concurrency {
+class Transaction;
 }
 
 namespace planner {
@@ -62,9 +64,9 @@ class AnalyzePlan : public AbstractPlan {
   }
 
  private:
-  storage::DataTable *target_table_ = nullptr;
+  storage::DataTable* target_table_ = nullptr;
   std::string table_name_;
-  std::vector<char *> column_names_;
+  std::vector<char*> column_names_;
 };
 
 }  // namespace planner
