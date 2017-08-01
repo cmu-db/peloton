@@ -302,7 +302,7 @@ bool RunDelivery(const size_t &thread_id){
     executor::IndexScanExecutor new_order_delete_index_scan_executor(&new_order_delete_idex_scan_node, context.get());
 
     // Construct delete executor
-    planner::DeletePlan new_order_delete_node(new_order_table, false);
+    planner::DeletePlan new_order_delete_node(new_order_table);
 
     executor::DeleteExecutor new_order_delete_executor(&new_order_delete_node, context.get());
 

@@ -359,15 +359,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalInsertSelect *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
-  // TODO: Support index scan
-  auto scan_plan = (planner::AbstractScan *)children_plans_[0].get();
-  PL_ASSERT(scan_plan != nullptr);
-
-  // Add predicates. The predicate should already be evaluated in Scan.
-  // Currently, the delete executor does not use predicate at all.
-  const expression::AbstractExpression *predicates = scan_plan->GetPredicate();
   unique_ptr<planner::AbstractPlan> delete_plan(
-      new planner::DeletePlan(op->target_table, predicates));
+      new planner::DeletePlan(op->target_table));
 
   // Add child
   delete_plan->AddChild(move(children_plans_[0]));

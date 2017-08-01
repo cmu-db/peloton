@@ -60,24 +60,21 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   // id = $0
   txn = txn_manager.BeginTransaction();
-  auto parameter_expr = new expression::ParameterValueExpression(0);
-  auto tuple_expr =
+  auto *parameter_expr = new expression::ParameterValueExpression(0);
+  auto *tuple_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-  auto cmp_expr = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
+  auto *scan_expr =
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+                                           tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
 
   // Create delete plan
-  planner::DeletePlan *delete_plan =
-      new planner::DeletePlan(target_table, cmp_expr);
+  std::unique_ptr<planner::DeletePlan> delete_plan(
+      new planner::DeletePlan(target_table));
 
   // Create sequential scan plan
-  expression::AbstractExpression *scan_expr =
-      (delete_plan->GetPredicate() == nullptr
-           ? nullptr
-           : delete_plan->GetPredicate()->Copy());
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(target_table, scan_expr, {}));
@@ -87,24 +84,21 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   delete_plan->AddChild(std::move(seq_scan_node));
 
   LOG_INFO("Plan created:\n%s",
-           planner::PlanUtil::GetInfo(delete_plan).c_str());
+           planner::PlanUtil::GetInfo(delete_plan.get()).c_str());
 
-  auto values = new std::vector<type::Value>();
+  std::unique_ptr<std::vector<type::Value>> values(
+      new std::vector<type::Value>());
 
   // id = 15
   LOG_INFO("Binding values");
   values->push_back(type::ValueFactory::GetIntegerValue(15).Copy());
 
   // bind values to parameters in plan
-  delete_plan->SetParameterValues(values);
+  delete_plan->SetParameterValues(values.get());
 
   // free the database just created
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete values;
-  delete cmp_expr;
-  delete delete_plan;
 }
 
 TEST_F(PlannerTests, UpdatePlanTestParameter) {

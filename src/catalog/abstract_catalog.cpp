@@ -111,7 +111,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
       new executor::ExecutorContext(txn));
 
   // Delete node
-  planner::DeletePlan delete_node(catalog_table_, false);
+  planner::DeletePlan delete_node(catalog_table_);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Index scan as child node

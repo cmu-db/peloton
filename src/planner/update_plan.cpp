@@ -11,11 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/update_plan.h"
-
 #include "planner/project_info.h"
-#include "type/types.h"
-
 #include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace planner {

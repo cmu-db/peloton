@@ -150,7 +150,7 @@ void DeleteTuple(storage::DataTable *table,
   std::vector<storage::Tuple *> tuples;
 
   // Delete
-  planner::DeletePlan delete_node(table, false);
+  planner::DeletePlan delete_node(table);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Predicate
