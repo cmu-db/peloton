@@ -107,5 +107,5 @@ class LayoutTuner {
 
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+}  // namespace brain
+}  // namespace peloton

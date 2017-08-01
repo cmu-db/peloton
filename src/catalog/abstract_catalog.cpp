@@ -264,5 +264,5 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
             index_name.c_str(), (int)catalog_table_->GetOid());
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

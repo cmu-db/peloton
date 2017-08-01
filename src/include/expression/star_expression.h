@@ -43,5 +43,5 @@ class StarExpression : public AbstractExpression {
  private:
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

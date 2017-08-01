@@ -51,5 +51,5 @@ class TableStatsCollector {
   void InitColumnStatsCollectors();
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

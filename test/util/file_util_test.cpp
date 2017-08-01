@@ -69,5 +69,5 @@ TEST_F(FileUtilTests, ExistsTest) {
   EXPECT_FALSE(FileUtil::Exists("/thereisnowaythatyoucouldhavethisfilename"));
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

@@ -81,5 +81,5 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

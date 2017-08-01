@@ -404,5 +404,5 @@ const std::string TileGroup::GetInfo() const {
   return os.str();
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

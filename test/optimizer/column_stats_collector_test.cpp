@@ -116,5 +116,5 @@ TEST_F(ColumnStatsCollectorTests, DecimalTest) {
   EXPECT_EQ(colstats.GetCardinality(), 3);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

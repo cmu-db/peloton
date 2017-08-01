@@ -317,5 +317,5 @@ TEST_F(CacheTests, Updating) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

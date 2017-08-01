@@ -154,5 +154,5 @@ TEST_F(TupleTests, VarcharTest) {
   delete schema;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

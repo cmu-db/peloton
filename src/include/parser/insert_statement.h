@@ -85,5 +85,5 @@ class InsertStatement : SQLStatement {
   TableRef* table_ref_;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

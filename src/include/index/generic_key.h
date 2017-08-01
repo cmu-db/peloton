@@ -191,5 +191,5 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
   GenericHasher(){};
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

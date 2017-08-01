@@ -177,5 +177,5 @@ extern void PacketGetByte(InputPacket *rpkt, uchar &result);
 */
 extern void GetStringToken(InputPacket *pkt, std::string &result);
 
-}  // End wire namespace
-}  // End peloton namespace
+}  // namespace wire
+}  // namespace peloton

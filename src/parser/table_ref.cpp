@@ -30,5 +30,5 @@ TableRef::~TableRef() {
   }
 }
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

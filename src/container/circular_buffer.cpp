@@ -41,4 +41,4 @@ void CIRCULAR_BUFFER_TYPE::Clear() { circular_buffer_.clear(); }
 // Explicit template instantiation
 template class CircularBuffer<double>;
 
-}  // End peloton namespace
+}  // namespace peloton

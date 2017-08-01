@@ -322,5 +322,5 @@ template class BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
                            TupleKeyEqualityChecker, TupleKeyHasher,
                            ItemPointerComparator, ItemPointerHashFunc>;
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

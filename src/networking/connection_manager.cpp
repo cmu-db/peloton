@@ -264,5 +264,5 @@ bool ConnectionManager::DeleteConn(Connection* conn) {
   return DeleteConn(addr);
 }
 
-}  // End peloton networking
-}  // End peloton namespace
+}  // namespace networking
+}  // namespace peloton

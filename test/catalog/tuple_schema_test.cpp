@@ -175,5 +175,5 @@ TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
   return;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

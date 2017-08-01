@@ -155,5 +155,5 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
                  "A.b = B.b");
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

@@ -223,5 +223,5 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

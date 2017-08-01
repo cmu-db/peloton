@@ -90,4 +90,4 @@ class SqlNodeVisitor {
   virtual void Visit(expression::TupleValueExpression *expr);
 };
 
-} /* namespace peloton */
+}  // namespace peloton

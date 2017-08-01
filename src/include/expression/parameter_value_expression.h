@@ -51,5 +51,5 @@ class ParameterValueExpression : public AbstractExpression {
       : AbstractExpression(other), value_idx_(other.value_idx_) {}
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

@@ -293,5 +293,5 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

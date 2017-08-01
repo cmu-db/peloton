@@ -29,5 +29,5 @@ TEST_F(TimestampOrderingTransactionManagerTests, Test) {
   EXPECT_TRUE(true);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

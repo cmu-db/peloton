@@ -452,5 +452,5 @@
 //   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 // }
 
-// }  // End test namespace
-// }  // End peloton namespace
+// }  // namespace test
+// }  // namespace peloton

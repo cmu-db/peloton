@@ -154,5 +154,5 @@ class AbstractTable : public Printable {
   bool own_schema_;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

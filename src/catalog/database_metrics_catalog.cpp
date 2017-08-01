@@ -96,5 +96,5 @@ oid_t DatabaseMetricsCatalog::GetTimeStamp(oid_t database_oid,
   return time_stamp;
 }
 
-}  // end of namespace catalog
-}  // end of namespace peloton
+}  // namespace catalog
+}  // namespace peloton

@@ -334,5 +334,5 @@ TEST_F(UpdateTests, UpdatingOld) {
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace?
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

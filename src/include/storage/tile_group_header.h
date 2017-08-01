@@ -288,5 +288,5 @@ class TileGroupHeader : public Printable {
   Spinlock tile_header_lock;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

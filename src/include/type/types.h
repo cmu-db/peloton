@@ -1218,4 +1218,4 @@ typedef unsigned char uchar;
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
 
-}  // End peloton namespace
+}  // namespace peloton

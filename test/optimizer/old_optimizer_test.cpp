@@ -179,5 +179,5 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

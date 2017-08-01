@@ -77,5 +77,5 @@ class PrepareStatement : public SQLStatement {
       placeholders;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

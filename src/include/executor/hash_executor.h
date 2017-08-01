@@ -73,5 +73,5 @@ class HashExecutor : public AbstractExecutor {
   size_t result_itr = 0;
 };
 
-} /* namespace executor */
-} /* namespace peloton */
+}  // namespace executor
+}  // namespace peloton

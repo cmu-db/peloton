@@ -233,5 +233,5 @@ size_t ColumnStatsCatalog::GetTableStats(
   return tuple_count;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

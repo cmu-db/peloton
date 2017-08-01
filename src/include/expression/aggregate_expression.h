@@ -127,5 +127,5 @@ class AggregateExpression : public AbstractExpression {
   const planner::AttributeInfo *ai_;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

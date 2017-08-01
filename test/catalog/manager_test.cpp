@@ -70,5 +70,5 @@ TEST_F(ManagerTests, TransactionTest) {
   // EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentTileGroupId(), 800);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

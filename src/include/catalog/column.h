@@ -139,5 +139,5 @@ class Column : public Printable {
   std::vector<Constraint> constraints;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

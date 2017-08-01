@@ -253,5 +253,5 @@ TEST_F(StatsStorageTests, GetTableStatsTest) {
   EXPECT_EQ(table_stats->num_rows, tuple_count);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

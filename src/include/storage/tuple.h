@@ -283,5 +283,5 @@ class TupleComparator {
   }
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

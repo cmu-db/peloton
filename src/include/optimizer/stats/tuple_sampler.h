@@ -48,5 +48,5 @@ class TupleSampler {
   std::vector<std::unique_ptr<storage::Tuple>> sampled_tuples;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

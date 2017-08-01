@@ -1097,5 +1097,5 @@ column_map_type DataTable::GetDefaultLayout() const {
   return default_partition_;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

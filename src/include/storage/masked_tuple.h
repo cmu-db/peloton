@@ -83,5 +83,5 @@ class MaskedTuple : public AbstractTuple {
 // Implementation
 //===--------------------------------------------------------------------===//
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

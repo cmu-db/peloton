@@ -71,5 +71,5 @@ class AnalyzeStatement : public SQLStatement {
   const std::string INVALID_NAME = "";
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

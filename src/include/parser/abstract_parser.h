@@ -37,5 +37,5 @@ class AbstractParser {
       const std::string &query_string) = 0;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

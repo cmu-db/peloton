@@ -173,5 +173,5 @@ class TransactionManager {
   static ConflictAvoidanceType conflict_avoidance_;
 
 };
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

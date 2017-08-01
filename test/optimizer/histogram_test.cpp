@@ -143,5 +143,5 @@ TEST_F(HistogramTests, SumTest) {
   EXPECT_EQ(h.Sum(6), 1);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

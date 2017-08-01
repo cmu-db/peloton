@@ -695,5 +695,5 @@ TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
                peloton::Exception);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

@@ -121,5 +121,5 @@ class FunctionExpression : public AbstractExpression {
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

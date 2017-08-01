@@ -130,5 +130,5 @@ class TempTable : public AbstractTable {
   size_t number_of_tuples_ = 0;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

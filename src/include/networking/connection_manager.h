@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/mutex.h"
@@ -21,6 +20,7 @@
 
 namespace peloton {
 namespace networking {
+
 //===--------------------------------------------------------------------===//
 // Connection Manager
 // Connection Manager can be used by both server and client
@@ -69,5 +69,5 @@ class ConnectionManager {
   std::map<NetworkAddress, Connection*> client_conn_pool_;
 };
 
-}  // End peloton networking
-}  // End peloton namespace
+}  // namespace networking
+}  // namespace peloton

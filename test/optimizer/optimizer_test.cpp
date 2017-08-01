@@ -166,5 +166,5 @@ TEST_F(OptimizerTests, HashJoinTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

@@ -120,5 +120,5 @@ class SQLStatementList : public Printable {
   int error_col;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

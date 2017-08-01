@@ -2556,4 +2556,4 @@ std::string OperatorIdToString(OperatorId op_id) {
   }
 }
 
-}  // End peloton namespace
+}  // namespace peloton

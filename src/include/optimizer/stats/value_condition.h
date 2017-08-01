@@ -47,5 +47,5 @@ class ValueCondition {
         value{value} {}
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

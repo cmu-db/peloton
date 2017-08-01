@@ -55,5 +55,5 @@ TEST_F(TupleSamplerTests, SampleCountTest) {
   EXPECT_EQ(sampled_tuples.size(), 10);
 }
 
-} /* namespace test */
-} /* namespace peloton */
+}  // namespace test
+}  // namespace peloton

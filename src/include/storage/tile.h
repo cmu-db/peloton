@@ -304,5 +304,5 @@ class TileFactory {
   }
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

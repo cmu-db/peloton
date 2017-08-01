@@ -104,5 +104,5 @@ TEST_F(MaskedTupleTests, BasicTest) {
   delete key_schema;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

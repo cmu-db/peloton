@@ -232,5 +232,5 @@ class CreateStatement : public TableRefStatement {
   bool unique = false;
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

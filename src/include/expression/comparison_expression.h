@@ -82,5 +82,5 @@ class ComparisonExpression : public AbstractExpression {
       : AbstractExpression(other) {}
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

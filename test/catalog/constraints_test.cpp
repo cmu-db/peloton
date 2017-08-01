@@ -262,5 +262,5 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
 #endif
 */
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

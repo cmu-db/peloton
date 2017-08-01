@@ -320,5 +320,5 @@ ResultType StatsStorage::AnalayzeStatsForColumns(
   return ResultType::FAILURE;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

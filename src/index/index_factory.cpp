@@ -358,5 +358,5 @@ std::string IndexFactory::GetInfo(IndexMetadata *metadata,
   return (os.str());
 }
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

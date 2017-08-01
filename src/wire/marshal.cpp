@@ -163,5 +163,5 @@ void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len) {
   pkt->len += len;
 }
 
-}  // end wire
-}  // end peloton
+}  // namespace wire
+}  // namespace peloton

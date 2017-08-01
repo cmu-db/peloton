@@ -176,5 +176,5 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   return DEFAULT_SELECTIVITY;
 }
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

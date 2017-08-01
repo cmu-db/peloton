@@ -29,5 +29,5 @@ TEST_F(LoggerTests, BasicTest) {
   LOG_ERROR("error message");
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

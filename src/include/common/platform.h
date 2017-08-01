@@ -172,4 +172,4 @@ static inline uint64_t NextPowerOf2(uint64_t n) {
 #endif
 }
 
-}  // End peloton namespace
+}  // namespace peloton

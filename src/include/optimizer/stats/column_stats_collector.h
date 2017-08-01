@@ -84,5 +84,5 @@ class ColumnStatsCollector {
   void operator=(const ColumnStatsCollector&);
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

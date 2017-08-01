@@ -98,5 +98,5 @@ class JoinDefinition {
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton

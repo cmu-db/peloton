@@ -434,5 +434,5 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   return;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

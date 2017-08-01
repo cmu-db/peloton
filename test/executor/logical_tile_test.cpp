@@ -206,5 +206,5 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   LOG_TRACE("%s", logical_tile->GetInfo().c_str());
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

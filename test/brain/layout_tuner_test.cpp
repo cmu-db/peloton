@@ -128,5 +128,5 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

@@ -212,5 +212,5 @@ class Schema : public Printable {
   std::vector<oid_t> indexed_columns_;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

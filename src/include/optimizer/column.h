@@ -87,5 +87,5 @@ class ExprColumn : public Column {
 
 catalog::Column GetSchemaColumnFromOptimizerColumn(Column *column);
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // namespace optimizer
+}  // namespace peloton

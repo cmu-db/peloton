@@ -77,5 +77,5 @@ class BackendManager {
   size_t allocation_count = 0;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

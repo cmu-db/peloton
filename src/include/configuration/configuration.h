@@ -95,6 +95,6 @@ namespace configuration {
 // Print configuration
 void PrintConfiguration();
 
-}  // End configuration namespace
-}  // End peloton namespace
+}  // namespace configuration
+}  // namespace peloton
 

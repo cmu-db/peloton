@@ -428,4 +428,4 @@ class ConnectionException : public Exception {
       : Exception(EXCEPTION_TYPE_CONNECTION, msg) {}
 };
 
-}  // End peloton namespace
+}  // namespace peloton

@@ -71,5 +71,5 @@ TEST_F(DatabaseTests, AddDropTableTest) {
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

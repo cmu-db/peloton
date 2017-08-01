@@ -71,5 +71,5 @@ class Constraint : public Printable {
 
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

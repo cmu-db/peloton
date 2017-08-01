@@ -488,5 +488,5 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
                          field_size);
 }
 
-}  // End tcop namespace
-}  // End peloton namespace
+}  // namespace tcop
+}  // namespace peloton

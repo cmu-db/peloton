@@ -20,4 +20,4 @@ void PrintStackTrace(FILE *out = ::stderr,
 
 void SignalHandler(int signum);
 
-}  // End peloton namespace
+}  // namespace peloton

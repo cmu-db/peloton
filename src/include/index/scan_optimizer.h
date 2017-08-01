@@ -714,5 +714,5 @@ class IndexScanPredicate {
   inline bool IsFullIndexScan() const { return full_index_scan_; }
 };
 
-}  // End index namespace
-}  // End peloton namespace
+}  // namespace index
+}  // namespace peloton

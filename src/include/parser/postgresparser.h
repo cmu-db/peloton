@@ -221,5 +221,5 @@ class PostgresParser {
   static parser::AnalyzeStatement* VacuumTransform(VacuumStmt* root);
 };
 
-}  // End parser namespace
-}  // End peloton namespace
+}  // namespace parser
+}  // namespace peloton
