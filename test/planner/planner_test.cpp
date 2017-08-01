@@ -18,11 +18,14 @@
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
 #include "parser/statements.h"
 #include "planner/delete_plan.h"
+#include "planner/attribute_info.h"
 #include "planner/plan_util.h"
-#include "planner/update_plan.h"
+#include "planner/project_info.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
 
 namespace peloton {
 namespace test {
@@ -126,44 +129,67 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   // UPDATE department_table SET name = $0 WHERE id = $1
   txn = txn_manager.BeginTransaction();
-  parser::UpdateStatement *update_statement = new parser::UpdateStatement();
-  parser::TableRef *table_ref =
-      new parser::TableRef(peloton::TableReferenceType::JOIN);
 
-  auto name = new char[strlen("department_table") + 1]();
-  strcpy(name, "department_table");
-  auto table_info = new parser::TableInfo();
-  table_info->table_name = name;
-  table_ref->table_info_ = table_info;
-  update_statement->table = table_ref;
-  // Value val =
-  //    type::ValueFactory::GetNullValue();  // The value is not important
-  // at this point
+  auto table_name = std::string("department_table");
+  auto database_name = DEFAULT_DB_NAME;
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      database_name, table_name);
+  auto schema = target_table->GetSchema();
 
-  // name = $0
-  auto update = new parser::UpdateClause();
-  auto column = new char[5]();
-  strcpy(column, "name");
-  update->column = column;
-  auto parameter_expr = new expression::ParameterValueExpression(0);
-  update->value = parameter_expr;
-  auto updates = new std::vector<parser::UpdateClause *>();
-  updates->push_back(update);
-  update_statement->updates = updates;
+  TargetList tlist;
+  DirectMapList dmlist;
+  oid_t col_id;
+  std::vector<oid_t> column_ids;
 
-  // id = $1
-  parameter_expr = new expression::ParameterValueExpression(1);
-  auto tuple_expr =
+  col_id = schema->GetColumnID(std::string("name"));
+  column_ids.push_back(col_id);
+  auto *update_expr = new expression::ParameterValueExpression(0);
+  expression::ExpressionUtil::TransformExpression(target_table->GetSchema(),
+                                                  update_expr);
+
+  planner::DerivedAttribute attribute(update_expr);
+  attribute.attribute_info.type = update_expr->ResultType();
+  attribute.attribute_info.name = std::string("name");
+  tlist.emplace_back(col_id, attribute);
+
+  auto *parameter_expr = new expression::ParameterValueExpression(1);
+  auto *tuple_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-  auto cmp_expr = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
+  auto *where_expr = new expression::ComparisonExpression(
+                     ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
-  update_statement->where = cmp_expr;
+  auto &schema_columns = schema->GetColumns();
+  for (uint i = 0; i < schema_columns.size(); i++) {
+    bool is_in_target_list = false;
+    for (auto col_id : column_ids) {
+      if (schema_columns[i].column_name == schema_columns[col_id].column_name) {
+        is_in_target_list = true;
+        break;
+      }
+    }
+    if (is_in_target_list == false)
+      dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
+  }
 
-  auto update_plan = new planner::UpdatePlan(update_statement);
+  column_ids.clear();
+  for (uint i = 0; i < schema_columns.size(); i++) {
+    column_ids.emplace_back(i);
+  }
+
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
+
+  std::unique_ptr<planner::UpdatePlan> update_plan(
+      new planner::UpdatePlan(target_table, std::move(project_info)));
+
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(target_table, where_expr, column_ids));
+  update_plan->AddChild(std::move(seq_scan_node));
+
   LOG_INFO("Plan created:\n%s", update_plan->GetInfo().c_str());
 
-  auto values = new std::vector<type::Value>();
+  std::unique_ptr<std::vector<type::Value>> values(
+      new std::vector<type::Value>());
 
   // name = CS, id = 1
   LOG_INFO("Binding values");
@@ -171,17 +197,13 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
 
   // bind values to parameters in plan
-  update_plan->SetParameterValues(values);
+  update_plan->SetParameterValues(values.get());
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete values;
-  delete update_statement;
-  delete update_plan;
 }
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
