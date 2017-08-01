@@ -56,7 +56,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   EXPECT_EQ(NumRowsInTestTable(), GetTestTable(TestTableId1()).GetTupleCount());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId1()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId1()))};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
       &GetTestTable(TestTableId1()), nullptr, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
@@ -87,7 +87,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId2()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId2()))};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
       &GetTestTable(TestTableId2()), a_gt_40.release(), {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
@@ -129,7 +129,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
       ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId3()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId3()))};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
       &GetTestTable(TestTableId3()), conj_eq, {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));
@@ -168,7 +168,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), std::move(b_mod_1));
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
-      new planner::DeletePlan(&GetTestTable(TestTableId4()), nullptr)};
+      new planner::DeletePlan(&GetTestTable(TestTableId4()))};
   std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
       &GetTestTable(TestTableId4()), a_eq_b_mod_1.release(), {0, 1, 2})};
   delete_plan->AddChild(std::move(scan));

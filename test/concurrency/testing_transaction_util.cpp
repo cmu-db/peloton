@@ -315,7 +315,7 @@ bool TestingTransactionUtil::ExecuteDelete(
       new executor::ExecutorContext(transaction));
 
   // Delete
-  planner::DeletePlan delete_node(table, false);
+  planner::DeletePlan delete_node(table);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   auto predicate = MakePredicate(id);

@@ -12,22 +12,13 @@
 
 #pragma once
 
-#include "catalog/schema.h"
-#include "type/types.h"
-#include "parser/table_ref.h"
 #include "planner/abstract_plan.h"
+#include "type/types.h"
 
 namespace peloton {
 
 namespace storage {
 class DataTable;
-}
-
-namespace expression {
-class AbstractExpression;
-}
-namespace concurrency {
-class Transaction;
 }
 
 namespace planner {
@@ -36,38 +27,24 @@ class DeletePlan : public AbstractPlan {
  public:
   DeletePlan() = delete;
 
-  ~DeletePlan() {
-    if (predicate_ != nullptr) {
-      delete predicate_;
-    }
-  }
+  ~DeletePlan() {}
 
-  DeletePlan(storage::DataTable *table, bool truncate);
-
-  DeletePlan(storage::DataTable *table,
-             const expression::AbstractExpression *predicate);
+  DeletePlan(storage::DataTable *table);
 
   storage::DataTable *GetTable() const { return target_table_; }
-
-  bool GetTruncate() const { return truncate_; }
-
-  void SetParameterValues(std::vector<type::Value> *values) override;
 
   PlanNodeType GetPlanNodeType() const override { return PlanNodeType::DELETE; }
 
   const std::string GetInfo() const override { return "DeletePlan"; }
 
+  void SetParameterValues(std::vector<type::Value> *values) override;
+
   std::unique_ptr<AbstractPlan> Copy() const override {
-    return std::unique_ptr<AbstractPlan>(
-        new DeletePlan(target_table_, truncate_));
+    return std::unique_ptr<AbstractPlan>(new DeletePlan(target_table_));
   }
 
  private:
   storage::DataTable *target_table_ = nullptr;
-
-  expression::AbstractExpression *predicate_ = nullptr;
-
-  bool truncate_ = false;
 
  private:
   DISALLOW_COPY_AND_MOVE(DeletePlan);
