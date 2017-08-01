@@ -29,6 +29,9 @@ class DataTable;
 namespace expression {
 class Expression;
 }
+namespace concurrency {
+class Transaction;
+}
 
 namespace planner {
 

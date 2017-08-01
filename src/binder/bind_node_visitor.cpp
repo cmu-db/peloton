@@ -18,9 +18,8 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn) {
+BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn): txn(txn) {
   context_ = nullptr;
-  this->txn = txn;
 }
 
 void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {

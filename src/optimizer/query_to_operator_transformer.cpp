@@ -33,8 +33,7 @@ using std::shared_ptr;
 
 namespace peloton {
 namespace optimizer {
-QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn) {
-  this->txn = txn;
+QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn): txn(txn){
 }
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {

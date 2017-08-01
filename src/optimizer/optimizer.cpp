@@ -95,7 +95,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
   // Run binder
   auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn);
-//  bind_node_visitor->txn = txn;
   bind_node_visitor->BindNameToNode(parse_tree);
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);

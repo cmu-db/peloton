@@ -38,31 +38,37 @@ class OperatorTransformerTests : public PelotonTest {
   }
   std::shared_ptr<OperatorExpression> TransformToOpExpression(
       std::string query, std::unique_ptr<parser::SQLStatementList>& stmt_list) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
     // Parse query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     stmt_list = peloton_parser.BuildParseTree(query);
     auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
 
     // Bind query
-    binder::BindNodeVisitor binder(nullptr);
+    binder::BindNodeVisitor binder(txn);
     binder.BindNameToNode(stmt);
 
-    QueryToOperatorTransformer transformer(nullptr);
-    return transformer.ConvertToOpExpression(stmt);
+    QueryToOperatorTransformer transformer(txn);
+    auto result = transformer.ConvertToOpExpression(stmt);
+    return result;
   }
 
   void CheckPredicate(expression::AbstractExpression* predicate,
                 std::string table_names,
                 std::string true_predicates) {
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
     // Parse true predicates
     auto peloton_parser = parser::PostgresParser::GetInstance();
     auto ref_query = StringUtil::Format(
         "SELECT %s FROM %s", true_predicates.c_str(), table_names.c_str());
     auto parsed_stmt = peloton_parser.BuildParseTree(ref_query);
     auto ref_stmt = parsed_stmt->GetStatement(0);
-    binder::BindNodeVisitor binder(nullptr);
+    binder::BindNodeVisitor binder(txn);
     binder.BindNameToNode(ref_stmt);
     auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
+    txn_manager.CommitTransaction(txn);
     LOG_INFO("Expected: %s", true_predicates.c_str());
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
     EXPECT_TRUE(predicate->Equals(ref_expr));

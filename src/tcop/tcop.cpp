@@ -217,6 +217,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   bool init_failure = false;
   executor::ExecuteResult p_status;
   auto &curr_state = GetCurrentTxnState();
+  // check and begin txn here, partly because tests directly call ExecuteStatementPlan
   if (tcop_txn_state_.empty()) {
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -284,22 +285,22 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
-  // transaction
-  // --multi-statements except BEGIN in a transaction
-  // ----not aborted
-  // ----COMMIT, ROLLBACK, and aborted
+  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from member variables,
+  // tcop_txn_state_. We can also get single-statement txn or multi-statement txn from member variable
+  // single_statement_txn_
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // --multi-statements except BEGIN in a transaction
   if (!tcop_txn_state_.empty()) {
     single_statement_txn_ = false;
-    // multi-statment txn has been aborted, just block it
-    // cannot return nullptr in case that commit cannot be execute
+    // multi-statment txn has been aborted, just skip this query,
+    // and do not need to parse or execute this query anymore.
+    // Do not return nullptr in case that 'COMMIT' cannot be execute,
+    // because nullptr will directly return ResultType::FAILURE to packet_manager
     if (tcop_txn_state_.top().second == ResultType::ABORTED) {
       return statement;
     }
   } else {
-    // --BEGIN
-    // --single-statement transaction
-    // ----prepareStatement abort
+    // Begin new transaction when received single-statement query or "BEGIN" from multi-statement query
     if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
       LOG_TRACE("BEGIN");
