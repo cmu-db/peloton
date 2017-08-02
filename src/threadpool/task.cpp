@@ -18,14 +18,14 @@ namespace threadpool {
 
 void Task::ExecuteTask() {
   LOG_TRACE("Task grab by some worker");
-  if (this->is_sync) {
-    this->ExecuteTaskSync();
-  }
-  else {
+  if (!this->is_sync_) {
+    this->ExecuteTaskAsync();
+  } else {
     this->ExecuteTaskBatchSync();
   }
   LOG_TRACE("Now task is done");
 }
+
 
 void Task::ExecuteTaskBatchSync() {
   this->func_ptr_(this->func_arg_);
@@ -47,12 +47,13 @@ void TaskQueue::SubmitSync(void(*func_ptr)(void *), void* func_arg) {
   std::unique_lock <std::mutex> lock(mutex);
 
   std::shared_ptr<std::condition_variable> cv = std::make_shared<std::condition_variable>();
-  int num_worker = 1;
 
-  task->is_sync = true;
+  int task_count_down = 1;
+
+  task->num_worker_ = &task_count_down;
+  task->is_sync_ = true;
   task->task_mutex_ = &mutex;
   task->condition_variable_ = cv.get();
-  task->num_worker_ = &num_worker;
   task_queue_.Enqueue(task);
   cv->wait(lock);
 }
@@ -61,7 +62,7 @@ void TaskQueue::SubmitSync(void(*func_ptr)(void *), void* func_arg) {
 // the call back function is still executing
 void TaskQueue::SubmitAsync(void(*func_ptr)(void *), void* func_arg) {
   std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
-  task->is_sync = false;
+  task->is_sync_ = false;
   task_queue_.Enqueue(task);
 }
 
@@ -75,7 +76,7 @@ void TaskQueue::SubmitTaskBatch(std::vector<std::shared_ptr<Task>>& task_vector)
 
   for (std::shared_ptr<Task> task: task_vector) {
     task->task_mutex_ = &mutex;
-    task->is_sync = true;
+    task->is_sync_ = true;
     task->condition_variable_ = &cv;
     task->num_worker_ = &task_countDown;
     task_queue_.Enqueue(task);

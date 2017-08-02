@@ -26,7 +26,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 
@@ -49,11 +49,15 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::vector<StatementResult> result;
 
   optimizer::Optimizer optimizer;
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796
 
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
+=======
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
+>>>>>>> rename frontend class
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -62,7 +66,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
+  auto tuple_descriptor = traffic_cop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
@@ -77,6 +81,11 @@ TEST_F(DeleteTests, VariousOperations) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796
+=======
+  optimizer::Optimizer optimizer;
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
+>>>>>>> rename frontend class
 
 //  optimizer::SimpleOptimizer optimizer;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
@@ -219,7 +228,7 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
-      tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
+      traffic_cop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);

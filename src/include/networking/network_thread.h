@@ -32,8 +32,7 @@
 #include "common/logger.h"
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
-#include "networking/network_server.h"
-#include "networking/packet_manager.h"
+#include "networking/network_manager.h"
 
 namespace peloton {
 namespace networking {

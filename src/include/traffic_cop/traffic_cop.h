@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tcop.h
+// traffic_cop.h
 //
-// Identification: src/include/tcop/tcop.h
+// Identification: src/include/traffic_cop/traffic_cop.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -24,13 +24,12 @@
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
-#include "planner/abstract_plan.h"
 #include "type/type.h"
 #include "type/types.h"
 
 namespace peloton {
 
-namespace tcop {
+namespace traffic_cop {
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
 //===--------------------------------------------------------------------===//
@@ -116,13 +115,14 @@ class TrafficCop {
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
 
-  std::stack<TcopTxnState> tcop_txn_state_;
+  typedef std::pair<concurrency::Transaction *, ResultType> TrafficCopTxnState;
+  std::stack<TrafficCopTxnState> traffic_cop_txn_state_;
+  std::stack<TrafficCopTxnState> traffic_cop_txn_state_;
 
-  static TcopTxnState &GetDefaultTxnState();
+ private:
 
-  TcopTxnState &GetCurrentTxnState();
+  TrafficCopTxnState &GetCurrentTxnState();
 
   ResultType BeginQueryHelper(const size_t thread_id);
 
@@ -158,5 +158,5 @@ struct ExecutePlanArg {
   executor::ExecuteResult &p_status_;
 };
 
-}  // End tcop namespace
+}  // End traffic_cop namespace
 }  // End peloton namespace

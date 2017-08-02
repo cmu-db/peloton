@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// tcop.cpp
+// traffic_cop.cpp
 //
-// Identification: src/tcop/tcop.cpp
+// Identification: src/traffic_cop/traffic_cop.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
 #include "common/abstract_tuple.h"
@@ -39,7 +39,7 @@
 
 
 namespace peloton {
-namespace tcop {
+namespace traffic_cop {
 
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
@@ -47,15 +47,15 @@ TrafficCop::TrafficCop() {
 }
 
 void TrafficCop::Reset() {
-  std::stack<TcopTxnState> new_tcop_txn_state;
+  std::stack<TrafficCopTxnState> new_traffic_cop_txn_state;
   // clear out the stack
-  swap(tcop_txn_state_, new_tcop_txn_state);
+  swap(traffic_cop_txn_state_, new_traffic_cop_txn_state);
   optimizer_->Reset();
 }
 
 TrafficCop::~TrafficCop() {
   // Abort all running transactions
-  while (tcop_txn_state_.empty() == false) {
+  while (traffic_cop_txn_state_.empty() == false) {
     AbortQueryHelper();
   }
 }
@@ -64,22 +64,22 @@ TrafficCop::~TrafficCop() {
 * NOTE: Used by in unit tests ONLY
 */
 TrafficCop &TrafficCop::GetInstance() {
-  static TrafficCop tcop;
-  tcop.Reset();
-  return tcop;
+  static TrafficCop traffic_cop;
+  traffic_cop.Reset();
+  return traffic_cop;
 }
 
-TrafficCop::TcopTxnState &TrafficCop::GetDefaultTxnState() {
-  static TcopTxnState default_state;
+TrafficCop::TrafficCopTxnState &TrafficCop::GetDefaultTxnState() {
+  static TrafficcopTxnState default_state;
   default_state = std::make_pair(nullptr, ResultType::INVALID);
   return default_state;
 }
 
-TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
-  if (tcop_txn_state_.empty()) {
+TrafficCop::TrafficCopTxnState &TrafficCop::GetCurrentTxnState() {
+  if (traffic_cop_txn_state_.empty()) {
     return GetDefaultTxnState();
   }
-  return tcop_txn_state_.top();
+  return traffic_cop_txn_state_.top();
 }
 
 ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
@@ -93,14 +93,20 @@ ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
       return ResultType::FAILURE;
     }
 
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
+=======
+  // initialize the current result as success
+  traffic_cop_txn_state_.emplace(txn, ResultType::SUCCESS);
+>>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
   return ResultType::SUCCESS;
 }
 
 ResultType TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
@@ -110,6 +116,12 @@ ResultType TrafficCop::CommitQueryHelper() {
   // If this exception if caused by a query in a transaction,
   // I will block following queries in that transaction until 'COMMIT' or 'ROLLBACK'
   // After receive 'COMMIT', see if it is rollback or really commit.
+=======
+  if (traffic_cop_txn_state_.empty()) return ResultType::NOOP;
+  auto &curr_state = traffic_cop_txn_state_.top();
+  traffic_cop_txn_state_.pop();
+  // commit the txn only if it has not aborted already
+>>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
     return txn_manager.CommitTransaction(txn);
@@ -121,9 +133,9 @@ ResultType TrafficCop::CommitQueryHelper() {
 
 ResultType TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
+  if (traffic_cop_txn_state_.empty()) return ResultType::NOOP;
+  auto &curr_state = traffic_cop_txn_state_.top();
+  traffic_cop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
   if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
@@ -208,6 +220,7 @@ ResultType TrafficCop::ExecuteStatement(
     return ResultType::FAILURE;
   }
 }
+
 void ExecutePlanCallBack(void* arg_ptr) {
   ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
 
@@ -228,8 +241,12 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   bool init_failure = false;
   executor::ExecuteResult p_status;
   auto &curr_state = GetCurrentTxnState();
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
   // check and begin txn here, partly because tests directly call ExecuteStatementPlan
   if (tcop_txn_state_.empty()) {
+=======
+  if (traffic_cop_txn_state_.empty()) {
+>>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
@@ -246,8 +263,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(txn);
     ExecutePlanArg arg = ExecutePlanArg(plan, txn, params, result, result_format, p_status);
     threadpool::MonoQueuePool::GetInstance().ExecuteSync(ExecutePlanCallBack, &arg);
-    //p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-    //                                               result_format);
+    // p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+    //                                                result_format);
 
     if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
@@ -554,5 +571,11 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
 }
 
 
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
 }  // namespace tcop
 }  // namespace peloton
+=======
+
+}  // End traffic_cop namespace
+}  // End peloton namespace
+>>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp

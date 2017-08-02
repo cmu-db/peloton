@@ -43,7 +43,7 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -133,7 +133,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //
   //  std::vector<int> result_format;
   //  auto tuple_descriptor =
-  //      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+  //      traffic_cop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   //  UNUSED_ATTRIBUTE executor::ExecuteResult status =
@@ -152,8 +152,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
+<<<<<<< da9ec626db0345729f2375b80943d7756b729796
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+=======
+  optimizer::Optimizer optimizer;
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
+
+>>>>>>> rename frontend class
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::TypeId::INTEGER,

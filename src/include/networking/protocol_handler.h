@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// packet_manager.h
+// protocol_handler.h
 //
-// Identification: src/include/networking/packet_manager.h
+// Identification: src/include/networking/protocol_handler.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,9 +22,8 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "networking/marshal.h"
-#include "networking/packet_manager.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
@@ -40,8 +39,6 @@ class ProtocolHandler {
   ProtocolHandler();
 
   ~ProtocolHandler();
-
-
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
@@ -87,8 +84,8 @@ class ProtocolHandler {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-  static std::vector<ProtocolHandler*> GetNetworkManagers() {
-    return (ProtocolHandler::network_managers_);
+  static std::vector<ProtocolHandler*> GetNetworkConnections() {
+    return (ProtocolHandler::network_connections_);
   }
 
 
@@ -170,7 +167,7 @@ class ProtocolHandler {
   std::vector<int> result_format_;
 
   // global txn state
-  NetworkTransactionStateType txn_state_;
+//  NetworkTransactionStateType txn_state_;
 
   // state to mang skipped queries
   bool skipped_stmt_ = false;
@@ -202,10 +199,8 @@ class ProtocolHandler {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
-  std::unique_ptr<PacketManger> packet_manager_;
-
   // The traffic cop used for this connection
-  std::unique_ptr<tcop::TrafficCop> traffic_cop_;
+  std::unique_ptr<traffic_cop::TrafficCop> traffic_cop_;
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA
@@ -217,8 +212,8 @@ class ProtocolHandler {
   // HACK: Global list of ProtocolHandler instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<ProtocolHandler*> network_managers_;
-  static std::mutex packet_managers_mutex_;
+  static std::vector<ProtocolHandler*> network_connections_;
+  static std::mutex network_connection_mutex_;
 
 };
 

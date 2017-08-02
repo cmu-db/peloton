@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// packet_manager.cpp
+// protocol_handler.cpp
 //
-// Identification: src/networking/packet_manager.cpp
+// Identification: src/networking/protocol_handler.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "networking/protocol_handler.h"
 
 #include <boost/algorithm/string.hpp>
@@ -22,7 +23,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -53,29 +54,29 @@ const std::unordered_map<std::string, std::string>
 				("TimeZone", "US/Eastern");
 // clang-format on
 
-std::vector<ProtocolHandler *> ProtocolHandler::network_managers_;
-std::mutex ProtocolHandler::packet_managers_mutex_;
+std::vector<ProtocolHandler *> ProtocolHandler::network_connections_;
+std::mutex ProtocolHandler::network_connection_mutex_;
 
 ProtocolHandler::ProtocolHandler()
     : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
-  traffic_cop_.reset(new tcop::TrafficCop());
+  traffic_cop_.reset(new traffic_cop::TrafficCop());
   {
-    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
-    ProtocolHandler::network_managers_.push_back(this);
+    std::lock_guard<std::mutex> lock(ProtocolHandler::network_connection_mutex_);
+    ProtocolHandler::network_connections_.push_back(this);
     LOG_DEBUG("Registered new ProtocolHandler [count=%d]",
-              (int)ProtocolHandler::network_managers_.size());
+              (int)ProtocolHandler::network_connections_.size());
   }
 }
 
 ProtocolHandler::~ProtocolHandler() {
   {
-    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
-    ProtocolHandler::network_managers_.erase(
-        std::remove(ProtocolHandler::network_managers_.begin(),
-                    ProtocolHandler::network_managers_.end(), this),
-        ProtocolHandler::network_managers_.end());
+    std::lock_guard<std::mutex> lock(ProtocolHandler::network_connection_mutex_);
+    ProtocolHandler::network_connections_.erase(
+        std::remove(ProtocolHandler::network_connections_.begin(),
+                    ProtocolHandler::network_connections_.end(), this),
+        ProtocolHandler::network_connections_.end());
     LOG_DEBUG("Removed ProtocolHandler [count=%d]",
-              (int)ProtocolHandler::network_managers_.size());
+              (int)ProtocolHandler::network_connections_.size());
   }
 }
 
@@ -363,7 +364,7 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
       }
       default:
       {
-        // execute the query using tcop
+        // execute the query using traffic_cop
         auto status = traffic_cop_->ExecuteStatement(
             query, result, tuple_descriptor, rows_affected, error_message,
             thread_id);
