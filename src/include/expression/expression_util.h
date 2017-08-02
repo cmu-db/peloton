@@ -26,7 +26,7 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
-#include "expression/string_functions.h"
+#include "include/function/string_functions.h"
 #include "expression/tuple_value_expression.h"
 #include "index/index.h"
 
@@ -516,10 +516,13 @@ class ExpressionUtil {
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
+      std::vector<type::TypeId> argtypes;
+      for (size_t i = 0; i < children_size; i++)
+        argtypes.push_back(expr->GetChild(i)->GetValueType());
       // Check and set the function ptr
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
-          catalog->GetFunction(func_expr->func_name_);
+          catalog->GetFunction(func_expr->func_name_, argtypes);
       LOG_INFO("Function %s found in the catalog",
                func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());

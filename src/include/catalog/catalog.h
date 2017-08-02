@@ -17,6 +17,7 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
+#include "function/functions.h"
 
 namespace peloton {
 
@@ -179,26 +180,26 @@ class Catalog {
   void AddDatabase(storage::Database *database);
 
   //===--------------------------------------------------------------------===//
-  // USER DEFINE FUNCTION
+  // BUILTIN FUNCTION
   //===--------------------------------------------------------------------===//
+
+  void InitializeLanguages();
 
   void InitializeFunctions();
 
   void AddFunction(const std::string &name,
                    const std::vector<type::TypeId> &argument_types,
                    const type::TypeId return_type,
-                   type::Value (*func_ptr)(const std::vector<type::Value> &));
+                   oid_t prolang,
+                   const std::string &func_name,
+                   function::BuiltInFuncType func_ptr,
+                   concurrency::Transaction *txn);
 
-  const FunctionData GetFunction(const std::string &name);
-
-  void RemoveFunction(const std::string &name);
+  const FunctionData GetFunction(const std::string &name,
+                                 const std::vector<type::TypeId> &argument_types);
 
  private:
   Catalog();
-
-  // Map of function names to data about functions (number of arguments,
-  // function ptr, return type)
-  std::unordered_map<std::string, FunctionData> functions_;
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;

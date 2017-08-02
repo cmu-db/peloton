@@ -19,7 +19,7 @@
 
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
-#include "expression/decimal_functions.h"
+#include "include/function/decimal_functions.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"

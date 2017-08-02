@@ -10,6 +10,8 @@
 //
 //===---------------------------------------------------------------------===//
 
+#include <include/catalog/proc_catalog.h>
+#include <include/catalog/language_catalog.h>
 #include "catalog/catalog.h"
 
 #include "common/exception.h"
@@ -27,9 +29,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "expression/date_functions.h"
-#include "expression/decimal_functions.h"
-#include "expression/string_functions.h"
+#include "function/functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -138,8 +138,6 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 
   // Commit transaction
   txn_manager.CommitTransaction(txn);
-
-  InitializeFunctions();
 }
 
 void Catalog::Bootstrap() {
@@ -151,10 +149,14 @@ void Catalog::Bootstrap() {
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
-
   TriggerCatalog::GetInstance(txn);
+  LanguageCatalog::GetInstance(txn);
+  ProcCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
+
+  InitializeLanguages();
+  InitializeFunctions();
 }
 
 //===----------------------------------------------------------------------===//
@@ -796,61 +798,111 @@ Catalog::~Catalog() {
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
-void Catalog::AddFunction(
-    const std::string &name, const std::vector<type::TypeId> &argument_types,
-    const type::TypeId return_type,
-    type::Value (*func_ptr)(const std::vector<type::Value> &)) {
-  PL_ASSERT(functions_.count(name) == 0);
-  functions_[name] = FunctionData{name, argument_types, return_type, func_ptr};
-}
-
-const FunctionData Catalog::GetFunction(const std::string &name) {
-  if (functions_.count(name) == 0) {
-    throw Exception("function " + name + " not found.");
+void Catalog::AddFunction(const std::string &name,
+                          const std::vector<type::TypeId> &argument_types,
+                          const type::TypeId return_type,
+                          oid_t prolang,
+                          const std::string &func_name,
+                          function::BuiltInFuncType func_ptr,
+                          concurrency::Transaction *txn) {
+  if (!ProcCatalog::GetInstance()->
+      InsertProc(name, return_type, argument_types,
+                 prolang, func_name, pool_.get(), txn)) {
+    throw CatalogException("Failed to add function " + func_name);
   }
-  return functions_[name];
+  function::BuiltInFunctions::AddFunction(func_name, func_ptr);
 }
 
-void Catalog::RemoveFunction(const std::string &name) {
-  functions_.erase(name);
+const FunctionData Catalog::GetFunction(
+    const std::string &name,
+    const std::vector<type::TypeId> &argument_types) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  FunctionData result;
+  oid_t prolang = ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
+  if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) == "internal") {
+    result.argument_types_ = argument_types;
+    result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
+    result.return_type_ = ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
+    result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
+    if (result.func_ptr_ != nullptr) return result;
+  }
+  throw new CatalogException("Failed to find function " + name);
+}
+
+void Catalog::InitializeLanguages() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  if (!LanguageCatalog::GetInstance()->
+      InsertLanguage("internal", pool_.get(), txn)) {
+    txn_manager.AbortTransaction(txn);
+    throw new CatalogException("Failed to add language 'internal'");
+  }
+  txn_manager.CommitTransaction(txn);
 }
 
 void Catalog::InitializeFunctions() {
-  /**
-   * string functions
-   */
-  AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-              expression::StringFunctions::Ascii);
-  AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
-              expression::StringFunctions::Chr);
-  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                         type::TypeId::INTEGER},
-              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
-  AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::Concat);
-  AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-              expression::StringFunctions::CharLength);
-  AddFunction("octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-              expression::StringFunctions::OctetLength);
-  AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-              type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                          type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
-  AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
-  AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::RTrim);
-  AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::BTrim);
-  AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-              expression::DecimalFunctions::Sqrt);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
-  /**
-   * date functions
-   */
-  AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-              type::TypeId::DECIMAL, expression::DateFunctions::Extract);
+  oid_t prolang = LanguageCatalog::GetInstance()->GetLanguageOid("internal", txn);
+  if (prolang == INVALID_OID) {
+    throw CatalogException("prolang 'internal' does not exist");
+  }
+
+  try {
+    /**
+     * string functions
+     */
+    AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER, prolang,
+                "Ascii", function::StringFunctions::Ascii, txn);
+    AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, prolang,
+                "Chr", function::StringFunctions::Chr, txn);
+    AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                           type::TypeId::INTEGER},
+                type::TypeId::VARCHAR, prolang,
+                "Substr", function::StringFunctions::Substr, txn);
+    AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "Concat", function::StringFunctions::Concat, txn);
+    AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+                prolang,
+                "CharLength", function::StringFunctions::CharLength, txn);
+    AddFunction("octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+                prolang,
+                "OctetLength", function::StringFunctions::OctetLength, txn);
+    AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
+                type::TypeId::VARCHAR, prolang,
+                "Repeat", function::StringFunctions::Repeat, txn);
+    AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                            type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "Replace", function::StringFunctions::Replace, txn);
+    AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "LTrim", function::StringFunctions::LTrim, txn);
+    AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "RTrim", function::StringFunctions::RTrim, txn);
+    AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "btrim", function::StringFunctions::BTrim, txn);
+    AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+                prolang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
+
+    /**
+     * date functions
+     */
+    AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+                type::TypeId::DECIMAL, prolang,
+                "Extract", function::DateFunctions::Extract, txn);
+  }
+  catch (CatalogException e) {
+    txn_manager.AbortTransaction(txn);
+    throw e;
+  }
+  txn_manager.CommitTransaction(txn);
 }
+
 }  // namespace catalog
 }  // namespace peloton
