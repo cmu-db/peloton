@@ -4,7 +4,7 @@
 //
 // string_functions.cpp
 //
-// Identification: /peloton/src/expression/string_functions.cpp
+// Identification: src/function/string_functions.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //

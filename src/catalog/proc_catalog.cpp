@@ -1,6 +1,18 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// proc_catalog.cpp
+//
+// Identification: src/catalog/proc_catalog.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
-#include "catalog/language_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -8,11 +20,13 @@
 namespace peloton {
 namespace catalog {
 
-static ProcCatalog *ProcCatalog::GetInstance(
-    concurrency::Transaction *txn = nullptr) {
+ProcCatalog *ProcCatalog::GetInstance(
+    concurrency::Transaction *txn) {
   static std::unique_ptr<ProcCatalog> proc_catalog(new ProcCatalog(txn));
   return proc_catalog.get();
 }
+
+ProcCatalog::~ProcCatalog() {};
 
 ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
@@ -20,10 +34,9 @@ ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
                       " ("
                       "proc_oid      INT NOT NULL PRIMARY KEY, "
                       "proname       VARCHAR NOT NULL, "
-                      "proargtypes   VARCHAR NOT NULL, "
                       "prorettype    INT NOT NULL, "
-                      "prolang       INT NOT NULL REFERENCES"
-                          CATALOG_DATABASE_NAME "." LANGUAGE_CATALOG_NAME ","
+                      "proargtypes   VARCHAR NOT NULL, "
+                      "prolang       INT NOT NULL, "
                       "prosrc        VARCHAR NOT NULL);",
                       txn) {
 
@@ -33,24 +46,26 @@ ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
       false, IndexType::BWTREE, txn);
 }
 
-std::string&& TypeArrayToString(const std::vector<type::TypeId> types) {
+std::string ProcCatalog::TypeArrayToString(
+    const std::vector<type::TypeId> types) {
   std::string result = "";
   for (auto type : types) {
     if (result != "")
       result.append(",");
     result.append(TypeIdToString(type));
   }
-  return std::move(result);
+  return result;
 }
 
-std::vector<type::TypeId>&& StringToTypeArray(const std::string &types) {
+std::vector<type::TypeId> ProcCatalog::StringToTypeArray(
+    const std::string &types) {
   std::vector<type::TypeId> result;
   std::istringstream stream(types);
   std::string type;
   while (getline(stream, type, ',')) {
     result.push_back(StringToTypeId(type));
   }
-  return std::move(result);
+  return result;
 }
 
 bool ProcCatalog::InsertProc(const std::string &proname,

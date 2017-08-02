@@ -4,11 +4,12 @@
 //
 // date_functions.h
 //
-// Identification: src/include/expression/date_functions.h
+// Identification: src/include/function/date_functions.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 
@@ -17,6 +18,7 @@
 
 #include "common/logger.h"
 #include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace function {

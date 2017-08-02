@@ -17,9 +17,7 @@
 
 #include "common/harness.h"
 
-#include "expression/expression_util.h"
-#include "expression/function_expression.h"
-#include "include/function/decimal_functions.h"
+#include "function/decimal_functions.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -39,13 +37,13 @@ TEST_F(DecimalFunctionsTests, SqrtTest) {
   std::vector<type::Value> args = {
       type::ValueFactory::GetDecimalValue(column_val)};
 
-  auto result = expression::DecimalFunctions::Sqrt(args);
+  auto result = function::DecimalFunctions::Sqrt(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.GetAs<double>());
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  result = expression::DecimalFunctions::Sqrt(args);
+  result = function::DecimalFunctions::Sqrt(args);
   EXPECT_TRUE(result.IsNull());
 }
 

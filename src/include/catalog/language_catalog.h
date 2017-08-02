@@ -1,24 +1,26 @@
 //===----------------------------------------------------------------------===//
-// pg_proc
+//
+//                         Peloton
+//
+// language_catalog.h
+//
+// Identification: src/include/catalog/language_catalog.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
+// pg_language
 //
 // Schema: (column offset: column_name)
-// 0: name (pkey)
-// 1: database_oid (pkey)
-// 2: num_params
-// 3: param_types
-// 4: param_formats
-// 5: param_values
-// 6: reads
-// 7: updates
-// 8: deletes
-// 9: inserts
-// 10: latency
-// 11: cpu_time
-// 12: time_stamp
+// 0: language_oid (pkey)
+// 1: lanname (skey_0)
 //
 // Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
-//
+// 0: language_oid (unique & primary key)
+// 1: lanname (secondary key 0)
 //===----------------------------------------------------------------------===//
 
 #pragma once

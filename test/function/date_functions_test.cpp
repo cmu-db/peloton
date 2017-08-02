@@ -18,9 +18,7 @@
 
 #include "common/harness.h"
 
-#include "include/function/date_functions.h"
-#include "expression/expression_util.h"
-#include "expression/function_expression.h"
+#include "function/date_functions.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -50,7 +48,7 @@ void ExtractTestHelper(DatePartType part, std::string &date,
           type::ValueFactory::GetVarcharValue(date))};
 
   // Invoke the Extract method and get back the result
-  auto result = expression::DateFunctions::Extract(args);
+  auto result = function::DateFunctions::Extract(args);
 
   // Check that result is *not* null
   EXPECT_FALSE(result.IsNull());
@@ -66,7 +64,7 @@ TEST_F(DateFunctionsTests, NullExtractTest) {
       type::ValueFactory::GetIntegerValue(
           static_cast<int>(DatePartType::MINUTE)),
       type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP)};
-  auto result = expression::DateFunctions::Extract(args);
+  auto result = function::DateFunctions::Extract(args);
   EXPECT_TRUE(result.IsNull());
 }
 
