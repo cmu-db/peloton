@@ -58,12 +58,12 @@ class BindNodeVisitor : public SqlNodeVisitor {
   // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
   void SetTxn(concurrency::Transaction *txn) {
-    this->txn = txn;
+    this->txn_ = txn;
   }
 
  private:
   std::shared_ptr<BinderContext> context_;
-  concurrency::Transaction *txn;
+  concurrency::Transaction *txn_;
 };
 
 }  // namespace binder

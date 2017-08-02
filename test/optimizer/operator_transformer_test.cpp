@@ -51,6 +51,7 @@ class OperatorTransformerTests : public PelotonTest {
 
     QueryToOperatorTransformer transformer(txn);
     auto result = transformer.ConvertToOpExpression(stmt);
+    txn_manager.CommitTransaction(txn);
     return result;
   }
 

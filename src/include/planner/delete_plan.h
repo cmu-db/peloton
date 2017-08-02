@@ -16,7 +16,6 @@
 #include "type/types.h"
 #include "parser/table_ref.h"
 #include "planner/abstract_plan.h"
-#include "concurrency/transaction.h"
 
 namespace peloton {
 

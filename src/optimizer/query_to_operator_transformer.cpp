@@ -33,7 +33,7 @@ using std::shared_ptr;
 
 namespace peloton {
 namespace optimizer {
-QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn): txn(txn){
+QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn): txn_(txn){
 }
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
@@ -214,7 +214,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
       node = node->list->at(0);
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
-            node->GetDatabaseName(), node->GetTableName(), txn);
+            node->GetDatabaseName(), node->GetTableName(), txn_);
     // Update table alias map
     table_alias_set_.insert(StringUtil::Lower(std::string(node->GetTableAlias())));
     // Construct logical operator
@@ -234,7 +234,7 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
                                                         op->GetTableName(),
-                                                        txn);
+                                                        txn_);
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsertSelect::make(target_table));
@@ -251,7 +251,7 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->GetDatabaseName(), op->GetTableName(), txn);
+      op->GetDatabaseName(), op->GetTableName(), txn_);
   auto table_scan = std::make_shared<OperatorExpression>(
       LogicalGet::make(target_table, op->GetTableName()));
   auto delete_expr =
@@ -270,7 +270,7 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->table->GetDatabaseName(), op->table->GetTableName(), txn);
+      op->table->GetDatabaseName(), op->table->GetTableName(), txn_);
 
   auto update_expr = std::make_shared<OperatorExpression>(
       LogicalUpdate::make(target_table, *op->updates));
