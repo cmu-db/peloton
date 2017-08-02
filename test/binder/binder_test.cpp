@@ -18,7 +18,7 @@
 #include "parser/postgresparser.h"
 
 #include "optimizer/optimizer.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include <memory>
 
@@ -41,7 +41,7 @@ void SetupTables() {
   LOG_INFO("Default database created!");
 
   auto& parser = parser::PostgresParser::GetInstance();
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
   optimizer::Optimizer optimizer;
 
   txn = txn_manager.BeginTransaction();

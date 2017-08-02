@@ -15,7 +15,7 @@
 #include "common/harness.h"
 #include "configuration/configuration.h"
 
-#include <include/tcop/tcop.h>
+#include <include/traffic_cop/traffic_cop.h>
 #include <sys/resource.h>
 #include <time.h>
 #include "executor/testing_executor_util.h"
@@ -25,7 +25,7 @@
 #include "executor/insert_executor.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -361,7 +361,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  int64_t aggregate_interval = 1000;
 //  LaunchAggregator(aggregate_interval);
 //  auto &aggregator = stats::StatsAggregator::GetInstance();
-//  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+//  auto &traffic_cop = traffic_cop::TrafficCop::GetInstance();
 //
 //  // Create a table first
 //  auto catalog = catalog::Catalog::GetInstance();

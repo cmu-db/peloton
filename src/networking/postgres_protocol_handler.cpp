@@ -1,14 +1,22 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by tim on 25/07/17.
+//                         Peloton
 //
+// postgres_protocol_handler.cpp
+//
+// Identification: src/include/networking/postgres_protocol_handler.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
-#include "networking/packet_manager.h"
+#include "networking/protocol_handler.h"
 
 namespace peloton {
 namespace networking {
 
-PacketManager::PacketReadState
-PostgresPacketManager::GetPacketFromBuffer(
+ProtocolHandler::PacketReadState
+PostgresProtolHandler::GetPacketFromBuffer(
     Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt) {
 
   if (rpkt_ == nullptr) {
@@ -35,7 +43,7 @@ PostgresPacketManager::GetPacketFromBuffer(
   return PacketDone;
 }
 
-void PostgresPacketManager::GetSizeFromPktHeader(
+void PostgresProtocolHandler::GetSizeFromPktHeader(
     size_t start_index, Buffer& rbuf) {
   rpkt_->len = 0;
   // directly converts from network byte order to little-endian
@@ -45,7 +53,7 @@ void PostgresPacketManager::GetSizeFromPktHeader(
   // packet size includes initial bytes read as well
 }
 
-bool PostgresPacketManager::ReadPacketHeader(
+bool PostgresProtocolHandler::ReadPacketHeader(
     Buffer& rbuf) {
   // get packet size from the header
 
@@ -68,7 +76,7 @@ bool PostgresPacketManager::ReadPacketHeader(
   return true;
 }
 
-bool PostgresPacketManager::ReadPacket(Buffer& rbuf) {
+bool PostgresProtocolHandler::ReadPacket(Buffer& rbuf) {
   // extended packet mode
   auto bytes_available = rbuf.buf_size - rbuf.buf_ptr;
   auto bytes_required = rpkt_->ExtendedBytesRequired();
@@ -89,7 +97,7 @@ bool PostgresPacketManager::ReadPacket(Buffer& rbuf) {
 }
 
 
-bool PostgresPacketManager::IsEndPacketSuppliment(){
+bool PostgresProtocolHandler::IsEndPacketSuppliment(){
   switch (rpkt_->msg_type) {
     case NetworkMessageType::CLOSE_COMMAND:
     case NetworkMessageType::TERMINATE_COMMAND:

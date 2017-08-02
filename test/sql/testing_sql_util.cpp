@@ -15,7 +15,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include <random>
 #include "sql/testing_sql_util.h"
@@ -107,7 +107,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   std::string error_message;
   int rows_changed;
 
-  // execute the query using tcop
+  // execute the query using traffic_cop
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
 
@@ -120,14 +120,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string error_message;
   int rows_changed;
 
-  // execute the query using tcop
+  // execute the query using traffic_cop
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
 
   return status;
 }
 
-tcop::TrafficCop TestingSQLUtil::traffic_cop_;
+traffic_cop::TrafficCop TestingSQLUtil::traffic_cop_;
 
 }  // namespace test
 }  // namespace peloton

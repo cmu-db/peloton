@@ -13,7 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include "networking/network_server.h"
+#include "networking/network_manager.h"
+#include "networking/network_connection.h"
 #include "common/macros.h"
 
 namespace peloton {
@@ -24,7 +25,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   // buffer used to receive messages from the main thread
   char m_buf[1];
   std::shared_ptr<NewConnQueueItem> item;
-  NetworkManager *conn;
+  NetworkConnection *conn;
   NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
 
   // pipe fds should match
@@ -41,11 +42,11 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
     case 'c': {
       // fetch the new connection fd from the queue
       thread->new_conn_queue.Dequeue(item);
-      conn = NetworkServer::GetConn(item->new_conn_fd);
+      conn = NetworkManager::GetConn(item->new_conn_fd);
       if (conn == nullptr) {
         LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
-        NetworkServer::CreateNewConn(item->new_conn_fd, item->event_flags,
+        NetworkManager::CreateNewConn(item->new_conn_fd, item->event_flags,
                                       static_cast<NetworkThread *>(thread),
                                       CONN_READ);
       } else {
@@ -66,62 +67,62 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags,
                   void *arg) {
   LOG_TRACE("Event callback fired for connfd: %d", connfd);
-  NetworkManager *conn = static_cast<NetworkManager *>(arg);
+  NetworkConnection *conn = static_cast<NetworkConnection *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
   PL_ASSERT(connfd == conn->sock_fd);
   StateMachine(conn);
 }
 
-void StateMachine(NetworkManager *network_manager) {
+void StateMachine(NetworkConnection *network_connection) {
   bool done = false;
 
   while (done == false) {
     LOG_TRACE("current state: %d", network_manager->state);
-    switch (network_manager->state) {
+    switch (network_connection->state) {
       case CONN_LISTENING: {
         struct sockaddr_storage addr;
         socklen_t addrlen = sizeof(addr);
         int new_conn_fd =
-            accept(network_manager->sock_fd, (struct sockaddr *)&addr, &addrlen);
+            accept(network_connection->sock_fd, (struct sockaddr *)&addr, &addrlen);
         if (new_conn_fd == -1) {
           LOG_ERROR("Failed to accept");
         }
-        (static_cast<NetworkMasterThread *>(network_manager->thread))
+        (static_cast<NetworkMasterThread *>(network_connection->thread))
             ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
         done = true;
         break;
       }
 
       case CONN_READ: {
-        auto res = network_manager->FillReadBuffer();
+        auto res = network_connection->FillReadBuffer();
         switch (res) {
           case READ_DATA_RECEIVED:
             // wait for some other event
-            network_manager->TransitState(CONN_PARSE_PACKET);
+            network_connection->TransitState(CONN_PARSE_PACKET);
             break;
 
           case READ_NO_DATA_RECEIVED:
             // process what we read
-            network_manager->TransitState(CONN_WAIT);
+            network_connection->TransitState(CONN_WAIT);
             break;
 
           case READ_ERROR:
             // fatal error for the connection
-            network_manager->TransitState(CONN_CLOSING);
+            network_connection->TransitState(CONN_CLOSING);
             break;
         }
         break;
       }
 
       case CONN_WAIT: {
-        if (network_manager->UpdateEvent(EV_READ | EV_PERSIST) == false) {
+        if (network_connection->UpdateEvent(EV_READ | EV_PERSIST) == false) {
           LOG_ERROR("Failed to update event, closing");
-          network_manager->TransitState(CONN_CLOSING);
+          network_connection->TransitState(CONN_CLOSING);
           break;
         }
 
-        network_manager->TransitState(CONN_READ);
+        network_connection->TransitState(CONN_READ);
         done = true;
         break;
       }
@@ -129,34 +130,34 @@ void StateMachine(NetworkManager *network_manager) {
       case CONN_PARSE_PACKET: {
         bool status;
 
-        if(network_manager->protocol_handler_.ssl_sent) {
+        if(network_connection->protocol_handler_.ssl_sent) {
             // start SSL handshake
             // TODO: consider free conn_SSL_context
-            network_manager->conn_SSL_context = SSL_new(NetworkServer::ssl_context);
-            if (SSL_set_fd(network_manager->conn_SSL_context, network_manager->sock_fd) == 0) {
+          network_connection->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+            if (SSL_set_fd(network_connection->conn_SSL_context, network_connection->sock_fd) == 0) {
               LOG_ERROR("Failed to set SSL fd");
               PL_ASSERT(false);
             }
             int ssl_accept_ret;
-            if ((ssl_accept_ret = SSL_accept(network_manager->conn_SSL_context)) <= 0) {
+            if ((ssl_accept_ret = SSL_accept(network_connection->conn_SSL_context)) <= 0) {
               LOG_ERROR("Failed to accept (handshake) client SSL context.");
-              LOG_ERROR("ssl error: %d", SSL_get_error(network_manager->conn_SSL_context, ssl_accept_ret));
+              LOG_ERROR("ssl error: %d", SSL_get_error(network_connection->conn_SSL_context, ssl_accept_ret));
               // TODO: consider more about proper action
               PL_ASSERT(false);
-              network_manager->TransitState(CONN_CLOSED);
+              network_connection->TransitState(CONN_CLOSED);
             }
             LOG_ERROR("SSL handshake completed");
-            network_manager->protocol_handler_.ssl_sent = false;
+            network_connection->protocol_handler_.ssl_sent = false;
         }
 
-        if (network_manager->packet_manager_ == nullptr) {
+        if (network_connection->protocol_handler_ == nullptr) {
           // We need to handle startup packet first
-          int status_res = network_manager->ProcessInitialPacket();
+          int status_res = network_connection->ProcessInitialPacket();
           status = (status_res != 0);
           if (status_res == 1) {
-            network_manager->protocol_handler_.is_started = true;
+            network_connection->protocol_handler_.is_started = true;
           } else if (status_res == -1) {
-            network_manager->protocol_handler_.ssl_sent = true;
+            network_connection->protocol_handler_.ssl_sent = true;
           }
         }
 
@@ -196,11 +197,11 @@ void StateMachine(NetworkManager *network_manager) {
 
       case CONN_WRITE: {
         // examine write packets result
-        switch (network_manager->WritePackets()) {
+        switch (network_connection->WritePackets()) {
           case WRITE_COMPLETE: {
             // Input Packet can now be reset, before we parse the next packet
-            network_manager->UpdateEvent(EV_READ | EV_PERSIST);
-            network_manager->TransitState(CONN_PROCESS);
+            network_connection->UpdateEvent(EV_READ | EV_PERSIST);
+            network_connection->TransitState(CONN_PROCESS);
             break;
           }
 
@@ -213,7 +214,7 @@ void StateMachine(NetworkManager *network_manager) {
 
           case WRITE_ERROR: {
             LOG_ERROR("Error during write, closing connection");
-            network_manager->TransitState(CONN_CLOSING);
+            network_connection->TransitState(CONN_CLOSING);
             break;
           }
         }
@@ -221,7 +222,7 @@ void StateMachine(NetworkManager *network_manager) {
       }
 
       case CONN_CLOSING: {
-        network_manager->CloseSocket();
+        network_connection->CloseSocket();
         done = true;
         break;
       }
@@ -253,7 +254,7 @@ void ControlCallback::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
                                                  fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
-  NetworkServer *server = (NetworkServer *)arg;
+  NetworkManager *server = (NetworkManager *)arg;
   if (server->GetIsStarted() == false) {
     server->SetIsStarted(true);
   }

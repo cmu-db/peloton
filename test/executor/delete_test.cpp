@@ -26,7 +26,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 
@@ -48,7 +48,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
   optimizer::Optimizer optimizer;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -57,7 +57,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
+  auto tuple_descriptor = traffic_cop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
@@ -72,7 +72,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::Optimizer optimizer;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   // Create a table first
   LOG_INFO("Creating a table...");
@@ -196,7 +196,7 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
-      tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
+      traffic_cop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);

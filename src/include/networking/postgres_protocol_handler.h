@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by tim on 25/07/17.
+//                         Peloton
 //
+// postgres_protocol_handler.h
+//
+// Identification: src/include/networking/postgres_protocol_handler.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "network_manager.h"
 
@@ -8,32 +16,13 @@
 namespace peloton {
 namespace networking {
 
-/**
- * The PacketManager Interface
- */
-class PacketManager {
+class PostgresProtocolHandler : public ProtocolHandler {
  public:
-  enum PacketReadState {
-    PacketDone,
-    PacketNotDone,
-    PacketEnd
-  };
-
-  virtual PacketReadState GetPacketFromBuffer(Buffer&, std::unique_ptr<InputPacket>&);
-
- protected:
-  static size_t initial_read_size_;
-  std::unique_ptr<InputPacket> rpkt_ = nullptr;
-};
-
-class PostgresPacketManager : public PacketManager {
- public:
-  inline PostgresPacketManager() {
+  inline PostgresProtocolHandler() {
     initial_read_size_ = sizeof(int32_t);
   }
 
-  PacketReadState
-  GetPacketFromBuffer(Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt);
+  PacketReadState GetPacketFromBuffer(Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt);
 
  protected:
   void GetSizeFromPktHeader(size_t start_index, Buffer& rbuf);
@@ -57,32 +46,32 @@ class PostgresPacketManager : public PacketManager {
 
 };
 
-class PostgresJDBCPacketManager : public PostgresPacketManager{
+class PostgresJDBCProtocolHandler : public PostgresProtocolHandler{
   inline bool IsEndPacket() {
     return (IsEndPacketSuppliment() ||
             (rpkt_->msg_type == NetworkMessageType::SYNC_COMMAND));
   }
 };
 
-class PostgresSQLPacketManager : public PostgresPacketManager{
+class PostgresSQLProtocolHandler : public PostgresProtcolHandler {
   inline bool IsEndPacket() {
     return (IsEndPacketSuppliment());
   }
 };
 
-class PacketManagerFactory {
+class ProtolHandlerFactory {
  public:
-  enum PacketManagerType {
+  enum ProtocolHandlerType {
     PostgresJDBC,
     PostgresSQL
   };
 
-  static std::unique_ptr<PacketManager> CreatePacketManager(PacketManagerType type) {
+  static std::unique_ptr<ProtocolHandler> CreateProtocolHandler(ProtocolHandler type) {
     switch (type) {
       case PostgresJDBC:
-        return std::make_unique<PostgresJDBCPacketManager>();
+        return std::make_unique<PostgresJDBCProtocolHandler>();
       case PostgresSQL:
-        return std::make_unique<PostgresSQLPacketManager>();
+        return std::make_unique<PostgresSQLProtocolHandler>();
     }
   }
 

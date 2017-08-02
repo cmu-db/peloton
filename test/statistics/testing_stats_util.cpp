@@ -26,7 +26,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "storage/tile.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -36,7 +36,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  auto &traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   std::vector<type::Value> params;
   std::vector<StatementResult> result;

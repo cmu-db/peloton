@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
     peloton::PelotonInit::Initialize();
 
     // Create LibeventServer object
-    peloton::networking::NetworkServer networkserver;
+    peloton::networking::NetworkManager networkmanager;
     
     // Start Libevent Server    
-    networkserver.StartServer();
+    networkmanager.StartServer();
 
     // Teardown
     peloton::PelotonInit::Shutdown();

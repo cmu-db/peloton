@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// network_server.cpp
+// network_manager.cpp
 //
 // Identification: src/networking/network_server.cpp
 //
@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "networking/network_server.h"
+#include "networking/network_manager.h"
 
 #include <fcntl.h>
 #include <inttypes.h>
@@ -24,19 +24,19 @@
 namespace peloton {
 namespace networking {
 
-int NetworkServer::recent_connfd = -1;
-SSL_CTX *NetworkServer::ssl_context = nullptr;
+int NetworkManager::recent_connfd = -1;
+SSL_CTX *NetworkManager:ssl_context = nullptr;
 
-std::unordered_map<int, std::unique_ptr<NetworkManager>> &
-NetworkServer::GetGlobalSocketList() {
+std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
+NetworkManager::GetGlobalSocketList() {
   // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<NetworkManager>>
+  static std::unordered_map<int, std::unique_ptr<NetworkConnection>>
       global_socket_list;
 
   return global_socket_list;
 }
 
-NetworkManager *NetworkServer::GetConn(const int &connfd) {
+NetworkConnection *NetworkManager::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
   if (global_socket_list.find(connfd) != global_socket_list.end()) {
     return global_socket_list.at(connfd).get();
@@ -45,7 +45,7 @@ NetworkManager *NetworkServer::GetConn(const int &connfd) {
   }
 }
 
-void NetworkServer::CreateNewConn(const int &connfd, short ev_flags,
+void NetworkManager::CreateNewConn(const int &connfd, short ev_flags,
                                    NetworkThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
@@ -58,7 +58,7 @@ void NetworkServer::CreateNewConn(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
-NetworkServer::NetworkServer() {
+NetworkManager::NetworkManager() {
   base_ = event_base_new();
 
   // Create our event base
@@ -99,7 +99,7 @@ NetworkServer::NetworkServer() {
   signal(SIGPIPE, SIG_IGN);
 }
 
-void NetworkServer::StartServer() {
+void NetworkManager::StartServer() {
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -160,7 +160,7 @@ void NetworkServer::StartServer() {
       throw ConnectionException("Error listening onsocket.\n");
     }
 
-    NetworkServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
+    NetworkManager::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
                                   master_thread_.get(), CONN_LISTENING);
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
@@ -184,7 +184,7 @@ void NetworkServer::StartServer() {
   }
 }
 
-void NetworkServer::CloseServer() {
+void NetworkManager::CloseServer() {
   LOG_INFO("Begin to stop server");
   this->SetIsClosed(true);
 }

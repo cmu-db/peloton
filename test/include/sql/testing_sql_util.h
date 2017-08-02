@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/statement.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 
@@ -79,7 +79,7 @@ class TestingSQLUtil {
   // Create a random number
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
 
-  static tcop::TrafficCop traffic_cop_;
+  static traffic_cop::TrafficCop traffic_cop_;
 };
 }  // namespace test
 }  // namespace peloton

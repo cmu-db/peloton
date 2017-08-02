@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_socket.cpp
+// network_connection.cpp
 //
-// Identification: src/networking/network_socket.cpp
+// Identification: src/networking/network_connection.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 namespace peloton {
 namespace networking {
 
-void NetworkManager::Init(short event_flags, NetworkThread *thread,
+void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                           ConnState init_state) {
   SetNonBlocking(sock_fd);
   SetTCPNoDelay(sock_fd);
@@ -49,14 +49,14 @@ void NetworkManager::Init(short event_flags, NetworkThread *thread,
   event_add(event, nullptr);
 }
 
-void NetworkManager::TransitState(ConnState next_state) {
+void NetworkConnection::TransitState(ConnState next_state) {
   if (next_state != state)
     LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
   state = next_state;
 }
 
 // Update event
-bool NetworkManager::UpdateEvent(short flags) {
+bool NetworkConnection::UpdateEvent(short flags) {
   auto base = thread->GetEventBase();
   if (event_del(event) == -1) {
     LOG_ERROR("Failed to delete event");
@@ -85,7 +85,7 @@ bool NetworkManager::UpdateEvent(short flags) {
  * Public Functions
  */
 
-WriteState NetworkManager::WritePackets() {
+WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_.responses.size(); next_response_++) {
     auto pkt = protocol_handler_.responses[next_response_].get();
@@ -107,7 +107,7 @@ WriteState NetworkManager::WritePackets() {
   return WRITE_COMPLETE;
 }
 
-ReadState NetworkManager::FillReadBuffer() {
+ReadState NetworkConnection::FillReadBuffer() {
   ReadState result = READ_NO_DATA_RECEIVED;
   ssize_t bytes_read = 0;
   bool done = false;
@@ -209,7 +209,7 @@ ReadState NetworkManager::FillReadBuffer() {
   return result;
 }
 
-WriteState NetworkManager::FlushWriteBuffer() {
+WriteState NetworkConnection::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
   while (wbuf_.buf_size > 0) {
@@ -306,7 +306,7 @@ WriteState NetworkManager::FlushWriteBuffer() {
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-int NetworkManager::ProcessInitialPacket() {
+int NetworkConnection::ProcessInitialPacket() {
   std::string token, value;
 
   int32_t available_len = rbuf_.buf_size - rbuf_.buf_ptr;
@@ -365,7 +365,7 @@ int NetworkManager::ProcessInitialPacket() {
   return res_base;
 }
 
-bool NetworkManager::ProcessStartupPacket(std::string& contents, int32_t proto_version) {
+bool NetworkConnection::ProcessStartupPacket(std::string& contents, int32_t proto_version) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -412,7 +412,7 @@ bool NetworkManager::ProcessStartupPacket(std::string& contents, int32_t proto_v
   return true;
 }
 
-bool NetworkManager::ProcessSSLRequestPacket() {
+bool NetworkConnection::ProcessSSLRequestPacket() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   // TODO: consider more about a proper response
   response->msg_type = NetworkMessageType::SSL_YES;
@@ -421,7 +421,7 @@ bool NetworkManager::ProcessSSLRequestPacket() {
   return true;
 }
 
-void NetworkManager::PrintWriteBuffer() {
+void NetworkConnection::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");
 
   for (size_t i = 0; i < wbuf_.buf_size; ++i) {
@@ -431,7 +431,7 @@ void NetworkManager::PrintWriteBuffer() {
 
 // Writes a packet's header (type, size) into the write buffer.
 // Return false when the socket is not ready for write
-WriteState NetworkManager::BufferWriteBytesHeader(OutputPacket *pkt) {
+WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   // If we should not write
   if (pkt->skip_header_write) {
     return WRITE_COMPLETE;
@@ -476,7 +476,7 @@ WriteState NetworkManager::BufferWriteBytesHeader(OutputPacket *pkt) {
 
 // Writes a packet's content into the write buffer
 // Return false when the socket is not ready for write
-WriteState NetworkManager::BufferWriteBytesContent(OutputPacket *pkt) {
+WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
   // the packet content to write
   ByteBuf &pkt_buf = pkt->buf;
   // the length of remaining content to write
@@ -525,7 +525,7 @@ WriteState NetworkManager::BufferWriteBytesContent(OutputPacket *pkt) {
   return WRITE_COMPLETE;
 }
 
-void NetworkManager::CloseSocket() {
+void NetworkConnection::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
   event_del(event);
@@ -547,7 +547,7 @@ void NetworkManager::CloseSocket() {
   }
 }
 
-void NetworkManager::Reset() {
+void NetworkConnection::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
   protocol_handler_.Reset();
