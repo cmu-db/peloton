@@ -168,5 +168,6 @@ oid_t ProcCatalog::GetProLang(const std::string &proname,
   }
   return prolang;
 }
+
 } // namespace catalog
 } // namespace peloton

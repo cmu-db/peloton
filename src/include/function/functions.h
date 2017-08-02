@@ -33,5 +33,6 @@ class BuiltInFunctions {
 
   static BuiltInFuncType GetFuncByName(const std::string &func_name);
 };
+
 }  // namespace function
 }  // namespace peloton

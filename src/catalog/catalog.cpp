@@ -10,8 +10,6 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include <include/catalog/proc_catalog.h>
-#include <include/catalog/language_catalog.h>
 #include "catalog/catalog.h"
 
 #include "common/exception.h"
@@ -28,6 +26,8 @@
 #include "catalog/settings_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/proc_catalog.h"
+#include "catalog/language_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/functions.h"
 #include "index/index_factory.h"
