@@ -38,6 +38,7 @@ class Task {
   // Functions
   void ExecuteTask();
   void ExecuteTaskSync();
+  void ExecuteTaskBatchSync();
   void ExecuteTaskAsync();
 
   // Instance variables

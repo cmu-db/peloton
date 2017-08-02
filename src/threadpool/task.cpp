@@ -12,7 +12,6 @@
 
 #include <common/logger.h>
 #include "threadpool/task.h"
-#include "../../../../../../../usr/include/c++/5/condition_variable"
 
 namespace peloton {
 namespace threadpool {
@@ -23,12 +22,12 @@ void Task::ExecuteTask() {
     this->ExecuteTaskSync();
   }
   else {
-    this->ExecuteTaskAsync();
+    this->ExecuteTaskBatchSync();
   }
   LOG_TRACE("Now task is done");
 }
 
-void Task::ExecuteTaskSync() {
+void Task::ExecuteTaskBatchSync() {
   this->func_ptr_(this->func_arg_);
   std::unique_lock <std::mutex> lock(*this->task_mutex_);
   (*num_worker_)--;
