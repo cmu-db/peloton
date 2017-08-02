@@ -84,8 +84,8 @@ class ProtocolHandler {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-  static std::vector<ProtocolHandler*> GetNetworkManagers() {
-    return (ProtocolHandler::network_managers_);
+  static std::vector<ProtocolHandler*> GetNetworkConnections() {
+    return (ProtocolHandler::network_connections_);
   }
 
 
@@ -167,7 +167,7 @@ class ProtocolHandler {
   std::vector<int> result_format_;
 
   // global txn state
-  NetworkTransactionStateType txn_state_;
+//  NetworkTransactionStateType txn_state_;
 
   // state to mang skipped queries
   bool skipped_stmt_ = false;
@@ -199,8 +199,6 @@ class ProtocolHandler {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
-//  std::unique_ptr<PacketManger> packet_manager_;
-
   // The traffic cop used for this connection
   std::unique_ptr<traffic_cop::TrafficCop> traffic_cop_;
 
@@ -214,8 +212,8 @@ class ProtocolHandler {
   // HACK: Global list of ProtocolHandler instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<ProtocolHandler*> network_managers_;
-  static std::mutex protocol_handler_mutex_;
+  static std::vector<ProtocolHandler*> network_connections_;
+  static std::mutex network_connection_mutex_;
 
 };
 
