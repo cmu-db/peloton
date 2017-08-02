@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// language_catalog.cpp
+//
+// Identification: src/catalog/language_catalog.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
 #include "executor/logical_tile.h"
@@ -7,11 +20,13 @@
 namespace peloton {
 namespace catalog {
 
-static LanguageCatalog *LanguageCatalog::GetInstance(
-    concurrency::Transaction *txn = nullptr) {
-  static std::unique_ptr<LanguageCatalog> proc_catalog(new LanguageCatalog(txn));
-  return proc_catalog.get();
+LanguageCatalog *LanguageCatalog::GetInstance(
+    concurrency::Transaction *txn) {
+  static std::unique_ptr<LanguageCatalog> language_catalog(new LanguageCatalog(txn));
+  return language_catalog.get();
 }
+
+LanguageCatalog::~LanguageCatalog() {};
 
 LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
@@ -64,7 +79,6 @@ oid_t LanguageCatalog::GetLanguageOid(const std::string &lanname,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  type::TypeId prorettype = type::TypeId::INVALID;
   oid_t language_oid = INVALID_OID;
   PL_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
@@ -96,5 +110,6 @@ std::string LanguageCatalog::GetLanguageName(oid_t language_oid,
   }
   return lanname;
 }
-} // namespace catalog
-} // namespace peloton
+
+}  // namespace catalog
+}  // namespace peloton

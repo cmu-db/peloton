@@ -769,9 +769,13 @@ class ExpressionUtil {
     // if the expression is a function, do a lookup and make sure it exists
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
+      std::vector<type::TypeId> argtypes;
+      size_t children_size = expr->GetChildrenSize();
+      for (size_t i = 0; i < children_size; i++)
+        argtypes.push_back(expr->GetChild(i)->GetValueType());
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
-          catalog->GetFunction(func_expr->func_name_);
+          catalog->GetFunction(func_expr->func_name_, argtypes);
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);

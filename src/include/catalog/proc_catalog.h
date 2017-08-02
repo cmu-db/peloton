@@ -1,24 +1,30 @@
 //===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// proc_catalog.h
+//
+// Identification: src/include/catalog/proc_catalog.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
 // pg_proc
 //
 // Schema: (column offset: column_name)
-// 0: name (pkey)
-// 1: database_oid (pkey)
-// 2: num_params
-// 3: param_types
-// 4: param_formats
-// 5: param_values
-// 6: reads
-// 7: updates
-// 8: deletes
-// 9: inserts
-// 10: latency
-// 11: cpu_time
-// 12: time_stamp
+// 0: proc_oid (pkey)
+// 1: proname (skey_0)
+// 2: prorettype
+// 3: proargtypes (skey_0)
+// 4: prolang
+// 5: prosrc
 //
 // Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
-//
+// 0: proc_oid (unique & primary key)
+// 1: proname & proargtypes (secondary key 0)
 //===----------------------------------------------------------------------===//
 
 #pragma once
@@ -66,8 +72,8 @@ class ProcCatalog : public AbstractCatalog {
   enum ColumnId {
     OID = 0,
     PRONAME = 1,
-    PROARGTYPES = 2,
-    PRORETTYPE = 3,
+    PRORETTYPE = 2,
+    PROARGTYPES = 3,
     PROLANG = 4,
     PROSRC = 5,
     // Add new columns here in creation order
@@ -78,9 +84,9 @@ class ProcCatalog : public AbstractCatalog {
 
   oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
 
-  std::string& TypeArrayToString(const std::vector<type::TypeId> types);
+  static std::string TypeArrayToString(const std::vector<type::TypeId> types);
 
-  std::vector<type::TypeId>& StringToTypeArray(const std::string &types);
+  static std::vector<type::TypeId> StringToTypeArray(const std::string &types);
 
   enum IndexId {
     PRIMARY_KEY = 0,

@@ -827,7 +827,7 @@ const FunctionData Catalog::GetFunction(
     result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
     if (result.func_ptr_ != nullptr) return result;
   }
-  throw new CatalogException("Failed to find function " + name);
+  throw CatalogException("Failed to find function " + name);
 }
 
 void Catalog::InitializeLanguages() {
@@ -836,7 +836,7 @@ void Catalog::InitializeLanguages() {
   if (!LanguageCatalog::GetInstance()->
       InsertLanguage("internal", pool_.get(), txn)) {
     txn_manager.AbortTransaction(txn);
-    throw new CatalogException("Failed to add language 'internal'");
+    throw CatalogException("Failed to add language 'internal'");
   }
   txn_manager.CommitTransaction(txn);
 }
@@ -858,13 +858,13 @@ void Catalog::InitializeFunctions() {
                 "Ascii", function::StringFunctions::Ascii, txn);
     AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, prolang,
                 "Chr", function::StringFunctions::Chr, txn);
+    AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                type::TypeId::VARCHAR, prolang,
+                "Concat", function::StringFunctions::Concat, txn);
     AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
                            type::TypeId::INTEGER},
                 type::TypeId::VARCHAR, prolang,
                 "Substr", function::StringFunctions::Substr, txn);
-    AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                type::TypeId::VARCHAR, prolang,
-                "Concat", function::StringFunctions::Concat, txn);
     AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
                 prolang,
                 "CharLength", function::StringFunctions::CharLength, txn);

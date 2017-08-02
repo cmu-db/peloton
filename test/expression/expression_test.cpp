@@ -38,6 +38,8 @@ class ExpressionTests : public PelotonTest {};
 
 // A simple test to make sure function expressions are filled in correctly
 TEST_F(ExpressionTests, FunctionExpressionTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
   // these will be gc'd by substr
   auto str = expression::ExpressionUtil::ConstantValueFactory(
       type::ValueFactory::GetVarcharValue("test123"));
@@ -52,7 +54,7 @@ TEST_F(ExpressionTests, FunctionExpressionTest) {
   // throw an exception when we cannot find a function
   EXPECT_THROW(
       expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()),
-      peloton::Exception);
+      peloton::CatalogException);
   expression::ExpressionUtil::TransformExpression(nullptr, substr.get());
   // do a lookup (we pass null schema because there are no tuple value
   // expressions

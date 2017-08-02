@@ -71,12 +71,23 @@ void AbstractExpression::DeduceExpressionName() {
 
   auto op_str = ExpressionTypeToString(exp_type_, true);
   auto children_size = children_.size();
-  PL_ASSERT(children_size <= 2);
-  if (children_size == 2) {
-    expr_name_ =
-        GetChild(0)->expr_name_ + " " + op_str + " " + GetChild(1)->expr_name_;
-  } else if (children_size == 1) {
-    expr_name_ = op_str + " " + GetChild(0)->expr_name_;
+  if (exp_type_ == ExpressionType::FUNCTION) {
+    auto expr = (FunctionExpression*)this;
+    expr_name_ = expr->func_name_ + "(";
+    for (size_t i = 0; i < children_size; i++) {
+      if (i > 0) expr_name_.append(",");
+      expr_name_.append(GetChild(i)->expr_name_);
+    }
+    expr_name_.append(")");
+  }
+  else {
+    PL_ASSERT(children_size <= 2);
+    if (children_size == 2) {
+      expr_name_ =
+          GetChild(0)->expr_name_ + " " + op_str + " " + GetChild(1)->expr_name_;
+    } else if (children_size == 1) {
+      expr_name_ = op_str + " " + GetChild(0)->expr_name_;
+    }
   }
 }
 
