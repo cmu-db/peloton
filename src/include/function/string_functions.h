@@ -17,7 +17,7 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 
 class StringFunctions {
  public:

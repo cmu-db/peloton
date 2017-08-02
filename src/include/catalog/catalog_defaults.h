@@ -12,6 +12,7 @@
 
 #pragma once
 #include "type/types.h"
+
 namespace peloton {
 namespace catalog {
 
@@ -41,6 +42,8 @@ namespace catalog {
 #define TABLE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TABLE))
 #define INDEX_OID_MASK (static_cast<oid_t>(catalog::CatalogType::INDEX))
 #define TRIGGER_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TRIGGER))
+#define LANGUAGE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::LANGUAGE))
+#define PROC_OID_MASK (static_cast<oid_t>(catalog::CatalogType::PROC))
 
 // Reserved pg_catalog database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)
@@ -71,7 +74,10 @@ enum class CatalogType : uint32_t {
   INDEX = 3 << CATALOG_TYPE_OFFSET,
   COLUMN = 4 << CATALOG_TYPE_OFFSET,
   TRIGGER = 5 << CATALOG_TYPE_OFFSET,
+  LANGUAGE = 6 << CATALOG_TYPE_OFFSET,
+  PROC = 7 << CATALOG_TYPE_OFFSET,
   // To be added
 };
-}
-}
+
+}  // namespace catalog
+}  // namespace peloton

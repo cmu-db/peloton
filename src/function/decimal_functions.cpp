@@ -11,12 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "expression/abstract_expression.h"
-#include "expression/decimal_functions.h"
+#include "function/decimal_functions.h"
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 // Get square root of the value
 type::Value DecimalFunctions::Sqrt(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 1);

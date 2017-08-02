@@ -18,7 +18,7 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 class DecimalFunctions {
  public:
   static type::Value Sqrt(const std::vector<type::Value>& args);

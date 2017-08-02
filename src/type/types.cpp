@@ -604,60 +604,6 @@ std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
     case ExpressionType::SELECT_SUBQUERY: {
       return ("SELECT_SUBQUERY");
     }
-    case ExpressionType::SUBSTR: {
-      return ("SUBSTR");
-    }
-    case ExpressionType::ASCII: {
-      return ("ASCII");
-    }
-    case ExpressionType::OCTET_LEN: {
-      return ("OCTET_LEN");
-    }
-    case ExpressionType::CHAR: {
-      return ("CHAR");
-    }
-    case ExpressionType::CHAR_LEN: {
-      return ("CHAR_LEN");
-    }
-    case ExpressionType::SPACE: {
-      return ("SPACE");
-    }
-    case ExpressionType::REPEAT: {
-      return ("REPEAT");
-    }
-    case ExpressionType::POSITION: {
-      return ("POSITION");
-    }
-    case ExpressionType::LEFT: {
-      return ("LEFT");
-    }
-    case ExpressionType::RIGHT: {
-      return ("RIGHT");
-    }
-    case ExpressionType::CONCAT: {
-      return ("CONCAT");
-    }
-    case ExpressionType::LTRIM: {
-      return ("LTRIM");
-    }
-    case ExpressionType::RTRIM: {
-      return ("RTRIM");
-    }
-    case ExpressionType::BTRIM: {
-      return ("BTRIM");
-    }
-    case ExpressionType::REPLACE: {
-      return ("REPLACE");
-    }
-    case ExpressionType::OVERLAY: {
-      return ("OVERLAY");
-    }
-    case ExpressionType::EXTRACT: {
-      return ("EXTRACT");
-    }
-    case ExpressionType::DATE_TO_TIMESTAMP: {
-      return ("DATE_TO_TIMESTAMP");
-    }
     case ExpressionType::STAR: {
       return ("STAR");
     }
@@ -791,42 +737,6 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::ROW_SUBQUERY;
   } else if (upper_str == "SELECT_SUBQUERY") {
     return ExpressionType::SELECT_SUBQUERY;
-  } else if (upper_str == "SUBSTR") {
-    return ExpressionType::SUBSTR;
-  } else if (upper_str == "ASCII") {
-    return ExpressionType::ASCII;
-  } else if (upper_str == "OCTET_LEN") {
-    return ExpressionType::OCTET_LEN;
-  } else if (upper_str == "CHAR") {
-    return ExpressionType::CHAR;
-  } else if (upper_str == "CHAR_LEN") {
-    return ExpressionType::CHAR_LEN;
-  } else if (upper_str == "SPACE") {
-    return ExpressionType::SPACE;
-  } else if (upper_str == "REPEAT") {
-    return ExpressionType::REPEAT;
-  } else if (upper_str == "POSITION") {
-    return ExpressionType::POSITION;
-  } else if (upper_str == "LEFT") {
-    return ExpressionType::LEFT;
-  } else if (upper_str == "RIGHT") {
-    return ExpressionType::RIGHT;
-  } else if (upper_str == "CONCAT") {
-    return ExpressionType::CONCAT;
-  } else if (upper_str == "LTRIM") {
-    return ExpressionType::LTRIM;
-  } else if (upper_str == "RTRIM") {
-    return ExpressionType::RTRIM;
-  } else if (upper_str == "BTRIM") {
-    return ExpressionType::BTRIM;
-  } else if (upper_str == "REPLACE") {
-    return ExpressionType::REPLACE;
-  } else if (upper_str == "OVERLAY") {
-    return ExpressionType::OVERLAY;
-  } else if (upper_str == "EXTRACT") {
-    return ExpressionType::EXTRACT;
-  } else if (upper_str == "DATE_TO_TIMESTAMP") {
-    return ExpressionType::DATE_TO_TIMESTAMP;
   } else if (upper_str == "STAR") {
     return ExpressionType::STAR;
   } else if (upper_str == "PLACEHOLDER") {

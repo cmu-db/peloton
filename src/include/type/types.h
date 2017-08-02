@@ -232,45 +232,19 @@ enum class ExpressionType {
   ROW_SUBQUERY = 400,
   SELECT_SUBQUERY = 401,
 
-  // -----------------------------
-  // String operators
-  // -----------------------------
-  SUBSTR = 500,
-  ASCII = 501,
-  OCTET_LEN = 502,
-  CHAR = 503,
-  CHAR_LEN = 504,
-  SPACE = 505,
-  REPEAT = 506,
-  POSITION = 507,
-  LEFT = 508,
-  RIGHT = 509,
-  CONCAT = 510,
-  LTRIM = 511,
-  RTRIM = 512,
-  BTRIM = 513,
-  REPLACE = 514,
-  OVERLAY = 515,
-
-  // -----------------------------
-  // Date operators
-  // -----------------------------
-  EXTRACT = 600,
-  DATE_TO_TIMESTAMP = 601,
-
   //===--------------------------------------------------------------------===//
   // Parser
   //===--------------------------------------------------------------------===//
-  STAR = 700,
-  PLACEHOLDER = 701,
-  COLUMN_REF = 702,
-  FUNCTION_REF = 703,
-  TABLE_REF = 704,
+  STAR = 500,
+  PLACEHOLDER = 501,
+  COLUMN_REF = 502,
+  FUNCTION_REF = 503,
+  TABLE_REF = 504,
 
   //===--------------------------------------------------------------------===//
   // Misc
   //===--------------------------------------------------------------------===//
-  CAST = 900
+  CAST = 600
 };
 
 // When short_str is true, return a short version of ExpressionType string

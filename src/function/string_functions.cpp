@@ -13,12 +13,11 @@
 
 #include <string>
 
-#include "expression/abstract_expression.h"
-#include "expression/string_functions.h"
+#include "function/string_functions.h"
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 
 // ASCII code of the first character of the argument.
 type::Value StringFunctions::Ascii(const std::vector<type::Value>& args) {

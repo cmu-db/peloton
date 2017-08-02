@@ -18,7 +18,7 @@
 
 #include "common/harness.h"
 
-#include "expression/date_functions.h"
+#include "include/function/date_functions.h"
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
 #include "type/types.h"

@@ -16,11 +16,10 @@
 #include <vector>
 
 #include "common/logger.h"
-#include "expression/abstract_expression.h"
 #include "type/types.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 
 class DateFunctions {
  public:

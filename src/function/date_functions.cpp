@@ -9,20 +9,19 @@
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "expression/date_functions.h"
+#include "function/date_functions.h"
 
 #include <date/date.h>
 #include <inttypes.h>
 #include <date/iso_week.h>
 
 #include "common/logger.h"
-#include "expression/abstract_expression.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace expression {
+namespace function {
 
 // The arguments are contained in the args vector
 // (1) The first argument is the part of the date to extract
