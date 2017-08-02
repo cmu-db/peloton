@@ -501,5 +501,6 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
 }
 
 
+
 }  // End traffic_cop namespace
 }  // End peloton namespace
