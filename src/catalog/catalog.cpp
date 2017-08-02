@@ -825,8 +825,12 @@ const FunctionData Catalog::GetFunction(
     result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
     result.return_type_ = ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
     result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
-    if (result.func_ptr_ != nullptr) return result;
+    if (result.func_ptr_ != nullptr) {
+      txn_manager.CommitTransaction(txn);
+      return result;
+    }
   }
+  txn_manager.AbortTransaction(txn);
   throw CatalogException("Failed to find function " + name);
 }
 
