@@ -72,11 +72,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Test regular table name
   LOG_INFO("Parsing sql query");
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(nullptr));
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  binder->SetTxn(txn);
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
           "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -87,11 +86,12 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
       dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
 
-  oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
+  oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
   oid_t tableA_oid =
-      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "a")->GetOid();
+      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "a", txn)->GetOid();
   oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b")->GetOid();
+      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b", txn)->GetOid();
+  txn_manager.CommitTransaction(txn);
 
   // Check select_list
   LOG_INFO("Checking select list");
@@ -146,10 +146,9 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
-  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->SetTxn(txn);
+  binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -164,7 +163,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->SetTxn(txn);
+  binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
@@ -182,7 +181,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder->SetTxn(txn);
+  binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
