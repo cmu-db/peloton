@@ -15,15 +15,9 @@
 namespace peloton {
 namespace networking {
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/networking/packet_manager.cpp
-PacketManager::PacketReadState
-PostgresPacketManager::GetPacketFromBuffer(
-    Buffer &rbuf, std::unique_ptr <InputPacket> &rpkt) {
-=======
 ProtocolHandler::PacketReadState
 PostgresProtolHandler::GetPacketFromBuffer(
     Buffer& rbuf, std::unique_ptr<InputPacket>& rpkt) {
->>>>>>> rename frontend class:src/networking/postgres_protocol_handler.cpp
 
   if (rpkt_ == nullptr) {
     rpkt_ = std::make_unique<InputPacket>();
@@ -49,13 +43,8 @@ PostgresProtolHandler::GetPacketFromBuffer(
   return PacketDone;
 }
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/networking/packet_manager.cpp
-void PostgresPacketManager::GetSizeFromPktHeader(
-    size_t start_index, Buffer &rbuf) {
-=======
 void PostgresProtocolHandler::GetSizeFromPktHeader(
     size_t start_index, Buffer& rbuf) {
->>>>>>> rename frontend class:src/networking/postgres_protocol_handler.cpp
   rpkt_->len = 0;
   // directly converts from network byte order to little-endian
   for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
@@ -64,13 +53,8 @@ void PostgresProtocolHandler::GetSizeFromPktHeader(
   // packet size includes initial bytes read as well
 }
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/networking/packet_manager.cpp
-bool PostgresPacketManager::ReadPacketHeader(
-    Buffer &rbuf) {
-=======
 bool PostgresProtocolHandler::ReadPacketHeader(
     Buffer& rbuf) {
->>>>>>> rename frontend class:src/networking/postgres_protocol_handler.cpp
   // get packet size from the header
 
   if (!IsReadDataAvailable(initial_read_size_, rbuf)) {
@@ -112,12 +96,8 @@ bool PostgresProtocolHandler::ReadPacket(Buffer& rbuf) {
   return true;
 }
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/networking/packet_manager.cpp
-bool PostgresPacketManager::IsEndPacketSuppliment() {
-=======
 
 bool PostgresProtocolHandler::IsEndPacketSuppliment(){
->>>>>>> rename frontend class:src/networking/postgres_protocol_handler.cpp
   switch (rpkt_->msg_type) {
     case NetworkMessageType::CLOSE_COMMAND:
     case NetworkMessageType::TERMINATE_COMMAND:return true;

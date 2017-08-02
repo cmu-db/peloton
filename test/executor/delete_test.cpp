@@ -49,15 +49,11 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::vector<StatementResult> result;
 
   optimizer::Optimizer optimizer;
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
 
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
-=======
-  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
->>>>>>> rename frontend class
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -81,16 +77,10 @@ TEST_F(DeleteTests, VariousOperations) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
-=======
-  optimizer::Optimizer optimizer;
-  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
->>>>>>> rename frontend class
-
 //  optimizer::SimpleOptimizer optimizer;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::TypeId::INTEGER,

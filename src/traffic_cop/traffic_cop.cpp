@@ -93,35 +93,23 @@ ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
       return ResultType::FAILURE;
     }
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
     // initialize the current result as success
-    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+    traffic_cop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
-=======
-  // initialize the current result as success
-  traffic_cop_txn_state_.emplace(txn, ResultType::SUCCESS);
->>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
   return ResultType::SUCCESS;
 }
 
 ResultType TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
+  if (traffic_cop_txn_state_.empty()) return ResultType::NOOP;
+  auto &curr_state = traffic_cop_txn_state_.top();
+  traffic_cop_txn_state_.pop();
   auto txn = curr_state.first;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // I catch the exception (ex. table not found) explicitly,
   // If this exception if caused by a query in a transaction,
   // I will block following queries in that transaction until 'COMMIT' or 'ROLLBACK'
   // After receive 'COMMIT', see if it is rollback or really commit.
-=======
-  if (traffic_cop_txn_state_.empty()) return ResultType::NOOP;
-  auto &curr_state = traffic_cop_txn_state_.top();
-  traffic_cop_txn_state_.pop();
-  // commit the txn only if it has not aborted already
->>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
     return txn_manager.CommitTransaction(txn);
@@ -241,12 +229,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   bool init_failure = false;
   executor::ExecuteResult p_status;
   auto &curr_state = GetCurrentTxnState();
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
   // check and begin txn here, partly because tests directly call ExecuteStatementPlan
-  if (tcop_txn_state_.empty()) {
-=======
   if (traffic_cop_txn_state_.empty()) {
->>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
@@ -570,12 +554,5 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
                          field_size);
 }
 
-
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796:src/tcop/tcop.cpp
-}  // namespace tcop
-}  // namespace peloton
-=======
-
 }  // End traffic_cop namespace
 }  // End peloton namespace
->>>>>>> rename frontend class:src/traffic_cop/traffic_cop.cpp

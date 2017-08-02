@@ -23,7 +23,6 @@
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
 #include "traffic_cop/traffic_cop.h"
-
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
 
@@ -43,13 +42,8 @@ TEST_F(CopyTests, Copying) {
   catalog->CreateDatabase("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-=======
-  optimizer::Optimizer optimizer;
   auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
->>>>>>> rename frontend class
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);

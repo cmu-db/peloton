@@ -16,12 +16,7 @@
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
-#include "tcop/tcop.h"
-=======
 #include "traffic_cop/traffic_cop.h"
-
->>>>>>> rename frontend class
 #include <random>
 #include "sql/testing_sql_util.h"
 
@@ -129,15 +124,10 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string error_message;
   int rows_changed;
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   // execute the query using tcop
   auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
-=======
-  // execute the query using traffic_cop
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
->>>>>>> rename frontend class
                                               rows_changed, error_message);
 
 

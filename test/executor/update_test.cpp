@@ -152,14 +152,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-<<<<<<< da9ec626db0345729f2375b80943d7756b729796
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-=======
-  optimizer::Optimizer optimizer;
   auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
->>>>>>> rename frontend class
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::TypeId::INTEGER,
