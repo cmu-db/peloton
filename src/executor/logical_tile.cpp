@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
 #include "executor/logical_tile.h"
 
 #include "catalog/schema.h"
