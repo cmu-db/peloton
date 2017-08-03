@@ -10,10 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "vector"
+#include <vector>
 #include "boost/algorithm/string/join.hpp"
 #include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
@@ -22,9 +21,11 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "concurrency/transaction_manager.h"
+#include "type/types.h"
+#include "parser/pg_trigger.h"
 
 namespace peloton {
-namespace commands {
+namespace trigger {
 
 class Trigger;
 
@@ -35,21 +36,31 @@ class TriggerData {
   int16_t tg_event;
   Trigger *tg_trigger;
   storage::Tuple *tg_trigtuple; // i.e. old tuple
-  storage::Tuple * tg_newtuple;
+  storage::Tuple *tg_newtuple;
 
-  TriggerData(int16_t tg_event, Trigger *tg_trigger, storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple) :
-    tg_event(tg_event), tg_trigger(tg_trigger), tg_trigtuple(tg_trigtuple), tg_newtuple(tg_newtuple) {}
+  TriggerData(int16_t tg_event, Trigger *tg_trigger,
+              storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple) :
+    tg_event(tg_event),
+    tg_trigger(tg_trigger),
+    tg_trigtuple(tg_trigtuple),
+    tg_newtuple(tg_newtuple) {}
 };
 
 class Trigger {
  public:
   Trigger(const planner::CreatePlan& plan);
+
+  Trigger(std::string name,
+          int16_t type,
+          std::string function_name,
+          std::string arguments,
+          const void *fire_condition);
+
   Trigger(const Trigger& that) {
     trigger_name = that.trigger_name;
     trigger_funcname = that.trigger_funcname;
     trigger_args = that.trigger_args;
     trigger_columns = that.trigger_columns;
-    // trigger_when = that.trigger_when->Copy();
     if (that.trigger_when) {
       trigger_when = that.trigger_when->Copy();
     } else {
@@ -57,99 +68,88 @@ class Trigger {
     }
     trigger_type = that.trigger_type;
   }
+
   ~Trigger() {
     if (trigger_when) {
       delete trigger_when;
     }
   }
-  Trigger(std::string name,
-          UNUSED_ATTRIBUTE std::string function_name,
-          UNUSED_ATTRIBUTE std::string arguments,
-          UNUSED_ATTRIBUTE std::string fire_condition);
-  Trigger(std::string name,
-          int16_t type,
-          UNUSED_ATTRIBUTE std::string function_name,
-          UNUSED_ATTRIBUTE std::string arguments,
-          UNUSED_ATTRIBUTE std::string fire_condition);
-  inline int16_t GetTriggerType() { return trigger_type; }
-  inline std::string GetTriggerName() { return trigger_name; }
+
+  int16_t GetTriggerType() { return trigger_type; }
+
+  std::string GetTriggerName() { return trigger_name; }
+
   storage::Tuple* ExecCallTriggerFunc(TriggerData &trigger_data);
 
-  inline std::string GetFuncname() {
-    return boost::algorithm::join(trigger_funcname, ",");
-  }
+  std::string GetFuncname() { return trigger_funcname; }
 
-  inline std::string GetArgs() {
+  std::string GetArgs() {
     return boost::algorithm::join(trigger_args, ",");
   }
 
-  //TODO
-  inline std::string GetWhen() {return "function_arguments";}
+  expression::AbstractExpression* GetTriggerWhen() const {
+    return trigger_when;
+  }
 
   //only apply to the simple case: old.balance != new.balance
-  std::string SerializeWhen(oid_t table_oid, concurrency::Transaction *txn);
-  expression::AbstractExpression* DeserializeWhen(std::string fire_condition);
-
-  inline expression::AbstractExpression* GetTriggerWhen() const {return trigger_when;}
+  void SerializeWhen(SerializeOutput &output, oid_t table_oid,
+                     concurrency::Transaction *txn);
+  expression::AbstractExpression* DeserializeWhen(SerializeInput &input);
 
  private:
   std::string trigger_name;
-  std::vector<std::string> trigger_funcname;
+  std::string trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
   expression::AbstractExpression* trigger_when = nullptr;
-  int16_t trigger_type;  // information about row, timing, events, access by
-                         // pg_trigger
+  // information about row, timing, events access by pg_trigger
+  int16_t trigger_type;
 };
 
-typedef enum TriggerType {
-  BEFORE_INSERT_ROW = 0,
-  BEFORE_INSERT_STATEMENT,
-  BEFORE_UPDATE_ROW,
-  BEFORE_UPDATE_STATEMENT,
-  BEFORE_DELETE_ROW,
-  BEFORE_DELETE_STATEMENT,
-  AFTER_INSERT_ROW,
-  AFTER_INSERT_STATEMENT,
-  AFTER_UPDATE_ROW,
-  AFTER_UPDATE_STATEMENT,
-  AFTER_DELETE_ROW,
-  AFTER_DELETE_STATEMENT,
-  TRIGGER_TYPE_MAX  // for counting the number of trigger types
-} EnumTriggerType;
 
 class TriggerList {
  public:
   TriggerList() {/*do nothing*/}
+
   inline bool HasTriggerType(EnumTriggerType type) const {
     return types_summary[type];
   }
-  inline int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
+
+  int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
+
   void AddTrigger(Trigger trigger);
+
   void UpdateTypeSummary(int16_t type);
+
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
+
+  TriggerType ToTriggerType(int16_t trigger_type) {
+    int type = 0;
+    type |= (trigger_type & TRIGGER_TYPE_ROW) ? TRIGGER_ROW : TRIGGER_STATEMENT;
+    type |= (trigger_type & TRIGGER_TYPE_BEFORE) ? TRIGGER_BEFORE : TRIGGER_AFTER;
+    type |= (trigger_TYPE & TRIGGER_TYPE_INSERT) ? TRIGGER_INSERT : 0;
+    type |= (trigger_TYPE & TRIGGER_TYPE_UPDATE) ? TRIGGER_UPDATE : 0;
+    type |= (trigger_TYPE & TRIGGER_TYPE_DELETE) ? TRIGGER_DELETE : 0;
+    return static_cast<TriggerType>(type);
+  }
 
   // Execute different types of triggers
   // B/A means before or after
   // R/S means row level or statement level
   // Insert/Update/Delete are events that invoke triggers
-  storage::Tuple* ExecBRInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
-  storage::Tuple* ExecARInsertTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
-  bool ExecBRUpdateTriggers();
-  bool ExecARUpdateTriggers(storage::Tuple *new_tuple, storage::Tuple *old_tuple, executor::ExecutorContext *executor_context_);
-  bool ExecBRDeleteTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
-  bool ExecARDeleteTriggers(storage::Tuple *new_tuple, executor::ExecutorContext *executor_context_);
-  void ExecBSInsertTriggers();
-  void ExecASInsertTriggers();
-  bool ExecBSUpdateTriggers();
-  bool ExecASUpdateTriggers();
-  bool ExecBSDeleteTriggers();
-  bool ExecASDeleteTriggers();
+
+  bool ExecTriggers(TriggerType exec_type,
+                    storage::Tuple *new_tuple = nullptr,
+                    executor::ExecutorContext *executor_context_ = nullptr,
+                    storage::Tuple *old_tuple = nullptr,
+                    storage::Tuple **resule);
+
  private:
   // types_summary contains a boolean for each kind of EnumTriggerType, this is
   // used for facilitate checking weather there is a trigger to be invoked
   bool types_summary[TRIGGER_TYPE_MAX] = {false};
   std::vector<Trigger> triggers;
 };
-}
-}
+
+}  // namespace trigger
+}  // namespace peloton

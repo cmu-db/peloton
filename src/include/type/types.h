@@ -936,6 +936,34 @@ typedef enum LayoutType {
 } LayoutType;
 
 //===--------------------------------------------------------------------===//
+// Trigger Types
+//===--------------------------------------------------------------------===//
+
+const int TRIGGER_AFTER = (1<<3);
+const int TRIGGER_INSERT = (0<<1);
+const int TRIGGER_UPDATE = (1<<1);
+const int TRIGGER_DELETE = (2<<1);
+const int TRIGGER_ROW = 0;
+const int TRIGGER_STATEMENT = 1;
+
+enum class TriggerType {
+  BEFORE_INSERT_ROW       = TRIGGER_BEFORE | TRIGGER_INSERT | TRIGGER_ROW,
+  BEFORE_INSERT_STATEMENT = TRIGGER_BEFORE | TRIGGER_INSERT | TRIGGER_STATEMENT,
+  BEFORE_UPDATE_ROW       = TRIGGER_BEFORE | TRIGGER_UPDATE | TRIGGER_ROW,
+  BEFORE_UPDATE_STATEMENT = TRIGGER_BEFORE | TRIGGER_UPDATE | TRIGGER_STATEMENT,
+  BEFORE_DELETE_ROW       = TRIGGER_BEFORE | TRIGGER_DELETE | TRIGGER_ROW,
+  BEFORE_DELETE_STATEMENT = TRIGGER_BEFORE | TRIGGER_DELETE | TRIGGER_STATEMENT,
+  AFTER_INSERT_ROW        = TRIGGER_AFTER | TRIGGER_INSERT | TRIGGER_ROW,
+  AFTER_INSERT_STATEMENT  = TRIGGER_AFTER | TRIGGER_INSERT | TRIGGER_STATEMENT,
+  AFTER_UPDATE_ROW        = TRIGGER_AFTER | TRIGGER_UPDATE | TRIGGER_ROW,
+  AFTER_UPDATE_STATEMENT  = TRIGGER_AFTER | TRIGGER_UPDATE | TRIGGER_STATEMENT,
+  AFTER_DELETE_ROW        = TRIGGER_AFTER | TRIGGER_DELETE | TRIGGER_ROW,
+  AFTER_DELETE_STATEMENT  = TRIGGER_AFTER | TRIGGER_DELETE | TRIGGER_STATEMENT,
+};
+
+const int TRIGGER_TYPE_MAX = 16;
+
+//===--------------------------------------------------------------------===//
 // Statistics Types
 //===--------------------------------------------------------------------===//
 

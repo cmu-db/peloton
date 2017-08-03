@@ -34,7 +34,7 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog_defaults.h"
-#include "commands/trigger.h"
+#include "trigger/trigger.h"
 
 #define TRIGGER_CATALOG_NAME "pg_trigger"
 
