@@ -2,26 +2,20 @@
 //
 //                         Peloton
 //
-// tuple_runtime_proxy.h
+// pool_proxy.cpp
 //
-// Identification: src/include/codegen/proxy/tuple_runtime_proxy.h
+// Identification: src/codegen/proxy/pool_proxy.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 #include "codegen/proxy/pool_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(TupleRuntime) {
-  DECLARE_METHOD(CreateVarlen);
-};
+DEFINE_TYPE(AbstractPool, "type::AbstractPool", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton

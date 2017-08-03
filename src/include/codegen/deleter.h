@@ -24,7 +24,7 @@ class Transaction;
 
 namespace executor {
 class ExecutorContext;
-}  // namespace executork
+}  // namespace executor
 
 namespace storage {
 class DataTable;
@@ -49,7 +49,7 @@ class Deleter {
 
  private:
   // Can't construct
-  Deleter() : txn_(nullptr), table_(nullptr) {}
+  Deleter() : txn_(nullptr), table_(nullptr), executor_context_(nullptr) {}
 
  private:
   // The transaction deletions happen in

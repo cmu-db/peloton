@@ -42,9 +42,9 @@ void Tuple::Generate(CodeGen &codegen, RowBatch::Row &row,
       case peloton::type::TypeId::VARBINARY:
       case peloton::type::TypeId::VARCHAR: {
         PL_ASSERT(v.GetLength() != nullptr);
-        auto func = TupleRuntimeProxy::_CreateVarArea::GetFunction(codegen);
         auto val_ptr = codegen->CreateBitCast(ptr, codegen.CharPtrType());
-        codegen.CallFunc(func, {v.GetValue(), v.GetLength(), val_ptr, pool});
+        codegen.Call(TupleRuntimeProxy::CreateVarlen,
+                     {v.GetValue(), v.GetLength(), val_ptr, pool});
         break;
       }
       default: {
