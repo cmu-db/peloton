@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <sys/time.h>
+
 #include "logging/dummy_log_manager.h"
 #include "logging/phylog_checkpoint_manager.h"
 #include "logging/dummy_checkpoint_manager.h"

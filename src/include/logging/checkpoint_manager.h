@@ -132,7 +132,7 @@ protected:
 
   std::unique_ptr<std::thread> central_checkpoint_thread_;
 
-  std::string ckpt_pepoch_dir_;
+  std::string ckpt_pepoch_dir_ = "/home/paulo/log";
 
   const std::string ckpt_pepoch_filename_ = "checkpoint_pepoch";
 
