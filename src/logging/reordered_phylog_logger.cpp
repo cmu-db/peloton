@@ -510,7 +510,7 @@ void ReorderedPhyLogLogger::Run() {
           continue;
         }
 
-        for (size_t epoch_id = last_persist_eid + 1; epoch_id < worker_current_eid; ++epoch_id) {
+        for (size_t epoch_id = last_persist_eid + 1; epoch_id <= worker_current_eid; ++epoch_id) {
 
           size_t epoch_idx = epoch_id % epoch_manager.GetEpochQueueCapacity();
           // get all the buffers that are associated with the epoch.

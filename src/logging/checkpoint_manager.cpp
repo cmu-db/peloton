@@ -10,14 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/logging/logging_util.h"
-#include "backend/storage/database.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/concurrency/epoch_manager_factory.h"
+#include "logging/checkpoint_manager.h"
+#include "logging/logging_util.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
+#include "concurrency/transaction_manager.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
+#include "type/ephemeral_pool.h"
+#include "common/timer.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -56,7 +60,7 @@ namespace logging {
         break;
       }
 
-      CopySerializeInputBE length_decode((const void *) &length_buf, 4);
+      CopySerializeInput length_decode((const void *) &length_buf, 4);
       length = length_decode.ReadInt();
 
       if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) buffer.get(), length) == false) {
@@ -65,7 +69,7 @@ namespace logging {
         return false;
       }
     }
-    CopySerializeInputBE record_decode((const void *) buffer.get(), length);
+    CopySerializeInput record_decode((const void *) buffer.get(), length);
 
     size_t persist_epoch_id = (size_t) record_decode.ReadLong();
 
@@ -131,7 +135,7 @@ namespace logging {
     // after obtaining the database structures, we can start recovering checkpoints in parallel.
     recovery_pools_.resize(recovery_thread_count_);
     for (size_t i = 0; i < recovery_thread_count_; ++i) {
-      recovery_pools_[i].reset(new VarlenPool(BACKEND_TYPE_MM)); 
+      recovery_pools_[i].reset(new type::EphemeralPool()); //BACKEND_TYPE_MM
     }
     
     std::vector<std::unique_ptr<std::thread>> recovery_threads;
@@ -212,15 +216,17 @@ namespace logging {
       ++count;
       if (count == checkpoint_interval_ || is_init == true) {
 
-        LOG_INFO("start performing checkpoint...");
+        LOG_DEBUG("start performing checkpoint...");
 
         Timer<std::milli> checkpoint_timer;
         checkpoint_timer.Start();
         
         is_init = false;
         // first of all, we should get a snapshot txn id.
-        auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-        cid_t begin_cid = epoch_manager.EnterReadOnlyEpoch();
+        auto transaction = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SNAPSHOT);
+        //auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+        cid_t begin_cid = transaction->GetEpochId();
+        //epoch_manager.EnterEpoch(transaction->GetThreadId(),);
 
 
 
@@ -229,13 +235,13 @@ namespace logging {
         // this guarantees that the workload can be partitioned consistently.
         std::vector<std::vector<size_t>> database_structures;
 
-        auto &catalog_manager = catalog::Manager::GetInstance();
-        auto database_count = catalog_manager.GetDatabaseCount();
+        auto storage_manager = storage::StorageManager::GetInstance();
+        auto database_count = storage_manager->GetDatabaseCount();
 
         database_structures.resize(database_count);
 
         for (oid_t database_idx = 0; database_idx < database_count; ++database_idx) {
-          auto database = catalog_manager.GetDatabase(database_idx);
+          auto database = storage_manager->GetDatabaseWithOid(database_idx);
           auto table_count = database->GetTableCount();
 
           database_structures[database_idx].resize(table_count);
@@ -251,8 +257,8 @@ namespace logging {
         PerformCheckpoint(begin_cid, database_structures);
         size_t epoch_id = begin_cid >> 32;
         // exit epoch.
-        epoch_manager.ExitReadOnlyEpoch(epoch_id);
-
+        //epoch_manager.ExitReadOnlyEpoch(epoch_id);
+        concurrency::TransactionManagerFactory::GetInstance().EndTransaction(transaction);
 
 
 
@@ -357,11 +363,11 @@ namespace logging {
 
   void CheckpointManager::PerformCheckpointThread(const size_t &thread_id, const cid_t &begin_cid, const std::vector<std::vector<size_t>> &database_structures, FileHandle ***file_handles) {
 
-    auto &catalog_manager = catalog::Manager::GetInstance();
+    auto storage_manager = storage::StorageManager::GetInstance();
 
     // loop all databases
     for (oid_t database_idx = 0; database_idx < database_structures.size(); database_idx++) {
-      auto database = catalog_manager.GetDatabase(database_idx);
+      auto database = storage_manager->GetDatabaseWithOid(database_idx);
       
       // loop all tables
       for (oid_t table_idx = 0; table_idx < database_structures[database_idx].size(); table_idx++) {
@@ -382,13 +388,11 @@ namespace logging {
 
     cid_t current_cid = (epoch_id << 32) | 0x0;
 
-    concurrency::current_txn = new concurrency::Transaction(thread_id, current_cid);
+    auto storage_manager = storage::StorageManager::GetInstance();
 
-    auto &catalog_manager = catalog::Manager::GetInstance();
-    
     // loop all databases
     for (oid_t database_idx = 0; database_idx < database_structures.size(); database_idx++) {
-      auto database = catalog_manager.GetDatabase(database_idx);
+      auto database = storage_manager->GetDatabaseWithOid(database_idx);
     
       // loop all tables
       for (oid_t table_idx = 0; table_idx < database_structures[database_idx].size(); table_idx++) {
@@ -400,9 +404,6 @@ namespace logging {
 
       } // end table looping
     } // end database looping
-
-    delete concurrency::current_txn;
-    concurrency::current_txn = nullptr;
   }
 
 

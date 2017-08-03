@@ -103,7 +103,7 @@ public:
   }
 
   // Worker side logic
-  virtual void RegisterWorker() override;
+  virtual void RegisterWorker(size_t thread_idccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc) override;
   virtual void DeregisterWorker() override;
 
   virtual void StartTxn(concurrency::Transaction *txn) override ;
@@ -138,7 +138,7 @@ private:
   std::unique_ptr<std::thread> pepoch_thread_;
   volatile bool is_running_;
 
-  std::string pepoch_dir_;
+  std::string pepoch_dir_ = "/home/paulo/log";
 
   const std::string pepoch_filename_ = "pepoch";
 };

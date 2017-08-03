@@ -757,6 +757,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
+  log_manager.RegisterWorker(current_txn->GetThreadId());
+  log_manager.StartTxn(current_txn);
 
   cid_t end_commit_id = current_txn->GetCommitId();
   eid_t epoch_id = current_txn->GetEpochId();

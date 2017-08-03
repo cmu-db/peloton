@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/logging/durability_factory.h"
-#include "backend/logging/worker_context.h"
-#include "backend/concurrency/epoch_manager_factory.h"
+#include "logging/durability_factory.h"
+#include "logging/worker_context.h"
+#include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
 namespace logging {
 
-  LoggingType DurabilityFactory::logging_type_ = LOGGING_TYPE_INVALID;
+  LoggingType DurabilityFactory::logging_type_ = LoggingType::INVALID;
 
   CheckpointType DurabilityFactory::checkpoint_type_ = CHECKPOINT_TYPE_INVALID;
 
@@ -46,24 +46,13 @@ namespace logging {
       return;
     }
 
-    uint64_t commit_time_usec = GetCurrentTimeInUsec();
+//    uint64_t commit_time_usec = GetCurrentTimeInUsec();
     auto upper_itr = worker_ctx->pending_txn_timers.upper_bound(persist_eid);
     auto itr = worker_ctx->pending_txn_timers.begin();
     while (itr != upper_itr) {
-      uint64_t sum = 0;
-      size_t count = 0;
 
-      for (uint64_t txn_start_us : itr->second) {
-        PL_ASSERT(commit_time_usec > txn_start_us);
-        auto lat = commit_time_usec - txn_start_us;
-        worker_ctx->txn_summary.AddTxnLatReport(lat, (timer_type_ == TIMER_DISTRIBUTION));
-        sum += lat;
-        count += 1;
-      }
 
-      if (generate_detailed_csv_ == true) {
-        worker_ctx->txn_summary.AddEpochLatReport(sum, count);
-      }
+
 
       itr = worker_ctx->pending_txn_timers.erase(itr);
     }
