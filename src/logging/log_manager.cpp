@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "backend/logging/durability_factory.h"
-#include "backend/logging/log_manager.h"
-#include "backend/storage/tile_group_header.h"
+#include "logging/durability_factory.h"
+#include "logging/log_manager.h"
+#include "storage/tile_group_header.h"
 
 namespace peloton {
 namespace logging {
@@ -30,7 +30,7 @@ namespace logging {
     PL_ASSERT(tl_worker_ctx->current_commit_eid == MAX_EID || tl_worker_ctx->current_commit_eid <= txn_eid);
 
     // Handle the epoch id
-    if (tl_worker_ctx->current_commit_eid == INVALID_EPOCH_ID
+    if (tl_worker_ctx->current_commit_eid == INVALID_EID
       || tl_worker_ctx->current_commit_eid != txn_eid) {
       // if this is a new epoch, then write to a new buffer
       tl_worker_ctx->current_commit_eid = txn_eid;
@@ -38,7 +38,7 @@ namespace logging {
     }
 
     // Handle the commit id
-    cid_t txn_cid = txn->GetEndCommitId();
+    cid_t txn_cid = txn->GetCommitId();
     tl_worker_ctx->current_cid = txn_cid;
   }
 
@@ -48,15 +48,15 @@ namespace logging {
     DurabilityFactory::StopTimersByPepoch(glob_peid, tl_worker_ctx);
   }
 
-  void LogManager::MarkTupleCommitEpochId(storage::TileGroupHeader *tg_header, oid_t tuple_slot) {
-    if (DurabilityFactory::GetLoggingType() == LOGGING_TYPE_INVALID) {
+  /*void LogManager::MarkTupleCommitEpochId(storage::TileGroupHeader *tg_header, oid_t tuple_slot) {
+    if (DurabilityFactory::GetLoggingType() == LoggingType::INVALID) {
       return;
     }
 
     PL_ASSERT(tl_worker_ctx != nullptr);
-    PL_ASSERT(tl_worker_ctx->current_commit_eid != MAX_EID && tl_worker_ctx->current_commit_eid != INVALID_EPOCH_ID);
+    PL_ASSERT(tl_worker_ctx->current_commit_eid != MAX_EID && tl_worker_ctx->current_commit_eid != INVALID_EID);
     tg_header->SetLoggingCommitEpochId(tuple_slot, tl_worker_ctx->current_commit_eid);
-  }
+  }*/
 
 }
 }

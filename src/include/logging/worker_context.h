@@ -32,9 +32,9 @@
 #include "common/timer.h"
 
 namespace peloton {
-  namespace concurrency {
+ /* namespace concurrency {
     extern thread_local size_t tl_txn_worker_id;
-  }
+  }*/
 
 namespace logging {
 
@@ -163,7 +163,7 @@ namespace logging {
   // the worker context is constructed when registering the worker to the logger.
   struct WorkerContext {
 
-    WorkerContext(oid_t id)
+    WorkerContext(oid_t id, oid_t txn_id)
       : per_epoch_buffer_ptrs(concurrency::EpochManager::GetEpochQueueCapacity()),
         buffer_pool(id), 
         output_buffer(),
@@ -177,8 +177,8 @@ namespace logging {
         pending_txn_timers(),
         per_epoch_dependencies(concurrency::EpochManager::GetEpochQueueCapacity()) {
       LOG_TRACE("Create worker %d", (int) worker_id);
-      PL_ASSERT(concurrency::tl_txn_worker_id != INVALID_TXN_ID);
-      transaction_worker_id = concurrency::tl_txn_worker_id;
+      //PL_ASSERT(concurrency::tl_txn_worker_id != INVALID_TXN_ID);
+      transaction_worker_id = txn_id;
     }
 
     ~WorkerContext() {

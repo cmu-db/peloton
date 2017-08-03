@@ -29,11 +29,11 @@ namespace logging {
 bool LoggingUtil::CreateDirectory(const char *dir_name, int mode) {
   int return_val = mkdir(dir_name, mode);
   if (return_val == 0) {
-    LOG_TRACE("Created directory %s successfully", dir_name);
+    LOG_DEBUG("Created directory %s successfully", dir_name);
   } else if (errno == EEXIST) {
-    LOG_TRACE("Directory %s already exists", dir_name);
+    LOG_DEBUG("Directory %s already exists", dir_name);
   } else {
-    LOG_TRACE("Creating directory failed: %s", strerror(errno));
+    LOG_DEBUG("Creating directory failed: %s", strerror(errno));
     return false;
   }
   return true;

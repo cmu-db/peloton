@@ -36,7 +36,7 @@ public:
   virtual const std::vector<std::string> &GetDirectories() final { return dirs_; }
 
   // Worker side logic
-  virtual void RegisterWorker() final {};
+  virtual void RegisterWorker(size_t thread_id UNUSED_ATTRIBUTE) final {};
   virtual void DeregisterWorker() final {};
 
   virtual void DoRecovery(const size_t &begin_eid UNUSED_ATTRIBUTE) final {};
