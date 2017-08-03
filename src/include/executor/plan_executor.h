@@ -6,7 +6,7 @@
 //
 // Identification: src/include/executor/plan_executor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,9 +15,13 @@
 #include "common/statement.h"
 #include "executor/abstract_executor.h"
 #include "type/types.h"
-#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
+
+namespace concurrency {
+class Transaction;
+}
+
 namespace executor {
 
 //===----------------------------------------------------------------------===//
@@ -78,6 +82,7 @@ class PlanExecutor {
    * @param plan and params
    * @return the number of tuple it executes and logical_tile_list
    */
+  // FIXME This should be removed when PelotonService is removed/rewritten
   static int ExecutePlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);

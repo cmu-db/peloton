@@ -10,6 +10,7 @@
 #include "optimizer/operator_expression.h"
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "util/string_util.h"
 
 namespace peloton {

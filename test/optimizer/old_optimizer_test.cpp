@@ -4,6 +4,7 @@
 
 #include "catalog/catalog.h"
 #include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"

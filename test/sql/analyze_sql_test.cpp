@@ -15,6 +15,7 @@
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
 #include "optimizer/stats/stats_storage.h"
