@@ -26,10 +26,10 @@ namespace logging {
 // register worker threads to the log manager before execution.
 // note that we always construct logger prior to worker.
 // this function is called by each worker thread.
-void ReorderedPhyLogLogManager::RegisterWorker() {
-  PL_ASSERT(tl_worker_ctx == nullptr);
+void ReorderedPhyLogLogManager::RegisterWorker(size_t thread_id) {
+  //PL_ASSERT(tl_worker_ctx == nullptr);
   // shuffle worker to logger
-  tl_worker_ctx = new WorkerContext(worker_count_++);
+  tl_worker_ctx = new WorkerContext(worker_count_++, thread_id);
   size_t logger_id = HashToLogger(tl_worker_ctx->worker_id);
 
   loggers_[logger_id]->RegisterWorker(tl_worker_ctx);
@@ -46,7 +46,7 @@ void ReorderedPhyLogLogManager::DeregisterWorker() {
 
 void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
   WorkerContext *ctx = tl_worker_ctx;
-  LOG_TRACE("Worker %d write a record", ctx->worker_id);
+  LOG_DEBUG("Worker %d write a record", ctx->worker_id);
 
   PL_ASSERT(ctx);
 
@@ -193,7 +193,7 @@ void ReorderedPhyLogLogManager::DoRecovery(const size_t &begin_eid){
   size_t recovery_thread_per_logger = (size_t) ceil(recovery_thread_count_ * 1.0 / logger_count_);
 
   for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    LOG_TRACE("Start logger %d for recovery", (int) logger_id);
+    LOG_DEBUG("Start logger %d for recovery", (int) logger_id);
     // TODO: properly set this two eid
     loggers_[logger_id]->StartRecovery(begin_eid, end_eid, recovery_thread_per_logger);
   }
@@ -217,7 +217,7 @@ void ReorderedPhyLogLogManager::DoRecovery(const size_t &begin_eid){
 
 void ReorderedPhyLogLogManager::StartLoggers() {
   for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    LOG_TRACE("Start logger %d", (int) logger_id);
+    LOG_DEBUG("Start logger %d", (int) logger_id);
     loggers_[logger_id]->StartLogging();
   }
   is_running_ = true;
@@ -294,7 +294,7 @@ size_t ReorderedPhyLogLogManager::RecoverPepoch() {
 
   while (true) {
     if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &persist_epoch_id, sizeof(persist_epoch_id)) == false) {
-      LOG_TRACE("Reach the end of the log file");
+      LOG_DEBUG("Reach the end of the log file");
       break;
     }
     //printf("persist_epoch_id = %d\n", (int)persist_epoch_id);

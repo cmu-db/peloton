@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/expression/container_tuple.h"
-#include "backend/catalog/manager.h"
-#include "backend/logging/log_record.h"
+#include "common/container_tuple.h"
+#include "catalog/manager.h"
+#include "logging/log_record.h"
 
 namespace peloton {
 namespace logging {

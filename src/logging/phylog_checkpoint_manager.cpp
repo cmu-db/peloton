@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <concurrency/transaction_manager_factory.h>
+#include "concurrency/transaction_manager_factory.h"
 #include "logging/phylog_checkpoint_manager.h"
 #include "logging/logging_util.h"
 #include "storage/database.h"
@@ -19,6 +19,7 @@
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/epoch_manager_factory.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace logging {
@@ -40,12 +41,12 @@ namespace logging {
       while (true) {
         // Read the frame length
         if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &tuple_size, sizeof(size_t)) == false) {
-          LOG_TRACE("Reach the end of the log file");
+          LOG_DEBUG("Reach the end of the log file");
           break;
         }
 
         if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) buffer, tuple_size) == false) {
-          LOG_ERROR("Unexpected file eof");
+          LOG_DEBUG("Unexpected file eof");
           // TODO: How to handle damaged log file?
         }
         
@@ -62,14 +63,14 @@ namespace logging {
         // fprintf(stdout, "\n");
         // fclose(fp);
 
-        ItemPointer *itemptr_ptr = nullptr;
+        //ItemPointer *itemptr_ptr = nullptr;
         ItemPointer location;
         location = target_table->InsertTuple(tuple.get());
 
         if (location.block == INVALID_OID) {
           LOG_ERROR("insertion failed!");
         }
-        auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
+        auto tile_group_header = target_table->GetTileGroup(location.block)->GetHeader();
 
     //    concurrency::TransactionManagerFactory::GetInstance().InitInsertedTupleForRecovery(tile_group_header, location.offset, itemptr_ptr);
 
@@ -113,11 +114,22 @@ namespace logging {
 
         // check tuple version visibility
         if (IsVisible(tile_group_header, tuple_id, begin_cid) == true) {
-          
+          std::vector<catalog::Column> columns;
           // persist this version.
-          expression::ContainerTuple<storage::TileGroup> container_tuple(
-            tile_group.get(), tuple_id);
-          
+            for(auto schema : tile_group->GetTileSchemas()){
+                for(auto column : schema.GetColumns()){
+                    columns.push_back(column);
+                }
+            }
+
+            expression::ContainerTuple<storage::TileGroup> container_tuple(
+              tile_group.get(), tuple_id
+            );
+            output_buffer.Reset();
+            for(oid_t oid = 0; oid < columns.size(); oid++){
+              auto val = container_tuple.GetValue(oid);
+              val.SerializeTo(output_buffer);
+            }
           // FILE *fp = fopen("out_file.txt", "a");
           // for (size_t i = 0; i < schema->GetColumnCount(); ++i) {
           //   int value = ValuePeeker::PeekAsInteger(container_tuple.GetValue(i));
@@ -126,9 +138,8 @@ namespace logging {
           // fprintf(fp, "\n");
           // fclose(fp);
 
-          output_buffer.Reset();
 
-          container_tuple.SerializeTo(output_buffer);
+          //container_tuple.SerializeTo(output_buffer);
 
           size_t output_buffer_size = output_buffer.Size();
           fwrite((const void *) (&output_buffer_size), sizeof(output_buffer_size), 1, file_handle.file);

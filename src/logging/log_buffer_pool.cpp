@@ -33,7 +33,7 @@ namespace logging {
 
       // sleep a while, and try to get a new buffer
       _mm_pause();
-      LOG_TRACE("Worker %d uses up its buffer", (int) thread_id_);
+      LOG_DEBUG("Worker %d uses up its buffer", (int) thread_id_);
     }
 
     head_.fetch_add(1, std::memory_order_relaxed);

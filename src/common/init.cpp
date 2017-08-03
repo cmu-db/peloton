@@ -22,7 +22,9 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
-
+#include "logging/reordered_phylog_log_manager.h"
+#include "logging/checkpoint_manager_factory.h"
+#include "logging/durability_factory.h"
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -44,6 +46,33 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
+
+
+  logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
+  auto &checkpoint_manager = logging::DurabilityFactory::GetCheckpointerInstance();
+  checkpoint_manager.SetDirectories({"/home/paulo/log"});
+  //checkpoint_manager.SetRecoveryThreadCount(1);
+
+  //size_t persist_checkpoint_eid = checkpoint_manager.DoRecovery();
+  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+  log_manager.SetDirectories({"/home/paulo/log"});
+//  log_manager.StartLoggers();
+    log_manager.SetRecoveryThreadCount(1);
+//    log_manager.RegisterWorker();
+//    log_manager.DoRecovery(0);
+  //auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+  //log_manager.SetDirectories({"/home/paulo/log"});
+  log_manager.StartLoggers();
+
+  checkpoint_manager.SetCheckpointInterval(30);
+  checkpoint_manager.StartCheckpointing();
+
+//  logging::ReorderedPhyLogLogManager::GetInstance().SetDirectories({"/home/paulo/log"});
+//  logging::CheckpointManagerFactory::Configure();
+//  logging::CheckpointManagerFactory::GetInstance().StartCheckpointing();
+//  logging::CheckpointManagerFactory::GetInstance().DoRecovery();
+//  logging::ReorderedPhyLogLogManager::GetInstance().DoRecovery(1);
+//  logging::ReorderedPhyLogLogManager::GetInstance().StartLoggers();
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -63,6 +92,7 @@ void PelotonInit::Initialize() {
 
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
+
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
 

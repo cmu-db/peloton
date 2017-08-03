@@ -753,9 +753,11 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::LogManager::GetInstance();
+  auto &log_manager = logging::ReorderedPhyLogLogManager::GetInstance();
 
-  log_manager.StartLogging();
+  //log_manager.StartLogging();
+  log_manager.RegisterWorker(current_txn->GetThreadId());
+  log_manager.StartTxn(current_txn);
 
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
@@ -907,7 +909,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   ResultType result = current_txn->GetResult();
 
-  log_manager.LogEnd();
+  //log_manager.LogEnd();
+  log_manager.DeregisterWorker();
+  //log_manager.End
 
   EndTransaction(current_txn);
 
