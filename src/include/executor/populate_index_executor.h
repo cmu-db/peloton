@@ -12,9 +12,6 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <unordered_set>
-
 #include "type/types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"

@@ -6,12 +6,9 @@
 //
 // Identification: src/executor/merge_join_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
-#include <vector>
 
 #include "type/types.h"
 #include "common/logger.h"

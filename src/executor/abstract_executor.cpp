@@ -6,7 +6,7 @@
 //
 // Identification: src/executor/abstract_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +31,6 @@ void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
 LogicalTile *AbstractExecutor::GetOutput() {
-  // PL_ASSERT(output.get() != nullptr);
   return output.release();
 }
 

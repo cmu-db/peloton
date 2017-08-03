@@ -6,27 +6,21 @@
 //
 // Identification: src/executor/logical_tile_factory.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/logical_tile_factory.h"
 
-#include <memory>
-#include <utility>
-
-#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace executor {
-
-namespace {
 
 /**
  * @brief Creates position list with the identity mapping.
@@ -41,8 +35,6 @@ std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
   }
   return position_list;
 }
-
-}  // namespace
 
 /**
  * @brief Returns an empty logical tile.

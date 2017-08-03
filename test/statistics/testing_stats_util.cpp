@@ -22,6 +22,7 @@
 #include "executor/update_executor.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
+#include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"

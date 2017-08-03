@@ -6,15 +6,13 @@
 //
 // Identification: src/include/executor/hash_executor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
 #include <unordered_map>
-#include <unordered_set>
 
 #include "type/types.h"
 #include "executor/abstract_executor.h"

@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
-#include <vector>
-
 #include "common/logger.h"
 #include "type/value.h"
 #include "executor/logical_tile.h"

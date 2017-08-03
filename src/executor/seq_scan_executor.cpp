@@ -6,16 +6,11 @@
 //
 // Identification: src/executor/seq_scan_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "executor/seq_scan_executor.h"
-
-#include <memory>
-#include <utility>
-#include <vector>
-#include <numeric>
 
 #include "type/types.h"
 #include "type/value_factory.h"
@@ -34,7 +29,6 @@
 #include "storage/tile.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/logger.h"
-#include "index/index.h"
 
 namespace peloton {
 namespace executor {

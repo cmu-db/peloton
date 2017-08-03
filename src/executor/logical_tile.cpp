@@ -6,14 +6,11 @@
 //
 // Identification: src/executor/logical_tile.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "executor/logical_tile.h"
-
-#include <algorithm>
-#include <sstream>
 
 #include "catalog/schema.h"
 #include "common/macros.h"

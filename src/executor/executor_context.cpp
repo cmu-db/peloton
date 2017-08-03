@@ -6,10 +6,9 @@
 //
 // Identification: src/executor/executor_context.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "type/value.h"
 #include "executor/executor_context.h"
