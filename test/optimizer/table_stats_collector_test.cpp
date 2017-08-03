@@ -10,22 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-
 #include <memory>
 
+#include "common/harness.h"
 #include "common/logger.h"
-#include "optimizer/stats/table_stats_collector.h"
-#include "optimizer/stats/column_stats_collector.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
 #include "catalog/catalog.h"
-#include "type/type.h"
-#include "type/value.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
+#include "optimizer/stats/table_stats_collector.h"
+#include "optimizer/stats/column_stats_collector.h"
+#include "sql/testing_sql_util.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "sql/testing_sql_util.h"
+#include "type/type.h"
+#include "type/value.h"
 
 #define private public
 

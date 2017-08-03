@@ -24,6 +24,7 @@
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
+#include "storage/data_table.h"
 #include "type/type.h"
 #include "type/types.h"
 

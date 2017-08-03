@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "optimizer/stats/cost.h"
 #include "optimizer/stats/table_stats.h"
 #include "optimizer/stats/value_condition.h"

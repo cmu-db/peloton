@@ -5,6 +5,7 @@
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
