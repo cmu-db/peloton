@@ -47,8 +47,7 @@ void InsertTranslator::InitializeState() {
   llvm::Value *txn_ptr = context.GetTransactionPtr();
 
   storage::DataTable *table = insert_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
       {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
  
@@ -56,9 +55,8 @@ void InsertTranslator::InitializeState() {
 
   // Initialize the inserter with txn and table
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
-  std::vector<llvm::Value *> args = {inserter, txn_ptr, table_ptr,
-                                     executor_ptr};
-  codegen.CallFunc(InserterProxy::_Init::GetFunction(codegen), args);
+  codegen.Call(InserterProxy::Init, {inserter, txn_ptr, table_ptr,
+                                     executor_ptr});
 }
 
 void InsertTranslator::Produce() const {
@@ -79,8 +77,7 @@ void InsertTranslator::Produce() const {
                                   TupleProxy::GetType(codegen)->getPointerTo());
  
       // Perform insertion of each tuple through inserter
-      auto *insert_func = InserterProxy::_Insert::GetFunction(codegen);
-      codegen.CallFunc(insert_func, {inserter, tuple_ptr});
+      codegen.Call(InserterProxy::Insert, {inserter, tuple_ptr});
     }
   }
 }
@@ -94,19 +91,15 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   std::vector<const planner::AttributeInfo *> ais;
   scan->GetAttributes(ais);
 
-  auto *tuple_storage_func =
-      InserterProxy::_ReserveTupleStorage::GetFunction(codegen);
-  auto *tuple_storage = codegen.CallFunc(tuple_storage_func, {inserter});
-
-  auto *pool_func = InserterProxy::_GetPool::GetFunction(codegen);
-  auto *pool = codegen.CallFunc(pool_func, {inserter});
+  auto *tuple_storage = codegen.Call(InserterProxy::ReserveTupleStorage,
+                                     {inserter});
+  auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
   // Generate/Materialize tuple data from row and attribute information
   tuple_.Generate(codegen, row, ais, tuple_storage, pool);
 
   // Call Inserter to insert the reserved tuple storage area
-  auto *insert_func = InserterProxy::_InsertReserved::GetFunction(codegen);
-  codegen.CallFunc(insert_func, {inserter});
+  codegen.Call(InserterProxy::InsertReserved, {inserter});
 }
 
 }  // namespace codegen

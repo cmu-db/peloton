@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "codegen/deleter.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
+#include "codegen/deleter.h"
 
 namespace peloton {
 namespace codegen {
