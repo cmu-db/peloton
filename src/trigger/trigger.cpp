@@ -44,12 +44,12 @@ Trigger::Trigger(std::string name,
 }
 Trigger::Trigger(std::string name,
                  int16_t type,
-                 std::string function_name,
+                 std::string proc_oids,
                  std::string arguments,
                  std::string fire_condition) {
   trigger_name = name;
   std::vector<std::string> strs;
-  boost::split(strs, function_name, boost::is_any_of(","));
+  boost::split(strs, proc_oids, boost::is_any_of(","));
   for (unsigned int i = 0; i < strs.size(); i++) {
     trigger_funcname.push_back(strs[i]);
   }

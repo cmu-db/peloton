@@ -14,23 +14,26 @@
 // pg_trigger
 //
 // Schema: (column offset: column_name)
-// 0: trigger_name (pkey)
-// 1: database_oid (pkey)
-// 2: table_oid
-// 3: trigger_type
-// 4: fire_condition
-// 5: function_name
-// 6: function_arguments
-// 7: time_stamp
+// 0: oid (pkey)
+// 1: tgrelid   : table_name
+// 2: tgname    : trigger_name
+// 3: tgfoid    : function_oid
+// 4: tgtype    : trigger_type
+// 5: tgargs    : function_arguemnts
+// 6: tgqual    : fire_condition
+// 7: timestamp : time_stamp
 //
 // Indexes: (index offset: indexed columns)
-// 0: database_oid & table_oid & trigger_type
-//
+// 0: oid (primary key)
+// 1: tgrelid & tgtype (secondary key 0)
+// 2: tgrelid (secondary key 1)
+// 3: tgname & tgrelid (secondary key 2)
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "catalog/abstract_catalog.h"
+#include "catalog/catalog_defaults.h"
 #include "commands/trigger.h"
 
 #define TRIGGER_CATALOG_NAME "pg_trigger"
@@ -49,63 +52,59 @@ class TriggerCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertTrigger(std::string trigger_name, oid_t database_oid, oid_t table_oid,
-                          int16_t trigger_type,
-                          std::string fire_condition, //TODO: this actually should be expression
-                          std::string function_name,
-                          std::string function_arguments,
-                          int64_t time_stamp, type::AbstractPool *pool,
-                          concurrency::Transaction *txn);
+  bool InsertTrigger(std::string trigger_name, oid_t table_oid,
+                     int16_t trigger_type,
+                     std::string fire_condition, //TODO: this actually should be expression
+                     oid_t proc_oid,
+                     std::string function_arguments,
+                     int64_t time_stamp, type::AbstractPool *pool,
+                     concurrency::Transaction *txn);
 
   ResultType DropTrigger(const std::string &database_name,
                          const std::string &table_name,
                          const std::string &trigger_name,
                          concurrency::Transaction *txn);
 
-  bool DeleteTrigger(oid_t trigger_oid, concurrency::Transaction *txn);
-
-  bool DeleteTriggerByName(const std::string &trigger_name, oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
+  bool DeleteTriggerByName(const std::string &trigger_name, oid_t table_oid,
+                           concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // get triggers for a specific table; one table may have multiple triggers
   // of the same type
   //===--------------------------------------------------------------------===//
-  commands::TriggerList* GetTriggersByType(
-      oid_t database_oid, oid_t table_oid, int16_t trigger_type,
-      concurrency::Transaction *txn);
+  commands::TriggerList* GetTriggersByType(oid_t table_oid, int16_t trigger_type,
+                                           concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
   //===--------------------------------------------------------------------===//
-  commands::TriggerList* GetTriggers(
-      oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
+  commands::TriggerList* GetTriggers(oid_t table_oid,
+                                     concurrency::Transaction *txn);
 
-  oid_t GetTriggerOid(std::string trigger_name,
-        oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
-
+  oid_t GetTriggerOid(std::string trigger_name, oid_t table_oid,
+                      concurrency::Transaction *txn);
 
   enum ColumnId {
     TRIGGER_OID = 0,
-    TRIGGER_NAME = 1,
-    DATABASE_OID = 2,
-    TABLE_OID = 3,
+    TABLE_OID = 1,
+    TRIGGER_NAME = 2,
+    FUNCTION_OID = 3,
     TRIGGER_TYPE = 4,
-    FIRE_CONDITION = 5,
-    FUNCTION_NAME = 6,
-    FUNCTION_ARGS = 7,
-    TIME_STAMP = 8
-    // Add new columns here in creation order
+    FUNCTION_ARGS = 5,
+    FIRE_CONDITION = 6,
+    TIMESTAMP = 7
   };
 
  private:
   TriggerCatalog(concurrency::Transaction *txn);
 
+  oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
+
   enum IndexId {
-    SECONDARY_KEY_0 = 0,
-    // Add new indexes here in creation order
-    DATABASE_TABLE_KEY_1 = 1,
-    DB_TABLE_TRIGGERNAME_KEY_2 = 2,
-    TRIGGEROID_KEY_3 = 3
+    PRIMARY_KEY = 0,
+    TABLE_TYPE_KEY_0 = 1,
+    TABLE_KEY_1 = 2,
+    NAME_TABLE_KEY_2 = 3,
   };
 
 };

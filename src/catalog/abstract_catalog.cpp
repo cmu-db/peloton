@@ -104,10 +104,6 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
                                           std::vector<type::Value> values,
                                           concurrency::Transaction *txn) {
-  LOG_DEBUG("Delete following values in index %d", index_offset);
-  for (auto value : values) {
-    LOG_DEBUG("value %s", value.ToString().c_str());
-  }
   if (txn == nullptr)
     throw CatalogException("Delete tuple requires transaction");
 
