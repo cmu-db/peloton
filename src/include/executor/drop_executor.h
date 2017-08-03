@@ -6,20 +6,22 @@
 //
 // Identification: src/include/executor/drop_executor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
 #include "executor/abstract_executor.h"
-#include "planner/drop_plan.h"
 
 namespace peloton {
 
 namespace storage {
 class DataTable;
+}
+
+namespace planner {
+class AbstractPlan;
 }
 
 namespace executor {
@@ -42,7 +44,7 @@ class DropExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-  ExecutorContext *context;
+  ExecutorContext *context_;
 
 };
 

@@ -6,12 +6,11 @@
 //
 // Identification: src/executor/aggregator.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "executor/aggregator.h"
 
-#include <set>
+#include "executor/aggregator.h"
 
 #include "catalog/manager.h"
 #include "common/logger.h"

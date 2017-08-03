@@ -6,16 +6,11 @@
 //
 // Identification: src/executor/abstract_scan_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/abstract_scan_executor.h"
-
-#include <memory>
-#include <utility>
-#include <vector>
 
 #include "type/types.h"
 #include "executor/logical_tile.h"
@@ -50,7 +45,6 @@ bool AbstractScanExecutor::DInit() {
   const planner::AbstractScan &node = GetPlanNode<planner::AbstractScan>();
 
   predicate_ = node.GetPredicate();
-  // auto column_ids = node.GetColumnIds();
 
   column_ids_ = std::move(node.GetColumnIds());
 

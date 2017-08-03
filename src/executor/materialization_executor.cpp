@@ -6,15 +6,12 @@
 //
 // Identification: src/executor/materialization_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 
 #include "executor/materialization_executor.h"
-
-#include <memory>
-#include <utility>
 
 #include "common/logger.h"
 #include "common/macros.h"

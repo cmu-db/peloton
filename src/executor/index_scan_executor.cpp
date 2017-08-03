@@ -6,16 +6,11 @@
 //
 // Identification: src/executor/index_scan_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "executor/index_scan_executor.h"
-
-#include <memory>
-#include <numeric>
-#include <utility>
-#include <vector>
 
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
@@ -25,7 +20,6 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"
-#include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
@@ -321,10 +315,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_TRACE_ENABLED
   LOG_TRACE("Examined %d tuples from index %s", num_tuples_examined,
             index_->GetName().c_str());
-#endif
 
   LOG_TRACE("%ld tuples before pruning boundaries",
             visible_tuple_locations.size());
@@ -570,10 +562,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_TRACE_ENABLED
   LOG_TRACE("Examined %d tuples from index %s [num_blocks_reused=%d]",
             num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
-#endif
 
   // Check whether the boundaries satisfy the required condition
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);

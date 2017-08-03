@@ -6,21 +6,19 @@
 //
 // Identification: src/executor/copy_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <concurrency/transaction_manager_factory.h>
-#include <utility>
-#include <vector>
-
 #include "common/logger.h"
 #include "catalog/catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/copy_executor.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
+#include "wire/packet_manager.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>

@@ -6,14 +6,13 @@
 //
 // Identification: src/include/executor/logical_tile.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include <iterator>
-#include <memory>
 #include <unordered_map>
 #include <vector>
 

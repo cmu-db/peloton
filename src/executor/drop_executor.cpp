@@ -6,7 +6,7 @@
 //
 // Identification: src/executor/drop_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 #include "common/logger.h"
 #include "concurrency/transaction.h"
 #include "executor/executor_context.h"
+#include "planner/drop_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -24,7 +25,7 @@ namespace executor {
 DropExecutor::DropExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
-  context = executor_context;
+  context_ = executor_context;
 }
 
 // Initialize executer
@@ -39,9 +40,8 @@ bool DropExecutor::DInit() {
 bool DropExecutor::DExecute() {
   LOG_TRACE("Executing Drop...");
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
-  std::string table_name = node.GetTableName();
-
-  auto current_txn = context->GetTransaction();
+  auto table_name = node.GetTableName();
+  auto current_txn = context_->GetTransaction();
 
   ResultType result = catalog::Catalog::GetInstance()->DropTable(
       DEFAULT_DB_NAME, table_name, current_txn);
@@ -63,5 +63,6 @@ bool DropExecutor::DExecute() {
 
   return false;
 }
-}
-}
+
+}  // namespace executor
+}  // namespace peloton
