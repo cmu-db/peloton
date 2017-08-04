@@ -20,19 +20,19 @@
 //===----------------------------------------------------------------------===//
 
 // Peloton port
-CONFIG_int(port,
+SETTING_int(port,
            "Peloton port (default: 15721)",
            15721,
            false, false)
 
 // Maximum number of connections
-CONFIG_int(max_connections,
+SETTING_int(max_connections,
            "Maximum number of connections (default: 64)",
            64,
            true, true)
 
 // Socket family
-CONFIG_string(socket_family,
+SETTING_string(socket_family,
               "Socket family (default: AF_INET)",
               "AF_INET",
               false, false)
@@ -43,13 +43,13 @@ CONFIG_string(socket_family,
 // Currently use hardcoded private key path, may need to change
 // to generate file dynamically at runtime
 // The same applies to certificate file
-CONFIG_string(private_key_file,
+SETTING_string(private_key_file,
               "path to private key file",
               "/home/vagrant/temp/server.key",
               false, false)
 
 // Peloton certificate file
-CONFIG_string(certificate_file,
+SETTING_string(certificate_file,
               "path to certificate file",
               "/home/vagrant/temp/server.crt",
               false, false)
@@ -67,12 +67,12 @@ CONFIG_string(certificate_file,
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// CONFIGURATION
+// SETTINGURATION
 //===----------------------------------------------------------------------===//
 
 // Display configuration
-CONFIG_bool(display_configuration,
-            "Display configuration (default: false)",
+SETTING_bool(display_settings,
+            "Display settings (default: false)",
             false,
             true, true)
 
@@ -81,7 +81,7 @@ CONFIG_bool(display_configuration,
 //===----------------------------------------------------------------------===//
 
 // Enable or disable statistics collection
-CONFIG_int(stats_mode,
+SETTING_int(stats_mode,
            "Enable statistics collection (default: 0)",
            peloton::STATS_TYPE_INVALID,
            true, true)
@@ -91,13 +91,13 @@ CONFIG_int(stats_mode,
 //===----------------------------------------------------------------------===//
 
 // Enable or disable index tuner
-CONFIG_bool(index_tuner,
+SETTING_bool(index_tuner,
             "Enable index tuner (default: false)",
             false,
             true, true)
 
 // Enable or disable layout tuner
-CONFIG_bool(layout_tuner,
+SETTING_bool(layout_tuner,
             "Enable layout tuner (default: false)",
             false,
             true, true)
@@ -106,7 +106,7 @@ CONFIG_bool(layout_tuner,
 // CODEGEN
 //===----------------------------------------------------------------------===//
 
-CONFIG_bool(codegen,
+SETTING_bool(codegen,
             "Enable code-generation for query execution (default: true)",
             true,
             true, true)
@@ -116,7 +116,7 @@ CONFIG_bool(codegen,
 //===----------------------------------------------------------------------===//
 
 // Both for showing the help info
-CONFIG_bool(h,
+SETTING_bool(h,
             "Show help",
             false,
             false, false)

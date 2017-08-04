@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration_type.h
+// settings_type.h
 //
-// Identification: src/include/configuration/configuration_type.h
+// Identification: src/include/settings/settings_type.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -13,18 +13,17 @@
 
 #pragma once
 
-#define __CONFIG_ENUM__
-#include "configuration/configuration_macro.h"
+#define __SETTING_ENUM__
+#include "settings/settings_macro.h"
 
 namespace peloton {
-namespace configuration {
+namespace settings {
 
-enum class ConfigurationId {
-  help = 0,
-  #include "configuration/configuration.h"
+enum class SettingsId {
+  #include "settings/settings.h"
 };
 
-} // End configuration namespace
-} // End peloton namespace
+}  // namespace settings
+}  // namespace peloton
 
-#undef __CONFIG_ENUM__
+#undef __SETTING_ENUM__

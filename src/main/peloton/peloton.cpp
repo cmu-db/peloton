@@ -13,12 +13,14 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
-#include "configuration/configuration_util.h"
+#include "settings/settings_util.h"
 #include "wire/libevent_server.h"
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/network_manager.h"
 #include "wire/libevent_server.h"
+
+DECLARE_bool(help);
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
@@ -27,16 +29,17 @@ int main(int argc, char *argv[]) {
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
   // If "-h" or "-help" is passed in, set up the help messages.
-  if (ConfigurationUtil::GET_BOOL(ConfigurationId::h) || ConfigurationUtil::GET_BOOL(ConfigurationId::help)) {
-    ConfigurationUtil::SET_BOOL(ConfigurationId::help, true);
+  if (peloton::settings::SettingsUtil::GetBool(peloton::settings::SettingsId::h) ||
+      FLAGS_help) {
+    FLAGS_help = true;
     ::google::SetUsageMessage("Usage Info: \n");
     ::google::HandleCommandLineHelpFlags();
   }
 
-  // Print configuration
-  if (ConfigurationUtil::GET_BOOL(ConfigurationId::display_configuration)) {
-    auto config = peloton::configuration::ConfigurationManager::GetInstance();
-    config->ShowInfo();
+  // Print settings
+  if (peloton::settings::SettingsUtil::GetBool(peloton::settings::SettingsId::display_settings)) {
+    auto settings = peloton::settings::SettingsManager::GetInstance();
+    settings->ShowInfo();
   }
 
   try {

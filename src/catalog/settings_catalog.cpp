@@ -17,6 +17,8 @@
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 
+#define SETTINGS_CATALOG_NAME "pg_settings"
+
 namespace peloton {
 namespace catalog {
 
@@ -85,7 +87,7 @@ bool SettingsCatalog::InsertSetting(
 
 bool SettingsCatalog::DeleteSetting(const std::string &name,
                                     concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of config_name
+  oid_t index_offset = 0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
 
@@ -134,5 +136,5 @@ std::string SettingsCatalog::GetDefaultValue(const std::string &name,
   return config_value;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

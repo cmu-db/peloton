@@ -27,7 +27,7 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "network/marshal.h"
-#include "configuration/configuration_util.h"
+#include "settings/settings_util.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
@@ -548,7 +548,7 @@ void ProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   statement->SetParamTypes(param_types);
 
   // Stat
-  if (ConfigurationUtil::GET_INT(ConfigurationId::stats_mode) != STATS_TYPE_INVALID) {
+  if (settings::SettingsUtil::GetInt(settings::SettingsId::stats_mode) != STATS_TYPE_INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
@@ -703,7 +703,7 @@ void ProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (ConfigurationUtil::GET_INT(ConfigurationId::stats_mode) != STATS_TYPE_INVALID
+  if (settings::SettingsUtil::GetInt(settings::SettingsId::stats_mode) != STATS_TYPE_INVALID
       && num_params > 0) {
     // Make a copy of format for stat collection
     stats::QueryMetric::QueryParamBuf param_format_buf;
