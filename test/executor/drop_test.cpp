@@ -139,7 +139,7 @@ TEST_F(DropTests, DroppingTrigger) {
 
   // Drop statement and drop plan
   parser::DropStatement drop_statement(parser::DropStatement::EntityType::kTrigger, "department_table", "update_dept_name");
-  planner::DropPlan drop_plan(&drop_statement);
+  planner::DropPlan drop_plan(&drop_statement, txn);
 
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();

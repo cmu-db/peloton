@@ -183,9 +183,6 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
         auto eval = predicate_->Evaluate(tuple_new, tuple_old, executor_context_);
         if (!eval.IsTrue()) continue;
       }
-      else {
-        throw ExecutorException("No executor_context_ for trigger execution");
-      }
     }
     // Construct trigger data
     TriggerData trigger_data(trigger_type, &obj, old_tuple, new_tuple);
