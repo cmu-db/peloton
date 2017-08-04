@@ -4,7 +4,7 @@
 //
 // marshal.h
 //
-// Identification: src/include/wire/marshal.h
+// Identification: src/include/network/marshal.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,7 @@
 #define BUFFER_INIT_SIZE 100
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 class NetworkConnection;
 
@@ -177,5 +177,5 @@ extern void PacketGetByte(InputPacket *rpkt, uchar &result);
 */
 extern void GetStringToken(InputPacket *pkt, std::string &result);
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

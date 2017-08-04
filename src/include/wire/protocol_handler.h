@@ -4,7 +4,7 @@
 //
 // packet_manager.h
 //
-// Identification: src/include/wire/packet_manager.h
+// Identification: src/include/network/packet_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@
 
 namespace peloton {
 
-namespace wire {
+namespace network {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
@@ -225,5 +225,5 @@ class ProtocolHandler {
   static std::mutex packet_managers_mutex_;
 };
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

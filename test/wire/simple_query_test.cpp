@@ -4,7 +4,7 @@
 //
 // simple_query_test.cpp
 //
-// Identification: test/wire/simple_query_test.cpp
+// Identification: test/network/simple_query_test.cpp
 //
 // Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
@@ -28,7 +28,7 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::NetworkManager network_manager,
+static void *LaunchServer(peloton::network::NetworkManager network_manager,
                           int port) {
   try {
     network_manager.SetPort(port);
@@ -49,12 +49,12 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::wire::NetworkConnection *conn =
-        peloton::wire::NetworkManager::GetConn(
-            peloton::wire::NetworkManager::recent_connfd);
+    peloton::network::NetworkConnection *conn =
+        peloton::network::NetworkManager::GetConn(
+            peloton::network::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
-    // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
+    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
     txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -90,12 +90,12 @@ void *RollbackTest(int port) {
     LOG_INFO("[RollbackTest] Connected to %s", C.dbname());
     pqxx::work W(C);
 
-    peloton::wire::NetworkConnection *conn =
-        peloton::wire::NetworkManager::GetConn(
-            peloton::wire::NetworkManager::recent_connfd);
+    peloton::network::NetworkConnection *conn =
+        peloton::network::NetworkManager::GetConn(
+            peloton::network::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
-    // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
+    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -130,7 +130,7 @@ TEST_F(PacketManagerTests, RollbackTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   int port = 15721;
-  peloton::wire::NetworkManager network_manager;
+  peloton::network::NetworkManager network_manager;
   std::thread serverThread(LaunchServer, network_manager,port);
   while (!network_manager.GetIsStarted()) {
     sleep(1);
@@ -155,7 +155,7 @@ TEST_F(PacketManagerTests, RollbackTest) {
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::wire::NetworkManager network_manager;
+  peloton::network::NetworkManager network_manager;
 
   int port = 15721;
   std::thread serverThread(LaunchServer, network_manager, port);
@@ -183,12 +183,12 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 //  /* launch 2 network managers in different port */
 //  // first server
 //  int port1 = 15721;
-//  peloton::wire::NetworkManager network_manager1;
+//  peloton::network::NetworkManager network_manager1;
 //  std::thread serverThread1(LaunchServer, network_manager1,port1);
 //
 //  // second server
 //  int port2 = 15722;
-//  peloton::wire::NetworkManager network_manager2;
+//  peloton::network::NetworkManager network_manager2;
 //  std::thread serverThread2(LaunchServer, network_manager2,port2);
 //
 //  while (!network_manager1.is_started || !network_manager2.is_started) {

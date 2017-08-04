@@ -4,7 +4,7 @@
 //
 // network_thread.cpp
 //
-// Identification: src/wire/network_thread.cpp
+// Identification: src/network/network_thread.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -20,7 +20,7 @@
 #include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 /*
  * Get the vector of Network worker threads
@@ -171,5 +171,5 @@ void NetworkMasterThread::DispatchConnection(int new_conn_fd,
   }
 }
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

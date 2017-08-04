@@ -387,7 +387,7 @@ void IndexTuner::AddIndexes(
         // At some point the PreparedStatement handles should be moved out of
         // the ProtocolHandler and into some more sane that doesn't require us
         // to start up the networking layer to test...
-        for (auto pm : wire::ProtocolHandler::GetPacketManagers()) {
+        for (auto pm : network::ProtocolHandler::GetPacketManagers()) {
           pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
         }  // FOR
       }

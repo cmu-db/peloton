@@ -6,7 +6,7 @@
 //
 // Implements Libevent callbacks for the protocol and their helpers
 //
-// Identification: src/wire/network_callbacks.cpp
+// Identification: src/network/network_callbacks.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 #include "common/macros.h"
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
                          UNUSED_ATTRIBUTE short ev_flags, void *arg) {

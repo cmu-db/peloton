@@ -4,7 +4,7 @@
 //
 // network_manager.cpp
 //
-// Identification: src/wire/network_manager.cpp
+// Identification: src/network/network_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,7 @@
 #include "common/thread_pool.h"
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 int NetworkManager::recent_connfd = -1;
 SSL_CTX *NetworkManager::ssl_context = nullptr;
@@ -195,5 +195,5 @@ void NetworkManager::CloseServer() {
  */
 void NetworkManager::SetPort(int new_port) { port_ = new_port; }
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

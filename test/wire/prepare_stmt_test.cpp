@@ -4,7 +4,7 @@
 //
 // prepare_stmt_test.cpp
 //
-// Identification: test/wire/prepare_stmt_test.cpp
+// Identification: test/network/prepare_stmt_test.cpp
 //
 // Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
@@ -28,7 +28,7 @@ namespace test {
 
 class PrepareStmtTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::NetworkManager network_manager,
+static void *LaunchServer(peloton::network::NetworkManager network_manager,
                           int port) {
   try {
     network_manager.SetPort(port);
@@ -51,9 +51,9 @@ void *PrepareStatementTest(int port) {
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::wire::NetworkConnection *conn =
-        peloton::wire::NetworkManager::GetConn(
-            peloton::wire::NetworkManager::recent_connfd);
+    peloton::network::NetworkConnection *conn =
+        peloton::network::NetworkManager::GetConn(
+            peloton::network::NetworkManager::recent_connfd);
 
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -88,7 +88,7 @@ void *PrepareStatementTest(int port) {
 TEST_F(PrepareStmtTests, PrepareStatementTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::wire::NetworkManager network_manager;
+  peloton::network::NetworkManager network_manager;
   int port = 15721;
   std::thread serverThread(LaunchServer, network_manager, port);
   while (!network_manager.GetIsStarted()) {
