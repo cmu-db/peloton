@@ -67,7 +67,7 @@ class PlanExecutor {
 
   /*
    * @brief Use std::vector<type::Value> as params to make it more elegant
-   * for networking
+   * for distributed
    * Before ExecutePlan, a node first receives value list, so we should
    * pass value list directly rather than passing Postgres's ParamListInfo
    */
