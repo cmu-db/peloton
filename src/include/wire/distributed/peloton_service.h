@@ -13,8 +13,8 @@
 #pragma once
 
 #include "peloton/proto/abstract_service.pb.h"
-#include "networking/rpc_server.h"
-#include "networking/peloton_endpoint.h"
+#include "wire/distributed/rpc_server.h"
+#include "wire/distributed/peloton_endpoint.h"
 
 //===--------------------------------------------------------------------===//
 // Implements AbstractPelotonService

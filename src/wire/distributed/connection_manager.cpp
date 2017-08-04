@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/connection_manager.h"
+#include "wire/distributed/connection_manager.h"
 
 #include "common/macros.h"
 

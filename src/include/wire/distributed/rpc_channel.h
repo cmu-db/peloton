@@ -16,7 +16,7 @@
 #include <string>
 #include <memory>
 
-#include "networking/network_address.h"
+#include "wire/distributed/network_address.h"
 #include "common/logger.h"
 #include "peloton/proto/abstract_service.pb.h"
 

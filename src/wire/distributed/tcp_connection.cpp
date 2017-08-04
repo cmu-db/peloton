@@ -16,10 +16,10 @@
 
 #include <pthread.h>
 
-#include "networking/tcp_connection.h"
-#include "networking/connection_manager.h"
-#include "networking/peloton_service.h"
-#include "networking/rpc_type.h"
+#include "wire/distributed/tcp_connection.h"
+#include "wire/distributed/connection_manager.h"
+#include "wire/distributed/peloton_service.h"
+#include "wire/distributed/rpc_type.h"
 #include "common/macros.h"
 
 namespace peloton {

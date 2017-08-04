@@ -11,13 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/tcp_listener.h"
-#include "networking/tcp_connection.h"
-#include "networking/rpc_type.h"
+#include "wire/distributed/tcp_listener.h"
+#include "wire/distributed/tcp_connection.h"
+#include "wire/distributed/rpc_type.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "networking/connection_manager.h"
+#include "wire/distributed/connection_manager.h"
 
 #include <event2/thread.h>
 #include <pthread.h>

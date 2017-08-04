@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "networking/rpc_server.h"
-#include "networking/peloton_service.h"
+#include "wire/distributed/rpc_server.h"
+#include "wire/distributed/peloton_service.h"
 
 namespace peloton {
 namespace networking {

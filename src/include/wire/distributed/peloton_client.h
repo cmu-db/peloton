@@ -12,10 +12,10 @@
 
 
 #include "common/logger.h"
-#include "networking/rpc_channel.h"
-#include "networking/rpc_controller.h"
-#include "networking/abstract_service.pb.h"
-#include "networking/peloton_endpoint.h"
+#include "wire/distributed/rpc_channel.h"
+#include "wire/distributed/rpc_controller.h"
+#include "wire/distributed/abstract_service.pb.h"
+#include "wire/distributed/peloton_endpoint.h"
 
 #include <google/protobuf/stubs/common.h>
 
