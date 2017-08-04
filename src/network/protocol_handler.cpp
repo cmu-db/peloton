@@ -455,13 +455,27 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
       }
       default:
       {
-        // execute the query using traffic_cop
-        auto status = traffic_cop_->ExecuteStatement(
-            query, result, tuple_descriptor, rows_affected, error_message,
-            thread_id);
-
-      // check status
-        if (status == ResultType::FAILURE) {
+        // prepareStatement
+        std::string unnamed_statement = "unnamed";
+        auto statement = traffic_cop_->PrepareStatement(unnamed_statement, query,
+                                                   error_message);
+        if (statement.get() == nullptr) {
+          rows_affected = 0;
+          SendErrorResponse(
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return;
+        }
+        // ExecuteStatment
+        std::vector<type::Value> param_values;
+        bool unnamed = false;
+        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        auto status =
+            traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                           result, rows_affected, error_message, thread_id);
+        if (status == ResultType::SUCCESS) {
+          tuple_descriptor = statement->GetTupleDescriptor();
+        } else if (status == ResultType::FAILURE) { // check status
           SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);

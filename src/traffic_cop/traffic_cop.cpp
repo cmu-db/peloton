@@ -125,35 +125,36 @@ ResultType TrafficCop::AbortQueryHelper() {
   }
 }
 
-ResultType TrafficCop::ExecuteStatement(
-    const std::string &query, std::vector<StatementResult> &result,
-    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Received %s", query.c_str());
-
-  std::string unnamed_statement = "unnamed";
-  auto statement = PrepareStatement(unnamed_statement, query, error_message);
-  if (statement.get() == nullptr) {
-    rows_changed = 0;
-    return ResultType::FAILURE;
-  }
-  // Then, execute the statement
-  bool unnamed = true;
-  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  std::vector<type::Value> params;
-  auto status =
-      ExecuteStatement(statement, params, unnamed, nullptr, result_format,
-                       result, rows_changed, error_message, thread_id);
-
-  if (status == ResultType::SUCCESS) {
-    LOG_TRACE("Execution succeeded!");
-    tuple_descriptor = statement->GetTupleDescriptor();
-  } else {
-    LOG_TRACE("Execution failed!");
-  }
-
-  return status;
-}
+//ResultType TrafficCop::ExecuteStatement(
+//    const std::string &query, std::vector<StatementResult> &result,
+//    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
+//    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
+//
+//  LOG_TRACE("Received %s", query.c_str());
+//
+//  std::string unnamed_statement = "unnamed";
+//  auto statement = PrepareStatement(unnamed_statement, query, error_message);
+//  if (statement.get() == nullptr) {
+//    rows_changed = 0;
+//    return ResultType::FAILURE;
+//  }
+//  // Then, execute the statement
+//  bool unnamed = true;
+//  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+//  std::vector<type::Value> params;
+//  auto status =
+//      ExecuteStatement(statement, params, unnamed, nullptr, result_format,
+//                       result, rows_changed, error_message, thread_id);
+//
+//  if (status == ResultType::SUCCESS) {
+//    LOG_TRACE("Execution succeeded!");
+//    tuple_descriptor = statement->GetTupleDescriptor();
+//  } else {
+//    LOG_TRACE("Execution failed!");
+//  }
+//
+//  return status;
+//}
 
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
