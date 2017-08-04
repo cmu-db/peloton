@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tcop.h
+// traffic_cop.h
 //
-// Identification: src/include/tcop/tcop.h
+// Identification: src/include/traffic_cop/traffic_cop.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -132,5 +132,5 @@ class TrafficCop {
                      std::vector<storage::DataTable *> &target_tables);
 };
 
-}  // namespace tcop
+}  // namespace traffic_cop
 }  // namespace peloton

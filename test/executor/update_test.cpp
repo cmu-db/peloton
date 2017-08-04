@@ -133,7 +133,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //
   //  std::vector<int> result_format;
   //  auto tuple_descriptor =
-  //      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+  //      traffic_cop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   //  UNUSED_ATTRIBUTE executor::ExecuteResult status =

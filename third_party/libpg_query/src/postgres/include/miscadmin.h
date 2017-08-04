@@ -88,7 +88,7 @@ extern PGDLLIMPORT __thread volatile uint32 InterruptHoldoffCount;
 extern PGDLLIMPORT __thread volatile uint32 QueryCancelHoldoffCount;
 extern PGDLLIMPORT __thread volatile uint32 CritSectionCount;
 
-/* in tcop/postgres.c */
+/* in traffic_cop/postgres.c */
 extern void ProcessInterrupts(void);
 
 #ifndef WIN32
@@ -253,7 +253,7 @@ extern int	VacuumCostBalance;
 extern bool VacuumCostActive;
 
 
-/* in tcop/postgres.c */
+/* in traffic_cop/postgres.c */
 
 #if defined(__ia64__) || defined(__ia64)
 typedef struct
@@ -270,7 +270,7 @@ extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
 
-/* in tcop/utility.c */
+/* in traffic_cop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
 extern void PreventCommandIfParallelMode(const char *cmdname);
 extern void PreventCommandDuringRecovery(const char *cmdname);

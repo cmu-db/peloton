@@ -112,7 +112,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   std::string error_message;
   int rows_changed;
 
-  // execute the query using tcop
+  // execute the query using traffic_cop
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
 
@@ -127,7 +127,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
 
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
-  // execute the query using tcop
+  // execute the query using traffic_cop
   auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
 
