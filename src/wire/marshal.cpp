@@ -4,7 +4,7 @@
 //
 // marshal.cpp
 //
-// Identification: src/wire/marshal.cpp
+// Identification: src/network/marshal.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 // checks for parsing overflows
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
@@ -163,5 +163,5 @@ void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len) {
   pkt->len += len;
 }
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

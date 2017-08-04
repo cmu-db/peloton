@@ -4,7 +4,7 @@
 //
 // network_manager.h
 //
-// Identification: src/include/wire/network_manager.h
+// Identification: src/include/network/network_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -42,7 +42,7 @@
 #define MASTER_THREAD_ID -1
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 // Forward Declarations
 class NetworkThread;
@@ -54,7 +54,7 @@ enum ConnState {
   CONN_READ,       // State that reads data from the network
   CONN_WRITE,      // State the writes data to the network
   CONN_WAIT,       // State for waiting for some event to happen
-  CONN_PROCESS,    // State that runs the wire protocol on received data
+  CONN_PROCESS,    // State that runs the network protocol on received data
   CONN_CLOSING,    // State for closing the client connection
   CONN_CLOSED,     // State for closed connection
   CONN_INVALID,    // Invalid STate

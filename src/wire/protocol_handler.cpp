@@ -4,7 +4,7 @@
 //
 // protocol.cpp
 //
-// Identification: src/wire/protocol.cpp
+// Identification: src/network/protocol.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -33,7 +33,7 @@
 #define UNUSED(x) (void)(x)
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 // TODO: Remove hardcoded auth strings
 // Hardcoded authentication strings used during session startup. To be removed
@@ -1126,6 +1126,6 @@ void ProtocolHandler::Reset() {
   traffic_cop_->Reset();
 }
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton
 

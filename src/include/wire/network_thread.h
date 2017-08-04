@@ -4,7 +4,7 @@
 //
 // network_thread.h
 //
-// Identification: src/include/wire/network_thread.h
+// Identification: src/include/network/network_thread.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -36,7 +36,7 @@
 #include "wire/protocol_handler.h"
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 // Forward Declarations
 struct NewConnQueueItem;
@@ -132,8 +132,8 @@ class NetworkMasterThread : public NetworkThread {
 
   std::vector<std::shared_ptr<NetworkWorkerThread>> &GetWorkerThreads();
 
-  static void StartWorker(peloton::wire::NetworkWorkerThread *worker_thread);
+  static void StartWorker(peloton::network::NetworkWorkerThread *worker_thread);
 };
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton

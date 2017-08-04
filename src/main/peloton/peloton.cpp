@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     peloton::PelotonInit::Initialize();
 
     // Create NetworkManager object
-    peloton::wire::NetworkManager network_manager;
+    peloton::network::NetworkManager network_manager;
     
     // Start NetworkManager
     network_manager.StartServer();

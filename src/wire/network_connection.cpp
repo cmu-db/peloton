@@ -4,7 +4,7 @@
 //
 // network_connection.cpp
 //
-// Identification: src/wire/network_connection.cpp
+// Identification: src/network/network_connection.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 #include "wire/network_manager.h"
 
 namespace peloton {
-namespace wire {
+namespace network {
 
 void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                           ConnState init_state) {
@@ -526,5 +526,5 @@ void NetworkConnection::Reset() {
   next_response_ = 0;
 }
 
-}  // namespace wire
+}  // namespace network
 }  // namespace peloton
