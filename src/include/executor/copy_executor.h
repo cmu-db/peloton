@@ -6,7 +6,7 @@
 //
 // Identification: src/include/executor/copy_executor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,9 +14,6 @@
 
 #include "executor/abstract_executor.h"
 #include "catalog/query_metrics_catalog.h"
-
-#include <vector>
-#include "wire/packet_manager.h"
 
 #define COPY_BUFFER_SIZE 65536
 #define INVALID_COL_ID -1

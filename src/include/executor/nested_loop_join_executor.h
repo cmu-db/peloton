@@ -6,15 +6,13 @@
 //
 // Identification: src/include/executor/nested_loop_join_executor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "executor/abstract_join_executor.h"
-
-#include <vector>
 
 namespace peloton {
 namespace executor {

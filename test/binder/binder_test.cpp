@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "expression/tuple_value_expression.h"
-#include "binder/bind_node_visitor.h"
-#include "parser/postgresparser.h"
-
 #include "optimizer/optimizer.h"
+#include "parser/postgresparser.h"
 #include "tcop/tcop.h"
-
-#include <memory>
 
 using std::string;
 using std::unique_ptr;

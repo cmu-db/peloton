@@ -6,18 +6,19 @@
 //
 // Identification: test/sql/sql_tests_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include <random>
 #include "catalog/catalog.h"
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
 #include "optimizer/rule.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
-#include <random>
 #include "sql/testing_sql_util.h"
 
 namespace peloton {

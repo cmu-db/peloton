@@ -19,6 +19,7 @@
 #include "planner/abstract_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/populate_index_plan.h"
+#include "storage/data_table.h"
 #include "util/string_util.h"
 
 namespace peloton {

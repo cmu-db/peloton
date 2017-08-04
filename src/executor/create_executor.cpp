@@ -6,7 +6,7 @@
 //
 // Identification: src/executor/create_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@
 #include "common/logger.h"
 #include "concurrency/transaction.h"
 #include "executor/executor_context.h"
-
+#include "planner/create_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -25,7 +25,7 @@ namespace executor {
 CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
-  context = executor_context;
+  context_ = executor_context;
 }
 
 // Initialize executer
@@ -39,7 +39,7 @@ bool CreateExecutor::DInit() {
 bool CreateExecutor::DExecute() {
   LOG_TRACE("Executing Create...");
   const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
-  auto current_txn = context->GetTransaction();
+  auto current_txn = context_->GetTransaction();
 
   // Check if query was for creating table
   if (node.GetCreateType() == CreateType::TABLE) {
@@ -86,5 +86,6 @@ bool CreateExecutor::DExecute() {
   }
   return false;
 }
-}
-}
+
+}  // namespace executor
+}  // namespace peloton

@@ -10,23 +10,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-
 #include <vector>
 
+#include "catalog/catalog.h"
+#include "catalog/column_catalog.h"
+#include "common/harness.h"
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/testing_executor_util.h"
 #include "optimizer/stats/selectivity.h"
 #include "optimizer/stats/tuple_samples_storage.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/value_condition.h"
 #include "optimizer/stats/table_stats.h"
+#include "sql/testing_sql_util.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "sql/testing_sql_util.h"
-#include "catalog/catalog.h"
-#include "catalog/column_catalog.h"
-#include "executor/testing_executor_util.h"
 
 #define private public
 

@@ -12,6 +12,7 @@
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
 #include "expression/comparison_expression.h"
 #include "expression/operator_expression.h"

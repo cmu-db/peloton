@@ -17,6 +17,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/executor_context.h"
+#include "planner/create_plan.h"
 
 namespace peloton {
 namespace test {

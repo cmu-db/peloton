@@ -6,16 +6,13 @@
 //
 // Identification: src/executor/aggregate_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <concurrency/transaction_manager_factory.h>
-#include <utility>
-#include <vector>
-
 #include "common/container_tuple.h"
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/aggregate_executor.h"
 #include "executor/aggregator.h"
 #include "executor/executor_context.h"

@@ -6,31 +6,17 @@
 //
 // Identification: src/executor/hybrid_scan_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-#include <chrono>
-#include <ctime>
-#include <iostream>
-#include <memory>
-#include <numeric>
-#include <string>
-#include <thread>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "common/container_tuple.h"
 #include "common/logger.h"
-#include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/hybrid_scan_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "expression/abstract_expression.h"
 #include "planner/hybrid_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"

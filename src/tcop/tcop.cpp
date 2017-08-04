@@ -14,27 +14,18 @@
 
 #include "catalog/catalog.h"
 #include "common/abstract_tuple.h"
+#include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/portal.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "configuration/configuration.h"
+#include "executor/plan_executor.h"
+#include "expression/expression_util.h"
+#include "optimizer/optimizer.h"
+#include "parser/postgresparser.h"
+#include "planner/plan_util.h"
 #include "type/type.h"
 #include "type/types.h"
-
-#include "configuration/configuration.h"
-
-#include "expression/aggregate_expression.h"
-#include "expression/expression_util.h"
-#include "common/exception.h"
-#include "parser/select_statement.h"
-
-#include "catalog/catalog.h"
-#include "executor/plan_executor.h"
-#include "optimizer/optimizer.h"
-#include "planner/plan_util.h"
-
-#include <boost/algorithm/string.hpp>
-#include <include/parser/postgresparser.h>
-
 
 namespace peloton {
 namespace tcop {

@@ -6,13 +6,9 @@
 //
 // Identification: src/executor/nested_loop_join_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-#include <memory>
-#include <vector>
-#include <unordered_set>
 
 #include "type/types.h"
 #include "common/logger.h"
@@ -225,5 +221,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   }  // end the very beginning for loop
 }
+
 }  // namespace executor
 }  // namespace peloton

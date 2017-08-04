@@ -6,13 +6,9 @@
 //
 // Identification: src/executor/hash_set_op_executor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
-#include <utility>
-#include <vector>
 
 #include "common/logger.h"
 #include "type/value.h"
