@@ -68,7 +68,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
@@ -157,7 +156,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
@@ -193,7 +191,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
