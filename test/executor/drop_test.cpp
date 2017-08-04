@@ -132,7 +132,7 @@ TEST_F(DropTests, DroppingTrigger) {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                       "department_table");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
-  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "update_dept_name");
 
   LOG_INFO("Create trigger finishes. Now drop it.");

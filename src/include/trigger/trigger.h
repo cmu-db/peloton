@@ -50,10 +50,10 @@ class Trigger {
  public:
   Trigger(const planner::CreatePlan& plan);
 
-  Trigger(std::string name,
+  Trigger(const std::string &name,
           int16_t type,
-          std::string function_name,
-          std::string arguments,
+          const std::string &function_name,
+          const std::string &arguments,
           const void *fire_condition);
 
   Trigger(const Trigger& that) {
@@ -123,14 +123,9 @@ class TriggerList {
 
   Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
 
-  TriggerType ToTriggerType(int16_t trigger_type) {
-    int type = 0;
-    type |= (trigger_type & TRIGGER_TYPE_ROW) ? TRIGGER_ROW : TRIGGER_STATEMENT;
-    type |= (trigger_type & TRIGGER_TYPE_BEFORE) ? TRIGGER_BEFORE : TRIGGER_AFTER;
-    type |= (trigger_type & TRIGGER_TYPE_INSERT) ? TRIGGER_INSERT : 0;
-    type |= (trigger_type & TRIGGER_TYPE_UPDATE) ? TRIGGER_UPDATE : 0;
-    type |= (trigger_type & TRIGGER_TYPE_DELETE) ? TRIGGER_DELETE : 0;
-    return TriggerType(type);
+  bool CheckTriggerType(int16_t trigger_type, TriggerType type) {
+    int type_code = static_cast<int>(type);
+    return (type_code & trigger_type) == type_code;
   }
 
   // Execute different types of triggers
@@ -147,7 +142,7 @@ class TriggerList {
  private:
   // types_summary contains a boolean for each kind of EnumTriggerType, this is
   // used for facilitate checking weather there is a trigger to be invoked
-  bool types_summary[TRIGGER_TYPE_MAX] = {false};
+  bool types_summary[TRIGGER_TYPE_MAX + 1] = {false};
   std::vector<Trigger> triggers;
 };
 

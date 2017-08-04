@@ -195,12 +195,12 @@ TEST_F(CreateTests, CreatingTrigger) {
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                         "accounts");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
-  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
 
-  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -290,12 +290,12 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                       "accounts");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
-  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
 
-  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -377,13 +377,13 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // check whether the trigger catalog table contains this new trigger
   oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(DEFAULT_DB_NAME, txn);
   oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid("accounts", database_oid, txn);
-  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(database_oid, table_oid, 
+  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(table_oid,
                               (TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_UPDATE), txn);
 
   txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(1, trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

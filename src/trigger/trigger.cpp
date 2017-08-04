@@ -17,6 +17,7 @@
 
 namespace peloton {
 namespace trigger {
+
 Trigger::Trigger(const peloton::planner::CreatePlan &plan) {
   trigger_name = plan.GetTriggerName();
   trigger_funcname = plan.GetTriggerFuncName()[0];
@@ -26,11 +27,11 @@ Trigger::Trigger(const peloton::planner::CreatePlan &plan) {
   trigger_type = plan.GetTriggerType();
 }
 
-Trigger::Trigger(std::string name,
+Trigger::Trigger(const std::string &name,
                  int16_t type,
-                 std::string function_name,
-                 std::string arguments,
-                 const void* fire_condition) {
+                 const std::string &function_name,
+                 const std::string &arguments,
+                 const void *fire_condition) {
   trigger_name = name;
   trigger_type = type;
   trigger_funcname = function_name;
@@ -147,7 +148,11 @@ void TriggerList::AddTrigger(Trigger trigger) {
  * Update a type summary when a new type of trigger is added
  */
 void TriggerList::UpdateTypeSummary(int16_t type) {
-  types_summary[static_cast<int>(ToTriggerType(type))] = true;
+  for (int t = 0; t <= TRIGGER_TYPE_MAX; ++t) {
+    if (CheckTriggerType(type, TriggerType(t))) {
+      types_summary[t] = true;
+    }
+  }
 }
 
 bool TriggerList::ExecTriggers(TriggerType exec_type,
@@ -166,7 +171,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
     Trigger &obj = triggers[i];
     int16_t trigger_type = obj.GetTriggerType();
     //check valid type
-    if (ToTriggerType(trigger_type) != exec_type) continue;
+    if (!CheckTriggerType(trigger_type, exec_type)) continue;
 
     //TODO: check if trigger is enabled
 

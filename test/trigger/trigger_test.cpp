@@ -30,13 +30,6 @@ class TriggerTests : public PelotonTest {
   std::string col_1 = "dept_id";
   std::string col_2 = "dept_name";
 
-  // helper for c_str copy
-  static char *cstrdup(const char *c_str) {
-    char *new_str = new char[strlen(c_str) + 1];
-    strcpy(new_str, c_str);
-    return new_str;
-  }
-
   void CreateTableHelper() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -73,9 +66,9 @@ class TriggerTests : public PelotonTest {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    char *table_name_c = cstrdup(table_name.c_str());
-    char *col_1_c = cstrdup(col_1.c_str());
-    char *col_2_c = cstrdup(col_2.c_str());
+    char *table_name_c = strdup(table_name.c_str());
+    char *col_1_c = strdup(col_1.c_str());
+    char *col_2_c = strdup(col_2.c_str());
 
 
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
@@ -152,7 +145,7 @@ class TriggerTests : public PelotonTest {
     storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, table_name);
     EXPECT_EQ(trigger_number, target_table->GetTriggerNumber());
-    commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+    trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
     EXPECT_EQ(trigger_name, new_trigger->GetTriggerName());
   }
 };
@@ -176,7 +169,7 @@ TEST_F(TriggerTests, BasicTest) {
   // Create plans
   const planner::CreatePlan plan1(create_trigger_stmt1);
 
-  commands::Trigger trigger1(plan1);
+  trigger::Trigger trigger1(plan1);
   EXPECT_EQ("check_update", trigger1.GetTriggerName());
   int16_t trigger_type1 = trigger1.GetTriggerType();
   EXPECT_TRUE(TRIGGER_FOR_ROW(trigger_type1));
@@ -195,7 +188,7 @@ TEST_F(TriggerTests, BasicTest) {
   auto create_trigger_stmt2 =
       static_cast<parser::CreateStatement *>(stmt_list2->GetStatement(0));
   const planner::CreatePlan plan2(create_trigger_stmt2);
-  commands::Trigger trigger2(plan2);
+  trigger::Trigger trigger2(plan2);
   EXPECT_EQ("check_update_and_delete", trigger2.GetTriggerName());
   int16_t trigger_type2 = trigger2.GetTriggerType();
   EXPECT_TRUE(TRIGGER_FOR_ROW(trigger_type2));
@@ -203,24 +196,24 @@ TEST_F(TriggerTests, BasicTest) {
   EXPECT_TRUE(TRIGGER_FOR_UPDATE(trigger_type2));
   EXPECT_TRUE(TRIGGER_FOR_DELETE(trigger_type2));
 
-  commands::TriggerList trigger_list;
+  trigger::TriggerList trigger_list;
   trigger_list.AddTrigger(trigger1);
   EXPECT_EQ(1, trigger_list.GetTriggerListSize());
   EXPECT_TRUE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+      TriggerType::BEFORE_UPDATE_ROW));
   EXPECT_FALSE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_DELETE_ROW));
+      TriggerType::BEFORE_DELETE_ROW));
   EXPECT_FALSE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_INSERT_ROW));
+      TriggerType::BEFORE_INSERT_ROW));
 
   trigger_list.AddTrigger(trigger2);
   EXPECT_EQ(2, trigger_list.GetTriggerListSize());
   EXPECT_TRUE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_UPDATE_ROW));
+      TriggerType::BEFORE_UPDATE_ROW));
   EXPECT_TRUE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_DELETE_ROW));
+      TriggerType::BEFORE_DELETE_ROW));
   EXPECT_FALSE(trigger_list.HasTriggerType(
-      commands::EnumTriggerType::BEFORE_INSERT_ROW));
+      TriggerType::BEFORE_INSERT_ROW));
 
 }
 
@@ -281,12 +274,12 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                       "accounts");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
-  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "b_r_insert_trigger");
 
-  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_ROW));
 
   // create another trigger in simple way (after row insert)
   CreateTriggerHelper("CREATE TRIGGER a_r_insert_trigger "
@@ -364,12 +357,12 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                       "accounts");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
-  commands::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+  trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "a_s_insert_trigger");
 
-  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_INSERT_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT));
 
 
   InsertTupleHelper(2333, "LTI");
@@ -450,25 +443,25 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   storage::DataTable *target_table =
     catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, table_name);
 
-  commands::TriggerList *new_trigger_list = target_table->GetTriggerList();
+  trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(9, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_ROW));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_ROW));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_ROW));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_ROW));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_INSERT_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_UPDATE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_UPDATE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT));
+  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT));
 
   // Invoke triggers directly
-  new_trigger_list->ExecBRUpdateTriggers();
-  new_trigger_list->ExecBSInsertTriggers();
-  new_trigger_list->ExecBSUpdateTriggers();
-  new_trigger_list->ExecASUpdateTriggers();
-  new_trigger_list->ExecBSDeleteTriggers();
-  new_trigger_list->ExecASDeleteTriggers();
+  new_trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_ROW);
+  new_trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_STATEMENT);
+  new_trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_STATEMENT);
+  new_trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_STATEMENT);
+  new_trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT);
+  new_trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT);
 
 
   // TODO: the effect of this operation should be verified automatically.
