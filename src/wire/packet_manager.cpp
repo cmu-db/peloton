@@ -454,7 +454,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
       }
       default:
       {
-        // execute the query using tcop
+        // execute the query using traffic_cop
         auto status = traffic_cop_->ExecuteStatement(
             query, result, tuple_descriptor, rows_affected, error_message,
             thread_id);

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tcop.cpp
+// traffic_cop.cpp
 //
-// Identification: src/tcop/tcop.cpp
+// Identification: src/traffic_cop/traffic_cop.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -531,5 +531,5 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
                          field_size);
 }
 
-}  // namespace tcop
+}  // namespace traffic_cop
 }  // namespace peloton
