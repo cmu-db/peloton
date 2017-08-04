@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration_manager.h
+// settings_manager.h
 //
-// Identification: src/include/configuration/configuration_manager.h
+// Identification: src/include/settings/settings_manager.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -13,65 +13,78 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include "type/types.h"
 #include "type/value.h"
 #include "common/exception.h"
 #include "common/printable.h"
-#include "configuration/configuration_type.h"
+#include "settings/settings_type.h"
 
 namespace peloton {
-namespace configuration {
+namespace settings {
 
-class ConfigurationManager : public Printable {
+// SettingsManager:
+// provide ability to define, get_value and set_value of setting parameters
+// It stores information in an internal map as well as catalog pg_settings
+class SettingsManager : public Printable {
 
-  friend class ConfigurationUtil;
+  friend class SettingsUtil;
 
-public:
-  static ConfigurationManager* GetInstance();
+ public:
+  static SettingsManager* GetInstance();
 
+  // Call this method in Catalog->Bootstrap
+  // to store information into pg_settings
   void InitializeCatalog();
 
   const std::string GetInfo() const;
 
   void ShowInfo();
 
-private:
+ private:
 
+  // local information storage
+  // name, value, description, default_value, is_mutable, is_persistent
   struct Param {
     std::string name;
-    void* gflags_ptr;
+    type::Value value;
     std::string desc;
-    type::Value value, default_value;
+    type::Value default_value;
     bool is_mutable, is_persistent;
-    Param() {}
-    Param(std::string name, void* gflags_ptr, std::string desc,
-          const type::Value &value, const type::Value &default_value,
+
+    Param(std::string name, const type::Value &value,
+          std::string desc, const type::Value &default_value,
           bool is_mutable, bool is_persistent)
-            : name(name), gflags_ptr(gflags_ptr), desc(desc),
-              value(value), default_value(default_value),
-              is_mutable(is_mutable), is_persistent(is_persistent) {}
+        : name(name), value(value), desc(desc),
+          default_value(default_value),
+          is_mutable(is_mutable), is_persistent(is_persistent) {}
   };
 
-  std::map<ConfigurationId, Param> config;
+  // internal map
+  struct EnumClassHash {
+    template <typename T> std::size_t operator()(T t)
+    const { return static_cast<std::size_t>(t); }
+  };
+  std::unordered_map<SettingsId, Param, EnumClassHash> settings;
 
   std::unique_ptr<type::AbstractPool> pool_;
 
   bool catalog_initialized;
 
-  ConfigurationManager();
+  SettingsManager();
 
-  void DefineConfig(ConfigurationId id, const std::string &name,
-                    void* gflags_ptr, const std::string &description,
-                    const type::Value &value, const type::Value &default_value,
-                    bool is_mutable, bool is_persistent);
+  void DefineSetting(SettingsId id, const std::string &name,
+                     const type::Value &value,
+                     const std::string &description,
+                     const type::Value &default_value,
+                     bool is_mutable, bool is_persistent);
 
-  type::Value GetValue(ConfigurationId id);
+  type::Value GetValue(SettingsId id);
 
-  void SetValue(ConfigurationId id, const type::Value &value);
+  void SetValue(SettingsId id, const type::Value &value);
 
-  void insert_into_catalog(const Param &param);
+  bool InsertIntoCatalog(const Param &param);
 };
 
-} // End configuration namespace
-} // End peloton namespace
+} // namespace settings
+} // namespace peloton

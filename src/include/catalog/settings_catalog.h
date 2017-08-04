@@ -15,8 +15,6 @@
 
 #include "catalog/abstract_catalog.h"
 
-#define SETTINGS_CATALOG_NAME "pg_settings"
-
 namespace peloton {
 namespace catalog {
 
@@ -71,5 +69,5 @@ private:
   };
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

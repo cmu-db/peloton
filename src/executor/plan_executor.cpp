@@ -20,7 +20,7 @@
 #include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "storage/tuple_iterator.h"
-#include "configuration/configuration_util.h"
+#include "settings/settings_util.h"
 
 namespace peloton {
 namespace executor {
@@ -52,7 +52,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));
 
-  if (!ConfigurationUtil::GET_BOOL(ConfigurationId::codegen)
+  if (!settings::SettingsUtil::GetBool(settings::SettingsId::codegen)
       || !codegen::QueryCompiler::IsSupported(*plan)) {
     bool status;
     std::unique_ptr<executor::AbstractExecutor> executor_tree(

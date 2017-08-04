@@ -30,7 +30,7 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "configuration/configuration_manager.h"
+#include "settings/settings_manager.h"
 #include "container/lock_free_queue.h"
 #include "wire/libevent_server.h"
 #include "wire/packet_manager.h"

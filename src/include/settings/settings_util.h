@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration_util.h
+// settings_util.h
 //
-// Identification: src/include/configuration/configuration_util.h
+// Identification: src/include/settings/settings_util.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -13,23 +13,21 @@
 
 #pragma once
 
-#include "configuration/configuration_type.h"
+#include "settings/settings_type.h"
 
 namespace peloton {
-namespace configuration {
+namespace settings {
 
-class ConfigurationUtil {
+class SettingsUtil {
 public:
-  static int32_t GET_INT(ConfigurationId id);
-  static bool GET_BOOL(ConfigurationId id);
-  static std::string GET_STRING(ConfigurationId id);
+  static int32_t GetInt(SettingsId id);
+  static bool GetBool(SettingsId id);
+  static std::string GetString(SettingsId id);
 
-  static void SET_INT(ConfigurationId id, int32_t value);
-  static void SET_BOOL(ConfigurationId id, bool value);
-  static void SET_STRING(ConfigurationId id, const std::string &value);
+  static void SetInt(SettingsId id, int32_t value);
+  static void SetBool(SettingsId id, bool value);
+  static void SetString(SettingsId id, const std::string &value);
 };
 
-} // End configuration namespace
-} // End peloton namespace
-
-using namespace peloton::configuration;
+}  // namespace settings
+}  // namespace peloton
