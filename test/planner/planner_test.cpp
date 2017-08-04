@@ -192,13 +192,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   std::unique_ptr<planner::UpdatePlan> update_plan(
       new planner::UpdatePlan(target_table, std::move(project_info)));
 
-<<<<<<< 2b8388800f17901c3bbd0977fe8f14d17fb7b2c6
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(target_table, where_expr, column_ids));
   update_plan->AddChild(std::move(seq_scan_node));
-=======
-  update_statement->where.reset(cmp_expr);
->>>>>>> merge the latest code
 
   LOG_INFO("Plan created:\n%s", update_plan->GetInfo().c_str());
 
