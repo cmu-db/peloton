@@ -33,11 +33,11 @@ namespace wire {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
-class PacketManager {
+class ProtocolHandler {
  public:
-  PacketManager();
+  ProtocolHandler();
 
-  ~PacketManager();
+  ~ProtocolHandler();
 
   /* Routine to deal with the first packet from the client */
   int ProcessInitialPacket(InputPacket* pkt);
@@ -56,7 +56,7 @@ class PacketManager {
   //  bool ManageStartupPacket();
   void Reset();
 
-  // Returns a vector of all the PreparedStatements that this PacketManager has
+  // Returns a vector of all the PreparedStatements that this ProtocolHandler has
   // that reference the given table id
   const std::vector<Statement*> GetPreparedStatements(oid_t table_id) {
     return table_statement_cache_[table_id];
@@ -92,8 +92,8 @@ class PacketManager {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-  static std::vector<PacketManager*> GetPacketManagers() {
-    return (PacketManager::packet_managers_);
+  static std::vector<ProtocolHandler*> GetPacketManagers() {
+    return (ProtocolHandler::packet_managers_);
   }
 
   Client client_;
@@ -218,10 +218,10 @@ class PacketManager {
   static const std::unordered_map<std::string, std::string>
       parameter_status_map_;
 
-  // HACK: Global list of PacketManager instances
+  // HACK: Global list of ProtocolHandler instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<PacketManager*> packet_managers_;
+  static std::vector<ProtocolHandler*> packet_managers_;
   static std::mutex packet_managers_mutex_;
 };
 
