@@ -19,6 +19,7 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/operator/update_translator.h"
+#include "codegen/type/sql_type.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 
@@ -120,11 +121,14 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
     column_ids.SetValue(codegen, target_id,
                         codegen.Const32(target_list[i].first));
-
     const auto &derived_attribute = target_list[i].second;
     codegen::Value val = row.DeriveValue(codegen, *derived_attribute.expr);
-    SetTargetValue(target_vals, target_id, val.GetType(), val.GetValue(),
-                   val.GetLength());
+
+    const auto &sql_type = val.GetType().GetSqlType();
+    auto *set_value_func = sql_type.GetOutputFunction(codegen, val.GetType());
+    std::vector<llvm::Value *> args = {target_vals, target_id, val.GetValue()};
+    if (val.GetLength() != nullptr) args.push_back(val.GetLength());
+    codegen.CallFunc(set_value_func, args);
   }
 
   auto column_ids_ptr = column_ids.GetVectorPtr();
@@ -135,60 +139,6 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   codegen.Call(UpdaterProxy::Update, {updater, row.GetTileGroupID(),
                                       row.GetTID(codegen), column_ids_ptr,
                                       target_vals, executor_context});
-}
-
-void UpdateTranslator::SetTargetValue(llvm::Value *target_val_vec,
-    llvm::Value *target_id, type::Type type, llvm::Value *value,
-    llvm::Value *length) const {
-  auto &codegen = GetCodeGen();
-  switch (type.type_id) {
-    case peloton::type::TypeId::TINYINT: {
-      codegen.Call(ValuesRuntimeProxy::OutputTinyInt,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::SMALLINT: {
-      codegen.Call(ValuesRuntimeProxy::OutputSmallInt,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::DATE:
-    case peloton::type::TypeId::INTEGER: {
-      codegen.Call(ValuesRuntimeProxy::OutputInteger,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::TIMESTAMP: {
-      codegen.Call(ValuesRuntimeProxy::OutputTimestamp,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::BIGINT: {
-      codegen.Call(ValuesRuntimeProxy::OutputBigInt,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::DECIMAL: {
-      codegen.Call(ValuesRuntimeProxy::OutputDecimal,
-                   {target_val_vec, target_id, value});
-      break;
-    }
-    case peloton::type::TypeId::VARBINARY: {
-      codegen.Call(ValuesRuntimeProxy::OutputVarbinary,
-                   {target_val_vec, target_id, value, length});
-      break;
-    }
-    case peloton::type::TypeId::VARCHAR: {
-      codegen.Call(ValuesRuntimeProxy::OutputVarchar,
-                   {target_val_vec, target_id, value, length});
-      break;
-    }
-    default: {
-      std::string msg = StringUtil::Format("Can't serialize value type '%s'",
-          TypeIdToString(type.type_id).c_str());
-      throw Exception{msg};
-    }
-  }
 }
 
 }  // namespace codegen
