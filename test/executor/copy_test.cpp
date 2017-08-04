@@ -22,8 +22,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
-#include "tcop/tcop.h"
-
+#include "traffic_cop/traffic_cop.h"
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
 
@@ -44,7 +43,7 @@ TEST_F(CopyTests, Copying) {
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);

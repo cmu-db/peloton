@@ -14,7 +14,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -38,7 +38,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::Optimizer optimizer;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = traffic_cop::TrafficCop::GetInstance();
 
   // Create a table first
   txn = txn_manager.BeginTransaction();

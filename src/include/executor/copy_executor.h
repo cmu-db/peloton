@@ -16,7 +16,7 @@
 #include "catalog/query_metrics_catalog.h"
 
 #include <vector>
-#include "wire/packet_manager.h"
+#include "networking/protocol_handler.h"
 
 #define COPY_BUFFER_SIZE 65536
 #define INVALID_COL_ID -1

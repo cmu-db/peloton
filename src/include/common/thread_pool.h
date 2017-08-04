@@ -58,21 +58,21 @@ class ThreadPool {
     thread_pool_.join_all();
   }
 
-  // submit task to thread pool.
+  // submit threadpool to thread pool.
   // it accepts a function and a set of function parameters as parameters.
   template <typename FunctionType, typename... ParamTypes>
   void SubmitTask(FunctionType &&func, const ParamTypes &&... params) {
-    // add task to thread pool.
+    // add threadpool to thread pool.
     io_service_.post(std::bind(func, params...));
   }
 
-  // submit task to a dedicated thread.
+  // submit threadpool to a dedicated thread.
   // it accepts a function and a set of function parameters as parameters.
   template <typename FunctionType, typename... ParamTypes>
   void SubmitDedicatedTask(FunctionType &&func, const ParamTypes &&... params) {
     size_t thread_id =
         current_thread_count_.fetch_add(1, std::memory_order_relaxed);
-    // assign task to dedicated thread.
+    // assign threadpool to dedicated thread.
     dedicated_threads_[thread_id].reset(new std::thread(std::thread(func, params...)));
   }
 
