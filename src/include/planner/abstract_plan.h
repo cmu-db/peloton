@@ -106,11 +106,9 @@ class AbstractPlan : public Printable {
   // virtual
   //===--------------------------------------------------------------------===//
   virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
-    PL_ASSERT(&output != nullptr);
     return false;
   }
   virtual bool DeserializeFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
-    PL_ASSERT(&input != nullptr);
     return false;
   }
   virtual int SerializeSize() { return 0; }
