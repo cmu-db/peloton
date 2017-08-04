@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/rpc_utils.h"
+#include "wire/distributed/rpc_utils.h"
 #include "common/cast.h"
 
 namespace peloton {

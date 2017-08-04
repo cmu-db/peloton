@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/mutex.h"
-#include "networking/tcp_connection.h"
+#include "wire/distributed/tcp_connection.h"
 
 #include <event2/event.h>
 #include <pthread.h>

@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "networking/peloton_service.h"
+#include "wire/distributed/peloton_service.h"
+#include "wire/distributed/peloton_endpoint.h"
+#include "wire/distributed/rpc_server.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "executor/plan_executor.h"
-#include "networking/peloton_endpoint.h"
-#include "networking/rpc_server.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"

@@ -9,7 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "networking/network_address.h"
+#include "wire/distributed/network_address.h"
 
 #include <netdb.h>
 #include <cstring>

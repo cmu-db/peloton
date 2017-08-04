@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/rpc_type.h"
-#include "networking/rpc_client.h"
-#include "networking/rpc_channel.h"
-#include "networking/rpc_controller.h"
-#include "networking/tcp_connection.h"
-#include "networking/connection_manager.h"
+#include "wire/distributed/rpc_type.h"
+#include "wire/distributed/rpc_client.h"
+#include "wire/distributed/rpc_channel.h"
+#include "wire/distributed/rpc_controller.h"
+#include "wire/distributed/tcp_connection.h"
+#include "wire/distributed/connection_manager.h"
 #include "common/logger.h"
 #include "common/macros.h"
 

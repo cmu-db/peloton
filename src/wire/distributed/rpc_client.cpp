@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/rpc_client.h"
+#include "wire/distributed/rpc_client.h"
 #include "peloton/proto/abstract_service.pb.h"
 
 namespace peloton {

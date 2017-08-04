@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "networking/rpc_server.h"
-#include "networking/rpc_controller.h"
-#include "networking/connection_manager.h"
+#include "wire/distributed/rpc_server.h"
+#include "wire/distributed/rpc_controller.h"
+#include "wire/distributed/connection_manager.h"
 #include "common/logger.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>

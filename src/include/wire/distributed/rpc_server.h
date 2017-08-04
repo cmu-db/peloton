@@ -17,8 +17,8 @@
 #include <map>
 
 #include "common/logger.h"
-#include "networking/rpc_method.h"
-#include "networking/tcp_listener.h"
+#include "wire/distributed/rpc_method.h"
+#include "wire/distributed/tcp_listener.h"
 
 namespace peloton {
 namespace networking {
