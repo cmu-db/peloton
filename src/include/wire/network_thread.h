@@ -33,7 +33,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "wire/network_manager.h"
-#include "wire/packet_manager.h"
+#include "wire/protocol_handler.h"
 
 namespace peloton {
 namespace wire {

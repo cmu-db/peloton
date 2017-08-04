@@ -33,7 +33,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "wire/network_thread.h"
-#include "wire/packet_manager.h"
+#include "wire/protocol_handler.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -158,7 +158,7 @@ class NetworkConnection {
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
   NetworkThread *thread;          // reference to the network thread
-  PacketManager pkt_manager;       // Stores state for this socket
+  ProtocolHandler pkt_manager;       // Stores state for this socket
   ConnState state = CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
 

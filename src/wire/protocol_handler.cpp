@@ -9,7 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "wire/packet_manager.h"
+#include "wire/protocol_handler.h"
 
 #include <boost/algorithm/string.hpp>
 #include <cstdio>
@@ -39,7 +39,7 @@ namespace wire {
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
     // clang-format off
-    PacketManager::parameter_status_map_ =
+    ProtocolHandler::parameter_status_map_ =
         boost::assign::map_list_of("application_name", "psql")
 				("client_encoding", "UTF8")
 				("DateStyle", "ISO, MDY")
@@ -53,33 +53,33 @@ const std::unordered_map<std::string, std::string>
 				("TimeZone", "US/Eastern");
 // clang-format on
 
-std::vector<PacketManager *> PacketManager::packet_managers_;
-std::mutex PacketManager::packet_managers_mutex_;
+std::vector<ProtocolHandler *> ProtocolHandler::packet_managers_;
+std::mutex ProtocolHandler::packet_managers_mutex_;
 
-PacketManager::PacketManager()
+ProtocolHandler::ProtocolHandler()
     : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
   {
-    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
-    PacketManager::packet_managers_.push_back(this);
-    LOG_DEBUG("Registered new PacketManager [count=%d]",
-              (int)PacketManager::packet_managers_.size());
+    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
+    ProtocolHandler::packet_managers_.push_back(this);
+    LOG_DEBUG("Registered new ProtocolHandler [count=%d]",
+              (int)ProtocolHandler::packet_managers_.size());
   }
 }
 
-PacketManager::~PacketManager() {
+ProtocolHandler::~ProtocolHandler() {
   {
-    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
-    PacketManager::packet_managers_.erase(
-        std::remove(PacketManager::packet_managers_.begin(),
-                    PacketManager::packet_managers_.end(), this),
-        PacketManager::packet_managers_.end());
-    LOG_DEBUG("Removed PacketManager [count=%d]",
-              (int)PacketManager::packet_managers_.size());
+    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
+    ProtocolHandler::packet_managers_.erase(
+        std::remove(ProtocolHandler::packet_managers_.begin(),
+                    ProtocolHandler::packet_managers_.end(), this),
+        ProtocolHandler::packet_managers_.end());
+    LOG_DEBUG("Removed ProtocolHandler [count=%d]",
+              (int)ProtocolHandler::packet_managers_.size());
   }
 }
 
-void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
+void ProtocolHandler::InvalidatePreparedStatements(oid_t table_id) {
   if (table_statement_cache_.find(table_id) == table_statement_cache_.end()) {
     return;
   }
@@ -92,7 +92,7 @@ void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
   }
 }
 
-void PacketManager::ReplanPreparedStatement(Statement *statement) {
+void ProtocolHandler::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
   auto new_statement = traffic_cop_->PrepareStatement(
       statement->GetStatementName(), statement->GetQueryString(),
@@ -116,7 +116,7 @@ void PacketManager::ReplanPreparedStatement(Statement *statement) {
   }
 }
 
-void PacketManager::MakeHardcodedParameterStatus(
+void ProtocolHandler::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::PARAMETER_STATUS;
@@ -129,7 +129,7 @@ void PacketManager::MakeHardcodedParameterStatus(
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
+int ProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -156,7 +156,7 @@ int PacketManager::ProcessInitialPacket(InputPacket *pkt) {
   return res_base;
 }
 
-bool PacketManager::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+bool ProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -209,7 +209,7 @@ bool PacketManager::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version
   return true;
 }
 
-bool PacketManager::ProcessSSLRequestPacket(InputPacket *pkt) {
+bool ProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
   UNUSED(pkt);
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   // TODO: consider more about a proper response
@@ -219,7 +219,7 @@ bool PacketManager::ProcessSSLRequestPacket(InputPacket *pkt) {
   return true;
 }
 
-void PacketManager::PutTupleDescriptor(
+void ProtocolHandler::PutTupleDescriptor(
     const std::vector<FieldInfo> &tuple_descriptor) {
   if (tuple_descriptor.empty()) return;
 
@@ -245,7 +245,7 @@ void PacketManager::PutTupleDescriptor(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<StatementResult> &results,
+void ProtocolHandler::SendDataRows(std::vector<StatementResult> &results,
                                  int colcount, int &rows_affected) {
   if (results.empty() || colcount == 0) return;
 
@@ -274,7 +274,7 @@ void PacketManager::SendDataRows(std::vector<StatementResult> &results,
   rows_affected = numrows;
 }
 
-void PacketManager::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
+void ProtocolHandler::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
   std::string query_type_string;
@@ -307,13 +307,13 @@ void PacketManager::CompleteCommand(const std::string &query, const QueryType& q
 /*
  * put_empty_query_response - Informs the client that an empty query was sent
  */
-void PacketManager::SendEmptyQueryResponse() {
+void ProtocolHandler::SendEmptyQueryResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::EMPTY_QUERY_RESPONSE;
   responses.push_back(std::move(response));
 }
 
-bool PacketManager::HardcodedExecuteFilter(QueryType query_type) {
+bool ProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
   switch (query_type) {
     // Skip SET
     case QueryType::QUERY_SET:
@@ -343,7 +343,7 @@ bool PacketManager::HardcodedExecuteFilter(QueryType query_type) {
 // ';' being split into multiple queries.
 // However, the multi-statement queries has been split by the psql client and
 // there is no need to split the query again.
-void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
+void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
 
@@ -493,7 +493,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
 /*
  * exec_parse_message - handle PARSE message
  */
-void PacketManager::ExecParseMessage(InputPacket *pkt) {
+void ProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   std::string error_message, statement_name, query_string, query_type_string;
   GetStringToken(pkt, statement_name);
   QueryType query_type;
@@ -577,7 +577,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecBindMessage(InputPacket *pkt) {
+void ProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
@@ -740,7 +740,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   responses.push_back(std::move(response));
 }
 
-size_t PacketManager::ReadParamType(InputPacket *pkt, int num_params,
+size_t ProtocolHandler::ReadParamType(InputPacket *pkt, int num_params,
                                     std::vector<int32_t> &param_types) {
   auto begin = pkt->ptr;
   // get the type of each parameter
@@ -752,7 +752,7 @@ size_t PacketManager::ReadParamType(InputPacket *pkt, int num_params,
   return end - begin;
 }
 
-size_t PacketManager::ReadParamFormat(InputPacket *pkt, int num_params_format,
+size_t ProtocolHandler::ReadParamFormat(InputPacket *pkt, int num_params_format,
                                       std::vector<int16_t> &formats) {
   auto begin = pkt->ptr;
   // get the format of each parameter
@@ -764,7 +764,7 @@ size_t PacketManager::ReadParamFormat(InputPacket *pkt, int num_params_format,
 }
 
 // For consistency, this function assumes the input vectors has the correct size
-size_t PacketManager::ReadParamValue(
+size_t ProtocolHandler::ReadParamValue(
     InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
     std::vector<std::pair<int, std::string>> &bind_parameters,
     std::vector<type::Value> &param_values, std::vector<int16_t> &formats) {
@@ -861,7 +861,7 @@ size_t PacketManager::ReadParamValue(
   return end - begin;
 }
 
-bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
+bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -905,7 +905,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(InputPacket *pkt,
+void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
@@ -982,7 +982,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt,
   }
 }
 
-void PacketManager::ExecCloseMessage(InputPacket *pkt) {
+void ProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
   uchar close_type = 0;
   std::string name;
   PacketGetByte(pkt, close_type);
@@ -1021,7 +1021,7 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
+bool ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -1080,7 +1080,7 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
  * send_error_response - Sends the passed string as an error response.
  *    For now, it only supports the human readable 'M' message body
  */
-void PacketManager::SendErrorResponse(
+void ProtocolHandler::SendErrorResponse(
     std::vector<std::pair<NetworkMessageType, std::string>> error_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::ERROR_RESPONSE;
@@ -1097,7 +1097,7 @@ void PacketManager::SendErrorResponse(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendReadyForQuery(NetworkTransactionStateType txn_status) {
+void ProtocolHandler::SendReadyForQuery(NetworkTransactionStateType txn_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::READY_FOR_QUERY;
 
@@ -1106,7 +1106,7 @@ void PacketManager::SendReadyForQuery(NetworkTransactionStateType txn_status) {
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::Reset() {
+void ProtocolHandler::Reset() {
   client_.Reset();
   is_started = false;
   force_flush = false;
