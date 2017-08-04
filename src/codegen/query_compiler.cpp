@@ -13,9 +13,10 @@
 #include "codegen/query_compiler.h"
 
 #include "codegen/compilation_context.h"
-#include "planner/seq_scan_plan.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/projection_plan.h"
+#include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -55,7 +56,18 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       break;
     }
     case PlanNodeType::PROJECTION: {
-      if (plan.GetChildren().size() == 0) return false;
+      // TODO(pmenon): Why does this check exists?
+      if (plan.GetChildren().empty()) return false;
+
+      // Check each projection expression
+      auto &proj_plan = static_cast<const planner::ProjectionPlan &>(plan);
+      auto &proj_info = *proj_plan.GetProjectInfo();
+      for (const auto &target : proj_info.GetTargetList()) {
+        const planner::DerivedAttribute &attr = target.second;
+        if (!IsExpressionSupported(*attr.expr)) {
+          return false;
+        }
+      }
       break;
     }
     case PlanNodeType::HASHJOIN: {
