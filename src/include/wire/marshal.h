@@ -24,7 +24,7 @@
 namespace peloton {
 namespace wire {
 
-class LibeventSocket;
+class NetworkConnection;
 
 class InputPacket {
  public:

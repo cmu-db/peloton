@@ -13,7 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
-#include "wire/libevent_server.h"
+#include "wire/network_manager.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 
@@ -28,11 +28,11 @@ namespace test {
 
 class PrepareStmtTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::LibeventServer libeventserver,
+static void *LaunchServer(peloton::wire::NetworkManager network_manager,
                           int port) {
   try {
-    libeventserver.SetPort(port);
-    libeventserver.StartServer();
+    network_manager.SetPort(port);
+    network_manager.StartServer();
   } catch (peloton::ConnectionException exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -51,9 +51,9 @@ void *PrepareStatementTest(int port) {
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::wire::LibeventSocket *conn =
-        peloton::wire::LibeventServer::GetConn(
-            peloton::wire::LibeventServer::recent_connfd);
+    peloton::wire::NetworkConnection *conn =
+        peloton::wire::NetworkManager::GetConn(
+            peloton::wire::NetworkManager::recent_connfd);
 
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -88,16 +88,16 @@ void *PrepareStatementTest(int port) {
 TEST_F(PrepareStmtTests, PrepareStatementTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
+  peloton::wire::NetworkManager network_manager;
   int port = 15721;
-  std::thread serverThread(LaunchServer, libeventserver, port);
-  while (!libeventserver.GetIsStarted()) {
+  std::thread serverThread(LaunchServer, network_manager, port);
+  while (!network_manager.GetIsStarted()) {
     sleep(1);
   }
 
   PrepareStatementTest(port);
 
-  libeventserver.CloseServer();
+  network_manager.CloseServer();
   serverThread.join();
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
