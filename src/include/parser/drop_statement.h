@@ -34,14 +34,22 @@ class DropStatement : public TableRefStatement {
     kTrigger
   };
 
+  // helper for c_str copy
+  static char* cstrdup(const char* c_str) {
+    char* new_str = new char[strlen(c_str) + 1];
+    strcpy(new_str, c_str);
+    return new_str;
+  }
+
   DropStatement(EntityType type)
       : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
   DropStatement(EntityType type, std::string table_name_of_trigger, std::string trigger_name)
       : TableRefStatement(StatementType::DROP),
         type(type),
-        table_name_of_trigger(strdup(table_name_of_trigger.c_str())),
-        trigger_name(strdup(trigger_name.c_str())) {}
+        table_name_of_trigger(cstrdup(table_name_of_trigger.c_str())),
+        trigger_name(cstrdup(trigger_name.c_str())) {}
+
 
   virtual ~DropStatement() {
     if (database_name != nullptr) {

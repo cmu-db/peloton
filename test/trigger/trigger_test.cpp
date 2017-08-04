@@ -30,6 +30,13 @@ class TriggerTests : public PelotonTest {
   std::string col_1 = "dept_id";
   std::string col_2 = "dept_name";
 
+  // helper for c_str copy
+  static char* cstrdup(const char* c_str) {
+    char* new_str = new char[strlen(c_str) + 1];
+    strcpy(new_str, c_str);
+    return new_str;
+  }
+
   void CreateTableHelper() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -66,9 +73,9 @@ class TriggerTests : public PelotonTest {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    char *table_name_c = strdup(table_name.c_str());
-    char *col_1_c = strdup(col_1.c_str());
-    char *col_2_c = strdup(col_2.c_str());
+    char *table_name_c = cstrdup(table_name.c_str());
+    char *col_1_c = cstrdup(col_1.c_str());
+    char *col_2_c = cstrdup(col_2.c_str());
 
 
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
