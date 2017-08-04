@@ -13,6 +13,7 @@
 #include "codegen/updater.h"
 #include "codegen/transaction_runtime.h"
 #include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -34,15 +35,16 @@ void Updater::Init(concurrency::Transaction *txn, storage::DataTable *table,
   direct_map_vector_size_ = direct_map_vector_size;
 }
 
-void Updater::Update(storage::TileGroup *tile_group, uint32_t tuple_offset,
-                     uint32_t *col_ids, type::Value *target_vals,
+void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
+                     uint32_t *col_ids, char *target_vals,
                      executor::ExecutorContext *executor_context) {
   PL_ASSERT(txn_ != nullptr && table_ != nullptr);
 
-  auto result = TransactionRuntime::PerformUpdate(*txn_, *table_, tile_group,
+  peloton::type::Value *values =
+     reinterpret_cast<peloton::type::Value *>(target_vals);
+  auto result = TransactionRuntime::PerformUpdate(*txn_, *table_, tile_group_id,
                                                   tuple_offset, col_ids, 
-                                                  target_vals,
-                                                  update_primary_key_,
+                                                  values, update_primary_key_,
                                                   target_vector_,
                                                   target_vector_size_,
                                                   direct_map_vector_,

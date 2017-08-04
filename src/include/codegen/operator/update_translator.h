@@ -13,7 +13,7 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "codegen/operator_translator.h"
+#include "codegen/operator/operator_translator.h"
 #include "codegen/pipeline.h"
 #include "codegen/runtime_state.h"
 #include "codegen/table.h"
@@ -48,7 +48,7 @@ class UpdateTranslator : public OperatorTranslator {
 
  private:
   void SetTargetValue(llvm::Value *target_val_vec, llvm::Value *target_id,
-                      type::Type::TypeId type, llvm::Value *value,
+                      type::Type type, llvm::Value *value,
                       llvm::Value *length) const;
 
  private:

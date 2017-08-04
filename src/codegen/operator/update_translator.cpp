@@ -10,14 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/catalog_proxy.h"
-#include "codegen/direct_map_proxy.h"
-#include "codegen/target_proxy.h"
-#include "codegen/transaction_runtime_proxy.h"
-#include "codegen/update_translator.h"
-#include "codegen/updater_proxy.h"
-#include "codegen/value_proxy.h"
-#include "codegen/values_runtime_proxy.h"
+#include "common/container_tuple.h"
+#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/direct_map_proxy.h"
+#include "codegen/proxy/target_proxy.h"
+#include "codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/proxy/updater_proxy.h"
+#include "codegen/proxy/value_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/operator/update_translator.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 
@@ -46,9 +47,9 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
 
   // Vectors are 
   target_val_vec_id_ = runtime_state.RegisterState( "updateTargetValVec",
-      codegen.VectorType(ValueProxy::GetType(codegen), column_num), true);
+      codegen.ArrayType(codegen.Int8Type(), column_num), true);
   column_id_vec_id_ = runtime_state.RegisterState( "updateColumnIdVec",
-      codegen.VectorType(codegen.Int64Type(), column_num), true);
+      codegen.ArrayType(codegen.Int32Type(), column_num), true);
 
   updater_state_id_ = runtime_state.RegisterState("updater",
       UpdaterProxy::GetType(codegen));
@@ -61,8 +62,7 @@ void UpdateTranslator::InitializeState() {
   llvm::Value *txn_ptr = context.GetTransactionPtr();
 
   storage::DataTable *table = update_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
       {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
 
@@ -89,11 +89,11 @@ void UpdateTranslator::InitializeState() {
 
   // Initialize the inserter with txn and table
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  auto *init_func = UpdaterProxy::_Init::GetFunction(codegen);
-  codegen.CallFunc(init_func, {updater, txn_ptr, table_ptr, target_vector_ptr,
-                               target_vector_size_ptr, direct_map_vector_ptr,
-                               direct_map_vector_size_ptr,
-                               update_primary_key_ptr});
+  codegen.Call(UpdaterProxy::Init, {updater, txn_ptr, table_ptr,
+                                    target_vector_ptr, target_vector_size_ptr,
+                                    direct_map_vector_ptr,
+                                    direct_map_vector_size_ptr,
+                                    update_primary_key_ptr});
 }
 
 void UpdateTranslator::Produce() const {
@@ -104,31 +104,22 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto &context = GetCompilationContext();
 
-  storage::DataTable *table = update_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.CallFunc(
-      CatalogProxy::_GetTableWithOid::GetFunction(codegen),
-      {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
-       codegen.Const32(table->GetOid())});
-  Table codegen_table(*table);
-  llvm::Value *tile_group_ptr =
-      codegen_table.GetTileGroup(codegen, table_ptr, row.GetTileGroupID());
-
   // Vector for collecting col ids that are targeted to update
   const auto *project_info = update_plan_.GetProjectInfo();
   auto target_list = project_info->GetTargetList();
   uint32_t column_num = (uint32_t)target_list.size();
   Vector column_ids{LoadStateValue(column_id_vec_id_), column_num,
-                    codegen.Int64Type()};
+                    codegen.Int32Type()};
 
   // Vector for collecting results from executing target list
   llvm::Value *target_vals = LoadStateValue(target_val_vec_id_);
 
   /* Loop for collecting target col ids and corresponding derived values */
   for (uint32_t i = 0; i < column_num; i++) {
-    auto target_id = codegen.Const64(i);
+    auto target_id = codegen.Const32(i);
 
     column_ids.SetValue(codegen, target_id,
-                        codegen.Const64(target_list[i].first));
+                        codegen.Const32(target_list[i].first));
 
     const auto &derived_attribute = target_list[i].second;
     codegen::Value val = row.DeriveValue(codegen, *derived_attribute.expr);
@@ -141,62 +132,60 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Finally, update!
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  auto *update_func = UpdaterProxy::_Update::GetFunction(codegen);
-  codegen.CallFunc(update_func, {updater, tile_group_ptr, row.GetTID(codegen),
-                                 column_ids_ptr, target_vals,
-                                 executor_context});
+  codegen.Call(UpdaterProxy::Update, {updater, row.GetTileGroupID(),
+                                      row.GetTID(codegen), column_ids_ptr,
+                                      target_vals, executor_context});
 }
 
 void UpdateTranslator::SetTargetValue(llvm::Value *target_val_vec,
-    llvm::Value *target_id, type::Type::TypeId type, llvm::Value *value,
+    llvm::Value *target_id, type::Type type, llvm::Value *value,
     llvm::Value *length) const {
   auto &codegen = GetCodeGen();
-  llvm::Function *func;
-  switch (type) {
-    case type::Type::TypeId::TINYINT: {
-      func = ValuesRuntimeProxy::_OutputTinyInt::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+  switch (type.type_id) {
+    case peloton::type::TypeId::TINYINT: {
+      codegen.Call(ValuesRuntimeProxy::OutputTinyInt,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::SMALLINT: {
-      func = ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+    case peloton::type::TypeId::SMALLINT: {
+      codegen.Call(ValuesRuntimeProxy::OutputSmallInt,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::DATE:
-    case type::Type::TypeId::INTEGER: {
-      func = ValuesRuntimeProxy::_OutputInteger::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+    case peloton::type::TypeId::DATE:
+    case peloton::type::TypeId::INTEGER: {
+      codegen.Call(ValuesRuntimeProxy::OutputInteger,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::TIMESTAMP: {
-      func = ValuesRuntimeProxy::_OutputTimestamp::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+    case peloton::type::TypeId::TIMESTAMP: {
+      codegen.Call(ValuesRuntimeProxy::OutputTimestamp,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::BIGINT: {
-      func = ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+    case peloton::type::TypeId::BIGINT: {
+      codegen.Call(ValuesRuntimeProxy::OutputBigInt,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::DECIMAL: {
-      func = ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value});
+    case peloton::type::TypeId::DECIMAL: {
+      codegen.Call(ValuesRuntimeProxy::OutputDecimal,
+                   {target_val_vec, target_id, value});
       break;
     }
-    case type::Type::TypeId::VARBINARY: {
-      func = ValuesRuntimeProxy::_OutputVarbinary::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value, length});
+    case peloton::type::TypeId::VARBINARY: {
+      codegen.Call(ValuesRuntimeProxy::OutputVarbinary,
+                   {target_val_vec, target_id, value, length});
       break;
     }
-    case type::Type::TypeId::VARCHAR: {
-      func = ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen);
-      codegen.CallFunc(func, {target_val_vec, target_id, value, length});
+    case peloton::type::TypeId::VARCHAR: {
+      codegen.Call(ValuesRuntimeProxy::OutputVarchar,
+                   {target_val_vec, target_id, value, length});
       break;
     }
     default: {
       std::string msg = StringUtil::Format("Can't serialize value type '%s'",
-                             TypeIdToString(type).c_str());
+          TypeIdToString(type.type_id).c_str());
       throw Exception{msg};
     }
   }

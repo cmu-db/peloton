@@ -12,9 +12,12 @@
 
 #include "codegen/transaction_runtime.h"
 
+#include "catalog/manager.h"
+#include "common/container_tuple.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {
@@ -126,8 +129,8 @@ bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
 }
 
 void DoProjection(AbstractTuple *dest, const AbstractTuple *tuple,
-                  type::Value *values, uint32_t *col_ids, uint32_t target_size,
-                  DirectMapList direct_list) {
+                  peloton::type::Value *values, uint32_t *col_ids,
+                  uint32_t target_size, DirectMapList direct_list) {
   // Execute target list
   for (uint32_t i = 0; i < target_size; i++) {
     dest->SetValue(col_ids[i], values[i]);
@@ -137,16 +140,16 @@ void DoProjection(AbstractTuple *dest, const AbstractTuple *tuple,
   for (auto dm : direct_list) {
     auto dest_col_id = dm.first;
     auto src_col_id = dm.second.second;
-    type::Value value = (tuple->GetValue(src_col_id));
+    peloton::type::Value value = (tuple->GetValue(src_col_id));
     dest->SetValue(dest_col_id, value);
   }
 }
 
 void DoProjection(storage::Tuple *dest, const AbstractTuple *tuple,
-                  type::Value *values, uint32_t *col_ids, uint32_t target_size,
-                  DirectMapList direct_map_list,
+                  peloton::type::Value *values, uint32_t *col_ids,
+                  uint32_t target_size, DirectMapList direct_map_list,
                   executor::ExecutorContext *context = nullptr) {
-  type::AbstractPool *pool = nullptr;
+  peloton::type::AbstractPool *pool = nullptr;
   if (context != nullptr) pool = context->GetPool();
 
   // Execute target list
@@ -158,7 +161,7 @@ void DoProjection(storage::Tuple *dest, const AbstractTuple *tuple,
   for (auto dm : direct_map_list) {
     auto dest_col_id = dm.first;
     auto src_col_id = dm.second.second;
-    type::Value value = (tuple->GetValue(src_col_id));
+    peloton::type::Value value = (tuple->GetValue(src_col_id));
     dest->SetValue(dest_col_id, value, pool);
   }
 }
@@ -168,7 +171,7 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *txn, bool is_owner,
                              storage::DataTable &table,
                              oid_t tuple_offset, ItemPointer &old_location,
                              storage::TileGroup *tile_group,
-                             type::Value *values, uint32_t *col_ids,
+                             peloton::type::Value *values, uint32_t *col_ids,
                              uint32_t target_size,
                              DirectMapList direct_map_list,
                              executor::ExecutorContext *executor_context) {
@@ -210,13 +213,13 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *txn, bool is_owner,
 }
 
 bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
-    storage::DataTable &table, storage::TileGroup *tile_group,
-    uint32_t tuple_offset, uint32_t *col_ids, type::Value *target_vals,
+    storage::DataTable &table, uint32_t tile_group_id,
+    uint32_t tuple_offset, uint32_t *col_ids, peloton::type::Value *target_vals,
     bool update_primary_key, Target *target_vector, uint32_t target_vector_size,
     DirectMap *direct_map_vector, uint32_t direct_map_vector_size,
     executor::ExecutorContext *executor_context) {
 
-  uint32_t tile_group_id = tile_group->GetTileGroupId();
+  auto tile_group = table.GetTileGroupById(tile_group_id).get();
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   // Deserialize the vectors
