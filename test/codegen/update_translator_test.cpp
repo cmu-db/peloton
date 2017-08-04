@@ -10,72 +10,51 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/testing_codegen_util.h"
+
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "common/statement.h"
 #include "executor/create_executor.h"
 #include "executor/update_executor.h"
 #include "expression/expression_util.h"
-#include "optimizer/simple_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "planner/abstract_plan.h"
 #include "planner/create_plan.h"
+#include "planner/seq_scan_plan.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
-
-#include "codegen/codegen_test_util.h"
 
 namespace peloton {
 namespace test {
 
-//===----------------------------------------------------------------------===//
-// This class contains code to test code generation and compilation of table
-// scan query plans. All the tests use a single table created and loaded during
-// SetUp().  The schema of the table is as follows:
-//
-// +---------+---------+---------+-------------+
-// | A (int) | B (int) | C (int) | D (varchar) |
-// +---------+---------+---------+-------------+
-//
-// The database and tables are created in CreateDatabase() and
-// CreateTestTables(), respectively.
-//
-// By default, the table is loaded with 64 rows of random values.
-//===---------------------------------------------------------------------===//
-
-namespace {
-  const uint32_t initial_num_rows = 10;
-}
-
 class UpdateTranslatorTest : public PelotonCodeGenTest {
  public:
-  UpdateTranslatorTest() : PelotonCodeGenTest(),
-                           num_rows_to_insert(initial_num_rows) {
-    // Load test table
-    LoadTestTable(TestTableId(), num_rows_to_insert);
-  }
+  UpdateTranslatorTest() : PelotonCodeGenTest() {}
 
+  TableId TestTableId1() { return TableId::_1; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  uint32_t TestTableId() { return test_table1_id; }
-
  private:
-  uint32_t num_rows_to_insert;
+  uint32_t num_rows_to_insert = 10;
 };
 
 TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
+  LoadTestTable(TestTableId1(), NumRowsInTestTable());
+
   // SET a = 1;
-  storage::DataTable *table = &this->GetTestTable(this->TestTableId());
+  storage::DataTable *table = &this->GetTestTable(this->TestTableId1());
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Pre-condition
-  EXPECT_EQ(initial_num_rows, table->GetTupleCount());
+  EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
   // Get the scan plan without a predicate with four columns
   std::unique_ptr<planner::SeqScanPlan> scan_plan(new planner::SeqScanPlan(
-      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3}));
+      &GetTestTable(TestTableId1()), nullptr, {0, 1, 2, 3}));
 
   // Transform using a projection
   // Column 0 of the updated tuple will have constant value 1
@@ -83,7 +62,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
       new planner::ProjectInfo(
           // Target List : [(oid_t, planner::DerivedAttribute)]
           // Specify columns that are transformed.
-          {{0, planner::DerivedAttribute{planner::AttributeInfo{},
+          {{0, planner::DerivedAttribute{
                    expression::ExpressionUtil::ConstantValueFactory(
                        type::ValueFactory::GetIntegerValue(1))}}},
           // Direct Map List : [(oid_t, (oid_t, oid_t))]
@@ -92,7 +71,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
 
   // Embed the transformation to build up an update plan.
   std::unique_ptr<planner::UpdatePlan> update_plan(new planner::UpdatePlan(
-      &GetTestTable(TestTableId()), std::move(project_info)));
+      &GetTestTable(TestTableId1()), std::move(project_info)));
 
   // Add the scan to the update plan
   update_plan->AddChild(std::move(scan_plan));
@@ -112,7 +91,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
   LOG_DEBUG("%s", table->GetInfo().c_str());
 
   // Post-condition: The table will have twice many, since it also has old ones
-  EXPECT_EQ(initial_num_rows*2, table->GetTupleCount());
+  EXPECT_EQ(NumRowsInTestTable()*2, table->GetTupleCount());
 }
 
 // fuction extracted from simple optimizer
@@ -189,25 +168,27 @@ std::shared_ptr<planner::AbstractPlan> BuildUpdatePlanTree(
 }
 
 TEST_F(UpdateTranslatorTest, UpdateComplicated) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn1 = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn1);
+  txn_manager.CommitTransaction(txn1);
 
   // Bootstrapping
-  auto catalog = catalog::Catalog::GetInstance();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-
-  optimizer::SimpleOptimizer optimizer;
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  traffic_cop.SetTcopTxnState(txn);
+
+  optimizer::Optimizer optimizer;
 
   //  Create a table
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(type::TypeId::INTEGER,
+      type::Type::GetTypeSize(type::TypeId::INTEGER), "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
-  auto manager_id_column = catalog::Column(type::Type::INTEGER,
-      type::Type::GetTypeSize(type::Type::INTEGER), "manager_id", true);
-  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "dept_name",
+  auto manager_id_column = catalog::Column(type::TypeId::INTEGER,
+      type::Type::GetTypeSize(type::TypeId::INTEGER), "manager_id", true);
+  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "dept_name",
                                      false);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -219,7 +200,7 @@ TEST_F(UpdateTranslatorTest, UpdateComplicated) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
+  traffic_cop.CommitQueryHelper();
   EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
   storage::DataTable *table = catalog->GetTableWithName(DEFAULT_DB_NAME,
@@ -227,6 +208,7 @@ TEST_F(UpdateTranslatorTest, UpdateComplicated) {
 
   //  Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
+  traffic_cop.SetTcopTxnState(txn);
   std::string insert_query = 
       "INSERT INTO department_table(dept_id,manager_id,dept_name) "
       "VALUES (1,12,'hello_1');";
@@ -234,7 +216,7 @@ TEST_F(UpdateTranslatorTest, UpdateComplicated) {
   statement.reset(new Statement("INSERT", insert_query));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto insert_stmt = peloton_parser.BuildParseTree(insert_query);
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
@@ -243,12 +225,12 @@ TEST_F(UpdateTranslatorTest, UpdateComplicated) {
   std::vector<int> result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   EXPECT_EQ(1, status.m_processed);
 
-  txn_manager.CommitTransaction(txn);
+  traffic_cop.CommitQueryHelper();
   LOG_INFO("%s", table->GetInfo().c_str());
 
   //  Now Update a tuple
@@ -317,20 +299,21 @@ TEST_F(UpdateTranslatorTest, UpdateComplicated) {
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
+  traffic_cop.SetTcopTxnState(txn);
   std::string delete_query =
-      "DELETE FROM department_table WHERE dept_name = 'CS';";
+      "DELETE FROM department_table WHERE dept_id = 2;";
   statement.reset(new Statement("DELETE", delete_query));
   auto delete_stmt = peloton_parser.BuildParseTree(delete_query);
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  txn_manager.CommitTransaction(txn);
+  traffic_cop.CommitQueryHelper();
   LOG_INFO("%s", table->GetInfo().c_str());
   EXPECT_EQ(1, status.m_processed);
 

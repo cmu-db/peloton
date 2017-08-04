@@ -27,6 +27,10 @@ class DataTable;
 class TileGroup;
 }  // namespace storage
 
+namespace type {
+class Value;
+}  // namespace type
+
 namespace codegen {
 // This class handles updating tuples from generated code. This avoids
 // passing along information through translators, and is intialized once
@@ -40,8 +44,8 @@ class Updater {
             uint32_t direct_map_vector_size, bool update_primary_key);
 
   // Update a tuple
-  void Update(storage::TileGroup *tile_group, uint32_t tuple_offset,
-              uint32_t *col_ids, type::Value *target_vals,
+  void Update(uint32_t tile_group_id, uint32_t tuple_offset,
+              uint32_t *col_ids, char *target_vals,
               executor::ExecutorContext *executor_context);
  private:
   // No external constructor

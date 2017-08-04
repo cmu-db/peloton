@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstdint>
+#include "type/types.h"
 
 namespace peloton {
 
@@ -28,6 +29,10 @@ namespace storage {
 class DataTable;
 class TileGroup;
 }  // namespace storage
+
+namespace type {
+class Value;
+}  // namespace type
 
 namespace codegen {
 
@@ -51,11 +56,11 @@ class TransactionRuntime {
 
   // Perform an update operation
   static bool PerformUpdate(concurrency::Transaction &txn,
-                            storage::DataTable &table,
-                            storage::TileGroup *tile_group,
+                            storage::DataTable &table, uint32_t tile_group_id,
                             uint32_t tuple_offset, uint32_t *col_ids,
-                            type::Value *target_vals, bool update_primary_key,
-                            Target *target_vector, uint32_t target_vector_size, 
+                            peloton::type::Value *target_vals,
+                            bool update_primary_key, Target *target_vector,
+                            uint32_t target_vector_size,
                             DirectMap *direct_map_vector,
                             uint32_t direct_map_size,
                             executor::ExecutorContext *executor_context);
