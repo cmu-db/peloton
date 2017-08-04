@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#include <sstream>
 #include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
 #include "executor/logical_tile.h"
