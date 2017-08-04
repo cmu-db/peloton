@@ -2,21 +2,21 @@
 //
 //                         Peloton
 //
-// socket_base.cpp
+// network_connection.cpp
 //
-// Identification: src/wire/socket_base.cpp
+// Identification: src/wire/network_connection.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include "wire/libevent_server.h"
+#include "wire/network_manager.h"
 
 namespace peloton {
 namespace wire {
 
-void LibeventSocket::Init(short event_flags, LibeventThread *thread,
+void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                           ConnState init_state) {
   SetNonBlocking(sock_fd);
   SetTCPNoDelay(sock_fd);
@@ -50,14 +50,14 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
   event_add(event, nullptr);
 }
 
-void LibeventSocket::TransitState(ConnState next_state) {
+void NetworkConnection::TransitState(ConnState next_state) {
   if (next_state != state)
     LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
   state = next_state;
 }
 
 // Update event
-bool LibeventSocket::UpdateEvent(short flags) {
+bool NetworkConnection::UpdateEvent(short flags) {
   auto base = thread->GetEventBase();
   if (event_del(event) == -1) {
     LOG_ERROR("Failed to delete event");
@@ -81,7 +81,7 @@ bool LibeventSocket::UpdateEvent(short flags) {
   return true;
 }
 
-void LibeventSocket::GetSizeFromPktHeader(size_t start_index) {
+void NetworkConnection::GetSizeFromPktHeader(size_t start_index) {
   rpkt.len = 0;
   // directly converts from network byte order to little-endian
   for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
@@ -91,14 +91,14 @@ void LibeventSocket::GetSizeFromPktHeader(size_t start_index) {
   rpkt.len = rpkt.len - sizeof(int32_t);
 }
 
-bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
+bool NetworkConnection::IsReadDataAvailable(size_t bytes) {
   return ((rbuf_.buf_ptr - 1) + bytes < rbuf_.buf_size);
 }
 
 // The function tries to do a preliminary read to fetch the size value and
 // then reads the rest of the packet.
 // Assume: Packet length field is always 32-bit int
-bool LibeventSocket::ReadPacketHeader() {
+bool NetworkConnection::ReadPacketHeader() {
   size_t initial_read_size = sizeof(int32_t);
   if (pkt_manager.is_started == true) {
     // All packets other than the startup packet have a 5B header
@@ -139,7 +139,7 @@ bool LibeventSocket::ReadPacketHeader() {
 
 // Tries to read the contents of a single packet, returns true on success, false
 // on failure.
-bool LibeventSocket::ReadPacket() {
+bool NetworkConnection::ReadPacket() {
   if (rpkt.is_extended) {
     // extended packet mode
     auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
@@ -174,7 +174,7 @@ bool LibeventSocket::ReadPacket() {
  * Public Functions
  */
 
-WriteState LibeventSocket::WritePackets() {
+WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
     auto pkt = pkt_manager.responses[next_response_].get();
@@ -196,7 +196,7 @@ WriteState LibeventSocket::WritePackets() {
   return WRITE_COMPLETE;
 }
 
-ReadState LibeventSocket::FillReadBuffer() {
+ReadState NetworkConnection::FillReadBuffer() {
   ReadState result = READ_NO_DATA_RECEIVED;
   ssize_t bytes_read = 0;
   bool done = false;
@@ -298,7 +298,7 @@ ReadState LibeventSocket::FillReadBuffer() {
   return result;
 }
 
-WriteState LibeventSocket::FlushWriteBuffer() {
+WriteState NetworkConnection::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
   while (wbuf_.buf_size > 0) {
@@ -391,7 +391,7 @@ WriteState LibeventSocket::FlushWriteBuffer() {
   return WRITE_COMPLETE;
 }
 
-void LibeventSocket::PrintWriteBuffer() {
+void NetworkConnection::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");
 
   for (size_t i = 0; i < wbuf_.buf_size; ++i) {
@@ -401,7 +401,7 @@ void LibeventSocket::PrintWriteBuffer() {
 
 // Writes a packet's header (type, size) into the write buffer.
 // Return false when the socket is not ready for write
-WriteState LibeventSocket::BufferWriteBytesHeader(OutputPacket *pkt) {
+WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   // If we should not write
   if (pkt->skip_header_write) {
     return WRITE_COMPLETE;
@@ -446,7 +446,7 @@ WriteState LibeventSocket::BufferWriteBytesHeader(OutputPacket *pkt) {
 
 // Writes a packet's content into the write buffer
 // Return false when the socket is not ready for write
-WriteState LibeventSocket::BufferWriteBytesContent(OutputPacket *pkt) {
+WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
   // the packet content to write
   ByteBuf &pkt_buf = pkt->buf;
   // the length of remaining content to write
@@ -495,7 +495,7 @@ WriteState LibeventSocket::BufferWriteBytesContent(OutputPacket *pkt) {
   return WRITE_COMPLETE;
 }
 
-void LibeventSocket::CloseSocket() {
+void NetworkConnection::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
   event_del(event);
@@ -517,7 +517,7 @@ void LibeventSocket::CloseSocket() {
   }
 }
 
-void LibeventSocket::Reset() {
+void NetworkConnection::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
   pkt_manager.Reset();

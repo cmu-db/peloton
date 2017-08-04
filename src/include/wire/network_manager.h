@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// libevent_server.h
+// network_manager.h
 //
-// Identification: src/include/wire/libevent_server.h
+// Identification: src/include/wire/network_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -32,7 +32,7 @@
 #include "common/logger.h"
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
-#include "wire/libevent_thread.h"
+#include "wire/network_thread.h"
 #include "wire/packet_manager.h"
 
 #include <openssl/ssl.h>
@@ -45,10 +45,10 @@ namespace peloton {
 namespace wire {
 
 // Forward Declarations
-class LibeventThread;
-class LibeventMasterThread;
+class NetworkThread;
+class NetworkMasterThread;
 
-// Libevent Thread States
+// Network Thread States
 enum ConnState {
   CONN_LISTENING,  // State that listens for new connections
   CONN_READ,       // State that reads data from the network
@@ -72,7 +72,7 @@ enum WriteState {
   WRITE_ERROR,      // Some error happened
 };
 
-/* Libevent Callbacks */
+/* Network Callbacks */
 
 /* Used by a worker thread to receive a new connection from the main thread and
  * launch the event handler */
@@ -84,7 +84,7 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 /* Helpers */
 
 /* Runs the state machine for the protocol. Invoked by event handler callback */
-void StateMachine(LibeventSocket *conn);
+void StateMachine(NetworkConnection *conn);
 
 /* Set the socket to non-blocking mode */
 inline void SetNonBlocking(evutil_socket_t fd) {
@@ -145,10 +145,10 @@ struct NewConnQueueItem {
 };
 
 /*
- * SocketManager - Wrapper for managing socket.
+ * NetworkConnection - Wrapper for managing socket.
  * 	B is the STL container type used as the protocol's buffer.
  */
-class LibeventSocket {
+class NetworkConnection {
  public:
   int thread_id;
   int sock_fd;                    // socket file descriptor
@@ -157,7 +157,7 @@ class LibeventSocket {
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
-  LibeventThread *thread;          // reference to the libevent thread
+  NetworkThread *thread;          // reference to the network thread
   PacketManager pkt_manager;       // Stores state for this socket
   ConnState state = CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
@@ -176,7 +176,7 @@ class LibeventSocket {
   void GetSizeFromPktHeader(size_t start_index);
 
  public:
-  inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread,
+  inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
                         ConnState init_state)
       : sock_fd(sock_fd) {
     Init(event_flags, thread, init_state);
@@ -185,7 +185,7 @@ class LibeventSocket {
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Init(short event_flags, LibeventThread *thread, ConnState init_state);
+  void Init(short event_flags, NetworkThread *thread, ConnState init_state);
 
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
@@ -224,7 +224,7 @@ class LibeventSocket {
   WriteState FlushWriteBuffer();
 };
 
-struct LibeventServer {
+struct NetworkManager {
  private:
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
@@ -237,7 +237,7 @@ struct LibeventServer {
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<LibeventMasterThread> master_thread_;
+  std::shared_ptr<NetworkMasterThread> master_thread_;
   struct event_base *base_;  // libevent event_base
 
   // Flags for controlling server start/close status
@@ -249,12 +249,12 @@ struct LibeventServer {
   static SSL_CTX *ssl_context;
 
  public:
-  LibeventServer();
+  NetworkManager();
 
-  static LibeventSocket *GetConn(const int &connfd);
+  static NetworkConnection *GetConn(const int &connfd);
 
   static void CreateNewConn(const int &connfd, short ev_flags,
-                            LibeventThread *thread, ConnState init_state);
+                            NetworkThread *thread, ConnState init_state);
 
   void StartServer();
 
@@ -277,7 +277,7 @@ struct LibeventServer {
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &
+  static std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
   GetGlobalSocketList();
 };
 

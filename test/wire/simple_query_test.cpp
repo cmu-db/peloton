@@ -13,7 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
-#include "wire/libevent_server.h"
+#include "wire/network_manager.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 
@@ -28,11 +28,11 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::wire::LibeventServer libeventserver,
+static void *LaunchServer(peloton::wire::NetworkManager network_manager,
                           int port) {
   try {
-    libeventserver.SetPort(port);
-    libeventserver.StartServer();
+    network_manager.SetPort(port);
+    network_manager.StartServer();
   } catch (peloton::ConnectionException exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -49,9 +49,9 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::wire::LibeventSocket *conn =
-        peloton::wire::LibeventServer::GetConn(
-            peloton::wire::LibeventServer::recent_connfd);
+    peloton::wire::NetworkConnection *conn =
+        peloton::wire::NetworkManager::GetConn(
+            peloton::wire::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
@@ -90,9 +90,9 @@ void *RollbackTest(int port) {
     LOG_INFO("[RollbackTest] Connected to %s", C.dbname());
     pqxx::work W(C);
 
-    peloton::wire::LibeventSocket *conn =
-        peloton::wire::LibeventServer::GetConn(
-            peloton::wire::LibeventServer::recent_connfd);
+    peloton::wire::NetworkConnection *conn =
+        peloton::wire::NetworkManager::GetConn(
+            peloton::wire::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
     // EXPECT_EQ(conn->state, peloton::wire::CONN_READ);
@@ -130,15 +130,15 @@ TEST_F(PacketManagerTests, RollbackTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   int port = 15721;
-  peloton::wire::LibeventServer libeventserver;
-  std::thread serverThread(LaunchServer, libeventserver,port);
-  while (!libeventserver.GetIsStarted()) {
+  peloton::wire::NetworkManager network_manager;
+  std::thread serverThread(LaunchServer, network_manager,port);
+  while (!network_manager.GetIsStarted()) {
     sleep(1);
   }
 
   RollbackTest(port);
 
-  libeventserver.CloseServer();
+  network_manager.CloseServer();
   serverThread.join();
   LOG_INFO("Thread has joined");
   peloton::PelotonInit::Shutdown();
@@ -155,18 +155,18 @@ TEST_F(PacketManagerTests, RollbackTest) {
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::wire::LibeventServer libeventserver;
+  peloton::wire::NetworkManager network_manager;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, libeventserver, port);
-  while (!libeventserver.GetIsStarted()) {
+  std::thread serverThread(LaunchServer, network_manager, port);
+  while (!network_manager.GetIsStarted()) {
     sleep(1);
   }
 
   // server & client running correctly
   SimpleQueryTest(port);
 
-  libeventserver.CloseServer();
+  network_manager.CloseServer();
   serverThread.join();
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
@@ -180,18 +180,18 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 // TEST_F(PacketManagerTests, ScalabilityTest) {
 //  peloton::PelotonInit::Initialize();
 //
-//  /* launch 2 libevent servers in different port */
+//  /* launch 2 network managers in different port */
 //  // first server
 //  int port1 = 15721;
-//  peloton::wire::LibeventServer libeventserver1;
-//  std::thread serverThread1(LaunchServer, libeventserver1,port1);
+//  peloton::wire::NetworkManager network_manager1;
+//  std::thread serverThread1(LaunchServer, network_manager1,port1);
 //
 //  // second server
 //  int port2 = 15722;
-//  peloton::wire::LibeventServer libeventserver2;
-//  std::thread serverThread2(LaunchServer, libeventserver2,port2);
+//  peloton::wire::NetworkManager network_manager2;
+//  std::thread serverThread2(LaunchServer, network_manager2,port2);
 //
-//  while (!libeventserver1.is_started || !libeventserver2.is_started) {
+//  while (!network_manager1.is_started || !network_manager2.is_started) {
 //    sleep(1);
 //  }
 //
@@ -199,8 +199,8 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 //  SimpleQueryTest(port1);
 //  SimpleQueryTest(port2);
 //
-//  libeventserver1.CloseServer();
-//  libeventserver2.CloseServer();
+//  network_manager1.CloseServer();
+//  network_manager2.CloseServer();
 //
 //  serverThread1.join();
 //  serverThread2.join();
