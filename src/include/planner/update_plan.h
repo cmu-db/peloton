@@ -16,12 +16,6 @@
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 #include "type/types.h"
-<<<<<<< 1ac48311dca16978f6cf47687b0b4c57d1e24380
-#include "parser/table_ref.h"
-#include "catalog/schema.h"
-#include "concurrency/transaction.h"
-=======
->>>>>>> Tidy up Delete Plan and Update Plan
 
 namespace peloton {
 
