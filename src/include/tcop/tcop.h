@@ -49,11 +49,11 @@ class TrafficCop {
   void Reset();
 
   // PortalExec - Execute query string
-  ResultType ExecuteStatement(const std::string &query,
-                              std::vector<StatementResult> &result,
-                              std::vector<FieldInfo> &tuple_descriptor,
-                              int &rows_changed, std::string &error_message,
-                              const size_t thread_id = 0);
+//  ResultType ExecuteStatement(const std::string &query,
+//                              std::vector<StatementResult> &result,
+//                              std::vector<FieldInfo> &tuple_descriptor,
+//                              int &rows_changed, std::string &error_message,
+//                              const size_t thread_id = 0);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   ResultType ExecuteStatement(
