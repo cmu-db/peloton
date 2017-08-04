@@ -47,21 +47,21 @@ bool DropExecutor::DExecute() {
       auto current_txn = context_->GetTransaction();
 
       ResultType result = catalog::Catalog::GetInstance()->DropTable(
-        DEFAULT_DB_NAME, table_name, current_txn);
+          DEFAULT_DB_NAME, table_name, current_txn);
       current_txn->SetResult(result);
 
       if (current_txn->GetResult() == ResultType::SUCCESS) {
         LOG_TRACE("Dropping table succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-        node.IsMissing()) {
+          node.IsMissing()) {
         current_txn->SetResult(ResultType::SUCCESS);
         LOG_TRACE("Dropping table Succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-        !node.IsMissing()) {
+          !node.IsMissing()) {
         LOG_TRACE("Dropping table Failed!");
       } else {
         LOG_TRACE("Result is: %s", ResultTypeToString(
-          current_txn->GetResult()).c_str());
+            current_txn->GetResult()).c_str());
       }
       break;
     }
@@ -72,27 +72,27 @@ bool DropExecutor::DExecute() {
       auto current_txn = context->GetTransaction();
 
       ResultType result = catalog::TriggerCatalog::GetInstance()->DropTrigger(
-        DEFAULT_DB_NAME, table_name, trigger_name, current_txn);
+          DEFAULT_DB_NAME, table_name, trigger_name, current_txn);
       current_txn->SetResult(result);
 
       if (current_txn->GetResult() == ResultType::SUCCESS) {
         LOG_TRACE("Dropping trigger succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-        node.IsMissing()) {
+          node.IsMissing()) {
         current_txn->SetResult(ResultType::SUCCESS);
         LOG_TRACE("Dropping trigger Succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-        !node.IsMissing()) {
+          !node.IsMissing()) {
         LOG_TRACE("Dropping trigger Failed!");
       } else {
         LOG_TRACE("Result is: %s", ResultTypeToString(
-          current_txn->GetResult()).c_str());
+            current_txn->GetResult()).c_str());
       }
       break;
     }
     default: {
       throw NotImplementedException(StringUtil::Format(
-        "Drop type %d not supported yet.\n", dropType));
+          "Drop type %d not supported yet.\n", dropType));
     }
   }
 

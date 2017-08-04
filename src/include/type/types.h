@@ -939,6 +939,7 @@ typedef enum LayoutType {
 // Trigger Types
 //===--------------------------------------------------------------------===//
 
+const int TRIGGER_BEFORE = (0<<3);
 const int TRIGGER_AFTER = (1<<3);
 const int TRIGGER_INSERT = (0<<1);
 const int TRIGGER_UPDATE = (1<<1);

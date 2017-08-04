@@ -52,12 +52,14 @@ class TriggerCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertTrigger(std::string trigger_name, oid_t table_oid,
+  bool InsertTrigger(oid_t table_oid,
+                     std::string trigger_name,
                      int16_t trigger_type,
-                     std::string fire_condition, //TODO: this actually should be expression
-                     oid_t proc_oid,
+                     std::string proc_oid,
                      std::string function_arguments,
-                     int64_t time_stamp, type::AbstractPool *pool,
+                     type::Value fire_condition,
+                     type::Value timestamp,
+                     type::AbstractPool *pool,
                      concurrency::Transaction *txn);
 
   ResultType DropTrigger(const std::string &database_name,
@@ -72,14 +74,14 @@ class TriggerCatalog : public AbstractCatalog {
   // get triggers for a specific table; one table may have multiple triggers
   // of the same type
   //===--------------------------------------------------------------------===//
-  commands::TriggerList* GetTriggersByType(oid_t table_oid, int16_t trigger_type,
-                                           concurrency::Transaction *txn);
+  trigger::TriggerList* GetTriggersByType(oid_t table_oid, int16_t trigger_type,
+                                          concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
   //===--------------------------------------------------------------------===//
-  commands::TriggerList* GetTriggers(oid_t table_oid,
-                                     concurrency::Transaction *txn);
+  trigger::TriggerList* GetTriggers(oid_t table_oid,
+                                    concurrency::Transaction *txn);
 
   oid_t GetTriggerOid(std::string trigger_name, oid_t table_oid,
                       concurrency::Transaction *txn);

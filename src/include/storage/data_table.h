@@ -24,7 +24,7 @@
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
-#include "commands/trigger.h"
+#include "trigger/trigger.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -148,13 +148,13 @@ class DataTable : public AbstractTable {
   // TRIGGER
   //===--------------------------------------------------------------------===//
 
-  void AddTrigger(commands::Trigger new_trigger);
+  void AddTrigger(trigger::Trigger new_trigger);
 
   int GetTriggerNumber();
 
-  commands::Trigger* GetTriggerByIndex(int n);
+  trigger::Trigger* GetTriggerByIndex(int n);
 
-  commands::TriggerList* GetTriggerList();
+  trigger::TriggerList* GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::Transaction *txn);
 
@@ -394,7 +394,7 @@ class DataTable : public AbstractTable {
   static oid_t invalid_tile_group_id;
 
   // trigger list
-  commands::TriggerList* trigger_list;
+  trigger::TriggerList* trigger_list;
 };
 
 }  // namespace storage

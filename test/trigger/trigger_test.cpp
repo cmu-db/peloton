@@ -4,7 +4,7 @@
 //
 // trigger_test.cpp
 //
-// Identification: test/commands/trigger_test.cpp
+// Identification: test/trigger/trigger_test.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -13,7 +13,7 @@
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
-#include "commands/trigger.h"
+#include "trigger/trigger.h"
 #include "executor/executors.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"

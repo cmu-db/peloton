@@ -56,13 +56,6 @@ class PostgresParser {
   // Helper Functions
   //===--------------------------------------------------------------------===//
 
-  // helper for c_str copy
-  static char* cstrdup(const char* c_str) {
-    char* new_str = new char[strlen(c_str) + 1];
-    strcpy(new_str, c_str);
-    return new_str;
-  }
-
   static ColumnDefinition::FKConstrActionType CharToActionType(char &type) {
     switch (type) {
       case 'a':return ColumnDefinition::FKConstrActionType::NOACTION;

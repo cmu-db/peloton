@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "memory"
+#include <memory>
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"

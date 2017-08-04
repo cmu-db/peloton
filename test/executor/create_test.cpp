@@ -18,7 +18,7 @@
 #include "executor/create_executor.h"
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
-#include "commands/trigger.h"
+#include "trigger/trigger.h"
 #include "storage/data_table.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -311,7 +311,6 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   }
 }
 
-
 TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -400,5 +399,5 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   }
 }
 
-}  // End test namespace
-}  // End peloton namespace
+}  // namespace test
+}  // namespace peloton

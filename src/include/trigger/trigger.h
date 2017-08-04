@@ -4,7 +4,7 @@
 //
 // trigger.h
 //
-// Identification: src/include/commands/trigger.h
+// Identification: src/include/trigger/trigger.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -111,8 +111,8 @@ class TriggerList {
  public:
   TriggerList() {/*do nothing*/}
 
-  inline bool HasTriggerType(EnumTriggerType type) const {
-    return types_summary[type];
+  bool HasTriggerType(TriggerType type) const {
+    return types_summary[static_cast<int>(type)];
   }
 
   int GetTriggerListSize() { return static_cast<int>(triggers.size()); }
@@ -127,10 +127,10 @@ class TriggerList {
     int type = 0;
     type |= (trigger_type & TRIGGER_TYPE_ROW) ? TRIGGER_ROW : TRIGGER_STATEMENT;
     type |= (trigger_type & TRIGGER_TYPE_BEFORE) ? TRIGGER_BEFORE : TRIGGER_AFTER;
-    type |= (trigger_TYPE & TRIGGER_TYPE_INSERT) ? TRIGGER_INSERT : 0;
-    type |= (trigger_TYPE & TRIGGER_TYPE_UPDATE) ? TRIGGER_UPDATE : 0;
-    type |= (trigger_TYPE & TRIGGER_TYPE_DELETE) ? TRIGGER_DELETE : 0;
-    return static_cast<TriggerType>(type);
+    type |= (trigger_type & TRIGGER_TYPE_INSERT) ? TRIGGER_INSERT : 0;
+    type |= (trigger_type & TRIGGER_TYPE_UPDATE) ? TRIGGER_UPDATE : 0;
+    type |= (trigger_type & TRIGGER_TYPE_DELETE) ? TRIGGER_DELETE : 0;
+    return TriggerType(type);
   }
 
   // Execute different types of triggers
@@ -142,7 +142,7 @@ class TriggerList {
                     storage::Tuple *new_tuple = nullptr,
                     executor::ExecutorContext *executor_context_ = nullptr,
                     storage::Tuple *old_tuple = nullptr,
-                    storage::Tuple **resule);
+                    const storage::Tuple **resule = nullptr);
 
  private:
   // types_summary contains a boolean for each kind of EnumTriggerType, this is

@@ -31,11 +31,6 @@ namespace planner {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  ~CreatePlan() {
-    if (trigger_when) {
-      delete trigger_when;
-    }
-  }
 
   explicit CreatePlan(storage::DataTable *table);
 
@@ -125,7 +120,7 @@ class CreatePlan : public AbstractPlan {
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when = nullptr;
+  std::unique_ptr<expression::AbstractExpression> trigger_when = nullptr;
   int16_t trigger_type; // information about row, timing, events, access by pg_trigger
 
  private:

@@ -26,7 +26,7 @@
 #include "storage/tuple.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/trigger_catalog.h"
-#include "commands/trigger.h"
+#include "trigger/trigger.h"
 #include "catalog/table_catalog.h"
 #include "parser/pg_trigger.h"
 
@@ -96,12 +96,12 @@ bool DeleteExecutor::DExecute() {
   auto target_table_schema = target_table_->GetSchema();
   auto column_count = target_table_schema->GetColumnCount();
 
-  commands::TriggerList* trigger_list = target_table_->GetTriggerList();
+  trigger::TriggerList* trigger_list = target_table_->GetTriggerList();
   if (trigger_list != nullptr) {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-    if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_STATEMENT)) {
+    if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-before-delete triggers!");
-      trigger_list->ExecBSDeleteTriggers();
+      trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT);
     }
   }
 
@@ -146,7 +146,7 @@ bool DeleteExecutor::DExecute() {
     // check whether there are per-row-before-delete triggers on this table using trigger catalog
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-      if (trigger_list->HasTriggerType(commands::EnumTriggerType::BEFORE_DELETE_ROW)) {
+      if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_ROW)) {
         expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
         // Materialize the logical tile tuple
         for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
@@ -155,7 +155,8 @@ bool DeleteExecutor::DExecute() {
         }
         tuple_is_materialzed = true;
         LOG_TRACE("target table has per-row-before-delete triggers!");
-        trigger_list->ExecBRDeleteTriggers(real_tuple.get(), executor_context_);
+        trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_ROW,
+                                   real_tuple.get(), executor_context_);
       }
     }
 
@@ -211,7 +212,7 @@ bool DeleteExecutor::DExecute() {
 
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-      if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_ROW)) {
+      if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW)) {
         if (!tuple_is_materialzed) {
           expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
           // Materialize the logical tile tuple
@@ -221,16 +222,17 @@ bool DeleteExecutor::DExecute() {
           }
         }
         LOG_TRACE("target table has per-row-after-delete triggers!");
-        trigger_list->ExecARDeleteTriggers(real_tuple.get(), executor_context_);
+        trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_ROW,
+                                   real_tuple.get(), executor_context_);
       }
     }
   }
 
   if (trigger_list != nullptr) {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-    if (trigger_list->HasTriggerType(commands::EnumTriggerType::AFTER_DELETE_STATEMENT)) {
+    if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-after-delete triggers!");
-      trigger_list->ExecASDeleteTriggers();
+      trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT);
     }
   }
   return true;

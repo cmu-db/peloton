@@ -4,7 +4,7 @@
 //
 // trigger.cpp
 //
-// Identification: src/commands/trigger.cpp
+// Identification: src/trigger/trigger.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -104,7 +104,7 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t table_oid,
 expression::AbstractExpression* Trigger::DeserializeWhen(SerializeInput &input) {
   expression::AbstractExpression *trigger_when = nullptr;
   int total_size = input.ReadInt();
-  if (total_size > sizeof(int)) {
+  if ((unsigned)total_size > sizeof(int)) {
     ExpressionType compare = ExpressionType(input.ReadInt());
     std::vector<expression::AbstractExpression*> exprs;
     for (int i = 0; i < 2; ++i) {
@@ -125,7 +125,7 @@ expression::AbstractExpression* Trigger::DeserializeWhen(SerializeInput &input) 
         }
         default:
           LOG_ERROR("%s type expression is not supported in trigger",
-                    ExpressionTypeToString(expr_type));
+                    ExpressionTypeToString(expr_type).c_str());
           return nullptr;
       }
       exprs.push_back(expr);
@@ -154,7 +154,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
                                storage::Tuple *new_tuple,
                                executor::ExecutorContext *executor_context_,
                                storage::Tuple *old_tuple,
-                               storage::Tuple **result) {
+                               const storage::Tuple **result) {
   if (!types_summary[static_cast<int>(exec_type)]) {
     if (result != nullptr) *result = nullptr;
     return false;

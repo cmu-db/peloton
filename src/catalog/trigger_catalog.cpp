@@ -33,10 +33,10 @@ TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
                       "oid          INT NOT NULL PRIMARY KEY, "
                       "tgrelid      INT NOT NULL, "
                       "tgname       VARCHAR NOT NULL, "
-                      "tgfoid       INT, "
+                      "tgfoid       VARCHAR, "
                       "tgtype       INT NOT NULL, "
                       "tgargs       VARCHAR, "
-                      "tgqual       VARCHAR, "
+                      "tgqual       VARBINARY, "
                       "timestamp    TIMESTAMP NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
@@ -58,30 +58,28 @@ TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
 
 TriggerCatalog::~TriggerCatalog() {}
 
-bool TriggerCatalog::InsertTrigger(
-    std::string trigger_name, oid_t table_oid,
-    int16_t trigger_type,
-    std::string fire_condition,
-    oid_t proc_oid,
-    std::string function_arguments,
-    int64_t time_stamp, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
-
-
+bool TriggerCatalog::InsertTrigger(oid_t table_oid,
+                                   std::string trigger_name,
+                                   int16_t trigger_type,
+                                   std::string proc_oid,
+                                   std::string function_arguments,
+                                   type::Value fire_condition,
+                                   type::Value timestamp,
+                                   type::AbstractPool *pool,
+                                   concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
-
 
   LOG_INFO("type of trigger inserted:%d", trigger_type);
 
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val2 = type::ValueFactory::GetVarcharValue(trigger_name);
-  auto val3 = type::ValueFactory::GetIntegerValue(proc_oid);
+  auto val3 = type::ValueFactory::GetVarcharValue(proc_oid);
   auto val4 = type::ValueFactory::GetIntegerValue(trigger_type);
   auto val5 = type::ValueFactory::GetVarcharValue(function_arguments);
-  auto val6 = type::ValueFactory::GetVarcharValue(fire_condition);
-  auto val7 = type::ValueFactory::GetTimestampValue(time_stamp);
+  auto val6 = fire_condition;
+  auto val7 = timestamp;
 
   tuple->SetValue(ColumnId::TRIGGER_OID, val0, pool);
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
@@ -180,7 +178,7 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
+trigger::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
                                                          int16_t trigger_type,
                                                          concurrency::Transaction *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
@@ -205,17 +203,17 @@ commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
   }
 
   // create the trigger list
-  commands::TriggerList* newTriggerList = new commands::TriggerList();
+  trigger::TriggerList* newTriggerList = new trigger::TriggerList();
   if (result_tiles != nullptr) {
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
         // create a new trigger instance
-        commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
+        trigger::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
                                      trigger_type,
                                      (*result_tiles)[i]->GetValue(j, 2).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 1).ToString());
+                                     (*result_tiles)[i]->GetValue(j, 1).GetData());
         newTriggerList->AddTrigger(newTrigger);
       }
     }
@@ -223,8 +221,8 @@ commands::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
   return newTriggerList;
 }
 
-commands::TriggerList* TriggerCatalog::GetTriggers(oid_t table_oid,
-                                                   concurrency::Transaction *txn) {
+trigger::TriggerList* TriggerCatalog::GetTriggers(oid_t table_oid,
+                                                  concurrency::Transaction *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME,
@@ -248,17 +246,17 @@ commands::TriggerList* TriggerCatalog::GetTriggers(oid_t table_oid,
   }
 
   // create the trigger list
-  commands::TriggerList* newTriggerList = new commands::TriggerList();
+  trigger::TriggerList* newTriggerList = new trigger::TriggerList();
   if (result_tiles != nullptr) {
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
         // create a new trigger instance
-        commands::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
+        trigger::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>(),
                                      (*result_tiles)[i]->GetValue(j, 3).ToString(),
                                      (*result_tiles)[i]->GetValue(j, 4).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 2).ToString());
+                                     (*result_tiles)[i]->GetValue(j, 2).GetData());
         newTriggerList->AddTrigger(newTrigger);
       }
     }

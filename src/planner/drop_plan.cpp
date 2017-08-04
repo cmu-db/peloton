@@ -55,7 +55,6 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree,
     trigger_name = std::string(parse_tree->trigger_name);
     drop_type = DropType::TRIGGER;
   }
-
 }
 
 }  // namespace planner
