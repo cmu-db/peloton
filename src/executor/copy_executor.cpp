@@ -18,7 +18,7 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
-#include "wire/protocol_handler.h"
+#include "network/protocol_handler.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>

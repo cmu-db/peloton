@@ -84,7 +84,7 @@ typedef FormData_pg_opclass *Form_pg_opclass;
 /* ----------------
  *		initial contents of pg_opclass
  *
- * Note: we hard-wire an OID only for a few entries that have to be explicitly
+ * Note: we hard-network an OID only for a few entries that have to be explicitly
  * referenced in the C code or in built-in catalog entries.  The rest get OIDs
  * assigned on-the-fly during initdb.
  * ----------------
