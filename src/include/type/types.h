@@ -1242,4 +1242,30 @@ enum class ProcessPacketResult {
   PROCESSING,
 };
 
+//===--------------------------------------------------------------------===//
+// TrafficCop: Wrapper struct ExecutePlan argument
+//===--------------------------------------------------------------------===//
+struct ExecutePlanArg {
+  ExecutePlanArg(const std::shared_ptr<planner::AbstractPlan> plan,
+                 concurrency::Transaction *txn,
+                 const std::vector<type::Value> &params,
+                 std::vector<StatementResult> &result,
+                 const std::vector<int> &result_format,
+                 executor::ExecuteResult &p_status) :
+      plan_(plan),
+      txn_(txn),
+      params_(params),
+      result_(result),
+      result_format_(result_format),
+      p_status_(p_status) { }
+
+
+  std::shared_ptr<planner::AbstractPlan> plan_;
+  concurrency::Transaction *txn_;
+  const std::vector<type::Value> &params_;
+  std::vector<StatementResult> &result_;
+  const std::vector<int> &result_format_;
+  executor::ExecuteResult &p_status_;
+};
+
 }  // namespace peloton
