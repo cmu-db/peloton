@@ -33,6 +33,7 @@ namespace tcop {
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
+  result_ = ResultType::QUEUING;
 }
 
 void TrafficCop::Reset() {
@@ -40,6 +41,7 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
+  result_ = ResultType::QUEUING;
 }
 
 TrafficCop::~TrafficCop() {
@@ -205,7 +207,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
-  bool init_failure = false;
+
   executor::ExecuteResult p_status;
   auto &curr_state = GetCurrentTxnState();
   // check and begin txn here, partly because tests directly call ExecuteStatementPlan
@@ -226,45 +228,51 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(txn);
     p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                    result_format);
+    ExecuteStatementPlanGetResult(p_status, txn);
 
-    if (p_status.m_result == ResultType::FAILURE) {
-      // only possible if init failed
-      init_failure = true;
-    }
-
-    auto txn_result = txn->GetResult();
-    if (single_statement_txn_ == true || init_failure == true ||
-        txn_result == ResultType::FAILURE) {
-      LOG_TRACE(
-          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-          single_statement_txn, init_failure,
-          ResultTypeToString(txn_result).c_str());
-      switch (txn_result) {
-        case ResultType::SUCCESS:
-          // Commit single statement
-          LOG_TRACE("Commit Transaction");
-          p_status.m_result = CommitQueryHelper();
-          break;
-
-        case ResultType::FAILURE:
-        default:
-          // Abort
-          LOG_TRACE("Abort Transaction");
-          if (single_statement_txn_ == true) {
-            LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-            p_status.m_result = AbortQueryHelper();
-          } else {
-            tcop_txn_state_.top().second = ResultType::ABORTED;
-            p_status.m_result = ResultType::ABORTED;
-          }
-      }
-    }
   } else {
     // otherwise, we have already aborted
     p_status.m_result = ResultType::ABORTED;
   }
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
   return p_status;
+}
+
+void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
+                                               concurrency::Transaction *txn) {
+  bool init_failure = false;
+  if (p_status.m_result == ResultType::FAILURE) {
+    // only possible if init failed
+    init_failure = true;
+  }
+
+  auto txn_result = txn->GetResult();
+  if (single_statement_txn_ == true || init_failure == true ||
+      txn_result == ResultType::FAILURE) {
+    LOG_TRACE(
+        "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+        single_statement_txn_, init_failure,
+        ResultTypeToString(txn_result).c_str());
+    switch (txn_result) {
+      case ResultType::SUCCESS:
+        // Commit single statement
+        LOG_TRACE("Commit Transaction");
+        p_status.m_result = CommitQueryHelper();
+        break;
+
+      case ResultType::FAILURE:
+      default:
+        // Abort
+        LOG_TRACE("Abort Transaction");
+        if (single_statement_txn_ == true) {
+          LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          p_status.m_result = AbortQueryHelper();
+        } else {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          p_status.m_result = ResultType::ABORTED;
+        }
+    }
+  }
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(

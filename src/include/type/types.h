@@ -813,7 +813,8 @@ enum class ResultType {
   FAILURE = 2,
   ABORTED = 3,  // aborted
   NOOP = 4,     // no op
-  UNKNOWN = 5
+  UNKNOWN = 5,
+  QUEUING = 6
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);

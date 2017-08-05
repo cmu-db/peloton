@@ -211,6 +211,18 @@ class ProtocolHandler {
   // The traffic cop used for this connection
   std::unique_ptr<tcop::TrafficCop> traffic_cop_;
 
+  std::shared_ptr<Statement> statement_;
+
+  ResultType status_;
+
+  std::string error_message_;
+
+  std::vector<StatementResult> results_;
+
+  int rows_affected_ = 0;
+
+  void ExecExecuteMessageGetResult();
+
   //===--------------------------------------------------------------------===//
   // STATIC DATA
   //===--------------------------------------------------------------------===//

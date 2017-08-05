@@ -94,10 +94,6 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  void SetPsqlFlag(bool is_psql) {
-    psql_ = is_psql;
-  }
-
   ResultType CommitQueryHelper();
 
  private:
@@ -109,6 +105,8 @@ class TrafficCop {
   bool single_statement_txn_;
 
   // flag of psql protocol
+  ResultType result_;
+//  executor::ExecuteResult;
   bool psql_ = true;
 
   // pair of txn ptr and the result so-far for that txn
@@ -130,6 +128,17 @@ class TrafficCop {
   // still a HACK
   void GetDataTables(parser::TableRef *from_table,
                      std::vector<storage::DataTable *> &target_tables);
+
+  void ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
+                                                                    concurrency::Transaction *txn);
+
+//  const std::shared_ptr<Statement> statement_;
+//  const std::vector<type::Value> params_;
+//  UNUSED_ATTRIBUTE const bool unnamed;
+//  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
+//  const std::vector<int> &result_format, std::vector<StatementResult> result;
+//  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
+//  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
 }  // namespace traffic_cop

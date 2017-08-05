@@ -924,9 +924,8 @@ bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
 void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
-  std::vector<StatementResult> results;
-  std::string error_message, portal_name;
-  int rows_affected = 0;
+  std::string portal_name;
+
   GetStringToken(pkt, portal_name);
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
@@ -938,7 +937,7 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       std::string skipped_query_type_string;
       Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
-      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected);
+      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected_);
     }
     skipped_stmt_ = false;
     return;
@@ -948,36 +947,41 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
     SendReadyForQuery(txn_state_);
     return;
   }
 
-  auto statement = portal->GetStatement();
-  const auto &query_type = statement->GetQueryType();
+  statement_ = portal->GetStatement();
+//  const auto &query_type = statement_->GetQueryType();
 
   auto param_stat = portal->GetParamStat();
-  if (statement.get() == nullptr) {
+  if (statement_.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
     SendReadyForQuery(txn_state_);
     return;
   }
 
-  auto statement_name = statement->GetStatementName();
+  auto statement_name = statement_->GetStatementName();
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
 
-  auto status = traffic_cop_->ExecuteStatement(
-      statement, param_values, unnamed, param_stat, result_format_, results,
-      rows_affected, error_message, thread_id);
+  status_ = traffic_cop_->ExecuteStatement(
+      statement_, param_values, unnamed, param_stat, result_format_, results_,
+      rows_affected_, error_message_, thread_id);
 
-  switch (status) {
+  ExecExecuteMessageGetResult();
+}
+
+void PacketManager::ExecExecuteMessageGetResult() {
+  const auto &query_type = statement_->GetQueryType();
+  switch (status_) {
     case ResultType::FAILURE:
-      LOG_ERROR("Failed to execute: %s", error_message.c_str());
+    LOG_ERROR("Failed to execute: %s", error_message_.c_str());
       SendErrorResponse(
-          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
       return;
     case ResultType::ABORTED:
       if (query_type != QueryType::QUERY_ROLLBACK) {
@@ -989,10 +993,10 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       }
       return;
     default: {
-      auto tuple_descriptor = statement->GetTupleDescriptor();
-      SendDataRows(results, tuple_descriptor.size(), rows_affected);
+      auto tuple_descriptor = statement_->GetTupleDescriptor();
+      SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
       // The reponse to ExecuteCommand is the query_type string token.
-      CompleteCommand(statement->GetQueryTypeString(), query_type, rows_affected);
+      CompleteCommand(statement_->GetQueryTypeString(), query_type, rows_affected_);
       return;
     }
   }
