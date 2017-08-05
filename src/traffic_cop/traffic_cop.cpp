@@ -233,9 +233,11 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                        result_format, p_status_);
-    if (false) {
+    ExecutePlanArg arg = ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
+    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, &arg);
+//    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+//                                        result_format, p_status_);
+    if (true) {
       p_status_.m_result = ResultType::QUEUING;
       return p_status_;
     } else {
@@ -248,6 +250,14 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   }
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
   return p_status_;
+}
+
+void ExecutePlanWrapper(void *arg_ptr) {
+  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+
+  executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
+                                      arg->result_, arg->result_format_,
+                                      arg->p_status_);
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
