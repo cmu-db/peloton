@@ -968,16 +968,24 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
 
-  status_ = traffic_cop_->ExecuteStatement(
+  auto status = traffic_cop_->ExecuteStatement(
       statement_, param_values, unnamed, param_stat, result_format_, results_,
       rows_affected_, error_message_, thread_id);
-
-  ExecExecuteMessageGetResult();
+  if (status == ResultType::QUEUING) {
+    return;
+  }
+  ExecExecuteMessageGetResult(status);
 }
 
-void PacketManager::ExecExecuteMessageGetResult() {
+void PacketManager::GetResult() {
+  traffic_cop_->ExecuteStatementPlanGetResult();
+  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  ExecExecuteMessageGetResult(status);
+}
+
+void PacketManager::ExecExecuteMessageGetResult(ResultType status) {
   const auto &query_type = statement_->GetQueryType();
-  switch (status_) {
+  switch (status) {
     case ResultType::FAILURE:
     LOG_ERROR("Failed to execute: %s", error_message_.c_str());
       SendErrorResponse(
