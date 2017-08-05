@@ -15,7 +15,7 @@
 #include "configuration/configuration.h"
 #include "common/init.h"
 #include "common/logger.h"
-#include "wire/network_manager.h"
+#include "network/network_manager.h"
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
