@@ -1714,6 +1714,9 @@ std::string ResultTypeToString(ResultType type) {
     case ResultType::UNKNOWN: {
       return ("UNKNOWN");
     }
+    case ResultType::QUEUING: {
+      return ("QUEUING");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for ResultType value '%d'",
@@ -1737,6 +1740,8 @@ ResultType StringToResultType(const std::string& str) {
     return ResultType::NOOP;
   } else if (upper_str == "UNKNOWN") {
     return ResultType::UNKNOWN;
+  } else if (upper_str == "QUEUING") {
+    return ResultType::QUEUING;
   } else {
     throw ConversionException(StringUtil::Format(
         "No ResultType conversion from string '%s'", upper_str.c_str()));
