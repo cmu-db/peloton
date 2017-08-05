@@ -186,13 +186,14 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        auto status = ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                           result, result_format, thread_id);
+        ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                           result, result_format,
+                                           thread_id);
         LOG_TRACE("Statement executed. Result: %s",
                   ResultTypeToString(status.m_result).c_str());
-        rows_changed = status.m_processed;
+        rows_changed = p_status_.m_processed;
         LOG_DEBUG("rows_changed %d", rows_changed);
-        return status.m_result;
+        return p_status_.m_result;
     }
   } catch (Exception &e) {
     error_message = e.what();
@@ -207,7 +208,6 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     const size_t thread_id) {
   concurrency::Transaction *txn;
 
-  executor::ExecuteResult p_status;
   auto &curr_state = GetCurrentTxnState();
   // check and begin txn here, partly because tests directly call
   // ExecuteStatementPlan
@@ -226,17 +226,16 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    p_status = executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-                                                   result_format);
-    ExecuteStatementPlanGetResult(p_status, txn);
+    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
+                                        result_format, p_status_);
+    ExecuteStatementPlanGetResult(p_status_, txn);
 
   } else {
     // otherwise, we have already aborted
-    p_status.m_result = ResultType::ABORTED;
+    p_status_.m_result = ResultType::ABORTED;
   }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu",
-            tcop_txn_state_.size());
-  return p_status;
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
+  return p_status_;
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
