@@ -100,6 +100,8 @@ class TrafficCop {
 
   ResultType ExecuteStatementGetResult(int &rows_changed);
 
+  bool is_queuing_;
+
  private:
 
   // The optimizer used for this connection

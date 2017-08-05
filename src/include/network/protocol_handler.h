@@ -22,7 +22,9 @@
 #include "common/portal.h"
 #include "common/statement.h"
 #include "tcop/tcop.h"
+
 #include "marshal.h"
+#include "type/types.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
@@ -50,7 +52,7 @@ class ProtocolHandler {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -73,6 +75,10 @@ class ProtocolHandler {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     return statement_cache_itr != statement_cache_.end();
   }
+
+  void ExecExecuteMessageGetResult();
+
+  void GetResult();
 
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
@@ -108,6 +114,8 @@ class ProtocolHandler {
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
   ResponseBuffer responses;
+  // The traffic cop used for this connection
+  std::unique_ptr<tcop::TrafficCop> traffic_cop_;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -148,7 +156,7 @@ class ProtocolHandler {
   bool HardcodedExecuteFilter(QueryType query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket* pkt);
@@ -157,10 +165,10 @@ class ProtocolHandler {
   void ExecBindMessage(InputPacket* pkt);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  bool ExecDescribeMessage(InputPacket* pkt);
+  ProcessPacketResult ExecDescribeMessage(InputPacket* pkt);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the optional CLOSE message of the extended query protocol */
   void ExecCloseMessage(InputPacket* pkt);
@@ -208,18 +216,15 @@ class ProtocolHandler {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
-  // The traffic cop used for this connection
-  std::unique_ptr<tcop::TrafficCop> traffic_cop_;
-
   std::shared_ptr<Statement> statement_;
-
-
 
   std::string error_message_;
 
   std::vector<StatementResult> results_;
 
   int rows_affected_ = 0;
+
+  std::vector<type::Value> param_values_;
 
   void ExecExecuteMessageGetResult(ResultType status);
 
@@ -229,7 +234,7 @@ class ProtocolHandler {
 
   std::string query_;
 
-  void GetResult();
+//  void GetResult();
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA
