@@ -22,8 +22,6 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include "tcop/tcop.h"
-#include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "network/marshal.h"
@@ -295,8 +293,10 @@ void ProtocolHandler::CompleteCommand(const std::string &query, const QueryType&
     case QueryType::QUERY_INSERT:
       tag += " 0 " + std::to_string(rows);
       break;
-     case QueryType::QUERY_CREATE:
+    case QueryType::QUERY_CREATE:
       tag += " TABLE";
+      break;
+    case QueryType::QUERY_PREPARE:
       break;
     default:
       tag += " " + std::to_string(rows);
@@ -344,7 +344,7 @@ bool ProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
 // ';' being split into multiple queries.
 // However, the multi-statement queries has been split by the psql client and
 // there is no need to split the query again.
-void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
+ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
 
@@ -360,19 +360,22 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
     std::string error_message;
     int rows_affected = 0;
 
-    std::string query_type_string_;
-    Statement::ParseQueryTypeString(query, query_type_string_);
-
+    std::string query_type_string;
+    Statement::ParseQueryTypeString(query, query_type_string);
     QueryType query_type;
-    Statement::MapToQueryType(query_type_string_, query_type);
-    std::stringstream stream(query_type_string_);
+    Statement::MapToQueryType(query_type_string, query_type);
+
+    query_ = query;
+    query_type_ = query_type;
 
     switch (query_type) {
       case QueryType::QUERY_PREPARE:
       {
         std::string statement_name;
-        stream >> statement_name;
-        std::size_t pos = query.find("AS");
+        std::vector<std::string> tokens;
+        boost::split(tokens, query_, boost::is_any_of("(), "));
+        statement_name = tokens.at(1);
+        std::size_t pos = boost::to_upper_copy(query_).find("AS");
         std::string statement_query = query.substr(pos + 3);
         boost::trim(statement_query);
 
@@ -389,7 +392,8 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
           SendErrorResponse(
               {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           LOG_TRACE("ExecQuery Error");
-          return;
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return ProcessPacketResult::COMPLETE;
         }
 
         auto entry = std::make_pair(statement_name, statement);
@@ -407,24 +411,26 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
         bool unnamed = false;
         std::vector<std::string> tokens;
 
-        boost::split(tokens, query, boost::is_any_of("(), "));
+        boost::split(tokens, query_, boost::is_any_of("(), "));
 
         statement_name = tokens.at(1);
         auto statement_cache_itr = statement_cache_.find(statement_name);
         if (statement_cache_itr != statement_cache_.end()) {
-          statement = *statement_cache_itr;
+          statement_ = *statement_cache_itr;
         }
         // Did not find statement with same name
         else {
-          std::string error_message = "The prepared statement does not exist";
-          LOG_ERROR("%s", error_message.c_str());
+          error_message_ = "The prepared statement does not exist";
+          LOG_ERROR("%s", error_message_.c_str());
           SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+          return ProcessPacketResult::COMPLETE;
         }
-
+        query_type_ = statement_->GetQueryType();
+        query_ = statement_->GetQueryString();
         std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        result_format_ = result_format;
 
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
           std::string param_str = tokens.at(idx);
@@ -436,50 +442,49 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
         }
 
         if (param_values.size() > 0) {
-          statement->GetPlanTree()->SetParameterValues(&param_values);
+          statement_->GetPlanTree()->SetParameterValues(&param_values);
         }
+        param_values_ = param_values;
 
         auto status =
-                traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                             result, rows_affected, error_message, thread_id);
+                traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
+                             results_, rows_affected_, error_message_, thread_id);
 
-        if (status == ResultType::SUCCESS) {
-          tuple_descriptor = statement->GetTupleDescriptor();
-        } else {
-          SendErrorResponse(
-                {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+        if (traffic_cop_->is_queuing_) {
+          return ProcessPacketResult::PROCESSING;
         }
-      	break;
+        ExecQueryMessageGetResult(status);
+        return ProcessPacketResult::COMPLETE;
       }
       default:
       {
-        query_ = query;
-        query_type_ = query_type;
         // prepareStatement
         std::string unnamed_statement = "unnamed";
-        statement_ = traffic_cop_->PrepareStatement(unnamed_statement, query,
-                                                   error_message);
+        statement_ = traffic_cop_->PrepareStatement(unnamed_statement, query_,
+                                                    error_message);
         if (statement_.get() == nullptr) {
           rows_affected = 0;
           SendErrorResponse(
               {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+          return ProcessPacketResult::COMPLETE;
         }
         // ExecuteStatment
         std::vector<type::Value> param_values;
+        param_values_ = param_values;
         bool unnamed = false;
         std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
+        result_format_ = result_format;
+        // should param_values and result_format be local variable?
+        // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
         auto status =
-            traffic_cop_->ExecuteStatement(statement_, param_values, unnamed, nullptr, result_format,
+            traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                                            results_, rows_affected_, error_message_, thread_id);
-        if (status == ResultType::QUEUING) {
-          return;
+        if (traffic_cop_->is_queuing_) {
+          return ProcessPacketResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
-        return;
+        return ProcessPacketResult::COMPLETE;
       }
     }
 
@@ -502,15 +507,16 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
   // switched it to be NetworkTransactionStateType::IDLE. I don't know
   // we just don't always send back the internal txn state?
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
+  return ProcessPacketResult::COMPLETE;
 }
 
-//void PacketManager::GetResult() {
-//  traffic_cop_->ExecuteStatementPlanGetResult();
-//  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
-//  ExecQueryMessageGetResult(status);
-//}
+void ProtocolHandler::GetResult() {
+  traffic_cop_->ExecuteStatementPlanGetResult();
+  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  ExecQueryMessageGetResult(status);
+}
 
-void PacketManager::ExecQueryMessageGetResult(ResultType status) {
+void ProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   std::vector<FieldInfo> tuple_descriptor;
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement_->GetTupleDescriptor();
@@ -905,13 +911,13 @@ size_t ProtocolHandler::ReadParamValue(
   return end - begin;
 }
 
-bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
+ProcessPacketResult ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::NO_DATA_RESPONSE;
     responses.push_back(std::move(response));
-    return true;
+    return ProcessPacketResult::COMPLETE;
   }
 
   ByteBuf mode;
@@ -930,7 +936,7 @@ bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
-      return false;
+      return ProcessPacketResult::TERMINATE;
     }
 
     auto portal = portal_itr->second;
@@ -938,7 +944,7 @@ bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
-      return false;
+      return ProcessPacketResult::TERMINATE;
     }
 
     auto statement = portal->GetStatement();
@@ -946,10 +952,10 @@ bool ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
   } else {
     LOG_TRACE("Describe a prepared statement");
   }
-  return true;
+  return ProcessPacketResult::COMPLETE;
 }
 
-void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
+ProcessPacketResult ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
   std::string portal_name;
@@ -968,7 +974,7 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected_);
     }
     skipped_stmt_ = false;
-    return;
+    return ProcessPacketResult::COMPLETE;
   }
 
   auto portal = portals_[portal_name];
@@ -977,7 +983,7 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
     SendReadyForQuery(txn_state_);
-    return;
+    return ProcessPacketResult::TERMINATE;
   }
 
   statement_ = portal->GetStatement();
@@ -989,29 +995,31 @@ void ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
     SendReadyForQuery(txn_state_);
-    return;
+    return ProcessPacketResult::TERMINATE;
   }
 
   auto statement_name = statement_->GetStatementName();
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
+  param_values_ = param_values;
 
   auto status = traffic_cop_->ExecuteStatement(
-      statement_, param_values, unnamed, param_stat, result_format_, results_,
+      statement_, param_values_, unnamed, param_stat, result_format_, results_,
       rows_affected_, error_message_, thread_id);
-  if (status == ResultType::QUEUING) {
-    return;
+  if (traffic_cop_->is_queuing_) {
+    return ProcessPacketResult::PROCESSING;
   }
   ExecExecuteMessageGetResult(status);
+  return ProcessPacketResult::PROCESSING;
 }
+//// jdbc getResult
+//void PacketManager::GetResult() {
+//  traffic_cop_->ExecuteStatementPlanGetResult();
+//  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+//  ExecExecuteMessageGetResult(status);
+//}
 
-void PacketManager::GetResult() {
-  traffic_cop_->ExecuteStatementPlanGetResult();
-  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
-  ExecExecuteMessageGetResult(status);
-}
-
-void PacketManager::ExecExecuteMessageGetResult(ResultType status) {
+void ProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
   const auto &query_type = statement_->GetQueryType();
   switch (status) {
     case ResultType::FAILURE:
@@ -1077,7 +1085,8 @@ void ProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
+
+ProcessPacketResult ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -1102,7 +1111,7 @@ bool ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
     } break;
     case NetworkMessageType::EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
-      ExecExecuteMessage(pkt, thread_id);
+      return ExecExecuteMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");
@@ -1116,12 +1125,12 @@ bool ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
     case NetworkMessageType::TERMINATE_COMMAND: {
       LOG_TRACE("TERMINATE_COMMAND");
       force_flush = true;
-      return false;
+      return ProcessPacketResult::TERMINATE;
     } break;
     case NetworkMessageType::NULL_COMMAND: {
       LOG_TRACE("NULL");
       force_flush = true;
-      return false;
+      return ProcessPacketResult::TERMINATE;
     } break;
     default: {
       LOG_ERROR("Packet type not supported yet: %d (%c)",
@@ -1129,7 +1138,7 @@ bool ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
                 static_cast<unsigned char>(pkt->msg_type));
     }
   }
-  return true;
+  return ProcessPacketResult::COMPLETE;
 }
 
 /*
@@ -1170,6 +1179,8 @@ void ProtocolHandler::Reset() {
   responses.clear();
   unnamed_statement_.reset();
   result_format_.clear();
+  results_.clear();
+  param_values_.clear();
   txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();

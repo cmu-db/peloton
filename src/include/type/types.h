@@ -1318,4 +1318,13 @@ typedef unsigned char uchar;
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
 
+//===--------------------------------------------------------------------===//
+// Packet Manager: ProcessPacketResult
+//===--------------------------------------------------------------------===//
+enum class ProcessPacketResult {
+  COMPLETE,
+  TERMINATE,
+  PROCESSING,
+};
+
 }  // namespace peloton

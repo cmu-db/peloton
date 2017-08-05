@@ -590,7 +590,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_PROCESS: {
-        bool status;
+        ProcessPacketResult status;
 
         if(conn->protocol_handler_.ssl_sent) {
             // start SSL handshake
@@ -635,7 +635,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         if (conn->protocol_handler_.is_started == false) {
           // We need to handle startup packet first
           int status_res = conn->protocol_handler_.ProcessInitialPacket(&conn->rpkt);
-          status = (status_res != 0);
+          if (status_res == 0) {
+            status = ProcessPacketResult::TERMINATE;
+           } else {
+            status = ProcessPacketResult::COMPLETE;
+          }
           if (status_res == 1) {
             conn->protocol_handler_.is_started = true;
           }
@@ -648,13 +652,30 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
                                                    (size_t)conn->thread_id);
         }
 
-        if (status == false) {
-          // packet processing can't proceed further
-          conn->TransitState(ConnState::CONN_CLOSING);
-        } else {
-          // We should have responses ready to send
-          conn->TransitState(ConnState::CONN_WRITE);
+        switch (status) {
+          case ProcessPacketResult::TERMINATE:
+          LOG_INFO("ProcessPacketResult: terminate");
+            // packet processing can't proceed further
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          case ProcessPacketResult::COMPLETE:
+            // We should have responses ready to send
+          LOG_INFO("ProcessPacketResult: complete");
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
+          case ProcessPacketResult::PROCESSING:
+          default:
+          LOG_INFO("ProcessPacketResult: queueing");
+            conn->TransitState(ConnState::CONN_GET_RESULT);
+            done = true;
         }
+        break;
+      }
+
+      case ConnState::CONN_GET_RESULT: {
+        conn->protocol_handler_.GetResult();
+        conn->protocol_handler_.traffic_cop_->is_queuing_ = false;
+        conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
 

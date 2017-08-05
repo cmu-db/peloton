@@ -24,6 +24,7 @@ enum class ConnState {
   CONN_CLOSING,    // State for closing the client connection
   CONN_CLOSED,     // State for closed connection
   CONN_INVALID,    // Invalid STate
+  CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
 };
 
 enum class ReadState {
