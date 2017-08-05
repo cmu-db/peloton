@@ -96,6 +96,10 @@ class TrafficCop {
 
   ResultType CommitQueryHelper();
 
+  void ExecuteStatementPlanGetResult();
+
+  ResultType ExecuteStatementGetResult(int &rows_changed);
+
  private:
 
   // The optimizer used for this connection
@@ -105,9 +109,13 @@ class TrafficCop {
   bool single_statement_txn_;
 
   // flag of psql protocol
-  ResultType result_;
-//  executor::ExecuteResult;
+  // executePlan arguments
   executor::ExecuteResult p_status_;
+
+  std::shared_ptr<planner::AbstractPlan> plan_;
+
+  std::vector<StatementResult> result_;
+
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
@@ -128,9 +136,6 @@ class TrafficCop {
   // still a HACK
   void GetDataTables(parser::TableRef *from_table,
                      std::vector<storage::DataTable *> &target_tables);
-
-  void ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
-                                                                    concurrency::Transaction *txn);
 
 //  const std::shared_ptr<Statement> statement_;
 //  const std::vector<type::Value> params_;
