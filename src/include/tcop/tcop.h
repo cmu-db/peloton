@@ -139,6 +139,7 @@ class TrafficCop {
   void GetDataTables(parser::TableRef *from_table,
                      std::vector<storage::DataTable *> &target_tables);
 
+  void ExecutePlanWrapper(void *arg_ptr);
 //  const std::shared_ptr<Statement> statement_;
 //  const std::vector<type::Value> params_;
 //  UNUSED_ATTRIBUTE const bool unnamed;
