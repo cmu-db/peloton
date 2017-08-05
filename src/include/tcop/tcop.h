@@ -107,7 +107,7 @@ class TrafficCop {
   // flag of psql protocol
   ResultType result_;
 //  executor::ExecuteResult;
-  bool psql_ = true;
+  executor::ExecuteResult p_status_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns

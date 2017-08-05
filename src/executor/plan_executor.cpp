@@ -26,8 +26,8 @@ namespace peloton {
 namespace executor {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-    const planner::AbstractPlan *plan,
-    executor::ExecutorContext *executor_context);
+                                              const planner::AbstractPlan *plan,
+                                              executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -84,7 +84,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
             PlanExecutor::copyFromTo(tuple[i], res.second);
             result.push_back(std::move(res));
             LOG_TRACE("column content: %s",
-                tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
+                      tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
           }
         }
       }
@@ -141,8 +141,8 @@ ExecuteResult PlanExecutor::ExecutePlan(
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-    const std::vector<type::Value> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
+                              const std::vector<type::Value> &params,
+                              std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   PL_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");
 
@@ -176,7 +176,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     logical_tile_list.push_back(std::move(logical_tile));
   }
 
-cleanup:
+  cleanup:
   LOG_TRACE("About to commit: init_failure: %d, status: %s", init_failure,
             ResultTypeToString(txn->GetResult()).c_str());
 
@@ -205,8 +205,8 @@ cleanup:
  * @return The updated executor tree.
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-    const planner::AbstractPlan *plan,
-    executor::ExecutorContext *executor_context) {
+                                              const planner::AbstractPlan *plan,
+                                              executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr) return root;
 
@@ -215,7 +215,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
     case PlanNodeType::INVALID:
-      LOG_ERROR("Invalid plan node type ");
+    LOG_ERROR("Invalid plan node type ");
       break;
 
     case PlanNodeType::SEQSCAN:
@@ -295,8 +295,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
           new executor::PopulateIndexExecutor(plan, executor_context);
       break;
     default:
-      LOG_ERROR("Unsupported plan node type : %s",
-                PlanNodeTypeToString(plan_node_type).c_str());
+    LOG_ERROR("Unsupported plan node type : %s",
+              PlanNodeTypeToString(plan_node_type).c_str());
       break;
   }
   LOG_TRACE("Adding %s Executor", PlanNodeTypeToString(plan_node_type).c_str());
