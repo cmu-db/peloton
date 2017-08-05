@@ -213,7 +213,7 @@ class ProtocolHandler {
 
   std::shared_ptr<Statement> statement_;
 
-  ResultType status_;
+
 
   std::string error_message_;
 
@@ -221,7 +221,9 @@ class ProtocolHandler {
 
   int rows_affected_ = 0;
 
-  void ExecExecuteMessageGetResult();
+  void ExecExecuteMessageGetResult(ResultType status);
+
+  void GetResult();
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA

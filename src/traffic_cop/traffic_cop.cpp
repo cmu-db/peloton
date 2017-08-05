@@ -33,7 +33,7 @@ namespace tcop {
 TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
-  result_ = ResultType::QUEUING;
+//  result_ = ResultType::QUEUING;
 }
 
 void TrafficCop::Reset() {
@@ -41,7 +41,7 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
-  result_ = ResultType::QUEUING;
+//  result_ = ResultType::QUEUING;
 }
 
 TrafficCop::~TrafficCop() {
@@ -187,18 +187,25 @@ ResultType TrafficCop::ExecuteStatement(
         return AbortQueryHelper();
       default:
         ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                           result, result_format,
-                                           thread_id);
-        LOG_TRACE("Statement executed. Result: %s",
-                  ResultTypeToString(status.m_result).c_str());
-        rows_changed = p_status_.m_processed;
-        LOG_DEBUG("rows_changed %d", rows_changed);
-        return p_status_.m_result;
+                             result, result_format,
+                             thread_id);
+        if (p_status_.m_result == ResultType::QUEUING) {
+          return ResultType::QUEUING;
+        }
+        return ExecuteStatementGetResult(rows_changed);
     }
   } catch (Exception &e) {
     error_message = e.what();
     return ResultType::FAILURE;
   }
+}
+
+ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(p_status_.m_result).c_str());
+  rows_changed = p_status_.m_processed;
+  LOG_DEBUG("rows_changed %d", rows_changed);
+  return p_status_.m_result;
 }
 
 executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
@@ -228,7 +235,12 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(txn);
     executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                         result_format, p_status_);
-    ExecuteStatementPlanGetResult(p_status_, txn);
+    if (false) {
+      p_status_.m_result = ResultType::QUEUING;
+      return p_status_;
+    } else {
+      ExecuteStatementPlanGetResult();
+    }
 
   } else {
     // otherwise, we have already aborted
@@ -238,15 +250,14 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   return p_status_;
 }
 
-void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
-                                               concurrency::Transaction *txn) {
+void TrafficCop::ExecuteStatementPlanGetResult() {
   bool init_failure = false;
-  if (p_status.m_result == ResultType::FAILURE) {
+  if (p_status_.m_result == ResultType::FAILURE) {
     // only possible if init failed
     init_failure = true;
   }
 
-  auto txn_result = txn->GetResult();
+  auto txn_result = GetCurrentTxnState().first->GetResult();
   if (single_statement_txn_ == true || init_failure == true ||
       txn_result == ResultType::FAILURE) {
     LOG_TRACE(
@@ -257,7 +268,7 @@ void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status
       case ResultType::SUCCESS:
         // Commit single statement
         LOG_TRACE("Commit Transaction");
-        p_status.m_result = CommitQueryHelper();
+        p_status_.m_result = CommitQueryHelper();
         break;
 
       case ResultType::FAILURE:
@@ -266,10 +277,10 @@ void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status
         LOG_TRACE("Abort Transaction");
         if (single_statement_txn_ == true) {
           LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status.m_result = AbortQueryHelper();
+          p_status_.m_result = AbortQueryHelper();
         } else {
           tcop_txn_state_.top().second = ResultType::ABORTED;
-          p_status.m_result = ResultType::ABORTED;
+          p_status_.m_result = ResultType::ABORTED;
         }
     }
   }
