@@ -49,19 +49,19 @@ class Updater {
               executor::ExecutorContext *executor_context);
  private:
   // No external constructor
-  Updater(): txn_(nullptr), table_(nullptr), update_primary_key_(false),
-             target_vector_(nullptr), target_vector_size_(0),
-             direct_map_vector_(nullptr),direct_map_vector_size_(0) {}
+  Updater(): txn_(nullptr), table_(nullptr), target_vals_size_(0),
+             update_primary_key_(false) {}
 
  private:
   // These are provided by the update translator
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
+
+  TargetList target_list_;
+  DirectMapList direct_map_list_;
+  uint32_t target_vals_size_;
+
   bool update_primary_key_;
-  Target *target_vector_;
-  uint32_t target_vector_size_;
-  DirectMap *direct_map_vector_;
-  uint32_t direct_map_vector_size_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Updater);
