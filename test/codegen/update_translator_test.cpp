@@ -15,6 +15,7 @@
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/update_executor.h"
 #include "expression/expression_util.h"

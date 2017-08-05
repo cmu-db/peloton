@@ -18,11 +18,9 @@ namespace peloton {
 namespace codegen {
 
 PROXY(TransactionRuntime) {
-  /// We only need to proxy PerformVectorizedRead(), PerformDelete(),
-  /// PerformUpdate() and IncreaseNumProcessed() in codegen::TransactionRuntime.
+  /// We only need to proxy PerformVectorizedRead()
+  /// in codegen::TransactionRuntime.
   DECLARE_METHOD(PerformVectorizedRead);
-  DECLARE_METHOD(PerformDelete);
-  DECLARE_METHOD(PerformUpdate);
   DECLARE_METHOD(IncreaseNumProcessed);
 };
 

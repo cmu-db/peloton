@@ -57,12 +57,11 @@ class TransactionRuntime {
   // Perform an update operation
   static bool PerformUpdate(concurrency::Transaction &txn,
                             storage::DataTable &table, uint32_t tile_group_id,
-                            uint32_t tuple_offset, uint32_t *col_ids,
-                            peloton::type::Value *target_vals,
-                            bool update_primary_key, Target *target_vector,
-                            uint32_t target_vector_size,
-                            DirectMap *direct_map_vector,
-                            uint32_t direct_map_size,
+                            uint32_t tuple_offset, uint32_t *column_ids,
+                            peloton::type::Value *values, uint32_t values_size,
+                            TargetList &target_list,
+                            DirectMapList &direct_map_list,
+                            bool update_primary_key,
                             executor::ExecutorContext *executor_context);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
