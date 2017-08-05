@@ -219,10 +219,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
     LOG_TRACE("Submit Task into MonoQueuePool");
-
     is_queuing_ = true;
     return p_status_;
-
   } else {
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
@@ -276,6 +274,43 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
         } else {
           tcop_txn_state_.top().second = ResultType::ABORTED;
           p_status_.m_result = ResultType::ABORTED;
+        }
+    }
+  }
+}
+
+void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status,
+                                               concurrency::Transaction *txn) {
+  bool init_failure = false;
+  if (p_status.m_result == ResultType::FAILURE) {
+    // only possible if init failed
+    init_failure = true;
+  }
+
+  auto txn_result = txn->GetResult();
+  if (single_statement_txn_ == true || init_failure == true ||
+      txn_result == ResultType::FAILURE) {
+    LOG_TRACE(
+        "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+        single_statement_txn_, init_failure,
+        ResultTypeToString(txn_result).c_str());
+    switch (txn_result) {
+      case ResultType::SUCCESS:
+        // Commit single statement
+        LOG_TRACE("Commit Transaction");
+        p_status.m_result = CommitQueryHelper();
+        break;
+
+      case ResultType::FAILURE:
+      default:
+        // Abort
+        LOG_TRACE("Abort Transaction");
+        if (single_statement_txn_ == true) {
+          LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          p_status.m_result = AbortQueryHelper();
+        } else {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          p_status.m_result = ResultType::ABORTED;
         }
     }
   }

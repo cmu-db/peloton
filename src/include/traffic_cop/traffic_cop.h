@@ -152,13 +152,6 @@ class TrafficCop {
   void GetDataTables(parser::TableRef *from_table,
                      std::vector<storage::DataTable *> &target_tables);
 
-//  const std::shared_ptr<Statement> statement_;
-//  const std::vector<type::Value> params_;
-//  UNUSED_ATTRIBUTE const bool unnamed;
-//  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
-//  const std::vector<int> &result_format, std::vector<StatementResult> result;
-//  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
-//  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
 //===--------------------------------------------------------------------===//
