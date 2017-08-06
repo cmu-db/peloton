@@ -363,7 +363,9 @@ WriteState NetworkConnection::FlushWriteBuffer() {
           // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
           // Listen for socket being enabled for write
-          UpdateEvent(EV_WRITE | EV_PERSIST);
+          if (!UpdateEvent(EV_WRITE | EV_PERSIST)) {
+            return WriteState::WRITE_ERROR;
+          }
           // We should go to CONN_WRITE state
           return WriteState::WRITE_NOT_READY;
         } else {
@@ -662,7 +664,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           case WriteState::WRITE_COMPLETE: {
             // Input Packet can now be reset, before we parse the next packet
             conn->rpkt.Reset();
-            conn->UpdateEvent(EV_READ | EV_PERSIST);
+            if (!conn->UpdateEvent(EV_READ | EV_PERSIST)) {
+              LOG_ERROR("Failed to update event, closing");
+              conn->TransitState(ConnState::CONN_CLOSING);
+              break;
+            }
             conn->TransitState(ConnState::CONN_PROCESS);
             break;
           }
