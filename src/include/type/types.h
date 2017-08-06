@@ -26,6 +26,9 @@
 #include "type/type_id.h"
 #include "parser/pg_trigger.h"
 
+#include "unistd.h"
+#include "common/logger.h"
+#include "common/macros.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -1327,30 +1330,19 @@ enum class ProcessPacketResult {
   PROCESSING,
 };
 
-//===--------------------------------------------------------------------===//
-// TrafficCop: Wrapper struct ExecutePlan argument
-//===--------------------------------------------------------------------===//
-struct ExecutePlanArg {
-  ExecutePlanArg(const std::shared_ptr<planner::AbstractPlan> plan,
-                 concurrency::Transaction *txn,
-                 const std::vector<type::Value> &params,
-                 std::vector<StatementResult> &result,
-                 const std::vector<int> &result_format,
-                 executor::ExecuteResult &p_status) :
-      plan_(plan),
-      txn_(txn),
-      params_(params),
-      result_(result),
-      result_format_(result_format),
-      p_status_(p_status) { }
-
-
-  std::shared_ptr<planner::AbstractPlan> plan_;
-  concurrency::Transaction *txn_;
-  const std::vector<type::Value> &params_;
-  std::vector<StatementResult> &result_;
-  const std::vector<int> &result_format_;
-  executor::ExecuteResult &p_status_;
+struct IOTrigger {
+  int event_fd_;
+  inline IOTrigger(int event_fd):event_fd_(event_fd) {
+    LOG_INFO("Create IOTrigger in TrafficCop with event_fd %d", event_fd);
+  }
+  inline bool trigger() {
+    char buf[1];
+    buf[0] = 'c';
+    if (write(event_fd_, buf, 1) < 0) {
+      return false;
+    }
+    return true;
+  }
 };
 
 }  // namespace peloton
