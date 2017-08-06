@@ -31,7 +31,7 @@ NetworkManager::GetGlobalSocketList() {
   return global_socket_list;
 }
 
-NetworkConnection *NetworkManager::GetConn(const int &connfd) {
+NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
   if (global_socket_list.find(connfd) != global_socket_list.end()) {
     return global_socket_list.at(connfd).get();
@@ -162,10 +162,10 @@ void NetworkManager::StartServer() {
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
-    NetworkManager::GetConn(listen_fd)->CloseSocket();
+    NetworkManager::GetConnection(listen_fd)->CloseSocket();
 
     // Free events and event base
-    event_free(NetworkManager::GetConn(listen_fd)->event);
+    event_free(NetworkManager::GetConnection(listen_fd)->event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);

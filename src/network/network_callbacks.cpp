@@ -14,8 +14,6 @@
 
 #include <unistd.h>
 #include "network/network_manager.h"
-#include "network/network_connection.h"
-#include "common/macros.h"
 
 namespace peloton {
 namespace network {
@@ -42,7 +40,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
     case 'c': {
       // fetch the new connection fd from the queue
       thread->new_conn_queue.Dequeue(item);
-      conn = NetworkManager::GetConn(item->new_conn_fd);
+      conn = NetworkManager::GetConnection(item->new_conn_fd);
       if (conn == nullptr) {
         LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */

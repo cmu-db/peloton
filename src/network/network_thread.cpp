@@ -103,7 +103,7 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
   // Free events and event base
   if (worker_thread->GetThreadSockFd() != -1) {
     event_free(
-        NetworkManager::GetConn(worker_thread->GetThreadSockFd())->event);
+        NetworkManager::GetConnection(worker_thread->GetThreadSockFd())->event);
   }
   event_free(worker_thread->GetNewConnEvent());
   event_free(worker_thread->GetTimeoutEvent());

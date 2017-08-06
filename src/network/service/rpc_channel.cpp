@@ -100,7 +100,7 @@ void RpcChannel::CallMethod(
    */
   Connection* conn = ConnectionManager::GetInstance().CreateConn(
       addr_);  // CreateConn is used for self connect
-  // Connection* conn = ConnectionManager::GetInstance().GetConn(addr_);
+  // Connection* conn = ConnectionManager::GetInstance().GetConnection(addr_);
 
   /* Connect to server with given address */
   if (conn == NULL) {

@@ -51,8 +51,10 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {
-  if (next_state != state)
-    LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
+  #ifdef LOG_TRACE_ENABLED
+    if (next_state != state)
+      LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
+  #endif
   state = next_state;
 }
 
@@ -81,7 +83,7 @@ bool NetworkConnection::UpdateEvent(short flags) {
   return true;
 }
 
-void NetworkConnection::GetSizeFromPktHeader(size_t start_index) {
+void NetworkConnection::GetSizeFromPacketHeader(size_t start_index) {
   rpkt.len = 0;
   // directly converts from network byte order to little-endian
   for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
@@ -116,9 +118,9 @@ bool NetworkConnection::ReadPacketHeader() {
     rpkt.msg_type =
         static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
     // extract packet size
-    GetSizeFromPktHeader(rbuf_.buf_ptr + 1);
+    GetSizeFromPacketHeader(rbuf_.buf_ptr + 1);
   } else {
-    GetSizeFromPktHeader(rbuf_.buf_ptr);
+    GetSizeFromPacketHeader(rbuf_.buf_ptr);
   }
 
   // do we need to use the extended buffer for this packet?

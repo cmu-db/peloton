@@ -104,7 +104,7 @@ struct NetworkManager {
  public:
   NetworkManager();
 
-  static NetworkConnection *GetConn(const int &connfd);
+  static NetworkConnection *GetConnection(const int &connfd);
 
   static void CreateNewConn(const int &connfd, short ev_flags,
                             NetworkThread *thread, ConnState init_state);

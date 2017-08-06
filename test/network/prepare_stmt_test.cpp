@@ -52,7 +52,7 @@ void *PrepareStatementTest(int port) {
     pqxx::work txn1(C);
 
     peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConn(
+        peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
     // create table and insert some data
