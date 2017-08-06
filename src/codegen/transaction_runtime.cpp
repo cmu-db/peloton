@@ -128,44 +128,33 @@ bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
   return true;
 }
 
-void DoProjection(AbstractTuple *dest, const AbstractTuple *tuple,
-                  uint32_t *column_ids, peloton::type::Value *values,
-                  uint32_t values_size, DirectMapList direct_list) {
-  // Execute target list
+void SetTargetValues(AbstractTuple *dest, uint32_t values_size,
+                     uint32_t *column_ids, peloton::type::Value *values) {
   for (uint32_t i = 0; i < values_size; i++) {
     dest->SetValue(column_ids[i], values[i]);
   }
+}
 
-  // Execute direct map
+void SetDirectMapValues(AbstractTuple *dest, const AbstractTuple *src,
+                        DirectMapList direct_list) {
   for (auto dm : direct_list) {
     auto dest_col_id = dm.first;
     auto src_col_id = dm.second.second;
-    peloton::type::Value value = (tuple->GetValue(src_col_id));
+    auto value = src->GetValue(src_col_id);
     dest->SetValue(dest_col_id, value);
   }
 }
 
-void DoProjection(storage::Tuple *dest, const AbstractTuple *tuple,
-                  uint32_t *column_ids, peloton::type::Value *values,
-                  uint32_t values_size, DirectMapList direct_map_list,
-                  executor::ExecutorContext *context = nullptr) {
-  peloton::type::AbstractPool *pool = nullptr;
-  if (context != nullptr) pool = context->GetPool();
-
-  // Execute target list
-  for (uint32_t i = 0; i < values_size; i++) {
-    dest->SetValue(column_ids[i], values[i]);
-  }
-
-  // Execute direct map
-  for (auto dm : direct_map_list) {
+void SetDirectMapValues(storage::Tuple *dest, const AbstractTuple *src,
+                        DirectMapList direct_list,
+                        peloton::type::AbstractPool *pool) {
+  for (auto dm : direct_list) {
     auto dest_col_id = dm.first;
     auto src_col_id = dm.second.second;
-    peloton::type::Value value = (tuple->GetValue(src_col_id));
+    auto value = (src->GetValue(src_col_id));
     dest->SetValue(dest_col_id, value, pool);
   }
 }
-
 
 bool PerformUpdatePrimaryKey(concurrency::Transaction *txn,
                              storage::DataTable &table,
@@ -199,8 +188,9 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *txn,
   storage::Tuple new_tuple(table.GetSchema(), true);
   expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                            tuple_offset);
-  DoProjection(&new_tuple, &old_tuple, column_ids, values, values_size,
-               direct_map_list, executor_context);
+  SetTargetValues(&new_tuple, values_size, column_ids, values);
+  SetDirectMapValues(&new_tuple, &old_tuple, direct_map_list,
+                     executor_context->GetPool());
 
   ItemPointer *index_entry_ptr = nullptr;
   peloton::ItemPointer location = table.InsertTuple(&new_tuple, txn,
@@ -239,8 +229,8 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
     // Make a copy of the original tuple and overwrite
     expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                              tuple_offset);
-    DoProjection(&old_tuple, &old_tuple, column_ids, values, values_size,
-                 direct_map_list);
+    SetTargetValues(&old_tuple, values_size, column_ids, values);
+    SetDirectMapValues(&old_tuple, &old_tuple, direct_map_list);
     txn_manager.PerformUpdate(&txn, old_location);
     return true;
   }
@@ -281,9 +271,8 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   expression::ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
                                                            new_location.offset);
   // This triggers in-place update and we don't need to allocate another version
-  DoProjection(&new_tuple, &old_tuple, column_ids, values, values_size,
-               direct_map_list);
-
+  SetTargetValues(&new_tuple, values_size, column_ids, values);
+  SetDirectMapValues(&new_tuple, &old_tuple, direct_map_list);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location.offset);
   auto ret = table.InstallVersion(&new_tuple, &target_list, &txn, indirection);
@@ -307,7 +296,6 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
   txn_manager.PerformUpdate(&txn, old_location, new_location);
   return true;
 }
-
 
 void TransactionRuntime::IncreaseNumProcessed(
     executor::ExecutorContext *executor_context) {
