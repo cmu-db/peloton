@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/traffic_cop/postgres.c
+ *	  src/backend/tcop/postgres.c
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -179,7 +179,7 @@ char	   *register_stack_base_ptr = NULL;
 
 /*
  * people who want to use EOF should #define DONTUSENEWLINE in
- * traffic_cop/tcopdebug.h
+ * tcop/tcopdebug.h
  */
 #ifndef TCOP_DONTUSENEWLINE
 		/* Use newlines query delimiters (the default) */

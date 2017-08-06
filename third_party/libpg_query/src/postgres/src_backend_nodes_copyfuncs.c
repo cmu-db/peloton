@@ -281,7 +281,7 @@
 /*
  * Macros to simplify copying of different kinds of fields.  Use these
  * wherever possible to reduce the chance for silly typos.  Note that these
- * hard-network the convention that the local variables in a Copy routine are
+ * hard-wire the convention that the local variables in a Copy routine are
  * named 'newnode' and 'from'.
  */
 

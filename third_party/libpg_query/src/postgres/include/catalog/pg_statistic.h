@@ -70,7 +70,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 
 	/* ----------------
 	 * To allow keeping statistics on different kinds of datatypes,
-	 * we do not hard-network any particular meaning for the remaining
+	 * we do not hard-wire any particular meaning for the remaining
 	 * statistical fields.  Instead, we provide several "slots" in which
 	 * statistical data can be placed.  Each slot includes:
 	 *		kind			integer code identifying kind of data (see below)

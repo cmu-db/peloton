@@ -241,7 +241,7 @@
 /*
  * Macros to simplify comparison of different kinds of fields.  Use these
  * wherever possible to reduce the chance for silly typos.  Note that these
- * hard-network the convention that the local variables in an Equal routine are
+ * hard-wire the convention that the local variables in an Equal routine are
  * named 'a' and 'b'.
  */
 
