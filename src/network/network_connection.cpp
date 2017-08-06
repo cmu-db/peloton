@@ -31,7 +31,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   rpkt.Reset();
   if (event == nullptr) {
     event = event_new(thread->GetEventBase(), sock_fd, event_flags,
-                      EventHandler, this);
+                      CallbackUtil::EventHandler, this);
   } else {
     // Reuse the event object if already initialized
     if (event_del(event) == -1) {
@@ -40,7 +40,8 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     }
 
     auto result = event_assign(event, thread->GetEventBase(), sock_fd,
-                               event_flags, EventHandler, this);
+                               event_flags,
+                               CallbackUtil::EventHandler, this);
 
     if (result != 0) {
       LOG_ERROR("Failed to update event");
@@ -66,7 +67,8 @@ bool NetworkConnection::UpdateEvent(short flags) {
     return false;
   }
   auto result =
-      event_assign(event, base, sock_fd, flags, EventHandler, (void *)this);
+      event_assign(event, base, sock_fd, flags,
+                   CallbackUtil::EventHandler, (void *)this);
 
   if (result != 0) {
     LOG_ERROR("Failed to update event");
@@ -393,12 +395,16 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   return WriteState::WRITE_COMPLETE;
 }
 
-void NetworkConnection::PrintWriteBuffer() {
-  LOG_TRACE("Write Buffer:");
+std::string NetworkConnection::WriteBufferToString() {
+  #ifdef LOG_TRACE_ENABLED
+    LOG_TRACE("Write Buffer:");
 
-  for (size_t i = 0; i < wbuf_.buf_size; ++i) {
-    LOG_TRACE("%u", wbuf_.buf[i]);
-  }
+    for (size_t i = 0; i < wbuf_.buf_size; ++i) {
+      LOG_TRACE("%u", wbuf_.buf[i]);
+    }
+  #endif
+
+  return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
 }
 
 // Writes a packet's header (type, size) into the write buffer.
@@ -528,5 +534,172 @@ void NetworkConnection::Reset() {
   next_response_ = 0;
 }
 
+void NetworkConnection::StateMachine(NetworkConnection *conn) {
+  bool done = false;
+
+  while (done == false) {
+    LOG_TRACE("current state: %d", conn->state);
+    switch (conn->state) {
+      case ConnState::CONN_LISTENING: {
+        struct sockaddr_storage addr;
+        socklen_t addrlen = sizeof(addr);
+        int new_conn_fd =
+            accept(conn->sock_fd, (struct sockaddr *)&addr, &addrlen);
+        if (new_conn_fd == -1) {
+          LOG_ERROR("Failed to accept");
+        }
+        (static_cast<NetworkMasterThread *>(conn->thread))
+            ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
+        done = true;
+        break;
+      }
+
+      case ConnState::CONN_READ: {
+        auto res = conn->FillReadBuffer();
+        switch (res) {
+          case ReadState::READ_DATA_RECEIVED:
+            // wait for some other event
+            conn->TransitState(ConnState::CONN_PROCESS);
+            break;
+
+          case ReadState::READ_NO_DATA_RECEIVED:
+            // process what we read
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+
+          case ReadState::READ_ERROR:
+            // fatal error for the connection
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+        }
+        break;
+      }
+
+      case ConnState::CONN_WAIT: {
+        if (conn->UpdateEvent(EV_READ | EV_PERSIST) == false) {
+          LOG_ERROR("Failed to update event, closing");
+          conn->TransitState(ConnState::CONN_CLOSING);
+          break;
+        }
+
+        conn->TransitState(ConnState::CONN_READ);
+        done = true;
+        break;
+      }
+
+      case ConnState::CONN_PROCESS: {
+        bool status;
+
+        if(conn->pkt_manager.ssl_sent) {
+            // start SSL handshake
+            // TODO: consider free conn_SSL_context
+            conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+            if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
+              LOG_ERROR("Failed to set SSL fd");
+              PL_ASSERT(false);
+            }
+            int ssl_accept_ret;
+            if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
+              LOG_ERROR("Failed to accept (handshake) client SSL context.");
+              LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
+              // TODO: consider more about proper action
+              PL_ASSERT(false);
+              conn->TransitState(ConnState::CONN_CLOSED);
+            }
+            LOG_ERROR("SSL handshake completed");
+            conn->pkt_manager.ssl_sent = false;
+        }
+
+        if (conn->rpkt.header_parsed == false) {
+          // parse out the header first
+          if (conn->ReadPacketHeader() == false) {
+            // need more data
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          }
+        }
+        PL_ASSERT(conn->rpkt.header_parsed == true);
+
+        if (conn->rpkt.is_initialized == false) {
+          // packet needs to be initialized with rest of the contents
+          if (conn->ReadPacket() == false) {
+            // need more data
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          }
+        }
+        PL_ASSERT(conn->rpkt.is_initialized == true);
+
+        if (conn->pkt_manager.is_started == false) {
+          // We need to handle startup packet first
+          int status_res = conn->pkt_manager.ProcessInitialPacket(&conn->rpkt);
+          status = (status_res != 0);
+          if (status_res == 1) {
+            conn->pkt_manager.is_started = true;
+          }
+          else if (status_res == -1){
+            conn->pkt_manager.ssl_sent = true;
+          }
+        } else {
+          // Process all other packets
+          status = conn->pkt_manager.ProcessPacket(&conn->rpkt,
+                                                   (size_t)conn->thread_id);
+        }
+
+        if (status == false) {
+          // packet processing can't proceed further
+          conn->TransitState(ConnState::CONN_CLOSING);
+        } else {
+          // We should have responses ready to send
+          conn->TransitState(ConnState::CONN_WRITE);
+        }
+        break;
+      }
+
+      case ConnState::CONN_WRITE: {
+        // examine write packets result
+        switch (conn->WritePackets()) {
+          case WriteState::WRITE_COMPLETE: {
+            // Input Packet can now be reset, before we parse the next packet
+            conn->rpkt.Reset();
+            conn->UpdateEvent(EV_READ | EV_PERSIST);
+            conn->TransitState(ConnState::CONN_PROCESS);
+            break;
+          }
+
+          case WriteState::WRITE_NOT_READY: {
+            // we can't write right now. Exit state machine
+            // and wait for next callback
+            done = true;
+            break;
+          }
+
+          case WriteState::WRITE_ERROR: {
+            LOG_ERROR("Error during write, closing connection");
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          }
+        }
+        break;
+      }
+
+      case ConnState::CONN_CLOSING: {
+        conn->CloseSocket();
+        done = true;
+        break;
+      }
+
+      case ConnState::CONN_CLOSED: {
+        done = true;
+        break;
+      }
+
+      case ConnState::CONN_INVALID: {
+        PL_ASSERT(false);
+        break;
+      }
+    }
+  }
+}
 }  // namespace network
 }  // namespace peloton

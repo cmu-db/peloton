@@ -17,8 +17,6 @@
 #include <event2/event.h>
 #include <event2/listener.h>
 
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
 
 #include <signal.h>
 #include <stdio.h>
@@ -32,13 +30,23 @@
 #include "common/logger.h"
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
-#include "protocol_handler.h"
+#include "network_state.h"
 
 namespace peloton {
 namespace network {
 
 // Forward Declarations
-struct NewConnQueueItem;
+struct NewConnQueueItem {
+  int new_conn_fd;
+  short event_flags;
+  ConnState init_state;
+
+  inline NewConnQueueItem(int new_conn_fd, short event_flags,
+                          ConnState init_state)
+      : new_conn_fd(new_conn_fd),
+        event_flags(event_flags),
+        init_state(init_state) {}
+};
 
 class NetworkThread {
  protected:
@@ -79,59 +87,6 @@ class NetworkThread {
   int GetThreadSockFd() { return sock_fd; }
 
   void SetThreadSockFd(int fd) { this->sock_fd = fd; }
-};
-
-class NetworkWorkerThread : public NetworkThread {
- private:
-  // New connection event
-  struct event *new_conn_event_;
-
-  // Timeout event
-  struct event *ev_timeout_;
-
-  // Notify new connection pipe(send end)
-  int new_conn_send_fd_;
-
-  // Notify new connection pipe(receive end)
-  int new_conn_receive_fd_;
-
- public:
-  /* The queue for new connection requests */
-  LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
-
- public:
-  NetworkWorkerThread(const int thread_id);
-
-  // Getters and setters
-  event *GetNewConnEvent() { return this->new_conn_event_; }
-
-  event *GetTimeoutEvent() { return this->ev_timeout_; }
-
-  int GetNewConnSendFd() { return this->new_conn_send_fd_; }
-
-  int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
-};
-
-// a master thread contains multiple worker threads.
-class NetworkMasterThread : public NetworkThread {
- private:
-  const int num_threads_;
-
-  // TODO: have a smarter dispatch scheduler
-  std::atomic<int> next_thread_id_;  // next thread we dispatched to
-
- public:
-  NetworkMasterThread(const int num_threads, struct event_base *libevent_base);
-
-  void Start();
-
-  void Stop();
-
-  void DispatchConnection(int new_conn_fd, short event_flags);
-
-  std::vector<std::shared_ptr<NetworkWorkerThread>> &GetWorkerThreads();
-
-  static void StartWorker(peloton::network::NetworkWorkerThread *worker_thread);
 };
 
 }  // namespace network

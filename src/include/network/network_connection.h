@@ -1,4 +1,4 @@
-///===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -23,12 +23,15 @@
 #include <string.h>
 #include <vector>
 
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <sys/file.h>
 
 #include "common/exception.h"
 #include "common/logger.h"
 #include "configuration/configuration.h"
 #include "network_thread.h"
+#include "network_master_thread.h"
 #include "protocol_handler.h"
 #include "marshal.h"
 #include "network_state.h"
@@ -38,9 +41,6 @@
 
 namespace peloton {
 namespace network {
-
-/* Used by a worker to execute the main event loop for a connection */
-void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 
 /*
  * NetworkConnection - Wrapper for managing socket.
@@ -104,11 +104,14 @@ class NetworkConnection {
 
   WriteState WritePackets();
 
-  void PrintWriteBuffer();
+  std::string WriteBufferToString();
 
   void CloseSocket();
 
   void Reset();
+
+  /* Runs the state machine for the protocol. Invoked by event handler callback */
+  static void StateMachine(NetworkConnection *conn);
 
  private:
   // Writes a packet's header (type, size) into the write buffer
@@ -135,7 +138,6 @@ class NetworkConnection {
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
-
 
 };
 

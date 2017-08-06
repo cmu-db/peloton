@@ -33,6 +33,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "network_thread.h"
+#include "network_master_thread.h"
 #include "protocol_handler.h"
 #include "network_connection.h"
 #include "network_state.h"
@@ -40,44 +41,15 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#define QUEUE_SIZE 100
-#define MASTER_THREAD_ID -1
-
 namespace peloton {
 namespace network {
 
 // Forward Declarations
 class NetworkThread;
 class NetworkMasterThread;
+class NetworkConnection;
 
-/* Network Callbacks */
-
-/* Used by a worker thread to receive a new connection from the main thread and
- * launch the event handler */
-void WorkerHandleNewConn(evutil_socket_t local_fd, short ev_flags, void *arg);
-
-
-/* Helpers */
-
-/* Runs the state machine for the protocol. Invoked by event handler callback */
-void StateMachine(NetworkConnection *conn);
-
-
-
-struct NewConnQueueItem {
-  int new_conn_fd;
-  short event_flags;
-  ConnState init_state;
-
-  inline NewConnQueueItem(int new_conn_fd, short event_flags,
-                          ConnState init_state)
-      : new_conn_fd(new_conn_fd),
-        event_flags(event_flags),
-        init_state(init_state) {}
-};
-
-
-struct NetworkManager {
+class NetworkManager {
  private:
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
@@ -106,8 +78,8 @@ struct NetworkManager {
 
   static NetworkConnection *GetConnection(const int &connfd);
 
-  static void CreateNewConn(const int &connfd, short ev_flags,
-                            NetworkThread *thread, ConnState init_state);
+  static void CreateNewConnection(const int &connfd, short ev_flags,
+                                  NetworkThread *thread, ConnState init_state);
 
   void StartServer();
 
@@ -134,22 +106,6 @@ struct NetworkManager {
   GetGlobalSocketList();
 };
 
-/*
- * ControlCallback - Some callback helper functions
- */
-class ControlCallback {
- public:
-  /* Used to handle signals */
-  static void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                              UNUSED_ATTRIBUTE short what, void *arg);
 
-  /* Used to control server start and close */
-  static void ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                                     UNUSED_ATTRIBUTE short what, void *arg);
-
-  /* Used to control thread event loop's begin and exit */
-  static void ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                                     UNUSED_ATTRIBUTE short what, void *arg);
-};
 }
 }
