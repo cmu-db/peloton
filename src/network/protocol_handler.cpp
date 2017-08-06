@@ -57,7 +57,7 @@ std::mutex ProtocolHandler::protocol_handlers_mutex_;
 
 ProtocolHandler::ProtocolHandler()
     : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
-  traffic_cop_.reset(new tcop::TrafficCop());
+  traffic_cop_.reset(new tcop::TrafficCop(sock_fd));
   {
     std::lock_guard<std::mutex> lock(ProtocolHandler::protocol_handlers_mutex_);
     ProtocolHandler::protocol_handlers_.push_back(this);

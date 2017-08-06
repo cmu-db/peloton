@@ -30,9 +30,9 @@ class MonoQueuePool {
     : task_queue_(DEFAULT_TASK_QUEUE_SIZE),
       worker_pool_(DEFAULT_WORKER_POOL_SIZE, &task_queue_){}
 
-  inline ~MonoQueuePool();
+  ~MonoQueuePool();
 
-  void QueueStatement(void(*func_ptr)(void *), void* func_arg);
+  void SubmitTask(void(*func_ptr)(void *), void* func_arg);
 
   static MonoQueuePool& GetInstance();
 

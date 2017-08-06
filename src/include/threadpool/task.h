@@ -18,6 +18,8 @@
 #include <memory>
 
 #include "container/lock_free_queue.h"
+#include "event.h"
+#include "tcop/tcop.h"
 
 namespace peloton {
 namespace threadpool {
@@ -51,7 +53,7 @@ class Task {
 class TaskQueue {
  public:
   inline TaskQueue(const size_t sz) : task_queue_(sz) {};
-
+void ExecutePlanWrapper(void *arg_ptr);
   bool PollTask(std::shared_ptr<Task> &task);
   bool IsEmpty();
   void EnqueueTask(void(*func_ptr)(void *), void* func_args);
