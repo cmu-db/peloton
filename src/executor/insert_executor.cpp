@@ -95,8 +95,7 @@ bool InsertExecutor::DExecute() {
 
     // Go over the logical tile
     for (oid_t tuple_id : *logical_tile) {
-      expression::ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(),
-                                                        tuple_id);
+      ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
 
       // Materialize the logical tile tuple
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {

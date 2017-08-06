@@ -76,7 +76,7 @@ bool PopulateIndexExecutor::DExecute() {
 
       // Go over all tuples in the logical tile
       for (oid_t tuple_id : *tile) {
-        expression::ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
+        ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
 
         // Materialize the logical tile tuple
         for (oid_t column_itr = 0; column_itr < column_ids_.size();

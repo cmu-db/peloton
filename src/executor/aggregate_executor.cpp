@@ -124,8 +124,8 @@ bool AggregateExecutor::DExecute() {
     LOG_TRACE("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
-      std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
-          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id));
+      std::unique_ptr<ContainerTuple<LogicalTile>> cur_tuple(
+          new ContainerTuple<LogicalTile>(tile.get(), tuple_id));
 
       if (aggregator->Advance(cur_tuple.get()) == false) {
         return false;

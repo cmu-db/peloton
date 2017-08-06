@@ -133,10 +133,9 @@ bool MergeJoinExecutor::DExecute() {
   LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
 
   while ((left_end_row > left_start_row) && (right_end_row > right_start_row)) {
-    expression::ContainerTuple<executor::LogicalTile> left_tuple(
-        left_tile, left_start_row);
-    expression::ContainerTuple<executor::LogicalTile> right_tuple(
-        right_tile, right_start_row);
+    ContainerTuple<executor::LogicalTile> left_tuple(left_tile, left_start_row);
+    ContainerTuple<executor::LogicalTile> right_tuple(right_tile,
+                                                      right_start_row);
     bool not_matching_tuple_pair = false;
 
     // Evaluate and compare the join clauses
@@ -248,9 +247,8 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
   if (start_row >= tuple_count) return start_row;
 
   while (end_row < tuple_count) {
-    expression::ContainerTuple<executor::LogicalTile> this_tuple(tile,
-                                                                 this_row);
-    expression::ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
+    ContainerTuple<executor::LogicalTile> this_tuple(tile, this_row);
+    ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
 
     bool diff = false;
 

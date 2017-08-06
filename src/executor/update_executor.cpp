@@ -98,8 +98,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
 
   storage::Tuple new_tuple(target_table_schema, true);
 
-  expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                           physical_tuple_id);
+  ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
 
   project_info_->Evaluate(&new_tuple, &old_tuple, nullptr, executor_context_);
 
@@ -216,8 +215,8 @@ bool UpdateExecutor::DExecute() {
         // We have already owned a version
 
         // Make a copy of the original tuple and allocate a new tuple
-        expression::ContainerTuple<storage::TileGroup> old_tuple(
-            tile_group, physical_tuple_id);
+        ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                     physical_tuple_id);
         // Execute the projections
         project_info_->Evaluate(&old_tuple, &old_tuple, nullptr,
                                 executor_context_);
@@ -274,11 +273,11 @@ bool UpdateExecutor::DExecute() {
           auto &manager = catalog::Manager::GetInstance();
           auto new_tile_group = manager.GetTileGroup(new_location.block);
 
-          expression::ContainerTuple<storage::TileGroup> new_tuple(
-              new_tile_group.get(), new_location.offset);
+          ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
+                                                       new_location.offset);
 
-          expression::ContainerTuple<storage::TileGroup> old_tuple(
-              tile_group, physical_tuple_id);
+          ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                       physical_tuple_id);
 
           // perform projection from old version to new version.
           // this triggers in-place update, and we do not need to allocate

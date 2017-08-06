@@ -24,7 +24,6 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace expression {
 
 //===--------------------------------------------------------------------===//
 // Container Tuple wrapping a tile group or logical tile.
@@ -292,5 +291,4 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
   const std::vector<oid_t> *column_ids_ = nullptr;
 };
 
-}  // namespace expression
 }  // namespace peloton

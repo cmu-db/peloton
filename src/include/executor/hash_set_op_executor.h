@@ -61,9 +61,9 @@ class HashSetOpExecutor : public AbstractExecutor {
 
   /** @brief Type definitions for hash table */
   typedef std::unordered_map<
-      expression::ContainerTuple<LogicalTile>, counter_pair_t,
-      expression::ContainerTupleHasher<LogicalTile>,
-      expression::ContainerTupleComparator<LogicalTile>> HashSetOpMapType;
+      ContainerTuple<LogicalTile>, counter_pair_t,
+      ContainerTupleHasher<LogicalTile>,
+      ContainerTupleComparator<LogicalTile>> HashSetOpMapType;
 
   /* Helper functions */
 

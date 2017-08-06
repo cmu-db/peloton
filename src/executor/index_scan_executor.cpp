@@ -240,8 +240,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
           LOG_TRACE("perform predicate evaluate");
-          expression::ContainerTuple<storage::TileGroup> tuple(
-              tile_group.get(), tuple_location.offset);
+          ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                   tuple_location.offset);
           eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         }
@@ -463,8 +463,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                   tuple_location.offset);
 
         // Further check if the version has the secondary key
-        expression::ContainerTuple<storage::TileGroup> candidate_tuple(
-            tile_group.get(), tuple_location.offset);
+        ContainerTuple<storage::TileGroup> candidate_tuple(tile_group.get(),
+            tuple_location.offset);
 
         LOG_TRACE("candidate_tuple size: %s",
                   candidate_tuple.GetInfo().c_str());
@@ -631,8 +631,8 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   auto &manager = catalog::Manager::GetInstance();
 
   auto tile_group = manager.GetTileGroup(tuple_location.block);
-  expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                       tuple_location.offset);
+  ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                           tuple_location.offset);
 
   // This is the end of loop
   oid_t cond_num = key_column_ids_.size();

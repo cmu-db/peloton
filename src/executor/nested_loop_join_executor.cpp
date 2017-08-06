@@ -107,8 +107,8 @@ bool NestedLoopJoinExecutor::DExecute() {
     // If left tile result is not done, continue the left tuples
     if (!left_tile_done_) {
       // Tuple result
-      expression::ContainerTuple<executor::LogicalTile> left_tuple(
-          left_tile_.get(), left_tile_row_itr_);
+      ContainerTuple<executor::LogicalTile> left_tuple(left_tile_.get(),
+                                                       left_tile_row_itr_);
 
       // Grab the values
       std::vector<type::Value> join_values;
@@ -142,8 +142,8 @@ bool NestedLoopJoinExecutor::DExecute() {
           // First, copy the elements in left logical tile's tuple
           LOG_TRACE("Insert a tuple into the output logical tile");
 
-          expression::ContainerTuple<executor::LogicalTile> right_tuple(
-              right_tile.get(), right_tile_row_itr);
+          ContainerTuple<executor::LogicalTile> right_tuple(right_tile.get(),
+              right_tile_row_itr);
 
           if (predicate_ != nullptr) {
             auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,

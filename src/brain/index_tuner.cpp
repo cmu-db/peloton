@@ -114,7 +114,7 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       // Setup container tuple
-      expression::ContainerTuple<storage::TileGroup> container_tuple(
+      ContainerTuple<storage::TileGroup> container_tuple(
           tile_group.get(), tuple_id);
 
       // Set the location

@@ -206,8 +206,7 @@ bool HybridScanExecutor::SeqScanUtil() {
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
         } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                               tuple_id);
+          ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
@@ -215,8 +214,7 @@ bool HybridScanExecutor::SeqScanUtil() {
           }
         }
       } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                             tuple_id);
+        ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
         auto eval =
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
