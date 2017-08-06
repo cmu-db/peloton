@@ -123,7 +123,7 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
       task_v.push_back(std::make_shared<threadpool::Task>(shortTask, &params.at(i)));
     }
   }
-  tq->SubmitTaskBatch(task_v);
+  tq->EnqueueTask(task_v);
 
   count++;
   LOG_INFO("master completes callback, count: %c", count);
