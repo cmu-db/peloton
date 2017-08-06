@@ -14,7 +14,6 @@
 #include <fstream>
 
 #include "network/network_manager.h"
-#include "common/thread_pool.h"
 
 namespace peloton {
 namespace network {
@@ -40,9 +39,9 @@ NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
   }
 }
 
-void NetworkManager::CreateNewConn(const int &connfd, short ev_flags,
-                                   NetworkThread *thread,
-                                   ConnState init_state) {
+void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
+                                         NetworkThread *thread,
+                                         ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
@@ -63,13 +62,13 @@ NetworkManager::NetworkManager() {
 
   // Add hang up signal event
   ev_stop_ =
-      evsignal_new(base_, SIGHUP, ControlCallback::Signal_Callback, base_);
+      evsignal_new(base_, SIGHUP, CallbackUtil::Signal_Callback, base_);
   evsignal_add(ev_stop_, NULL);
 
   // Add timeout event to check server's start/close flag every one second
   struct timeval one_seconds = {1, 0};
   ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
-                          ControlCallback::ServerControl_Callback, this);
+                          CallbackUtil::ServerControl_Callback, this);
   event_add(ev_timeout_, &one_seconds);
 
   // a master thread is responsible for coordinating worker threads.
@@ -157,8 +156,8 @@ void NetworkManager::StartServer() {
 
     master_thread_->Start();
 
-    NetworkManager::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
-                                  master_thread_.get(), ConnState::CONN_LISTENING);
+    NetworkManager::CreateNewConnection(listen_fd, EV_READ | EV_PERSIST,
+                                        master_thread_.get(), ConnState::CONN_LISTENING);
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
