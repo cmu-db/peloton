@@ -35,7 +35,7 @@ WrappedTuple::WrappedTuple(const WrappedTuple &o)
     : ContainerTuple(&tuple_), tuple_(o.tuple_) {}
 
 WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
-  expression::ContainerTuple<std::vector<peloton::type::Value>>::operator=(o);
+  ContainerTuple<std::vector<peloton::type::Value>>::operator=(o);
   tuple_ = o.tuple_;
   return *this;
 }

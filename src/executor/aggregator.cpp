@@ -114,8 +114,8 @@ bool Helper(const planner::AggregatePlan *node, AbstractAttributeAggregator **ag
    * 2) Evaluate filter predicate;
    * if fail, just return
    */
-  std::unique_ptr<expression::ContainerTuple<std::vector<type::Value>>>
-      aggref_tuple(new expression::ContainerTuple<std::vector<type::Value>>(
+  std::unique_ptr<ContainerTuple<std::vector<type::Value>>>
+      aggref_tuple(new ContainerTuple<std::vector<type::Value>>(
           &aggregate_values));
 
   auto predicate = node->GetPredicate();
@@ -230,7 +230,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 bool HashAggregator::Finalize() {
   for (auto entry : aggregates_map) {
     // Construct a container for the first tuple
-    expression::ContainerTuple<std::vector<type::Value>> first_tuple(
+    ContainerTuple<std::vector<type::Value>> first_tuple(
         &entry.second->first_tuple_values);
     if (Helper(node, entry.second->aggregates, output_table, &first_tuple,
                this->executor_context) == false) {

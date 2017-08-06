@@ -98,7 +98,7 @@ bool SeqScanExecutor::DExecute() {
       if (predicate_ != nullptr) {
         // Invalidate tuples that don't satisfy the predicate.
         for (oid_t tuple_id : *tile) {
-          expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
+          ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
           auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_);
           if (eval.IsFalse()) {
             // if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
@@ -180,8 +180,8 @@ bool SeqScanExecutor::DExecute() {
               return res;
             }
           } else {
-            expression::ContainerTuple<storage::TileGroup> tuple(
-                tile_group.get(), tuple_id);
+            ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                     tuple_id);
             LOG_TRACE("Evaluate predicate for a tuple");
             auto eval =
                 predicate_->Evaluate(&tuple, nullptr, executor_context_);

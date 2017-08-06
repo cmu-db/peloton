@@ -40,11 +40,11 @@ class HashExecutor : public AbstractExecutor {
 
   /** @brief Type definitions for hash table */
   typedef std::unordered_map<
-      expression::ContainerTuple<LogicalTile>,
+      ContainerTuple<LogicalTile>,
       std::unordered_set<std::pair<size_t, oid_t>,
                          boost::hash<std::pair<size_t, oid_t>>>,
-      expression::ContainerTupleHasher<LogicalTile>,
-      expression::ContainerTupleComparator<LogicalTile>> HashMapType;
+      ContainerTupleHasher<LogicalTile>,
+      ContainerTupleComparator<LogicalTile>> HashMapType;
 
   inline HashMapType &GetHashTable() { return this->hash_table_; }
 
