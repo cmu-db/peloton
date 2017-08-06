@@ -181,9 +181,9 @@ WriteState NetworkConnection::WritePackets() {
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR) return result;
+    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
     result = BufferWriteBytesContent(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR) return result;
+    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
   }
 
   // Done writing all packets. clear packets
@@ -193,11 +193,11 @@ WriteState NetworkConnection::WritePackets() {
   if (pkt_manager.force_flush == true) {
     return FlushWriteBuffer();
   }
-  return WRITE_COMPLETE;
+  return WriteState::WRITE_COMPLETE;
 }
 
 ReadState NetworkConnection::FillReadBuffer() {
-  ReadState result = READ_NO_DATA_RECEIVED;
+  ReadState result = ReadState::READ_NO_DATA_RECEIVED;
   ssize_t bytes_read = 0;
   bool done = false;
 
@@ -242,10 +242,10 @@ ReadState NetworkConnection::FillReadBuffer() {
       if (bytes_read > 0) {
         // read succeeded, update buffer size
         rbuf_.buf_size += bytes_read;
-        result = READ_DATA_RECEIVED;
+        result = ReadState::READ_DATA_RECEIVED;
       } else if (bytes_read == 0) {
         // Read failed
-        return READ_ERROR;
+        return ReadState::READ_ERROR;
       } else if (bytes_read < 0) {
         // related to non-blocking?
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -290,7 +290,7 @@ ReadState NetworkConnection::FillReadBuffer() {
               LOG_TRACE("Error Reading: UNKNOWN");
           }
           // some other error occured
-          return READ_ERROR;
+          return ReadState::READ_ERROR;
         }
       }
     }
@@ -361,11 +361,11 @@ WriteState NetworkConnection::FlushWriteBuffer() {
           // Listen for socket being enabled for write
           UpdateEvent(EV_WRITE | EV_PERSIST);
           // We should go to CONN_WRITE state
-          return WRITE_NOT_READY;
+          return WriteState::WRITE_NOT_READY;
         } else {
           // fatal errors
           LOG_ERROR("Fatal error during write");
-          return WRITE_ERROR;
+          return WriteState::WRITE_ERROR;
         }
       }
 
@@ -388,7 +388,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   pkt_manager.force_flush = false;
 
   // we are ok
-  return WRITE_COMPLETE;
+  return WriteState::WRITE_COMPLETE;
 }
 
 void NetworkConnection::PrintWriteBuffer() {
@@ -404,7 +404,7 @@ void NetworkConnection::PrintWriteBuffer() {
 WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   // If we should not write
   if (pkt->skip_header_write) {
-    return WRITE_COMPLETE;
+    return WriteState::WRITE_COMPLETE;
   }
 
   size_t len = pkt->len;
@@ -415,7 +415,7 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
     auto result = FlushWriteBuffer();
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR) {
+    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
       // Socket is not ready for write
       return result;
     }
@@ -441,7 +441,7 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
 
   // Header is written to socket buf. No need to write it in the future
   pkt->skip_header_write = true;
-  return WRITE_COMPLETE;
+  return WriteState::WRITE_COMPLETE;
 }
 
 // Writes a packet's content into the write buffer
@@ -468,7 +468,7 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
       wbuf_.buf_ptr += len;
       wbuf_.buf_size = wbuf_.buf_ptr;
       LOG_TRACE("Content fit in window. Write content successful");
-      return WRITE_COMPLETE;
+      return WriteState::WRITE_COMPLETE;
     } else {
       // contents longer than socket buffer size, fill up the socket buffer
       // with "window" bytes
@@ -486,13 +486,13 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
       LOG_TRACE("Content doesn't fit in window. Try flushing");
       auto result = FlushWriteBuffer();
       // flush before write the remaining content
-      if (result == WRITE_NOT_READY || result == WRITE_ERROR) {
+      if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
         // need to retry or close connection
         return result;
       }
     }
   }
-  return WRITE_COMPLETE;
+  return WriteState::WRITE_COMPLETE;
 }
 
 void NetworkConnection::CloseSocket() {
@@ -501,7 +501,7 @@ void NetworkConnection::CloseSocket() {
   event_del(event);
   // event_free(event);
 
-  TransitState(CONN_CLOSED);
+  TransitState(ConnState::CONN_CLOSED);
   Reset();
   for (;;) {
     int status = close(sock_fd);
@@ -521,7 +521,7 @@ void NetworkConnection::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
   pkt_manager.Reset();
-  state = CONN_INVALID;
+  state = ConnState::CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;
 }

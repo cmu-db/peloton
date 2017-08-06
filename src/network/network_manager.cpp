@@ -163,7 +163,7 @@ void NetworkManager::StartServer() {
     master_thread_->Start();
 
     NetworkManager::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
-                                  master_thread_.get(), CONN_LISTENING);
+                                  master_thread_.get(), ConnState::CONN_LISTENING);
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);

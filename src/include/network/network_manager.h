@@ -49,7 +49,7 @@ class NetworkThread;
 class NetworkMasterThread;
 
 // Network Thread States
-enum ConnState {
+enum class ConnState {
   CONN_LISTENING,  // State that listens for new connections
   CONN_READ,       // State that reads data from the network
   CONN_WRITE,      // State the writes data to the network
@@ -60,13 +60,13 @@ enum ConnState {
   CONN_INVALID,    // Invalid STate
 };
 
-enum ReadState {
+enum class ReadState {
   READ_DATA_RECEIVED,
   READ_NO_DATA_RECEIVED,
   READ_ERROR,
 };
 
-enum WriteState {
+enum class WriteState {
   WRITE_COMPLETE,   // Write completed
   WRITE_NOT_READY,  // Socket not ready to write
   WRITE_ERROR,      // Some error happened
@@ -159,7 +159,7 @@ class NetworkConnection {
 
   NetworkThread *thread;          // reference to the network thread
   ProtocolHandler pkt_manager;       // Stores state for this socket
-  ConnState state = CONN_INVALID;  // Initial state of connection
+  ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:

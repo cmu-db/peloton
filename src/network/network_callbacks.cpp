@@ -47,13 +47,13 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
         /* create a new connection object */
         NetworkManager::CreateNewConn(item->new_conn_fd, item->event_flags,
                                       static_cast<NetworkThread *>(thread),
-                                      CONN_READ);
+                                      ConnState::CONN_READ);
       } else {
         LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
         conn->Init(item->event_flags, static_cast<NetworkThread *>(thread),
-                   CONN_READ);
+                   ConnState::CONN_READ);
       }
       break;
     }
@@ -79,7 +79,7 @@ void StateMachine(NetworkConnection *conn) {
   while (done == false) {
     LOG_TRACE("current state: %d", conn->state);
     switch (conn->state) {
-      case CONN_LISTENING: {
+      case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
         socklen_t addrlen = sizeof(addr);
         int new_conn_fd =
@@ -93,40 +93,40 @@ void StateMachine(NetworkConnection *conn) {
         break;
       }
 
-      case CONN_READ: {
+      case ConnState::CONN_READ: {
         auto res = conn->FillReadBuffer();
         switch (res) {
-          case READ_DATA_RECEIVED:
+          case ReadState::READ_DATA_RECEIVED:
             // wait for some other event
-            conn->TransitState(CONN_PROCESS);
+            conn->TransitState(ConnState::CONN_PROCESS);
             break;
 
-          case READ_NO_DATA_RECEIVED:
+          case ReadState::READ_NO_DATA_RECEIVED:
             // process what we read
-            conn->TransitState(CONN_WAIT);
+            conn->TransitState(ConnState::CONN_WAIT);
             break;
 
-          case READ_ERROR:
+          case ReadState::READ_ERROR:
             // fatal error for the connection
-            conn->TransitState(CONN_CLOSING);
+            conn->TransitState(ConnState::CONN_CLOSING);
             break;
         }
         break;
       }
 
-      case CONN_WAIT: {
+      case ConnState::CONN_WAIT: {
         if (conn->UpdateEvent(EV_READ | EV_PERSIST) == false) {
           LOG_ERROR("Failed to update event, closing");
-          conn->TransitState(CONN_CLOSING);
+          conn->TransitState(ConnState::CONN_CLOSING);
           break;
         }
 
-        conn->TransitState(CONN_READ);
+        conn->TransitState(ConnState::CONN_READ);
         done = true;
         break;
       }
 
-      case CONN_PROCESS: {
+      case ConnState::CONN_PROCESS: {
         bool status;
 
         if(conn->pkt_manager.ssl_sent) {
@@ -143,7 +143,7 @@ void StateMachine(NetworkConnection *conn) {
               LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
               // TODO: consider more about proper action
               PL_ASSERT(false);
-              conn->TransitState(CONN_CLOSED);
+              conn->TransitState(ConnState::CONN_CLOSED);
             }
             LOG_ERROR("SSL handshake completed");
             conn->pkt_manager.ssl_sent = false;
@@ -153,7 +153,7 @@ void StateMachine(NetworkConnection *conn) {
           // parse out the header first
           if (conn->ReadPacketHeader() == false) {
             // need more data
-            conn->TransitState(CONN_WAIT);
+            conn->TransitState(ConnState::CONN_WAIT);
             break;
           }
         }
@@ -163,7 +163,7 @@ void StateMachine(NetworkConnection *conn) {
           // packet needs to be initialized with rest of the contents
           if (conn->ReadPacket() == false) {
             // need more data
-            conn->TransitState(CONN_WAIT);
+            conn->TransitState(ConnState::CONN_WAIT);
             break;
           }
         }
@@ -187,53 +187,53 @@ void StateMachine(NetworkConnection *conn) {
 
         if (status == false) {
           // packet processing can't proceed further
-          conn->TransitState(CONN_CLOSING);
+          conn->TransitState(ConnState::CONN_CLOSING);
         } else {
           // We should have responses ready to send
-          conn->TransitState(CONN_WRITE);
+          conn->TransitState(ConnState::CONN_WRITE);
         }
         break;
       }
 
-      case CONN_WRITE: {
+      case ConnState::CONN_WRITE: {
         // examine write packets result
         switch (conn->WritePackets()) {
-          case WRITE_COMPLETE: {
+          case WriteState::WRITE_COMPLETE: {
             // Input Packet can now be reset, before we parse the next packet
             conn->rpkt.Reset();
             conn->UpdateEvent(EV_READ | EV_PERSIST);
-            conn->TransitState(CONN_PROCESS);
+            conn->TransitState(ConnState::CONN_PROCESS);
             break;
           }
 
-          case WRITE_NOT_READY: {
+          case WriteState::WRITE_NOT_READY: {
             // we can't write right now. Exit state machine
             // and wait for next callback
             done = true;
             break;
           }
 
-          case WRITE_ERROR: {
+          case WriteState::WRITE_ERROR: {
             LOG_ERROR("Error during write, closing connection");
-            conn->TransitState(CONN_CLOSING);
+            conn->TransitState(ConnState::CONN_CLOSING);
             break;
           }
         }
         break;
       }
 
-      case CONN_CLOSING: {
+      case ConnState::CONN_CLOSING: {
         conn->CloseSocket();
         done = true;
         break;
       }
 
-      case CONN_CLOSED: {
+      case ConnState::CONN_CLOSED: {
         done = true;
         break;
       }
 
-      case CONN_INVALID: {
+      case ConnState::CONN_INVALID: {
         PL_ASSERT(false);
         break;
       }
