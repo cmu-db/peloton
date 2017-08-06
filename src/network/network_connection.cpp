@@ -104,7 +104,7 @@ bool NetworkConnection::IsReadDataAvailable(size_t bytes) {
 // Assume: Packet length field is always 32-bit int
 bool NetworkConnection::ReadPacketHeader() {
   size_t initial_read_size = sizeof(int32_t);
-  if (pkt_manager.is_started == true) {
+  if (protocol_handler_.is_started == true) {
     // All packets other than the startup packet have a 5B header
     initial_read_size++;
   }
@@ -115,7 +115,7 @@ bool NetworkConnection::ReadPacketHeader() {
   }
 
   // get packet size from the header
-  if (pkt_manager.is_started == true) {
+  if (protocol_handler_.is_started == true) {
     // Header also contains msg type
     rpkt.msg_type =
         static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
@@ -180,8 +180,8 @@ bool NetworkConnection::ReadPacket() {
 
 WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
-    auto pkt = pkt_manager.responses[next_response_].get();
+  for (; next_response_ < protocol_handler_.responses.size(); next_response_++) {
+    auto pkt = protocol_handler_.responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
@@ -191,10 +191,10 @@ WriteState NetworkConnection::WritePackets() {
   }
 
   // Done writing all packets. clear packets
-  pkt_manager.responses.clear();
+  protocol_handler_.responses.clear();
   next_response_ = 0;
 
-  if (pkt_manager.force_flush == true) {
+  if (protocol_handler_.force_flush == true) {
     return FlushWriteBuffer();
   }
   return WriteState::WRITE_COMPLETE;
@@ -391,7 +391,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   wbuf_.Reset();
 
   // we have flushed, disable force flush now
-  pkt_manager.force_flush = false;
+  protocol_handler_.force_flush = false;
 
   // we are ok
   return WriteState::WRITE_COMPLETE;
@@ -530,7 +530,7 @@ void NetworkConnection::CloseSocket() {
 void NetworkConnection::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
-  pkt_manager.Reset();
+  protocol_handler_.Reset();
   state = ConnState::CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;
@@ -592,7 +592,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       case ConnState::CONN_PROCESS: {
         bool status;
 
-        if(conn->pkt_manager.ssl_sent) {
+        if(conn->protocol_handler_.ssl_sent) {
             // start SSL handshake
             // TODO: consider free conn_SSL_context
             conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
@@ -609,7 +609,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               conn->TransitState(ConnState::CONN_CLOSED);
             }
             LOG_ERROR("SSL handshake completed");
-            conn->pkt_manager.ssl_sent = false;
+            conn->protocol_handler_.ssl_sent = false;
         }
 
         if (conn->rpkt.header_parsed == false) {
@@ -632,19 +632,19 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         }
         PL_ASSERT(conn->rpkt.is_initialized == true);
 
-        if (conn->pkt_manager.is_started == false) {
+        if (conn->protocol_handler_.is_started == false) {
           // We need to handle startup packet first
-          int status_res = conn->pkt_manager.ProcessInitialPacket(&conn->rpkt);
+          int status_res = conn->protocol_handler_.ProcessInitialPacket(&conn->rpkt);
           status = (status_res != 0);
           if (status_res == 1) {
-            conn->pkt_manager.is_started = true;
+            conn->protocol_handler_.is_started = true;
           }
           else if (status_res == -1){
-            conn->pkt_manager.ssl_sent = true;
+            conn->protocol_handler_.ssl_sent = true;
           }
         } else {
           // Process all other packets
-          status = conn->pkt_manager.ProcessPacket(&conn->rpkt,
+          status = conn->protocol_handler_.ProcessPacket(&conn->rpkt,
                                                    (size_t)conn->thread_id);
         }
 

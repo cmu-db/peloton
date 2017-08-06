@@ -93,7 +93,7 @@ class ProtocolHandler {
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
   static std::vector<ProtocolHandler*> GetPacketManagers() {
-    return (ProtocolHandler::packet_managers_);
+    return (ProtocolHandler::protocol_handlers_);
   }
 
   Client client_;
@@ -221,8 +221,8 @@ class ProtocolHandler {
   // HACK: Global list of ProtocolHandler instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<ProtocolHandler*> packet_managers_;
-  static std::mutex packet_managers_mutex_;
+  static std::vector<ProtocolHandler*> protocol_handlers_;
+  static std::mutex protocol_handlers_mutex_;
 };
 
 }  // namespace network
