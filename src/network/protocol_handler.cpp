@@ -455,11 +455,13 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
       }
       default:
       {
+        query_ = query;
+        query_type_ = query_type;
         // prepareStatement
         std::string unnamed_statement = "unnamed";
-        auto statement = traffic_cop_->PrepareStatement(unnamed_statement, query,
+        statement_ = traffic_cop_->PrepareStatement(unnamed_statement, query,
                                                    error_message);
-        if (statement.get() == nullptr) {
+        if (statement_.get() == nullptr) {
           rows_affected = 0;
           SendErrorResponse(
               {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
@@ -469,18 +471,15 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
         // ExecuteStatment
         std::vector<type::Value> param_values;
         bool unnamed = false;
-        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
         auto status =
-            traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                           result, rows_affected, error_message, thread_id);
-        if (status == ResultType::SUCCESS) {
-          tuple_descriptor = statement->GetTupleDescriptor();
-        } else if (status == ResultType::FAILURE) { // check status
-          SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+            traffic_cop_->ExecuteStatement(statement_, param_values, unnamed, nullptr, result_format,
+                                           results_, rows_affected_, error_message_, thread_id);
+        if (status == ResultType::QUEUING) {
           return;
         }
+        ExecQueryMessageGetResult(status);
+        return;
       }
     }
 
@@ -502,6 +501,35 @@ void ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id)
   // I switched to strong types, this obviously doesn't work. So I
   // switched it to be NetworkTransactionStateType::IDLE. I don't know
   // we just don't always send back the internal txn state?
+  SendReadyForQuery(NetworkTransactionStateType::IDLE);
+}
+
+//void PacketManager::GetResult() {
+//  traffic_cop_->ExecuteStatementPlanGetResult();
+//  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+//  ExecQueryMessageGetResult(status);
+//}
+
+void PacketManager::ExecQueryMessageGetResult(ResultType status) {
+  std::vector<FieldInfo> tuple_descriptor;
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = statement_->GetTupleDescriptor();
+  } else if (status == ResultType::FAILURE) { // check status
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
+  }
+
+  // send the attribute names
+  PutTupleDescriptor(tuple_descriptor);
+
+  // send the result rows
+  SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
+
+  // The response to the SimpleQueryCommand is the query string.
+  CompleteCommand(query_, query_type_, rows_affected_);
+
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
 

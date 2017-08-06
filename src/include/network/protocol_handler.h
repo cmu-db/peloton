@@ -223,6 +223,12 @@ class ProtocolHandler {
 
   void ExecExecuteMessageGetResult(ResultType status);
 
+  void ExecQueryMessageGetResult(ResultType status);
+
+  QueryType query_type_;
+
+  std::string query_;
+
   void GetResult();
 
   //===--------------------------------------------------------------------===//
