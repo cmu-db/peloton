@@ -242,7 +242,6 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     } else {
       ExecuteStatementPlanGetResult();
     }
-
   } else {
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;

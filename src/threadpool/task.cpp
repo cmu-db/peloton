@@ -21,7 +21,7 @@ void Task::ExecuteTask() {
 }
 
 // Current thread would be blocked until the call back function finishes.
-void TaskQueue::SubmitTask(void(*func_ptr)(void *), void* func_arg) {
+void TaskQueue::EnqueueTask(void(*func_ptr)(void *), void* func_arg) {
   std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
   task_queue_.Enqueue(task);
 }
