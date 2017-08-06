@@ -215,7 +215,7 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
 size_t Cost::GetEstimatedGroupByRows(
     const std::shared_ptr<TableStats> &input_stats,
     std::vector<oid_t> &columns) {
-  // Idea is to assume each column is uniformaly distributed and get an
+  // Idea is to assume each column is uniformaly network and get an
   // overestimation.
   // Then use max cardinality among all columns as underestimation.
   // And combine them together.

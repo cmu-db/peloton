@@ -1,6 +1,6 @@
 option cc_generic_services = true;
 
-package peloton.networking;
+package peloton.network.service;
 
 enum Status {
     // Everything is ok with the transaction and it is allowed
@@ -32,7 +32,7 @@ enum Status {
     // evicted. This is only used with the anti-caching feature.
     ABORT_EVICTEDACCESS = 8;
     // The transaction was aborted because it was speculatively executed and 
-    // its parent distributed transaction aborted.
+    // its parent network transaction aborted.
     ABORT_SPECULATIVE = 9;
 }
 
@@ -126,7 +126,7 @@ message QueryEstimate {
 
 // Initialization request for a new transaction
 message TransactionInitRequest {
-    // The last distributed transaction id seen at the sending base partition
+    // The last network transaction id seen at the sending base partition
     optional int64 last_transaction_id = 1;
 
     // Globally unique transaction id
@@ -170,7 +170,7 @@ message TransactionInitResponse {
 // -----------------------------------
 
 message TransactionWorkRequest {
-    // The last distributed transaction id seen at the sending base partition
+    // The last network transaction id seen at the sending base partition
     optional int64 last_transaction_id = 1;
 
     // Globally unique transaction id
@@ -222,7 +222,7 @@ message TransactionWorkResponse {
 // -----------------------------------
 
 message TransactionPrefetchResult {
-    // The last distributed transaction id seen at the sending base partition
+    // The last network transaction id seen at the sending base partition
     optional int64 last_transaction_id = 1;
 
     // Globally unique transaction id
@@ -260,7 +260,7 @@ message TransactionPrefetchAcknowledgement {
 // -----------------------------------
 
 message TransactionMapRequest {
-    // The last distributed transaction id seen at the sending base partition
+    // The last network transaction id seen at the sending base partition
     optional int64 last_transaction_id = 1;
 
     // Globally unique transaction id
@@ -317,7 +317,7 @@ message TransactionReduceResponse {
 
 // Two-Phase Commit Prepare
 // The initiating PelotonSite is telling the remote sites to prepare to commit
-// a distributed transaction for a select number of partitions.
+// a network transaction for a select number of partitions.
 message TransactionPrepareRequest {
     required int64 transaction_id = 1;
     repeated int32 partitions = 2 [packed=true];
