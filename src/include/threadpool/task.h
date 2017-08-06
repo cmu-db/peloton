@@ -54,7 +54,7 @@ class TaskQueue {
 
   bool PollTask(std::shared_ptr<Task> &task);
   bool IsEmpty();
-  void SubmitTask(void(*func_ptr)(void *), void* func_args);
+  void EnqueueTask(void(*func_ptr)(void *), void* func_args);
 
  private:
   peloton::LockFreeQueue<std::shared_ptr<Task>> task_queue_;
