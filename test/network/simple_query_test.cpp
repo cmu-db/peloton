@@ -50,7 +50,7 @@ void *SimpleQueryTest(int port) {
     pqxx::work txn1(C);
 
     peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConn(
+        peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);
@@ -91,7 +91,7 @@ void *RollbackTest(int port) {
     pqxx::work W(C);
 
     peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConn(
+        peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
     EXPECT_EQ(conn->pkt_manager.is_started, true);

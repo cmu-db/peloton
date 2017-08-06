@@ -71,7 +71,7 @@ class NetworkConnection {
   bool IsReadDataAvailable(size_t bytes);
 
   // Parses out packet size from its header
-  void GetSizeFromPktHeader(size_t start_index);
+  void GetSizeFromPacketHeader(size_t start_index);
 
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
