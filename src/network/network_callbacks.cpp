@@ -14,6 +14,7 @@
 
 #include <unistd.h>
 #include "network/network_manager.h"
+#include "network/network_connection.h"
 #include "common/macros.h"
 
 namespace peloton {

@@ -9,10 +9,9 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "network/network_thread.h"
-#include <sys/file.h>
 #include <fstream>
-#include <vector>
+
+#include "network/network_thread.h"
 #include "boost/thread/future.hpp"
 #include "common/init.h"
 #include "common/thread_pool.h"

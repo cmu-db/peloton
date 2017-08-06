@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include "network/network_manager.h"
+#include "network/network_connection.h"
 
 namespace peloton {
 namespace network {
