@@ -163,7 +163,7 @@ void NetworkMasterThread::DispatchConnection(int new_conn_fd,
   LOG_DEBUG("Dispatching connection to worker %d", thread_id);
 
   std::shared_ptr<NewConnQueueItem> item(
-      new NewConnQueueItem(new_conn_fd, event_flags, CONN_READ));
+      new NewConnQueueItem(new_conn_fd, event_flags, ConnState::CONN_READ));
   worker_thread->new_conn_queue.Enqueue(item);
 
   if (write(worker_thread->GetNewConnSendFd(), buf, 1) != 1) {
