@@ -10,15 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "network/network_manager.h"
 
-#include <fcntl.h>
-#include <inttypes.h>
-#include <sys/socket.h>
 #include <fstream>
 
-#include "common/init.h"
-#include "common/macros.h"
+#include "network/network_manager.h"
 #include "common/thread_pool.h"
 
 namespace peloton {

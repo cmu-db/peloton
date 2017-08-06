@@ -14,7 +14,6 @@
 #include <cstring>
 #include <iterator>
 #include "network/marshal.h"
-#include "common/macros.h"
 
 #include <netinet/in.h>
 

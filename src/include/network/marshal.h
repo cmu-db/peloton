@@ -24,7 +24,36 @@
 namespace peloton {
 namespace network {
 
-class NetworkConnection;
+// Buffers used to batch messages at the socket
+struct Buffer {
+  size_t buf_ptr;        // buffer cursor
+  size_t buf_size;       // buffer size
+  size_t buf_flush_ptr;  // buffer cursor for write
+  ByteBuf buf;
+
+  inline Buffer() : buf_ptr(0), buf_size(0), buf_flush_ptr(0) {
+    // capacity of the buffer
+    buf.reserve(SOCKET_BUFFER_SIZE);
+  }
+
+  inline void Reset() {
+    buf_ptr = 0;
+    buf_size = 0;
+    buf_flush_ptr = 0;
+  }
+
+  // single buffer element accessor
+  inline uchar GetByte(size_t &index) { return buf[index]; }
+
+  // Get pointer to index location
+  inline uchar *GetPtr(size_t index) { return &buf[index]; }
+
+  inline ByteBuf::const_iterator Begin() { return std::begin(buf); }
+
+  inline ByteBuf::const_iterator End() { return std::end(buf); }
+
+  inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
+};
 
 class InputPacket {
  public:
