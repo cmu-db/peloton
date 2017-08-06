@@ -24,8 +24,11 @@
 #include <vector>
 
 #include "type/type_id.h"
+<<<<<<< 6d42bebabbbbe5f6d274cca7541d4d3c1843306c
 #include "parser/pg_trigger.h"
 
+=======
+>>>>>>> add event trigger back to network thread when worker threads finishes one task. Bug exists now, core dump
 #include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"

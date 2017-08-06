@@ -43,7 +43,6 @@ class TrafficCop {
  public:
   TrafficCop();
   TrafficCop(void(* task_callback)(void *), void *task_callback_arg);
-
   ~TrafficCop();
 
   // static singleton method used by tests
@@ -172,7 +171,6 @@ struct ExecutePlanArg {
       p_status_(p_status) {}
 //      event_(event) {}
 //      io_trigger_(io_trigger) { }
-
 
   std::shared_ptr<planner::AbstractPlan> plan_;
   concurrency::Transaction *txn_;
