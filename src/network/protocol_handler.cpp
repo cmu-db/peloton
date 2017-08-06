@@ -53,29 +53,29 @@ const std::unordered_map<std::string, std::string>
 				("TimeZone", "US/Eastern");
 // clang-format on
 
-std::vector<ProtocolHandler *> ProtocolHandler::packet_managers_;
-std::mutex ProtocolHandler::packet_managers_mutex_;
+std::vector<ProtocolHandler *> ProtocolHandler::protocol_handlers_;
+std::mutex ProtocolHandler::protocol_handlers_mutex_;
 
 ProtocolHandler::ProtocolHandler()
     : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
   {
-    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
-    ProtocolHandler::packet_managers_.push_back(this);
+    std::lock_guard<std::mutex> lock(ProtocolHandler::protocol_handlers_mutex_);
+    ProtocolHandler::protocol_handlers_.push_back(this);
     LOG_DEBUG("Registered new ProtocolHandler [count=%d]",
-              (int)ProtocolHandler::packet_managers_.size());
+              (int)ProtocolHandler::protocol_handlers_.size());
   }
 }
 
 ProtocolHandler::~ProtocolHandler() {
   {
-    std::lock_guard<std::mutex> lock(ProtocolHandler::packet_managers_mutex_);
-    ProtocolHandler::packet_managers_.erase(
-        std::remove(ProtocolHandler::packet_managers_.begin(),
-                    ProtocolHandler::packet_managers_.end(), this),
-        ProtocolHandler::packet_managers_.end());
+    std::lock_guard<std::mutex> lock(ProtocolHandler::protocol_handlers_mutex_);
+    ProtocolHandler::protocol_handlers_.erase(
+        std::remove(ProtocolHandler::protocol_handlers_.begin(),
+                    ProtocolHandler::protocol_handlers_.end(), this),
+        ProtocolHandler::protocol_handlers_.end());
     LOG_DEBUG("Removed ProtocolHandler [count=%d]",
-              (int)ProtocolHandler::packet_managers_.size());
+              (int)ProtocolHandler::protocol_handlers_.size());
   }
 }
 

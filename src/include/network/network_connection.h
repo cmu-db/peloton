@@ -56,7 +56,7 @@ class NetworkConnection {
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
   NetworkThread *thread;          // reference to the network thread
-  ProtocolHandler pkt_manager;       // Stores state for this socket
+  ProtocolHandler protocol_handler_;       // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
