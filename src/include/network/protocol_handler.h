@@ -37,6 +37,7 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class ProtocolHandler {
  public:
+
   ProtocolHandler();
 
   ~ProtocolHandler();

@@ -241,6 +241,7 @@ ReadState NetworkConnection::FillReadBuffer() {
       else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
                         rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_INFO("When filling read buffer, read %ld bytes", bytes_read);
       }
 
       if (bytes_read > 0) {
