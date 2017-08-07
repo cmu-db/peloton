@@ -211,7 +211,7 @@ VisibilityType TransactionManager::IsVisible(
   // the tuple is not visible.
   bool invalidated = (txn_vis_id >= tuple_end_cid);
 
-  if (tuple_txn_id == INVALID_TXN_ID || CidIsInDirtyRange(tuple_begin_cid)) {
+  if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     if (activated && !invalidated) {
       // deleted tuple
