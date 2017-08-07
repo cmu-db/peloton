@@ -1338,7 +1338,13 @@ struct IOTrigger {
   inline bool trigger() {
     char buf[1];
     buf[0] = 'c';
-    if (write(event_fd_, buf, 1) < 0) {
+    LOG_INFO("Going to use IOTrigger to trigger event");
+    int len = write(event_fd_, buf, 1);
+    if (len < 0) {
+      LOG_INFO("Error when writing into the event_fd_ to trigger event, err code is %d", errno);
+      return false;
+    } else if (len == 0) {
+      LOG_INFO("Cannot write anything into the event_fd_ to trigger event");
       return false;
     }
     return true;

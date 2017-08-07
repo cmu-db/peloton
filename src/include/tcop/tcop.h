@@ -29,7 +29,7 @@
 #include "type/types.h"
 
 namespace peloton {
-
+//void ExecutePlanWrapper(void *arg_ptr);
 namespace tcop {
 
 //===--------------------------------------------------------------------===//

@@ -1093,9 +1093,9 @@ ProcessPacketResult ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_
   // we see a SYNC
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
-      LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      ExecQueryMessage(pkt, thread_id);
+      LOG_INFO("SIMPLE_QUERY_COMMAND");
       force_flush = true;
+      return ExecQueryMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
