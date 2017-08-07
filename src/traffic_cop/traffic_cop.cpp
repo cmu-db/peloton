@@ -30,6 +30,21 @@
 #include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
+
+//void ExecutePlanWrapper(void *arg_ptr) {
+////void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
+//  LOG_INFO("Entering ExecutePlanWrapper");
+//  tcop::ExecutePlanArg* arg = (tcop::ExecutePlanArg*) arg_ptr;
+//
+//  executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
+//                                      arg->result_, arg->result_format_,
+//                                      arg->p_status_);
+//  LOG_INFO("Use IOTrigger to trigger the state machine");
+//  if (arg->io_trigger_->trigger() == false) {
+//    LOG_ERROR("Event trigger fail, cannot activate by writing into pipe");
+//  }
+//}
+
 namespace tcop {
 
 TrafficCop::TrafficCop(int event_fd = 0):io_trigger_(event_fd) {
@@ -254,7 +269,9 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
 }
 
 void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
-  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+//void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
+  LOG_INFO("Entering ExecutePlanWrapper");
+  tcop::ExecutePlanArg* arg = (tcop::ExecutePlanArg*) arg_ptr;
 
   executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
                                       arg->result_, arg->result_format_,
