@@ -144,6 +144,7 @@ bool TimestampOrderingTransactionManager::IsWritten(
 
 // if the tuple is not owned by any transaction and is visible to current
 // transaction.
+// the version must be the latest version in the version chain.
 bool TimestampOrderingTransactionManager::IsOwnable(
     UNUSED_ATTRIBUTE Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -515,9 +516,9 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   ItemPointer old_location = location;
 
-  LOG_TRACE("Performing Write old tuple %u %u", old_location.block,
+  LOG_TRACE("Performing Update old tuple %u %u", old_location.block,
             old_location.offset);
-  LOG_TRACE("Performing Write new tuple %u %u", new_location.block,
+  LOG_TRACE("Performing Update new tuple %u %u", new_location.block,
             new_location.offset);
 
   auto &manager = catalog::Manager::GetInstance();
@@ -532,6 +533,11 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
             transaction_id);
+  PL_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() == 
+            true);
+
+  
+  // check whether the new version is empty.
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
             INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -541,14 +547,9 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // if the executor doesn't call PerformUpdate after AcquireOwnership,
   // no one will possibly release the write lock acquired by this txn.
+  
   // Set double linked list
-  // old_prev is the version next (newer) to the old version.
-
-  auto old_prev = tile_group_header->GetPrevItemPointer(old_location.offset);
-
   tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
-
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_prev);
 
   new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
 
@@ -558,41 +559,28 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // newer version to older version.
   COMPILER_MEMORY_FENCE;
 
-  if (old_prev.IsNull() == false) {
-    auto old_prev_tile_group_header = manager.GetTileGroup(old_prev.block)
-                                             ->GetHeader();
-
-    // once everything is set, we can allow traversing the new version.
-    old_prev_tile_group_header->SetNextItemPointer(old_prev.offset,
-                                                   new_location);
-  }
-
   InitTupleReserved(new_tile_group_header, new_location.offset);
 
-  // if the transaction is not updating the latest version,
-  // then do not change item pointer header.
-  if (old_prev.IsNull() == true) {
-    // if we are updating the latest version.
-    // Set the header information for the new version
-    ItemPointer *index_entry_ptr =
-        tile_group_header->GetIndirection(old_location.offset);
+  // we must be updating the latest version.
+  // Set the header information for the new version
+  ItemPointer *index_entry_ptr =
+      tile_group_header->GetIndirection(old_location.offset);
 
-    if (index_entry_ptr != nullptr) {
+// if there's no primary index on a table, then index_entry_ptr == nullptr.
+  if (index_entry_ptr != nullptr) {
+    new_tile_group_header->SetIndirection(new_location.offset,
+                                          index_entry_ptr);
 
-      new_tile_group_header->SetIndirection(new_location.offset,
-                                            index_entry_ptr);
-
-      // Set the index header in an atomic way.
-      // We do it atomically because we don't want any one to see a half-done
-      // pointer.
-      // In case of contention, no one can update this pointer when we are
-      // updating it
-      // because we are holding the write lock. This update should success in
-      // its first trial.
-      UNUSED_ATTRIBUTE auto res =
-          AtomicUpdateItemPointer(index_entry_ptr, new_location);
-      PL_ASSERT(res == true);
-    }
+    // Set the index header in an atomic way.
+    // We do it atomically because we don't want any one to see a half-done
+    // pointer.
+    // In case of contention, no one can update this pointer when we are
+    // updating it
+    // because we are holding the write lock. This update should success in
+    // its first trial.
+    UNUSED_ATTRIBUTE auto res =
+        AtomicUpdateItemPointer(index_entry_ptr, new_location);
+    PL_ASSERT(res == true);
   }
 
   // Add the old tuple into the update set
@@ -605,27 +593,28 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   }
 }
 
+// NOTE: this function is deprecated.
 void TimestampOrderingTransactionManager::PerformUpdate(
-    Transaction *const current_txn, const ItemPointer &location) {
+    Transaction *const current_txn UNUSED_ATTRIBUTE, const ItemPointer &location) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
 
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  UNUSED_ATTRIBUTE auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
             current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  // Add the old tuple into the update set
-  auto old_location = tile_group_header->GetNextItemPointer(tuple_id);
-  if (old_location.IsNull() == false) {
-    // update an inserted version
-    current_txn->RecordUpdate(old_location);
-  }
+  // no need to add the older version into the update set.
+  // if there exists older version, then the older version must already
+  // been added to the update set.
+  // if there does not exist an older version, then it means that the transaction
+  // is updating a version that is installed by itself.
+  // in this case, nothing needs to be performed.
 
   // Increment table update op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -641,7 +630,10 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   ItemPointer old_location = location;
 
-  LOG_TRACE("Performing Delete");
+  LOG_TRACE("Performing Delete old tuple %u %u", old_location.block,
+            old_location.offset);
+  LOG_TRACE("Performing Delete new tuple %u %u", new_location.block,
+            new_location.offset);
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -655,8 +647,15 @@ void TimestampOrderingTransactionManager::PerformDelete(
   PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
             current_txn->GetCommitId());
 
+  // if we can perform delete, then we must have already locked the older
+  // version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
             transaction_id);
+  // we must be deleting the latest version.
+  PL_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() == 
+            true);
+
+  // check whether the new version is empty.
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
             INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -665,12 +664,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
             MAX_CID);
 
   // Set up double linked list
-
-  auto old_prev = tile_group_header->GetPrevItemPointer(old_location.offset);
-
   tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
-
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_prev);
 
   new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
 
@@ -682,40 +676,29 @@ void TimestampOrderingTransactionManager::PerformDelete(
   // newer version to older version.
   COMPILER_MEMORY_FENCE;
 
-  if (old_prev.IsNull() == false) {
-    auto old_prev_tile_group_header = manager.GetTileGroup(old_prev.block)
-                                             ->GetHeader();
-
-    old_prev_tile_group_header->SetNextItemPointer(old_prev.offset,
-                                                   new_location);
-  }
-
   InitTupleReserved(new_tile_group_header, new_location.offset);
 
-  // if the transaction is not deleting the latest version,
-  // then do not change item pointer header.
-  if (old_prev.IsNull() == true) {
-    // if we are deleting the latest version.
-    // Set the header information for the new version
-    ItemPointer *index_entry_ptr =
-        tile_group_header->GetIndirection(old_location.offset);
+  // we must be deleting the latest version.
+  // Set the header information for the new version
+  ItemPointer *index_entry_ptr =
+      tile_group_header->GetIndirection(old_location.offset);
 
-    // if there's no primary index on a table, then index_entry_ptry == nullptr.
-    if (index_entry_ptr != nullptr) {
-      new_tile_group_header->SetIndirection(new_location.offset,
-                                            index_entry_ptr);
 
-      // Set the index header in an atomic way.
-      // We do it atomically because we don't want any one to see a half-down
-      // pointer
-      // In case of contention, no one can update this pointer when we are
-      // updating it
-      // because we are holding the write lock. This update should success in
-      // its first trial.
-      UNUSED_ATTRIBUTE auto res =
-          AtomicUpdateItemPointer(index_entry_ptr, new_location);
-      PL_ASSERT(res == true);
-    }
+  // if there's no primary index on a table, then index_entry_ptr == nullptr.
+  if (index_entry_ptr != nullptr) {
+    new_tile_group_header->SetIndirection(new_location.offset,
+                                          index_entry_ptr);
+
+    // Set the index header in an atomic way.
+    // We do it atomically because we don't want any one to see a half-down
+    // pointer
+    // In case of contention, no one can update this pointer when we are
+    // updating it
+    // because we are holding the write lock. This update should success in
+    // its first trial.
+    UNUSED_ATTRIBUTE auto res =
+        AtomicUpdateItemPointer(index_entry_ptr, new_location);
+    PL_ASSERT(res == true);
   }
 
   current_txn->RecordDelete(old_location);
@@ -841,8 +824,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = false;
+        // add old version into gc set.
+        // may need to delete versions from secondary indexes.
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
 
         log_manager.LogUpdate(new_version);
 
@@ -873,9 +857,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // we need to recycle both old and new versions.
         // we require the GC to delete tuple from index only once.
         // recycle old version, delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
-        // recycle new version (which is an empty version), do not delete from index
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        // the gc should be responsible for recycling the newer empty version.
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
 
         log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
@@ -909,7 +892,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_INS_DEL;
 
         // no log is needed for this case
       }
@@ -977,21 +960,20 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         // as the aborted version has already been placed in the version chain,
         // we need to unlink it by resetting the item pointers.
-        auto old_prev =
-            new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
-        // check whether the previous version exists.
-        if (old_prev.IsNull() == true) {
-          PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
-          // if we updated the latest version.
-          // We must first adjust the head pointer
-          // before we unlink the aborted version from version list
-          ItemPointer *index_entry_ptr =
-              tile_group_header->GetIndirection(tuple_slot);
-          UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-              index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-          PL_ASSERT(res == true);
-        }
+        // this must be the latest version of a version chain.
+        PL_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset).IsNull()
+             == true);
+
+        PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
+        // if we updated the latest version.
+        // We must first adjust the head pointer
+        // before we unlink the aborted version from version list
+        ItemPointer *index_entry_ptr =
+            tile_group_header->GetIndirection(tuple_slot);
+        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+        PL_ASSERT(res == true);
         //////////////////////////////////////////////////
 
         // we should set the version before releasing the lock.
@@ -1000,25 +982,18 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
-        if (old_prev.IsNull() == false) {
-          auto old_prev_tile_group_header = catalog::Manager::GetInstance()
-                                                .GetTileGroup(old_prev.block)
-                                                ->GetHeader();
-          old_prev_tile_group_header->SetNextItemPointer(
-              old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
-          tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
-        } else {
-          tile_group_header->SetPrevItemPointer(tuple_slot,
-                                                INVALID_ITEMPOINTER);
-        }
+        tile_group_header->SetPrevItemPointer(tuple_slot,
+                                              INVALID_ITEMPOINTER);
 
         // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        // add the version to gc set.
+        // this version has already been unlinked from the version chain.
+        // however, the gc should further unlink it from indexes.
+        gc_set->operator[](new_version.block)[new_version.offset] = GCVersionType::ABORT_UPDATE;
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -1034,20 +1009,19 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         // as the aborted version has already been placed in the version chain,
         // we need to unlink it by resetting the item pointers.
-        auto old_prev =
-            new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
-        // check whether the previous version exists.
-        if (old_prev.IsNull() == true) {
-          // if we updated the latest version.
-          // We must first adjust the head pointer
-          // before we unlink the aborted version from version list
-          ItemPointer *index_entry_ptr =
-              tile_group_header->GetIndirection(tuple_slot);
-          UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-              index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-          PL_ASSERT(res == true);
-        }
+        // this must be the latest version of a version chain.
+        PL_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset).IsNull()
+             == true);
+
+        // if we updated the latest version.
+        // We must first adjust the head pointer
+        // before we unlink the aborted version from version list
+        ItemPointer *index_entry_ptr =
+            tile_group_header->GetIndirection(tuple_slot);
+        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+        PL_ASSERT(res == true);
         //////////////////////////////////////////////////
 
         // we should set the version before releasing the lock.
@@ -1056,23 +1030,16 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
-        if (old_prev.IsNull() == false) {
-          auto old_prev_tile_group_header = catalog::Manager::GetInstance()
-                                                .GetTileGroup(old_prev.block)
-                                                ->GetHeader();
-          old_prev_tile_group_header->SetNextItemPointer(
-              old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
-        }
-
-        tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
+        tile_group_header->SetPrevItemPointer(tuple_slot, 
+                                              INVALID_ITEMPOINTER);
 
         // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = false;
+        // add the version to gc set.
+        gc_set->operator[](new_version.block)[new_version.offset] = GCVersionType::ABORT_DELETE;
 
       } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1083,9 +1050,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
-        // add to gc set.
-        // delete from index
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        // add the version to gc set.
+        // delete from index.
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::ABORT_INSERT;
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1097,7 +1064,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::ABORT_INS_DEL;
       }
     }
   }

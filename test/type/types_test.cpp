@@ -695,5 +695,61 @@ TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
                peloton::Exception);
 }
 
-}  // namespace test
-}  // namespace peloton
+
+TEST_F(TypesTests, RWTypeTest) {
+  std::vector<RWType> list = {
+      RWType::INVALID, 
+      RWType::READ, 
+      RWType::READ_OWN, 
+      RWType::UPDATE, 
+      RWType::INSERT, 
+      RWType::DELETE, 
+      RWType::INS_DEL,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::RWTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToRWType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToRWType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::RWTypeToString(static_cast<RWType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, GCVersionTypeTest) {
+  std::vector<GCVersionType> list = {
+      GCVersionType::INVALID, 
+      GCVersionType::COMMIT_UPDATE, 
+      GCVersionType::COMMIT_DELETE, 
+      GCVersionType::COMMIT_INS_DEL, 
+      GCVersionType::ABORT_UPDATE, 
+      GCVersionType::ABORT_DELETE, 
+      GCVersionType::ABORT_INSERT, 
+      GCVersionType::ABORT_INS_DEL,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::GCVersionTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToGCVersionType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToGCVersionType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::GCVersionTypeToString(static_cast<GCVersionType>(-99999)),
+               peloton::Exception);
+}
+
+}  // End test namespace
+}  // End peloton namespace

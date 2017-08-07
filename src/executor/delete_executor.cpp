@@ -148,7 +148,7 @@ bool DeleteExecutor::DExecute() {
         // insert an empty version.
         ItemPointer new_location = target_table_->InsertEmptyVersion();
 
-        // PerformUpdate() will not be executed if the insertion failed.
+        // PerformDelete() will not be executed if the insertion failed.
         // There is a write lock acquired, but since it is not in the write set,
         // because we haven't yet put them into the write set.
         // the acquired lock can't be released when the txn is aborted.
