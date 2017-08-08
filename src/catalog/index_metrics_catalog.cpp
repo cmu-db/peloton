@@ -21,10 +21,8 @@ namespace catalog {
 
 IndexMetricsCatalog *IndexMetricsCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<IndexMetricsCatalog> index_metrics_catalog(
-      new IndexMetricsCatalog(txn));
-
-  return index_metrics_catalog.get();
+  static IndexMetricsCatalog index_metrics_catalog{txn};
+  return &index_metrics_catalog;
 }
 
 IndexMetricsCatalog::IndexMetricsCatalog(concurrency::Transaction *txn)

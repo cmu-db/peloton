@@ -25,10 +25,8 @@ namespace catalog {
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
                                         concurrency::Transaction *txn) {
-  static std::unique_ptr<IndexCatalog> index_catalog(
-      new IndexCatalog(pg_catalog, pool, txn));
-
-  return index_catalog.get();
+  static IndexCatalog index_catalog{pg_catalog, pool, txn};
+  return &index_catalog;
 }
 
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,

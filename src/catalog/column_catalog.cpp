@@ -22,10 +22,8 @@ namespace catalog {
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool,
                                           concurrency::Transaction *txn) {
-  static std::unique_ptr<ColumnCatalog> column_catalog(
-      new ColumnCatalog(pg_catalog, pool, txn));
-
-  return column_catalog.get();
+  static ColumnCatalog column_catalog{pg_catalog, pool, txn};
+  return &column_catalog;
 }
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
