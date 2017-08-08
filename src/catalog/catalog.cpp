@@ -34,8 +34,8 @@ namespace catalog {
 
 // Get instance of the global catalog
 Catalog *Catalog::GetInstance(void) {
-  static std::unique_ptr<Catalog> global_catalog(new Catalog());
-  return global_catalog.get();
+  static Catalog global_catalog;
+  return &global_catalog;
 }
 
 /* Initialization of catalog, including:

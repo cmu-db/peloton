@@ -22,10 +22,8 @@ namespace catalog {
 
 QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<QueryMetricsCatalog> query_metrics_catalog(
-      new QueryMetricsCatalog(txn));
-
-  return query_metrics_catalog.get();
+  static QueryMetricsCatalog query_metrics_catalog{txn};
+  return &query_metrics_catalog;
 }
 
 QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)

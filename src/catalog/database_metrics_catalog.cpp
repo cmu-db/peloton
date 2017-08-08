@@ -21,10 +21,8 @@ namespace catalog {
 
 DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<DatabaseMetricsCatalog> database_metrics_catalog(
-      new DatabaseMetricsCatalog(txn));
-
-  return database_metrics_catalog.get();
+  static DatabaseMetricsCatalog database_metrics_catalog{txn};
+  return &database_metrics_catalog;
 }
 
 DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::Transaction *txn)
