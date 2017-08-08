@@ -79,7 +79,7 @@ TEST_F(ExpressionTests, EqualityTest) {
       type::ValueFactory::GetIntegerValue(2));
   std::unique_ptr<expression::OperatorExpression> root2(
       new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2));
+      ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left2, right2));
   EXPECT_TRUE(*root1.get() != *root2.get());
 
   // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
@@ -89,7 +89,7 @@ TEST_F(ExpressionTests, EqualityTest) {
       type::ValueFactory::GetIntegerValue(2));
   std::unique_ptr<expression::OperatorExpression> root3(
       new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3));
+      ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left3, right3));
   EXPECT_TRUE(*root1.get() == *root3.get());
 }
 
