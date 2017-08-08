@@ -20,7 +20,7 @@
 namespace peloton {
 namespace codegen {
 
-Query* QueryCache::Find(const std::shared_ptr<planner::AbstractPlan> &ey) {
+Query* QueryCache::Find(const std::shared_ptr<planner::AbstractPlan> &key) {
   auto it = cache_map_.find(key);
   if (it == cache_map_.end()) {
     return nullptr;

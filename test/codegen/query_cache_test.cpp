@@ -11,13 +11,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/query_cache.h"
+#include "common/timer.h"
 #include "catalog/catalog.h"
-#include "codegen/codegen_test_util.h"
+#include "codegen/testing_codegen_util.h"
+#include "codegen/type/decimal_type.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
+#include "expression/abstract_expression.h"
+#include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
@@ -37,15 +42,15 @@ class QueryCacheTest : public PelotonCodeGenTest {
     LoadTestTable(RightTableId(), 4 * num_rows_to_insert);
   }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
-  uint32_t TestTableId() { return test_table1_id; }
-  uint32_t RightTableId() { return test_table2_id; }
+  TableId TestTableId() { return TableId::_1; }
+  TableId RightTableId() { return TableId::_2; }
 
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
 
     auto* a_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-    auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+    auto* const_40_exp = PelotonCodeGenTest::ConstIntExpr(40).release();
     auto* a_gt_40 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
     return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
@@ -55,14 +60,14 @@ class QueryCacheTest : public PelotonCodeGenTest {
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanWithPredicate() {
     auto* a_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-    auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+    auto* const_20_exp = PelotonCodeGenTest::ConstIntExpr(20).release();
     auto* a_gt_20 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
     auto* b_col_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
-    auto* const_21_exp = CodegenTestUtils::ConstIntExpression(21);
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
+    auto* const_21_exp = PelotonCodeGenTest::ConstIntExpr(21).release();
     auto* b_eq_21 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
 
@@ -94,15 +99,15 @@ class QueryCacheTest : public PelotonCodeGenTest {
     // Left and right hash keys
     std::vector<AbstractExprPtr> left_hash_keys;
     left_hash_keys.emplace_back(new expression::TupleValueExpression(
-        type::Type::TypeId::INTEGER, 0, 0));
+        type::TypeId::INTEGER, 0, 0));
 
     std::vector<AbstractExprPtr> right_hash_keys;
     right_hash_keys.emplace_back(new expression::TupleValueExpression(
-        type::Type::TypeId::INTEGER, 0, 0));
+        type::TypeId::INTEGER, 0, 0));
 
     std::vector<AbstractExprPtr> hash_keys;
     hash_keys.emplace_back(new expression::TupleValueExpression(
-        type::Type::TypeId::INTEGER, 0, 0));
+        type::TypeId::INTEGER, 0, 0));
 
     // Finally, the fucking join node
     std::shared_ptr<planner::HashJoinPlan> hj_plan{new planner::HashJoinPlan(
@@ -131,22 +136,22 @@ class QueryCacheTest : public PelotonCodeGenTest {
 
     // 2) Setup the average over 'b'
     auto* tve_expr =
-        new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
     std::vector<planner::AggregatePlan::AggTerm> agg_terms = {
         {ExpressionType::AGGREGATE_AVG, tve_expr}};
-    agg_terms[0].agg_ai.type = type::Type::TypeId::DECIMAL;
+    agg_terms[0].agg_ai.type = codegen::type::Decimal::Instance();
 
     // 3) The grouping column
     std::vector<oid_t> gb_cols = {0};
 
     // 4) The output schema
     std::shared_ptr<const catalog::Schema> output_schema{
-        new catalog::Schema({{type::Type::TypeId::INTEGER, 4, "COL_A"},
-                             {type::Type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
+        new catalog::Schema({{type::TypeId::INTEGER, 4, "COL_A"},
+                             {type::TypeId::DECIMAL, 8, "AVG(COL_B)"}})};
 
     // 5) The predicate on the average aggregate
     auto* x_exp =
-        new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 1, 0);
+        new expression::TupleValueExpression(type::TypeId::DECIMAL, 1, 0);
     auto* const_50 = new expression::ConstantValueExpression(
         type::ValueFactory::GetDecimalValue(50.0));
     std::unique_ptr<expression::AbstractExpression> x_gt_50{
@@ -191,7 +196,6 @@ TEST_F(QueryCacheTest, SimpleCache) {
                          reinterpret_cast<char*>(buffer1.GetState()));
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results1.size());
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
 
   // Execute a query cached
   codegen::BufferingConsumer buffer2{{0}, context2};
@@ -214,12 +218,12 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   auto scan1 = GetSeqScanPlanWithPredicate();
   auto scan2 = GetSeqScanPlanWithPredicate();
 
+  // Do binding
   planner::BindingContext context1;
   scan1->PerformBinding(context1);
   planner::BindingContext context2;
   scan2->PerformBinding(context2);
 
-  // Check the plan is the same
   auto is_equal = (*scan1.get() == *scan2.get());
   EXPECT_EQ(is_equal, true);
 
@@ -280,7 +284,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   // The output has the join columns (that should match) in positions 0 and 1
   for (const auto& tuple : results1) {
     type::Value v0 = tuple.GetValue(0);
-    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+    EXPECT_EQ(v0.GetTypeId(), type::TypeId::INTEGER);
 
     // Check that the joins keys are actually equal
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
@@ -297,7 +301,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   EXPECT_EQ(64, results2.size());
   for (const auto& tuple : results2) {
     type::Value v0 = tuple.GetValue(0);
-    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+    EXPECT_EQ(v0.GetTypeId(), type::TypeId::INTEGER);
 
     // Check that the joins keys are actually equal
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
@@ -339,7 +343,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   order_by_plan_2->PerformBinding(context2);
   order_by_plan_3->PerformBinding(context3);
 
-  bool is_equal = (*order_by_plan_1.get() == *order_by_plan_2.get());
+  auto is_equal = (*order_by_plan_1.get() == *order_by_plan_2.get());
   EXPECT_EQ(is_equal, true);
 
   is_equal = (*order_by_plan_1.get() == *order_by_plan_3.get());
@@ -434,6 +438,7 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
   timer1.Start();
   for (int i = 0; i < 10; i++) {
     auto plan = GetHashJoinPlan();
+    // Do binding
     planner::BindingContext context;
     plan->PerformBinding(context);
     // We collect the results of the query into an in-memory buffer
@@ -447,6 +452,7 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
   timer2.Start();
   for (int i = 0; i < 10; i++) {
     auto plan = GetHashJoinPlan();
+    // Do binding
     planner::BindingContext context;
     plan->PerformBinding(context);
     // We collect the results of the query into an in-memory buffer

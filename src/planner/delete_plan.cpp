@@ -38,9 +38,6 @@ bool DeletePlan::operator==(AbstractPlan &rhs) const {
   if (*table != *other_table)
     return false;
 
-  if (GetTruncate() != other.GetTruncate())
-    return false;
-
   return AbstractPlan::operator==(rhs);
 }
 
