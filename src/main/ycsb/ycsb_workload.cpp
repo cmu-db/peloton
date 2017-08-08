@@ -291,8 +291,8 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
     LOG_TRACE("result column count = %d\n", (int)column_count);
 
     for (oid_t tuple_id : *result_tile) {
-      expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
-                                                                  tuple_id);
+      ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
+                                                      tuple_id);
       std::vector<type::Value > tuple_values;
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
          auto value = cur_tuple.GetValue(column_itr);
