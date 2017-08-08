@@ -13,8 +13,6 @@
 #include "storage/table_factory.h"
 
 #include "common/exception.h"
-#include "common/logger.h"
-#include "index/index.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
 #include "storage/temp_table.h"
