@@ -19,7 +19,6 @@
 #include "storage/storage_manager.h"
 #include "storage/temp_table.h"
 
-#include <mutex>
 
 namespace peloton {
 namespace storage {
