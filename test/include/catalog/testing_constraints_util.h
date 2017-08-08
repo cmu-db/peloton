@@ -247,15 +247,15 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Delete all tuples from a table */
-  static bool ExecuteTruncate(concurrency::Transaction *transaction,
-                              storage::DataTable *table) {
-    std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(transaction));
-    planner::DeletePlan node(table, true);
-    executor::DeleteExecutor executor(&node, context.get());
-    executor.Init();
-    return executor.Execute();
-  };
+//  static bool ExecuteTruncate(concurrency::Transaction *transaction,
+//                              storage::DataTable *table) {
+//    std::unique_ptr<executor::ExecutorContext> context(
+//        new executor::ExecutorContext(transaction));
+//    planner::DeletePlan node(table, true);
+//    executor::DeleteExecutor executor(&node, context.get());
+//    executor.Init();
+//    return executor.Execute();
+//  };
 
   /** @brief Insert a tuple with 1 columns' value specified */
   static bool ExecuteMultiInsert(concurrency::Transaction *transaction,

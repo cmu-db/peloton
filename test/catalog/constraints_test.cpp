@@ -29,7 +29,7 @@
 #define DEFAULT_VALUE 11111
 
 #define CONSTRAINT_NOTNULL_TEST
-#define CONSTRAINT_DEFAULT_TEST
+// #define CONSTRAINT_DEFAULT_TEST
 //#define CONSTRAINT_CHECK_TEST
 
 namespace peloton {
@@ -59,8 +59,8 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
                                                 "notnull_constraint") });
   }
   std::vector<catalog::MultiConstraint> multi_constraints;
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints));
+  storage::DataTable *data_table =
+      TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -82,8 +82,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   auto txn = txn_manager.BeginTransaction();
   bool hasException = false;
   try {
-    TestingConstraintsUtil::ExecuteMultiInsert(
-        txn, data_table.get(), values);
+    TestingConstraintsUtil::ExecuteMultiInsert(txn, data_table, values);
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -99,14 +98,18 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
       new_values.push_back(i == j ? null_values[j] : values[j]);
     }
     try {
-      TestingConstraintsUtil::ExecuteMultiInsert(
-          txn, data_table.get(), new_values);
+      TestingConstraintsUtil::ExecuteMultiInsert(txn, data_table, new_values);
     } catch (ConstraintException e) {
       hasException = true;
     }
     EXPECT_TRUE(hasException);
     txn_manager.CommitTransaction(txn);
   } // FOR
+  
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 #endif
 
