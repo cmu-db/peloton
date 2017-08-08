@@ -2496,6 +2496,79 @@ std::ostream& operator<<(std::ostream& os, const RWType& type) {
   os << RWTypeToString(type);
   return os;
 }
+
+
+//===--------------------------------------------------------------------===//
+// GCVersionType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string GCVersionTypeToString(GCVersionType type) {
+  switch (type) {
+    case GCVersionType::INVALID: {
+      return "INVALID";
+    }
+    case GCVersionType::COMMIT_UPDATE: {
+      return "COMMIT_UPDATE";
+    }
+    case GCVersionType::COMMIT_DELETE: {
+      return "COMMIT_DELETE";
+    }
+    case GCVersionType::COMMIT_INS_DEL: {
+      return "COMMIT_INS_DEL";
+    }
+    case GCVersionType::ABORT_UPDATE: {
+      return "ABORT_UPDATE";
+    }
+    case GCVersionType::ABORT_DELETE: {
+      return "ABORT_DELETE";
+    }
+    case GCVersionType::ABORT_INSERT: {
+      return "ABORT_INSERT";
+    }
+    case GCVersionType::ABORT_INS_DEL: {
+      return "ABORT_INS_DEL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for GCVersionType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+GCVersionType StringToGCVersionType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return GCVersionType::INVALID;
+  } else if (upper_str == "COMMIT_UPDATE") {
+    return GCVersionType::COMMIT_UPDATE;
+  } else if (upper_str == "COMMIT_DELETE") {
+    return GCVersionType::COMMIT_DELETE;
+  } else if (upper_str == "COMMIT_INS_DEL") {
+    return GCVersionType::COMMIT_INS_DEL;
+  } else if (upper_str == "ABORT_UPDATE") {
+    return GCVersionType::ABORT_UPDATE;
+  } else if (upper_str == "ABORT_DELETE") {
+    return GCVersionType::ABORT_DELETE;
+  } else if (upper_str == "ABORT_INSERT") {
+    return GCVersionType::ABORT_INSERT;
+  } else if (upper_str == "ABORT_INS_DEL") {
+    return GCVersionType::ABORT_INS_DEL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No GCVersionType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return GCVersionType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const GCVersionType& type) {
+  os << GCVersionTypeToString(type);
+  return os;
+}
+
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//

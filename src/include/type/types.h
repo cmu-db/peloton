@@ -1078,6 +1078,7 @@ typedef std::bitset<max_col_count> ColBitmap;
 // read-write set
 //===--------------------------------------------------------------------===//
 
+// this enum is to identify the operations performed by the transaction.
 enum class RWType {
   INVALID,
   READ,
@@ -1091,14 +1092,28 @@ std::string RWTypeToString(RWType type);
 RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
-enum class GCSetType { COMMITTED, ABORTED };
-
 // block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
-// block -> offset -> is_index_deletion
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> GCSet;
+//this enum is to identify why the version should be GC'd.
+enum class GCVersionType { 
+  INVALID,
+  COMMIT_UPDATE, // a version that is updated during txn commit.
+  COMMIT_DELETE, // a version that is deleted during txn commit.
+  COMMIT_INS_DEL, // a version that is inserted and deleted during txn commit.
+  ABORT_UPDATE, // a version that is updated during txn abort.
+  ABORT_DELETE, // a version that is deleted during txn abort.
+  ABORT_INSERT, // a version that is inserted during txn abort.
+  ABORT_INS_DEL, // a version that is inserted and deleted during txn commit.
+};
+std::string GCVersionTypeToString(GCVersionType type);
+GCVersionType StringToGCVersionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const GCVersionType &type);
+
+// block -> offset -> type
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, GCVersionType>> 
+    GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
