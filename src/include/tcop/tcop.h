@@ -105,7 +105,12 @@ class TrafficCop {
   bool is_queuing_;
 
   static void ExecutePlanWrapper(void *arg_ptr);
-  struct event* event_;
+
+  void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
+    task_callback_ = task_callback;
+    task_callback_arg_ = task_callback_arg;
+  }
+//  struct event* event_;
  private:
 
   // The optimizer used for this connection
@@ -121,7 +126,8 @@ class TrafficCop {
   std::shared_ptr<planner::AbstractPlan> plan_;
 
   std::vector<StatementResult> result_;
-
+  void(* task_callback_)(void *);
+  void * task_callback_arg_;
 //  IOTrigger io_trigger_;
 
   // pair of txn ptr and the result so-far for that txn
@@ -162,15 +168,14 @@ struct ExecutePlanArg {
                         const std::vector<type::Value> &params,
                         std::vector<StatementResult> &result,
                         const std::vector<int> &result_format,
-                        executor::ExecuteResult &p_status,
-                        struct event* event) :
+                        executor::ExecuteResult &p_status) :
       plan_(plan),
       txn_(txn),
       params_(params),
       result_(result),
       result_format_(result_format),
-      p_status_(p_status),
-      event_(event) {}
+      p_status_(p_status) {}
+//      event_(event) {}
 //      io_trigger_(io_trigger) { }
 
 
@@ -180,7 +185,7 @@ struct ExecutePlanArg {
   std::vector<StatementResult> &result_;
   const std::vector<int> &result_format_;
   executor::ExecuteResult &p_status_;
-  struct event* event_;
+//  struct event* event_;
 //  IOTrigger *io_trigger_;
 };
 

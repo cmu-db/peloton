@@ -33,8 +33,8 @@ class Task {
 
  public:
   inline Task() {};
-  inline Task(void(*func_ptr)(void*), void* func_arg) :
-      func_ptr_(func_ptr), func_arg_(func_arg) {};
+  inline Task(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg) :
+      task_ptr_(task_ptr), task_arg_(task_arg), task_callback_ptr_(task_callback_ptr), task_callback_arg_(task_callback_arg) {};
 
  private:
   // Functions
@@ -42,8 +42,10 @@ class Task {
 
   // Instance variables
   // Callback function
-  void(*func_ptr_)(void *);
-  void* func_arg_;
+  void(*task_ptr_)(void *);
+  void * task_arg_;
+  void(*task_callback_ptr_)(void *);
+  void * task_callback_arg_;
 };
 
 /**
@@ -56,7 +58,7 @@ class TaskQueue {
 void ExecutePlanWrapper(void *arg_ptr);
   bool PollTask(std::shared_ptr<Task> &task);
   bool IsEmpty();
-  void EnqueueTask(void(*func_ptr)(void *), void* func_args);
+  void EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg);
 
  private:
   peloton::LockFreeQueue<std::shared_ptr<Task>> task_queue_;
