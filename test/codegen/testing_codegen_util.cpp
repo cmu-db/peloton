@@ -51,6 +51,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto result = catalog->DropDatabaseWithName(test_db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
+  codegen::QueryCache::Instance().ClearCache();
 }
 
 // Create the test schema for all the tables
