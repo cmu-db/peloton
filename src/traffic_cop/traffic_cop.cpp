@@ -47,7 +47,7 @@ namespace peloton {
 
 namespace tcop {
 
-TrafficCop::TrafficCop(int event_fd = 0):io_trigger_(event_fd) {
+TrafficCop::TrafficCop() {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
 //  result_ = ResultType::QUEUING;
@@ -191,7 +191,7 @@ ResultType TrafficCop::ExecuteStatement(
             statement->GetStatementName().c_str());
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
-  LOG_TRACE("Execute Statement Plan:\n%s",
+  LOG_INFO("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
@@ -203,9 +203,8 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        ExecuteStatementPlan(statement->GetPlanTree(), params,
-                             result, result_format,
-                             thread_id);
+        ExecuteStatementPlan(statement->GetPlanTree(), params, result,
+                             result_format, thread_id);
         if (p_status_.m_result == ResultType::QUEUING) {
           return ResultType::QUEUING;
         }
@@ -250,8 +249,9 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   // skip if already aborted
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
-    ExecutePlanArg arg = ExecutePlanArg(plan, txn, params, result, result_format, p_status_, &io_trigger_);
-    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, &arg);
+    PL_ASSERT(plan);
+    ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_, event_);
+    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg);
 //    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
 //                                        result_format, p_status_);
     LOG_INFO("Submit Task into MonoQueuePool");
@@ -272,15 +272,23 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
 void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
 //void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
   LOG_INFO("Entering ExecutePlanWrapper");
-  tcop::ExecutePlanArg* arg = (tcop::ExecutePlanArg*) arg_ptr;
-
+  PL_ASSERT(arg_ptr);
+  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+  PL_ASSERT(arg->plan_);
+  // arg->txn_ fails!
+  PL_ASSERT(arg->txn_);
+//  PL_ASSERT(&arg->result_);
+  PL_ASSERT(&arg->params_);
+  LOG_INFO("Entering 2");
   executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
                                       arg->result_, arg->result_format_,
                                       arg->p_status_);
-  LOG_INFO("Use IOTrigger to trigger the state machine");
-  if (arg->io_trigger_->trigger() == false) {
-    LOG_ERROR("Event trigger fail, cannot activate by writing into pipe");
-  }
+//  LOG_INFO("Use IOTrigger to trigger the state machine");
+//  if (arg->io_trigger_->trigger() == false) {
+//    LOG_ERROR("Event trigger fail, cannot activate by writing into pipe");
+//  }
+  event_active(arg->event_, EV_WRITE, 0);
+  delete(arg);
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
