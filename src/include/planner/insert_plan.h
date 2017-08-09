@@ -93,6 +93,7 @@ class InsertPlan : public AbstractPlan {
   // WARNING - Not Implemented
   std::unique_ptr<AbstractPlan> Copy() const override {
     LOG_INFO("InsertPlan Copy() not implemented");
+    // TODO: Add copying mechanism
     std::unique_ptr<AbstractPlan> dummy;
     return dummy;
   }
