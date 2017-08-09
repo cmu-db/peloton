@@ -27,9 +27,8 @@
 #include "network/marshal.h"
 #include "settings/settings_manager.h"
 
-#define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) x >> 16
-#define UNUSED(x) (void)(x)
+
+
 
 namespace peloton {
 namespace network {
@@ -115,78 +114,8 @@ void ProtocolHandler::ReplanPreparedStatement(Statement *statement) {
   }
 }
 
-void ProtocolHandler::MakeHardcodedParameterStatus(
-    const std::pair<std::string, std::string> &kv) {
+void ProtocolHandler::SendInitialResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NetworkMessageType::PARAMETER_STATUS;
-  PacketPutString(response.get(), kv.first);
-  PacketPutString(response.get(), kv.second);
-  responses.push_back(std::move(response));
-}
-
-/*
- * process_startup_packet - Processes the startup packet
- *  (after the size field of the header).
- */
-int ProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-
-  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
-  LOG_INFO("protocol version: %d", proto_version);
-  bool res;
-  int res_base = 0;
-  // TODO: consider more about return value
-  if (proto_version == SSL_MESSAGE_VERNO) {
-    res = ProcessSSLRequestPacket(pkt);
-    if (!res)
-      res_base = 0;
-    else
-      res_base = -1;
-  }
-  else {
-    res = ProcessStartupPacket(pkt, proto_version);
-    if (!res)
-      res_base = 0;
-    else
-      res_base = 1;
-  }
-
-  return res_base;
-}
-
-bool ProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-
-  // Only protocol version 3 is supported
-  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
-    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
-    exit(EXIT_FAILURE);
-  }
-
-  // TODO: check for more malformed cases
-  // iterate till the end
-  for (;;) {
-    // loop end case?
-    if (pkt->ptr >= pkt->len) break;
-    GetStringToken(pkt, token);
-
-    // if the option database was found
-    if (token.compare("database") == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.dbname);
-    } else if (token.compare(("user")) == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.user);
-    } else {
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, value);
-      client_.cmdline_options[token] = value;
-    }
-  }
 
   // send auth-ok ('R')
   response->msg_type = NetworkMessageType::AUTHENTICATION_REQUEST;
@@ -199,24 +128,23 @@ bool ProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_versi
     MakeHardcodedParameterStatus(*it);
   }
 
+  //TODO: This should be done after protocol handler is created
   // ready-for-query packet -> 'Z'
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 
   // we need to send the response right away
   force_flush = true;
-
-  return true;
 }
 
-bool ProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
-  UNUSED(pkt);
+void ProtocolHandler::MakeHardcodedParameterStatus(
+    const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
+  response->msg_type = NetworkMessageType::PARAMETER_STATUS;
+  PacketPutString(response.get(), kv.first);
+  PacketPutString(response.get(), kv.second);
   responses.push_back(std::move(response));
-  force_flush = true;
-  return true;
 }
+
 
 void ProtocolHandler::PutTupleDescriptor(
     const std::vector<FieldInfo> &tuple_descriptor) {
@@ -1180,7 +1108,6 @@ void ProtocolHandler::SendReadyForQuery(NetworkTransactionStateType txn_status) 
 }
 
 void ProtocolHandler::Reset() {
-  client_.Reset();
   is_started = false;
   force_flush = false;
 

@@ -63,6 +63,8 @@ class NetworkConnection {
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
+  Client client_;
+  bool ssl_sent_ = false;
 
  private:
   // Is the requested amount of data available from the current position in
@@ -116,6 +118,18 @@ class NetworkConnection {
 
 
  private:
+
+  ProcessInitialState ProcessInitialPacket();
+
+  /* Routine to deal with the first packet from the client */
+  int ProcessInitialPacket(InputPacket* pkt);
+
+  /* Routine to deal with general Startup message */
+  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
+
+  /* Routine to deal with SSL request message */
+  bool ProcessSSLRequestPacket(InputPacket *pkt);
+
   // Writes a packet's header (type, size) into the write buffer
   WriteState BufferWriteBytesHeader(OutputPacket *pkt);
 

@@ -39,5 +39,11 @@ enum class WriteState {
   WRITE_ERROR,      // Some error happened
 };
 
+enum class ProcessInitialState {
+  PROCESS_INITIAL_MORE_DATA_NEEDED,
+  PROCESS_INITIAL_FAILED,
+  PROCESS_INITIAL_SUCCESS
+};
+
 }
 }
