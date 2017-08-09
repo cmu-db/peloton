@@ -27,6 +27,7 @@
 #include "storage/data_table.h"
 #include "type/type.h"
 #include "type/types.h"
+#include "event.h"
 
 namespace peloton {
 //void ExecutePlanWrapper(void *arg_ptr);
@@ -40,7 +41,7 @@ class TrafficCop {
   TrafficCop(TrafficCop const &) = delete;
 
  public:
-  TrafficCop(int event_fd);
+  TrafficCop();
   ~TrafficCop();
 
   // static singleton method used by tests
@@ -104,6 +105,7 @@ class TrafficCop {
   bool is_queuing_;
 
   static void ExecutePlanWrapper(void *arg_ptr);
+  struct event* event_;
  private:
 
   // The optimizer used for this connection
@@ -120,7 +122,7 @@ class TrafficCop {
 
   std::vector<StatementResult> result_;
 
-  IOTrigger io_trigger_;
+//  IOTrigger io_trigger_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
@@ -161,14 +163,15 @@ struct ExecutePlanArg {
                         std::vector<StatementResult> &result,
                         const std::vector<int> &result_format,
                         executor::ExecuteResult &p_status,
-                        IOTrigger *io_trigger) :
+                        struct event* event) :
       plan_(plan),
       txn_(txn),
       params_(params),
       result_(result),
       result_format_(result_format),
       p_status_(p_status),
-      io_trigger_(io_trigger) { }
+      event_(event) {}
+//      io_trigger_(io_trigger) { }
 
 
   std::shared_ptr<planner::AbstractPlan> plan_;
@@ -177,7 +180,8 @@ struct ExecutePlanArg {
   std::vector<StatementResult> &result_;
   const std::vector<int> &result_format_;
   executor::ExecuteResult &p_status_;
-  IOTrigger *io_trigger_;
+  struct event* event_;
+//  IOTrigger *io_trigger_;
 };
 
 }  // namespace tcop

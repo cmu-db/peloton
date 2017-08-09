@@ -117,7 +117,6 @@ class ProtocolHandler {
   ResponseBuffer responses;
   // The traffic cop used for this connection
   std::unique_ptr<tcop::TrafficCop> traffic_cop_;
-
  private:
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
