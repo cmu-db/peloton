@@ -42,21 +42,13 @@ class ProtocolHandler {
 
   ~ProtocolHandler();
 
-  /* Routine to deal with the first packet from the client */
-  int ProcessInitialPacket(InputPacket* pkt);
-
-  /* Routine to deal with general Startup message */
-  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
-
-  /* Routine to deal with SSL request message */
-  bool ProcessSSLRequestPacket(InputPacket *pkt);
-
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
   ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
+  void SendInitialResponse();
   void Reset();
 
   // Returns a vector of all the PreparedStatements that this ProtocolHandler has
@@ -103,11 +95,10 @@ class ProtocolHandler {
     return (ProtocolHandler::protocol_handlers_);
   }
 
-  Client client_;
+
 
   // has the startup packet been received for this connection
   bool is_started = false;
-  bool ssl_sent = false;
 
   // Should we send the buffered packets right away?
   bool force_flush = false;
