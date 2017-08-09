@@ -342,7 +342,7 @@ class SortedAggregator : public AbstractAggregator {
  private:
   //  AbstractTuple *prev_tuple = nullptr;
   std::vector<type::Value> delegate_tuple_values_;
-  const expression::ContainerTuple<std::vector<type::Value>> delegate_tuple_;
+  const ContainerTuple<std::vector<type::Value>> delegate_tuple_;
   const size_t num_input_columns_;
   AbstractAttributeAggregator **aggregates;
 };

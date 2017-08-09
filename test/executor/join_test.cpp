@@ -912,7 +912,7 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const expression::ContainerTuple<executor::LogicalTile> join_tuple(
+    const ContainerTuple<executor::LogicalTile> join_tuple(
         logical_tile, logical_tile_itr);
 
     // Go over all the fields and check for null values
@@ -940,7 +940,7 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
   // Check the attribute values
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const expression::ContainerTuple<executor::LogicalTile> join_tuple(
+    const ContainerTuple<executor::LogicalTile> join_tuple(
         logical_tile, logical_tile_itr);
 
     // Check the join fields
@@ -965,7 +965,7 @@ void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
   // Check the attribute values
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const expression::ContainerTuple<executor::LogicalTile> join_tuple(
+    const ContainerTuple<executor::LogicalTile> join_tuple(
         logical_tile, logical_tile_itr);
 
     // Check the join fields

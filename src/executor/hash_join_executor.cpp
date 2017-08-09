@@ -108,7 +108,7 @@ bool HashJoinExecutor::DExecute() {
 
     // Go over the left tile
     for (auto left_tile_itr : *left_tile) {
-      const expression::ContainerTuple<executor::LogicalTile> left_tuple(
+      const ContainerTuple<executor::LogicalTile> left_tuple(
           left_tile, left_tile_itr, &hashed_col_ids);
 
       // Find matching tuples in the hash table built on top of the right table

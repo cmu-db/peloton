@@ -283,8 +283,8 @@ void TransactionLevelGCManager::UnlinkVersion(
     return;
   }
 
-  expression::ContainerTuple<storage::TileGroup> current_tuple(
-      tile_group.get(), location.offset);
+  ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(),
+                                                   location.offset);
 
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());

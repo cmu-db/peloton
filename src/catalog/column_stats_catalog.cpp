@@ -23,10 +23,8 @@ namespace catalog {
 
 ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<ColumnStatsCatalog> column_stats_catalog(
-      new ColumnStatsCatalog(txn));
-
-  return column_stats_catalog.get();
+  static ColumnStatsCatalog column_stats_catalog{txn};
+  return &column_stats_catalog;
 }
 
 ColumnStatsCatalog::ColumnStatsCatalog(concurrency::Transaction *txn)

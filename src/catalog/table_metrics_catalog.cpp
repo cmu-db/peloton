@@ -21,10 +21,8 @@ namespace catalog {
 
 TableMetricsCatalog *TableMetricsCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<TableMetricsCatalog> table_metrics_catalog(
-      new TableMetricsCatalog(txn));
-
-  return table_metrics_catalog.get();
+  static TableMetricsCatalog table_metrics_catalog{txn};
+  return &table_metrics_catalog;
 }
 
 TableMetricsCatalog::TableMetricsCatalog(concurrency::Transaction *txn)

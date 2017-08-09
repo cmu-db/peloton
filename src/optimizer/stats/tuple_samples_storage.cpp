@@ -24,10 +24,9 @@ namespace peloton {
 namespace optimizer {
 
 // Get instance of the global tuple samples storage
-TupleSamplesStorage *TupleSamplesStorage::GetInstance(void) {
-  static std::unique_ptr<TupleSamplesStorage> global_tuple_samples_storage(
-      new TupleSamplesStorage());
-  return global_tuple_samples_storage.get();
+TupleSamplesStorage *TupleSamplesStorage::GetInstance() {
+  static TupleSamplesStorage global_tuple_samples_storage;
+  return &global_tuple_samples_storage;
 }
 
 /**

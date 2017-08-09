@@ -105,8 +105,7 @@ bool ProjectionExecutor::DExecute() {
     oid_t new_tuple_id = 0;
     for (oid_t old_tuple_id : *source_tile) {
       storage::Tuple *buffer = new storage::Tuple(schema_, true);
-      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
-                                                    old_tuple_id);
+      ContainerTuple<LogicalTile> tuple(source_tile.get(), old_tuple_id);
       project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
       // Insert projected tuple into the new tile

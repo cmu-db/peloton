@@ -36,7 +36,7 @@ TEST_F(ContainerTupleTests, VectorValue) {
   values.push_back(type::ValueFactory::GetDecimalValue(3.14));
   values.push_back(type::ValueFactory::GetVarcharValue("Hello from ContainerTupleTest"));
 
-  expression::ContainerTuple<std::vector<type::Value>> ctuple(&values);
+  ContainerTuple<std::vector<type::Value>> ctuple(&values);
 
   for (size_t i = 0; i < values.size(); i++) {
     LOG_INFO("%s", ctuple.GetValue(i).GetInfo().c_str());
