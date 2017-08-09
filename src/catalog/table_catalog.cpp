@@ -23,9 +23,8 @@ namespace catalog {
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
                                         concurrency::Transaction *txn) {
-  static std::unique_ptr<TableCatalog> table_catalog(
-      new TableCatalog(pg_catalog, pool, txn));
-  return table_catalog.get();
+  static TableCatalog table_catalog{pg_catalog, pool, txn};
+  return &table_catalog;
 }
 
 TableCatalog::TableCatalog(storage::Database *pg_catalog,

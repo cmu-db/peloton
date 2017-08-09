@@ -24,9 +24,9 @@ namespace peloton {
 namespace optimizer {
 
 // Get instance of the global stats storage
-StatsStorage *StatsStorage::GetInstance(void) {
-  static std::unique_ptr<StatsStorage> global_stats_storage(new StatsStorage());
-  return global_stats_storage.get();
+StatsStorage *StatsStorage::GetInstance() {
+  static StatsStorage global_stats_storage;
+  return &global_stats_storage;
 }
 
 /**

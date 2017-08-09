@@ -18,16 +18,15 @@
 namespace peloton {
 namespace storage {
 
-StorageManager::~StorageManager() {}
+StorageManager::StorageManager() = default;
+
+StorageManager::~StorageManager() = default;
 
 // Get instance of the global catalog storage manager
-StorageManager *StorageManager::GetInstance(void) {
-  static std::unique_ptr<StorageManager> global_catalog_storage_manager(
-      new StorageManager());
-  return global_catalog_storage_manager.get();
+StorageManager *StorageManager::GetInstance() {
+  static StorageManager global_catalog_storage_manager;
+  return &global_catalog_storage_manager;
 }
-
-StorageManager::StorageManager() {}
 
 //===--------------------------------------------------------------------===//
 // GET WITH OID - DIRECTLY GET FROM STORAGE LAYER
