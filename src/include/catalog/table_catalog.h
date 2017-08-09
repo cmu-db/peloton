@@ -32,6 +32,29 @@
 namespace peloton {
 namespace catalog {
 
+class TableCatalogObject {
+ public:
+  TableCatalogObject()
+      : table_oid(INVALID_OID), table_name(), database_oid(INVALID_OID) {}
+  TableCatalogObject(std::unique_ptr<executor::LogicalTile> tuple)
+      : table_oid(tuple->GetValue(0, 0).GetAs<oid_t>()),
+        table_name(tuple->GetValue(0, 1).ToString()),
+        database_oid(tuple->GetValue(0, 2).GetAs<oid_t>()) {}
+
+  oid_t GetOid() const { return table_oid; }
+  std::string GetName() const { return table_name; }
+  oid_t GetDatabaseOid() const { return database_oid; }
+
+  // table oid
+  const oid_t table_oid;
+
+  // table name
+  std::string table_name;
+
+  // database oid
+  const oid_t database_oid;
+};
+
 class TableCatalog : public AbstractCatalog {
  public:
   ~TableCatalog();
@@ -54,6 +77,12 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
+  const TableCatalogObject GetTableByOid(oid_t table_oid,
+                                         concurrency::Transaction *txn);
+  const TableCatalogObject GetTableByName(const std::string &table_name,
+                                          oid_t database_oid,
+                                          concurrency::Transaction *txn);
+
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(const std::string &table_name, oid_t database_oid,

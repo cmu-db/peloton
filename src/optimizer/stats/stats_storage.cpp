@@ -279,7 +279,7 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
   LOG_TRACE("Database count: %u", database_count);
   for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
     auto database = storage_manager->GetDatabaseWithOffset(db_offset);
-    if (database->GetDBName().compare(CATALOG_DATABASE_NAME) == 0) {
+    if (database->GetOid() == CATALOG_DATABASE_OID) {
       continue;
     }
     oid_t table_count = database->GetTableCount();

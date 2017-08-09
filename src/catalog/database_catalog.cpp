@@ -33,7 +33,8 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
     : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+  ColumnCatalog *pg_attribute =
+      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
@@ -96,6 +97,47 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+const DatabaseCatalogObject DatabaseCatalog::GetDatabaseObjectByOid(
+    oid_t database_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1});
+  oid_t index_offset = 0;  // Index of database_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return DatabaseCatalogObject(std::move((*result_tiles)[0]));
+  } else {
+    LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
+              database_oid);
+  }
+
+  return DatabaseCatalogObject();  // return empty object with INVALID_OID
+}
+
+const DatabaseCatalogObject DatabaseCatalog::GetDatabaseObjectByName(
+    const std::string &database_name, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1});
+  oid_t index_offset = 1;  // Index of database_name
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return DatabaseCatalogObject(std::move((*result_tiles)[0]));
+  } else {
+    LOG_DEBUG("Found %lu database tiles with name %s", result_tiles->size(),
+              database_name.c_str());
+  }
+
+  return DatabaseCatalogObject();  // return empty object with INVALID_OID
 }
 
 std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,

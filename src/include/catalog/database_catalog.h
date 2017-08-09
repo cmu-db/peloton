@@ -30,6 +30,23 @@
 namespace peloton {
 namespace catalog {
 
+class DatabaseCatalogObject {
+ public:
+  DatabaseCatalogObject() : database_oid(INVALID_OID), database_name() {}
+  DatabaseCatalogObject(std::unique_ptr<executor::LogicalTile> tuple)
+      : database_oid(tuple->GetValue(0, 0).GetAs<oid_t>()),
+        database_name(tuple->GetValue(0, 1).ToString()) {}
+
+  oid_t GetOid() const { return database_oid; }
+  std::string GetDBName() const { return database_name; }
+
+  // database oid
+  const oid_t database_oid;
+
+  // database name
+  std::string database_name;
+};
+
 class DatabaseCatalog : public AbstractCatalog {
  public:
   ~DatabaseCatalog();
@@ -51,6 +68,12 @@ class DatabaseCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
+  const DatabaseCatalogObject GetDatabaseObjectByOid(
+      oid_t database_oid, concurrency::Transaction *txn);
+  const DatabaseCatalogObject GetDatabaseObjectByName(
+      const std::string &database_name, concurrency::Transaction *txn);
+
+  // Deprecated, use DatabaseCatalogObject
   std::string GetDatabaseName(oid_t database_oid,
                               concurrency::Transaction *txn);
   oid_t GetDatabaseOid(const std::string &database_name,
