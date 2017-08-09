@@ -19,9 +19,8 @@ MonoQueuePool::~MonoQueuePool() {
   worker_pool_.Shutdown();
 }
 
-void MonoQueuePool::SubmitTask(void(*func_ptr_)(void *),
-                            void* func_arg_) {
-  task_queue_.EnqueueTask(func_ptr_, func_arg_);
+void MonoQueuePool::SubmitTask(void(*task_ptr)(void *), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg) {
+  task_queue_.EnqueueTask(task_ptr, task_arg, task_callback_ptr, task_callback_arg);
 }
 
 MonoQueuePool& MonoQueuePool::GetInstance() {

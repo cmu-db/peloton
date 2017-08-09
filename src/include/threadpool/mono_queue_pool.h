@@ -32,7 +32,7 @@ class MonoQueuePool {
 
   ~MonoQueuePool();
 
-  void SubmitTask(void(*func_ptr)(void *), void* func_arg);
+  void SubmitTask(void(*task_ptr)(void *), void* task_arg, void(*task_callback_ptr)(void *), void* task_callback_arg);
 
   static MonoQueuePool& GetInstance();
 

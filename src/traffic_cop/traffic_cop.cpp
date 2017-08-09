@@ -250,8 +250,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     PL_ASSERT(plan);
-    ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_, event_);
-    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg);
+    ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
+    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
 //    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
 //                                        result_format, p_status_);
     LOG_INFO("Submit Task into MonoQueuePool");
@@ -287,7 +287,7 @@ void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
 //  if (arg->io_trigger_->trigger() == false) {
 //    LOG_ERROR("Event trigger fail, cannot activate by writing into pipe");
 //  }
-  event_active(arg->event_, EV_WRITE, 0);
+//  event_active(arg->event_, EV_WRITE, 0);
   delete(arg);
 }
 

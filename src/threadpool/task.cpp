@@ -17,12 +17,14 @@ namespace peloton {
 namespace threadpool {
 
 void Task::ExecuteTask() {
-  this->func_ptr_(this->func_arg_);
+  task_ptr_(task_arg_);
+  // then call the TaskCallBack
+  task_callback_ptr_(task_callback_arg_);
 }
 
 // Current thread would be blocked until the call back function finishes.
-void TaskQueue::EnqueueTask(void(*func_ptr)(void *), void* func_arg) {
-  std::shared_ptr<Task> task = std::make_shared<Task>(func_ptr, func_arg);
+void TaskQueue::EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg){
+  std::shared_ptr<Task> task = std::make_shared<Task>(task_ptr, task_arg, task_callback_ptr, task_callback_arg);
   task_queue_.Enqueue(task);
 }
 
