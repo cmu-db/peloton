@@ -49,6 +49,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     }
   }
   event_add(event, nullptr);
+  pkt_manager.traffic_cop_->event_ = event;
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {
