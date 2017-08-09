@@ -20,7 +20,7 @@
 // 3: index_type (default value is BWTREE)
 // 4: index_constraint
 // 5: unique_keys (is this index supports duplicate keys)
-// 5: indexed_attributes (indicate which table columns this index indexes. For
+// 6: indexed_attributes (indicate which table columns this index indexes. For
 // example a value of 0 2 would mean that the first and the third table columns
 // make up the index.)
 //
@@ -37,6 +37,43 @@
 
 namespace peloton {
 namespace catalog {
+
+class IndexCatalogObject {
+ public:
+  IndexCatalogObject()
+      : index_oid(INVALID_OID),
+        index_name(),
+        table_oid(INVALID_OID),
+        index_type(IndexType::INVALID),
+        index_constraint(IndexConstraintType::INVALID),
+        unique_keys(false),
+        indexed_attributes() {}
+  IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0)
+      : index_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
+        index_name(tile->GetValue(tupleId, 1).ToString()),
+        table_oid(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
+        index_type(tile->GetValue(tupleId, 3).GetAs<IndexType>()),
+        index_constraint(
+            tile->GetValue(tupleId, 4).GetAs<IndexConstraintType>()),
+        unique_keys(tile->GetValue(tupleId, 5).GetAs<bool>()) {
+    std::string attr_str = tile->GetValue(tupleId, 6).ToString();
+    std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
+    std::string tok;
+
+    while (std::getline(ss, tok, ' ')) {
+      indexed_attributes.push_back(std::stoi(tok));
+    }
+    LOG_DEBUG("the size for indexed key is %lu", indexed_attributes.size());
+  }
+
+  const oid_t index_oid;
+  const std::string index_name;
+  const oid_t table_oid;
+  const IndexType index_type;
+  const IndexConstraintType index_constraint;
+  const bool unique_keys;
+  std::vector<oid_t> indexed_attributes;
+};
 
 class IndexCatalog : public AbstractCatalog {
  public:
@@ -62,6 +99,13 @@ class IndexCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
+  const IndexCatalogObject GetIndexByOid(oid_t index_oid,
+                                         concurrency::Transaction *txn);
+  const IndexCatalogObject GetIndexByName(const std::string &index_name,
+                                          concurrency::Transaction *txn);
+  const std::vector<IndexCatalogObject> GetIndexesByTableOid(
+      oid_t table_oid, concurrency::Transaction *txn);
+
   std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn);
   IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn);

@@ -124,8 +124,7 @@ const std::string Database::GetInfo() const {
   for (auto table : tables) {
     if (table != nullptr) {
       os << "(" << ++table_itr << "/" << table_count << ") "
-         << "Table Name(" << table->GetOid() << ") : " << table->GetName()
-         << std::endl;
+         << "Table Oid : " << table->GetOid() << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 

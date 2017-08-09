@@ -33,7 +33,8 @@ TableCatalog::TableCatalog(storage::Database *pg_catalog,
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+  ColumnCatalog *pg_attribute =
+      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
@@ -62,8 +63,8 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto table_name_column =
-      catalog::Column(type::TypeId::VARCHAR, max_name_size, "table_name", false);
+  auto table_name_column = catalog::Column(type::TypeId::VARCHAR, max_name_size,
+                                           "table_name", false);
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
@@ -116,6 +117,60 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+/*@brief   read table catalog object from pg_table using table oid
+* @param   table_oid
+* @param   txn     Transaction
+* @return  table catalog object
+*/
+const TableCatalogObject TableCatalog::GetTableByOid(
+    oid_t table_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2});
+  oid_t index_offset = 0;  // Index of table_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return TableCatalogObject(std::move((*result_tiles)[0]));
+  } else {
+    LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
+  }
+
+  return TableCatalogObject();  // return empty object with INVALID_OID
+}
+
+/*@brief   read table catalog object from pg_table using table name + database
+* oid
+* @param   table_name
+* @param   database_oid
+* @param   txn     Transaction
+* @return  table catalog object
+*/
+const TableCatalogObject TableCatalog::GetTableByName(
+    const std::string &table_name, oid_t database_oid,
+    concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2});
+  oid_t index_offset = 1;  // Index of table_name & database_oid
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return TableCatalogObject(std::move((*result_tiles)[0]));
+  } else {
+    LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
+              table_name.c_str());
+  }
+
+  return TableCatalogObject();  // return empty object with INVALID_OID
 }
 
 /*@brief   read table name from pg_table using table oid
@@ -191,8 +246,6 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);

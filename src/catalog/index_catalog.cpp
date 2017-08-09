@@ -43,7 +43,8 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
            IndexConstraintType::DEFAULT);
 
   // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+  ColumnCatalog *pg_attribute =
+      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
@@ -72,8 +73,8 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   index_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto index_name_column =
-      catalog::Column(type::TypeId::VARCHAR, max_name_size, "index_name", false);
+  auto index_name_column = catalog::Column(type::TypeId::VARCHAR, max_name_size,
+                                           "index_name", false);
   index_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
@@ -151,6 +152,72 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+const IndexCatalogObject IndexCatalog::GetIndexByOid(
+    oid_t index_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
+  oid_t index_offset = 0;  // Index of index_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return IndexCatalogObject((*result_tiles)[0].get());
+  } else {
+    LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
+  }
+
+  return IndexCatalogObject();  // return empty object with INVALID_OID
+}
+
+const IndexCatalogObject IndexCatalog::GetIndexByName(
+    const std::string &index_name, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
+  oid_t index_offset = 1;  // Index of index_name & table_oid
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return IndexCatalogObject((*result_tiles)[0].get());
+  } else {
+    LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
+              index_name.c_str());
+  }
+
+  return IndexCatalogObject();  // return empty object with INVALID_OID
+}
+
+/*@brief   get all index records from the same table
+* this function may be useful when calling DropTable
+* @param   table_oid
+* @param   txn  Transaction
+* @return  a vector of index catalog objects
+*/
+const std::vector<IndexCatalogObject> IndexCatalog::GetIndexesByTableOid(
+    oid_t table_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
+  oid_t index_offset = 2;  // Index of table_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  std::vector<IndexCatalogObject> index_objects;
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      index_objects.emplace_back(IndexCatalogObject(tile.get(), tuple_id));
+    }
+  }
+
+  return index_objects;
 }
 
 std::string IndexCatalog::GetIndexName(oid_t index_oid,
