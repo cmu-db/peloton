@@ -27,6 +27,7 @@ PROXY(Updater) {
   /// Proxy Init() and Update() in codegen::Updater
   DECLARE_METHOD(Init);
   DECLARE_METHOD(Update);
+  DECLARE_METHOD(TearDown);
 };
 
 TYPE_BUILDER(Updater, codegen::Updater);

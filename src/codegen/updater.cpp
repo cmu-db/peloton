@@ -59,5 +59,11 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
   }
 }
 
+void Updater::TearDown() {
+  // Updater object does not destruct its own data structures
+  target_list_.~TargetList();
+  direct_map_list_.~DirectMapList();
+}
+
 }  // namespace codegen
 }  // namespace peloton

@@ -141,5 +141,11 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
                                       target_vals, executor_context});
 }
 
+void UpdateTranslator::TearDownState() {
+  auto &codegen = GetCodeGen();
+  llvm::Value *updater = LoadStatePtr(updater_state_id_);
+  codegen.Call(UpdaterProxy::TearDown, {updater});
+}
+
 }  // namespace codegen
 }  // namespace peloton
