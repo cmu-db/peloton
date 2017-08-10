@@ -27,7 +27,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "storage/tile.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {

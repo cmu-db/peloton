@@ -90,9 +90,11 @@ void CallbackUtil::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
   if (server->GetIsStarted() == false) {
     server->SetIsStarted(true);
   }
+  LOG_TRACE("Closing server::exiting event loop -- Start");
   if (server->GetIsClosed() == true) {
     event_base_loopexit(server->GetEventBase(), NULL);
   }
+  LOG_TRACE("Closing server::exiting event loop -- Done");
 }
 
 void CallbackUtil::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t

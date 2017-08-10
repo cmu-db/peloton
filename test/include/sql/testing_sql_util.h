@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/statement.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 
 namespace peloton {
 

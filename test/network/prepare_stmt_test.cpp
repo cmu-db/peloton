@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "gtest/gtest.h"
 #include "network/network_manager.h"
+#include "network/postgres_protocol_handler.h"
 #include "util/string_util.h"
 
 #define NUM_THREADS 1
@@ -46,6 +47,7 @@ static void *LaunchServer(peloton::network::NetworkManager network_manager,
 
 void *PrepareStatementTest(int port) {
   try {
+    // forcing the factory to generate jdbc protocol handler
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=postgres sslmode=disable", port));
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
@@ -54,6 +56,12 @@ void *PrepareStatementTest(int port) {
     peloton::network::NetworkConnection *conn =
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
+
+    //Check type of protocol handler
+    network::PostgresProtocolHandler* handler =
+        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+
+    EXPECT_NE(handler, nullptr);
 
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -75,8 +83,9 @@ void *PrepareStatementTest(int port) {
     // LOG_INFO("[Prepare statement cache]
     // %d",conn->protocol_handler_.ExistCachedStatement("searchstmt"));
     EXPECT_EQ(R.size(), 1);
-    EXPECT_TRUE(conn->protocol_handler_.ExistCachedStatement("searchstmt"));
-    LOG_INFO("[PrepareStatementTest] Client has closed");
+
+    EXPECT_TRUE(handler->ExistCachedStatement("searchstmt"));
+
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

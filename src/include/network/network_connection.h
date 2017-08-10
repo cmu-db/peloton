@@ -55,7 +55,7 @@ class NetworkConnection {
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
   NetworkThread *thread;          // reference to the network thread
-  ProtocolHandler protocol_handler_;       // Stores state for this socket
+  std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
@@ -122,7 +122,7 @@ class NetworkConnection {
   ProcessInitialState ProcessInitialPacket();
 
   /* Routine to deal with the first packet from the client */
-  int ProcessInitialPacket(InputPacket* pkt);
+  bool ProcessInitialPacket(InputPacket* pkt);
 
   /* Routine to deal with general Startup message */
   bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);

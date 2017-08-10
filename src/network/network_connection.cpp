@@ -12,6 +12,7 @@
 
 #include <unistd.h>
 #include "network/network_connection.h"
+#include "network/protocol_handler_factory.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
@@ -23,6 +24,8 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                           ConnState init_state) {
   SetNonBlocking(sock_fd);
   SetTCPNoDelay(sock_fd);
+
+  protocol_handler_ = nullptr;
 
   this->event_flags = event_flags;
   this->thread = thread;
@@ -115,7 +118,7 @@ bool NetworkConnection::IsReadDataAvailable(size_t bytes) {
 // Assume: Packet length field is always 32-bit int
 bool NetworkConnection::ReadPacketHeader() {
   size_t initial_read_size = sizeof(int32_t);
-  if (protocol_handler_.is_started == true) {
+  if (protocol_handler_ != nullptr) {
     // All packets other than the startup packet have a 5B header
     initial_read_size++;
   }
@@ -126,7 +129,7 @@ bool NetworkConnection::ReadPacketHeader() {
   }
 
   // get packet size from the header
-  if (protocol_handler_.is_started == true) {
+  if (protocol_handler_ != nullptr) {
     // Header also contains msg type
     rpkt.msg_type =
         static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
@@ -191,8 +194,8 @@ bool NetworkConnection::ReadPacket() {
 
 WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < protocol_handler_.responses.size(); next_response_++) {
-    auto pkt = protocol_handler_.responses[next_response_].get();
+  for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
+    auto pkt = protocol_handler_->responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
@@ -202,10 +205,10 @@ WriteState NetworkConnection::WritePackets() {
   }
 
   // Done writing all packets. clear packets
-  protocol_handler_.responses.clear();
+  protocol_handler_->responses.clear();
   next_response_ = 0;
 
-  if (protocol_handler_.force_flush == true) {
+  if (protocol_handler_->force_flush == true) {
     return FlushWriteBuffer();
   }
   return WriteState::WRITE_COMPLETE;
@@ -403,7 +406,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   wbuf_.Reset();
 
   // we have flushed, disable force flush now
-  protocol_handler_.force_flush = false;
+  protocol_handler_->force_flush = false;
 
   // we are ok
   return WriteState::WRITE_COMPLETE;
@@ -444,13 +447,6 @@ ProcessInitialState NetworkConnection::ProcessInitialPacket() {
   // We need to handle startup packet first
   int status_res = ProcessInitialPacket(&rpkt);
 
-  if (status_res == 1) {
-    protocol_handler_.is_started = true;
-  }
-  else if (status_res == -1){
-    ssl_sent_ = true;
-  }
-
   if (status_res == 0) {
     return ProcessInitialState::PROCESS_INITIAL_FAILED;
   }
@@ -462,38 +458,31 @@ bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   // TODO: consider more about a proper response
   response->msg_type = NetworkMessageType::SSL_YES;
-  protocol_handler_.responses.push_back(std::move(response));
-  protocol_handler_.force_flush = true;
+  protocol_handler_->responses.push_back(std::move(response));
+  protocol_handler_->force_flush = true;
+  ssl_sent_ = true;
   return true;
 }
 /*
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-int NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
+bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
-  bool res;
-  int res_base = 0;
+
   // TODO: consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
-    res = ProcessSSLRequestPacket(pkt);
-    if (!res)
-      res_base = 0;
-    else
-      res_base = -1;
+    LOG_TRACE("process SSL MESSAGE");
+    return ProcessSSLRequestPacket(pkt);
   }
   else {
-    res = ProcessStartupPacket(pkt, proto_version);
-    if (!res)
-      res_base = 0;
-    else
-      res_base = 1;
+    LOG_TRACE("process startup packet");
+    return ProcessStartupPacket(pkt, proto_version);
   }
-  return res_base;
 }
 
 bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
@@ -512,24 +501,31 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
     // loop end case?
     if (pkt->ptr >= pkt->len) break;
     GetStringToken(pkt, token);
-
+    LOG_DEBUG("%s", token.c_str());
     // if the option database was found
     if (token.compare("database") == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.dbname);
+      LOG_DEBUG("%s", client_.dbname.c_str());
     } else if (token.compare(("user")) == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.user);
-    } else {
+      LOG_DEBUG("%s", client_.user.c_str());
+    }
+    else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client_.cmdline_options[token] = value;
+      LOG_DEBUG("%s", value.c_str());
     }
+
   }
 
-  protocol_handler_.SendInitialResponse();
+  protocol_handler_ =
+      ProtocolHandlerFactory::CreateProtocolHandler(ProtocolHandlerType::Postgres);
+  protocol_handler_->SendInitialResponse();
 
   return true;
 }
@@ -635,7 +631,6 @@ void NetworkConnection::CloseSocket() {
   // Remove listening event
   event_del(event);
   // event_free(event);
-
   TransitState(ConnState::CONN_CLOSED);
   Reset();
   for (;;) {
@@ -656,7 +651,10 @@ void NetworkConnection::Reset() {
   client_.Reset();
   rbuf_.Reset();
   wbuf_.Reset();
-  protocol_handler_.Reset();
+  // The listening connection do not have protocol handler
+  if (protocol_handler_ != nullptr) {
+    protocol_handler_->Reset();
+  }
   state = ConnState::CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;
@@ -742,7 +740,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             conn->ssl_sent_ = false;
         }
 
-        if (!conn->protocol_handler_.is_started) {
+        if (conn->protocol_handler_ == nullptr) {
           switch (conn->ProcessInitialPacket()) {
             case ProcessInitialState::PROCESS_INITIAL_SUCCESS:
               conn->TransitState(ConnState::CONN_WRITE);
@@ -776,7 +774,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(conn->rpkt.is_initialized == true);
 
           // Process all other packets
-          status = conn->protocol_handler_.ProcessPacket(&conn->rpkt,
+          status = conn->protocol_handler_->ProcessPacket(&conn->rpkt,
                                                          (size_t)conn->thread_id);
         switch (status) {
           case ProcessPacketResult::TERMINATE:
