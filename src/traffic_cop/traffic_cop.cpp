@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
 #include "common/abstract_tuple.h"

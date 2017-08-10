@@ -44,7 +44,7 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"

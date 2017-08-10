@@ -14,8 +14,10 @@
 #include "gtest/gtest.h"
 #include "common/logger.h"
 #include "network/network_manager.h"
+#include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
+#include <include/network/postgres_protocol_handler.h>
 
 #define NUM_THREADS 1
 
@@ -44,16 +46,19 @@ static void *LaunchServer(peloton::network::NetworkManager network_manager,
  */
 void *SimpleQueryTest(int port) {
   try {
+    // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres sslmode=disable", port));
-    LOG_INFO("[SimpleQueryTest] Connected to %s", C.dbname());
+        "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
     pqxx::work txn1(C);
 
     peloton::network::NetworkConnection *conn =
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
-    EXPECT_EQ(conn->protocol_handler_.is_started, true);
+    network::PostgresProtocolHandler *handler =
+        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+    EXPECT_NE(handler, nullptr);
+
     // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
@@ -168,6 +173,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 
   network_manager.CloseServer();
   serverThread.join();
+  LOG_INFO("Peloton is shutting down");
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }

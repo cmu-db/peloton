@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/tcop/tcop.h>
+#include <include/traffic_cop/traffic_cop.h>
 #include <cstdio>
 #include <sql/testing_sql_util.h>
 
@@ -31,7 +31,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 

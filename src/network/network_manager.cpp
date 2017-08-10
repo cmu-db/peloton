@@ -164,6 +164,7 @@ void NetworkManager::StartServer() {
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
+    LOG_INFO("Closing server");
     NetworkManager::GetConnection(listen_fd)->CloseSocket();
 
     // Free events and event base
