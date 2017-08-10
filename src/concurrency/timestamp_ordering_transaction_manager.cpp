@@ -760,11 +760,11 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::ReorderedPhyLogLogManager::GetInstance();
+  //auto &log_manager = logging::ReorderedPhyLogLogManager::GetInstance();
 
   //log_manager.StartLogging();
-  log_manager.RegisterWorker(current_txn->GetThreadId());
-  log_manager.StartTxn(current_txn);
+  //log_manager.RegisterWorker(current_txn->GetThreadId());
+  //log_manager.StartTxn(current_txn);
   
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
@@ -830,7 +830,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // may need to delete versions from secondary indexes.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
 
-        log_manager.LogUpdate(new_version);
+    //    log_manager.LogUpdate(new_version);
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -862,7 +862,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // the gc should be responsible for recycling the newer empty version.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
 
-        log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
+//        log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -878,7 +878,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
         // nothing to be added to gc set.
 
-        log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
+//        log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -904,7 +904,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   ResultType result = current_txn->GetResult();
 
   //log_manager.LogEnd();
-  log_manager.DeregisterWorker();
+  //log_manager.DeregisterWorker();
   //log_manager.End
 
   EndTransaction(current_txn);
