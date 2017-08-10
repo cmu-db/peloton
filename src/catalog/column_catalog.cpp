@@ -66,8 +66,8 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto column_name_column =
-      catalog::Column(type::TypeId::VARCHAR, max_name_size, "column_name", false);
+  auto column_name_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "column_name", false);
   column_name_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
   column_name_column.AddConstraint(
@@ -85,8 +85,8 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   column_offset_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto column_type_column =
-      catalog::Column(type::TypeId::VARCHAR, max_name_size, "column_type", false);
+  auto column_type_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "column_type", false);
   column_type_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
@@ -116,11 +116,13 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   return column_catalog_schema;
 }
 
-bool ColumnCatalog::InsertColumn(
-    oid_t table_oid, const std::string &column_name, oid_t column_id,
-    oid_t column_offset, type::TypeId column_type, bool is_inlined,
-    const std::vector<Constraint> &constraints, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
+bool ColumnCatalog::InsertColumn(oid_t table_oid,
+                                 const std::string &column_name,
+                                 oid_t column_id, oid_t column_offset,
+                                 type::TypeId column_type, bool is_inlined,
+                                 const std::vector<Constraint> &constraints,
+                                 type::AbstractPool *pool,
+                                 concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -182,6 +184,76 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+/*@brief   get column catalog object
+* @param   table_oid
+* @param   column_name
+* @param   txn  Transaction
+* @return  column catalog object
+*/
+const ColumnCatalogObject ColumnCatalog::GetColumnByName(
+    oid_t table_oid, const std::string &column_name,
+    concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
+  oid_t index_offset = 0;  // Index of table_oid & column_name
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return ColumnCatalogObject((*result_tiles)[0].get());
+  } else {
+    LOG_DEBUG("Found %lu column with column name %s", result_tiles->size(),
+              column_name.c_str());
+  }
+
+  return ColumnCatalogObject();
+}
+
+const ColumnCatalogObject ColumnCatalog::GetColumnById(
+    oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
+  oid_t index_offset = 1;  // Index of table_oid & column_id
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    return ColumnCatalogObject((*result_tiles)[0].get());
+  } else {
+    LOG_DEBUG("Found %lu column with column id %u", result_tiles->size(),
+              column_id);
+  }
+
+  return ColumnCatalogObject();
+}
+
+const std::vector<ColumnCatalogObject> ColumnCatalog::GetColumnsByTableOid(
+    oid_t table_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
+  oid_t index_offset = 1;  // Index of table_oid & column_id
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  std::vector<ColumnCatalogObject> column_objects;
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      column_objects.emplace_back(ColumnCatalogObject(tile.get(), tuple_id));
+    }
+  }
+
+  return column_objects;
 }
 
 /*@brief   get physical offset of one column in the table(e.g this column store
@@ -279,8 +351,8 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_id,
 }
 
 type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
-                                                std::string column_name,
-                                                concurrency::Transaction *txn) {
+                                          std::string column_name,
+                                          concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // column_type
   oid_t index_offset = 0;              // Index of table_oid & column_name
   std::vector<type::Value> values;
@@ -306,9 +378,8 @@ type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
   return column_type;
 }
 
-type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
-                                                oid_t column_id,
-                                                concurrency::Transaction *txn) {
+type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid, oid_t column_id,
+                                          concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // column_type
   oid_t index_offset = 1;              // Index of table_oid & column_id
   std::vector<type::Value> values;

@@ -28,6 +28,7 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
+#include "executor/logical_tile.h"
 
 namespace peloton {
 namespace catalog {

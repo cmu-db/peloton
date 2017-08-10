@@ -22,6 +22,23 @@
 namespace peloton {
 namespace catalog {
 
+IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
+    : index_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
+      index_name(tile->GetValue(tupleId, 1).ToString()),
+      table_oid(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
+      index_type(tile->GetValue(tupleId, 3).GetAs<IndexType>()),
+      index_constraint(tile->GetValue(tupleId, 4).GetAs<IndexConstraintType>()),
+      unique_keys(tile->GetValue(tupleId, 5).GetAs<bool>()) {
+  std::string attr_str = tile->GetValue(tupleId, 6).ToString();
+  std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
+  std::string tok;
+
+  while (std::getline(ss, tok, ' ')) {
+    indexed_attributes.push_back(std::stoi(tok));
+  }
+  LOG_DEBUG("the size for indexed key is %lu", indexed_attributes.size());
+}
+
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
                                         concurrency::Transaction *txn) {

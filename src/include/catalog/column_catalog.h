@@ -33,9 +33,41 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
+#include "executor/logical_tile.h"
 
 namespace peloton {
 namespace catalog {
+
+class ColumnCatalogObject {
+ public:
+  ColumnCatalogObject()
+      : table_oid(INVALID_OID),
+        column_name(),
+        column_id(INVALID_OID),
+        column_offset(0),
+        column_type(type::TypeId::INVALID),
+        is_inlined(false),
+        is_primary(false),
+        is_not_null(false) {}
+  ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0)
+      : table_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
+        column_name(tile->GetValue(tupleId, 1).ToString()),
+        column_id(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
+        column_offset(tile->GetValue(tupleId, 3).GetAs<size_t>()),
+        column_type(tile->GetValue(tupleId, 4).GetAs<type::TypeId>()),
+        is_inlined(tile->GetValue(tupleId, 5).GetAs<bool>()),
+        is_primary(tile->GetValue(tupleId, 6).GetAs<bool>()),
+        is_not_null(tile->GetValue(tupleId, 7).GetAs<bool>()) {}
+
+  const oid_t table_oid;
+  const std::string column_name;
+  const oid_t column_id;
+  const size_t column_offset;
+  const type::TypeId column_type;
+  const bool is_inlined;
+  const bool is_primary;
+  const bool is_not_null;
+};
 
 class ColumnCatalog : public AbstractCatalog {
  public:
@@ -64,6 +96,14 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
+  const ColumnCatalogObject GetColumnByName(oid_t table_oid,
+                                            const std::string &column_name,
+                                            concurrency::Transaction *txn);
+  const ColumnCatalogObject GetColumnById(oid_t table_oid, oid_t column_id,
+                                          concurrency::Transaction *txn);
+  const std::vector<ColumnCatalogObject> GetColumnsByTableOid(
+      oid_t table_oid, concurrency::Transaction *txn);
+
   oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,
                         concurrency::Transaction *txn);
   oid_t GetColumnId(oid_t table_oid, const std::string &column_name,
@@ -71,9 +111,9 @@ class ColumnCatalog : public AbstractCatalog {
   std::string GetColumnName(oid_t table_oid, oid_t column_id,
                             concurrency::Transaction *txn);
   type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
-                                   concurrency::Transaction *txn);
+                             concurrency::Transaction *txn);
   type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
-                                   concurrency::Transaction *txn);
+                             concurrency::Transaction *txn);
 
  private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
