@@ -186,8 +186,7 @@ bool PerformUpdatePrimaryKey(concurrency::Transaction *txn,
 
   // Insert tuple rather than install version
   storage::Tuple new_tuple(table.GetSchema(), true);
-  expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                           tuple_offset);
+  ContainerTuple<storage::TileGroup> old_tuple(tile_group, tuple_offset);
   SetTargetValues(&new_tuple, values_size, column_ids, values);
   SetDirectMapValues(&new_tuple, &old_tuple, direct_map_list,
                      executor_context->GetPool());
@@ -227,8 +226,7 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
           values_size, direct_map_list, is_owner, executor_context);
     }
     // Make a copy of the original tuple and overwrite
-    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                             tuple_offset);
+    ContainerTuple<storage::TileGroup> old_tuple(tile_group, tuple_offset);
     SetTargetValues(&old_tuple, values_size, column_ids, values);
     SetDirectMapValues(&old_tuple, &old_tuple, direct_map_list);
     txn_manager.PerformUpdate(&txn, old_location);
@@ -263,13 +261,12 @@ bool TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
 
   // If it is the latest version and not locked by other threads, then
   // insert a new version.  Acquire a version slot from the table.
-  expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                           tuple_offset);
+  ContainerTuple<storage::TileGroup> old_tuple(tile_group, tuple_offset);
   ItemPointer new_location = table.AcquireVersion();
   auto &manager = catalog::Manager::GetInstance();
   auto new_tile_group = manager.GetTileGroup(new_location.block);
-  expression::ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
-                                                           new_location.offset);
+  ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
+                                               new_location.offset);
   // This triggers in-place update and we don't need to allocate another version
   SetTargetValues(&new_tuple, values_size, column_ids, values);
   SetDirectMapValues(&new_tuple, &old_tuple, direct_map_list);
