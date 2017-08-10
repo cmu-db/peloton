@@ -22,7 +22,6 @@ namespace network {
 
   ProtocolHandler::~ProtocolHandler() {}
 
-
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   void ProtocolHandler::SendInitialResponse() {}

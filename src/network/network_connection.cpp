@@ -118,6 +118,7 @@ bool NetworkConnection::UpdateEvent(short flags) {
 }
 
 
+
 /**
  * Public Functions
  */
@@ -466,6 +467,7 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.dbname);
+      LOG_DEBUG("%s", client_.dbname.c_str());
     } else if (token.compare(("user")) == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
@@ -475,6 +477,7 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client_.cmdline_options[token] = value;
+      LOG_DEBUG("%s", value.c_str());
     }
 
   }
