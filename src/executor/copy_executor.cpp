@@ -18,7 +18,7 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
-#include "wire/packet_manager.h"
+#include "network/protocol_handler.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>
@@ -229,11 +229,11 @@ bool CopyExecutor::DExecute() {
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
-          wire::InputPacket packet(len, val);
+          network::InputPacket packet(len, val);
 
           // Read param types
           types.resize(num_params);
-          wire::PacketManager::ReadParamType(&packet, num_params, types);
+          network::ProtocolHandler::ReadParamType(&packet, num_params, types);
 
           // Write all the types to output file
           for (int i = 0; i < num_params; i++) {
@@ -245,21 +245,21 @@ bool CopyExecutor::DExecute() {
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
-          wire::InputPacket packet(len, val);
+          network::InputPacket packet(len, val);
 
           // Read param formats
           formats.resize(num_params);
-          wire::PacketManager::ReadParamFormat(&packet, num_params, formats);
+          network::ProtocolHandler::ReadParamFormat(&packet, num_params, formats);
 
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
-          wire::InputPacket packet(len, val);
+          network::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
           param_values.resize(num_params);
-          wire::PacketManager::ReadParamValue(&packet, num_params, types,
+          network::ProtocolHandler::ReadParamValue(&packet, num_params, types,
                                               bind_parameters, param_values,
                                               formats);
 

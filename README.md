@@ -12,7 +12,7 @@
 * Integrated artificial intelligence components that enable autonomous optimization.
 * Native support for byte-addressable non-volatile memory (NVM) storage technology.
 * Lock-free multi-version concurrency control to support real-time analytics.
-* Postgres wire-protocol and JDBC compatible.
+* Postgres network-protocol and JDBC compatible.
 * High-performance, lock-free Bw-Tree for indexing.
 * 100% Open-Source (Apache Software License v2.0).
 

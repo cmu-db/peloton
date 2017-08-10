@@ -63,8 +63,8 @@ VALIDATOR_PATTERNS = [
 
 SKIP_FILES_LIST = [
     "src/common/allocator.cpp",
-    "src/wire/socket_base.cpp",
-    "src/wire/protocol.cpp",
+    "src/network/socket_base.cpp",
+    "src/network/protocol.cpp",
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
     "src/include/parser/sql_scanner.h", # There is a free() in comments
