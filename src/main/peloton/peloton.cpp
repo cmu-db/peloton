@@ -13,12 +13,10 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
-#include "settings/settings_util.h"
-#include "wire/libevent_server.h"
+#include "settings/settings_manager.h"
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/network_manager.h"
-#include "wire/libevent_server.h"
 
 DECLARE_bool(help);
 
@@ -29,7 +27,7 @@ int main(int argc, char *argv[]) {
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
   // If "-h" or "-help" is passed in, set up the help messages.
-  if (peloton::settings::SettingsUtil::GetBool(peloton::settings::SettingsId::h) ||
+  if (peloton::settings::SettingsManager::GetBool(peloton::settings::SettingId::h) ||
       FLAGS_help) {
     FLAGS_help = true;
     ::google::SetUsageMessage("Usage Info: \n");
@@ -37,7 +35,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Print settings
-  if (peloton::settings::SettingsUtil::GetBool(peloton::settings::SettingsId::display_settings)) {
+  if (peloton::settings::SettingsManager::GetBool(peloton::settings::SettingId::display_settings)) {
     auto settings = peloton::settings::SettingsManager::GetInstance();
     settings->ShowInfo();
   }

@@ -23,8 +23,8 @@ namespace peloton {
 namespace catalog {
 
 SettingsCatalog *SettingsCatalog::GetInstance(concurrency::Transaction *txn) {
-  static std::unique_ptr<SettingsCatalog> config_catalog(new SettingsCatalog(txn));
-  return config_catalog.get();
+  static SettingsCatalog settings_catalog{txn};
+  return &settings_catalog;
 }
 
 SettingsCatalog::SettingsCatalog(concurrency::Transaction *txn)

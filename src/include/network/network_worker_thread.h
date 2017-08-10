@@ -21,7 +21,6 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "network_thread.h"
 #include "network_callback_util.h"
