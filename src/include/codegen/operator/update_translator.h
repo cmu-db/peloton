@@ -41,7 +41,7 @@ class UpdateTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // No state finalization
-  void TearDownState() override {}
+  void TearDownState() override;
 
   // Get the stringified name of this translator
   std::string GetName() const override { return "Update"; }

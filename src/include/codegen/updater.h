@@ -47,6 +47,9 @@ class Updater {
   void Update(uint32_t tile_group_id, uint32_t tuple_offset,
               uint32_t *col_ids, char *target_vals,
               executor::ExecutorContext *executor_context);
+
+  void TearDown();
+
  private:
   // No external constructor
   Updater(): txn_(nullptr), table_(nullptr), target_vals_size_(0),

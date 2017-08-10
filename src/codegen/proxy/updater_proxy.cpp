@@ -27,6 +27,7 @@ DEFINE_TYPE(Updater, "codegen::Updater", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen, Updater, Init);
 DEFINE_METHOD(peloton::codegen, Updater, Update);
+DEFINE_METHOD(peloton::codegen, Updater, TearDown);
 
 }  // namespace codegen
 }  // namespace peloton
