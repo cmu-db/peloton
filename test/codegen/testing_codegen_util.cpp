@@ -54,7 +54,8 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
 }
 
 // Create the test schema for all the tables
-std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
+std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
+    bool add_primary) const {
   bool is_inlined = true;
 
   // Create the columns
@@ -71,6 +72,9 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  if (add_primary == true)
+    cols[0].AddConstraint(
+        catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
   cols[3].AddConstraint(
