@@ -18,7 +18,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "settings/settings_util.h"
+#include "settings/settings_manager.h"
 #include "executor/plan_executor.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
@@ -163,7 +163,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  if (settings::SettingsUtil::GetInt(settings::SettingsId::stats_mode) != STATS_TYPE_INVALID) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }

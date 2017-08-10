@@ -13,17 +13,16 @@
 
 #pragma once
 
-#define __SETTING_ENUM__
-#include "settings/settings_macro.h"
-
 namespace peloton {
 namespace settings {
 
-enum class SettingsId {
+enum class SettingId {
+  #define __SETTING_ENUM__
+  #include "settings/settings_macro.h"
   #include "settings/settings.h"
+  #undef __SETTING_ENUM__
 };
 
 }  // namespace settings
 }  // namespace peloton
 
-#undef __SETTING_ENUM__

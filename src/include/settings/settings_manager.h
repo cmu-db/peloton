@@ -18,7 +18,7 @@
 #include "type/value.h"
 #include "common/exception.h"
 #include "common/printable.h"
-#include "settings/settings_type.h"
+#include "settings/setting_id.h"
 
 namespace peloton {
 namespace settings {
@@ -27,10 +27,14 @@ namespace settings {
 // provide ability to define, get_value and set_value of setting parameters
 // It stores information in an internal map as well as catalog pg_settings
 class SettingsManager : public Printable {
-
-  friend class SettingsUtil;
-
  public:
+  static int32_t GetInt(SettingId id);
+  static bool GetBool(SettingId id);
+  static std::string GetString(SettingId id);
+
+  static void SetInt(SettingId id, int32_t value);
+  static void SetBool(SettingId id, bool value);
+  static void SetString(SettingId id, const std::string &value);
   static SettingsManager* GetInstance();
 
   // Call this method in Catalog->Bootstrap
@@ -65,26 +69,26 @@ class SettingsManager : public Printable {
     template <typename T> std::size_t operator()(T t)
     const { return static_cast<std::size_t>(t); }
   };
-  std::unordered_map<SettingsId, Param, EnumClassHash> settings;
+  std::unordered_map<SettingId, Param, EnumClassHash> settings_;
 
   std::unique_ptr<type::AbstractPool> pool_;
 
-  bool catalog_initialized;
+  bool catalog_initialized_;
 
   SettingsManager();
 
-  void DefineSetting(SettingsId id, const std::string &name,
+  void DefineSetting(SettingId id, const std::string &name,
                      const type::Value &value,
                      const std::string &description,
                      const type::Value &default_value,
                      bool is_mutable, bool is_persistent);
 
-  type::Value GetValue(SettingsId id);
+  type::Value GetValue(SettingId id);
 
-  void SetValue(SettingsId id, const type::Value &value);
+  void SetValue(SettingId id, const type::Value &value);
 
   bool InsertIntoCatalog(const Param &param);
 };
 
-} // namespace settings
-} // namespace peloton
+}  // namespace settings
+}  // namespace peloton

@@ -10,6 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+// This allows the settings defined once to be used in different contexts.
+// When __SETTING_GFLAGS_DEFILE__ is set,
+//    setting definitions will be exposed through glfags definitions.
+// When __SETTING_GFLAGS_DECLARE__ is set,
+//    setting definitions will be exposed through glfags declarations.
+// When __SETTING_DEFINE__ is set,
+//    setting definitions will be exposed through defitions in SettingsManager.
+// When __SETTING_ENUM__ is set,
+//    setting definitions will be exposed through SettingId.
 
 #ifdef __SETTING_GFLAGS_DEFINE__
   #ifdef SETTING_int
@@ -63,21 +72,21 @@
   #endif
   #define SETTING_int(name, description, default_value, is_mutable, is_persistent)     \
       DefineSetting(                                                                   \
-        peloton::settings::SettingsId::name,                                           \
+        peloton::settings::SettingId::name,                                            \
         #name, type::ValueFactory::GetIntegerValue(FLAGS_##name),                      \
         description, type::ValueFactory::GetIntegerValue(default_value),               \
         is_mutable, is_persistent);
 
   #define SETTING_bool(name, description, default_value, is_mutable, is_persistent)    \
       DefineSetting(                                                                   \
-        peloton::settings::SettingsId::name,                                           \
+        peloton::settings::SettingId::name,                                            \
         #name, type::ValueFactory::GetBooleanValue(FLAGS_##name),                      \
         description, type::ValueFactory::GetBooleanValue(default_value),               \
         is_mutable, is_persistent);
 
   #define SETTING_string(name, description, default_value, is_mutable, is_persistent)  \
       DefineSetting(                                                                   \
-        peloton::settings::SettingsId::name,                                           \
+        peloton::settings::SettingId::name,                                            \
         #name, type::ValueFactory::GetVarcharValue(FLAGS_##name),                      \
         description, type::ValueFactory::GetVarcharValue(default_value),               \
         is_mutable, is_persistent);
