@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include "type/types.h"
+#include "common/item_pointer.h"
 
 namespace peloton {
 
@@ -28,6 +29,7 @@ class ExecutorContext;
 namespace storage {
 class DataTable;
 class TileGroup;
+class TileGroupHeader;
 }  // namespace storage
 
 namespace type {
@@ -54,17 +56,43 @@ class TransactionRuntime {
                             storage::DataTable &table, uint32_t tile_group_id,
                             uint32_t tuple_offset);
 
-  // Perform an update operation
-  static bool PerformUpdate(concurrency::Transaction &txn,
-                            storage::DataTable &table, uint32_t tile_group_id,
-                            uint32_t tuple_offset, uint32_t *column_ids,
-                            peloton::type::Value *values, uint32_t values_size,
-                            TargetList &target_list,
-                            DirectMapList &direct_map_list,
-                            bool update_primary_key,
-                            executor::ExecutorContext *executor_context);
+  // Check Ownership
+  static bool IsOwner(concurrency::Transaction &txn,
+                      storage::TileGroupHeader *tile_group_header,
+                      uint32_t tuple_offset);
+  // Acquire Ownership
+  static bool AcquireOwnership(concurrency::Transaction &txn,
+                               storage::TileGroupHeader *tile_group_header,
+                               uint32_t tuple_offset);
+  // Yield Ownership
+  // Note: this should be called when failed after acquired ownership
+  //       otherwise, ownership is yielded inside transaction functions
+  static void YieldOwnership(concurrency::Transaction &txn,
+                             storage::TileGroupHeader *tile_group_header,
+                             uint32_t tuple_offset);
+
+  // Perform an in-place update operation
+  // Note: One should be an owner or have acquired the ownership
+  static void PerformUpdate(concurrency::Transaction &txn,
+      ItemPointer &location, executor::ExecutorContext *executor_context);
+
+  // Perform a new version update operation
+  // Note: One should be an owner or have acquired the ownership
+  static void PerformUpdate(concurrency::Transaction &txn,
+      ItemPointer &old_location, ItemPointer &new_location,
+      executor::ExecutorContext *executor_context);
+
+  // Perform a primary key update operation by PerformDelete + PerformInsert
+  // Note: One should be an owner or have acquired the ownership
+  static void PerformDelete(concurrency::Transaction &txn,
+      ItemPointer &old_location, ItemPointer &empty_location);
+  static void PerformInsert(concurrency::Transaction &txn,
+      ItemPointer &new_location, ItemPointer *index_entry_ptr,
+      executor::ExecutorContext *executor_context);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
+
+  static void SetTransactionFailure(concurrency::Transaction &txn);
 };
 
 }  // namespace codegen

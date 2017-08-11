@@ -40,20 +40,23 @@ class Updater {
   // Initialize the instance
   void Init(concurrency::Transaction *txn, storage::DataTable *table,
             Target *target_vector, uint32_t target_vector_size,
-            DirectMap *direct_map_vector,
-            uint32_t direct_map_vector_size, bool update_primary_key);
+            DirectMap *direct_map_vector, uint32_t direct_map_vector_size);
 
   // Update a tuple
   void Update(uint32_t tile_group_id, uint32_t tuple_offset,
               uint32_t *col_ids, char *target_vals,
               executor::ExecutorContext *executor_context);
 
+  // Update a tuple with Primary Key
+  void UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
+                        uint32_t *col_ids, char *target_vals,
+                        executor::ExecutorContext *executor_context);
+  // Finalize the instance
   void TearDown();
 
  private:
   // No external constructor
-  Updater(): txn_(nullptr), table_(nullptr), target_vals_size_(0),
-             update_primary_key_(false) {}
+  Updater(): txn_(nullptr), table_(nullptr), target_vals_size_(0) {}
 
  private:
   // These are provided by the update translator
@@ -63,8 +66,6 @@ class Updater {
   TargetList target_list_;
   DirectMapList direct_map_list_;
   uint32_t target_vals_size_;
-
-  bool update_primary_key_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Updater);
