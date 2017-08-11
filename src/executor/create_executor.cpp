@@ -28,6 +28,7 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
   context_ = executor_context;
+  pool_.reset(new type::EphemeralPool());
 }
 
 // Initialize executer
