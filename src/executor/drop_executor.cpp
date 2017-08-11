@@ -69,7 +69,7 @@ bool DropExecutor::DExecute() {
       std::string table_name = node.GetTableName();
       std::string trigger_name = node.GetTriggerName();
 
-      auto current_txn = context->GetTransaction();
+      auto current_txn = context_->GetTransaction();
 
       ResultType result = catalog::TriggerCatalog::GetInstance()->DropTrigger(
           DEFAULT_DB_NAME, table_name, trigger_name, current_txn);

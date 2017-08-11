@@ -147,7 +147,7 @@ bool DeleteExecutor::DExecute() {
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_ROW)) {
-        expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+        ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
         // Materialize the logical tile tuple
         for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
           type::Value val = (logical_tile_tuple.GetValue(column_itr));
@@ -214,7 +214,7 @@ bool DeleteExecutor::DExecute() {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW)) {
         if (!tuple_is_materialzed) {
-          expression::ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+          ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
           // Materialize the logical tile tuple
           for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
             type::Value val = (logical_tile_tuple.GetValue(column_itr));
