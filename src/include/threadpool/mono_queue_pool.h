@@ -14,7 +14,7 @@
 #include "worker.h"
 
 // TODO: tune these variables
-#define DEFAULT_WORKER_POOL_SIZE 10
+#define DEFAULT_WORKER_POOL_SIZE 4
 #define DEFAULT_TASK_QUEUE_SIZE 20
 
 namespace peloton {
