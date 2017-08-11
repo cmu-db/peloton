@@ -9,8 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
+#include "event2/thread.h"
 #include <fstream>
 
 #include "network/network_manager.h"
@@ -55,7 +54,9 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
 }
 
 NetworkManager::NetworkManager() {
+  evthread_use_pthreads();
   base_ = event_base_new();
+  evthread_make_base_notifiable(base_);
 
   // Create our event base
   if (!base_) {

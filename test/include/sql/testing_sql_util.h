@@ -85,6 +85,14 @@ class TestingSQLUtil {
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
 
   static tcop::TrafficCop traffic_cop_;
+  inline static void UtilTestTaskCallback(void *arg) {
+    int *count = static_cast<int*>(arg);
+    *count--;
+  }
+  inline TestingSQLUtil() {
+    int count = 1;
+    traffic_cop_.SetTaskCallback(UtilTestTaskCallback, &count);
+  }
 };
 }  // namespace test
 }  // namespace peloton
