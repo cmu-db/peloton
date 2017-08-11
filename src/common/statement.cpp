@@ -45,8 +45,7 @@ void Statement::ParseQueryTypeString(const std::string& query_string,
   std::stringstream stream(query_string);
   stream >> query_type_string;
   if (query_type_string.back() == ';') {
-    query_type_string =
-        query_type_string.substr(0, query_type_string.length() - 1);
+    query_type_string.pop_back();
   }
   boost::to_upper(query_type_string);
 }

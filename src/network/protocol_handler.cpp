@@ -406,7 +406,6 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
       case QueryType::QUERY_EXECUTE:
       {
         std::string statement_name;
-        std::shared_ptr<Statement> statement;
         std::vector<type::Value> param_values;
         bool unnamed = false;
         std::vector<std::string> tokens;
@@ -427,9 +426,10 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
           return ProcessPacketResult::COMPLETE;
         }
+
         query_type_ = statement_->GetQueryType();
         query_ = statement_->GetQueryString();
-        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
         result_format_ = result_format;
 
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
