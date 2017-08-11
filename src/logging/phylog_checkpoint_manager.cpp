@@ -122,7 +122,7 @@ namespace logging {
                 }
             }
 
-            expression::ContainerTuple<storage::TileGroup> container_tuple(
+            ContainerTuple<storage::TileGroup> container_tuple(
               tile_group.get(), tuple_id
             );
             output_buffer.Reset();

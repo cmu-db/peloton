@@ -87,7 +87,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
           }
       }
 
-      expression::ContainerTuple<storage::TileGroup> container_tuple(
+      ContainerTuple<storage::TileGroup> container_tuple(
         tg, tuple_pos.offset
       );
       for(oid_t oid = 0; oid < columns.size(); oid++){
