@@ -4,7 +4,7 @@
 //
 // update_translator.cpp
 //
-// Identification: src/codegen/update_translator.cpp
+// Identification: src/codegen/operator/update_translator.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -29,8 +29,7 @@ namespace codegen {
 UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      update_plan_(update_plan) {
+    : OperatorTranslator(context, pipeline), update_plan_(update_plan) {
   // Create the translator for our child and derived attributes
   context.Prepare(*update_plan.GetChild(0), pipeline);
 
@@ -46,10 +45,9 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
   auto &runtime_state = context.GetRuntimeState();
   auto column_num = target_list.size();
 
-  // Vectors are 
-  target_val_vec_id_ = runtime_state.RegisterState( "updateTargetValVec",
+  target_val_vec_id_ = runtime_state.RegisterState("updateTargetValVec",
       codegen.ArrayType(codegen.Int8Type(), column_num), true);
-  column_id_vec_id_ = runtime_state.RegisterState( "updateColumnIdVec",
+  column_id_vec_id_ = runtime_state.RegisterState("updateColumnIdVec",
       codegen.ArrayType(codegen.Int32Type(), column_num), true);
 
   updater_state_id_ = runtime_state.RegisterState("updater",
@@ -85,16 +83,12 @@ void UpdateTranslator::InitializeState() {
   llvm::Value *direct_map_vector_size_ptr =
       codegen.Const32((int32_t)direct_map_vector_size);
 
-  llvm::Value *update_primary_key_ptr = codegen.ConstBool(
-      update_plan_.GetUpdatePrimaryKey());
-
   // Initialize the inserter with txn and table
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
   codegen.Call(UpdaterProxy::Init, {updater, txn_ptr, table_ptr,
                                     target_vector_ptr, target_vector_size_ptr,
                                     direct_map_vector_ptr,
-                                    direct_map_vector_size_ptr,
-                                    update_primary_key_ptr});
+                                    direct_map_vector_size_ptr});
 }
 
 void UpdateTranslator::Produce() const {
@@ -136,9 +130,15 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Finally, update!
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  codegen.Call(UpdaterProxy::Update, {updater, row.GetTileGroupID(),
-                                      row.GetTID(codegen), column_ids_ptr,
-                                      target_vals, executor_context});
+  std::vector<llvm::Value *> args = {updater, row.GetTileGroupID(),
+                                     row.GetTID(codegen), column_ids_ptr,
+                                     target_vals, executor_context};
+  if (update_plan_.GetUpdatePrimaryKey() == true) {
+    codegen.Call(UpdaterProxy::UpdatePrimaryKey, args);
+  }
+  else {
+    codegen.Call(UpdaterProxy::Update, args);
+  }
 }
 
 void UpdateTranslator::TearDownState() {
