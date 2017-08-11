@@ -60,9 +60,9 @@ class InsertPlan : public AbstractPlan {
   // Get a varlen pool - will construct the pool only if needed
   type::AbstractPool *GetPlanPool();
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::INSERT; }
+  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::INSERT; }
 
-  void SetParameterValues(std::vector<type::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
   storage::DataTable *GetTable() const { return target_table_; }
 
@@ -79,7 +79,7 @@ class InsertPlan : public AbstractPlan {
     return tuples_[tuple_idx].get();
   }
 
-  const std::string GetInfo() const { return "InsertPlan"; }
+  const std::string GetInfo() const override { return "InsertPlan"; }
 
   // WARNING - Not Implemented
   std::unique_ptr<AbstractPlan> Copy() const {
