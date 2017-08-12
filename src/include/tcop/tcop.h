@@ -110,6 +110,9 @@ class TrafficCop {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
+  void SetTaskCallbackPtr(void(* task_callback)(void *)) {
+    task_callback_ = task_callback;
+  }
   void SetTaskCallbackArg(void *task_callback_arg) {
     task_callback_arg_ = task_callback_arg;
   }

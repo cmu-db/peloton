@@ -225,7 +225,7 @@ class ProtocolHandler {
   int rows_affected_ = 0;
 
   std::vector<type::Value> param_values_;
-
+  
   void ExecExecuteMessageGetResult(ResultType status);
 
   void ExecQueryMessageGetResult(ResultType status);
