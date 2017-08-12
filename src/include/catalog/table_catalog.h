@@ -28,7 +28,10 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
+#include "catalog/column_catalog.h"
+#include "catalog/index_catalog.h"
 #include "executor/logical_tile.h"
+#include <unordered_map>
 
 namespace peloton {
 namespace catalog {
@@ -36,24 +39,47 @@ namespace catalog {
 class TableCatalogObject {
  public:
   TableCatalogObject()
-      : table_oid(INVALID_OID), table_name(), database_oid(INVALID_OID) {}
-  TableCatalogObject(std::unique_ptr<executor::LogicalTile> tuple)
-      : table_oid(tuple->GetValue(0, 0).GetAs<oid_t>()),
-        table_name(tuple->GetValue(0, 1).ToString()),
-        database_oid(tuple->GetValue(0, 2).GetAs<oid_t>()) {}
+      : table_oid(INVALID_OID),
+        table_name(),
+        database_oid(INVALID_OID),
+        index_objects(),
+        column_objects(),
+        valid_index_objects(false),
+        valid_column_objects(false),
+        txn(nullptr) {}
+  TableCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn)
+      : table_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
+        table_name(tile->GetValue(0, 1).ToString()),
+        database_oid(tile->GetValue(0, 2).GetAs<oid_t>()),
+        index_objects(),
+        column_objects(),
+        valid_index_objects(false),
+        valid_column_objects(false),
+        txn(txn) {}
 
   oid_t GetOid() const { return table_oid; }
   std::string GetName() const { return table_name; }
   oid_t GetDatabaseOid() const { return database_oid; }
+  std::unordered_map<oid_t, IndexCatalogObject> GetIndexObjects();
+  std::unordered_map<size_t, ColumnCatalogObject> GetColumnObjects();
 
   // table oid
-  const oid_t table_oid;
+  oid_t table_oid;
 
   // table name
   std::string table_name;
 
   // database oid
-  const oid_t database_oid;
+  oid_t database_oid;
+
+  std::unordered_map<oid_t, IndexCatalogObject> index_objects;
+  std::unordered_map<size_t, ColumnCatalogObject> column_objects;
+
+  bool valid_index_objects;
+  bool valid_column_objects;
+
+  // Pointer to its corresponding transaction
+  concurrency::Transaction *txn;
 };
 
 class TableCatalog : public AbstractCatalog {

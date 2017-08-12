@@ -34,9 +34,9 @@ namespace catalog {
 class DatabaseCatalogObject {
  public:
   DatabaseCatalogObject() : database_oid(INVALID_OID), database_name() {}
-  DatabaseCatalogObject(std::unique_ptr<executor::LogicalTile> tuple)
-      : database_oid(tuple->GetValue(0, 0).GetAs<oid_t>()),
-        database_name(tuple->GetValue(0, 1).ToString()) {}
+  DatabaseCatalogObject(executor::LogicalTile *tile)
+      : database_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
+        database_name(tile->GetValue(0, 1).ToString()) {}
 
   oid_t GetOid() const { return database_oid; }
   std::string GetDBName() const { return database_name; }

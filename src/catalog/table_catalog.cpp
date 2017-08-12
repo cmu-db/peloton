@@ -12,13 +12,29 @@
 
 #include "catalog/table_catalog.h"
 
-#include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 
 namespace peloton {
 namespace catalog {
+
+std::unordered_map<oid_t, IndexCatalogObject>
+TableCatalogObject::GetIndexObjects() {
+  if (!valid_index_objects) {
+    index_objects =
+        IndexCatalog::GetInstance()->GetIndexesByTableOid(table_oid, txn);
+  }
+  return index_objects;
+}
+
+std::unordered_map<size_t, ColumnCatalogObject>
+TableCatalogObject::GetColumnObjects() {
+  if (!valid_column_objects) {
+    ColumnCatalog::GetInstance()->GetColumnsByTableOid(table_oid, txn);
+  }
+  return column_objects;
+}
 
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
@@ -135,7 +151,7 @@ const TableCatalogObject TableCatalog::GetTableByOid(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return TableCatalogObject(std::move((*result_tiles)[0]));
+    return TableCatalogObject((*result_tiles)[0].get(), txn);
   } else {
     LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
   }
@@ -164,7 +180,7 @@ const TableCatalogObject TableCatalog::GetTableByName(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return TableCatalogObject(std::move((*result_tiles)[0]));
+    return TableCatalogObject((*result_tiles)[0].get(), txn);
   } else {
     LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
               table_name.c_str());
