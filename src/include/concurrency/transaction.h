@@ -22,6 +22,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "type/types.h"
+#include "catalog/catalog_cache.h"
 
 namespace peloton {
 
@@ -40,29 +41,22 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction(const size_t thread_id,
-              const IsolationLevelType isolation,
+  Transaction(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id);
 
-  Transaction(const size_t thread_id,
-              const IsolationLevelType isolation,
-              const cid_t &read_id, 
-              const cid_t &commit_id);
+  Transaction(const size_t thread_id, const IsolationLevelType isolation,
+              const cid_t &read_id, const cid_t &commit_id);
 
   ~Transaction();
 
  private:
-
-  void Init(const size_t thread_id, 
-            const IsolationLevelType isolation, 
+  void Init(const size_t thread_id, const IsolationLevelType isolation,
             const cid_t &read_id) {
     Init(thread_id, isolation, read_id, read_id);
   }
 
-  void Init(const size_t thread_id, 
-            const IsolationLevelType isolation, 
-            const cid_t &read_id, 
-            const cid_t &commit_id);
+  void Init(const size_t thread_id, const IsolationLevelType isolation,
+            const cid_t &read_id, const cid_t &commit_id);
 
  public:
   //===--------------------------------------------------------------------===//
@@ -99,7 +93,6 @@ class Transaction : public Printable {
   void ExecOnCommitTriggers();
 
   bool IsInRWSet(const ItemPointer &location) {
-
     oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
@@ -114,9 +107,7 @@ class Transaction : public Printable {
 
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
-  inline std::shared_ptr<GCSet> GetGCSetPtr() {
-    return gc_set_;
-  }
+  inline std::shared_ptr<GCSet> GetGCSetPtr() { return gc_set_; }
 
   inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
 
@@ -137,7 +128,7 @@ class Transaction : public Printable {
     return isolation_level_;
   }
 
-
+  catalog::CatalogCache catalog_cache;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -155,7 +146,8 @@ class Transaction : public Printable {
   cid_t read_id_;
 
   // commit id
-  // this id determines the id attached to the tuple version written by the transaction.
+  // this id determines the id attached to the tuple version written by the
+  // transaction.
   cid_t commit_id_;
 
   // epoch id can be extracted from read id.
@@ -176,7 +168,6 @@ class Transaction : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
-
 };
 
 }  // namespace concurrency

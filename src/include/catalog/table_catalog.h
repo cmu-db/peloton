@@ -38,8 +38,8 @@ namespace catalog {
 
 class TableCatalogObject {
  public:
-  TableCatalogObject()
-      : table_oid(INVALID_OID),
+  TableCatalogObject(oid_t table_oid = INVALID_OID)
+      : table_oid(table_oid),  // INVALID_OID represents an invalid object
         table_name(),
         database_oid(INVALID_OID),
         index_objects(),
