@@ -86,13 +86,21 @@ class TestingSQLUtil {
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
 
   static tcop::TrafficCop traffic_cop_;
+  static std::atomic_int* counter_;
   inline static void UtilTestTaskCallback(void *arg) {
-    int *count = static_cast<int*>(arg);
+    std::atomic_int *count = static_cast<std::atomic_int>(arg);
     *count--;
   }
   inline TestingSQLUtil() {
-    int count = 1;
-    traffic_cop_.SetTaskCallback(UtilTestTaskCallback, &count);
+    traffic_cop_.SetTaskCallbackPtr(UtilTestTaskCallback);
+  }
+  inline static void SetTrafficCopCounter() {
+    counter_ = 1;
+  }
+  inline static void ContinueAfterComplete() {
+    while (counter_->load() == 1) {
+      usleep(10);
+    }
   }
 };
 }  // namespace test
