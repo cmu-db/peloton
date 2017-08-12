@@ -368,7 +368,7 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
     query_ = query;
     query_type_ = query_type;
 
-    switch (query_type) {
+    switch (query_type_) {
       case QueryType::QUERY_PREPARE:
       {
         std::string statement_name;
@@ -376,7 +376,7 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
         boost::split(tokens, query_, boost::is_any_of("(), "));
         statement_name = tokens.at(1);
         std::size_t pos = boost::to_upper_copy(query_).find("AS");
-        std::string statement_query = query.substr(pos + 3);
+        std::string statement_query = query_.substr(pos + 3);
         boost::trim(statement_query);
 
         // Prepare statement
@@ -495,7 +495,7 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
     SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
     // The response to the SimpleQueryCommand is the query string.
-    CompleteCommand(query, query_type, rows_affected);
+    CompleteCommand(query_, query_type_, rows_affected);
   } else {
     SendEmptyQueryResponse();
   }
