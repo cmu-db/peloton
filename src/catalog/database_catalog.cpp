@@ -110,7 +110,7 @@ const DatabaseCatalogObject DatabaseCatalog::GetDatabaseObjectByOid(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return DatabaseCatalogObject(std::move((*result_tiles)[0]));
+    return DatabaseCatalogObject((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
               database_oid);
@@ -131,7 +131,7 @@ const DatabaseCatalogObject DatabaseCatalog::GetDatabaseObjectByName(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return DatabaseCatalogObject(std::move((*result_tiles)[0]));
+    return DatabaseCatalogObject((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu database tiles with name %s", result_tiles->size(),
               database_name.c_str());

@@ -236,8 +236,9 @@ const ColumnCatalogObject ColumnCatalog::GetColumnById(
   return ColumnCatalogObject();
 }
 
-const std::vector<ColumnCatalogObject> ColumnCatalog::GetColumnsByTableOid(
-    oid_t table_oid, concurrency::Transaction *txn) {
+const std::unordered_map<size_t, ColumnCatalogObject>
+ColumnCatalog::GetColumnsByTableOid(oid_t table_oid,
+                                    concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 1;  // Index of table_oid & column_id
   std::vector<type::Value> values;
@@ -246,10 +247,14 @@ const std::vector<ColumnCatalogObject> ColumnCatalog::GetColumnsByTableOid(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::vector<ColumnCatalogObject> column_objects;
+  std::unordered_map<size_t, ColumnCatalogObject> column_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      column_objects.emplace_back(ColumnCatalogObject(tile.get(), tuple_id));
+      auto column_object = ColumnCatalogObject(tile.get(), tuple_id);
+      column_objects.insert(
+          std::make_pair(column_object.column_id, column_object));
+      // column_objects[column_object.column_id] =
+      //     ColumnCatalogObject(tile.get(), tuple_id);
     }
   }
 

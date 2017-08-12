@@ -43,7 +43,7 @@ class ColumnCatalogObject {
   ColumnCatalogObject()
       : table_oid(INVALID_OID),
         column_name(),
-        column_id(INVALID_OID),
+        column_id(0),
         column_offset(0),
         column_type(type::TypeId::INVALID),
         is_inlined(false),
@@ -52,21 +52,21 @@ class ColumnCatalogObject {
   ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0)
       : table_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
         column_name(tile->GetValue(tupleId, 1).ToString()),
-        column_id(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
+        column_id(tile->GetValue(tupleId, 2).GetAs<size_t>()),
         column_offset(tile->GetValue(tupleId, 3).GetAs<size_t>()),
         column_type(tile->GetValue(tupleId, 4).GetAs<type::TypeId>()),
         is_inlined(tile->GetValue(tupleId, 5).GetAs<bool>()),
         is_primary(tile->GetValue(tupleId, 6).GetAs<bool>()),
         is_not_null(tile->GetValue(tupleId, 7).GetAs<bool>()) {}
 
-  const oid_t table_oid;
-  const std::string column_name;
-  const oid_t column_id;
-  const size_t column_offset;
-  const type::TypeId column_type;
-  const bool is_inlined;
-  const bool is_primary;
-  const bool is_not_null;
+  oid_t table_oid;
+  std::string column_name;
+  size_t column_id;
+  size_t column_offset;
+  type::TypeId column_type;
+  bool is_inlined;
+  bool is_primary;
+  bool is_not_null;
 };
 
 class ColumnCatalog : public AbstractCatalog {
@@ -101,7 +101,7 @@ class ColumnCatalog : public AbstractCatalog {
                                             concurrency::Transaction *txn);
   const ColumnCatalogObject GetColumnById(oid_t table_oid, oid_t column_id,
                                           concurrency::Transaction *txn);
-  const std::vector<ColumnCatalogObject> GetColumnsByTableOid(
+  const std::unordered_map<size_t, ColumnCatalogObject> GetColumnsByTableOid(
       oid_t table_oid, concurrency::Transaction *txn);
 
   oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,

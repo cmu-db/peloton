@@ -48,7 +48,7 @@ class IndexCatalogObject {
         index_type(IndexType::INVALID),
         index_constraint(IndexConstraintType::INVALID),
         unique_keys(false),
-        indexed_attributes() {}
+        key_attrs() {}
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
   const oid_t index_oid;
@@ -57,7 +57,7 @@ class IndexCatalogObject {
   const IndexType index_type;
   const IndexConstraintType index_constraint;
   const bool unique_keys;
-  std::vector<oid_t> indexed_attributes;
+  std::vector<oid_t> key_attrs;
 };
 
 class IndexCatalog : public AbstractCatalog {
@@ -88,7 +88,7 @@ class IndexCatalog : public AbstractCatalog {
                                          concurrency::Transaction *txn);
   const IndexCatalogObject GetIndexByName(const std::string &index_name,
                                           concurrency::Transaction *txn);
-  const std::vector<IndexCatalogObject> GetIndexesByTableOid(
+  const std::unordered_map<oid_t, IndexCatalogObject> GetIndexesByTableOid(
       oid_t table_oid, concurrency::Transaction *txn);
 
   std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);

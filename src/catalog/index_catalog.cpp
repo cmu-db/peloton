@@ -34,9 +34,9 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   std::string tok;
 
   while (std::getline(ss, tok, ' ')) {
-    indexed_attributes.push_back(std::stoi(tok));
+    key_attrs.push_back(std::stoi(tok));
   }
-  LOG_DEBUG("the size for indexed key is %lu", indexed_attributes.size());
+  LOG_DEBUG("the size for indexed key is %lu", key_attrs.size());
 }
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
@@ -217,8 +217,9 @@ const IndexCatalogObject IndexCatalog::GetIndexByName(
 * @param   txn  Transaction
 * @return  a vector of index catalog objects
 */
-const std::vector<IndexCatalogObject> IndexCatalog::GetIndexesByTableOid(
-    oid_t table_oid, concurrency::Transaction *txn) {
+const std::unordered_map<oid_t, IndexCatalogObject>
+IndexCatalog::GetIndexesByTableOid(oid_t table_oid,
+                                   concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
@@ -227,10 +228,13 @@ const std::vector<IndexCatalogObject> IndexCatalog::GetIndexesByTableOid(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::vector<IndexCatalogObject> index_objects;
+  std::unordered_map<oid_t, IndexCatalogObject> index_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      index_objects.emplace_back(IndexCatalogObject(tile.get(), tuple_id));
+      auto index_object = IndexCatalogObject(tile.get(), tuple_id);
+      index_objects.insert(
+          std::make_pair(index_object.index_oid, index_object));
+      // index_objects[index_object.index_oid] = index_object;
     }
   }
 
