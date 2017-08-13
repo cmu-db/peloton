@@ -43,6 +43,8 @@ class TrafficCop {
  public:
   TrafficCop();
   TrafficCop(void(* task_callback)(void *), void *task_callback_arg);
+
+
   ~TrafficCop();
 
   // static singleton method used by tests
