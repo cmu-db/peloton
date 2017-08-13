@@ -123,8 +123,6 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  const std::vector<Constraint> &constraints,
                                  type::AbstractPool *pool,
                                  concurrency::Transaction *txn) {
-  LOG_DEBUG("Inserting column %s into table %u", column_name.c_str(),
-            table_oid);
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
