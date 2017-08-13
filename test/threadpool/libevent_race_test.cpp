@@ -123,7 +123,7 @@ void eventCallback(UNUSED_ATTRIBUTE evutil_socket_t fd,
       task_v.push_back(std::make_shared<threadpool::Task>(shortTask, &params.at(i)));
     }
   }
-  tq->EnqueueTask(task_v);
+//  tq->EnqueueTask(task_v);
 
   count++;
   LOG_INFO("master completes callback, count: %c", count);
@@ -162,20 +162,20 @@ class CallerThread {
 
 // For this test, libevent thread should be only activated by the callerThread
 // after its previous tasks are completed by worker threads.
-TEST_F(WorkerPoolTests, LibeventActivateTest) {
-  const size_t queue_size = 50;
-  const size_t pool_size = 4;
-  threadpool::TaskQueue tq(queue_size);
-  threadpool::WorkerPool wp(pool_size, &tq);
-  MyLibeventThread libeventThread(&tq);
-  CallerThread callerThread(&libeventThread);
-  libeventThread.startMyLibeventThread();
-
-  event_free(libeventThread.getEvent());
-  event_base_free(libeventThread.getEventBase());
-
-  wp.Shutdown();
-}
+//TEST_F(WorkerPoolTests, LibeventActivateTest) {
+//  const size_t queue_size = 50;
+//  const size_t pool_size = 4;
+//  threadpool::TaskQueue tq(queue_size);
+//  threadpool::WorkerPool wp(pool_size, &tq);
+//  MyLibeventThread libeventThread(&tq);
+//  CallerThread callerThread(&libeventThread);
+//  libeventThread.startMyLibeventThread();
+//
+//  event_free(libeventThread.getEvent());
+//  event_base_free(libeventThread.getEventBase());
+//
+//  wp.Shutdown();
+//}
 
 } // end of test
 } // end of peloton

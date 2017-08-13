@@ -42,6 +42,9 @@ class TrafficCop {
 
  public:
   TrafficCop();
+  inline TrafficCop(void(* task_callback)(void *)) {
+    task_callback_ = task_callback;
+  }
   ~TrafficCop();
 
   // static singleton method used by tests
@@ -116,6 +119,8 @@ class TrafficCop {
   void SetTaskCallbackArg(void *task_callback_arg) {
     task_callback_arg_ = task_callback_arg;
   }
+
+  executor::ExecuteResult p_status_;
 //  struct event* event_;
  private:
 
@@ -127,7 +132,7 @@ class TrafficCop {
 
   // flag of psql protocol
   // executePlan arguments
-  executor::ExecuteResult p_status_;
+//  executor::ExecuteResult p_status_;
 
   std::shared_ptr<planner::AbstractPlan> plan_;
 
