@@ -67,6 +67,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, rows_changed, error_message);
@@ -102,6 +104,8 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
+    //SetTrafficCopCounter();
+    counter_.store(1);
     auto status = traffic_cop_.ExecuteStatementPlan(plan, params, result,
                                                     result_format);
     if (status.m_result == ResultType::QUEUING) {
@@ -149,6 +153,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, rows_changed, error_message);
@@ -181,6 +187,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, rows_changed, error_message);
@@ -194,7 +202,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   return status;
 }
 
-tcop::TrafficCop TestingSQLUtil::traffic_cop_;
+tcop::TrafficCop TestingSQLUtil::traffic_cop_(UtilTestTaskCallback);
+std::atomic_int TestingSQLUtil::counter_;
 
 }  // namespace test
 }  // namespace peloton
