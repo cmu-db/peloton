@@ -25,6 +25,7 @@ namespace optimizer {
 class AbstractOptimizer;
 }
 
+
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
@@ -83,21 +84,18 @@ class TestingSQLUtil {
 
   // Create a random number
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
+  inline static void UtilTestTaskCallback(void *arg) {
+    std::atomic_int *count = static_cast<std::atomic_int*>(arg);
+    count->store(0);
+  }
 
   static tcop::TrafficCop traffic_cop_;
-  static std::atomic_int* counter_;
-  inline static void UtilTestTaskCallback(void *arg) {
-    std::atomic_int *count = static_cast<std::atomic_int>(arg);
-    *count--;
-  }
-  inline TestingSQLUtil() {
-    traffic_cop_.SetTaskCallbackPtr(UtilTestTaskCallback);
-  }
-  inline static void SetTrafficCopCounter() {
-    counter_ = 1;
-  }
+  static std::atomic_int counter_;
+//  inline static void SetTrafficCopCounter() {
+//    counter_.store(1);
+//  }
   inline static void ContinueAfterComplete() {
-    while (counter_->load() == 1) {
+    while (counter_.load() == 1) {
       usleep(10);
     }
   }
