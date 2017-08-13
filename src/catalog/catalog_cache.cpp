@@ -32,7 +32,7 @@ const TableCatalogObject CatalogCache::GetTableByOid(
   if (it == table_objects_cache.end()) {
     if (txn == nullptr) return TableCatalogObject();
     auto table_object =
-        TableCatalog::GetInstance()->GetTableByOid(table_oid, txn);
+        TableCatalog::GetInstance()->GetTableObjectByOid(table_oid, txn);
     table_objects_cache.insert(std::make_pair(table_oid, table_object));
   }
   return it->second;

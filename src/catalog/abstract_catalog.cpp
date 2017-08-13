@@ -67,11 +67,11 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       catalog_table_name, CATALOG_DATABASE_OID, txn);
 
   // set catalog_table_
-  try{
+  try {
     catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
-      CATALOG_DATABASE_OID, catalog_table_oid);
+        CATALOG_DATABASE_OID, catalog_table_oid);
   } catch (CatalogException &e) {
-      LOG_TRACE("Can't find table %d! Return false", catalog_table_oid);
+    LOG_TRACE("Can't find table %d! Return false", catalog_table_oid);
   }
 }
 

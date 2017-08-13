@@ -96,13 +96,14 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  const ColumnCatalogObject GetColumnByName(oid_t table_oid,
-                                            const std::string &column_name,
-                                            concurrency::Transaction *txn);
-  const ColumnCatalogObject GetColumnById(oid_t table_oid, oid_t column_id,
-                                          concurrency::Transaction *txn);
-  const std::unordered_map<size_t, ColumnCatalogObject> GetColumnsByTableOid(
-      oid_t table_oid, concurrency::Transaction *txn);
+  const ColumnCatalogObject GetColumnObjectByName(
+      oid_t table_oid, const std::string &column_name,
+      concurrency::Transaction *txn);
+  const ColumnCatalogObject GetColumnObjectById(oid_t table_oid,
+                                                oid_t column_id,
+                                                concurrency::Transaction *txn);
+  const std::unordered_map<size_t, ColumnCatalogObject>
+  GetColumnObjectsByTableOid(oid_t table_oid, concurrency::Transaction *txn);
 
   oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,
                         concurrency::Transaction *txn);

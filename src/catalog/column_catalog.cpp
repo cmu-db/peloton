@@ -123,6 +123,8 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  const std::vector<Constraint> &constraints,
                                  type::AbstractPool *pool,
                                  concurrency::Transaction *txn) {
+  LOG_DEBUG("Inserting column %s into table %u", column_name.c_str(),
+            table_oid);
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -192,7 +194,7 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 * @param   txn  Transaction
 * @return  column catalog object
 */
-const ColumnCatalogObject ColumnCatalog::GetColumnByName(
+const ColumnCatalogObject ColumnCatalog::GetColumnObjectByName(
     oid_t table_oid, const std::string &column_name,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
@@ -215,7 +217,7 @@ const ColumnCatalogObject ColumnCatalog::GetColumnByName(
   return ColumnCatalogObject();
 }
 
-const ColumnCatalogObject ColumnCatalog::GetColumnById(
+const ColumnCatalogObject ColumnCatalog::GetColumnObjectById(
     oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 1;  // Index of table_oid & column_id
@@ -237,10 +239,10 @@ const ColumnCatalogObject ColumnCatalog::GetColumnById(
 }
 
 const std::unordered_map<size_t, ColumnCatalogObject>
-ColumnCatalog::GetColumnsByTableOid(oid_t table_oid,
-                                    concurrency::Transaction *txn) {
+ColumnCatalog::GetColumnObjectsByTableOid(oid_t table_oid,
+                                          concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
-  oid_t index_offset = 1;  // Index of table_oid & column_id
+  oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
