@@ -11,10 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
-#include "catalog/database_metrics_catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/query_metrics_catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/column_catalog.h"
+#include "catalog/database_metrics_catalog.h"
+#include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/harness.h"
 #include "common/logger.h"
@@ -64,9 +66,9 @@ TEST_F(CatalogTests, CreatingDatabase) {
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
   auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
@@ -146,6 +148,40 @@ TEST_F(CatalogTests, CreatingTable) {
   //               ->GetSchema()
   //               ->GetLength(),
   //           72);
+}
+
+TEST_F(CatalogTests, TableObject) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  oid_t database_oid =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid("EMP_DB", txn);
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObjectByName("EMP_DB",
+                                                                       txn);
+  EXPECT_EQ(database_object.database_oid, database_oid);
+
+  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
+      "department_table", database_oid, txn);
+  auto table_object =
+      catalog::TableCatalog::GetInstance()->GetTableObjectByName(
+          "department_table", database_oid, txn);
+  EXPECT_EQ(table_object.table_oid, table_oid);
+  EXPECT_EQ(table_object.database_oid, database_oid);
+
+  auto index_objects = table_object.GetIndexObjects();
+  auto column_objects = table_object.GetColumnObjects();
+  EXPECT_EQ(index_objects.size(), 1);
+  EXPECT_EQ(column_objects.size(), 2);
+
+  auto column_name =
+      catalog::ColumnCatalog::GetInstance()->GetColumnName(table_oid, 0, txn);
+  EXPECT_EQ(column_name, "id");
+  column_name =
+      catalog::ColumnCatalog::GetInstance()->GetColumnName(table_oid, 1, txn);
+  EXPECT_EQ(column_name, "name");
+
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(CatalogTests, DroppingTable) {
