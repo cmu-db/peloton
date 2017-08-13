@@ -171,7 +171,7 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-const IndexCatalogObject IndexCatalog::GetIndexByOid(
+const IndexCatalogObject IndexCatalog::GetIndexObjectByOid(
     oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 0;  // Index of index_oid
@@ -190,7 +190,7 @@ const IndexCatalogObject IndexCatalog::GetIndexByOid(
   return IndexCatalogObject();  // return empty object with INVALID_OID
 }
 
-const IndexCatalogObject IndexCatalog::GetIndexByName(
+const IndexCatalogObject IndexCatalog::GetIndexObjectByName(
     const std::string &index_name, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 1;  // Index of index_name & table_oid
@@ -218,8 +218,8 @@ const IndexCatalogObject IndexCatalog::GetIndexByName(
 * @return  a vector of index catalog objects
 */
 const std::unordered_map<oid_t, IndexCatalogObject>
-IndexCatalog::GetIndexesByTableOid(oid_t table_oid,
-                                   concurrency::Transaction *txn) {
+IndexCatalog::GetIndexObjectsByTableOid(oid_t table_oid,
+                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;

@@ -23,7 +23,7 @@ std::unordered_map<oid_t, IndexCatalogObject>
 TableCatalogObject::GetIndexObjects() {
   if (!valid_index_objects) {
     index_objects =
-        IndexCatalog::GetInstance()->GetIndexesByTableOid(table_oid, txn);
+        IndexCatalog::GetInstance()->GetIndexObjectsByTableOid(table_oid, txn);
   }
   return index_objects;
 }
@@ -31,7 +31,7 @@ TableCatalogObject::GetIndexObjects() {
 std::unordered_map<size_t, ColumnCatalogObject>
 TableCatalogObject::GetColumnObjects() {
   if (!valid_column_objects) {
-    ColumnCatalog::GetInstance()->GetColumnsByTableOid(table_oid, txn);
+    ColumnCatalog::GetInstance()->GetColumnObjectsByTableOid(table_oid, txn);
   }
   return column_objects;
 }
@@ -140,7 +140,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
 * @param   txn     Transaction
 * @return  table catalog object
 */
-const TableCatalogObject TableCatalog::GetTableByOid(
+const TableCatalogObject TableCatalog::GetTableObjectByOid(
     oid_t table_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2});
   oid_t index_offset = 0;  // Index of table_oid
@@ -166,7 +166,7 @@ const TableCatalogObject TableCatalog::GetTableByOid(
 * @param   txn     Transaction
 * @return  table catalog object
 */
-const TableCatalogObject TableCatalog::GetTableByName(
+const TableCatalogObject TableCatalog::GetTableObjectByName(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2});

@@ -64,7 +64,7 @@ class TableCatalogObject {
   std::unordered_map<size_t, ColumnCatalogObject> GetColumnObjects();
 
   // table oid
-  oid_t table_oid;
+  const oid_t table_oid;
 
   // table name
   std::string table_name;
@@ -72,6 +72,7 @@ class TableCatalogObject {
   // database oid
   oid_t database_oid;
 
+ private:
   std::unordered_map<oid_t, IndexCatalogObject> index_objects;
   std::unordered_map<size_t, ColumnCatalogObject> column_objects;
 
@@ -104,11 +105,11 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
-  const TableCatalogObject GetTableByOid(oid_t table_oid,
-                                         concurrency::Transaction *txn);
-  const TableCatalogObject GetTableByName(const std::string &table_name,
-                                          oid_t database_oid,
-                                          concurrency::Transaction *txn);
+  const TableCatalogObject GetTableObjectByOid(oid_t table_oid,
+                                               concurrency::Transaction *txn);
+  const TableCatalogObject GetTableObjectByName(const std::string &table_name,
+                                                oid_t database_oid,
+                                                concurrency::Transaction *txn);
 
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);

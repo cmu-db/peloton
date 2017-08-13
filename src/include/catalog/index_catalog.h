@@ -84,11 +84,11 @@ class IndexCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  const IndexCatalogObject GetIndexByOid(oid_t index_oid,
-                                         concurrency::Transaction *txn);
-  const IndexCatalogObject GetIndexByName(const std::string &index_name,
-                                          concurrency::Transaction *txn);
-  const std::unordered_map<oid_t, IndexCatalogObject> GetIndexesByTableOid(
+  const IndexCatalogObject GetIndexObjectByOid(oid_t index_oid,
+                                               concurrency::Transaction *txn);
+  const IndexCatalogObject GetIndexObjectByName(const std::string &index_name,
+                                                concurrency::Transaction *txn);
+  const std::unordered_map<oid_t, IndexCatalogObject> GetIndexObjectsByTableOid(
       oid_t table_oid, concurrency::Transaction *txn);
 
   std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);
