@@ -21,25 +21,25 @@
 namespace peloton {
 namespace test {
 
-class MonoQueuePoolTests : public PelotonTest {};
-std::mutex m;
-std::condition_variable cv;
+//class MonoQueuePoolTests : public PelotonTest {};
+//std::mutex m;
+//std::condition_variable cv;
+//
+//void CallBackFuncSync(UNUSED_ATTRIBUTE void *arg) {
+//  LOG_DEBUG("Start call back");
+//  int* num = (int*)arg;
+//  usleep(1000000);
+//  (*num)++;
+//  LOG_DEBUG("Finish call back");
+//}
 
-void CallBackFuncSync(UNUSED_ATTRIBUTE void *arg) {
-  LOG_DEBUG("Start call back");
-  int* num = (int*)arg;
-  usleep(1000000);
-  (*num)++;
-  LOG_DEBUG("Finish call back");
-}
-
-TEST_F(MonoQueuePoolTests, SyncExecuteTest) {
-  LOG_DEBUG("Start synchronous execution test");
-  int number = 1;
-  threadpool::MonoQueuePool::GetInstance().SubmitTask(CallBackFuncSync, &number);
-  EXPECT_EQ(number, 2);
-  LOG_DEBUG("Finish synchronous execution test");
-}
+//TEST_F(MonoQueuePoolTests, SyncExecuteTest) {
+//  LOG_DEBUG("Start synchronous execution test");
+//  int number = 1;
+//  threadpool::MonoQueuePool::GetInstance().SubmitTask(CallBackFuncSync, &number);
+//  EXPECT_EQ(number, 2);
+//  LOG_DEBUG("Finish synchronous execution test");
+//}
 
 } // namespace test
 } // namespace peloton
