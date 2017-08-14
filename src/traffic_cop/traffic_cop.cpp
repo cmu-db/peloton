@@ -53,6 +53,11 @@ TrafficCop::TrafficCop() {
 //  result_ = ResultType::QUEUING;
 }
 
+TrafficCop::TrafficCop(void(* task_callback)(void *), void *task_callback_arg):
+    task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
+  optimizer_.reset(new optimizer::Optimizer);
+}
+
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;
   // clear out the stack
@@ -249,6 +254,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     PL_ASSERT(plan);
+    PL_ASSERT(task_callback_);
+    PL_ASSERT(task_callback_arg_);
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
 //    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
@@ -330,8 +337,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
-  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
+  LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
+  LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
@@ -353,17 +360,17 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // Begin new transaction when received single-statement query or "BEGIN" from multi-statement query
     if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
-      LOG_TRACE("BEGIN");
+      LOG_DEBUG("BEGIN");
       single_statement_txn_ = false;
     } else {
       // single statement
-      LOG_TRACE("SINGLE TXN");
+      LOG_DEBUG("SINGLE TXN");
       single_statement_txn_ = true;
     }
     auto txn = txn_manager.BeginTransaction(thread_id);
     // this shouldn't happen
     if (txn == nullptr) {
-      LOG_TRACE("Begin txn failed");
+      LOG_DEBUG("Begin txn failed");
     }
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
@@ -375,9 +382,16 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    LOG_TRACE("Optimizer Build Peloton Plan Tree...");
+    LOG_DEBUG("Optimizer Build Peloton Plan Tree...");
+    LOG_DEBUG("sql_stmt_num: %lu", sql_stmt->GetNumStatements());
+    for (auto stmt:sql_stmt->GetStatements()) {
+      LOG_DEBUG("%s",stmt->GetInfo().c_str());
+    }
+    LOG_DEBUG("tcop_txn_state_: %lu", tcop_txn_state_.size());
+    PL_ASSERT(optimizer_);
     auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
+    LOG_DEBUG("1");
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
     const std::set<oid_t> table_oids =
@@ -385,7 +399,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     statement->SetReferencedTables(table_oids);
 
     for (auto stmt : sql_stmt->GetStatements()) {
-      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
+      LOG_DEBUG("SQLStatement: %s", stmt->GetInfo().c_str());
       if (stmt->GetType() == StatementType::SELECT) {
         auto tuple_descriptor = GenerateTupleDescriptor(stmt);
         statement->SetTupleDescriptor(tuple_descriptor);
@@ -395,8 +409,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+      LOG_DEBUG("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_DEBUG("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
     return statement;

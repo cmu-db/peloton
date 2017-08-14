@@ -202,8 +202,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   return status;
 }
 
-tcop::TrafficCop TestingSQLUtil::traffic_cop_(UtilTestTaskCallback);
 std::atomic_int TestingSQLUtil::counter_;
+tcop::TrafficCop TestingSQLUtil::traffic_cop_(UtilTestTaskCallback, &counter_);
 
 }  // namespace test
 }  // namespace peloton

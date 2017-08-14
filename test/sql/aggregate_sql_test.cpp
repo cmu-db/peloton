@@ -36,7 +36,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
-
+  LOG_DEBUG("execute one query");
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
