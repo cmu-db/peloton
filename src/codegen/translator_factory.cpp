@@ -26,6 +26,7 @@
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
+#include "codegen/expression/function_translator.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
@@ -159,6 +160,11 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::OPERATOR_CASE_EXPR: {
       auto &case_exp = static_cast<const expression::CaseExpression &>(exp);
       translator = new CaseTranslator(case_exp, context);
+      break;
+    }
+    case ExpressionType::FUNCTION: {
+      auto &func_exp = static_cast<const expression::FunctionExpression &>(exp);
+      translator = new FunctionTranslator(func_exp, context);
       break;
     }
     default: {
