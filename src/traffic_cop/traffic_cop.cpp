@@ -219,6 +219,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
     LOG_TRACE("Submit Task into MonoQueuePool");
+
+
     is_queuing_ = true;
     return p_status_;
   } else {

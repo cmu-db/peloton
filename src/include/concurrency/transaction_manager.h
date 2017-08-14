@@ -53,7 +53,6 @@ class TransactionManager {
     isolation_level_ = isolation;
     conflict_avoidance_ = conflict;
   }
-
   // This method is used for avoiding concurrent inserts.
   bool IsOccupied(
       Transaction *const current_txn, 
