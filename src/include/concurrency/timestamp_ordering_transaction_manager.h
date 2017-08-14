@@ -26,19 +26,14 @@ namespace concurrency {
 
 class TimestampOrderingTransactionManager : public TransactionManager {
  public:
-  TimestampOrderingTransactionManager() {
-    LOG_DEBUG("Constructor of TimestampOrderingTransactionManager");
-  }
+  TimestampOrderingTransactionManager() {}
 
-  virtual ~TimestampOrderingTransactionManager() {
-    LOG_DEBUG("Destructor of TimestampOrderingTransactionManager");
-  }
+  virtual ~TimestampOrderingTransactionManager() {}
 
   static TimestampOrderingTransactionManager &GetInstance(
       const ProtocolType protocol,
       const IsolationLevelType isolation, 
       const ConflictAvoidanceType conflict);
-  virtual void babyPrint();
   // This method tests whether the current transaction is the owner of this version.
   virtual bool IsOwner(
       Transaction *const current_txn,

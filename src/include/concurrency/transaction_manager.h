@@ -42,13 +42,9 @@ class Transaction;
 
 class TransactionManager {
  public:
-  TransactionManager() {
-    LOG_DEBUG("Constructor of TransactionManager");
-  }
+  TransactionManager() {}
 
-  virtual ~TransactionManager() {
-    LOG_DEBUG("Destructor of TransactionManager");
-  }
+  virtual ~TransactionManager() {}
 
   void Init(const ProtocolType protocol,
             const IsolationLevelType isolation, 
@@ -57,7 +53,6 @@ class TransactionManager {
     isolation_level_ = isolation;
     conflict_avoidance_ = conflict;
   }
-  virtual void babyPrint();
   // This method is used for avoiding concurrent inserts.
   bool IsOccupied(
       Transaction *const current_txn, 

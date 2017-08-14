@@ -31,10 +31,6 @@ IsolationLevelType TransactionManager::isolation_level_ =
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
 
-void TransactionManager::babyPrint() {
-  LOG_DEBUG("TransactionManager babyprint");
-}
-
 Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const IsolationLevelType type) {
   
   Transaction *txn = nullptr;

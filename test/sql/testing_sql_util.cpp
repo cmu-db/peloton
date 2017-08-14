@@ -74,6 +74,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
                                     result, rows_changed, error_message);
   if (status == ResultType::QUEUING) {
     ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
   }
   if (status == ResultType::SUCCESS) {
@@ -113,7 +114,6 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       traffic_cop_.ExecuteStatementPlanGetResult();
       status = traffic_cop_.p_status_;
     }
-    traffic_cop_.CommitQueryHelper();
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
              ResultTypeToString(status.m_result).c_str());
@@ -160,6 +160,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
                                     result, rows_changed, error_message);
   if (status == ResultType::QUEUING) {
     ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
   }
   if (status == ResultType::SUCCESS) {
@@ -194,12 +195,24 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
                                     result, rows_changed, error_message);
   if (status == ResultType::QUEUING) {
     ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
   }
   return status;
+}
+
+void TestingSQLUtil::ContinueAfterComplete() {
+  while (TestingSQLUtil::counter_.load() == 1) {
+    usleep(10);
+  }
+}
+
+void TestingSQLUtil::UtilTestTaskCallback(void *arg) {
+  std::atomic_int *count = static_cast<std::atomic_int*>(arg);
+  count->store(0);
 }
 
 std::atomic_int TestingSQLUtil::counter_;

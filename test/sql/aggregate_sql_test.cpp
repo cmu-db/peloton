@@ -79,7 +79,6 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
   // into the table
