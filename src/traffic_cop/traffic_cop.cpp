@@ -141,10 +141,14 @@ ResultType TrafficCop::AbortQueryHelper() {
   if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    LOG_DEBUG("Enter AbortTransaction");
+    txn_manager.babyPrint();
     auto result = txn_manager.AbortTransaction(txn);
+    LOG_DEBUG("Exit abortQueryHelper");
     return result;
   } else {
     // otherwise, the txn has already been aborted
+    LOG_DEBUG("Exit abortQueryHelper");
     return ResultType::ABORTED;
   }
 }

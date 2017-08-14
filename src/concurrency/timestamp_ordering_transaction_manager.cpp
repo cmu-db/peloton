@@ -23,7 +23,9 @@
 
 namespace peloton {
 namespace concurrency {
-
+void TimestampOrderingTransactionManager::babyPrint() {
+  LOG_DEBUG("TimestampOrderingTransactionManager babyprint");
+}
 // timestamp ordering requires a spinlock field for protecting the atomic access
 // to txn_id field and last_reader_cid field.
 Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
@@ -91,7 +93,7 @@ TimestampOrderingTransactionManager::GetInstance(
       const ConflictAvoidanceType conflict) {
 
   static TimestampOrderingTransactionManager txn_manager;
-
+  LOG_DEBUG("Get TimestampOrderingTransactionManager object");
   txn_manager.Init(protocol, isolation, conflict);
 
   return txn_manager;
@@ -920,7 +922,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   // a pre-declared read-only transaction will never abort.
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
-  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_DEBUG("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetReadWriteSet();
