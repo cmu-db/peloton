@@ -371,7 +371,6 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
   EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT));
 
-
   InsertTupleHelper(2333, "LTI");
 
   // TODO: the effect of this operation should be verified automatically.

@@ -190,6 +190,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
     TriggerData trigger_data(trigger_type, &obj, old_tuple, new_tuple);
 
     if (IsOnCommit(exec_type)) {
+      PL_ASSERT(txn != nullptr);
       if (txn->GetOnCommitTriggers() == nullptr) {
         txn->InitOnCommitTriggers();
       }

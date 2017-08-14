@@ -149,7 +149,7 @@ class TriggerList {
   // Insert/Update/Delete are events that invoke triggers
 
   bool ExecTriggers(TriggerType exec_type,
-                    concurrency::Transaction *txn,
+                    concurrency::Transaction *txn = nullptr,
                     storage::Tuple *new_tuple = nullptr,
                     executor::ExecutorContext *executor_context_ = nullptr,
                     storage::Tuple *old_tuple = nullptr,
