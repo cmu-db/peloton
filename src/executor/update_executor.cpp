@@ -153,7 +153,7 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-before-update triggers!");
-      trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_STATEMENT);
+      trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_STATEMENT, current_txn);
     }
   }
 
@@ -196,7 +196,7 @@ bool UpdateExecutor::DExecute() {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW)) {
         LOG_TRACE("target table has per-row-before-update triggers!");
-        trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_ROW);
+        trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_ROW, current_txn);
       }
     }
 
@@ -343,7 +343,8 @@ bool UpdateExecutor::DExecute() {
 
           if (trigger_list != nullptr) {
             LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-            if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW)) {
+            if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW) ||
+                trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_ROW)) {
               std::unique_ptr<storage::Tuple> real_old_tuple(
                   new storage::Tuple(target_table_schema, true));
               std::unique_ptr<storage::Tuple> real_new_tuple(
@@ -357,11 +358,22 @@ bool UpdateExecutor::DExecute() {
                 real_new_tuple->SetValue(column_itr, val, executor_pool);
               }
 
-              LOG_TRACE("target table has per-row-after-update triggers!");
-              trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_ROW,
-                                         real_new_tuple.get(),
-                                         executor_context_,
-                                         real_old_tuple.get());
+              if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW)) {
+                LOG_TRACE("target table has per-row-after-update triggers!");
+                trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_ROW,
+                                           current_txn,
+                                           real_new_tuple.get(),
+                                           executor_context_,
+                                           real_old_tuple.get());
+              }
+              if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_ROW)) {
+                LOG_TRACE("target table has per-row-on-commit-update triggers!");
+                trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_ROW,
+                                           current_txn,
+                                           real_new_tuple.get(),
+                                           executor_context_,
+                                           real_old_tuple.get());
+              }
             }
           }
         }
@@ -378,7 +390,11 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-after-update triggers!");
-      trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_STATEMENT);
+      trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_STATEMENT, current_txn);
+    }
+    if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-on-commit-update triggers!");
+      trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_STATEMENT, current_txn);
     }
   }
   return true;

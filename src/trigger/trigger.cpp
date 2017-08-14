@@ -14,6 +14,7 @@
 #include "trigger/trigger.h"
 #include "expression/constant_value_expression.h"
 #include "catalog/column_catalog.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace trigger {
@@ -156,6 +157,7 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
 }
 
 bool TriggerList::ExecTriggers(TriggerType exec_type,
+                               concurrency::Transaction *txn,
                                storage::Tuple *new_tuple,
                                executor::ExecutorContext *executor_context_,
                                storage::Tuple *old_tuple,
@@ -187,9 +189,18 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
     // Construct trigger data
     TriggerData trigger_data(trigger_type, &obj, old_tuple, new_tuple);
 
-    // apply all triggers on the tuple
-    storage::Tuple* ret = obj.ExecCallTriggerFunc(trigger_data);
-    if (result) *result = ret;
+    if (IsOnCommit(exec_type)) {
+      if (txn->GetOnCommitTriggers() == nullptr) {
+        txn->InitOnCommitTriggers();
+      }
+      // Defer triggers firing until transaction committed
+      txn->GetOnCommitTriggers()->push_back(trigger_data);
+    }
+    else {
+      // apply all triggers on the tuple
+      storage::Tuple *ret = obj.ExecCallTriggerFunc(trigger_data);
+      if (result) *result = ret;
+    }
   }
   return true;
 }

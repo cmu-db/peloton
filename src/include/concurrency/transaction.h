@@ -22,6 +22,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "type/types.h"
+#include "trigger/trigger.h"
 
 namespace peloton {
 namespace concurrency {
@@ -80,8 +81,9 @@ class Transaction : public Printable {
     insert_count_ = 0;
     
     gc_set_.reset(new GCSet());
-  }
 
+    on_commit_triggers_.reset();
+  }
 
  public:
   //===--------------------------------------------------------------------===//
@@ -152,6 +154,14 @@ class Transaction : public Printable {
     return isolation_level_;
   }
 
+  inline std::shared_ptr<trigger::TriggerSet> GetOnCommitTriggers() {
+    return on_commit_triggers_;
+  }
+
+  inline void InitOnCommitTriggers() {
+    on_commit_triggers_.reset(new trigger::TriggerSet());
+  }
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -187,6 +197,8 @@ class Transaction : public Printable {
   size_t insert_count_;
 
   IsolationLevelType isolation_level_;
+
+  std::shared_ptr<trigger::TriggerSet> on_commit_triggers_;
 
 };
 

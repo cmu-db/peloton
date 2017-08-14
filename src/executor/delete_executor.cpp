@@ -101,7 +101,7 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-before-delete triggers!");
-      trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT);
+      trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT, current_txn);
     }
   }
 
@@ -156,6 +156,7 @@ bool DeleteExecutor::DExecute() {
         tuple_is_materialzed = true;
         LOG_TRACE("target table has per-row-before-delete triggers!");
         trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_ROW,
+                                   current_txn,
                                    real_tuple.get(), executor_context_);
       }
     }
@@ -212,7 +213,8 @@ bool DeleteExecutor::DExecute() {
 
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
-      if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW)) {
+      if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW) ||
+          trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_ROW)) {
         if (!tuple_is_materialzed) {
           ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
           // Materialize the logical tile tuple
@@ -221,9 +223,18 @@ bool DeleteExecutor::DExecute() {
             real_tuple->SetValue(column_itr, val, executor_pool);
           }
         }
-        LOG_TRACE("target table has per-row-after-delete triggers!");
-        trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_ROW,
-                                   real_tuple.get(), executor_context_);
+        if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW)) {
+          LOG_TRACE("target table has per-row-after-delete triggers!");
+          trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_ROW,
+                                     current_txn,
+                                     real_tuple.get(), executor_context_);
+        }
+        if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_ROW)) {
+          LOG_TRACE("target table has per-row-on-commit-delete triggers!");
+          trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_ROW,
+                                     current_txn,
+                                     real_tuple.get(), executor_context_);
+        }
       }
     }
   }
@@ -232,7 +243,11 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT)) {
       LOG_TRACE("target table has per-statement-after-delete triggers!");
-      trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT);
+      trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT, current_txn);
+    }
+    if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-on-commit-delete triggers!");
+      trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_STATEMENT, current_txn);
     }
   }
   return true;

@@ -78,6 +78,12 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
 
 void TransactionManager::EndTransaction(Transaction *current_txn) {
 
+  // fire all on commit triggees
+  if (current_txn->GetResult() == ResultType::SUCCESS &&
+      current_txn->GetOnCommitTriggers() != nullptr) {
+    current_txn->GetOnCommitTriggers()->ExecTriggers();
+  }
+
   auto &epoch_manager = EpochManagerFactory::GetInstance();
 
   epoch_manager.ExitEpoch(current_txn->GetThreadId(), current_txn->GetEpochId());

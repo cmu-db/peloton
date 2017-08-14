@@ -20,11 +20,15 @@
 #include "storage/tuple.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
-#include "concurrency/transaction_manager.h"
 #include "type/types.h"
 #include "parser/pg_trigger.h"
 
 namespace peloton {
+
+namespace concurrency {
+class Transaction;
+}
+
 namespace trigger {
 
 class Trigger;
@@ -38,6 +42,7 @@ class TriggerData {
   storage::Tuple *tg_trigtuple; // i.e. old tuple
   storage::Tuple *tg_newtuple;
 
+  TriggerData() {}
   TriggerData(int16_t tg_event, Trigger *tg_trigger,
               storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple) :
     tg_event(tg_event),
@@ -125,7 +130,17 @@ class TriggerList {
 
   bool CheckTriggerType(int16_t trigger_type, TriggerType type) {
     int type_code = static_cast<int>(type);
-    return (type_code & trigger_type) == type_code;
+    return
+        ((TRIGGER_TYPE_TIMING_MASK & type_code) ==
+            (TRIGGER_TYPE_TIMING_MASK & trigger_type)) &&
+        ((TRIGGER_TYPE_LEVEL_MASK & type_code) ==
+            (TRIGGER_TYPE_LEVEL_MASK & trigger_type)) &&
+        ((TRIGGER_TYPE_EVENT_MASK & type_code & trigger_type) ==
+            (TRIGGER_TYPE_EVENT_MASK & type_code));
+  }
+
+  bool IsOnCommit(TriggerType type) {
+    return static_cast<int>(type) & (TRIGGER_TYPE_COMMIT);
   }
 
   // Execute different types of triggers
@@ -134,6 +149,7 @@ class TriggerList {
   // Insert/Update/Delete are events that invoke triggers
 
   bool ExecTriggers(TriggerType exec_type,
+                    concurrency::Transaction *txn,
                     storage::Tuple *new_tuple = nullptr,
                     executor::ExecutorContext *executor_context_ = nullptr,
                     storage::Tuple *old_tuple = nullptr,
@@ -145,6 +161,17 @@ class TriggerList {
   bool types_summary[TRIGGER_TYPE_MAX + 1] = {false};
   std::vector<Trigger> triggers;
 };
+
+class TriggerSet : public std::vector<TriggerData> {
+ public:
+  void ExecTriggers() {
+    for (TriggerData &tr : *this) {
+      tr.tg_trigger->ExecCallTriggerFunc(tr);
+    }
+  }
+  ~TriggerSet() {}
+};
+
 
 }  // namespace trigger
 }  // namespace peloton
