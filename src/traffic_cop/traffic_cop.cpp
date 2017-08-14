@@ -53,6 +53,11 @@ TrafficCop::TrafficCop() {
 //  result_ = ResultType::QUEUING;
 }
 
+TrafficCop::TrafficCop(void(* task_callback)(void *), void *task_callback_arg):
+    task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
+  optimizer_.reset(new optimizer::Optimizer);
+}
+
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;
   // clear out the stack
@@ -250,10 +255,10 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     PL_ASSERT(plan);
+    PL_ASSERT(task_callback_);
+    PL_ASSERT(task_callback_arg_);
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
-//    executor::PlanExecutor::ExecutePlan(plan, txn, params, result,
-//                                        result_format, p_status_);
     LOG_INFO("Submit Task into MonoQueuePool");
     if (true) {
       p_status_.m_result = ResultType::QUEUING;
@@ -270,24 +275,16 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
 }
 
 void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
-//void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
-  LOG_INFO("Entering ExecutePlanWrapper");
+  LOG_TRACE("Entering ExecutePlanWrapper");
   PL_ASSERT(arg_ptr);
   ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
   PL_ASSERT(arg->plan_);
-  // arg->txn_ fails!
   PL_ASSERT(arg->txn_);
 //  PL_ASSERT(&arg->result_);
   PL_ASSERT(&arg->params_);
-  LOG_INFO("Entering 2");
   executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
                                       arg->result_, arg->result_format_,
                                       arg->p_status_);
-//  LOG_INFO("Use IOTrigger to trigger the state machine");
-//  if (arg->io_trigger_->trigger() == false) {
-//    LOG_ERROR("Event trigger fail, cannot activate by writing into pipe");
-//  }
-//  event_active(arg->event_, EV_WRITE, 0);
   delete(arg);
 }
 
@@ -317,7 +314,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
         // Abort
         LOG_TRACE("Abort Transaction");
         if (single_statement_txn_ == true) {
-          LOG_DEBUG("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
           p_status_.m_result = AbortQueryHelper();
         } else {
           tcop_txn_state_.top().second = ResultType::ABORTED;
@@ -400,8 +397,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+      LOG_DEBUG("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_DEBUG("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
     return statement;

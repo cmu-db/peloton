@@ -84,21 +84,15 @@ class TestingSQLUtil {
 
   // Create a random number
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
-  inline static void UtilTestTaskCallback(void *arg) {
-    std::atomic_int *count = static_cast<std::atomic_int*>(arg);
-    count->store(0);
-  }
+  static void UtilTestTaskCallback(void *arg);
 
   static tcop::TrafficCop traffic_cop_;
   static std::atomic_int counter_;
 //  inline static void SetTrafficCopCounter() {
 //    counter_.store(1);
 //  }
-  inline static void ContinueAfterComplete() {
-    while (counter_.load() == 1) {
-      usleep(10);
-    }
-  }
+  static void ContinueAfterComplete();
+
 };
 }  // namespace test
 }  // namespace peloton
