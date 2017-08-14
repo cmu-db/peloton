@@ -43,7 +43,7 @@ class ColumnCatalogObject {
   ColumnCatalogObject()
       : table_oid(INVALID_OID),
         column_name(),
-        column_id(0),
+        column_id(-1),
         column_offset(0),
         column_type(type::TypeId::INVALID),
         is_inlined(false),
@@ -52,17 +52,17 @@ class ColumnCatalogObject {
   ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0)
       : table_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
         column_name(tile->GetValue(tupleId, 1).ToString()),
-        column_id(tile->GetValue(tupleId, 2).GetAs<size_t>()),
-        column_offset(tile->GetValue(tupleId, 3).GetAs<size_t>()),
-        column_type(tile->GetValue(tupleId, 4).GetAs<type::TypeId>()),
+        column_id(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
+        column_offset(tile->GetValue(tupleId, 3).GetAs<oid_t>()),
+        column_type(StringToTypeId(tile->GetValue(tupleId, 4).ToString())),
         is_inlined(tile->GetValue(tupleId, 5).GetAs<bool>()),
         is_primary(tile->GetValue(tupleId, 6).GetAs<bool>()),
         is_not_null(tile->GetValue(tupleId, 7).GetAs<bool>()) {}
 
   oid_t table_oid;
   std::string column_name;
-  size_t column_id;
-  size_t column_offset;
+  oid_t column_id;
+  oid_t column_offset;
   type::TypeId column_type;
   bool is_inlined;
   bool is_primary;
@@ -102,19 +102,23 @@ class ColumnCatalog : public AbstractCatalog {
   const ColumnCatalogObject GetColumnObjectById(oid_t table_oid,
                                                 oid_t column_id,
                                                 concurrency::Transaction *txn);
-  const std::unordered_map<size_t, ColumnCatalogObject>
+  const std::unordered_map<oid_t, ColumnCatalogObject>
   GetColumnObjectsByTableOid(oid_t table_oid, concurrency::Transaction *txn);
 
-  oid_t GetColumnOffset(oid_t table_oid, const std::string &column_name,
-                        concurrency::Transaction *txn);
   oid_t GetColumnId(oid_t table_oid, const std::string &column_name,
                     concurrency::Transaction *txn);
+  oid_t GetColumnOffset(oid_t table_oid, oid_t column_id,
+                        concurrency::Transaction *txn);
   std::string GetColumnName(oid_t table_oid, oid_t column_id,
                             concurrency::Transaction *txn);
-  type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
-                             concurrency::Transaction *txn);
   type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
                              concurrency::Transaction *txn);
+  bool IsInlined(oid_t table_oid, oid_t column_id,
+                 concurrency::Transaction *txn);
+  bool IsPrimary(oid_t table_oid, oid_t column_id,
+                 concurrency::Transaction *txn);
+  bool IsNotNull(oid_t table_oid, oid_t column_id,
+                 concurrency::Transaction *txn);
 
  private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

@@ -29,7 +29,7 @@ TableCatalogObject::GetIndexObjects() {
   return index_objects;
 }
 
-std::unordered_map<size_t, ColumnCatalogObject>
+std::unordered_map<oid_t, ColumnCatalogObject>
 TableCatalogObject::GetColumnObjects() {
   if (!valid_column_objects) {
     ColumnCatalog::GetInstance()->GetColumnObjectsByTableOid(table_oid, txn);

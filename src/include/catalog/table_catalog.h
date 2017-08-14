@@ -61,7 +61,7 @@ class TableCatalogObject {
   std::string GetName() const { return table_name; }
   oid_t GetDatabaseOid() const { return database_oid; }
   std::unordered_map<oid_t, IndexCatalogObject> GetIndexObjects();
-  std::unordered_map<size_t, ColumnCatalogObject> GetColumnObjects();
+  std::unordered_map<oid_t, ColumnCatalogObject> GetColumnObjects();
 
   // table oid
   const oid_t table_oid;
@@ -74,7 +74,7 @@ class TableCatalogObject {
 
  private:
   std::unordered_map<oid_t, IndexCatalogObject> index_objects;
-  std::unordered_map<size_t, ColumnCatalogObject> column_objects;
+  std::unordered_map<oid_t, ColumnCatalogObject> column_objects;
 
   bool valid_index_objects;
   bool valid_column_objects;

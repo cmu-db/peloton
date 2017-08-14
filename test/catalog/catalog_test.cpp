@@ -171,15 +171,28 @@ TEST_F(CatalogTests, TableObject) {
 
   auto index_objects = table_object.GetIndexObjects();
   auto column_objects = table_object.GetColumnObjects();
+
   EXPECT_EQ(index_objects.size(), 1);
   EXPECT_EQ(column_objects.size(), 2);
 
-  auto column_name =
-      catalog::ColumnCatalog::GetInstance()->GetColumnName(table_oid, 0, txn);
-  EXPECT_EQ(column_name, "id");
-  column_name =
-      catalog::ColumnCatalog::GetInstance()->GetColumnName(table_oid, 1, txn);
-  EXPECT_EQ(column_name, "name");
+  EXPECT_EQ(column_objects[0].table_oid, table_oid);
+  EXPECT_EQ(column_objects[0].column_name, "id");
+  EXPECT_EQ(column_objects[0].column_id, 0);
+  EXPECT_EQ(column_objects[0].column_offset, 0);
+  EXPECT_EQ(column_objects[0].column_type, type::TypeId::INTEGER);
+  EXPECT_EQ(column_objects[0].is_inlined, true);
+  EXPECT_EQ(column_objects[0].is_primary, true);
+  EXPECT_EQ(column_objects[0].is_not_null,
+            false);  // Should this be true because it is a primary key?
+
+  EXPECT_EQ(column_objects[1].table_oid, table_oid);
+  EXPECT_EQ(column_objects[1].column_name, "name");
+  EXPECT_EQ(column_objects[1].column_id, 1);
+  EXPECT_EQ(column_objects[1].column_offset, 4);
+  EXPECT_EQ(column_objects[1].column_type, type::TypeId::VARCHAR);
+  EXPECT_EQ(column_objects[1].is_inlined, true);
+  EXPECT_EQ(column_objects[1].is_primary, false);
+  EXPECT_EQ(column_objects[1].is_not_null, false);
 
   txn_manager.CommitTransaction(txn);
 }
