@@ -34,7 +34,6 @@ class TimestampOrderingTransactionManager : public TransactionManager {
       const ProtocolType protocol,
       const IsolationLevelType isolation, 
       const ConflictAvoidanceType conflict);
-
   // This method tests whether the current transaction is the owner of this version.
   virtual bool IsOwner(
       Transaction *const current_txn,
