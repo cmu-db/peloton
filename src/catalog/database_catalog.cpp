@@ -106,8 +106,8 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     // std::lock_guard<std::mutex> lock(table_cache_lock);
     auto it = table_name_cache.find(table_name);
     if (it == table_name_cache.end()) {
-      LOG_DEBUG("table %s not found in database %u", table_name.c_str(),
-                database_oid);
+      // LOG_DEBUG("table %s not found in database %u", table_name.c_str(),
+      //           database_oid);
       return nullptr;
     }
     oid_t table_oid = it->second;
@@ -263,8 +263,8 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     }
     return database_object;
   } else {
-    LOG_DEBUG("Found %lu database tiles with name %s", result_tiles->size(),
-              database_name.c_str());
+    // LOG_DEBUG("Found %lu database tiles with name %s", result_tiles->size(),
+    //           database_name.c_str());
   }
 
   return std::shared_ptr<DatabaseCatalogObject>();
