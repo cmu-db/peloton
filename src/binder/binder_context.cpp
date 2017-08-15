@@ -13,20 +13,25 @@
 #include "binder/binder_context.h"
 
 #include "catalog/catalog.h"
-#include "catalog/schema.h"
-#include "storage/data_table.h"
-#include "storage/storage_manager.h"
+#include "catalog/database_catalog.h"
+#include "common/logger.h"
 #include "parser/table_ref.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace binder {
 
 void BinderContext::AddTable(const parser::TableRef* table_ref,
                              concurrency::Transaction* txn) {
-  storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
-      table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
+  // using catalog object to retrieve meta-data
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
+          table_ref->GetDatabaseName(), txn);
+  auto table_object =
+      database_object->GetTableObject(table_ref->GetTableName());
 
-  auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
+  auto id_tuple =
+      std::make_tuple(table_object->database_oid, table_object->table_oid);
 
   std::string alias = table_ref->GetTableAlias();
 
@@ -39,10 +44,13 @@ void BinderContext::AddTable(const parser::TableRef* table_ref,
 void BinderContext::AddTable(const std::string db_name,
                              const std::string table_name,
                              concurrency::Transaction* txn) {
-  storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
-      db_name, table_name, txn);
+  // using catalog object to retrieve meta-data
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(db_name, txn);
+  auto table_object = database_object->GetTableObject(table_name);
 
-  auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
+  auto id_tuple =
+      std::make_tuple(table_object->database_oid, table_object->table_oid);
 
   if (table_alias_map.find(table_name) != table_alias_map.end()) {
     throw Exception("Duplicate alias " + table_name);
@@ -52,33 +60,36 @@ void BinderContext::AddTable(const std::string db_name,
 
 bool BinderContext::GetColumnPosTuple(
     std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
-    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type) {
-    try{
-        auto db_id = std::get<0>(table_id_tuple);
-        auto table_id = std::get<1>(table_id_tuple);
-        auto schema = storage::StorageManager::GetInstance()
-                    ->GetTableWithOid(db_id, table_id)
-                    ->GetSchema();
-        auto col_pos = schema->GetColumnID(col_name);
-        if (col_pos == (oid_t)-1) return false;
-        col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
-        value_type = schema->GetColumn(col_pos).GetType();
-        return true;
-    } catch (CatalogException &e) {
-        LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));
-        return false;
-    }
+    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type,
+    concurrency::Transaction* txn) {
+  try {
+    auto db_id = std::get<0>(table_id_tuple);
+    auto table_id = std::get<1>(table_id_tuple);
+
+    // get table object first and use the column name to get column object
+    auto table_object =
+        catalog::TableCatalog::GetInstance()->GetTableObject(table_id, txn);
+    auto column_object = table_object->GetColumnObject(col_name);
+    oid_t col_pos = column_object->column_id;
+    if (col_pos == (oid_t)-1) return false;
+    col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
+    value_type = column_object->column_type;
+    return true;
+  } catch (CatalogException& e) {
+    LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));
+    return false;
+  }
 }
 
 bool BinderContext::GetColumnPosTuple(
     std::shared_ptr<BinderContext> current_context, std::string& col_name,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, std::string& table_alias,
-    type::TypeId& value_type) {
+    type::TypeId& value_type, concurrency::Transaction* txn) {
   bool find_matched = false;
   while (current_context != nullptr && !find_matched) {
     for (auto entry : current_context->table_alias_map) {
-      bool get_matched =
-          GetColumnPosTuple(col_name, entry.second, col_pos_tuple, value_type);
+      bool get_matched = GetColumnPosTuple(col_name, entry.second,
+                                           col_pos_tuple, value_type, txn);
       if (get_matched) {
         if (!find_matched) {
           find_matched = true;
