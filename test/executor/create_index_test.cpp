@@ -12,6 +12,7 @@
 
 #include <include/tcop/tcop.h>
 #include <cstdio>
+#include <sql/testing_sql_util.h>
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -55,6 +56,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   optimizer.reset(new optimizer::Optimizer);
 
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
@@ -86,9 +88,23 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
+<<<<<<< HEAD
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+=======
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+
+  TestingSQLUtil::counter_.store(1);
+>>>>>>> 545aa4e83... race condition bug
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
+
+  if (status.m_result == ResultType::QUEUING) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+  }
+
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
@@ -123,9 +139,24 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
+<<<<<<< HEAD
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
                                             result, result_format);
+=======
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(
+      statement->GetPlanTree(), params, result, result_format);
+
+  if (status.m_result == ResultType::QUEUING) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+  }
+>>>>>>> 545aa4e83... race condition bug
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -150,9 +181,18 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                            result, result_format);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(
+      statement->GetPlanTree(), params, result, result_format);
+
+  if (status.m_result == ResultType::QUEUING) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("INDEX CREATED!");
