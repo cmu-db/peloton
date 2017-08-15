@@ -47,7 +47,7 @@ namespace peloton {
 
 namespace tcop {
 
-TrafficCop::TrafficCop() {
+TrafficCop::TrafficCop():is_queuing_(false) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
 //  result_ = ResultType::QUEUING;
@@ -209,9 +209,10 @@ ResultType TrafficCop::ExecuteStatement(
       default:
         ExecuteStatementPlan(statement->GetPlanTree(), params, result,
                              result_format, thread_id);
-        if (p_status_.m_result == ResultType::QUEUING) {
+        if (is_queuing_) {
           return ResultType::QUEUING;
         }
+        // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
         return ExecuteStatementGetResult(rows_changed);
     }
   } catch (Exception &e) {
@@ -260,7 +261,8 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
     LOG_INFO("Submit Task into MonoQueuePool");
     if (true) {
-      p_status_.m_result = ResultType::QUEUING;
+      is_queuing_ = true;
+//      p_status_.m_result = ResultType::QUEUING;
       return p_status_;
     } else {
       ExecuteStatementPlanGetResult();
