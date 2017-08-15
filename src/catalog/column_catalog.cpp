@@ -247,7 +247,8 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unordered_map<oid_t, ColumnCatalogObject> column_objects;
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
+      column_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto column_object =

@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+
 #include "catalog/catalog_cache.h"
 
 namespace peloton {
@@ -22,23 +24,23 @@ namespace catalog {
 * @return  false only if not forced and database_oid already exists in cache
 */
 bool CatalogCache::InsertDatabaseObject(
-    const DatabaseCatalogObject &database_object, bool forced) {
-  std::lock_guard<std::mutex> lock(database_cache_lock);
+    std::shared_ptr<DatabaseCatalogObject> &database_object, bool forced) {
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
 
-  auto object_iter = database_objects_cache.find(database_object.database_oid);
+  auto object_iter = database_objects_cache.find(database_object->database_oid);
 
-  auto if (forced == true && object_iter != database_objects_cache.end()) {
+  if (forced == true && object_iter != database_objects_cache.end()) {
     database_objects_cache.erase(object_iter);  // Evict old
-    database_name_cache.erase(database_object.database_name);
-    object_iter = database_objects_cache.find(database_object.database_oid);
+    database_name_cache.erase(database_object->database_name);
+    object_iter = database_objects_cache.find(database_object->database_oid);
   }
   if (object_iter == database_objects_cache.end()) {
     auto cached_object =
         std::shared_ptr<DatabaseCatalogObject>(database_object);
     database_objects_cache.insert(
-        std::make_pair(database_object.database_oid, cached_object));
-    database_name_cache.insert(
-        std::make_pair(database_object.database_name, cached_object));
+        std::make_pair(database_object->database_oid, cached_object));
+    database_name_cache.insert(std::make_pair(database_object->database_name,
+                                              cached_object->database_oid));
     return true;
   } else {
     return false;
@@ -50,8 +52,8 @@ bool CatalogCache::InsertDatabaseObject(
 * @return  true if database_oid is found and evicted; false if not found
 */
 bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
-  std::lock_guard<std::mutex> lock(database_cache_lock);
-  auto it = database_objects_cache.find(database_object.database_oid);
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
+  auto it = database_objects_cache.find(database_oid);
   if (it == database_objects_cache.end()) {
     return false;
   } else {
@@ -67,7 +69,7 @@ bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
 */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     oid_t database_oid) {
-  std::lock_guard<std::mutex> lock(database_cache_lock);
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_objects_cache.find(database_oid);
   if (it == database_objects_cache.end()) {
     return std::make_shared<DatabaseCatalogObject>();
@@ -80,13 +82,14 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
 * @return  database catalog object; if not found return object with invalid oid
 */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
-    const std::string database_name) {
-  std::lock_guard<std::mutex> lock(database_cache_lock);
+    const std::string &database_name) {
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_name_cache.find(database_name);
   if (it == database_name_cache.end()) {
     return std::make_shared<DatabaseCatalogObject>();
   }
-  return it->second;
+  oid_t database_oid = it->second;
+  return database_objects_cache.find(database_oid)->second;
 }
 
 /*@brief   insert table catalog object into cache
@@ -102,7 +105,7 @@ bool CatalogCache::InsertTableObject(
   }
 
   // find old table catalog object
-  std::lock_guard<std::mutex> lock(table_cache_lock);
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
   auto it = table_objects_cache.find(table_object->table_oid);
 
   // forced evict if found
@@ -133,7 +136,7 @@ bool CatalogCache::InsertTableObject(
 */
 bool CatalogCache::EvictTableObject(oid_t table_oid) {
   if (table_oid == INVALID_OID) return false;
-  std::lock_guard<std::mutex> lock(table_cache_lock);
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
 
   // find table oid from catalog cache
   auto it = table_objects_cache.find(table_oid);
@@ -160,7 +163,7 @@ bool CatalogCache::EvictTableObject(oid_t table_oid) {
 */
 std::shared_ptr<TableCatalogObject> CatalogCache::GetTableObject(
     oid_t table_oid) {
-  std::lock_guard<std::mutex> lock(table_cache_lock);
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
   auto it = table_objects_cache.find(table_oid);
   if (it == table_objects_cache.end()) {
     // if (txn == nullptr) return TableCatalogObject();

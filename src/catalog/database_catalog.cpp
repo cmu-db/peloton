@@ -10,8 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+
 #include "catalog/database_catalog.h"
 
+#include "concurrency/transaction.h"
 #include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
@@ -33,7 +36,7 @@ bool DatabaseCatalogObject::InsertTableObject(
   }
 
   // find old table catalog object
-  std::lock_guard<std::mutex> lock(table_cache_lock);
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
   auto it = table_name_cache.find(table_object->table_name);
 
   // force evict if found
@@ -60,8 +63,8 @@ bool DatabaseCatalogObject::InsertTableObject(
 * @param   table_name
 * @return  true if table_oid is found and evicted; false if not found
 */
-bool EvictTableObject(const strd::string &table_name) {
-  std::lock_guard<std::mutex> lock(table_cache_lock);
+bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
 
   // find table name from table name cache
   auto it = table_name_cache.find(table_name);
@@ -100,7 +103,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     const std::string &table_name, bool cached_only) {
   if (cached_only) {
     // translate table name to table_oid from cache
-    std::lock_guard<std::mutex> lock(table_cache_lock);
+    // std::lock_guard<std::mutex> lock(table_cache_lock);
     auto it = table_name_cache.find(table_name);
     if (it == table_name_cache.end()) {
       LOG_DEBUG("table %s not found in database %u", table_name.c_str(),
@@ -213,7 +216,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get());
+        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     if (database_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
@@ -228,7 +231,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
               database_oid);
   }
 
-  return DatabaseCatalogObject();  // return empty object with INVALID_OID
+  return std::shared_ptr<DatabaseCatalogObject>();
 }
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
@@ -249,7 +252,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get());
+        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     if (database_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
@@ -264,7 +267,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
               database_name.c_str());
   }
 
-  return DatabaseCatalogObject();  // return empty object with INVALID_OID
+  return std::shared_ptr<DatabaseCatalogObject>();
 }
 
 std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,

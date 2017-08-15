@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <unordered_map>
 
 #include "catalog/table_catalog.h"
@@ -46,12 +47,12 @@ class CatalogCache {
   std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
       database_objects_cache;
   std::unordered_map<std::string, oid_t> database_name_cache;
-  std::mutex database_cache_lock;
+  // std::mutex database_cache_lock;
 
   // cache for table catalog object
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
       table_objects_cache;
-  std::mutex table_cache_lock;
+  // std::mutex table_cache_lock;
 };
 
 }  // namespace catalog

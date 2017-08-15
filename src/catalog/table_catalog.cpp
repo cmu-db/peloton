@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+
 #include "catalog/table_catalog.h"
 
 #include "concurrency/transaction.h"
@@ -25,7 +27,7 @@ namespace catalog {
  */
 std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> &
 TableCatalogObject::GetIndexObjects() {
-  std::lock_guard<std::mutex> lock(index_cache_lock);
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
   if (!valid_index_objects) {
     index_objects =
         IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
@@ -37,8 +39,9 @@ TableCatalogObject::GetIndexObjects() {
 /*@brief    get index object with index oid from cache
  * @return  shared pointer to the cached index object, nullptr if not found
  */
-std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid) {
-  std::lock_guard<std::mutex> lock(index_cache_lock);
+std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
+    oid_t index_oid) {
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
   GetIndexObjects();  // fetch index objects in case we have not
   auto it = index_objects.find(index_oid);
   if (it != index_objects.end()) {
@@ -52,7 +55,7 @@ std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid) {
  */
 std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
 TableCatalogObject::GetColumnObjects() {
-  std::lock_guard<std::mutex> lock(column_cache_lock);
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects) {
     column_objects =
         ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
@@ -68,8 +71,9 @@ TableCatalogObject::GetColumnObjects() {
 /*@brief    get column object with column id from cache
  * @return  shared pointer to the cached column object, nullptr if not found
  */
-std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id) {
-  std::lock_guard<std::mutex> lock(column_cache_lock);
+std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
+    oid_t column_id) {
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
   GetColumnObjects();  // fetch column objects in case we have not
   auto it = column_objects.find(column_id);
   if (it != column_objects.end()) {
@@ -81,10 +85,10 @@ std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id) {
 /*@brief    get column object with column name from cache
  * @return  shared pointer to the cached column object, nullptr if not found
  */
-std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
     const std::string &column_name) {
   GetColumnObjects();  // fetch column objects in case we have not
-  std::lock_guard<std::mutex> lock(column_cache_lock);
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
   auto nameIter = column_name_cache.find(column_name);
   if (nameIter != column_name_cache.end()) {
     auto objectIter = column_objects.find(nameIter->second);
@@ -215,7 +219,7 @@ const TableCatalogObject TableCatalog::GetTableObject(
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
-        make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     if (table_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertTableObject(table_object);
@@ -254,7 +258,7 @@ const TableCatalogObject TableCatalog::GetTableObject(
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
-        make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     if (table_object) {
       bool success = txn->catalog_cache.InsertTableObject(table_object);
       if (success == false) {
