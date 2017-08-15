@@ -22,6 +22,8 @@
 #include "parser/postgresparser.h"
 #include "tcop/tcop.h"
 
+#include <sql/testing_sql_util.h>
+
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -42,6 +44,7 @@ void SetupTables() {
 
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
   optimizer::Optimizer optimizer;
 
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
@@ -57,8 +60,15 @@ void SetupTables() {
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
     statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree, txn));
+    TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);
+    if (traffic_cop.is_queuing_) {
+      TestingSQLUtil::ContinueAfterComplete();
+      traffic_cop.ExecuteStatementPlanGetResult();
+      status = traffic_cop.p_status_;
+      traffic_cop.is_queuing_ = false;
+    }
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());
     traffic_cop.CommitQueryHelper();
