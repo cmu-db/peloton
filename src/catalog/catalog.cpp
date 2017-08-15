@@ -167,8 +167,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   auto pg_database = DatabaseCatalog::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
-  oid_t database_oid =
-      pg_database->GetDatabaseObject(database_name, txn).database_oid;
+  oid_t database_oid = pg_database->GetDatabaseOid(database_name, txn);
   if (database_oid != INVALID_OID) {
     LOG_TRACE("Database  %s already exists.", database_name.c_str());
     return ResultType::FAILURE;
@@ -573,9 +572,8 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
 
   // Drop actual database object
   LOG_TRACE("Dropping database with oid: %d", database_oid);
-  bool found_database = false;
   std::lock_guard<std::mutex> lock(catalog_mutex);
-  found_database =
+  bool found_database =
       storage_manager->RemoveDatabaseFromStorageManager(database_oid);
   if (!found_database) {
     LOG_TRACE("Database %d is not found!", database_oid);

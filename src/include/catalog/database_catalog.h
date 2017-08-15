@@ -25,7 +25,10 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "catalog/abstract_catalog.h"
+#include "catalog/table_catalog.h"
 #include "executor/logical_tile.h"
 
 namespace peloton {
@@ -46,7 +49,7 @@ class DatabaseCatalogObject {
 
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object,
                          bool forced = false);
-  bool EvictTableObject(const strd::string &table_name);
+  bool EvictTableObject(const std::string &table_name);
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
@@ -61,7 +64,7 @@ class DatabaseCatalogObject {
   // private:
   // cache for table name to oid translation
   std::unordered_map<std::string, oid_t> table_name_cache;
-  std::mutex table_cache_lock;
+  // std::mutex table_cache_lock;
 
   // Pointer to its corresponding transaction
   // This object is only visible during this transaction

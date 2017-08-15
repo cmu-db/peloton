@@ -27,11 +27,13 @@
 
 #pragma once
 
+#include <mutex>
+#include <unordered_map>
+
 #include "catalog/abstract_catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "executor/logical_tile.h"
-#include <unordered_map>
 
 namespace peloton {
 namespace catalog {
@@ -84,12 +86,12 @@ class TableCatalogObject {
 
  private:
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
-  std::mutex index_cache_lock;
+  // std::mutex index_cache_lock;
 
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
       column_objects;
   std::unordered_map<std::string, oid_t> column_name_cache;
-  std::mutex column_cache_lock;
+  // std::mutex column_cache_lock;
 
   bool valid_index_objects;
   bool valid_column_objects;
