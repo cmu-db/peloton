@@ -75,7 +75,7 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
   // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_objects_cache.find(database_oid);
   if (it == database_objects_cache.end()) {
-    return std::make_shared<DatabaseCatalogObject>();
+    return nullptr;
   }
   return it->second;
 }
@@ -89,7 +89,7 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
   // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_name_cache.find(database_name);
   if (it == database_name_cache.end()) {
-    return std::make_shared<DatabaseCatalogObject>();
+    return nullptr;
   }
   oid_t database_oid = it->second;
   return database_objects_cache.find(database_oid)->second;
