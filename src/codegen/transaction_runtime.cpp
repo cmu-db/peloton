@@ -66,68 +66,6 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
-                                       storage::DataTable &table,
-                                       uint32_t tile_group_id,
-                                       uint32_t tuple_offset) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto tile_group = table.GetTileGroupById(tile_group_id);
-  ItemPointer old_location(tile_group_id, tuple_offset);
-
-  auto *tile_group_header = tile_group->GetHeader();
-
-  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_written =
-      txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
-
-  if (is_owner && is_written) {
-    LOG_TRACE("I am the owner of the tuple");
-    txn_manager.PerformDelete(&txn, old_location);
-    return true;
-  }
-
-  bool is_ownable =
-      is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
-  if (!is_ownable) {
-    // transaction should be aborted as we cannot update the latest version.
-    LOG_TRACE("Fail to delete tuple.");
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-  LOG_TRACE("I am NOT the owner, but it is visible");
-
-  bool acquired_ownership =
-      is_owner ||
-      txn_manager.AcquireOwnership(&txn, tile_group_header, tuple_offset);
-  if (!acquired_ownership) {
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-
-  LOG_TRACE("Ownership is acquired");
-  // if it is the latest version and not locked by other threads, then
-  // insert an empty version.
-  ItemPointer new_location = table.InsertEmptyVersion();
-
-  // PerformDelete() will not be executed if the insertion failed.
-  if (new_location.IsNull()) {
-    LOG_TRACE("Fail to insert a new tuple version and so fail to delete");
-    // this means we acquired ownership from AcquireOwnership
-    if (!is_owner) {
-      // A write lock is acquired when inserted, but it is not in the write set,
-      // because we haven't yet put it into the write set.
-      // The acquired lock is not released when the txn gets aborted, and
-      // YieldOwnership() will help us release the acquired write lock.
-      txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
-    }
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-  txn_manager.PerformDelete(&txn, old_location, new_location);
-  return true;
-}
-
 bool TransactionRuntime::IsOwner(concurrency::Transaction &txn,
                                  storage::TileGroupHeader *tile_group_header,
                                  uint32_t tuple_offset) {
@@ -175,50 +113,6 @@ void TransactionRuntime::YieldOwnership(concurrency::Transaction &txn,
       txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
   }
   txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-}
-
-void TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
-    ItemPointer &location, executor::ExecutorContext *executor_context) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.PerformUpdate(&txn, location);
-  IncreaseNumProcessed(executor_context);
-}
-
-void TransactionRuntime::PerformUpdate(concurrency::Transaction &txn,
-    ItemPointer &old_location, ItemPointer &new_location,
-    executor::ExecutorContext *executor_context) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  LOG_TRACE("Perform update: old(%u,%u) new(%u, %u)", old_location.block,
-            old_location.offset, new_location.block, new_location.offset);
-
-  txn_manager.PerformUpdate(&txn, old_location, new_location);
-  IncreaseNumProcessed(executor_context);
-}
-
-void TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
-    ItemPointer &old_location, ItemPointer &empty_location) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  txn_manager.PerformDelete(&txn, old_location, empty_location);
-}
-
-void TransactionRuntime::PerformInsert(concurrency::Transaction &txn,
-    ItemPointer &new_location, ItemPointer *index_entry_ptr,
-    executor::ExecutorContext *executor_context) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  txn_manager.PerformInsert(&txn, new_location, index_entry_ptr);
-  IncreaseNumProcessed(executor_context);
-}
-
-void TransactionRuntime::SetTransactionFailure(concurrency::Transaction &txn) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-}
-
-void TransactionRuntime::IncreaseNumProcessed(
-    executor::ExecutorContext *executor_context) {
-  executor_context->num_processed++;
 }
 
 }  // namespace codegen

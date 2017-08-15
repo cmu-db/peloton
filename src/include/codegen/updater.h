@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
+#include "executor/executor_context.h"
 #include "type/types.h"
 
 namespace peloton {

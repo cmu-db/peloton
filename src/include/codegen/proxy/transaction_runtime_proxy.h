@@ -21,7 +21,6 @@ PROXY(TransactionRuntime) {
   /// We only need to proxy PerformVectorizedRead()
   /// in codegen::TransactionRuntime.
   DECLARE_METHOD(PerformVectorizedRead);
-  DECLARE_METHOD(IncreaseNumProcessed);
 };
 
 }  // namespace codegen

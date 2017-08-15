@@ -78,6 +78,11 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
                      uint32_t *column_ids, char *target_vals,
                      executor::ExecutorContext *executor_context) {
   PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+
+  LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
+            tile_group_id, tuple_offset, table_->GetName().c_str(),
+            table_->GetDatabaseOid(), table_->GetOid());
+
   peloton::type::Value *values =
      reinterpret_cast<peloton::type::Value *>(target_vals);
   uint32_t values_size = target_vals_size_;
@@ -86,6 +91,7 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
   auto *tile_group_header = tile_group->GetHeader();
   ItemPointer old_location(tile_group_id, tuple_offset);
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // Update In-Place
   auto is_owner = TransactionRuntime::IsOwner(*txn_, tile_group_header,
                                               tuple_offset);
@@ -94,7 +100,9 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
     ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_offset);
     SetTargetValues(tuple, values_size, column_ids, values);
     SetDirectMapValues(tuple, tuple, direct_map_list_);
-    TransactionRuntime::PerformUpdate(*txn_, old_location, executor_context);
+
+    txn_manager.PerformUpdate(txn_, old_location);
+    executor_context->num_processed++;
     return;
   }
 
@@ -119,14 +127,17 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
   if (res == false)
     TransactionRuntime::YieldOwnership(*txn_, tile_group_header, tuple_offset);
 
-  TransactionRuntime::PerformUpdate(*txn_, old_location,
-                                    new_location, executor_context);
+  txn_manager.PerformUpdate(txn_, old_location, new_location);
+  executor_context->num_processed++;
 }
 
 void Updater::UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
                                uint32_t *column_ids, char *target_vals,
                                executor::ExecutorContext *executor_context) {
   PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+  LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
+            tile_group_id, tuple_offset, table_->GetName().c_str(),
+            table_->GetDatabaseOid(), table_->GetOid());
   peloton::type::Value *values =
      reinterpret_cast<peloton::type::Value *>(target_vals);
   uint32_t values_size = target_vals_size_;
@@ -152,7 +163,8 @@ void Updater::UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
                                        tuple_offset);
     return;
   }
-  TransactionRuntime::PerformDelete(*txn_, old_location, empty_location);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.PerformDelete(txn_, old_location, empty_location);
 
   ContainerTuple<storage::TileGroup> old_tuple(tile_group, tuple_offset);
   storage::Tuple new_tuple(table_->GetSchema(), true);
@@ -163,11 +175,11 @@ void Updater::UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
   ItemPointer new_location = table_->InsertTuple(&new_tuple, txn_,
                                                  &index_entry_ptr);
   if (new_location.block == INVALID_OID && acquired_ownership == true) {
-    TransactionRuntime::SetTransactionFailure(*txn_);
+    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
     return;
   }
-  TransactionRuntime::PerformInsert(*txn_, new_location, index_entry_ptr,
-                                    executor_context);
+  txn_manager.PerformInsert(txn_, new_location, index_entry_ptr);
+  executor_context->num_processed++;
 }
 
 void Updater::TearDown() {

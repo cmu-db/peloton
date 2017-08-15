@@ -68,7 +68,8 @@ void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   // Call Deleter::Delete(tile_group_id, tuple_offset)
   auto *deleter = LoadStatePtr(deleter_state_id_);
   codegen.Call(DeleterProxy::Delete,
-               {deleter, row.GetTileGroupID(), row.GetTID(codegen)});
+               {deleter, row.GetTileGroupID(), row.GetTID(codegen),
+                GetCompilationContext().GetExecutorContextPtr()});
 }
 
 }  // namespace codegen

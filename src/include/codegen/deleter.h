@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include "common/macros.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 
@@ -45,7 +46,8 @@ class Deleter {
 
   // Delete the tuple within the provided tile group ID (unique) at the provided
   // offset from the start of the tile group.
-  void Delete(uint32_t tile_group_id, uint32_t tuple_offset);
+  void Delete(uint32_t tile_group_id, uint32_t tuple_offset,
+              executor::ExecutorContext *executor_context);
 
  private:
   // Can't construct
