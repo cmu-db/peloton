@@ -50,12 +50,6 @@ class TransactionRuntime {
                                         storage::TileGroup &tile_group,
                                         uint32_t tid_start, uint32_t tid_end,
                                         uint32_t *selection_vector);
-
-  // Perform a delete operation: see more descriptions in the .cpp file
-  static bool PerformDelete(concurrency::Transaction &txn,
-                            storage::DataTable &table, uint32_t tile_group_id,
-                            uint32_t tuple_offset);
-
   // Check Ownership
   static bool IsOwner(concurrency::Transaction &txn,
                       storage::TileGroupHeader *tile_group_header,
@@ -70,29 +64,6 @@ class TransactionRuntime {
   static void YieldOwnership(concurrency::Transaction &txn,
                              storage::TileGroupHeader *tile_group_header,
                              uint32_t tuple_offset);
-
-  // Perform an in-place update operation
-  // Note: One should be an owner or have acquired the ownership
-  static void PerformUpdate(concurrency::Transaction &txn,
-      ItemPointer &location, executor::ExecutorContext *executor_context);
-
-  // Perform a new version update operation
-  // Note: One should be an owner or have acquired the ownership
-  static void PerformUpdate(concurrency::Transaction &txn,
-      ItemPointer &old_location, ItemPointer &new_location,
-      executor::ExecutorContext *executor_context);
-
-  // Perform a primary key update operation by PerformDelete + PerformInsert
-  // Note: One should be an owner or have acquired the ownership
-  static void PerformDelete(concurrency::Transaction &txn,
-      ItemPointer &old_location, ItemPointer &empty_location);
-  static void PerformInsert(concurrency::Transaction &txn,
-      ItemPointer &new_location, ItemPointer *index_entry_ptr,
-      executor::ExecutorContext *executor_context);
-
-  static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
-
-  static void SetTransactionFailure(concurrency::Transaction &txn);
 };
 
 }  // namespace codegen
