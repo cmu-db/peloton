@@ -62,8 +62,8 @@ class Updater {
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
 
-  TargetList target_list_;
-  DirectMapList direct_map_list_;
+  std::unique_ptr<TargetList> target_list_;
+  std::unique_ptr<DirectMapList> direct_map_list_;
   uint32_t target_vals_size_;
 
  private:

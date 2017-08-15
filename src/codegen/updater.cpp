@@ -38,12 +38,12 @@ void Updater::Init(concurrency::Transaction *txn, storage::DataTable *table,
   txn_ = txn;
   table_ = table;
 
-  for (uint32_t i = 0; i < target_vector_size; i++) {
-    target_list_.emplace_back(target_vector[i]);
-  }
-  for (uint32_t i = 0; i < direct_map_vector_size; i++) {
-    direct_map_list_.emplace_back(direct_map_vector[i]);
-  }
+  target_list_.reset(
+      new TargetList(target_vector, target_vector + target_vector_size));
+  direct_map_list_.reset(
+      new DirectMapList(direct_map_vector,
+                        direct_map_vector + direct_map_vector_size));
+
   target_vals_size_ = target_vector_size;
 }
 
@@ -99,7 +99,7 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
     // Update on the original tuple & Update
     ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_offset);
     SetTargetValues(tuple, values_size, column_ids, values);
-    SetDirectMapValues(tuple, tuple, direct_map_list_);
+    SetDirectMapValues(tuple, tuple, *direct_map_list_);
 
     txn_manager.PerformUpdate(txn_, old_location);
     executor_context->num_processed++;
@@ -119,10 +119,10 @@ void Updater::Update(uint32_t tile_group_id, uint32_t tuple_offset,
   ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
                                                new_location.offset);
   SetTargetValues(new_tuple, values_size, column_ids, values);
-  SetDirectMapValues(new_tuple, old_tuple, direct_map_list_);
+  SetDirectMapValues(new_tuple, old_tuple, *direct_map_list_);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location.offset);
-  auto res = table_->InstallVersion(&new_tuple, &target_list_, txn_,
+  auto res = table_->InstallVersion(&new_tuple, target_list_.get(), txn_,
                                    indirection);
   if (res == false)
     TransactionRuntime::YieldOwnership(*txn_, tile_group_header, tuple_offset);
@@ -169,7 +169,7 @@ void Updater::UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
   ContainerTuple<storage::TileGroup> old_tuple(tile_group, tuple_offset);
   storage::Tuple new_tuple(table_->GetSchema(), true);
   SetTargetValues(new_tuple, values_size, column_ids, values);
-  SetDirectMapValues(new_tuple, old_tuple, direct_map_list_,
+  SetDirectMapValues(new_tuple, old_tuple, *direct_map_list_,
                        executor_context->GetPool());
   ItemPointer *index_entry_ptr = nullptr;
   ItemPointer new_location = table_->InsertTuple(&new_tuple, txn_,
@@ -184,8 +184,8 @@ void Updater::UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
 
 void Updater::TearDown() {
   // Updater object does not destruct its own data structures
-  target_list_.~TargetList();
-  direct_map_list_.~DirectMapList();
+  target_list_.reset();
+  direct_map_list_.reset();
 }
 
 }  // namespace codegen
