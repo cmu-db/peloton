@@ -41,8 +41,8 @@ namespace catalog {
 
 class IndexCatalogObject {
  public:
-  IndexCatalogObject()
-      : index_oid(INVALID_OID),
+  IndexCatalogObject(oid_t index_oid = INVALID_OID)
+      : index_oid(index_oid),
         index_name(),
         table_oid(INVALID_OID),
         index_type(IndexType::INVALID),
@@ -84,12 +84,12 @@ class IndexCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  const IndexCatalogObject GetIndexObjectByOid(oid_t index_oid,
-                                               concurrency::Transaction *txn);
-  const IndexCatalogObject GetIndexObjectByName(const std::string &index_name,
-                                                concurrency::Transaction *txn);
-  const std::unordered_map<oid_t, IndexCatalogObject> GetIndexObjectsByTableOid(
-      oid_t table_oid, concurrency::Transaction *txn);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      oid_t index_oid, concurrency::Transaction *txn);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      const std::string &index_name, concurrency::Transaction *txn);
+  const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+  GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn);
 
   std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn);

@@ -171,7 +171,7 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-const IndexCatalogObject IndexCatalog::GetIndexObjectByOid(
+std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 0;  // Index of index_oid
@@ -182,15 +182,15 @@ const IndexCatalogObject IndexCatalog::GetIndexObjectByOid(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return IndexCatalogObject((*result_tiles)[0].get());
+    return std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
   }
 
-  return IndexCatalogObject();  // return empty object with INVALID_OID
+  return std::make_shared<IndexCatalogObject>(INVALID_OID);
 }
 
-const IndexCatalogObject IndexCatalog::GetIndexObjectByName(
+std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     const std::string &index_name, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 1;  // Index of index_name & table_oid
@@ -202,13 +202,13 @@ const IndexCatalogObject IndexCatalog::GetIndexObjectByName(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return IndexCatalogObject((*result_tiles)[0].get());
+    return std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
               index_name.c_str());
   }
 
-  return IndexCatalogObject();  // return empty object with INVALID_OID
+  return std::make_shared<IndexCatalogObject>(INVALID_OID);
 }
 
 /*@brief   get all index records from the same table
@@ -217,9 +217,8 @@ const IndexCatalogObject IndexCatalog::GetIndexObjectByName(
 * @param   txn  Transaction
 * @return  a vector of index catalog objects
 */
-const std::unordered_map<oid_t, IndexCatalogObject>
-IndexCatalog::GetIndexObjectsByTableOid(oid_t table_oid,
-                                        concurrency::Transaction *txn) {
+const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
@@ -228,10 +227,11 @@ IndexCatalog::GetIndexObjectsByTableOid(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unordered_map<oid_t, IndexCatalogObject> index_objects;
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      auto index_object = IndexCatalogObject(tile.get(), tuple_id);
+      auto index_object =
+          std::make_shared<IndexCatalogObject>(tile.get(), tuple_id);
       index_objects.insert(
           std::make_pair(index_object.index_oid, index_object));
       // index_objects[index_object.index_oid] = index_object;
