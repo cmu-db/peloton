@@ -192,7 +192,7 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 * @param   txn  Transaction
 * @return  column catalog object
 */
-const ColumnCatalogObject ColumnCatalog::GetColumnObjectByName(
+std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, const std::string &column_name,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
@@ -206,16 +206,16 @@ const ColumnCatalogObject ColumnCatalog::GetColumnObjectByName(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return ColumnCatalogObject((*result_tiles)[0].get());
+    return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu column with column name %s", result_tiles->size(),
               column_name.c_str());
   }
 
-  return ColumnCatalogObject();
+  return std::make_shared<ColumnCatalogObject>();
 }
 
-const ColumnCatalogObject ColumnCatalog::GetColumnObjectById(
+std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 1;  // Index of table_oid & column_id
@@ -227,18 +227,18 @@ const ColumnCatalogObject ColumnCatalog::GetColumnObjectById(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return ColumnCatalogObject((*result_tiles)[0].get());
+    return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
   } else {
     LOG_DEBUG("Found %lu column with column id %u", result_tiles->size(),
               column_id);
   }
 
-  return ColumnCatalogObject();
+  return std::make_shared<ColumnCatalogObject>();
 }
 
-const std::unordered_map<oid_t, ColumnCatalogObject>
-ColumnCatalog::GetColumnObjectsByTableOid(oid_t table_oid,
-                                          concurrency::Transaction *txn) {
+const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
+ColumnCatalog::GetColumnObjects(oid_t table_oid,
+                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
@@ -250,7 +250,8 @@ ColumnCatalog::GetColumnObjectsByTableOid(oid_t table_oid,
   std::unordered_map<oid_t, ColumnCatalogObject> column_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      auto column_object = ColumnCatalogObject(tile.get(), tuple_id);
+      auto column_object =
+          std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
       column_objects.insert(
           std::make_pair(column_object.column_id, column_object));
       // column_objects[column_object.column_id] =
