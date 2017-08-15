@@ -47,7 +47,7 @@ std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
   if (it != index_objects.end()) {
     return it->second;
   }
-  return std::make_shared<IndexCatalogObject>();
+  return nullptr;
 }
 
 /*@brief    get all column objects of this table into cache
@@ -79,7 +79,7 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   if (it != column_objects.end()) {
     return it->second;
   }
-  return std::make_shared<ColumnCatalogObject>();
+  return nullptr;
 }
 
 /*@brief    get column object with column name from cache
@@ -95,7 +95,7 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
     PL_ASSERT(objectIter != column_objects.end());
     return objectIter->second;
   }
-  return std::make_shared<ColumnCatalogObject>();
+  return nullptr;
 }
 
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
@@ -233,7 +233,7 @@ const TableCatalogObject TableCatalog::GetTableObject(
     LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
   }
 
-  return std::make_shared<TableCatalogObject>();
+  return nullptr;
 }
 
 /*@brief   read table catalog object from pg_table using table name + database
@@ -272,7 +272,7 @@ const TableCatalogObject TableCatalog::GetTableObject(
               table_name.c_str());
   }
 
-  return std::make_shared<TableCatalogObject>();
+  return nullptr;
 }
 
 /*@brief   read table name from pg_table using table oid

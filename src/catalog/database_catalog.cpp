@@ -108,7 +108,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     if (it == table_name_cache.end()) {
       LOG_DEBUG("table %s not found in database %u", table_name.c_str(),
                 database_oid);
-      return std::make_shared<TableCatalogObject>();
+      return nullptr;
     }
     oid_t table_oid = it->second;
 
@@ -272,7 +272,13 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
 std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
                                              concurrency::Transaction *txn) {
-  return GetDatabaseObject(database_oid, txn)->database_name;
+  auto database_object = GetDatabaseObject(database_oid, txn);
+  if (database_object) {
+    return database_object->database_name;
+  } else {
+    return std::string();
+  }
+
   // std::vector<oid_t> column_ids({1});  // database_name
   // oid_t index_offset = 0;              // Index of database_oid
   // std::vector<type::Value> values;
@@ -297,7 +303,13 @@ std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
 
 oid_t DatabaseCatalog::GetDatabaseOid(const std::string &database_name,
                                       concurrency::Transaction *txn) {
-  return GetDatabaseObject(database_name, txn)->database_oid;
+  auto database_object = GetDatabaseObject(database_name, txn);
+  if (database_object) {
+    return database_object->database_oid;
+  } else {
+    return INVALID_OID;
+  }
+
   // std::vector<oid_t> column_ids({0});  // database_oid
   // oid_t index_offset = 1;              // Index of database_name
   // std::vector<type::Value> values;

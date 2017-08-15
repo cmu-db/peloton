@@ -187,7 +187,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
   }
 
-  return std::make_shared<IndexCatalogObject>();
+  return nullptr;
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
@@ -208,7 +208,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
               index_name.c_str());
   }
 
-  return std::make_shared<IndexCatalogObject>();
+  return nullptr;
 }
 
 /*@brief   get all index records from the same table

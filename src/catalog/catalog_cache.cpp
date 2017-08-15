@@ -25,6 +25,9 @@ namespace catalog {
 */
 bool CatalogCache::InsertDatabaseObject(
     std::shared_ptr<DatabaseCatalogObject> &database_object, bool forced) {
+  if (!database_object || database_object->database_oid == INVALID_OID) {
+    return false;  // invalid object
+  }
   // std::lock_guard<std::mutex> lock(database_cache_lock);
 
   auto object_iter = database_objects_cache.find(database_object->database_oid);
@@ -171,7 +174,7 @@ std::shared_ptr<TableCatalogObject> CatalogCache::GetTableObject(
     //     TableCatalog::GetInstance()->GetTableObject(table_oid, txn));
     // PL_ASSERT(success == true);
     // it = table_objects_cache.find(table_oid)
-    return std::make_shared<TableCatalogObject>();
+    return nullptr;
   }
   return it->second;
 }

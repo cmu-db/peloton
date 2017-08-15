@@ -212,7 +212,7 @@ std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
               column_name.c_str());
   }
 
-  return std::make_shared<ColumnCatalogObject>();
+  return nullptr;
 }
 
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
@@ -233,7 +233,7 @@ std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
               column_id);
   }
 
-  return std::make_shared<ColumnCatalogObject>();
+  return nullptr;
 }
 
 const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
