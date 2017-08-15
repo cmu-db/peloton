@@ -120,6 +120,8 @@ class TrafficCop {
   }
 
   executor::ExecuteResult p_status_;
+
+  bool is_queuing_;
 //  struct event* event_;
  private:
 

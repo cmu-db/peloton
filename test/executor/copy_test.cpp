@@ -92,10 +92,11 @@ TEST_F(CopyTests, Copying) {
     executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);
 
-    if (status.m_result == ResultType::QUEUING) {
+    if (traffic_cop.is_queuing_) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop.ExecuteStatementPlanGetResult();
       status = traffic_cop.p_status_;
+      traffic_cop.is_queuing_ = false;
     }
 
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);

@@ -99,10 +99,11 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
 
-  if (status.m_result == ResultType::QUEUING) {
+  if (traffic_cop.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
   }
 
   LOG_INFO("Statement executed. Result: %s",
@@ -151,10 +152,11 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
 
-  if (status.m_result == ResultType::QUEUING) {
+  if (traffic_cop.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
   }
 >>>>>>> 545aa4e83... race condition bug
   LOG_INFO("Statement executed. Result: %s",
@@ -188,10 +190,11 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
 
-  if (status.m_result == ResultType::QUEUING) {
+  if (traffic_cop.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
