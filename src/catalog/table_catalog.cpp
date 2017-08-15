@@ -246,6 +246,14 @@ const TableCatalogObject TableCatalog::GetTableObject(
 const TableCatalogObject TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
+  // try get from cache
+  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+  if (database_object) {
+    auto table_object = database_object->GetTableObject(table_name, true);
+    if (table_object) return table_object;
+  }
+
+  // cache miss, get from pg_table
   std::vector<oid_t> column_ids({0, 1, 2});
   oid_t index_offset = 1;  // Index of table_name & database_oid
   std::vector<type::Value> values;
@@ -260,16 +268,17 @@ const TableCatalogObject TableCatalog::GetTableObject(
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     if (table_object) {
+      // insert into cache
       bool success = txn->catalog_cache.InsertTableObject(table_object);
       if (success == false) {
-        LOG_DEBUG("Table catalog for table %u is read again",
-                  table_object->table_oid);
+        LOG_DEBUG("Table catalog for table %s is read again",
+                  table_object->table_name.c_str());
       }
     }
     return table_object;
   } else {
-    LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
-              table_name.c_str());
+    // LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
+    //           table_name.c_str());
   }
 
   return nullptr;
