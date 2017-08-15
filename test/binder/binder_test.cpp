@@ -24,6 +24,8 @@
 
 #include <sql/testing_sql_util.h>
 
+#include <sql/testing_sql_util.h>
+
 using std::string;
 using std::unique_ptr;
 using std::vector;
