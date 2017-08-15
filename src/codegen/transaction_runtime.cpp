@@ -125,37 +125,6 @@ bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
   return true;
 }
 
-bool TransactionRuntime::PerformInsert(concurrency::Transaction &txn,
-                                       storage::DataTable &table,
-                                       const storage::Tuple *tuple) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  ItemPointer *index_entry_ptr = nullptr;
-  ItemPointer location = table.InsertTuple(tuple, &txn, &index_entry_ptr);
-  if (location.block == INVALID_OID) {
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-  txn_manager.PerformInsert(&txn, location, index_entry_ptr);
-  return true;
-}
-
-bool TransactionRuntime::PerformInsert(concurrency::Transaction &txn,
-                                       storage::DataTable &table,
-                                       const AbstractTuple *tuple,
-                                       ItemPointer location) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  ItemPointer *index_entry_ptr = nullptr;
-  bool result = table.InsertTuple(tuple, location, &txn, &index_entry_ptr);
-  if (result == false) {
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-  txn_manager.PerformInsert(&txn, location, index_entry_ptr);
-  return true;
-}
-
 void TransactionRuntime::IncreaseNumProcessed(
     executor::ExecutorContext *executor_context) {
   executor_context->num_processed++;

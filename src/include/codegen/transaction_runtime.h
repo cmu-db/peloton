@@ -16,9 +16,6 @@
 
 namespace peloton {
 
-class AbstractTuple;
-class ItemPointer;
-
 namespace concurrency {
 class Transaction;
 }  // namespace concurrency
@@ -30,7 +27,6 @@ class ExecutorContext;
 namespace storage {
 class DataTable;
 class TileGroup;
-class Tuple;
 }  // namespace storage
 
 namespace codegen {
@@ -53,18 +49,7 @@ class TransactionRuntime {
                             storage::DataTable &table, uint32_t tile_group_id,
                             uint32_t tuple_offset);
 
-  // Perform an insert operation
-  static bool PerformInsert(concurrency::Transaction &txn,
-                            storage::DataTable &table,
-                            const storage::Tuple *tuple);
-
-  static bool PerformInsert(concurrency::Transaction &txn,
-                            storage::DataTable &table,
-                            const AbstractTuple *tuple,
-                            ItemPointer location);
-
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
-  // Add other stuff for Insert/Update/Delete
 };
 
 }  // namespace codegen
