@@ -13,6 +13,7 @@
 #include "codegen/inserter.h"
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
@@ -47,25 +48,35 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 
 void Inserter::InsertReserved() {
   PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  expression::ContainerTuple<storage::TileGroup> tuple(
+  ContainerTuple<storage::TileGroup> tuple(
       table_->GetTileGroupById(location_.block).get(), location_.offset);
-  auto result = TransactionRuntime::PerformInsert(*txn_, *table_, &tuple,
-                                                  location_);
-  if (result == true) {
-    TransactionRuntime::IncreaseNumProcessed(executor_context_);
+  ItemPointer *index_entry_ptr = nullptr;
+  bool result = table_->InsertTuple(&tuple, location_, txn_, &index_entry_ptr);
+  if (result == false) {
+    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
+    return;
   }
+  txn_manager.PerformInsert(txn_, location_, index_entry_ptr);
+  executor_context_->num_processed++;
+
   // the tile pointer is there for an insertion, so we release it at this moment
   tile_.reset();
 }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
   PL_ASSERT(txn_ && table_ && executor_context_);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  auto result = TransactionRuntime::PerformInsert(*txn_, *table_, tuple);
-  if (result == true) {
-    TransactionRuntime::IncreaseNumProcessed(executor_context_);
+  ItemPointer *index_entry_ptr = nullptr;
+  ItemPointer location = table_->InsertTuple(tuple, txn_, &index_entry_ptr);
+  if (location.block == INVALID_OID) {
+    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
+    return;
   }
+  txn_manager.PerformInsert(txn_, location, index_entry_ptr);
+  executor_context_->num_processed++;
 }
 
 }  // namespace codegen
