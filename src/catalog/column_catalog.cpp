@@ -256,6 +256,14 @@ std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
 const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::Transaction *txn) {
+  // try get from cache
+  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  if (table_object) {
+    auto column_objects = table_object->GetColumnObjects(true);
+    if (column_objects.size() != 0) return column_objects;
+  }
+
+  // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
