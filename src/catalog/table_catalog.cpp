@@ -24,6 +24,7 @@ TableCatalogObject::GetIndexObjects() {
   if (!valid_index_objects) {
     index_objects =
         IndexCatalog::GetInstance()->GetIndexObjectsByTableOid(table_oid, txn);
+    valid_index_objects = true;
   }
   return index_objects;
 }
@@ -32,6 +33,7 @@ std::unordered_map<size_t, ColumnCatalogObject>
 TableCatalogObject::GetColumnObjects() {
   if (!valid_column_objects) {
     ColumnCatalog::GetInstance()->GetColumnObjectsByTableOid(table_oid, txn);
+    valid_column_objects = true;
   }
   return column_objects;
 }
@@ -65,8 +67,8 @@ TableCatalog::TableCatalog(storage::Database *pg_catalog,
 TableCatalog::~TableCatalog() {}
 
 /*@brief   private function for initialize schema of pg_table
-* @return  unqiue pointer to schema
-*/
+ * @return  unqiue pointer to schema
+ */
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
@@ -97,12 +99,12 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
 }
 
 /*@brief   insert a tuple about table info into pg_table
-* @param   table_oid
-* @param   table_name
-* @param   database_oid
-* @param   txn     Transaction
-* @return  Whether insertion is Successful
-*/
+ * @param   table_oid
+ * @param   table_name
+ * @param   database_oid
+ * @param   txn     Transaction
+ * @return  Whether insertion is Successful
+ */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
@@ -123,10 +125,10 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 }
 
 /*@brief   delete a tuple about table info from pg_table(using index scan)
-* @param   table_oid
-* @param   txn     Transaction
-* @return  Whether deletion is Successful
-*/
+ * @param   table_oid
+ * @param   txn     Transaction
+ * @return  Whether deletion is Successful
+ */
 bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of table_oid
   std::vector<type::Value> values;
@@ -136,10 +138,10 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
 }
 
 /*@brief   read table catalog object from pg_table using table oid
-* @param   table_oid
-* @param   txn     Transaction
-* @return  table catalog object
-*/
+ * @param   table_oid
+ * @param   txn     Transaction
+ * @return  table catalog object
+ */
 const TableCatalogObject TableCatalog::GetTableObjectByOid(
     oid_t table_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2});
@@ -160,12 +162,12 @@ const TableCatalogObject TableCatalog::GetTableObjectByOid(
 }
 
 /*@brief   read table catalog object from pg_table using table name + database
-* oid
-* @param   table_name
-* @param   database_oid
-* @param   txn     Transaction
-* @return  table catalog object
-*/
+ * oid
+ * @param   table_name
+ * @param   database_oid
+ * @param   txn     Transaction
+ * @return  table catalog object
+ */
 const TableCatalogObject TableCatalog::GetTableObjectByName(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
@@ -190,10 +192,10 @@ const TableCatalogObject TableCatalog::GetTableObjectByName(
 }
 
 /*@brief   read table name from pg_table using table oid
-* @param   table_oid
-* @param   txn     Transaction
-* @return  table name
-*/
+ * @param   table_oid
+ * @param   txn     Transaction
+ * @return  table name
+ */
 std::string TableCatalog::GetTableName(oid_t table_oid,
                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
@@ -219,10 +221,10 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
 }
 
 /*@brief   read database oid one table belongs to using table oid
-* @param   table_oid
-* @param   txn     Transaction
-* @return  database oid
-*/
+ * @param   table_oid
+ * @param   txn     Transaction
+ * @return  database oid
+ */
 oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
                                    concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // database_oid
@@ -248,11 +250,11 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
 }
 
 /*@brief   read table oid from pg_table using table name + database oid
-* @param   table_name
-* @param   database_oid
-* @param   txn     Transaction
-* @return  table oid
-*/
+ * @param   table_name
+ * @param   database_oid
+ * @param   txn     Transaction
+ * @return  table oid
+ */
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
                                 oid_t database_oid,
                                 concurrency::Transaction *txn) {
@@ -281,10 +283,10 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
 }
 
 /*@brief   read all table oids from the same database using its oid
-* @param   database_oid
-* @param   txn  Transaction
-* @return  a vector of table oid
-*/
+ * @param   database_oid
+ * @param   txn  Transaction
+ * @return  a vector of table oid
+ */
 std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
                                               concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_oid
@@ -308,10 +310,10 @@ std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
 }
 
 /*@brief   read all table names from the same database using its oid
-* @param   database_oid
-* @param   txn  Transaction
-* @return  a vector of table name
-*/
+ * @param   database_oid
+ * @param   txn  Transaction
+ * @return  a vector of table name
+ */
 std::vector<std::string> TableCatalog::GetTableNames(
     oid_t database_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
