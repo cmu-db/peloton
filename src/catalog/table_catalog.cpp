@@ -194,6 +194,9 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
+  // evict from cache
+  txn->catalog_cache.EvictTableObject(table_oid);
+
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 

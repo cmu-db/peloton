@@ -50,6 +50,7 @@ class DatabaseCatalogObject {
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object,
                          bool forced = false);
   bool EvictTableObject(const std::string &table_name);
+  void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(

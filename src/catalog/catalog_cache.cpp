@@ -60,7 +60,9 @@ bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
   if (it == database_objects_cache.end()) {
     return false;
   } else {
-    database_name_cache.erase(it->second->database_name);
+    auto database_object = it->second;
+    database_object->EvictAllTableObjects();
+    database_name_cache.erase(database_object->database_name);
     database_objects_cache.erase(it);
     return true;
   }
