@@ -54,9 +54,9 @@ std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
  * @return  map from column id to cached column object
  */
 std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
-TableCatalogObject::GetColumnObjects() {
+TableCatalogObject::GetColumnObjects(bool cached_only) {
   // std::lock_guard<std::mutex> lock(column_cache_lock);
-  if (!valid_column_objects) {
+  if (!valid_column_objects && !cached_only) {
     column_objects =
         ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;

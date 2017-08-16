@@ -66,7 +66,7 @@ class TableCatalogObject {
 
   // Get column objects
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
-  GetColumnObjects();
+  GetColumnObjects(bool cached_only = false);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name);
