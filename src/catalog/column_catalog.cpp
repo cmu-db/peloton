@@ -196,6 +196,14 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, const std::string &column_name,
     concurrency::Transaction *txn) {
+  // try get from cache
+  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  if (table_object) {
+    auto column_object = table_object->GetColumnObject(column_name);
+    if (column_object) return column_object;
+  }
+
+  // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 0;  // Index of table_oid & column_name
   std::vector<type::Value> values;
@@ -218,12 +226,14 @@ std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
 
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
+  // try get from cache
   auto table_object = txn->catalog_cache.GetTableObject(table_oid);
   if (table_object) {
     auto column_object = table_object->GetColumnObject(column_id);
     if (column_object) return column_object;
   }
 
+  // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 1;  // Index of table_oid & column_id
   std::vector<type::Value> values;
