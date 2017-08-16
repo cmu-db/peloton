@@ -33,19 +33,39 @@ namespace catalog {
 
 class DatabaseCatalogObject {
  public:
-  DatabaseCatalogObject() : database_oid(INVALID_OID), database_name() {}
-  DatabaseCatalogObject(executor::LogicalTile *tile)
+  DatabaseCatalogObject()
+      : database_oid(INVALID_OID), database_name(), txn(nullptr) {}
+  DatabaseCatalogObject(executor::LogicalTile *tile,
+                        concurrency::Transaction *txn)
       : database_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
-        database_name(tile->GetValue(0, 1).ToString()) {}
+        database_name(tile->GetValue(0, 1).ToString()),
+        txn(txn) {}
 
   oid_t GetOid() const { return database_oid; }
   std::string GetDBName() const { return database_name; }
+
+  bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object,
+                         bool forced = false);
+  bool EvictTableObject(const strd::string &table_name);
+  std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
+                                                     bool cached_only = false);
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      const std::string &table_name, bool cached_only = false);
 
   // database oid
   const oid_t database_oid;
 
   // database name
   std::string database_name;
+
+  // private:
+  // cache for table name to oid translation
+  std::unordered_map<std::string, oid_t> table_name_cache;
+  std::mutex table_cache_lock;
+
+  // Pointer to its corresponding transaction
+  // This object is only visible during this transaction
+  concurrency::Transaction *txn;
 };
 
 class DatabaseCatalog : public AbstractCatalog {
@@ -69,9 +89,9 @@ class DatabaseCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  const DatabaseCatalogObject GetDatabaseObjectByOid(
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       oid_t database_oid, concurrency::Transaction *txn);
-  const DatabaseCatalogObject GetDatabaseObjectByName(
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &database_name, concurrency::Transaction *txn);
 
   // Deprecated, use DatabaseCatalogObject

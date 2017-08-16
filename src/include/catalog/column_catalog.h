@@ -40,8 +40,8 @@ namespace catalog {
 
 class ColumnCatalogObject {
  public:
-  ColumnCatalogObject()
-      : table_oid(INVALID_OID),
+  ColumnCatalogObject(oid_t table_oid = INVALID_OID)
+      : table_oid(table_oid),
         column_name(),
         column_id(-1),
         column_offset(0),

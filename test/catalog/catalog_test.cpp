@@ -35,14 +35,14 @@ class CatalogTests : public PelotonTest {};
 TEST_F(CatalogTests, BootstrappingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
-  EXPECT_EQ(storage::StorageManager::GetInstance()->GetDatabaseCount(), 1);
+  EXPECT_EQ(1, storage::StorageManager::GetInstance()->GetDatabaseCount());
   storage::Database *database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  EXPECT_NE(database, nullptr);
+  EXPECT_NE(nullptr, database);
   // Check database metric table
   auto db_metric_table =
       database->GetTableWithName(DATABASE_METRICS_CATALOG_NAME);
-  EXPECT_NE(db_metric_table, nullptr);
+  EXPECT_NE(nullptr, db_metric_table);
 }
 //
 TEST_F(CatalogTests, CreatingDatabase) {
@@ -54,13 +54,12 @@ TEST_F(CatalogTests, CreatingDatabase) {
           INDEX_CATALOG_PKEY_OID, txn);
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetDBName(),
-            "EMP_DB");
-  EXPECT_EQ(key_attrs.size(), 1);
-  EXPECT_EQ(key_attrs[0], 0);
-  // EXPECT_EQ(index_name, "pg_index_pkey");
+  EXPECT_EQ("EMP_DB", catalog::Catalog::GetInstance()
+                          ->GetDatabaseWithName("EMP_DB")
+                          ->GetDBName());
+  EXPECT_EQ(1, key_attrs.size());
+  EXPECT_EQ(0, key_attrs[0]);
+  // EXPECT_EQ("pg_index_pkey", index_name);
 }
 
 TEST_F(CatalogTests, CreatingTable) {
@@ -90,8 +89,8 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
       2, 3, 4, 5, pool.get(), txn);
-//   oid_t time_stamp = 
-//       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
+  //   oid_t time_stamp =
+  //       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
   // inset meaningless tuple into QUERY_METRICS_CATALOG and check
   stats::QueryMetric::QueryParamBuf param;
@@ -103,8 +102,8 @@ TEST_F(CatalogTests, CreatingTable) {
       txn);
   auto param1 = catalog::QueryMetricsCatalog::GetInstance()->GetParamTypes(
       "a query", 1, txn);
-  EXPECT_EQ(param1.len, 1);
-  EXPECT_EQ(*param1.buf, 'a');
+  EXPECT_EQ(1, param1.len);
+  EXPECT_EQ('a', *param1.buf);
 
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -115,7 +114,7 @@ TEST_F(CatalogTests, CreatingTable) {
                 .GetName(),
             "name");
   // EXPECT_EQ(time_stamp, 5);
-  
+
   // We remove these tests so people can add new catalogs without breaking this
   // test...
   // 3 + 4
@@ -157,51 +156,50 @@ TEST_F(CatalogTests, TableObject) {
   oid_t database_oid =
       catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid("EMP_DB", txn);
   auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObjectByName("EMP_DB",
-                                                                       txn);
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
   EXPECT_EQ(database_object.database_oid, database_oid);
 
   oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
       "department_table", database_oid, txn);
-  auto table_object =
-      catalog::TableCatalog::GetInstance()->GetTableObjectByName(
-          "department_table", database_oid, txn);
+  auto table_object = catalog::TableCatalog::GetInstance()->GetTableObject(
+      "department_table", database_oid, txn);
   EXPECT_EQ(table_object.table_oid, table_oid);
   EXPECT_EQ(table_object.database_oid, database_oid);
 
   auto index_objects = table_object.GetIndexObjects();
   auto column_objects = table_object.GetColumnObjects();
 
-  EXPECT_EQ(index_objects.size(), 1);
-  EXPECT_EQ(column_objects.size(), 2);
+  EXPECT_EQ(1, index_objects.size());
+  EXPECT_EQ(2, column_objects.size());
 
-  EXPECT_EQ(column_objects[0].table_oid, table_oid);
-  EXPECT_EQ(column_objects[0].column_name, "id");
-  EXPECT_EQ(column_objects[0].column_id, 0);
-  EXPECT_EQ(column_objects[0].column_offset, 0);
-  EXPECT_EQ(column_objects[0].column_type, type::TypeId::INTEGER);
-  EXPECT_EQ(column_objects[0].is_inlined, true);
-  EXPECT_EQ(column_objects[0].is_primary, true);
-  EXPECT_EQ(column_objects[0].is_not_null,
-            false);  // Should this be true because it is a primary key?
+  EXPECT_EQ(table_oid, column_objects[0].table_oid);
+  EXPECT_EQ("id", column_objects[0].column_name);
+  EXPECT_EQ(0, column_objects[0].column_id);
+  EXPECT_EQ(0, column_objects[0].column_offset);
+  EXPECT_EQ(type::TypeId::INTEGER, column_objects[0].column_type);
+  EXPECT_EQ(true, column_objects[0].is_inlined);
+  EXPECT_EQ(true, column_objects[0].is_primary);
+  EXPECT_EQ(
+      false,
+      column_objects[0]
+          .is_not_null);  // Should this be true because it is a primary key?
 
-  EXPECT_EQ(column_objects[1].table_oid, table_oid);
-  EXPECT_EQ(column_objects[1].column_name, "name");
-  EXPECT_EQ(column_objects[1].column_id, 1);
-  EXPECT_EQ(column_objects[1].column_offset, 4);
-  EXPECT_EQ(column_objects[1].column_type, type::TypeId::VARCHAR);
-  EXPECT_EQ(column_objects[1].is_inlined, true);
-  EXPECT_EQ(column_objects[1].is_primary, false);
-  EXPECT_EQ(column_objects[1].is_not_null, false);
+  EXPECT_EQ(table_oid, column_objects[1].table_oid);
+  EXPECT_EQ("name", column_objects[1].column_name);
+  EXPECT_EQ(1, column_objects[1].column_id);
+  EXPECT_EQ(4, column_objects[1].column_offset);
+  EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1].column_type);
+  EXPECT_EQ(true, column_objects[1].is_inlined);
+  EXPECT_EQ(false, column_objects[1].is_primary);
+  EXPECT_EQ(false, column_objects[1].is_not_null);
 
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(CatalogTests, DroppingTable) {
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetTableCount(),
-            3);
+  EXPECT_EQ(3, catalog::Catalog::GetInstance()
+                   ->GetDatabaseWithName("EMP_DB")
+                   ->GetTableCount());
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   oid_t database_oid =
@@ -213,12 +211,11 @@ TEST_F(CatalogTests, DroppingTable) {
                                                         database_oid, txn);
   txn_manager.CommitTransaction(txn);
   //  catalog::Catalog::GetInstance()->PrintCatalogs();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetTableCount(),
-            2);
+  EXPECT_EQ(2, catalog::Catalog::GetInstance()
+                   ->GetDatabaseWithName("EMP_DB")
+                   ->GetTableCount());
 
-  EXPECT_EQ(department_table_oid, INVALID_OID);
+  EXPECT_EQ(INVALID_OID, department_table_oid);
 
   // Try to drop again
   txn = txn_manager.BeginTransaction();
@@ -226,32 +223,29 @@ TEST_F(CatalogTests, DroppingTable) {
       "EMP_DB", "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetTableCount(),
-            2);
+  EXPECT_EQ(2, catalog::Catalog::GetInstance()
+                   ->GetDatabaseWithName("EMP_DB")
+                   ->GetTableCount());
 
-  EXPECT_EQ(result, ResultType::FAILURE);
+  EXPECT_EQ(ResultType::FAILURE, result);
 
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
   result =
       catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn);
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetTableCount(),
-            2);
-  EXPECT_EQ(result, ResultType::FAILURE);
+  EXPECT_EQ(2, catalog::Catalog::GetInstance()
+                   ->GetDatabaseWithName("EMP_DB")
+                   ->GetTableCount());
+  EXPECT_EQ(ResultType::FAILURE, result);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "emp_table", txn);
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("EMP_DB")
-                ->GetTableCount(),
-            1);
+  EXPECT_EQ(1, catalog::Catalog::GetInstance()
+                   ->GetDatabaseWithName("EMP_DB")
+                   ->GetTableCount());
 }
 
 TEST_F(CatalogTests, DroppingDatabase) {
@@ -266,7 +260,7 @@ TEST_F(CatalogTests, DroppingDatabase) {
 
 TEST_F(CatalogTests, DroppingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
-  EXPECT_NE(catalog, nullptr);
+  EXPECT_NE(nullptr, catalog);
 }
 
 }  // namespace test

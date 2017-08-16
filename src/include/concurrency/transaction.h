@@ -128,6 +128,7 @@ class Transaction : public Printable {
     return isolation_level_;
   }
 
+  // cache for table catalog objects
   catalog::CatalogCache catalog_cache;
 
  private:

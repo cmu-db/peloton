@@ -168,7 +168,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
   oid_t database_oid =
-      pg_database->GetDatabaseObjectByName(database_name, txn).GetOid();
+      pg_database->GetDatabaseObject(database_name, txn).database_oid;
   if (database_oid != INVALID_OID) {
     LOG_TRACE("Database  %s already exists.", database_name.c_str());
     return ResultType::FAILURE;
