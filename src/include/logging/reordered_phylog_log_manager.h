@@ -26,7 +26,7 @@
 #include "logging/log_buffer_pool.h"
 #include "logging/log_manager.h"
 #include "logging/logging_util.h"
-#include "logging/worker_context.h"
+//#include "logging/worker_context.h"
 #include "logging/reordered_phylog_logger.h"
 #include "type/types.h"
 #include "type/serializer.h"
@@ -64,7 +64,7 @@ class ReorderedPhyLogLogManager : public LogManager {
 protected:
 
   ReorderedPhyLogLogManager()
-    : worker_count_(0),
+    :// worker_count_(0),
       is_running_(false) {}
 
 public:
@@ -74,15 +74,15 @@ public:
   }
   virtual ~ReorderedPhyLogLogManager() {}
 
-  virtual void SetDirectories(const std::vector<std::string> &logging_dirs) override {
-    logger_dirs_ = logging_dirs;
+  virtual void SetDirectories(std::string logging_dir) override {
+    logger_dir_ = logging_dir;
 
-    if (logging_dirs.size() > 0) {
-      pepoch_dir_ = logging_dirs.at(0);
+    if (!logging_dir.empty()) {
+      pepoch_dir_ = logging_dir;
     }
     // check the existence of logging directories.
     // if not exists, then create the directory.
-    for (auto logging_dir : logging_dirs) {
+    //for (auto logging_dir : logging_dirs) {
       if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false) {
         LOG_INFO("Logging directory %s is not accessible or does not exist", logging_dir.c_str());
         bool res = LoggingUtil::CreateDirectory(logging_dir.c_str(), 0700);
@@ -90,30 +90,30 @@ public:
           LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
         }
       }
-    }
+//    }
 
-    logger_count_ = logging_dirs.size();
+    logger_count_ = 1;
     for (size_t i = 0; i < logger_count_; ++i) {
-      loggers_.emplace_back(new ReorderedPhyLogLogger(i, logging_dirs.at(i)));
+      logger_ = new ReorderedPhyLogLogger(0, logging_dir);
     }
   }
 
-  virtual const std::vector<std::string> &GetDirectories() override {
-    return logger_dirs_;
+  virtual const std::string GetDirectories() override {
+    return logger_dir_;
   }
 
   // Worker side logic
-  virtual void RegisterWorker(size_t thread_idccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc) override;
-  virtual void DeregisterWorker() override;
+  //virtual void RegisterWorker(size_t thread_id) override;
+  //virtual void DeregisterWorker() override;
 
-  virtual void StartTxn(concurrency::Transaction *txn) override ;
+  virtual void StartTxn() override ;
 
   void LogInsert(const ItemPointer &tuple_pos);
   void LogUpdate(const ItemPointer &tuple_pos);
   void LogDelete(const ItemPointer &tuple_pos_deleted);
 
-  void StartPersistTxn();
-  void EndPersistTxn();
+  void StartPersistTxn(cid_t commit_id);
+  void EndPersistTxn(cid_t commit_id);
 
 
   // Logger side logic
@@ -129,11 +129,15 @@ private:
   void WriteRecordToBuffer(LogRecord &record);
 
 private:
-  std::atomic<oid_t> worker_count_;
+  //std::atomic<oid_t> worker_count_;
 
-  std::vector<std::string> logger_dirs_;
+  std::string logger_dir_;
 
-  std::vector<std::shared_ptr<ReorderedPhyLogLogger>> loggers_;
+  CopySerializeOutput output_buffer_;
+
+  LogBuffer* buffer_ptr_;
+
+  ReorderedPhyLogLogger* logger_;
 
   std::unique_ptr<std::thread> pepoch_thread_;
   volatile bool is_running_;

@@ -30,8 +30,9 @@ private:
   const static size_t log_buffer_capacity_ = 1024 * 1024 * 32; // 32 MB
 
 public:
-  LogBuffer(const size_t thread_id, const size_t eid) : 
-      thread_id_(thread_id), eid_(eid), size_(0){
+  LogBuffer()://const size_t thread_id)://, const size_t eid) :
+     // thread_id_(thread_id), //eid_(eid),
+      size_(0){
     data_ = new char[log_buffer_capacity_];
     PL_MEMSET(data_, 0, log_buffer_capacity_);
   }
@@ -40,13 +41,13 @@ public:
     data_ = nullptr;
   }
 
-  inline void Reset() { size_ = 0; eid_ = INVALID_EID; }
+  inline void Reset() { size_ = 0;} // eid_ = INVALID_EID; }
 
   inline char *GetData() { return data_; }
 
   inline size_t GetSize() { return size_; }
 
-  inline size_t GetEpochId() { return eid_; }
+  //inline size_t GetEpochId() { return eid_; }
 
   inline size_t GetThreadId() { return thread_id_; }
 
@@ -56,7 +57,7 @@ public:
 
 private:
   size_t thread_id_;
-  size_t eid_;
+  //size_t eid_;
   size_t size_;
   char* data_;
 };

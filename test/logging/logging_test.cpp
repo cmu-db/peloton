@@ -11,18 +11,19 @@
 // //===----------------------------------------------------------------------===//
 
 // #include "catalog/catalog.h"
-// #include "common/harness.h"
-// #include "executor/testing_executor_util.h"
+ #include "common/harness.h"
+ #include "executor/testing_executor_util.h"
 // #include "logging/testing_logging_util.h"
 
-// #include "concurrency/transaction_manager_factory.h"
+ #include "concurrency/transaction_manager_factory.h"
 // #include "executor/logical_tile_factory.h"
 // #include "logging/loggers/wal_frontend_logger.h"
-// #include "logging/logging_util.h"
-// #include "storage/data_table.h"
-// #include "storage/database.h"
-// #include "storage/table_factory.h"
-// #include "storage/tile.h"
+ #include "logging/logging_util.h"
+#include "logging/durability_factory.h"
+ #include "storage/data_table.h"
+ #include "storage/database.h"
+ #include "storage/table_factory.h"
+ #include "storage/tile.h"
 
 // #include "executor/mock_executor.h"
 
@@ -32,20 +33,32 @@
 
 // extern peloton::LoggingType peloton_logging_mode;
 
-// namespace peloton {
-// namespace test {
+ namespace peloton {
+ namespace test {
 
 // //===--------------------------------------------------------------------===//
 // // Logging Tests
 // //===--------------------------------------------------------------------===//
 
-// class LoggingTests : public PelotonTest {};
+class LoggingTests : public PelotonTest {};
 
-// TEST_F(LoggingTests, BasicLoggingTest) {
-//   std::unique_ptr<storage::DataTable> table(
-//       TestingExecutorUtil::CreateTable(1));
+ TEST_F(LoggingTests, BasicLoggingTest) {
+   std::unique_ptr<storage::DataTable> table(
+       TestingExecutorUtil::CreateAndPopulateTable());
 
-//   auto &log_manager = logging::LogManager::GetInstance();
+    logging::DurabilityFactory::Configure(LoggingType::ON,CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
+    auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+    auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SNAPSHOT);
+    log_manager.SetDirectories({"/tmp/log"});
+    log_manager.StartLoggers();
+    log_manager.RegisterWorker(1);
+    log_manager.StartTxn(txn);
+    log_manager.LogInsert(ItemPointer(table->GetTileGroup(0)->GetTileGroupId(),0));
+    log_manager.EndPersistTxn();
+    log_manager.DeregisterWorker();;
+    log_manager.StopLoggers();
+
+
 
 //   LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
@@ -378,7 +391,7 @@
 //   EXPECT_EQ(commit_id, log_manager.GetPersistentFlushedCommitId());
 //   log_manager.EndLogging();
 // }
-
-// }  // namespace test
-// }  // namespace peloton
+}
+ }  // namespace test
+ }  // namespace peloton
 // >>>>>>> master

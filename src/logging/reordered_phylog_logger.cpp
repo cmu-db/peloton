@@ -34,16 +34,16 @@
 namespace peloton {
 namespace logging {
 
-void ReorderedPhyLogLogger::RegisterWorker(WorkerContext *phylog_worker_ctx) {
-  worker_map_lock_.Lock();
-  worker_map_[phylog_worker_ctx->worker_id].reset(phylog_worker_ctx);
-  worker_map_lock_.Unlock();
+void ReorderedPhyLogLogger::RegisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
+//  worker_map_lock_.Lock();
+//  worker_map_[phylog_worker_ctx->worker_id].reset(phylog_worker_ctx);
+//  worker_map_lock_.Unlock();
 }
 
-void ReorderedPhyLogLogger::DeregisterWorker(WorkerContext *phylog_worker_ctx) {
-  worker_map_lock_.Lock();
-  worker_map_.erase(phylog_worker_ctx->worker_id);
-  worker_map_lock_.Unlock();
+void ReorderedPhyLogLogger::DeregisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
+//  worker_map_lock_.Lock();
+//  worker_map_.erase(phylog_worker_ctx->worker_id);
+//  worker_map_lock_.Unlock();
 }
 
 void ReorderedPhyLogLogger::StartIndexRebulding(const size_t logger_count) {
@@ -112,10 +112,6 @@ void ReorderedPhyLogLogger::GetSortedLogFileIdList(const size_t checkpoint_eid, 
   // Sort in descending order
   std::sort(file_eids_.begin(), file_eids_.end(), std::less<size_t>());
   max_replay_file_id_ = file_eids_.size() - 1;
-
-  // for (auto &entry : file_eids_) {
-  //   printf("file id = %lu\n", entry);
-  // }
 
 }
 
@@ -259,7 +255,6 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
     }
     CopySerializeInput length_decode((const void *) &length_buf, 4);
     int length = length_decode.ReadInt();
-    // printf("length = %d\n", length);
     // Adjust the buffer
     if ((size_t) length > buf_size) {
       buffer.reset(new char[(int)(length * 1.2)]);
@@ -291,7 +286,6 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
           return false;
         }
         current_eid = (size_t) record_decode.ReadLong();
-        // printf("begin epoch id = %lu\n", current_eid);
         break;
       } case LogRecordType::EPOCH_END: {
         size_t eid = (size_t) record_decode.ReadLong();
@@ -299,7 +293,6 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
           LOG_ERROR("Mismatched epoch in log record");
           return false;
         }
-        // printf("end epoch id = %lu\n", current_eid);
         current_eid = INVALID_EID;
         break;
       } case LogRecordType::TRANSACTION_BEGIN: {
@@ -349,14 +342,6 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
         tuple->DeserializeFrom(record_decode, this->recovery_pools_[thread_id].get());
 
-        // FILE *fp = fopen("in_file.txt", "a");
-        // for (size_t i = 0; i < schema->GetColumnCount(); ++i) {
-        //   int value = ValuePeeker::PeekAsInteger(tuple->GetValue(i));
-        //   fprintf(stdout, "%d, ", value);
-        // }
-        // fprintf(stdout, "\n");
-        // fclose(fp);
-
         // Install the record
         InstallTupleRecord(record_type, tuple.get(), table, current_cid);
         break;
@@ -381,11 +366,9 @@ void ReorderedPhyLogLogger::RunRecoveryThread(const size_t thread_id, const size
     }
 
     size_t file_eid = file_eids_.at(replay_file_id);
-    // printf("start replaying file id = %d, file eid = %lu\n", replay_file_id, file_eid);
     // Replay a single file
     std::string filename = GetLogFileFullPath(file_eid);
     FileHandle file_handle;
-    // std::cout<<"filename = " << filename << std::endl;
     bool res = LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle);
     if (res == false) {
       LOG_ERROR("Cannot open log file %s\n", filename.c_str());
@@ -460,7 +443,7 @@ void ReorderedPhyLogLogger::Run() {
 
   std::list<std::pair<FileHandle*, size_t>> file_handles;
 
-  size_t current_file_eid = 0; //epoch_manager.GetCurrentEpochId();
+  size_t current_file_eid = epoch_manager.GetCurrentEpochId();
 
   FileHandle *new_file_handle = new FileHandle();
   file_handles.push_back(std::make_pair(new_file_handle, current_file_eid));
@@ -472,7 +455,7 @@ void ReorderedPhyLogLogger::Run() {
     exit(EXIT_FAILURE);
   }
 
-  auto &epoch_mamager = concurrency::EpochManagerFactory::GetInstance();
+//  auto &epoch_mamager = concurrency::EpochManagerFactory::GetInstance();
 
   /**
    *  Main loop
@@ -481,59 +464,58 @@ void ReorderedPhyLogLogger::Run() {
     if (is_running_ == false) { break; }
 
     std::this_thread::sleep_for(
-      std::chrono::microseconds(epoch_mamager.GetEpochLengthInMicroSecQuarter()));
+      std::chrono::microseconds(epoch_manager.GetEpochLengthInMicroSecQuarter()));
 
-    size_t current_global_eid = epoch_mamager.GetCurrentEpochId();
+//    size_t current_global_eid = epoch_manager.GetCurrentEpochId();
 
     // Pull log records from workers per epoch buffer
     {
-      worker_map_lock_.Lock();
+      //worker_map_lock_.Lock();
 
-      size_t min_workers_persist_eid = INVALID_EID;
-      for (auto &worker_entry : worker_map_) {
+      //size_t min_workers_persist_eid = INVALID_EID;
+      //for (auto &worker_entry : worker_map_) {
         // For every alive worker, move its buffer to the logger's local buffer
-        auto worker_ctx_ptr = worker_entry.second.get();
+        //auto worker_ctx_ptr = worker_entry.second.get();
 
-        size_t last_persist_eid = worker_ctx_ptr->persist_eid;
+        //size_t last_persist_eid = worker_ctx_ptr->persist_eid;
 
         // Since idle worker has MAX_EID, we need a std::min here
         // Note: std::min pass a const & of into the function. We need to first copy the shared worker_ctx_ptr->current_commit_eid
         // into a local variable before calling std::min. Otherwise we will have a Heisenbug where std::min first check which one is smaller,
         // and before it returns, other thread modify the variable and we actually return the larger one.
-        size_t worker_current_eid = worker_ctx_ptr->current_commit_eid;
-        worker_current_eid = std::min(worker_current_eid, current_global_eid);
+        //size_t worker_current_eid = worker_ctx_ptr->current_commit_eid;
+        //worker_current_eid = std::min(worker_current_eid, current_global_eid);
 
-        PL_ASSERT(last_persist_eid <= worker_current_eid);
+        //PL_ASSERT(last_persist_eid <= worker_current_eid);
 
-        if (last_persist_eid == worker_current_eid) {
+        //if (last_persist_eid == worker_current_eid) {
           // The worker makes no progress
-          continue;
-        }
+          //continue;
+        //}
 
-        for (size_t epoch_id = last_persist_eid + 1; epoch_id <= worker_current_eid; ++epoch_id) {
+        //for (size_t epoch_id = last_persist_eid + 1; epoch_id <= worker_current_eid; ++epoch_id) {
 
-          size_t epoch_idx = epoch_id % epoch_manager.GetEpochQueueCapacity();
+          //size_t epoch_idx = epoch_id % epoch_manager.GetEpochQueueCapacity();
           // get all the buffers that are associated with the epoch.
-          auto &buffers = worker_ctx_ptr->per_epoch_buffer_ptrs[epoch_idx];
+          //auto &buffers = worker_ctx_ptr->per_epoch_buffer_ptrs[epoch_idx];
 
-          if (buffers.empty() == true) {
+          //if (buffers.empty() == true) {
             // no transaction log is generated within this epoch.
             // or we have logged this epoch before.
             // just skip it.
-            continue;
-          }
+            //continue;
+          //}
 
           // if we have something to write, then check whether we need to create new file.
           FileHandle *file_handle = nullptr;
 
-          for (auto &entry : file_handles) {
+          /*for (auto &entry : file_handles) {
             if (epoch_id >= entry.second && epoch_id < entry.second + file_epoch_count) {
               file_handle = entry.first;
             }
-          }
-          while (file_handle == nullptr) {
+          }*/
+          //while (file_handle == nullptr) {
             current_file_eid = current_file_eid + file_epoch_count;
-            // printf("create new file with epoch id = %lu, last persist eid = %lu, current eid = %lu\n", current_file_eid, last_persist_eid, worker_current_eid);
             FileHandle *new_file_handle = new FileHandle();
             file_handles.push_back(std::make_pair(new_file_handle, current_file_eid));
 
@@ -543,55 +525,56 @@ void ReorderedPhyLogLogger::Run() {
               LOG_ERROR("Unable to create log file %s\n", filename.c_str());
               exit(EXIT_FAILURE);
             }
-            if (epoch_id >= current_file_eid && epoch_id < current_file_eid + file_epoch_count) {
+            //if (epoch_id >= current_file_eid && epoch_id < current_file_eid + file_epoch_count) {
               file_handle = new_file_handle;
-              break;
-            }
-          }
+              //break;
+            //}
+          //}
 
 
-          PersistEpochBegin(*file_handle, epoch_id);
+          //PersistEpochBegin(*file_handle, epoch_id);
           // persist all the buffers.
-          while (buffers.empty() == false) {
+        //  while (buffer.empty() == false) {
             // Check if the buffer is empty
             // TODO: is it possible to have an empty buffer??? --YINGJUN
-            if (buffers.top()->Empty()) {
-              worker_ctx_ptr->buffer_pool.PutBuffer(std::move(buffers.top()));
-            } else {
-              PersistLogBuffer(*file_handle, std::move(buffers.top()));
-            }
-            PL_ASSERT(buffers.top() == nullptr);
-            buffers.pop();
-          }
-          PersistEpochEnd(*file_handle, epoch_id);
+           // if (buffers.top()->Empty()) {
+//              worker_ctx_ptr->buffer_pool.PutBuffer(std::move(buffers.top()));
+//            } else {
+              if(log_buffer_ != nullptr)
+                PersistLogBuffer(*file_handle, log_buffer_);
+//            }
+//            PL_ASSERT(buffers.top() == nullptr);
+//            buffers.pop();
+//          }
+//          PersistEpochEnd(*file_handle, epoch_id);
           // Call fsync
-          LoggingUtil::FFlushFsync(*file_handle);
+//          LoggingUtil::FFlushFsync(*file_handle);
         } // end for
 
-        worker_ctx_ptr->persist_eid = worker_current_eid - 1;
+//        worker_ctx_ptr->persist_eid = worker_current_eid - 1;
 
-        if (min_workers_persist_eid == INVALID_EID || min_workers_persist_eid > (worker_current_eid - 1)) {
-          min_workers_persist_eid = worker_current_eid - 1;
-        }
+//        if (min_workers_persist_eid == INVALID_EID || min_workers_persist_eid > (worker_current_eid - 1)) {
+//          min_workers_persist_eid = worker_current_eid - 1;
+//        }
 
-      } // end for
+//      } // end for
 
-      if (min_workers_persist_eid == INVALID_EID) {
+//      if (min_workers_persist_eid == INVALID_EID) {
         // in this case, it is likely that there's no registered worker or there's nothing to persist.
-        worker_map_lock_.Unlock();
-        continue;
-      }
+//        worker_map_lock_.Unlock();
+//        continue;
+//      }
 
       // Currently when there is a long running txn, the logger can only know the worker's eid when the worker is committing the txn.
       // We should switch to localized epoch manager to solve this problem.
       // XXX: work around. We should switch to localized epoch manager to solve this problem
-      if (min_workers_persist_eid < persist_epoch_id_) {
-        min_workers_persist_eid = persist_epoch_id_;
-      }
+//      if (min_workers_persist_eid < persist_epoch_id_) {
+//        min_workers_persist_eid = persist_epoch_id_;
+//      }
 
-      PL_ASSERT(min_workers_persist_eid >= persist_epoch_id_);
+//      PL_ASSERT(min_workers_persist_eid >= persist_epoch_id_);
 
-      persist_epoch_id_ = min_workers_persist_eid;
+//      persist_epoch_id_ = min_workers_persist_eid;
 
       auto list_iter = file_handles.begin();
 
@@ -617,8 +600,8 @@ void ReorderedPhyLogLogger::Run() {
       }
 
 
-      worker_map_lock_.Unlock();
-    }
+//      worker_map_lock_.Unlock();
+//    }
   }
 
   // Close the log file
@@ -626,22 +609,22 @@ void ReorderedPhyLogLogger::Run() {
 
   // Safely close all the files
 
-  auto list_iter = file_handles.begin();
+//  auto list_iter = file_handles.begin();
 
-  while (list_iter != file_handles.end()) {
-    FileHandle *file_handle = list_iter->first;
+//  while (list_iter != file_handles.end()) {
+//    FileHandle *file_handle = list_iter->first;
 
-    bool res = LoggingUtil::CloseFile(*file_handle);
-    if (res == false) {
-      LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
-      exit(EXIT_FAILURE);
-    }
+//    bool res = LoggingUtil::CloseFile(*file_handle);
+//    if (res == false) {
+//      LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
+//      exit(EXIT_FAILURE);
+//    }
 
-    delete file_handle;
-    file_handle = nullptr;
+//    delete file_handle;
+//    file_handle = nullptr;
 
-    list_iter = file_handles.erase(list_iter);
-  }
+//    list_iter = file_handles.erase(list_iter);
+//  }
 }
 
 void ReorderedPhyLogLogger::PersistEpochBegin(FileHandle &file_handle, const size_t epoch_id) {
@@ -679,7 +662,7 @@ void ReorderedPhyLogLogger::PersistEpochEnd(FileHandle &file_handle, const size_
 
 }
 
-void ReorderedPhyLogLogger::PersistLogBuffer(FileHandle &file_handle, std::unique_ptr<LogBuffer> log_buffer) {
+void ReorderedPhyLogLogger::PersistLogBuffer(FileHandle &file_handle, LogBuffer* log_buffer) {
 
   fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, file_handle.file);
 
