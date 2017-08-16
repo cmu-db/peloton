@@ -49,18 +49,18 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Creating table");
   LOG_TRACE(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
-          "INT, dept_name TEXT);");
+      "INT, dept_name TEXT);");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("CREATE",
                                 "CREATE TABLE department_table(dept_id INT "
-                                    "PRIMARY KEY, student_id INT, dept_name "
-                                    "TEXT);"));
+                                "PRIMARY KEY, student_id INT, dept_name "
+                                "TEXT);"));
 
   auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
-          "dept_name TEXT);");
+      "dept_name TEXT);");
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
@@ -69,8 +69,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Query Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
@@ -89,22 +88,21 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Inserting a tuple...");
   LOG_TRACE(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
-          "VALUES (1,52,'hello_1');");
+      "VALUES (1,52,'hello_1');");
   statement.reset(new Statement("INSERT",
                                 "INSERT INTO department_table(dept_id, "
-                                    "student_id, dept_name) VALUES "
-                                    "(1,52,'hello_1');"));
+                                "student_id, dept_name) VALUES "
+                                "(1,52,'hello_1');"));
 
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
-          "(1,52,'hello_1');");
+      "(1,52,'hello_1');");
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple inserted!");
@@ -123,10 +121,9 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("INDEX CREATED!");
@@ -144,7 +141,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Updating a tuple...");
   LOG_TRACE(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE student_id = "
-          "52");
+      "52");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
   auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt, txn);
@@ -183,7 +180,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   // Test delete tuple with seq scan
   auto delete_stmt_seq = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
-  auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq, nullptr);
+  auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq, txn);
   auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PlanNodeType::SEQSCAN);
