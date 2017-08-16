@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/transaction.h"
 #include "catalog/column_catalog.h"
 
 #include "executor/logical_tile.h"
@@ -217,6 +218,12 @@ std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
 
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
+  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  if (table_object) {
+    auto column_object = table_object->GetColumnObject(column_id);
+    if (column_object) return column_object;
+  }
+
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
   oid_t index_offset = 1;  // Index of table_oid & column_id
   std::vector<type::Value> values;

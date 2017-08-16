@@ -78,6 +78,17 @@ bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   }
 }
 
+/*@brief   evict all table catalog objects in this database from cache
+*/
+void DatabaseCatalogObject::EvictAllTableObjects() {
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
+
+  // find table name from table name cache
+  for (auto it = table_name_cache.begin(); it != table_name_cache.end(); ++it) {
+    txn->catalog_cache.EvictTableObject(it->second);
+  }
+}
+
 /* @brief   Get table catalog object from cache or all the way from storage
  * @param   table_oid     table oid of the requested table catalog object
  * @param   cached_only   if cached only, return nullptr on a cache miss
@@ -195,6 +206,9 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
   oid_t index_offset = 0;  // Index of database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  // evict cache
+  txn->catalog_cache.EvictDatabaseObject(database_oid);
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
