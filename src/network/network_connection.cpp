@@ -49,6 +49,14 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     }
   }
   event_add(event, nullptr);
+  // should put the initialization else where.. check correctness first.
+  protocol_handler_.traffic_cop_->SetTaskCallback(TriggerStateMachine, event);
+//  pkt_manager.traffic_cop_->event_ = event;
+}
+
+void NetworkConnection::TriggerStateMachine(void* arg) {
+  struct event* event = static_cast<struct event*>(arg);
+  event_active(event, EV_WRITE, 0);
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {
@@ -241,6 +249,7 @@ ReadState NetworkConnection::FillReadBuffer() {
       else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
                         rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_INFO("When filling read buffer, read %ld bytes", bytes_read);
       }
 
       if (bytes_read > 0) {
@@ -590,7 +599,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_PROCESS: {
-        bool status;
+        ProcessPacketResult status;
 
         if(conn->protocol_handler_.ssl_sent) {
             // start SSL handshake
@@ -635,7 +644,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         if (conn->protocol_handler_.is_started == false) {
           // We need to handle startup packet first
           int status_res = conn->protocol_handler_.ProcessInitialPacket(&conn->rpkt);
-          status = (status_res != 0);
+          if (status_res == 0) {
+            status = ProcessPacketResult::TERMINATE;
+           } else {
+            status = ProcessPacketResult::COMPLETE;
+          }
           if (status_res == 1) {
             conn->protocol_handler_.is_started = true;
           }
@@ -648,13 +661,30 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
                                                    (size_t)conn->thread_id);
         }
 
-        if (status == false) {
-          // packet processing can't proceed further
-          conn->TransitState(ConnState::CONN_CLOSING);
-        } else {
-          // We should have responses ready to send
-          conn->TransitState(ConnState::CONN_WRITE);
+        switch (status) {
+          case ProcessPacketResult::TERMINATE:
+          LOG_INFO("ProcessPacketResult: terminate");
+            // packet processing can't proceed further
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          case ProcessPacketResult::COMPLETE:
+            // We should have responses ready to send
+          LOG_INFO("ProcessPacketResult: complete");
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
+          case ProcessPacketResult::PROCESSING:
+          default:
+          LOG_INFO("ProcessPacketResult: queueing");
+            conn->TransitState(ConnState::CONN_GET_RESULT);
+            done = true;
         }
+        break;
+      }
+
+      case ConnState::CONN_GET_RESULT: {
+        conn->protocol_handler_.GetResult();
+        conn->protocol_handler_.traffic_cop_->is_queuing_ = false;
+        conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
 

@@ -24,7 +24,9 @@
 #include <vector>
 
 #include "type/type_id.h"
-
+#include "unistd.h"
+#include "common/logger.h"
+#include "common/macros.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -813,7 +815,8 @@ enum class ResultType {
   FAILURE = 2,
   ABORTED = 3,  // aborted
   NOOP = 4,     // no op
-  UNKNOWN = 5
+  UNKNOWN = 5,
+  QUEUING = 6
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);
@@ -1231,5 +1234,35 @@ typedef unsigned char uchar;
 
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
+
+//===--------------------------------------------------------------------===//
+// Packet Manager: ProcessPacketResult
+//===--------------------------------------------------------------------===//
+enum class ProcessPacketResult {
+  COMPLETE,
+  TERMINATE,
+  PROCESSING,
+};
+
+//struct IOTrigger {
+//  int event_fd_;
+//  inline IOTrigger(int event_fd):event_fd_(event_fd) {
+//    LOG_INFO("Create IOTrigger in TrafficCop with event_fd %d", event_fd);
+//  }
+//  inline bool trigger() {
+//    char buf[1];
+//    buf[0] = 'c';
+//    LOG_INFO("Going to use IOTrigger to trigger event");
+//    int len = write(event_fd_, buf, 1);
+//    if (len < 0) {
+//      LOG_INFO("Error when writing into the event_fd_ to trigger event, err code is %d", errno);
+//      return false;
+//    } else if (len == 0) {
+//      LOG_INFO("Cannot write anything into the event_fd_ to trigger event");
+//      return false;
+//    }
+//    return true;
+//  }
+//};
 
 }  // namespace peloton

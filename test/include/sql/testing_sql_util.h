@@ -25,6 +25,7 @@ namespace optimizer {
 class AbstractOptimizer;
 }
 
+
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
@@ -78,14 +79,20 @@ class TestingSQLUtil {
   static std::string GetResultValueAsString(
       const std::vector<StatementResult> &result, size_t index) {
     std::string value(result[index].second.begin(), result[index].second.end());
-
     return value;
   }
 
   // Create a random number
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
+  static void UtilTestTaskCallback(void *arg);
 
   static tcop::TrafficCop traffic_cop_;
+  static std::atomic_int counter_;
+//  inline static void SetTrafficCopCounter() {
+//    counter_.store(1);
+//  }
+  static void ContinueAfterComplete();
+
 };
 }  // namespace test
 }  // namespace peloton

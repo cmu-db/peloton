@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
+#include <sql/testing_sql_util.h>
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -52,6 +53,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   optimizer::Optimizer optimizer;
 
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
@@ -66,8 +68,15 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   traffic_cop.CommitQueryHelper();
 }
 
@@ -83,6 +92,7 @@ TEST_F(DeleteTests, VariousOperations) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(type::TypeId::INTEGER,
@@ -136,8 +146,15 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format = std::vector<int>(0, 0);
+  TestingSQLUtil::counter_.store(1);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -164,8 +181,15 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -192,8 +216,15 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -222,8 +253,15 @@ TEST_F(DeleteTests, VariousOperations) {
   auto tuple_descriptor =
       tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Counted Tuples!");
@@ -246,8 +284,15 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
@@ -273,8 +318,15 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");

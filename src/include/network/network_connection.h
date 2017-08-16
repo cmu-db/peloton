@@ -109,8 +109,11 @@ class NetworkConnection {
 
   void Reset();
 
+  static void TriggerStateMachine(void* arg);
+
   /* Runs the state machine for the protocol. Invoked by event handler callback */
   static void StateMachine(NetworkConnection *conn);
+
 
  private:
   // Writes a packet's header (type, size) into the write buffer

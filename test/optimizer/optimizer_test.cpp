@@ -16,6 +16,7 @@
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include "tcop/tcop.h"
+#include <sql/testing_sql_util.h>
 
 namespace peloton {
 namespace test {
@@ -40,6 +41,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   optimizer::Optimizer optimizer;
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
@@ -62,9 +64,15 @@ TEST_F(OptimizerTests, HashJoinTest) {
   std::vector<int> result_format;
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-
+  TestingSQLUtil::counter_.store(1);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
@@ -89,8 +97,15 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
@@ -116,8 +131,15 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_a!");
@@ -138,8 +160,15 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_b!");
@@ -158,8 +187,15 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
 
   result_format = std::vector<int>(4, 0);
+  TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
                                             params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Join completed!");

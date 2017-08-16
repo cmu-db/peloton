@@ -26,6 +26,8 @@ namespace test {
 class AggregateSQLTests : public PelotonTest {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
+  PL_ASSERT(&TestingSQLUtil::counter_);
+  PL_ASSERT(&TestingSQLUtil::traffic_cop_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -34,12 +36,12 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
-
+  LOG_DEBUG("execute one query");
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::Optimizer optimizer;
+//  optimizer::Optimizer optimizer;
 
   // All of these aggregates should return null
   std::vector<std::string> nullAggregates = {"MIN", "MAX", "AVG", "SUM"};
@@ -77,7 +79,6 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
   // into the table
@@ -105,7 +106,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::Optimizer optimizer;
+//  optimizer::Optimizer optimizer;
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(b) from test", result,
@@ -203,6 +204,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   // free the database just created
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+  LOG_DEBUG("Finish test");
 }
 
 }  // namespace test
