@@ -57,11 +57,21 @@ class TableCatalogObject {
         valid_column_objects(false),
         txn(txn) {}
 
+  // Get index objects
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> &
+  GetIndexObjects();
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid);
+
+  // Get column objects
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
+  GetColumnObjects();
+  std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id);
+  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+      const std::string &column_name);
+
   oid_t GetOid() const { return table_oid; }
   std::string GetName() const { return table_name; }
   oid_t GetDatabaseOid() const { return database_oid; }
-  std::unordered_map<oid_t, IndexCatalogObject> GetIndexObjects();
-  std::unordered_map<oid_t, ColumnCatalogObject> GetColumnObjects();
 
   // table oid
   const oid_t table_oid;
@@ -73,8 +83,13 @@ class TableCatalogObject {
   oid_t database_oid;
 
  private:
-  std::unordered_map<oid_t, IndexCatalogObject> index_objects;
-  std::unordered_map<oid_t, ColumnCatalogObject> column_objects;
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
+  std::mutex index_cache_lock;
+
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
+      column_objects;
+  std::unordered_map<std::string, oid_t> column_name_cache;
+  std::mutex column_cache_lock;
 
   bool valid_index_objects;
   bool valid_column_objects;
@@ -105,11 +120,11 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
-  const TableCatalogObject GetTableObjectByOid(oid_t table_oid,
-                                               concurrency::Transaction *txn);
-  const TableCatalogObject GetTableObjectByName(const std::string &table_name,
-                                                oid_t database_oid,
-                                                concurrency::Transaction *txn);
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      oid_t table_oid, concurrency::Transaction *txn);
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      const std::string &table_name, oid_t database_oid,
+      concurrency::Transaction *txn);
 
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);

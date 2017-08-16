@@ -253,9 +253,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
       auto column_object =
           std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
       column_objects.insert(
-          std::make_pair(column_object.column_id, column_object));
-      // column_objects[column_object.column_id] =
-      //     ColumnCatalogObject(tile.get(), tuple_id);
+          std::make_pair(column_object->column_id, column_object));
     }
   }
 
@@ -273,52 +271,67 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
 oid_t ColumnCatalog::GetColumnId(oid_t table_oid,
                                  const std::string &column_name,
                                  concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({2});  // column_id
-  oid_t index_offset = 0;              // Index of table_oid & column_name
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t column_id = -1;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      column_id = (*result_tiles)[0]
-                      ->GetValue(0, 0)
-                      .GetAs<oid_t>();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_name, txn);
+  if (column_object) {
+    return column_object->column_id;
+  } else {
+    return INVALID_OID;
   }
-  return column_id;
+
+  // std::vector<oid_t> column_ids({2});  // column_id
+  // oid_t index_offset = 0;              // Index of table_oid & column_name
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(
+  //     type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // oid_t column_id = -1;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     column_id = (*result_tiles)[0]
+  //                     ->GetValue(0, 0)
+  //                     .GetAs<oid_t>();  // After projection left 1 column
+  //   }
+  // }
+  // return column_id;
 }
 
 std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_id,
                                          concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({1});  // column_name
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string column_name;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      column_name = (*result_tiles)[0]
-                        ->GetValue(0, 0)
-                        .ToString();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->column_name;
+  } else {
+    return std::string();
   }
 
-  return column_name;
+  // std::vector<oid_t> column_ids({1});  // column_name
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // std::string column_name;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     column_name = (*result_tiles)[0]
+  //                       ->GetValue(0, 0)
+  //                       .ToString();  // After projection left 1 column
+  //   }
+  // }
+
+  // return column_name;
 }
 
 /*@brief   get physical offset of one column in the table(e.g this column store
@@ -331,128 +344,167 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_id,
 */
 oid_t ColumnCatalog::GetColumnOffset(oid_t table_oid, oid_t column_id,
                                      concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({3});  // column_offset
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t column_offset = -1;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      column_offset = (*result_tiles)[0]
-                          ->GetValue(0, 0)
-                          .GetAs<oid_t>();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->column_offset;
+  } else {
+    return INVALID_OID;
   }
 
-  return column_offset;
+  // std::vector<oid_t> column_ids({3});  // column_offset
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // oid_t column_offset = -1;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     column_offset = (*result_tiles)[0]
+  //                         ->GetValue(0, 0)
+  //                         .GetAs<oid_t>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return column_offset;
 }
 
 type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid, oid_t column_id,
                                           concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({4});  // column_type
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  type::TypeId column_type = type::TypeId::INVALID;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      column_type =
-          StringToTypeId((*result_tiles)[0]
-                             ->GetValue(0, 0)
-                             .ToString());  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->column_type;
+  } else {
+    return type::TypeId::INVALID;
   }
 
-  return column_type;
+  // std::vector<oid_t> column_ids({4});  // column_type
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // type::TypeId column_type = type::TypeId::INVALID;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     column_type =
+  //         StringToTypeId((*result_tiles)[0]
+  //                            ->GetValue(0, 0)
+  //                            .ToString());  // After projection left 1 column
+  //   }
+  // }
+
+  // return column_type;
 }
 
 bool ColumnCatalog::IsInlined(oid_t table_oid, oid_t column_id,
                               concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({5});  // is_inlined
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  bool is_inlined = true;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      is_inlined = (*result_tiles)[0]
-                       ->GetValue(0, 0)
-                       .GetAs<bool>();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->is_inlined;
+  } else {
+    return true;
   }
 
-  return is_inlined;
+  // std::vector<oid_t> column_ids({5});  // is_inlined
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // bool is_inlined = true;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     is_inlined = (*result_tiles)[0]
+  //                      ->GetValue(0, 0)
+  //                      .GetAs<bool>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return is_inlined;
 }
 
 bool ColumnCatalog::IsPrimary(oid_t table_oid, oid_t column_id,
                               concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({6});  // is_primary
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  bool is_primary = false;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      is_primary = (*result_tiles)[0]
-                       ->GetValue(0, 0)
-                       .GetAs<bool>();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->is_primary;
+  } else {
+    return false;
   }
 
-  return is_primary;
+  // std::vector<oid_t> column_ids({6});  // is_primary
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // bool is_primary = false;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     is_primary = (*result_tiles)[0]
+  //                      ->GetValue(0, 0)
+  //                      .GetAs<bool>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return is_primary;
 }
 
 bool ColumnCatalog::IsNotNull(oid_t table_oid, oid_t column_id,
                               concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({7});  // is_not_null
-  oid_t index_offset = 1;              // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  bool is_not_null = false;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      is_not_null = (*result_tiles)[0]
-                        ->GetValue(0, 0)
-                        .GetAs<bool>();  // After projection left 1 column
-    }
+  auto column_object = GetColumnObject(table_oid, column_id, txn);
+  if (column_object) {
+    return column_object->is_not_null;
+  } else {
+    return false;
   }
 
-  return is_not_null;
+  // std::vector<oid_t> column_ids({7});  // is_not_null
+  // oid_t index_offset = 1;              // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // bool is_not_null = false;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     is_not_null = (*result_tiles)[0]
+  //                       ->GetValue(0, 0)
+  //                       .GetAs<bool>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return is_not_null;
 }
 
 }  // namespace catalog

@@ -12,6 +12,7 @@
 
 #include "catalog/table_catalog.h"
 
+#include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -19,23 +20,78 @@
 namespace peloton {
 namespace catalog {
 
-std::unordered_map<oid_t, IndexCatalogObject>
+/*@brief    get all index objects of this table into cache
+ * @return  map from index oid to cached index object
+ */
+std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> &
 TableCatalogObject::GetIndexObjects() {
+  std::lock_guard<std::mutex> lock(index_cache_lock);
   if (!valid_index_objects) {
     index_objects =
-        IndexCatalog::GetInstance()->GetIndexObjectsByTableOid(table_oid, txn);
+        IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
     valid_index_objects = true;
   }
   return index_objects;
 }
 
-std::unordered_map<oid_t, ColumnCatalogObject>
+/*@brief    get index object with index oid from cache
+ * @return  shared pointer to the cached index object, nullptr if not found
+ */
+std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid) {
+  std::lock_guard<std::mutex> lock(index_cache_lock);
+  GetIndexObjects();  // fetch index objects in case we have not
+  auto it = index_objects.find(index_oid);
+  if (it != index_objects.end()) {
+    return it->second;
+  }
+  return std::make_shared<IndexCatalogObject>();
+}
+
+/*@brief    get all column objects of this table into cache
+ * @return  map from column id to cached column object
+ */
+std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
 TableCatalogObject::GetColumnObjects() {
+  std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects) {
-    ColumnCatalog::GetInstance()->GetColumnObjectsByTableOid(table_oid, txn);
+    column_objects =
+        ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
+    for (auto it = column_objects.begin(); it != column_objects.end(); ++it) {
+      column_name_cache.insert(
+          std::make_pair(it->second->column_name, it->second->column_id));
+    }
   }
   return column_objects;
+}
+
+/*@brief    get column object with column id from cache
+ * @return  shared pointer to the cached column object, nullptr if not found
+ */
+std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id) {
+  std::lock_guard<std::mutex> lock(column_cache_lock);
+  GetColumnObjects();  // fetch column objects in case we have not
+  auto it = column_objects.find(column_id);
+  if (it != column_objects.end()) {
+    return it->second;
+  }
+  return std::make_shared<ColumnCatalogObject>();
+}
+
+/*@brief    get column object with column name from cache
+ * @return  shared pointer to the cached column object, nullptr if not found
+ */
+std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+    const std::string &column_name) {
+  GetColumnObjects();  // fetch column objects in case we have not
+  std::lock_guard<std::mutex> lock(column_cache_lock);
+  auto nameIter = column_name_cache.find(column_name);
+  if (nameIter != column_name_cache.end()) {
+    auto objectIter = column_objects.find(nameIter->second);
+    PL_ASSERT(objectIter != column_objects.end());
+    return objectIter->second;
+  }
+  return std::make_shared<ColumnCatalogObject>();
 }
 
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
@@ -142,8 +198,13 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
  * @param   txn     Transaction
  * @return  table catalog object
  */
-const TableCatalogObject TableCatalog::GetTableObjectByOid(
+const TableCatalogObject TableCatalog::GetTableObject(
     oid_t table_oid, concurrency::Transaction *txn) {
+  // try get from cache
+  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  if (table_object) return table_object;
+
+  // cache miss, get from pg_table
   std::vector<oid_t> column_ids({0, 1, 2});
   oid_t index_offset = 0;  // Index of table_oid
   std::vector<type::Value> values;
@@ -153,12 +214,22 @@ const TableCatalogObject TableCatalog::GetTableObjectByOid(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return TableCatalogObject((*result_tiles)[0].get(), txn);
+    auto table_object =
+        make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+    if (table_object) {
+      // insert into cache
+      bool success = txn->catalog_cache.InsertTableObject(table_object);
+      if (success == false) {
+        LOG_DEBUG("Table catalog for table %u is already in cache",
+                  table_object->table_oid);
+      }
+    }
+    return table_object;
   } else {
     LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
   }
 
-  return TableCatalogObject();  // return empty object with INVALID_OID
+  return std::make_shared<TableCatalogObject>();
 }
 
 /*@brief   read table catalog object from pg_table using table name + database
@@ -168,7 +239,7 @@ const TableCatalogObject TableCatalog::GetTableObjectByOid(
  * @param   txn     Transaction
  * @return  table catalog object
  */
-const TableCatalogObject TableCatalog::GetTableObjectByName(
+const TableCatalogObject TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2});
@@ -182,13 +253,22 @@ const TableCatalogObject TableCatalog::GetTableObjectByName(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return TableCatalogObject((*result_tiles)[0].get(), txn);
+    auto table_object =
+        make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+    if (table_object) {
+      bool success = txn->catalog_cache.InsertTableObject(table_object);
+      if (success == false) {
+        LOG_DEBUG("Table catalog for table %u is read again",
+                  table_object->table_oid);
+      }
+    }
+    return table_object;
   } else {
     LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
               table_name.c_str());
   }
 
-  return TableCatalogObject();  // return empty object with INVALID_OID
+  return std::make_shared<TableCatalogObject>();
 }
 
 /*@brief   read table name from pg_table using table oid
@@ -198,26 +278,33 @@ const TableCatalogObject TableCatalog::GetTableObjectByName(
  */
 std::string TableCatalog::GetTableName(oid_t table_oid,
                                        concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({1});  // table_name
-  oid_t index_offset = 0;              // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string table_name;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      table_name = (*result_tiles)[0]
-                       ->GetValue(0, 0)
-                       .ToString();  // After projection left 1 column
-    }
+  auto table_object = GetTableObject(table_oid, txn);
+  if (table_object) {
+    return table_object->table_name;
+  } else {
+    return std::string();
   }
 
-  return table_name;
+  // std::vector<oid_t> column_ids({1});  // table_name
+  // oid_t index_offset = 0;              // Index of table_oid
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // std::string table_name;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     table_name = (*result_tiles)[0]
+  //                      ->GetValue(0, 0)
+  //                      .ToString();  // After projection left 1 column
+  //   }
+  // }
+
+  // return table_name;
 }
 
 /*@brief   read database oid one table belongs to using table oid
@@ -227,26 +314,33 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
  */
 oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
                                    concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({2});  // database_oid
-  oid_t index_offset = 0;              // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t database_oid = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      database_oid = (*result_tiles)[0]
-                         ->GetValue(0, 0)
-                         .GetAs<oid_t>();  // After projection left 1 column
-    }
+  auto table_object = GetTableObject(table_oid, txn);
+  if (table_object) {
+    return table_object->database_oid;
+  } else {
+    return INVALID_OID;
   }
 
-  return database_oid;
+  // std::vector<oid_t> column_ids({2});  // database_oid
+  // oid_t index_offset = 0;              // Index of table_oid
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // oid_t database_oid = INVALID_OID;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     database_oid = (*result_tiles)[0]
+  //                        ->GetValue(0, 0)
+  //                        .GetAs<oid_t>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return database_oid;
 }
 
 /*@brief   read table oid from pg_table using table name + database oid
@@ -258,28 +352,36 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
                                 oid_t database_oid,
                                 concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({0});  // table_oid
-  oid_t index_offset = 1;              // Index of table_name & database_oid
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t table_oid = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      table_oid = (*result_tiles)[0]
-                      ->GetValue(0, 0)
-                      .GetAs<oid_t>();  // After projection left 1 column
-    }
+  auto table_object = GetTableObject(table_name, database_oid, txn);
+  if (table_object) {
+    return table_object->table_oid;
+  } else {
+    return INVALID_OID;
   }
 
-  return table_oid;
+  // std::vector<oid_t> column_ids({0});  // table_oid
+  // oid_t index_offset = 1;              // Index of table_name & database_oid
+  // std::vector<type::Value> values;
+  // values.push_back(
+  //     type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  // oid_t table_oid = INVALID_OID;
+  // PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is
+  // unique
+  // if (result_tiles->size() != 0) {
+  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+  //     table_oid = (*result_tiles)[0]
+  //                     ->GetValue(0, 0)
+  //                     .GetAs<oid_t>();  // After projection left 1 column
+  //   }
+  // }
+
+  // return table_oid;
 }
 
 /*@brief   read all table oids from the same database using its oid
