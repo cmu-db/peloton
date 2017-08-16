@@ -16,25 +16,25 @@
 
 #include "catalog/manager.h"
 
-#include "parser/create_statement.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/properties.h"
+#include "parser/create_statement.h"
 
-#include "planner/order_by_plan.h"
-#include "planner/projection_plan.h"
-#include "planner/seq_scan_plan.h"
+#include "planner/analyze_plan.h"
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/order_by_plan.h"
 #include "planner/populate_index_plan.h"
-#include "planner/analyze_plan.h"
+#include "planner/projection_plan.h"
+#include "planner/seq_scan_plan.h"
 
 #include "storage/data_table.h"
 
@@ -77,7 +77,6 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
 }
 
-
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
     concurrency::Transaction *txn) {
@@ -119,8 +118,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     Reset();
     //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
     return move(best_plan);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     Reset();
     throw e;
   }
@@ -132,7 +130,8 @@ void Optimizer::Reset() {
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
-    parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::Transaction *txn) {
+    parser::SQLStatement *tree, bool &is_ddl_stmt,
+    concurrency::Transaction *txn) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
@@ -157,12 +156,18 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(), create_stmt->GetTableName(),
-            txn);
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
-        auto schema = target_table->GetSchema();
+        // use catalog object instead of schema to acquire metadata
+        auto database_object =
+            catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
+                create_stmt->GetDatabaseName(), txn);
+        auto table_object =
+            database_object->GetTableObject(create_stmt->GetTableName());
         for (auto column_name : create_plan->GetIndexAttributes()) {
-          column_ids.push_back(schema->GetColumnID(column_name));
+          auto column_object = table_object->GetColumnObject(column_name);
+          oid_t col_pos = column_object->column_id;
+          column_ids.push_back(col_pos);
         }
         // Create a plan to retrieve data
         std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
@@ -183,8 +188,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     }
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
-      unique_ptr<planner::AbstractPlan> analyze_plan(
-          new planner::AnalyzePlan(static_cast<parser::AnalyzeStatement *>(tree), txn));
+      unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
+          static_cast<parser::AnalyzeStatement *>(tree), txn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -202,8 +207,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
-    parser::SQLStatement *tree,
-    concurrency::Transaction *txn) {
+    parser::SQLStatement *tree, concurrency::Transaction *txn) {
   QueryToOperatorTransformer converter(txn);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
@@ -368,7 +372,7 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
   auto cols_prop = requirements.GetPropertyOfType(PropertyType::COLUMNS)
-      ->As<PropertyColumns>();
+                       ->As<PropertyColumns>();
   auto sort_prop =
       requirements.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
 
@@ -475,7 +479,7 @@ void Optimizer::ExploreGroup(GroupID id) {
   if (memo_.GetGroupByID(id)->HasExplored()) return;
 
   for (shared_ptr<GroupExpression> gexpr :
-      memo_.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     ExploreExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetExplorationFlag();
@@ -514,7 +518,7 @@ void Optimizer::ImplementGroup(GroupID id) {
   if (memo_.GetGroupByID(id)->HasImplemented()) return;
 
   for (shared_ptr<GroupExpression> gexpr :
-      memo_.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     if (gexpr->Op().IsLogical()) ImplementExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetImplementationFlag();

@@ -14,8 +14,8 @@
 
 #include "catalog/database_catalog.h"
 
-#include "concurrency/transaction.h"
 #include "catalog/column_catalog.h"
+#include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -24,11 +24,11 @@ namespace peloton {
 namespace catalog {
 
 /*@brief   insert table catalog object into cache
-* @param   table_object
-* @param   forced   if forced, replace existing object, else return false if oid
-*          already exists
-* @return  false only if not forced and table_name already exists in cache
-*/
+ * @param   table_object
+ * @param   forced   if forced, replace existing object, else return false if
+ * oid already exists
+ * @return  false only if not forced and table_name already exists in cache
+ */
 bool DatabaseCatalogObject::InsertTableObject(
     std::shared_ptr<TableCatalogObject> table_object, bool forced) {
   if (!table_object || table_object->table_oid == INVALID_OID) {
@@ -60,9 +60,9 @@ bool DatabaseCatalogObject::InsertTableObject(
 }
 
 /*@brief   evict table catalog object from cache
-* @param   table_name
-* @return  true if table_oid is found and evicted; false if not found
-*/
+ * @param   table_name
+ * @return  true if table_oid is found and evicted; false if not found
+ */
 bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   // std::lock_guard<std::mutex> lock(table_cache_lock);
 
@@ -160,8 +160,8 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
 DatabaseCatalog::~DatabaseCatalog() {}
 
 /*@brief   private function for initialize schema of pg_database
-* @return  unqiue pointer to schema
-*/
+ * @return  unqiue pointer to schema
+ */
 std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
@@ -244,8 +244,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
               database_oid);
   }
-
-  return std::shared_ptr<DatabaseCatalogObject>();
+  return nullptr;
 }
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
@@ -280,8 +279,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     // LOG_DEBUG("Found %lu database tiles with name %s", result_tiles->size(),
     //           database_name.c_str());
   }
-
-  return std::shared_ptr<DatabaseCatalogObject>();
+  return nullptr;
 }
 
 std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,

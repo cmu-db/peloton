@@ -76,8 +76,8 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
 IndexCatalog::~IndexCatalog() {}
 
 /*@brief   private function for initialize schema of pg_index
-* @return  unqiue pointer to schema
-*/
+ * @return  unqiue pointer to schema
+ */
 std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
@@ -193,7 +193,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     const std::string &index_name, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
-  oid_t index_offset = 1;  // Index of index_name & table_oid
+  oid_t index_offset = 1;  // Index of index_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
@@ -212,11 +212,11 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 }
 
 /*@brief   get all index records from the same table
-* this function may be useful when calling DropTable
-* @param   table_oid
-* @param   txn  Transaction
-* @return  a vector of index catalog objects
-*/
+ * this function may be useful when calling DropTable
+ * @param   table_oid
+ * @param   txn  Transaction
+ * @return  a vector of index catalog objects
+ */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
 IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
@@ -430,10 +430,10 @@ oid_t IndexCatalog::GetIndexOid(const std::string &index_name,
 }
 
 /*@brief   return all the columns this index indexed
-* @param   index_oid
-* @param   txn  Transaction
-* @return  a vector of column oid(logical position)
-*/
+ * @param   index_oid
+ * @param   txn  Transaction
+ * @return  a vector of column oid(logical position)
+ */
 std::vector<oid_t> IndexCatalog::GetIndexedAttributes(
     oid_t index_oid, concurrency::Transaction *txn) {
   auto index_object = GetIndexObject(index_oid, txn);
@@ -473,11 +473,11 @@ std::vector<oid_t> IndexCatalog::GetIndexedAttributes(
 }
 
 /*@brief   get all index records from the same table
-* this function may be useful when calling DropTable
-* @param   table_oid
-* @param   txn  Transaction
-* @return  a vector of index oid
-*/
+ * this function may be useful when calling DropTable
+ * @param   table_oid
+ * @param   txn  Transaction
+ * @return  a vector of index oid
+ */
 std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
                                               concurrency::Transaction *txn) {
   auto index_objects = GetIndexObjects(table_oid, txn);
