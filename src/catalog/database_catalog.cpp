@@ -215,6 +215,9 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     oid_t database_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) return database_object;
@@ -249,6 +252,9 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     const std::string &database_name, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
   if (database_object) return database_object;

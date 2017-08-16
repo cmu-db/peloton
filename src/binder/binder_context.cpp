@@ -24,11 +24,8 @@ namespace binder {
 void BinderContext::AddTable(const parser::TableRef* table_ref,
                              concurrency::Transaction* txn) {
   // using catalog object to retrieve meta-data
-  auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
-          table_ref->GetDatabaseName(), txn);
-  auto table_object =
-      database_object->GetTableObject(table_ref->GetTableName());
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
 
   auto id_tuple =
       std::make_tuple(table_object->database_oid, table_object->table_oid);
@@ -45,9 +42,8 @@ void BinderContext::AddTable(const std::string db_name,
                              const std::string table_name,
                              concurrency::Transaction* txn) {
   // using catalog object to retrieve meta-data
-  auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(db_name, txn);
-  auto table_object = database_object->GetTableObject(table_name);
+  auto table_object =
+      catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
 
   auto id_tuple =
       std::make_tuple(table_object->database_oid, table_object->table_oid);
