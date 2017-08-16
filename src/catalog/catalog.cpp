@@ -784,6 +784,47 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
   }
   return storage_manager->GetTableWithOid(database_oid, table_oid);
 }
+
+/* Check table from pg_table with table_name using txn,
+ * get it from storage layer using table_oid,
+ * throw exception and abort txn if not exists/invisible
+ * */
+std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
+    const std::string &database_name, const std::string &table_name,
+    concurrency::Transaction *txn) {
+  // FIXME: enforce caller to use txn
+  // auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // bool single_statement_txn = false;
+  // if (txn == nullptr) {
+  //   single_statement_txn = true;
+  //   txn = txn_manager.BeginTransaction();
+  // }
+
+  LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
+            database_name.c_str());
+
+  // Check in pg_database, throw exception and abort txn if not exists
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+
+  if (!database_object || database_object->database_oid == INVALID_OID) {
+    throw CatalogException("Database " + database_name + " is not found");
+  }
+
+  // Check in pg_table using txn
+  auto table_object = database_object->GetTableObject(table_name);
+
+  if (!table_object || table_object->table_oid == INVALID_OID) {
+    // throw table not found exception and explicitly abort txn
+    throw CatalogException("Table " + table_name + " is not found");
+  }
+
+  // if (single_statement_txn) {
+  //   txn_manager.CommitTransaction(txn);
+  // }
+  return table_object;
+}
+
 //===--------------------------------------------------------------------===//
 // DEPRECATED
 //===--------------------------------------------------------------------===//

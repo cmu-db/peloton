@@ -15,6 +15,8 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 
 namespace peloton {
 
@@ -124,8 +126,7 @@ class Catalog {
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::Transaction *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t index_oid,
-                       concurrency::Transaction *txn);
+  ResultType DropIndex(oid_t index_oid, concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
@@ -148,6 +149,14 @@ class Catalog {
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &table_name,
                                        concurrency::Transaction *txn = nullptr);
+
+  /* Check table from pg_table with table_name using txn,
+   * get it from storage layer using table_oid,
+   * throw exception and abort txn if not exists/invisible
+   * */
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      const std::string &database_name, const std::string &table_name,
+      concurrency::Transaction *txn);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONs
   //===--------------------------------------------------------------------===//
@@ -186,6 +195,5 @@ class Catalog {
 
   std::mutex catalog_mutex;
 };
-
 }
 }
