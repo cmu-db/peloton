@@ -26,33 +26,34 @@ namespace logging {
 // register worker threads to the log manager before execution.
 // note that we always construct logger prior to worker.
 // this function is called by each worker thread.
-void ReorderedPhyLogLogManager::RegisterWorker(size_t thread_id) {
-  //PL_ASSERT(tl_worker_ctx == nullptr);
-  // shuffle worker to logger
+
+/*void ReorderedPhyLogLogManager::RegisterWorker(size_t thread_id) {
+  PL_ASSERT(tl_worker_ctx == nullptr);
+  //  shuffle worker to logger
   tl_worker_ctx = new WorkerContext(worker_count_++, thread_id);
   size_t logger_id = HashToLogger(tl_worker_ctx->worker_id);
 
-  loggers_[logger_id]->RegisterWorker(tl_worker_ctx);
-}
+  loggers_[0]->RegisterWorker();
+}*/
 
 // deregister worker threads.
-void ReorderedPhyLogLogManager::DeregisterWorker() {
+/*void ReorderedPhyLogLogManager::DeregisterWorker() {
   PL_ASSERT(tl_worker_ctx != nullptr);
 
   size_t logger_id = HashToLogger(tl_worker_ctx->worker_id);
 
   loggers_[logger_id]->DeregisterWorker(tl_worker_ctx);
-}
+}*/
 
 void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
-  WorkerContext *ctx = tl_worker_ctx;
-  LOG_DEBUG("Worker %d write a record", ctx->worker_id);
+//  WorkerContext *ctx = tl_worker_ctx;
+//  LOG_DEBUG("Worker %d write a record", ctx->worker_id);
 
-  PL_ASSERT(ctx);
+//  PL_ASSERT(ctx);
 
   // First serialize the epoch to current output buffer
   // TODO: Eliminate this extra copy
-  auto &output = ctx->output_buffer;
+  auto &output = output_buffer_;
 
   // Reset the output buffer
   output.Reset();
@@ -100,7 +101,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
     }
     case LogRecordType::TRANSACTION_BEGIN:
     case LogRecordType::TRANSACTION_COMMIT: {
-      output.WriteLong(ctx->current_cid);
+      output.WriteLong(record.GetCommitId());
       break;
     }
       // case LOGRECORD_TYPE_EPOCH_BEGIN:
@@ -114,11 +115,11 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
     }
   }
 
-  size_t epoch_idx = ctx->current_commit_eid % concurrency::EpochManager::GetEpochQueueCapacity();
+//  size_t epoch_idx = ctx->current_commit_eid % concurrency::EpochManager::GetEpochQueueCapacity();
 
-  PL_ASSERT(ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == false);
-  LogBuffer* buffer_ptr = ctx->per_epoch_buffer_ptrs[epoch_idx].top().get();
-  PL_ASSERT(buffer_ptr);
+//  PL_ASSERT(ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == false);
+ // LogBuffer* buffer_ptr = logging::LogBufferPool::GetBuffer();//ctx->per_epoch_buffer_ptrs[epoch_idx].top().get();
+ // PL_ASSERT(buffer_ptr);
 
   // Add the frame length
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
@@ -126,49 +127,50 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
   output.WriteIntAt(start, length);
 
   // Copy the output buffer into current buffer
-  bool is_success = buffer_ptr->WriteData(output.Data(), output.Size());
+  bool is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
   if (is_success == false) {
     // A buffer is full, pass it to the front end logger
     // Get a new buffer and register it to current epoch
-    buffer_ptr = RegisterNewBufferToEpoch(std::move((ctx->buffer_pool.GetBuffer(ctx->current_commit_eid))));
+    buffer_ptr_->Reset();
+    //buffer_ptr = RegisterNewBufferToEpoch(std::move(GetBuffer()));
     // Write it again
-    is_success = buffer_ptr->WriteData(output.Data(), output.Size());
+    is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
     PL_ASSERT(is_success);
   }
 }
 
 
-void ReorderedPhyLogLogManager::StartPersistTxn() {
+void ReorderedPhyLogLogManager::StartPersistTxn(cid_t current_cid) {
   // Log down the begin of a transaction
-  LogRecord record = LogRecordFactory::CreateTxnRecord(LogRecordType::TRANSACTION_BEGIN, tl_worker_ctx->current_cid);
+  LogRecord record = LogRecordFactory::CreateTxnRecord(LogRecordType::TRANSACTION_BEGIN, current_cid);
   WriteRecordToBuffer(record);
 }
 
-void ReorderedPhyLogLogManager::EndPersistTxn() {
-  PL_ASSERT(tl_worker_ctx);
-  LogRecord record = LogRecordFactory::CreateTxnRecord(LogRecordType::TRANSACTION_COMMIT, tl_worker_ctx->current_cid);
+void ReorderedPhyLogLogManager::EndPersistTxn(cid_t current_cid) {
+//  PL_ASSERT(tl_worker_ctx);
+  LogRecord record = LogRecordFactory::CreateTxnRecord(LogRecordType::TRANSACTION_COMMIT, current_cid);
   WriteRecordToBuffer(record);
-  tl_worker_ctx->current_commit_eid = MAX_EID;
+//  tl_worker_ctx->current_commit_eid = MAX_EID;
 }
 
-void ReorderedPhyLogLogManager::StartTxn(concurrency::Transaction *txn) {
-  PL_ASSERT(tl_worker_ctx);
-  size_t cur_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
+void ReorderedPhyLogLogManager::StartTxn(){ //concurrency::Transaction *txn) {
+//  PL_ASSERT(tl_worker_ctx);
+//  size_t cur_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
 
-  tl_worker_ctx->current_commit_eid = cur_eid;
+//  tl_worker_ctx->current_commit_eid = cur_eid;
 
-  size_t epoch_idx = cur_eid % concurrency::EpochManager::GetEpochQueueCapacity();
+//  size_t epoch_idx = cur_eid % concurrency::EpochManager::GetEpochQueueCapacity();
 
-  if (tl_worker_ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == true) {
-    RegisterNewBufferToEpoch(std::move(tl_worker_ctx->buffer_pool.GetBuffer(cur_eid)));
-  }
+//  if (tl_worker_ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == true) {
+//    RegisterNewBufferToEpoch(std::move(tl_worker_ctx->buffer_pool.GetBuffer(cur_eid)));
+//  }
 
   // Record the txn timer
-  DurabilityFactory::StartTxnTimer(cur_eid, tl_worker_ctx);
+  //DurabilityFactory::StartTxnTimer(cur_eid, tl_worker_ctx);
 
   // Handle the commit id
-  cid_t txn_cid = txn->GetCommitId();
-  tl_worker_ctx->current_cid = txn_cid;
+//  cid_t txn_cid = txn->GetCommitId();
+//  tl_worker_ctx->current_cid = txn_cid;
 }
 
 void ReorderedPhyLogLogManager::LogInsert(const ItemPointer &tuple_pos) {
@@ -189,45 +191,40 @@ void ReorderedPhyLogLogManager::LogDelete(const ItemPointer &tuple_pos_deleted) 
 
 void ReorderedPhyLogLogManager::DoRecovery(const size_t &begin_eid){
   size_t end_eid = RecoverPepoch();
-  // printf("recovery_thread_count = %d, logger count = %d\n", (int)recovery_thread_count_, (int)logger_count_);
   size_t recovery_thread_per_logger = (size_t) ceil(recovery_thread_count_ * 1.0 / logger_count_);
 
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    LOG_DEBUG("Start logger %d for recovery", (int) logger_id);
+//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
+//    LOG_DEBUG("Start logger %d for recovery", (int) logger_id);
     // TODO: properly set this two eid
-    loggers_[logger_id]->StartRecovery(begin_eid, end_eid, recovery_thread_per_logger);
-  }
+    logger_->StartRecovery(begin_eid, end_eid, recovery_thread_per_logger);
+//  }
 
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    loggers_[logger_id]->WaitForRecovery();
-  }
+//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
+    logger_->WaitForRecovery();
+//  }
 
   // Rebuild all secondary indexes
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    loggers_[logger_id]->StartIndexRebulding(logger_count_);
-  }
+//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
+    logger_->StartIndexRebulding(logger_count_);
+//  }
 
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    loggers_[logger_id]->WaitForIndexRebuilding();
-  }
+//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
+    logger_->WaitForIndexRebuilding();
+//  }
 
   // Reset the epoch manager
   concurrency::EpochManagerFactory::GetInstance().Reset(end_eid + 1);
 }
 
 void ReorderedPhyLogLogManager::StartLoggers() {
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    LOG_DEBUG("Start logger %d", (int) logger_id);
-    loggers_[logger_id]->StartLogging();
-  }
+    logger_->StartLogging();
+
   is_running_ = true;
   pepoch_thread_.reset(new std::thread(&ReorderedPhyLogLogManager::RunPepochLogger, this));
 }
 
 void ReorderedPhyLogLogManager::StopLoggers() {
-  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    loggers_[logger_id]->StopLogging();
-  }
+    logger_->StopLogging();
   is_running_ = false;
   pepoch_thread_->join();
 }
@@ -253,12 +250,12 @@ void ReorderedPhyLogLogManager::RunPepochLogger() {
     );
 
     size_t curr_persist_epoch_id = MAX_EID;
-    for (auto &logger : loggers_) {
-      size_t logger_pepoch_id = logger->GetPersistEpochId();
+//    for (auto &logger : loggers_) {
+      size_t logger_pepoch_id = logger_->GetPersistEpochId();
       if (logger_pepoch_id < curr_persist_epoch_id) {
         curr_persist_epoch_id = logger_pepoch_id;
       }
-    }
+//    }
 
     PL_ASSERT(curr_persist_epoch_id < MAX_EID);
     size_t glob_peid = global_persist_epoch_id_.load();

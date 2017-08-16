@@ -224,7 +224,6 @@
     delete schema;
     delete buf;
     delete new_file_handle;
-}
 
 }  // End test namespace
 }  // End peloton namespace
