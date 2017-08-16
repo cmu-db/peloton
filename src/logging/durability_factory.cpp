@@ -27,7 +27,7 @@ namespace logging {
 
 
   //////////////////////////////////
-  void DurabilityFactory::StartTxnTimer(size_t eid, WorkerContext *worker_ctx) {
+  /*void DurabilityFactory::StartTxnTimer(size_t eid, WorkerContext *worker_ctx) {
     if (DurabilityFactory::GetTimerType() == TIMER_OFF) return;
 
     uint64_t cur_time_usec = GetCurrentTimeInUsec();
@@ -57,6 +57,6 @@ namespace logging {
       itr = worker_ctx->pending_txn_timers.erase(itr);
     }
     worker_ctx->reported_eid = persist_eid;
-  }
+  }*/
 }
 }

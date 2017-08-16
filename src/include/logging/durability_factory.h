@@ -25,13 +25,13 @@ namespace logging {
 class DurabilityFactory {
  public:
 
-  static LogManager& GetLoggerInstance() {
-    switch (logging_type_) {
-      case LoggingType::ON:
+  static ReorderedPhyLogLogManager& GetLoggerInstance() {
+    //switch (logging_type_) {
+     // case LoggingType::ON:
         return ReorderedPhyLogLogManager::GetInstance();
-      default:
-        return DummyLogManager::GetInstance();
-    }
+      //default:
+//        return DummyLogManager::GetInstance();
+//    }
   }
 
   static CheckpointManager &GetCheckpointerInstance() {
@@ -59,8 +59,8 @@ class DurabilityFactory {
   inline static bool GenerateDetailedCsv() { return generate_detailed_csv_; }
 
   /* Statistics */
-  static void StartTxnTimer(size_t eid, WorkerContext *worker_ctx);
-  static void StopTimersByPepoch(size_t persist_eid, WorkerContext *worker_ctx);
+  //static void StartTxnTimer(size_t eid, WorkerContext *worker_ctx);
+  //static void StopTimersByPepoch(size_t persist_eid, WorkerContext *worker_ctx);
   
   static uint64_t GetCurrentTimeInUsec() {
     struct timeval tv;

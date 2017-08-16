@@ -51,15 +51,15 @@ void PelotonInit::Initialize() {
 
 
 
-  //logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
+  logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
   //auto &checkpoint_manager = logging::DurabilityFactory::GetCheckpointerInstance();
   //checkpoint_manager.SetDirectories({"/home/paulo/log"});
   //checkpoint_manager.SetRecoveryThreadCount(1);
 
   //size_t persist_checkpoint_eid = checkpoint_manager.DoRecovery();
-  //auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-  //log_manager.SetDirectories({"/home/paulo/log"});
-//  log_manager.StartLoggers();
+  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+  log_manager.SetDirectories({"/home/paulo/log"});
+  log_manager.StartLoggers();
   //  log_manager.SetRecoveryThreadCount(1);
 //    log_manager.RegisterWorker();
 //    log_manager.DoRecovery(0);

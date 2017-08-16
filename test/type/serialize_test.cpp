@@ -82,17 +82,17 @@ TEST_F(SerializeTests, SerializeValuesToFileTest) {
     EXPECT_EQ(type::CMP_TRUE,value3.CompareEquals(valuefinal3));
 }
 
-TEST_F(SerializeTests, SerializeTupleToFileTest) {
+/*TEST_F(SerializeTests, SerializeTupleToFileTest) {
     std::vector<catalog::Column> columns;
     columns.push_back(catalog::Column(type::TypeId::INTEGER, 4, "column_a", true, 0));
     columns.push_back(catalog::Column(type::TypeId::DECIMAL, 8, "column_b", true, 4));
-    columns.push_back(catalog::Column(type::TypeId::BOOLEAN, 1, "column_b", true, 12));
+    columns.push_back(catalog::Column(type::TypeId::SMALLINT, 4, "column_c", true, 12));
     auto schema = new catalog::Schema(columns);
     auto tuple = storage::Tuple(schema, true);
 
     auto value1 = type::ValueFactory::GetIntegerValue(type::PELOTON_INT32_MAX);
     auto value2 = type::ValueFactory::GetDecimalValue(type::PELOTON_DECIMAL_MAX);
-    auto value3 = type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_MAX);
+    auto value3 = type::ValueFactory::GetSmallIntValue(type::PELOTON_INT16_MIN);
     tuple.SetValue(0,value1);
     tuple.SetValue(1,value2);
     tuple.SetValue(2,value3);
@@ -100,23 +100,19 @@ TEST_F(SerializeTests, SerializeTupleToFileTest) {
     CopySerializeOutput output_buffer;
     output_buffer.Reset();
     tuple.SerializeTo(output_buffer);
-    //TODO: Understand file conversion.
-    //value1.SerializeTo(output_buffer);
-    //value2.SerializeTo(output_buffer);
-    //value3.SerializeTo(output_buffer);
 
-    //auto filename = FileUtil::WriteTempFile(output_buffer.Data());
-    //auto file = FileUtil::GetFile(filename);
-    //auto a = memcmp(file.c_str(), output_buffer.Data(), output_buffer.Size());
+    auto filename = FileUtil::WriteTempFile(output_buffer.Data());
+    auto file = FileUtil::GetFile(filename);
+    auto a = memcmp(file.c_str(), output_buffer.Data(), output_buffer.Size());
 
-   // std::cout << "\nXXXXXXXXXXXX " << a << " XXXXXXX\n" << std::endl;
-    //CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
-     CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
+    std::cout << "\nXXXXXXXXXXXX " << a << " XXXXXXX\n" << std::endl;
+    CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
+    //CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
     auto tuple2 = storage::Tuple(schema, true);
     tuple2.DeserializeWithHeaderFrom(input_buffer);
 
     EXPECT_EQ(0,tuple.Compare(tuple2));
-}
+}*/
 
 }  // End test namespace
 }  // End peloton namespace

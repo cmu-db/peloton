@@ -31,9 +31,9 @@ public:
   virtual ~DummyLogManager() {}
 
 
-  virtual void SetDirectories(const std::vector<std::string> &logging_dirs UNUSED_ATTRIBUTE) final {}
+  virtual void SetDirectories(std::string logging_dir UNUSED_ATTRIBUTE) final {}
 
-  virtual const std::vector<std::string> &GetDirectories() final { return dirs_; }
+  virtual const std::string GetDirectories() final { return dirs_; }
 
   // Worker side logic
   virtual void RegisterWorker(size_t thread_id UNUSED_ATTRIBUTE) final {};
@@ -45,7 +45,7 @@ public:
   virtual void StopLoggers() final {};
 
 private:
-  std::vector<std::string> dirs_;
+  std::string dirs_;
 
 };
 
