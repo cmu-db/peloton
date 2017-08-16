@@ -50,8 +50,13 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   }
   event_add(event, nullptr);
   // should put the initialization else where.. check correctness first.
-  pkt_manager.traffic_cop_->SetTaskCallback(TriggerStateMachine, event);
+  protocol_handler_.traffic_cop_->SetTaskCallback(TriggerStateMachine, event);
 //  pkt_manager.traffic_cop_->event_ = event;
+}
+
+void NetworkConnection::TriggerStateMachine(void* arg) {
+  struct event* event = static_cast<struct event*>(arg);
+  event_active(event, EV_WRITE, 0);
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {

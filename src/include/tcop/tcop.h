@@ -104,8 +104,6 @@ class TrafficCop {
 
   ResultType ExecuteStatementGetResult(int &rows_changed);
 
-  bool is_queuing_;
-
   static void ExecutePlanWrapper(void *arg_ptr);
 
   void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {

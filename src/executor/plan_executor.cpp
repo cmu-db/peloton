@@ -39,15 +39,16 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(
+void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::Transaction *txn, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result,
-    const std::vector<int> &result_format) {
+    const std::vector<int> &result_format,
+    executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%lu)", txxn->GetTransactionId());
 
-  ExecuteResult p_status;
+//  ExecuteResult p_status;
   result.clear();
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));
@@ -63,7 +64,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
       p_status.m_result = ResultType::FAILURE;
       p_status.m_result_slots = nullptr;
       CleanExecutorTree(executor_tree.get());
-      return p_status;
+      return;
     }
 
     // Execute the tree until we get result tiles from root node
@@ -93,7 +94,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
     p_status.m_result = ResultType::SUCCESS;
     p_status.m_result_slots = nullptr;
     CleanExecutorTree(executor_tree.get());
-    return p_status;
+    return;
   }
 
   LOG_TRACE("Compiling and executing query ...");
@@ -127,7 +128,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
   p_status.m_processed = executor_context->num_processed;
   p_status.m_result = ResultType::SUCCESS;
   p_status.m_result_slots = nullptr;
-  return p_status;
+  return;
 }
 
 // FIXME this function is here temporarily to support PelotonService
