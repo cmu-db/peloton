@@ -9,17 +9,17 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "sql/testing_sql_util.h"
 #include <random>
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
-#include "optimizer/rule.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
-#include "sql/testing_sql_util.h"
 
 namespace peloton {
 
@@ -70,7 +70,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::string &error_message) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   std::vector<type::Value> params;
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   traffic_cop_.SetTcopTxnState(txn);
 
@@ -82,32 +82,36 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status = traffic_cop_.ExecuteStatementPlan(plan, params, result,
-                                                    result_format);
+    auto status =
+        traffic_cop_.ExecuteStatementPlan(plan, params, result, result_format);
     traffic_cop_.CommitQueryHelper();
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
              ResultTypeToString(status.m_result).c_str());
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return ResultType::FAILURE;
   }
 }
 
-std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
+std::shared_ptr<planner::AbstractPlan>
+TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
-  return optimizer->BuildPelotonPlanTree(parsed_stmt, nullptr);
+  auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  txn_manager.CommitTransaction(txn);
+  return return_value;
 }
 
-ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
-                                           std::vector<StatementResult> &result) {
+ResultType TestingSQLUtil::ExecuteSQLQuery(
+    const std::string query, std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -125,12 +129,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string error_message;
   int rows_changed;
 
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // execute the query using traffic_cop
   auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_changed, error_message);
-
+                                             rows_changed, error_message);
 
   return status;
 }
