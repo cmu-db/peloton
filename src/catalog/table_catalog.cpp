@@ -205,7 +205,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
  * @param   txn     Transaction
  * @return  table catalog object
  */
-const TableCatalogObject TableCatalog::GetTableObject(
+std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     oid_t table_oid, concurrency::Transaction *txn) {
   // try get from cache
   auto table_object = txn->catalog_cache.GetTableObject(table_oid);
@@ -246,7 +246,7 @@ const TableCatalogObject TableCatalog::GetTableObject(
  * @param   txn     Transaction
  * @return  table catalog object
  */
-const TableCatalogObject TableCatalog::GetTableObject(
+std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
   // try get from cache
