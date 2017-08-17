@@ -87,6 +87,16 @@ class PostgresProtocolHandler: public ProtocolHandler {
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
 
+  // Packet Reading Function
+  // Extracts the header of a Postgres start up packet from the read socket buffer
+  static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+
+  // Extracts the header of a Postgres packet from the read socket buffer
+  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+
+  // Extracts the contents of Postgres packet from the read socket buffer
+  static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
+
   // TODO This is a hack for index changing
   static std::vector<PostgresProtocolHandler*> GetPostgresProtocolHandlers() {
     return (PostgresProtocolHandler::postgres_protocol_handlers_);

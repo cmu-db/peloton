@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
+#include <include/network/postgres_protocol_handler.h>
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
 
@@ -99,94 +100,6 @@ bool NetworkConnection::UpdateEvent(short flags) {
   return true;
 }
 
-void NetworkConnection::GetSizeFromPacketHeader(size_t start_index) {
-  rpkt.len = 0;
-  // directly converts from network byte order to little-endian
-  for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
-    rpkt.len = (rpkt.len << 8) | rbuf_.GetByte(i);
-  }
-  // packet size includes initial bytes read as well
-  rpkt.len = rpkt.len - sizeof(int32_t);
-}
-
-bool NetworkConnection::IsReadDataAvailable(size_t bytes) {
-  return ((rbuf_.buf_ptr - 1) + bytes < rbuf_.buf_size);
-}
-
-// The function tries to do a preliminary read to fetch the size value and
-// then reads the rest of the packet.
-// Assume: Packet length field is always 32-bit int
-bool NetworkConnection::ReadPacketHeader() {
-  size_t initial_read_size = sizeof(int32_t);
-  if (protocol_handler_ != nullptr) {
-    // All packets other than the startup packet have a 5B header
-    initial_read_size++;
-  }
-  // check if header bytes are available
-  if (IsReadDataAvailable(initial_read_size) == false) {
-    // nothing more to read
-    return false;
-  }
-
-  // get packet size from the header
-  if (protocol_handler_ != nullptr) {
-    // Header also contains msg type
-    rpkt.msg_type =
-        static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
-    // extract packet size
-    GetSizeFromPacketHeader(rbuf_.buf_ptr + 1);
-  } else {
-    GetSizeFromPacketHeader(rbuf_.buf_ptr);
-  }
-
-  // do we need to use the extended buffer for this packet?
-  rpkt.is_extended = (rpkt.len > rbuf_.GetMaxSize());
-
-  if (rpkt.is_extended) {
-    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
-    // reserve space for the extended buffer
-    rpkt.ReserveExtendedBuffer();
-  }
-
-  // we have processed the data, move buffer pointer
-  rbuf_.buf_ptr += initial_read_size;
-  rpkt.header_parsed = true;
-
-  return true;
-}
-
-// Tries to read the contents of a single packet, returns true on success, false
-// on failure.
-bool NetworkConnection::ReadPacket() {
-  if (rpkt.is_extended) {
-    // extended packet mode
-    auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
-    auto bytes_required = rpkt.ExtendedBytesRequired();
-    // read minimum of the two ranges
-    auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf_.Begin() + rbuf_.buf_ptr,
-                                rbuf_.Begin() + rbuf_.buf_ptr + read_size);
-    // data has been copied, move ptr
-    rbuf_.buf_ptr += read_size;
-    if (bytes_required > bytes_available) {
-      // more data needs to be read
-      return false;
-    }
-    // all the data has been read
-    rpkt.InitializePacket();
-    return true;
-  } else {
-    if (IsReadDataAvailable(rpkt.len) == false) {
-      // data not available yet, return
-      return false;
-    }
-    // Initialize the packet's "contents"
-    rpkt.InitializePacket(rbuf_.buf_ptr, rbuf_.Begin());
-    // We have processed the data, move buffer pointer
-    rbuf_.buf_ptr += rpkt.len;
-  }
-  return true;
-}
 
 /**
  * Public Functions
@@ -429,7 +342,7 @@ ProcessInitialState NetworkConnection::ProcessInitialPacket() {
 
   if (rpkt.header_parsed == false) {
     // parse out the header first
-    if (ReadPacketHeader() == false) {
+    if (PostgresProtocolHandler::ReadStartupPacketHeader(rbuf_, rpkt) == false) {
       // need more data
       return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
     }
@@ -438,7 +351,7 @@ ProcessInitialState NetworkConnection::ProcessInitialPacket() {
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    if (ReadPacket() == false) {
+    if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
       // need more data
       return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
     }
@@ -501,24 +414,20 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
     // loop end case?
     if (pkt->ptr >= pkt->len) break;
     GetStringToken(pkt, token);
-    LOG_DEBUG("%s", token.c_str());
     // if the option database was found
     if (token.compare("database") == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.dbname);
-      LOG_DEBUG("%s", client_.dbname.c_str());
     } else if (token.compare(("user")) == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.user);
-      LOG_DEBUG("%s", client_.user.c_str());
     }
     else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client_.cmdline_options[token] = value;
-      LOG_DEBUG("%s", value.c_str());
     }
 
   }
@@ -755,7 +664,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         } else {
           if (conn->rpkt.header_parsed == false) {
             // parse out the header first
-            if (conn->ReadPacketHeader() == false) {
+            if (PostgresProtocolHandler::ReadPacketHeader(conn->rbuf_, conn->rpkt) == false) {
               // need more data
               conn->TransitState(ConnState::CONN_WAIT);
               break;
@@ -765,7 +674,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
           if (conn->rpkt.is_initialized == false) {
             // packet needs to be initialized with rest of the contents
-            if (conn->ReadPacket() == false) {
+            if (PostgresProtocolHandler::ReadPacket(conn->rbuf_,conn->rpkt) == false) {
               // need more data
               conn->TransitState(ConnState::CONN_WAIT);
               break;
