@@ -42,13 +42,13 @@ class TestingSQLUtil {
   static ResultType ExecuteSQLQuery(const std::string query,
                                     std::vector<StatementResult> &result,
                                     std::vector<FieldInfo> &tuple_descriptor,
-                                    int &rows_affected, std::string &error_message);
+                                    int &rows_affected,
+                                    std::string &error_message);
 
   static ResultType ExecuteSQLQuery(const std::string query,
                                     std::vector<StatementResult> &result,
                                     std::vector<FieldInfo> &tuple_descriptor,
                                     int &rows_affected);
-
 
   // Execute a SQL query end-to-end with the specific optimizer
   // Note: right now this is not executed in the context of a transaction, we
@@ -63,7 +63,7 @@ class TestingSQLUtil {
   // Generate the plan tree for a SQL query with the specific optimizer
   static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query);
+      const std::string query, concurrency::Transaction *txn);
 
   // A simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query,

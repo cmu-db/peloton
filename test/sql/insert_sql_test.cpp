@@ -72,7 +72,9 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   // INSERT a tuple
   std::string query("INSERT INTO test VALUES (5, 55, 555);");
 
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  txn = txn_manager.BeginTransaction();
+  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
@@ -113,8 +115,10 @@ TEST_F(InsertSQLTest, InsertMultipleValues) {
   // INSERT multiple tuples
   std::string query("INSERT INTO test VALUES (6, 11, 888), (7, 77, 000);");
 
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  txn = txn_manager.BeginTransaction();
+  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+  txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
@@ -154,8 +158,10 @@ TEST_F(InsertSQLTest, InsertSpecifyColumns) {
   // INSERT a tuple with columns specified
   std::string query("INSERT INTO test (b, a, c) VALUES (99, 8, 111);");
 
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  txn = txn_manager.BeginTransaction();
+  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+  txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
@@ -194,8 +200,10 @@ TEST_F(InsertSQLTest, InsertTooLargeVarchar) {
 
   std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghijk');");
 
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query),
-      peloton::Exception);
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
+  txn_manager.CommitTransaction(txn);
 
   rows_changed = 0;
   TestingSQLUtil::ExecuteSQLQuery(query, result, tuple_descriptor, rows_changed,
@@ -203,8 +211,8 @@ TEST_F(InsertSQLTest, InsertTooLargeVarchar) {
   EXPECT_EQ(0, rows_changed);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test3;", result, tuple_descriptor,
-      rows_changed, error_message);
+      optimizer, "SELECT * FROM test3;", result, tuple_descriptor, rows_changed,
+      error_message);
   EXPECT_EQ(0, result.size());
 
   // free the database just created
@@ -232,17 +240,21 @@ TEST_F(InsertSQLTest, InsertIntoSelectSimple) {
   // TEST CASE 1
   std::string query_1("INSERT INTO test SELECT * FROM test2;");
 
-  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query_1);
+  txn = txn_manager.BeginTransaction();
+  auto plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query_1, txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_1, result,
-      tuple_descriptor, rows_changed, error_message);
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
 
   EXPECT_EQ(4, rows_changed);
 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,
-      "SELECT * FROM test WHERE a=8", result, tuple_descriptor, rows_changed,
-      error_message);
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test WHERE a=8", result, tuple_descriptor,
+      rows_changed, error_message);
   EXPECT_EQ(3, result.size());
   EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -251,12 +263,13 @@ TEST_F(InsertSQLTest, InsertIntoSelectSimple) {
   // TEST CASE 2
   std::string query_2("INSERT INTO test2 SELECT * FROM test WHERE a=1;");
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_2, result,
-      tuple_descriptor, rows_changed, error_message);
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
   EXPECT_EQ(1, rows_changed);
- 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,
-      "SELECT * FROM test2 WHERE a=1", result, tuple_descriptor, rows_changed,
-      error_message);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test2 WHERE a=1", result, tuple_descriptor,
+      rows_changed, error_message);
   EXPECT_EQ(3, result.size());
   EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
@@ -265,12 +278,13 @@ TEST_F(InsertSQLTest, InsertIntoSelectSimple) {
   // TEST CASE 3
   std::string query_3("INSERT INTO test2 SELECT b,a,c FROM test WHERE a=2;");
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_3, result,
-      tuple_descriptor, rows_changed, error_message);
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
   EXPECT_EQ(1, rows_changed);
- 
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer,
-      "SELECT * FROM test2 WHERE a=11", result, tuple_descriptor, rows_changed,
-      error_message);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test2 WHERE a=11", result, tuple_descriptor,
+      rows_changed, error_message);
   EXPECT_EQ(3, result.size());
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
