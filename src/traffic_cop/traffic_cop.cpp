@@ -177,16 +177,18 @@ ResultType TrafficCop::ExecuteStatement(
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-  LOG_TRACE("Execute Statement of name: %s",
+  LOG_INFO("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement of query: %s",
+  LOG_INFO("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
   LOG_INFO("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-
+  LOG_INFO("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
+  LOG_INFO("----QueryType: %d--------", (int)statement->GetQueryType());
   try {
     switch (statement->GetQueryType()) {
       case QueryType::QUERY_BEGIN:
+        LOG_INFO("QUERY_BEGIN");
         return BeginQueryHelper(thread_id);
       case QueryType::QUERY_COMMIT:
         return CommitQueryHelper();
@@ -212,6 +214,7 @@ ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
             ResultTypeToString(p_status_.m_result).c_str());
   rows_changed = p_status_.m_processed;
   LOG_DEBUG("rows_changed %d", rows_changed);
+  is_queuing_ = false;
   return p_status_.m_result;
 }
 

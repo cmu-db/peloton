@@ -510,11 +510,11 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
   return ProcessPacketResult::COMPLETE;
 }
 
-void ProtocolHandler::GetResult() {
-  traffic_cop_->ExecuteStatementPlanGetResult();
-  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
-  ExecQueryMessageGetResult(status);
-}
+//void ProtocolHandler::GetResult() {
+//  traffic_cop_->ExecuteStatementPlanGetResult();
+//  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+//  ExecQueryMessageGetResult(status);
+//}
 
 void ProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   std::vector<FieldInfo> tuple_descriptor;
@@ -1010,14 +1010,14 @@ ProcessPacketResult ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
     return ProcessPacketResult::PROCESSING;
   }
   ExecExecuteMessageGetResult(status);
-  return ProcessPacketResult::PROCESSING;
+  return ProcessPacketResult::COMPLETE;
 }
-//// jdbc getResult
-//void PacketManager::GetResult() {
-//  traffic_cop_->ExecuteStatementPlanGetResult();
-//  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
-//  ExecExecuteMessageGetResult(status);
-//}
+// jdbc getResult
+void ProtocolHandler::GetResult() {
+  traffic_cop_->ExecuteStatementPlanGetResult();
+  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  ExecExecuteMessageGetResult(status);
+}
 
 void ProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
   const auto &query_type = statement_->GetQueryType();
@@ -1087,7 +1087,7 @@ void ProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
  */
 
 ProcessPacketResult ProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
-  LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
+  LOG_DEBUG("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
   // we see a SYNC

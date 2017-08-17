@@ -547,9 +547,12 @@ void NetworkConnection::Reset() {
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
-
+  if (conn->event_flags == EV_READ && conn->state == ConnState::CONN_GET_RESULT) {
+//    LOG_DEBUG("return");
+    return;
+  }
   while (done == false) {
-    LOG_TRACE("current state: %d", conn->state);
+//    LOG_DEBUG("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -660,21 +663,21 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           status = conn->protocol_handler_.ProcessPacket(&conn->rpkt,
                                                    (size_t)conn->thread_id);
         }
-
+//        LOG_INFO("ProcessStatus: %d", (int)status);
         switch (status) {
           case ProcessPacketResult::TERMINATE:
-          LOG_INFO("ProcessPacketResult: terminate");
+//          LOG_INFO("ProcessPacketResult: terminate");
             // packet processing can't proceed further
             conn->TransitState(ConnState::CONN_CLOSING);
             break;
           case ProcessPacketResult::COMPLETE:
             // We should have responses ready to send
-          LOG_INFO("ProcessPacketResult: complete");
+//          LOG_INFO("ProcessPacketResult: complete");
             conn->TransitState(ConnState::CONN_WRITE);
             break;
           case ProcessPacketResult::PROCESSING:
           default:
-          LOG_INFO("ProcessPacketResult: queueing");
+//          LOG_INFO("ProcessPacketResult: queueing");
             conn->TransitState(ConnState::CONN_GET_RESULT);
             done = true;
         }
