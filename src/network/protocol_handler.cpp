@@ -21,13 +21,18 @@ namespace network {
   }
 
   ProtocolHandler::~ProtocolHandler() {}
-  bool ProtocolHandler::ProcessPacket(UNUSED_ATTRIBUTE InputPacket* pkt, UNUSED_ATTRIBUTE const size_t thread_id) {
+
+  bool ProtocolHandler::ProcessPacket(
+      UNUSED_ATTRIBUTE InputPacket* pkt,
+      UNUSED_ATTRIBUTE const size_t thread_id)
+  {
     return false;
   }
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   void ProtocolHandler::SendInitialResponse() {}
+
   void ProtocolHandler::Reset() {}
 
 }  // namespace network

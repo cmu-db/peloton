@@ -66,13 +66,6 @@ class NetworkConnection {
   Client client_;
   bool ssl_sent_ = false;
 
- private:
-  // Is the requested amount of data available from the current position in
-  // the reader buffer?
-  bool IsReadDataAvailable(size_t bytes);
-
-  // Parses out packet size from its header
-  void GetSizeFromPacketHeader(size_t start_index);
 
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
@@ -96,12 +89,6 @@ class NetworkConnection {
 
   // Update the existing event to listen to the passed flags
   bool UpdateEvent(short flags);
-
-  // Extracts the header of a Postgres packet from the read socket buffer
-  bool ReadPacketHeader();
-
-  // Extracts the contents of Postgres packet from the read socket buffer
-  bool ReadPacket();
 
   WriteState WritePackets();
 

@@ -27,6 +27,15 @@ inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
   PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
+size_t Buffer::GetUInt32BigEndian() {
+  size_t num = 0;
+  // directly converts from network byte order to little-endian
+  for (size_t i = buf_ptr; i < buf_ptr + sizeof(uint32_t); i++) {
+    num = (num << 8) | GetByte(i);
+  }
+  return num;
+}
+
 int PacketGetInt(InputPacket *rpkt, uchar base) {
   int value = 0;
   auto begin = rpkt->Begin() + rpkt->ptr;
