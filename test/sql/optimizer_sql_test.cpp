@@ -80,7 +80,10 @@ class OptimizerSQLTests : public PelotonTest {
 
     // Check Plan Nodes are correct if provided
     if (expected_plans.size() > 0) {
-      auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+      auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      auto txn = txn_manager.BeginTransaction();
+      auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      txn_manager.CommitTransaction(txn);
 
       auto plan_ptr = plan.get();
       vector<PlanNodeType> actual_plans;
@@ -138,8 +141,11 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   string query = "SELECT b from test order by c";
 
   // check for plan node type
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      txn_manager.CommitTransaction(txn);
 
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
@@ -157,7 +163,9 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   query = "SELECT a from test order by c desc";
 
   // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  txn = txn_manager.BeginTransaction();
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+  txn_manager.CommitTransaction(txn);
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::ORDERBY);
@@ -176,7 +184,9 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   query = "SELECT a, b, c from test order by a + c";
 
   // check for plan node type
-  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  txn = txn_manager.BeginTransaction();
+  select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+  txn_manager.CommitTransaction(txn);
   //  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
   //  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
   //            PlanNodeType::SEQSCAN);

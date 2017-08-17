@@ -98,15 +98,12 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 std::shared_ptr<planner::AbstractPlan>
 TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-    const std::string query) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+    const std::string query, concurrency::Transaction *txn) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
   auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
-  txn_manager.CommitTransaction(txn);
   return return_value;
 }
 
