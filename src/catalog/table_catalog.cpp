@@ -472,7 +472,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
     //           table_name.c_str());
   }
-
   return nullptr;
 }
 
