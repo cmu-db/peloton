@@ -14,7 +14,6 @@
 
 #include "concurrency/transaction_manager_factory.h"
 
-
 namespace peloton {
 namespace optimizer {
 
@@ -43,7 +42,7 @@ double Selectivity::ComputeSelectivity(const std::shared_ptr<TableStats> &stats,
       return DistinctFrom(stats, condition);
     default:
       LOG_WARN("Expression type %s not supported for computing selectivity",
-                ExpressionTypeToString(condition.type).c_str());
+               ExpressionTypeToString(condition.type).c_str());
       return DEFAULT_SELECTIVITY;
   }
 }
@@ -151,11 +150,13 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   oid_t column_id = column_stats->column_id;
 
   // Check whether column type is VARCHAR.
-  auto column_catalog = catalog::ColumnCatalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  type::TypeId column_type =
-      column_catalog->GetColumnType(table_id, column_id, txn);
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(database_id,
+                                                                 txn);
+  auto table_object = database_object->GetTableObject(table_id);
+  auto column_type = table_object->GetColumnObject(column_id)->column_type;
   txn_manager.CommitTransaction(txn);
 
   if (column_type != type::TypeId::VARCHAR) {

@@ -70,6 +70,8 @@ class ColumnCatalogObject {
 };
 
 class ColumnCatalog : public AbstractCatalog {
+  friend class TableCatalogObject;
+
  public:
   // Global Singleton, only the first call requires passing parameters.
   static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
@@ -93,33 +95,13 @@ class ColumnCatalog : public AbstractCatalog {
                     concurrency::Transaction *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::Transaction *txn);
 
+ private:
   //===--------------------------------------------------------------------===//
-  // Read-only Related API
+  // Read-only Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
-      oid_t table_oid, const std::string &column_name,
-      concurrency::Transaction *txn);
-  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
-      oid_t table_oid, oid_t column_id, concurrency::Transaction *txn);
   const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(oid_t table_oid, concurrency::Transaction *txn);
 
-  oid_t GetColumnId(oid_t table_oid, const std::string &column_name,
-                    concurrency::Transaction *txn);
-  oid_t GetColumnOffset(oid_t table_oid, oid_t column_id,
-                        concurrency::Transaction *txn);
-  std::string GetColumnName(oid_t table_oid, oid_t column_id,
-                            concurrency::Transaction *txn);
-  type::TypeId GetColumnType(oid_t table_oid, oid_t column_id,
-                             concurrency::Transaction *txn);
-  bool IsInlined(oid_t table_oid, oid_t column_id,
-                 concurrency::Transaction *txn);
-  bool IsPrimary(oid_t table_oid, oid_t column_id,
-                 concurrency::Transaction *txn);
-  bool IsNotNull(oid_t table_oid, oid_t column_id,
-                 concurrency::Transaction *txn);
-
- private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                 concurrency::Transaction *txn);
 
