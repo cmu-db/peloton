@@ -22,6 +22,9 @@ namespace peloton {
 namespace catalog {
 
 class CatalogCache {
+  friend class TableCatalog;
+  friend class IndexCatalog;
+
  public:
   CatalogCache() {}
 

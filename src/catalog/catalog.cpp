@@ -167,14 +167,14 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   auto pg_database = DatabaseCatalog::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
-  oid_t database_oid = pg_database->GetDatabaseOid(database_name, txn);
-  if (database_oid != INVALID_OID) {
+  auto database_object = pg_database->GetDatabaseObject(database_name, txn);
+  if (database_object != nullptr) {
     LOG_TRACE("Database  %s already exists.", database_name.c_str());
     return ResultType::FAILURE;
   }
 
   // Create actual database
-  database_oid = pg_database->GetNextOid();
+  oid_t database_oid = pg_database->GetNextOid();
 
   storage::Database *database = new storage::Database(database_oid);
 
@@ -215,24 +215,24 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
   // get database oid from pg_database
-  oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
-  if (database_oid == INVALID_OID) {
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr) {
     LOG_TRACE("Cannot find the database %s in pg_db", database_name.c_str());
     return ResultType::FAILURE;
   }
 
   // get table oid from pg_table
-  oid_t table_oid =
-      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
-  if (table_oid != INVALID_OID) {
-    LOG_TRACE("Cannot find the table %s in pg_table", table_name.c_str());
+  auto table_object = database_object->GetTableObject(table_name);
+  if (table_object != nullptr) {
+    LOG_TRACE("Table %s in pg_table", table_name.c_str());
     return ResultType::FAILURE;
   }
 
   auto storage_manager = storage::StorageManager::GetInstance();
   try {
-    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+    auto database =
+        storage_manager->GetDatabaseWithOid(database_object->database_oid);
 
     // Check duplicate column names
     std::set<std::string> column_names;
@@ -251,17 +251,17 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 
     // Create actual table
     auto pg_table = TableCatalog::GetInstance();
-    table_oid = pg_table->GetNextOid();
+    oid_t table_oid = pg_table->GetNextOid();
     bool own_schema = true;
     bool adapt_table = false;
     auto table = storage::TableFactory::GetDataTable(
-        database_oid, table_oid, schema.release(), table_name,
+        database_object->database_oid, table_oid, schema.release(), table_name,
         DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
     database->AddTable(table, is_catalog);
 
     // Update pg_table with table info
-    pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(),
-                          txn);
+    pg_table->InsertTable(table_oid, table_name, database_object->database_oid,
+                          pool_.get(), txn);
     oid_t column_id = 0;
     for (auto column : table->GetSchema()->GetColumns()) {
       ColumnCatalog::GetInstance()->InsertColumn(
@@ -282,7 +282,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       }
     }
 
-    CreatePrimaryIndex(database_oid, table_oid, txn);
+    CreatePrimaryIndex(database_object->database_oid, table_oid, txn);
 
     return ResultType::SUCCESS;
   } catch (CatalogException &e) {
@@ -445,8 +445,12 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
   // check if table already has index with same name
-  auto pg_index = IndexCatalog::GetInstance();
-  if (!is_catalog && pg_index->GetIndexOid(index_name, txn) != INVALID_OID) {
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+  auto table_object = database_object->GetTableObject(table_oid);
+  auto index_object = table_object->GetIndexObject(index_name);
+
+  if (!is_catalog && index_object != nullptr) {
     LOG_TRACE(
         "Cannot create index with same name Return "
         "RESULT_FAILURE.");
@@ -483,6 +487,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       // Passed all checks, now get all index metadata
       LOG_TRACE("Trying to create index %s on table %d", index_name.c_str(),
                 table_oid);
+      auto pg_index = IndexCatalog::GetInstance();
       oid_t index_oid = pg_index->GetNextOid();
       auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
       key_schema->SetIndexedColumns(key_attrs);
@@ -636,10 +641,13 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
     // auto table = database->GetTableWithOid(table_oid);
     LOG_TRACE("Deleting table!");
     // STEP 1, read index_oids from pg_index, and iterate through
-    auto index_oids = IndexCatalog::GetInstance()->GetIndexOids(table_oid, txn);
-    LOG_TRACE("dropping #%d indexes", (int)index_oids.size());
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    auto table_object = database_object->GetTableObject(table_oid);
+    auto index_objects = table_object->GetIndexObjects();
+    LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
 
-    for (oid_t index_oid : index_oids) DropIndex(index_oid, txn);
+    for (auto it : index_objects) DropIndex(it.second->index_oid, txn);
     // STEP 2
     ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
     // STEP 3
@@ -667,23 +675,25 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
 
   // find table_oid by looking up pg_index using index_oid
   // txn is nullptr, one sentence Transaction
-  oid_t table_oid = IndexCatalog::GetInstance()->GetTableOid(index_oid, txn);
-  if (table_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find the table to drop index. Return RESULT_FAILURE.");
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  if (index_object != nullptr) {
+    // If this happens, call instead:
+    //    IndexCatalog::GetInstance()->GetIndexObject()
+    LOG_TRACE("Cannot find the dropped index in cache. Return RESULT_FAILURE.");
     return ResultType::FAILURE;
   }
 
   // find database_oid by looking up pg_table using table_oid
   // txn is nullptr, one sentence Transaction
   oid_t database_oid =
-      TableCatalog::GetInstance()->GetDatabaseOid(table_oid, txn);
+      TableCatalog::GetInstance()->GetDatabaseOid(index_object->table_oid, txn);
 
   auto storage_manager = storage::StorageManager::GetInstance();
 
   try {
     auto database = storage_manager->GetDatabaseWithOid(database_oid);
     try {
-      auto table = database->GetTableWithOid(table_oid);
+      auto table = database->GetTableWithOid(index_object->table_oid);
       // drop index in actual table
       table->DropIndexWithOid(index_oid);
 
