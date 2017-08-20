@@ -170,6 +170,13 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  if (index_object) {
+    auto table_object =
+        txn->catalog_cache.GetCachedTableObject(index_object->table_oid);
+    table_object->EvictAllIndexObjects();
+  }
+
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
