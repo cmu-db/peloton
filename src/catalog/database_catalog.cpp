@@ -280,7 +280,9 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     auto database_object =
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    txn->catalog_cache.InsertDatabaseObject(database_object);
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
+    (void)success;
     return database_object;
   } else {
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
@@ -313,7 +315,9 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     if (database_object) {
       // insert into cache
-      txn->catalog_cache.InsertDatabaseObject(database_object);
+      bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+      PL_ASSERT(success == true);
+      (void)success;
     }
     return database_object;
   } else {
