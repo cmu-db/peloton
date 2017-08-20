@@ -22,27 +22,110 @@
 namespace peloton {
 namespace catalog {
 
-/*@brief    get all index objects of this table into cache
+/* @brief   insert index catalog object into cache
+ * @param   index_object
+ * @return  false if index_name already exists in cache
+ */
+bool TableCatalogObject::InsertIndexObject(
+    std::shared_ptr<IndexCatalogObject> index_object) {
+  if (!index_object || index_object->index_oid == INVALID_OID) {
+    return false;  // invalid object
+  }
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
+
+  // check if already in cache
+  if (index_objects.find(index_object->index_oid) != index_objects.end()) {
+    LOG_DEBUG("Index %u already exists in cache!", index_object->index_oid);
+    return false;
+  }
+
+  if (index_names.find(index_object->index_name) != index_names.end()) {
+    LOG_DEBUG("Index %s already exists in cache!",
+              index_object->index_name.c_str());
+    return false;
+  }
+
+  valid_index_objects = true;
+  index_objects.insert(std::make_pair(index_object->index_oid, index_object));
+  index_names.insert(std::make_pair(index_object->index_name, index_object));
+  return true;
+}
+
+/* @brief   evict index catalog object from cache
+ * @param   index_oid
+ * @return  true if index_oid is found and evicted; false if not found
+ */
+bool TableCatalogObject::EvictIndexObject(oid_t index_oid) {
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
+  if (!valid_index_objects) return false;
+
+  // find index name from index name cache
+  auto it = index_objects.find(index_oid);
+  if (it == index_objects.end()) {
+    return false;  // index oid not found in cache
+  }
+
+  auto index_object = it->second;
+  PL_ASSERT(index_object);
+  index_objects.erase(it);
+  index_names.erase(index_object->index_name);
+  return true;
+}
+
+/* @brief   evict index catalog object from cache
+ * @param   index_name
+ * @return  true if index_name is found and evicted; false if not found
+ */
+bool TableCatalogObject::EvictIndexObject(const std::string &index_name) {
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
+  if (!valid_index_objects) return false;
+
+  // find index name from index name cache
+  auto it = index_names.find(index_name);
+  if (it == index_names.end()) {
+    return false;  // index name not found in cache
+  }
+
+  auto index_object = it->second;
+  PL_ASSERT(index_object);
+  index_names.erase(it);
+  index_objects.erase(index_object->index_oid);
+  return true;
+}
+
+/* @brief   evict all index catalog objects from cache
+ */
+void TableCatalogObject::EvictAllIndexObjects() {
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
+  index_objects.clear();
+  index_names.clear();
+  valid_index_objects = false;
+}
+
+/* @brief   get all index objects of this table into cache
  * @return  map from index oid to cached index object
  */
-std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> &
-TableCatalogObject::GetIndexObjects() {
+std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+TableCatalogObject::GetIndexObjects(bool cached_only) {
   // std::lock_guard<std::mutex> lock(index_cache_lock);
-  if (!valid_index_objects) {
+  if (!valid_index_objects && !cached_only) {
+    // get index catalog objects from pg_index
+    valid_index_objects = true;
     index_objects =
         IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
-    valid_index_objects = true;
   }
   return index_objects;
 }
 
-/*@brief    get index object with index oid from cache
+/* @brief   get index object with index oid from cache
+ * @param   index_oid
+ * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  shared pointer to the cached index object, nullptr if not found
  */
 std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
-    oid_t index_oid) {
+    oid_t index_oid, bool cached_only) {
   // std::lock_guard<std::mutex> lock(index_cache_lock);
-  GetIndexObjects();  // fetch index objects in case we have not
+  GetIndexObjects(cached_only);  // fetch index objects in case we have not
   auto it = index_objects.find(index_oid);
   if (it != index_objects.end()) {
     return it->second;
@@ -50,31 +133,128 @@ std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
   return nullptr;
 }
 
-/*@brief    get all column objects of this table into cache
+/* @brief   get index object with index oid from cache
+ * @param   index_name
+ * @param   cached_only   if cached only, return nullptr on a cache miss
+ * @return  shared pointer to the cached index object, nullptr if not found
+ */
+std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
+    const std::string &index_name, bool cached_only) {
+  // std::lock_guard<std::mutex> lock(index_cache_lock);
+  GetIndexObjects(cached_only);  // fetch index objects in case we have not
+  auto it = index_names.find(index_name);
+  if (it != index_names.end()) {
+    return it->second;
+  }
+  return nullptr;
+}
+
+/* @brief   insert column catalog object into cache
+ * @param   column_object
+ * @return  false if column_name already exists in cache
+ */
+bool TableCatalogObject::InsertColumnObject(
+    std::shared_ptr<ColumnCatalogObject> column_object) {
+  if (!column_object || column_object->table_oid == INVALID_OID) {
+    return false;  // invalid object
+  }
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
+
+  // check if already in cache
+  if (column_objects.find(column_object->column_id) != column_objects.end()) {
+    LOG_DEBUG("Column %u already exists in cache!", column_object->column_id);
+    return false;
+  }
+
+  if (column_names.find(column_object->column_name) != column_names.end()) {
+    LOG_DEBUG("Column %s already exists in cache!",
+              column_object->column_name.c_str());
+    return false;
+  }
+
+  valid_column_objects = true;
+  column_objects.insert(
+      std::make_pair(column_object->column_id, column_object));
+  column_names.insert(
+      std::make_pair(column_object->column_name, column_object));
+  return true;
+}
+
+/* @brief   evict column catalog object from cache
+ * @param   column_id
+ * @return  true if column_id is found and evicted; false if not found
+ */
+bool TableCatalogObject::EvictColumnObject(oid_t column_id) {
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
+  if (!valid_column_objects) return false;
+
+  // find column name from column name cache
+  auto it = column_objects.find(column_id);
+  if (it == column_objects.end()) {
+    return false;  // column id not found in cache
+  }
+
+  auto column_object = it->second;
+  PL_ASSERT(column_object);
+  column_objects.erase(it);
+  column_names.erase(column_object->column_name);
+  return true;
+}
+
+/* @brief   evict column catalog object from cache
+ * @param   column_name
+ * @return  true if column_name is found and evicted; false if not found
+ */
+bool TableCatalogObject::EvictColumnObject(const std::string &column_name) {
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
+  if (!valid_column_objects) return false;
+
+  // find column name from column name cache
+  auto it = column_names.find(column_name);
+  if (it == column_names.end()) {
+    return false;  // column name not found in cache
+  }
+
+  auto column_object = it->second;
+  PL_ASSERT(column_object);
+  column_names.erase(it);
+  column_objects.erase(column_object->column_id);
+  return true;
+}
+
+/* @brief   evict all column catalog objects from cache
+ * @return  true if column_name is found and evicted; false if not found
+ */
+void TableCatalogObject::EvictAllColumnObjects() {
+  // std::lock_guard<std::mutex> lock(column_cache_lock);
+  column_objects.clear();
+  column_names.clear();
+  valid_column_objects = false;
+}
+
+/* @brief   get all column objects of this table into cache
  * @return  map from column id to cached column object
  */
-std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
+std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnObjects(bool cached_only) {
   // std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects && !cached_only) {
-    column_objects =
-        ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
+    // get column catalog objects from pg_column
+    ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
-    for (auto it = column_objects.begin(); it != column_objects.end(); ++it) {
-      column_name_cache.insert(
-          std::make_pair(it->second->column_name, it->second->column_id));
-    }
   }
   return column_objects;
 }
 
-/*@brief    get column object with column id from cache
+/* @brief   get column object with column id from cache
+ * @param   column_id
+ * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  shared pointer to the cached column object, nullptr if not found
  */
 std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
-    oid_t column_id) {
+    oid_t column_id, bool cached_only) {
   // std::lock_guard<std::mutex> lock(column_cache_lock);
-  GetColumnObjects();  // fetch column objects in case we have not
+  GetColumnObjects(cached_only);  // fetch column objects in case we have not
   auto it = column_objects.find(column_id);
   if (it != column_objects.end()) {
     return it->second;
@@ -82,18 +262,18 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   return nullptr;
 }
 
-/*@brief    get column object with column name from cache
+/* @brief   get column object with column id from cache
+ * @param   column_name
+ * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  shared pointer to the cached column object, nullptr if not found
  */
 std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
-    const std::string &column_name) {
-  GetColumnObjects();  // fetch column objects in case we have not
+    const std::string &column_name, bool cached_only) {
   // std::lock_guard<std::mutex> lock(column_cache_lock);
-  auto nameIter = column_name_cache.find(column_name);
-  if (nameIter != column_name_cache.end()) {
-    auto objectIter = column_objects.find(nameIter->second);
-    PL_ASSERT(objectIter != column_objects.end());
-    return objectIter->second;
+  GetColumnObjects(cached_only);  // fetch column objects in case we have not
+  auto it = column_names.find(column_name);
+  if (it != column_names.end()) {
+    return it->second;
   }
   return nullptr;
 }
@@ -195,7 +375,12 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // evict from cache
-  txn->catalog_cache.EvictTableObject(table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
+  if (table_object) {
+    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+        table_object->database_oid, txn);
+    database_object->EvictTableObject(table_oid);
+  }
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
@@ -207,8 +392,11 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     oid_t table_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
   // try get from cache
-  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
   if (table_object) return table_object;
 
   // cache miss, get from pg_table
@@ -223,14 +411,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
-    if (table_object) {
-      // insert into cache
-      bool success = txn->catalog_cache.InsertTableObject(table_object);
-      if (success == false) {
-        LOG_DEBUG("Table catalog for table %u is already in cache",
-                  table_object->table_oid);
-      }
-    }
+    // insert into cache
+    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+        table_object->database_oid, txn);
+    PL_ASSERT(database_object);
+    bool success = database_object->InsertTableObject(table_object);
+    PL_ASSERT(success == true);
     return table_object;
   } else {
     LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
@@ -249,6 +435,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
     concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
@@ -270,14 +459,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
-    if (table_object) {
-      // insert into cache
-      bool success = txn->catalog_cache.InsertTableObject(table_object);
-      if (success == false) {
-        LOG_DEBUG("Table catalog for table %s is read again",
-                  table_object->table_name.c_str());
-      }
-    }
+    // insert into cache
+    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+        table_object->database_oid, txn);
+    PL_ASSERT(database_object);
+    bool success = database_object->InsertTableObject(table_object);
+    PL_ASSERT(success == true);
     return table_object;
   } else {
     // LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
