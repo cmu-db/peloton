@@ -14,6 +14,7 @@
 
 #include "catalog/database_catalog.h"
 
+#include "concurrency/transaction.h"
 #include "catalog/column_catalog.h"
 #include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
@@ -23,70 +24,84 @@
 namespace peloton {
 namespace catalog {
 
-/*@brief   insert table catalog object into cache
+/* @brief   insert table catalog object into cache
  * @param   table_object
- * @param   forced   if forced, replace existing object, else return false if
- * oid already exists
- * @return  false only if not forced and table_name already exists in cache
+ * @return  false if table_name already exists in cache
  */
 bool DatabaseCatalogObject::InsertTableObject(
-    std::shared_ptr<TableCatalogObject> table_object, bool forced) {
+    std::shared_ptr<TableCatalogObject> table_object) {
   if (!table_object || table_object->table_oid == INVALID_OID) {
     return false;  // invalid object
   }
-
-  // find old table catalog object
   // std::lock_guard<std::mutex> lock(table_cache_lock);
-  auto it = table_name_cache.find(table_object->table_name);
 
-  // force evict if found
-  if (forced == true && it != table_name_cache.end()) {
-    if (it->second == table_object->table_oid) {
-      return false;  // no need to replace
-    }
-    EvictTableObject(table_object->table_name);  // evict old
-    it = table_name_cache.find(table_object->table_name);
+  // check if already in cache
+  if (table_objects_cache.find(table_object->table_oid) !=
+      table_objects_cache.end()) {
+    LOG_DEBUG("Table %u already exists in cache!", table_object->table_oid);
+    return false;
   }
 
-  // insert into table name cache
-  if (it == table_name_cache.end()) {
-    table_name_cache.insert(
-        std::make_pair(table_object->table_name, table_object->table_oid));
-    txn->catalog_cache.InsertTableObject(table_object, forced);
-    return true;
-  } else {
-    return false;  // table name already exists
+  if (table_name_cache.find(table_object->table_name) !=
+      table_name_cache.end()) {
+    LOG_DEBUG("Table %s already exists in cache!",
+              table_object->table_name.c_str());
+    return false;
   }
+
+  table_objects_cache.insert(
+      std::make_pair(table_object->table_oid, table_object));
+  table_name_cache.insert(
+      std::make_pair(table_object->table_name, table_object));
+  return true;
 }
 
-/*@brief   evict table catalog object from cache
- * @param   table_name
+/* @brief   evict table catalog object from cache
+ * @param   table_oid
  * @return  true if table_oid is found and evicted; false if not found
+ */
+bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
+  // std::lock_guard<std::mutex> lock(table_cache_lock);
+
+  // find table name from table name cache
+  auto it = table_objects_cache.find(table_oid);
+  if (it == table_objects_cache.end()) {
+    return false;  // table oid not found in cache
+  }
+
+  auto table_object = it->second;
+  PL_ASSERT(table_object);
+  table_objects_cache.erase(it);
+  table_name_cache.erase(table_object->table_name);
+  return true;
+}
+
+/* @brief   evict table catalog object from cache
+ * @param   table_name
+ * @return  true if table_name is found and evicted; false if not found
  */
 bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   // std::lock_guard<std::mutex> lock(table_cache_lock);
 
   // find table name from table name cache
   auto it = table_name_cache.find(table_name);
-  if (it != table_name_cache.end()) {
-    oid_t table_oid = it->second;
-    table_name_cache.erase(it);
-    txn->catalog_cache.EvictTableObject(table_oid);
-    return true;
-  } else {
-    return false;  // table name not found in cache
+  if (it == table_name_cache.end()) {
+    return false;  // table oid not found in cache
   }
+
+  auto table_object = it->second;
+  PL_ASSERT(table_object);
+  table_name_cache.erase(it);
+  table_objects_cache.erase(table_object->table_oid);
+  return true;
 }
 
 /*@brief   evict all table catalog objects in this database from cache
 */
 void DatabaseCatalogObject::EvictAllTableObjects() {
   // std::lock_guard<std::mutex> lock(table_cache_lock);
-
-  // find table name from table name cache
-  for (auto it = table_name_cache.begin(); it != table_name_cache.end(); ++it) {
-    txn->catalog_cache.EvictTableObject(it->second);
-  }
+  table_objects_cache.clear();
+  table_name_cache.clear();
 }
 
 /* @brief   Get table catalog object from cache or all the way from storage
@@ -96,10 +111,14 @@ void DatabaseCatalogObject::EvictAllTableObjects() {
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     oid_t table_oid, bool cached_only) {
+  auto it = table_objects_cache.find(table_oid);
+  if (it != table_objects_cache.end()) return it->second;
+
   if (cached_only) {
-    // return table object from cache
-    return txn->catalog_cache.GetTableObject(table_oid);
+    // cache miss return empty object
+    return nullptr;
   } else {
+    // cache miss get from pg_table
     return TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
   }
 }
@@ -112,23 +131,49 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     const std::string &table_name, bool cached_only) {
-  if (cached_only) {
-    // translate table name to table_oid from cache
-    // std::lock_guard<std::mutex> lock(table_cache_lock);
-    auto it = table_name_cache.find(table_name);
-    if (it == table_name_cache.end()) {
-      // LOG_DEBUG("table %s not found in database %u", table_name.c_str(),
-      //           database_oid);
-      return nullptr;
-    }
-    oid_t table_oid = it->second;
+  auto it = table_name_cache.find(table_name);
+  if (it != table_name_cache.end()) return it->second;
 
-    // return table object from cache
-    return txn->catalog_cache.GetTableObject(table_oid);
+  if (cached_only) {
+    // cache miss return empty object
+    return nullptr;
   } else {
+    // cache miss get from pg_table
     return TableCatalog::GetInstance()->GetTableObject(table_name, database_oid,
                                                        txn);
   }
+}
+
+/*@brief   search index catalog object from all cached database objects
+* @param   index_oid
+* @return  index catalog object; if not found return null
+*/
+std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
+    oid_t index_oid) {
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
+  for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
+       ++it) {
+    auto table_object = it->second;
+    auto index_object = table_object->GetIndexObject(index_oid, true);
+    if (index_object) return index_object;
+  }
+  return nullptr;
+}
+
+/*@brief   search index catalog object from all cached database objects
+* @param   index_name
+* @return  index catalog object; if not found return null
+*/
+std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
+    const std::string &index_name) {
+  // std::lock_guard<std::mutex> lock(database_cache_lock);
+  for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
+       ++it) {
+    auto table_object = it->second;
+    auto index_object = table_object->GetIndexObject(index_name, true);
+    if (index_object) return index_object;
+  }
+  return nullptr;
 }
 
 DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
@@ -234,14 +279,9 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto database_object =
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
-    if (database_object) {
-      // insert into cache
-      bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-      if (success == false) {
-        LOG_DEBUG("Database catalog for database %u is already in cache",
-                  database_object->database_oid);
-      }
-    }
+    // insert into cache
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
     return database_object;
   } else {
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
@@ -275,10 +315,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     if (database_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-      if (success == false) {
-        LOG_DEBUG("Database catalog for database %u is already in cache",
-                  database_object->database_oid);
-      }
+      PL_ASSERT(success == true);
     }
     return database_object;
   } else {

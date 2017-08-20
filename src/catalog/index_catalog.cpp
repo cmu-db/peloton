@@ -14,6 +14,8 @@
 
 #include <sstream>
 
+#include "concurrency/transaction.h"
+#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
@@ -173,6 +175,16 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     oid_t index_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  if (index_object) {
+    return index_object;
+  }
+
+  // cache miss, get from pg_index
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 0;  // Index of index_oid
   std::vector<type::Value> values;
@@ -182,7 +194,14 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    auto index_object =
+        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    // fetch all indexes into table object (cannot use the above index object)
+    auto table_object = TableCatalog::GetInstance()->GetTableObject(
+        index_object->table_oid, txn);
+    PL_ASSERT(table_object &&
+              table_object->table_oid == index_object->table_oid);
+    return table_object->GetIndexObject(index_oid);
   } else {
     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
   }
@@ -192,6 +211,16 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     const std::string &index_name, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
+  if (index_object) {
+    return index_object;
+  }
+
+  // cache miss, get from pg_index
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 1;  // Index of index_name
   std::vector<type::Value> values;
@@ -202,7 +231,14 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    auto index_object =
+        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    // fetch all indexes into table object (cannot use the above index object)
+    auto table_object = TableCatalog::GetInstance()->GetTableObject(
+        index_object->table_oid, txn);
+    PL_ASSERT(table_object &&
+              table_object->table_oid == index_object->table_oid);
+    return table_object->GetIndexObject(index_name);
   } else {
     LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
               index_name.c_str());
@@ -219,6 +255,17 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
 IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  PL_ASSERT(table_object && table_object->table_oid == table_oid);
+  auto index_objects = table_object->GetIndexObjects(true);
+  if (index_objects.empty() == false) return index_objects;
+
+  // cache miss, get from pg_index
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
@@ -227,17 +274,15 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto index_object =
           std::make_shared<IndexCatalogObject>(tile.get(), tuple_id);
-      index_objects.insert(
-          std::make_pair(index_object->index_oid, index_object));
+      table_object->InsertIndexObject(index_object);
     }
   }
 
-  return index_objects;
+  return table_object->GetIndexObjects();
 }
 
 std::string IndexCatalog::GetIndexName(oid_t index_oid,

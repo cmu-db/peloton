@@ -13,6 +13,7 @@
 #include "concurrency/transaction.h"
 #include "catalog/column_catalog.h"
 
+#include "catalog/table_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -169,99 +170,122 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
+  // delete column from cache
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  table_object->EvictColumnObject(column_name);
+
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-/*@brief   delete all column records from the same table
-* this function is useful when calling DropTable
-* @param   table_oid
-* @param   txn  Transaction
-* @return  a vector of table oid
-*/
+/* @brief   delete all column records from the same table
+ * this function is useful when calling DropTable
+ * @param   table_oid
+ * @param   txn  Transaction
+ * @return  a vector of table oid
+ */
 bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                                   concurrency::Transaction *txn) {
   oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
+  // delete columns from cache
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  table_object->EvictAllColumnObjects();
+
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-/*@brief   get column catalog object
-* @param   table_oid
-* @param   column_name
-* @param   txn  Transaction
-* @return  column catalog object
-*/
+/* @brief   get column catalog object
+ * @param   table_oid
+ * @param   column_name
+ * @param   txn  Transaction
+ * @return  column catalog object
+ */
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, const std::string &column_name,
     concurrency::Transaction *txn) {
   // try get from cache
-  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
-  if (table_object) {
-    auto column_object = table_object->GetColumnObject(column_name);
-    if (column_object) return column_object;
-  }
+  // auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  PL_ASSERT(table_object && table_object->table_oid == table_oid);
+  auto column_object = table_object->GetColumnObject(column_name);
+  return column_object;
+  // GetColumnObject() will go to pg_attribute if necessary
 
-  // cache miss, get from pg_attribute
-  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
-  oid_t index_offset = 0;  // Index of table_oid & column_name
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+  // // cache miss, get from pg_attribute
+  // std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
+  // oid_t index_offset = 0;  // Index of table_oid & column_name
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(
+  //     type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
-  } else {
-    LOG_DEBUG("Found %lu column with column name %s", result_tiles->size(),
-              column_name.c_str());
-  }
+  // if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1)
+  // {
+  //   return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
+  // } else {
+  //   LOG_DEBUG("Found %lu column with column name %s", result_tiles->size(),
+  //             column_name.c_str());
+  // }
 
-  return nullptr;
+  // return nullptr;
 }
 
+/* @brief   get column catalog object
+ * @param   table_oid
+ * @param   column_id
+ * @param   txn  Transaction
+ * @return  column catalog object
+ */
 std::shared_ptr<ColumnCatalogObject> ColumnCatalog::GetColumnObject(
     oid_t table_oid, oid_t column_id, concurrency::Transaction *txn) {
   // try get from cache
-  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
-  if (table_object) {
-    auto column_object = table_object->GetColumnObject(column_id);
-    if (column_object) return column_object;
-  }
+  // auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  PL_ASSERT(table_object && table_object->table_oid == table_oid);
+  auto column_object = table_object->GetColumnObject(column_id);
+  return column_object;
+  // GetColumnObject() will go to pg_attribute if necessary
 
-  // cache miss, get from pg_attribute
-  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
-  oid_t index_offset = 1;  // Index of table_oid & column_id
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+  // // cache miss, get from pg_attribute
+  // std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
+  // oid_t index_offset = 1;  // Index of table_oid & column_id
+  // std::vector<type::Value> values;
+  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  // auto result_tiles =
+  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
-  } else {
-    LOG_DEBUG("Found %lu column with column id %u", result_tiles->size(),
-              column_id);
-  }
+  // if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1)
+  // {
+  //   return std::make_shared<ColumnCatalogObject>((*result_tiles)[0].get());
+  // } else {
+  //   LOG_DEBUG("Found %lu column with column id %u", result_tiles->size(),
+  //             column_id);
+  // }
 
-  return nullptr;
+  // return nullptr;
 }
 
 const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::Transaction *txn) {
   // try get from cache
-  auto table_object = txn->catalog_cache.GetTableObject(table_oid);
-  if (table_object) {
-    auto column_objects = table_object->GetColumnObjects(true);
-    if (column_objects.size() != 0) return column_objects;
-  }
+  // auto table_object = txn->catalog_cache.GetTableObject(table_oid);
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  PL_ASSERT(table_object && table_object->table_oid == table_oid);
+  auto column_objects = table_object->GetColumnObjects(true);
+  if (column_objects.size() != 0) return column_objects;
 
   // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
@@ -272,18 +296,15 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-      column_objects;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto column_object =
           std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
-      column_objects.insert(
-          std::make_pair(column_object->column_id, column_object));
+      table_object->InsertColumnObject(column_object);
     }
   }
 
-  return column_objects;
+  return table_object->GetColumnObjects();
 }
 
 /*@brief   get logical position of one column in the table(e.g column id = 0

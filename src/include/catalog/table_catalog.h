@@ -45,8 +45,10 @@ class TableCatalogObject {
         table_name(),
         database_oid(INVALID_OID),
         index_objects(),
-        column_objects(),
+        index_names(),
         valid_index_objects(false),
+        column_objects(),
+        column_names(),
         valid_column_objects(false),
         txn(nullptr) {}
   TableCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn)
@@ -54,22 +56,38 @@ class TableCatalogObject {
         table_name(tile->GetValue(0, 1).ToString()),
         database_oid(tile->GetValue(0, 2).GetAs<oid_t>()),
         index_objects(),
-        column_objects(),
+        index_names(),
         valid_index_objects(false),
+        column_objects(),
+        column_names(),
         valid_column_objects(false),
         txn(txn) {}
 
   // Get index objects
-  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> &
-  GetIndexObjects();
-  std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid);
+  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
+  bool EvictIndexObject(oid_t index_oid);
+  bool EvictIndexObject(const std::string &index_name);
+
+  void EvictAllIndexObjects();
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+  GetIndexObjects(bool cached_only = false);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid,
+                                                     bool cached_only = false);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      const std::string &index_name, bool cached_only = false);
 
   // Get column objects
-  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>> &
+  bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
+  bool EvictColumnObject(oid_t column_id);
+  bool EvictColumnObject(const std::string &column_name);
+
+  void EvictAllColumnObjects();
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(bool cached_only = false);
-  std::shared_ptr<ColumnCatalogObject> GetColumnObject(oid_t column_id);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
-      const std::string &column_name);
+      oid_t column_id, bool cached_only = false);
+  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+      const std::string &column_name, bool cached_only = false);
 
   oid_t GetOid() const { return table_oid; }
   std::string GetName() const { return table_name; }
@@ -84,17 +102,21 @@ class TableCatalogObject {
   // database oid
   oid_t database_oid;
 
- private:
+  // private:
+  // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
+  std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
+      index_names;
+  bool valid_index_objects;
   // std::mutex index_cache_lock;
 
+  // cache for *all* column catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
       column_objects;
-  std::unordered_map<std::string, oid_t> column_name_cache;
-  // std::mutex column_cache_lock;
-
-  bool valid_index_objects;
+  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
+      column_names;
   bool valid_column_objects;
+  // std::mutex column_cache_lock;
 
   // Pointer to its corresponding transaction
   concurrency::Transaction *txn;
