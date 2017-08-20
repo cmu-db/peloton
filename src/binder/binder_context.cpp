@@ -59,16 +59,17 @@ bool BinderContext::GetColumnPosTuple(
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type,
     concurrency::Transaction* txn) {
   try {
-    auto db_id = std::get<0>(table_id_tuple);
-    auto table_id = std::get<1>(table_id_tuple);
+    auto db_oid = std::get<0>(table_id_tuple);
+    auto table_oid = std::get<1>(table_id_tuple);
 
     // get table object first and use the column name to get column object
-    auto table_object =
-        catalog::TableCatalog::GetInstance()->GetTableObject(table_id, txn);
+    auto database_object =
+        catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(db_oid, txn);
+    auto table_object = database_object->GetTableObject(table_oid, txn);
     auto column_object = table_object->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
     oid_t col_pos = column_object->column_id;
-    col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
+    col_pos_tuple = std::make_tuple(db_oid, table_oid, col_pos);
     value_type = column_object->column_type;
     return true;
   } catch (CatalogException& e) {

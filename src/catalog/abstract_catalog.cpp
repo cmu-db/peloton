@@ -63,13 +63,15 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
   // get catalog table oid
-  oid_t catalog_table_oid = TableCatalog::GetInstance()->GetTableOid(
-      catalog_table_name, CATALOG_DATABASE_OID, txn);
+  auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+      CATALOG_DATABASE_OID, txn);
+  auto catalog_table_object =
+      database_object->GetTableObject(catalog_table_name);
 
   // set catalog_table_
   try {
     catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
-        CATALOG_DATABASE_OID, catalog_table_oid);
+        CATALOG_DATABASE_OID, catalog_table_object->table_oid);
   } catch (CatalogException &e) {
     LOG_TRACE("Can't find table %d! Return false", catalog_table_oid);
   }

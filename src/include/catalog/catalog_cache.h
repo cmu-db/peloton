@@ -24,6 +24,7 @@ namespace catalog {
 class CatalogCache {
   friend class TableCatalog;
   friend class IndexCatalog;
+  friend class Catalog;
 
  public:
   CatalogCache() {}
@@ -38,7 +39,7 @@ class CatalogCache {
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &name);
 
-  // private:
+ private:
   std::shared_ptr<TableCatalogObject> GetCachedTableObject(oid_t table_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(

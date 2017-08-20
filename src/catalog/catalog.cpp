@@ -445,16 +445,18 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
   // check if table already has index with same name
-  auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-  auto table_object = database_object->GetTableObject(table_oid);
-  auto index_object = table_object->GetIndexObject(index_name);
+  if (!is_catalog) {
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    auto table_object = database_object->GetTableObject(table_oid);
+    auto index_object = table_object->GetIndexObject(index_name);
 
-  if (!is_catalog && index_object != nullptr) {
-    LOG_TRACE(
-        "Cannot create index with same name Return "
-        "RESULT_FAILURE.");
-    return ResultType::FAILURE;
+    if (index_object != nullptr) {
+      LOG_TRACE(
+          "Cannot create index with same name Return "
+          "RESULT_FAILURE.");
+      return ResultType::FAILURE;
+    }
   }
   auto storage_manager = storage::StorageManager::GetInstance();
 

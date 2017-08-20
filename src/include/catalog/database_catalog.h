@@ -107,10 +107,10 @@ class DatabaseCatalog : public AbstractCatalog {
       const std::string &database_name, concurrency::Transaction *txn);
 
   // Deprecated, use DatabaseCatalogObject
-  std::string GetDatabaseName(oid_t database_oid,
-                              concurrency::Transaction *txn);
-  oid_t GetDatabaseOid(const std::string &database_name,
-                       concurrency::Transaction *txn);
+  // std::string GetDatabaseName(oid_t database_oid,
+  //                             concurrency::Transaction *txn);
+  // oid_t GetDatabaseOid(const std::string &database_name,
+  //                      concurrency::Transaction *txn);
 
  private:
   DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

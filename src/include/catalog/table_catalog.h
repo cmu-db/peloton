@@ -39,6 +39,10 @@ namespace peloton {
 namespace catalog {
 
 class TableCatalogObject {
+  friend class TableCatalog;
+  friend class IndexCatalog;
+  friend class ColumnCatalog;
+
  public:
   TableCatalogObject(oid_t table_oid = INVALID_OID)
       : table_oid(table_oid),  // INVALID_OID represents an invalid object
@@ -63,46 +67,49 @@ class TableCatalogObject {
         valid_column_objects(false),
         txn(txn) {}
 
+ private:
   // Get index objects
   bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
   bool EvictIndexObject(oid_t index_oid);
   bool EvictIndexObject(const std::string &index_name);
 
+ public:
   void EvictAllIndexObjects();
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
   GetIndexObjects(bool cached_only = false);
+  std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
+  GetIndexNames(bool cached_only = false);
   std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid,
                                                      bool cached_only = false);
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, bool cached_only = false);
 
+ private:
   // Get column objects
   bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
   bool EvictColumnObject(oid_t column_id);
   bool EvictColumnObject(const std::string &column_name);
 
+ public:
   void EvictAllColumnObjects();
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(bool cached_only = false);
+  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
+  GetColumnNames(bool cached_only = false);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       oid_t column_id, bool cached_only = false);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
 
-  oid_t GetOid() const { return table_oid; }
-  std::string GetName() const { return table_name; }
-  oid_t GetDatabaseOid() const { return database_oid; }
+  // oid_t GetOid() const { return table_oid; }
+  // std::string GetName() const { return table_name; }
+  // oid_t GetDatabaseOid() const { return database_oid; }
 
-  // table oid
   const oid_t table_oid;
-
-  // table name
   std::string table_name;
-
-  // database oid
   oid_t database_oid;
 
-  // private:
+ private:
   // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
@@ -123,6 +130,10 @@ class TableCatalogObject {
 };
 
 class TableCatalog : public AbstractCatalog {
+  friend class DatabaseCatalogObject;
+  friend class ColumnCatalog;
+  friend class IndexCatalog;
+
  public:
   ~TableCatalog();
 
@@ -144,20 +155,21 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
+ private:
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::Transaction *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, oid_t database_oid,
       concurrency::Transaction *txn);
 
-  std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
-  oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);
-  oid_t GetTableOid(const std::string &table_name, oid_t database_oid,
-                    concurrency::Transaction *txn);
-  std::vector<oid_t> GetTableOids(oid_t database_oid,
-                                  concurrency::Transaction *txn);
-  std::vector<std::string> GetTableNames(oid_t database_oid,
-                                         concurrency::Transaction *txn);
+  // std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
+  // oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);
+  // oid_t GetTableOid(const std::string &table_name, oid_t database_oid,
+  //                   concurrency::Transaction *txn);
+  // std::vector<oid_t> GetTableOids(oid_t database_oid,
+  //                                 concurrency::Transaction *txn);
+  // std::vector<std::string> GetTableNames(oid_t database_oid,
+  //                                        concurrency::Transaction *txn);
 
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

@@ -475,172 +475,176 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   return nullptr;
 }
 
-/*@brief   read table name from pg_table using table oid
- * @param   table_oid
- * @param   txn     Transaction
- * @return  table name
- */
-std::string TableCatalog::GetTableName(oid_t table_oid,
-                                       concurrency::Transaction *txn) {
-  auto table_object = GetTableObject(table_oid, txn);
-  if (table_object) {
-    return table_object->table_name;
-  } else {
-    return std::string();
-  }
+// /*@brief   read table name from pg_table using table oid
+//  * @param   table_oid
+//  * @param   txn     Transaction
+//  * @return  table name
+//  */
+// std::string TableCatalog::GetTableName(oid_t table_oid,
+//                                        concurrency::Transaction *txn) {
+//   auto table_object = GetTableObject(table_oid, txn);
+//   if (table_object) {
+//     return table_object->table_name;
+//   } else {
+//     return std::string();
+//   }
 
-  // std::vector<oid_t> column_ids({1});  // table_name
-  // oid_t index_offset = 0;              // Index of table_oid
-  // std::vector<type::Value> values;
-  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+//   // std::vector<oid_t> column_ids({1});  // table_name
+//   // oid_t index_offset = 0;              // Index of table_oid
+//   // std::vector<type::Value> values;
+//   // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  // auto result_tiles =
-  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+//   // auto result_tiles =
+//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  // std::string table_name;
-  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-  // if (result_tiles->size() != 0) {
-  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-  //     table_name = (*result_tiles)[0]
-  //                      ->GetValue(0, 0)
-  //                      .ToString();  // After projection left 1 column
-  //   }
-  // }
+//   // std::string table_name;
+//   // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+//   // if (result_tiles->size() != 0) {
+//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+//   //     table_name = (*result_tiles)[0]
+//   //                      ->GetValue(0, 0)
+//   //                      .ToString();  // After projection left 1 column
+//   //   }
+//   // }
 
-  // return table_name;
-}
+//   // return table_name;
+// }
 
-/*@brief   read database oid one table belongs to using table oid
- * @param   table_oid
- * @param   txn     Transaction
- * @return  database oid
- */
-oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
-                                   concurrency::Transaction *txn) {
-  auto table_object = GetTableObject(table_oid, txn);
-  if (table_object) {
-    return table_object->database_oid;
-  } else {
-    return INVALID_OID;
-  }
+// /*@brief   read database oid one table belongs to using table oid
+//  * @param   table_oid
+//  * @param   txn     Transaction
+//  * @return  database oid
+//  */
+// oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
+//                                    concurrency::Transaction *txn) {
+//   auto table_object = GetTableObject(table_oid, txn);
+//   if (table_object) {
+//     return table_object->database_oid;
+//   } else {
+//     return INVALID_OID;
+//   }
 
-  // std::vector<oid_t> column_ids({2});  // database_oid
-  // oid_t index_offset = 0;              // Index of table_oid
-  // std::vector<type::Value> values;
-  // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+//   // std::vector<oid_t> column_ids({2});  // database_oid
+//   // oid_t index_offset = 0;              // Index of table_oid
+//   // std::vector<type::Value> values;
+//   // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  // auto result_tiles =
-  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+//   // auto result_tiles =
+//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  // oid_t database_oid = INVALID_OID;
-  // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-  // if (result_tiles->size() != 0) {
-  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-  //     database_oid = (*result_tiles)[0]
-  //                        ->GetValue(0, 0)
-  //                        .GetAs<oid_t>();  // After projection left 1 column
-  //   }
-  // }
+//   // oid_t database_oid = INVALID_OID;
+//   // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+//   // if (result_tiles->size() != 0) {
+//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+//   //     database_oid = (*result_tiles)[0]
+//   //                        ->GetValue(0, 0)
+//   //                        .GetAs<oid_t>();  // After projection left 1
+//   column
+//   //   }
+//   // }
 
-  // return database_oid;
-}
+//   // return database_oid;
+// }
 
-/*@brief   read table oid from pg_table using table name + database oid
- * @param   table_name
- * @param   database_oid
- * @param   txn     Transaction
- * @return  table oid
- */
-oid_t TableCatalog::GetTableOid(const std::string &table_name,
-                                oid_t database_oid,
-                                concurrency::Transaction *txn) {
-  auto table_object = GetTableObject(table_name, database_oid, txn);
-  if (table_object) {
-    return table_object->table_oid;
-  } else {
-    return INVALID_OID;
-  }
+// /*@brief   read table oid from pg_table using table name + database oid
+//  * @param   table_name
+//  * @param   database_oid
+//  * @param   txn     Transaction
+//  * @return  table oid
+//  */
+// oid_t TableCatalog::GetTableOid(const std::string &table_name,
+//                                 oid_t database_oid,
+//                                 concurrency::Transaction *txn) {
+//   auto table_object = GetTableObject(table_name, database_oid, txn);
+//   if (table_object) {
+//     return table_object->table_oid;
+//   } else {
+//     return INVALID_OID;
+//   }
 
-  // std::vector<oid_t> column_ids({0});  // table_oid
-  // oid_t index_offset = 1;              // Index of table_name & database_oid
-  // std::vector<type::Value> values;
-  // values.push_back(
-  //     type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  // values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+//   // std::vector<oid_t> column_ids({0});  // table_oid
+//   // oid_t index_offset = 1;              // Index of table_name &
+//   database_oid
+//   // std::vector<type::Value> values;
+//   // values.push_back(
+//   //     type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+//   //
+//   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  // auto result_tiles =
-  //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
+//   // auto result_tiles =
+//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  // oid_t table_oid = INVALID_OID;
-  // PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is
-  // unique
-  // if (result_tiles->size() != 0) {
-  //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-  //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-  //     table_oid = (*result_tiles)[0]
-  //                     ->GetValue(0, 0)
-  //                     .GetAs<oid_t>();  // After projection left 1 column
-  //   }
-  // }
+//   // oid_t table_oid = INVALID_OID;
+//   // PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is
+//   // unique
+//   // if (result_tiles->size() != 0) {
+//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
+//   //     table_oid = (*result_tiles)[0]
+//   //                     ->GetValue(0, 0)
+//   //                     .GetAs<oid_t>();  // After projection left 1 column
+//   //   }
+//   // }
 
-  // return table_oid;
-}
+//   // return table_oid;
+// }
 
-/*@brief   read all table oids from the same database using its oid
- * @param   database_oid
- * @param   txn  Transaction
- * @return  a vector of table oid
- */
-std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
-                                              concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({0});  // table_oid
-  oid_t index_offset = 2;              // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+// /*@brief   read all table oids from the same database using its oid
+//  * @param   database_oid
+//  * @param   txn  Transaction
+//  * @return  a vector of table oid
+//  */
+// std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
+//                                               concurrency::Transaction *txn)
+//                                               {
+//   std::vector<oid_t> column_ids({0});  // table_oid
+//   oid_t index_offset = 2;              // Index of database_oid
+//   std::vector<type::Value> values;
+//   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+//   auto result_tiles =
+//       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::vector<oid_t> table_ids;
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      table_ids.emplace_back(
-          tile->GetValue(tuple_id, 0)
-              .GetAs<oid_t>());  // After projection left 1 column
-    }
-  }
+//   std::vector<oid_t> table_ids;
+//   for (auto &tile : (*result_tiles)) {
+//     for (auto tuple_id : *tile) {
+//       table_ids.emplace_back(
+//           tile->GetValue(tuple_id, 0)
+//               .GetAs<oid_t>());  // After projection left 1 column
+//     }
+//   }
 
-  return table_ids;
-}
+//   return table_ids;
+// }
 
-/*@brief   read all table names from the same database using its oid
- * @param   database_oid
- * @param   txn  Transaction
- * @return  a vector of table name
- */
-std::vector<std::string> TableCatalog::GetTableNames(
-    oid_t database_oid, concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({1});  // table_name
-  oid_t index_offset = 2;              // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+// /*@brief   read all table names from the same database using its oid
+//  * @param   database_oid
+//  * @param   txn  Transaction
+//  * @return  a vector of table name
+//  */
+// std::vector<std::string> TableCatalog::GetTableNames(
+//     oid_t database_oid, concurrency::Transaction *txn) {
+//   std::vector<oid_t> column_ids({1});  // table_name
+//   oid_t index_offset = 2;              // Index of database_oid
+//   std::vector<type::Value> values;
+//   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+//   auto result_tiles =
+//       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  std::vector<std::string> table_names;
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      table_names.emplace_back(
-          tile->GetValue(tuple_id, 0)
-              .ToString());  // After projection left 1 column
-    }
-  }
+//   std::vector<std::string> table_names;
+//   for (auto &tile : (*result_tiles)) {
+//     for (auto tuple_id : *tile) {
+//       table_names.emplace_back(
+//           tile->GetValue(tuple_id, 0)
+//               .ToString());  // After projection left 1 column
+//     }
+//   }
 
-  return table_names;
-}
+//   return table_names;
+// }
 
 }  // namespace catalog
 }  // namespace peloton
