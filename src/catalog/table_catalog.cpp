@@ -414,8 +414,10 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
         table_object->database_oid, txn);
-    PL_ASSERT(database_object != nullptr);
-    database_object->InsertTableObject(table_object);
+    PL_ASSERT(database_object);
+    bool success = database_object->InsertTableObject(table_object);
+    PL_ASSERT(success == true);
+    (void)success;
     return table_object;
   } else {
     LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
@@ -462,7 +464,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
         table_object->database_oid, txn);
     PL_ASSERT(database_object);
-    database_object->InsertTableObject(table_object);
+    bool success = database_object->InsertTableObject(table_object);
+    PL_ASSERT(success == true);
+    (void)success;
     return table_object;
   } else {
     // LOG_DEBUG("Found %lu table with name %s", result_tiles->size(),
