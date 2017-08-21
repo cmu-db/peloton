@@ -49,7 +49,8 @@ class NetworkConnection {
  public:
   int thread_id;
   int sock_fd;                    // socket file descriptor
-  struct event *event = nullptr;  // libevent handle
+  struct event *network_event = nullptr;  // something to read from network
+  struct event *workpool_event = nullptr; // worker thread done the job
   short event_flags;              // event flags mask
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection

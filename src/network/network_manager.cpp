@@ -168,7 +168,7 @@ void NetworkManager::StartServer() {
     NetworkManager::GetConnection(listen_fd)->CloseSocket();
 
     // Free events and event base
-    event_free(NetworkManager::GetConnection(listen_fd)->event);
+    event_free(NetworkManager::GetConnection(listen_fd)->network_event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);
