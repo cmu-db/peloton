@@ -36,17 +36,17 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 
   // clear out packet
   rpkt.Reset();
-  if (event == nullptr) {
-    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+  if (network_event == nullptr) {
+    network_event = event_new(thread->GetEventBase(), sock_fd, event_flags,
                       CallbackUtil::EventHandler, this);
   } else {
     // Reuse the event object if already initialized
-    if (event_del(event) == -1) {
+    if (event_del(network_event) == -1) {
       LOG_ERROR("Failed to delete event");
       PL_ASSERT(false);
     }
 
-    auto result = event_assign(event, thread->GetEventBase(), sock_fd,
+    auto result = event_assign(network_event, thread->GetEventBase(), sock_fd,
                                event_flags,
                                CallbackUtil::EventHandler, this);
 
@@ -55,9 +55,9 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
   }
-  event_add(event, nullptr);
+  event_add(network_event, nullptr);
   // should put the initialization else where.. check correctness first.
-  protocol_handler_.traffic_cop_->SetTaskCallback(TriggerStateMachine, event);
+  protocol_handler_.traffic_cop_->SetTaskCallback(TriggerStateMachine, network_event);
 //  pkt_manager.traffic_cop_->event_ = event;
 }
 
@@ -77,12 +77,12 @@ void NetworkConnection::TransitState(ConnState next_state) {
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
   auto base = thread->GetEventBase();
-  if (event_del(event) == -1) {
+  if (event_del(network_event) == -1) {
     LOG_ERROR("Failed to delete event");
     return false;
   }
   auto result =
-      event_assign(event, base, sock_fd, flags,
+      event_assign(network_event, base, sock_fd, flags,
                    CallbackUtil::EventHandler, (void *)this);
 
   if (result != 0) {
@@ -92,7 +92,7 @@ bool NetworkConnection::UpdateEvent(short flags) {
 
   event_flags = flags;
 
-  if (event_add(event, nullptr) == -1) {
+  if (event_add(network_event, nullptr) == -1) {
     LOG_ERROR("Failed to add event");
     return false;
   }
@@ -538,7 +538,7 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
 void NetworkConnection::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
-  event_del(event);
+  event_del(network_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
   Reset();
