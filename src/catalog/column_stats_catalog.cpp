@@ -45,14 +45,12 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::Transaction *txn)
                       txn) {
   // unique key: (database_id, table_id, column_id)
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME,
-      {"database_id", "table_id", "column_id"},
+      CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME, {0, 1, 2},
       COLUMN_STATS_CATALOG_NAME "_skey0", true, IndexType::BWTREE, txn);
   // non-unique key: (database_id, table_id)
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME,
-      {"database_id", "table_id"}, COLUMN_STATS_CATALOG_NAME "_skey1", false,
-      IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME, {0, 1},
+      COLUMN_STATS_CATALOG_NAME "_skey1", false, IndexType::BWTREE, txn);
 }
 
 ColumnStatsCatalog::~ColumnStatsCatalog() {}
@@ -176,8 +174,8 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::Transaction *txn,
-    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
-        column_stats_map) {
+    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
+        &column_stats_map) {
   std::vector<oid_t> column_ids(
       {ColumnId::COLUMN_ID, ColumnId::NUM_ROWS, ColumnId::CARDINALITY,
        ColumnId::FRAC_NULL, ColumnId::MOST_COMMON_VALS,

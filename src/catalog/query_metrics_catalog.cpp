@@ -46,9 +46,8 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, QUERY_METRICS_CATALOG_NAME,
-      {"query_name", "database_oid"}, QUERY_METRICS_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, QUERY_METRICS_CATALOG_NAME, {0, 1},
+      QUERY_METRICS_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}

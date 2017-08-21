@@ -84,6 +84,9 @@ class CreatePlan : public AbstractPlan {
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
   inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+  std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
+
+  void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
 
   // interfaces for triggers
 
@@ -105,7 +108,7 @@ class CreatePlan : public AbstractPlan {
 protected:
     // This is a helper method for extracting foreign key information
     // and storing it in an internal struct.
-    void ProcessForeignKeyConstraint(const std::string table_name,
+    void ProcessForeignKeyConstraint(const std::string &table_name,
                                      const parser::ColumnDefinition *col);
 
  private:
@@ -123,6 +126,7 @@ protected:
 
   // Index attributes
   std::vector<std::string> index_attrs;
+  std::vector<oid_t> key_attrs;
 
   // Check to either Create Table or INDEX
   CreateType create_type;
@@ -143,7 +147,8 @@ protected:
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
   std::unique_ptr<expression::AbstractExpression> trigger_when = nullptr;
-  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
+  int16_t trigger_type;  // information about row, timing, events, access by
+                         // pg_trigger
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);
