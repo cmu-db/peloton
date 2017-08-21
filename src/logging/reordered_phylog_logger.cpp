@@ -30,21 +30,22 @@
 #include "storage/storage_manager.h"
 
 #include "logging/reordered_phylog_logger.h"
+#include "logging/reordered_phylog_log_manager.h"
 
 namespace peloton {
 namespace logging {
 
-void ReorderedPhyLogLogger::RegisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
+//void ReorderedPhyLogLogger::RegisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
 //  worker_map_lock_.Lock();
 //  worker_map_[phylog_worker_ctx->worker_id].reset(phylog_worker_ctx);
 //  worker_map_lock_.Unlock();
-}
+//}
 
-void ReorderedPhyLogLogger::DeregisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
+//void ReorderedPhyLogLogger::DeregisterWorker(WorkerContext *phylog_worker_ctx UNUSED_ATTRIBUTE) {
 //  worker_map_lock_.Lock();
 //  worker_map_.erase(phylog_worker_ctx->worker_id);
 //  worker_map_lock_.Unlock();
-}
+//}
 
 void ReorderedPhyLogLogger::StartIndexRebulding(const size_t logger_count) {
   PL_ASSERT(recovery_threads_.size() != 0);
@@ -55,17 +56,17 @@ void ReorderedPhyLogLogger::WaitForIndexRebuilding() {
   recovery_threads_[0]->join();
 }
 
-void ReorderedPhyLogLogger::StartRecovery(const size_t checkpoint_eid, const size_t persist_eid, const size_t recovery_thread_count) {
+void ReorderedPhyLogLogger::StartRecovery(){ //const size_t checkpoint_eid, const size_t persist_eid, const size_t recovery_thread_count) {
 
-  GetSortedLogFileIdList(checkpoint_eid, persist_eid);
-  recovery_pools_.resize(recovery_thread_count);
-  recovery_threads_.resize(recovery_thread_count);
+  GetSortedLogFileIdList();//checkpoint_eid, persist_eid);
+  recovery_pools_.resize(1);
+  recovery_threads_.resize(1);
 
-  for (size_t i = 0; i < recovery_thread_count; ++i) {
+  for (size_t i = 0; i < 1; ++i) {
 
     recovery_pools_[i].reset(new type::EphemeralPool()); //VarlenPool(BACKEND_TYPE_MM)
 
-    recovery_threads_[i].reset(new std::thread(&ReorderedPhyLogLogger::RunRecoveryThread, this, i, checkpoint_eid, persist_eid));
+    recovery_threads_[i].reset(new std::thread(&ReorderedPhyLogLogger::RunRecoveryThread, this, i));//, checkpoint_eid, persist_eid));
   }
 }
 
@@ -76,7 +77,7 @@ void ReorderedPhyLogLogger::WaitForRecovery() {
 }
 
 
-void ReorderedPhyLogLogger::GetSortedLogFileIdList(const size_t checkpoint_eid, const size_t persist_eid) {
+void ReorderedPhyLogLogger::GetSortedLogFileIdList(){ //const size_t checkpoint_eid, const size_t persist_eid) {
   // Open the log dir
   struct dirent *file;
   DIR *dirp;
@@ -87,8 +88,8 @@ void ReorderedPhyLogLogger::GetSortedLogFileIdList(const size_t checkpoint_eid, 
   }
 
 
-  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  size_t file_epoch_count = (size_t)(new_file_interval_ / epoch_manager.GetEpochDurationMilliSecond());
+  //concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  //size_t file_epoch_count = (size_t)(new_file_interval_ / epoch_manager.GetEpochDurationMilliSecond());
 
   // Filter out all log files
   std::string base_name = logging_filename_prefix_ + "_" + std::to_string(logger_id_) + "_";
@@ -102,9 +103,9 @@ void ReorderedPhyLogLogger::GetSortedLogFileIdList(const size_t checkpoint_eid, 
       // Get the file epoch id
       size_t file_eid = (size_t)std::stoi(std::string(file->d_name + base_name.length()));
 
-      if (file_eid + file_epoch_count > checkpoint_eid && file_eid <= persist_eid) {
+//      if (file_eid + file_epoch_count > checkpoint_eid && file_eid <= persist_eid) {
         file_eids_.push_back(file_eid);
-      }
+//      }
 
     }
   }
@@ -236,11 +237,11 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
 //  return true;
 }
 
-bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &file_handle, size_t checkpoint_eid, size_t persist_eid) {
+bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t checkpoint_eid, size_t persist_eid) {
   PL_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
 
   // Status
-  size_t current_eid = INVALID_EID;
+  //size_t current_eid = INVALID_EID;
   cid_t current_cid = INVALID_CID;
   size_t buf_size = 4096;
   std::unique_ptr<char[]> buffer(new char[buf_size]);
@@ -269,10 +270,10 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
     CopySerializeInput record_decode((const void *) buffer.get(), length);
 
     // Check if we can skip this epoch
-    if (current_eid != INVALID_EID && (current_eid < checkpoint_eid || current_eid > persist_eid)) {
+//    if (current_eid != INVALID_EID && (current_eid < checkpoint_eid || current_eid > persist_eid)) {
       // Skip the record if current epoch is before the checkpoint or after persistent epoch
-      continue;
-    }
+//      continue;
+//    }
 
     /*
      * Decode the record
@@ -280,38 +281,39 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
     // Get record type
     LogRecordType record_type = (LogRecordType) (record_decode.ReadEnumInSingleByte());
     switch (record_type) {
-      case LogRecordType::EPOCH_BEGIN: {
-        if (current_eid != INVALID_EID) {
-          LOG_ERROR("Incomplete epoch in log record");
-          return false;
-        }
-        current_eid = (size_t) record_decode.ReadLong();
-        break;
-      } case LogRecordType::EPOCH_END: {
-        size_t eid = (size_t) record_decode.ReadLong();
-        if (eid != current_eid) {
-          LOG_ERROR("Mismatched epoch in log record");
-          return false;
-        }
-        current_eid = INVALID_EID;
-        break;
-      } case LogRecordType::TRANSACTION_BEGIN: {
-        if (current_eid == INVALID_EID) {
-          LOG_ERROR("Invalid txn begin record");
-          return false;
-        }
-        if (current_cid != INVALID_CID) {
-          LOG_ERROR("Incomplete txn in log record");
-          return false;
-        }
+//      case LogRecordType::EPOCH_BEGIN: {
+//        if (current_eid != INVALID_EID) {
+//          LOG_ERROR("Incomplete epoch in log record");
+//          return false;
+//        }
+//        current_eid = (size_t) record_decode.ReadLong();
+//        break;
+//      } case LogRecordType::EPOCH_END: {
+//        size_t eid = (size_t) record_decode.ReadLong();
+//        if (eid != current_eid) {
+//          LOG_ERROR("Mismatched epoch in log record");
+//          return false;
+//        }
+//        current_eid = INVALID_EID;
+//        break;
+    //  }
+    case LogRecordType::TRANSACTION_BEGIN: {
+//        if (current_eid == INVALID_EID) {
+//          LOG_ERROR("Invalid txn begin record");
+//          return false;
+//        }
+//        if (current_cid != INVALID_CID) {
+//          LOG_ERROR("Incomplete txn in log record");
+//          return false;
+//        }
         current_cid = (cid_t) record_decode.ReadLong();
 
         break;
       } case LogRecordType::TRANSACTION_COMMIT: {
-        if (current_eid == INVALID_EID) {
-          LOG_ERROR("Invalid txn begin record");
-          return false;
-        }
+//        if (current_eid == INVALID_EID) {
+//          LOG_ERROR("Invalid txn begin record");
+//          return false;
+//        }
         cid_t cid = (cid_t) record_decode.ReadLong();
         if (cid != current_cid) {
           LOG_ERROR("Mismatched txn in log record");
@@ -322,14 +324,14 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
       } case LogRecordType::TUPLE_UPDATE:
       case LogRecordType::TUPLE_DELETE:
       case LogRecordType::TUPLE_INSERT: {
-        if (current_cid == INVALID_CID || current_eid == INVALID_EID) {
+        if (current_cid == INVALID_CID){// || current_eid == INVALID_EID) {
           LOG_ERROR("Invalid txn tuple record");
           return false;
         }
 
-        if (current_eid < checkpoint_eid || current_eid > persist_eid) {
-          break;
-        }
+//        if (current_eid < checkpoint_eid || current_eid > persist_eid) {
+//          break;
+//        }
 
         oid_t database_id = (oid_t) record_decode.ReadLong();
         oid_t table_id = (oid_t) record_decode.ReadLong();
@@ -340,7 +342,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
 
         // Decode the tuple from the record
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-        tuple->DeserializeFrom(record_decode, this->recovery_pools_[thread_id].get());
+        tuple->DeserializeWithHeaderFrom(record_decode);//, this->recovery_pools_[thread_id].get());
 
         // Install the record
         InstallTupleRecord(record_type, tuple.get(), table, current_cid);
@@ -356,8 +358,11 @@ bool ReorderedPhyLogLogger::ReplayLogFile(const size_t thread_id, FileHandle &fi
   return true;
 }
 
-void ReorderedPhyLogLogger::RunRecoveryThread(const size_t thread_id, const size_t checkpoint_eid, const size_t persist_eid) {
 
+
+void ReorderedPhyLogLogger::RunRecoveryThread(const size_t thread_id UNUSED_ATTRIBUTE){//const size_t thread_id, const size_t checkpoint_eid, const size_t persist_eid) {
+
+    int replay_cap = max_replay_file_id_.load();
   while (true) {
 
     int replay_file_id = max_replay_file_id_.fetch_sub(1, std::memory_order_relaxed);
@@ -365,7 +370,7 @@ void ReorderedPhyLogLogger::RunRecoveryThread(const size_t thread_id, const size
       break;
     }
 
-    size_t file_eid = file_eids_.at(replay_file_id);
+    size_t file_eid = file_eids_.at(replay_cap - replay_file_id);
     // Replay a single file
     std::string filename = GetLogFileFullPath(file_eid);
     FileHandle file_handle;
@@ -374,7 +379,7 @@ void ReorderedPhyLogLogger::RunRecoveryThread(const size_t thread_id, const size
       LOG_ERROR("Cannot open log file %s\n", filename.c_str());
       exit(EXIT_FAILURE);
     }
-    ReplayLogFile(thread_id, file_handle, checkpoint_eid, persist_eid);
+    ReplayLogFile(file_handle);//, checkpoint_eid, persist_eid);
 
     // Safely close the file
     res = LoggingUtil::CloseFile(file_handle);
@@ -437,18 +442,16 @@ void ReorderedPhyLogLogger::RebuildSecIndexForTable(const size_t logger_count, s
 void ReorderedPhyLogLogger::Run() {
   // TODO: Ensure that we have called run recovery before
 
-  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+//  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
 
-  size_t file_epoch_count = (size_t)(new_file_interval_ / epoch_manager.GetEpochDurationMilliSecond());
+  //size_t file_epoch_count = 1; //(size_t)(new_file_interval_ / epoch_manager.GetEpochDurationMilliSecond());
 
   std::list<std::pair<FileHandle*, size_t>> file_handles;
 
-  size_t current_file_eid = epoch_manager.GetCurrentEpochId();
-
   FileHandle *new_file_handle = new FileHandle();
-  file_handles.push_back(std::make_pair(new_file_handle, current_file_eid));
+  file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
 
-  std::string filename = GetLogFileFullPath(current_file_eid);
+  std::string filename = GetLogFileFullPath(current_file_eid_);
   // Create a new file
   if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
     LOG_ERROR("Unable to create log file %s\n", filename.c_str());
@@ -464,7 +467,7 @@ void ReorderedPhyLogLogger::Run() {
     if (is_running_ == false) { break; }
 
     std::this_thread::sleep_for(
-      std::chrono::microseconds(epoch_manager.GetEpochLengthInMicroSecQuarter()));
+      std::chrono::microseconds(10000000));//epoch_manager.GetEpochLengthInMicroSecQuarter()));
 
 //    size_t current_global_eid = epoch_manager.GetCurrentEpochId();
 
@@ -507,7 +510,7 @@ void ReorderedPhyLogLogger::Run() {
           //}
 
           // if we have something to write, then check whether we need to create new file.
-          FileHandle *file_handle = nullptr;
+          //FileHandle *file_handle = nullptr;
 
           /*for (auto &entry : file_handles) {
             if (epoch_id >= entry.second && epoch_id < entry.second + file_epoch_count) {
@@ -515,11 +518,19 @@ void ReorderedPhyLogLogger::Run() {
             }
           }*/
           //while (file_handle == nullptr) {
-            current_file_eid = current_file_eid + file_epoch_count;
-            FileHandle *new_file_handle = new FileHandle();
-            file_handles.push_back(std::make_pair(new_file_handle, current_file_eid));
 
-            std::string filename = GetLogFileFullPath(current_file_eid);
+          //===== timeout, buffer is not full ====//
+          if(log_buffer_ == nullptr || log_buffer_->Empty()){
+              log_buffer_ = ReorderedPhyLogLogManager::GetInstance().GetBuffer();
+          }
+          if(!log_buffer_->Empty())
+          {
+
+            /*current_file_eid_ = current_file_eid_ + file_epoch_count;
+            FileHandle *new_file_handle = new FileHandle();
+            file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
+
+            std::string filename = GetLogFileFullPath(current_file_eid_);
             // Create a new file
             if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
               LOG_ERROR("Unable to create log file %s\n", filename.c_str());
@@ -540,15 +551,17 @@ void ReorderedPhyLogLogger::Run() {
            // if (buffers.top()->Empty()) {
 //              worker_ctx_ptr->buffer_pool.PutBuffer(std::move(buffers.top()));
 //            } else {
-              if(log_buffer_ != nullptr)
-                PersistLogBuffer(*file_handle, log_buffer_);
+*/
+                PersistLogBuffer(log_buffer_);
+//                log_buffer_->Reset();
+
 //            }
 //            PL_ASSERT(buffers.top() == nullptr);
 //            buffers.pop();
 //          }
 //          PersistEpochEnd(*file_handle, epoch_id);
           // Call fsync
-//          LoggingUtil::FFlushFsync(*file_handle);
+//         LoggingUtil::FFlushFsync(*file_handle);
         } // end for
 
 //        worker_ctx_ptr->persist_eid = worker_current_eid - 1;
@@ -576,30 +589,15 @@ void ReorderedPhyLogLogger::Run() {
 
 //      persist_epoch_id_ = min_workers_persist_eid;
 
-      auto list_iter = file_handles.begin();
+     // auto list_iter = file_handles.begin();
 
-      while (list_iter != file_handles.end()) {
-        if (list_iter->second + file_epoch_count <= persist_epoch_id_) {
-          FileHandle *file_handle = list_iter->first;
+//      while (list_iter != file_handles.end()) {
+//        if (list_iter->second + file_epoch_count <= persist_epoch_id_) {
+//          FileHandle *file_handle = list_iter->first;
 
           // Safely close the file
-          bool res = LoggingUtil::CloseFile(*file_handle);
-          if (res == false) {
-            LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
-            exit(EXIT_FAILURE);
-          }
 
-          delete file_handle;
-          file_handle = nullptr;
-
-          list_iter = file_handles.erase(list_iter);
-
-        } else {
-          ++list_iter;
-        }
-      }
-
-
+}
 //      worker_map_lock_.Unlock();
 //    }
   }
@@ -662,12 +660,40 @@ void ReorderedPhyLogLogger::PersistEpochEnd(FileHandle &file_handle, const size_
 
 }
 
-void ReorderedPhyLogLogger::PersistLogBuffer(FileHandle &file_handle, LogBuffer* log_buffer) {
+void ReorderedPhyLogLogger::PersistLogBuffer(LogBuffer* log_buffer) {
+    current_file_eid_ = current_file_eid_ + 1;
+    FileHandle *new_file_handle = new FileHandle();
+    //file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
 
-  fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, file_handle.file);
+    std::string filename = GetLogFileFullPath(current_file_eid_);
+    // Create a new file
+    if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
+      LOG_ERROR("Unable to create log file %s\n", filename.c_str());
+      exit(EXIT_FAILURE);
+    }
+    //if (epoch_id >= current_file_eid && epoch_id < current_file_eid + file_epoch_count) {
+      //file_handle = new_file_handle;
+      //break;
+    //}
+  //}
+    fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, new_file_handle->file);
+    log_buffer->Reset();
+
+//  Call fsync
+    LoggingUtil::FFlushFsync(*new_file_handle);
+
+    bool res = LoggingUtil::CloseFile(*new_file_handle);
+    if (res == false) {
+      LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
+      exit(EXIT_FAILURE);
+    }
+
+    delete new_file_handle;
+//    new_file_handle = nullptr;
 
   // Return the buffer to the worker
-  log_buffer->Reset();
+  //log_buffer->Reset();
+
   /*auto itr = worker_map_.find(log_buffer->GetWorkerId());
   if (itr != worker_map_.end()) {
     itr->second->buffer_pool.PutBuffer(std::move(log_buffer));

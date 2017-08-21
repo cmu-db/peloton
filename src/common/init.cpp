@@ -57,9 +57,6 @@ void PelotonInit::Initialize() {
   //checkpoint_manager.SetRecoveryThreadCount(1);
 
   //size_t persist_checkpoint_eid = checkpoint_manager.DoRecovery();
-  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-  log_manager.SetDirectories({"/home/paulo/log"});
-  log_manager.StartLoggers();
   //  log_manager.SetRecoveryThreadCount(1);
 //    log_manager.RegisterWorker();
 //    log_manager.DoRecovery(0);
@@ -69,6 +66,8 @@ void PelotonInit::Initialize() {
 
   //checkpoint_manager.SetCheckpointInterval(30);
   //checkpoint_manager.StartCheckpointing();
+  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+
 
 //  logging::ReorderedPhyLogLogManager::GetInstance().SetDirectories({"/home/paulo/log"});
 //  logging::CheckpointManagerFactory::Configure();
@@ -108,6 +107,10 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
+  log_manager.SetDirectories({"/home/paulo/log"});
+  log_manager.DoRecovery();
+  log_manager.StartLoggers();
+
 }
 
 void PelotonInit::Shutdown() {
