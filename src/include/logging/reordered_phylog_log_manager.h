@@ -96,10 +96,15 @@ public:
     for (size_t i = 0; i < logger_count_; ++i) {
       logger_ = new ReorderedPhyLogLogger(0, logging_dir);
     }
+    buffer_ptr_ = new LogBuffer();
   }
 
   virtual const std::string GetDirectories() override {
     return logger_dir_;
+  }
+
+  LogBuffer* GetBuffer() {
+      return buffer_ptr_;
   }
 
   // Worker side logic
@@ -117,7 +122,8 @@ public:
 
 
   // Logger side logic
-  virtual void DoRecovery(const size_t &begin_eid) override;
+  virtual void DoRecovery();
+  virtual void DoRecovery(const size_t &begin_eid UNUSED_ATTRIBUTE) override {}
   virtual void StartLoggers() override;
   virtual void StopLoggers() override;
 

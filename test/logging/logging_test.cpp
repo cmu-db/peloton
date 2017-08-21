@@ -51,11 +51,11 @@ class LoggingTests : public PelotonTest {};
     auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SNAPSHOT);
     log_manager.SetDirectories({"/tmp/log"});
     log_manager.StartLoggers();
-    log_manager.RegisterWorker(1);
-    log_manager.StartTxn(txn);
+    //log_manager.RegisterWorker(1);
+    log_manager.StartPersistTxn(txn->GetCommitId());
     log_manager.LogInsert(ItemPointer(table->GetTileGroup(0)->GetTileGroupId(),0));
-    log_manager.EndPersistTxn();
-    log_manager.DeregisterWorker();;
+    log_manager.EndPersistTxn(txn->GetCommitId());
+    //log_manager.DeregisterWorker();;
     log_manager.StopLoggers();
 
 

@@ -18,6 +18,8 @@ namespace peloton {
 namespace logging {
 
 bool LogBuffer::WriteData(const char *data, size_t len) {
+  if(this == nullptr)
+      return true;
   if (unlikely_branch(size_ + len > log_buffer_capacity_)) {
     return false;
   } else {

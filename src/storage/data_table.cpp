@@ -389,7 +389,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   UNUSED_ATTRIBUTE auto index_count = GetIndexCount();
-  PL_ASSERT(index_count == 0);
+ // PL_ASSERT(index_count == 0);
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
   return location;
