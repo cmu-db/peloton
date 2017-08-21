@@ -178,7 +178,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   // TODO check type CreateType::kDatabase
 }
 
-void CreatePlan::ProcessForeignKeyConstraint(const std::string table_name,
+void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
                                              const parser::ColumnDefinition *col) {
 
   ForeignKeyInfo fkey_info;

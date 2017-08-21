@@ -37,14 +37,14 @@ class Database;
 class DataTable;
 class TableFactory;
 class Tuple;
-}
+}  // namespace storage
 
 namespace type {
 class AbstractPool;
 class Value;
 class ValueFactory;
 class Value;
-}
+}  // namespace type
 
 namespace catalog {
 
@@ -96,12 +96,12 @@ class Catalog {
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
-                         const std::vector<std::string> &index_attr,
+                         const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, bool unique_keys,
                          IndexType index_type, concurrency::Transaction *txn);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
-                         const std::vector<std::string> &index_attr,
+                         const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::Transaction *txn,
@@ -161,9 +161,9 @@ class Catalog {
   // DEPRECATED FUNCTIONs
   //===--------------------------------------------------------------------===//
   /*
-  * We're working right now to remove metadata from storage level and eliminate
-  * multiple copies, so those functions below will be DEPRECATED soon.
-  */
+   * We're working right now to remove metadata from storage level and eliminate
+   * multiple copies, so those functions below will be DEPRECATED soon.
+   */
 
   // Add a database
   void AddDatabase(storage::Database *database);
@@ -195,5 +195,5 @@ class Catalog {
 
   std::mutex catalog_mutex;
 };
-}
-}
+}  // namespace catalog
+}  // namespace peloton

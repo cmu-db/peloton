@@ -68,6 +68,7 @@ bool BinderContext::GetColumnPosTuple(
     auto table_object = database_object->GetTableObject(table_oid, txn);
     auto column_object = table_object->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
+
     oid_t col_pos = column_object->column_id;
     col_pos_tuple = std::make_tuple(db_oid, table_oid, col_pos);
     value_type = column_object->column_type;

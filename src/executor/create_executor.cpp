@@ -151,10 +151,10 @@ bool CreateExecutor::DExecute() {
     bool unique_flag = node.IsUnique();
     IndexType index_type = node.GetIndexType();
 
-    auto index_attrs = node.GetIndexAttributes();
+    auto key_attrs = node.GetKeyAttrs();
 
     ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-        DEFAULT_DB_NAME, table_name, index_attrs, index_name, unique_flag,
+        DEFAULT_DB_NAME, table_name, key_attrs, index_name, unique_flag,
         index_type, current_txn);
     current_txn->SetResult(result);
 
