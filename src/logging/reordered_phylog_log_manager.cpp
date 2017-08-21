@@ -131,7 +131,8 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
   if (is_success == false) {
     // A buffer is full, pass it to the front end logger
     // Get a new buffer and register it to current epoch
-    buffer_ptr_->Reset();
+    logger_->PersistLogBuffer(buffer_ptr_);
+    buffer_ptr_ = new LogBuffer();
     //buffer_ptr = RegisterNewBufferToEpoch(std::move(GetBuffer()));
     // Write it again
     is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
@@ -189,14 +190,14 @@ void ReorderedPhyLogLogManager::LogDelete(const ItemPointer &tuple_pos_deleted) 
   WriteRecordToBuffer(record);
 }
 
-void ReorderedPhyLogLogManager::DoRecovery(const size_t &begin_eid){
-  size_t end_eid = RecoverPepoch();
-  size_t recovery_thread_per_logger = (size_t) ceil(recovery_thread_count_ * 1.0 / logger_count_);
+void ReorderedPhyLogLogManager::DoRecovery(){
+  //size_t end_eid = RecoverPepoch();
+//  size_t recovery_thread_per_logger = (size_t) ceil(recovery_thread_count_ * 1.0 / logger_count_);
 
 //  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
 //    LOG_DEBUG("Start logger %d for recovery", (int) logger_id);
     // TODO: properly set this two eid
-    logger_->StartRecovery(begin_eid, end_eid, recovery_thread_per_logger);
+    logger_->StartRecovery();
 //  }
 
 //  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
@@ -205,20 +206,20 @@ void ReorderedPhyLogLogManager::DoRecovery(const size_t &begin_eid){
 
   // Rebuild all secondary indexes
 //  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    logger_->StartIndexRebulding(logger_count_);
+    //logger_->StartIndexRebulding(logger_count_);
 //  }
 
 //  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    logger_->WaitForIndexRebuilding();
+//    logger_->WaitForIndexRebuilding();
 //  }
 
   // Reset the epoch manager
-  concurrency::EpochManagerFactory::GetInstance().Reset(end_eid + 1);
+//  concurrency::EpochManagerFactory::GetInstance().Reset(end_eid + 1);
 }
 
 void ReorderedPhyLogLogManager::StartLoggers() {
     logger_->StartLogging();
-
+//    logger_->manager_ = this;
   is_running_ = true;
   pepoch_thread_.reset(new std::thread(&ReorderedPhyLogLogManager::RunPepochLogger, this));
 }

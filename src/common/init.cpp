@@ -48,6 +48,8 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
+  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -83,6 +85,7 @@ void PelotonInit::Initialize() {
   //Change this to config-defined constant
   logging::WalLogManager::SetDirectory(settings::SettingsManager::GetString(settings::SettingId::log_directory));
   logging::WalLogManager::DoRecovery();
+
 }
 
 void PelotonInit::Shutdown() {
