@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <include/brain/brain_util.h>
 
+#include "concurrency/transaction_manager_factory.h"
 #include "brain/clusterer.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
@@ -114,8 +115,8 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       // Setup container tuple
-      ContainerTuple<storage::TileGroup> container_tuple(
-          tile_group.get(), tuple_id);
+      ContainerTuple<storage::TileGroup> container_tuple(tile_group.get(),
+                                                         tuple_id);
 
       // Set the location
       ItemPointer location(tile_group_id, tuple_id);
@@ -592,7 +593,6 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
   // Enable visibility mode
   SetVisibilityMode();
 
-
   auto tables_samples = brain::BrainUtil::LoadSamplesFile(path);
 
   // Build sample map
@@ -607,9 +607,12 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
     auto samples = table_samples.second;
 
     // Locate table in catalog
-    auto table = catalog->GetTableWithName(database_name, table_name);
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    auto table = catalog->GetTableWithName(database_name, table_name, txn);
+    txn_manager.CommitTransaction(txn);
     PL_ASSERT(table != nullptr);
-    for (auto &sample : samples) {
+    for (auto& sample : samples) {
       table->RecordIndexSample(sample);
     }
     LOG_INFO("Added table to index tuner : %s", table_name.c_str());
@@ -620,14 +623,14 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
 }
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(const std::string &path) {
+void LoadStatsFromFile(const std::string& path) {
   LOG_INFO("LoadStatsFromFile Invoked");
 
   // Get index tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-  auto duration = 30000; // in ms
+  auto duration = 30000;  // in ms
   index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap

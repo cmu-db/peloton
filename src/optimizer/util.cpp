@@ -12,6 +12,7 @@
 
 #include "optimizer/util.h"
 
+#include "concurrency/transaction_manager_factory.h"
 #include "catalog/query_metrics_catalog.h"
 #include "expression/expression_util.h"
 #include "planner/copy_plan.h"
@@ -274,10 +275,9 @@ expression::AbstractExpression* CombinePredicates(
  * the underlying tables
  */
 
-bool ContainsJoinColumns(
-    const std::unordered_set<std::string>& l_group_alias,
-    const std::unordered_set<std::string>& r_group_alias,
-    const expression::AbstractExpression* expr) {
+bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
+                         const std::unordered_set<std::string>& r_group_alias,
+                         const expression::AbstractExpression* expr) {
   if (expr == nullptr) return false;
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
     if (ContainsJoinColumns(l_group_alias, r_group_alias, expr->GetChild(0)) ||
@@ -328,12 +328,16 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   std::unique_ptr<planner::AbstractPlan> copy_plan(
       new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
 
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      copy_stmt->cpy_table->GetDatabaseName(), copy_stmt->cpy_table->GetTableName());
+      copy_stmt->cpy_table->GetDatabaseName(),
+      copy_stmt->cpy_table->GetTableName(), txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<planner::SeqScanPlan> select_plan(
       new planner::SeqScanPlan(target_table, nullptr, {}, false));
-  
+
   LOG_DEBUG("Sequential scan plan for copy created");
 
   // Attach it to the copy plan

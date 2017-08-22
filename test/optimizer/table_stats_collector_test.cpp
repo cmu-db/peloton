@@ -51,7 +51,6 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(id integer);");
   int nrow = 100;
@@ -61,7 +60,8 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
     TestingSQLUtil::ExecuteSQLQuery(os.str());
   }
 
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test");
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
+  txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
 
@@ -91,7 +91,6 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT, b VARCHAR, c DOUBLE, d TIMESTAMP);");
@@ -109,7 +108,8 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
     }
   }
 
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test");
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
+  txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
 

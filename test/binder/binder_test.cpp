@@ -78,15 +78,16 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
-          "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
-          "ORDER BY a1";
+      "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
+      "ORDER BY a1";
 
   auto parse_tree = parser.BuildParseTree(selectSQL);
   auto selectStmt =
       dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
 
-  oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
+  oid_t db_oid =
+      catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
   oid_t tableA_oid =
       catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "a", txn)->GetOid();
   oid_t tableB_oid =
@@ -105,15 +106,14 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   EXPECT_EQ(type::TypeId::VARCHAR, tupleExpr->GetValueType());
 
-
   // Check join condition
   LOG_INFO("Checking join condition");
   tupleExpr = (expression::TupleValueExpression*)
-      selectStmt->from_table->join->condition->GetChild(0);
+                  selectStmt->from_table->join->condition->GetChild(0);
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // a.a1
   tupleExpr = (expression::TupleValueExpression*)
-      selectStmt->from_table->join->condition->GetChild(1);
+                  selectStmt->from_table->join->condition->GetChild(1);
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 0));  // b.b1
 
@@ -208,12 +208,13 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto& parser = parser::PostgresParser::GetInstance();
   catalog::Catalog* catalog_ptr = catalog::Catalog::GetInstance();
 
-  oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
-  oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b")->GetOid();
-
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  oid_t db_oid =
+      catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b", txn)->GetOid();
+
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
 
@@ -232,9 +233,8 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 
   LOG_INFO("Checking second condition in where clause");
   tupleExpr = (expression::TupleValueExpression*)deleteStmt->expr->GetChild(1)
-      ->GetChild(0);
+                  ->GetChild(0);
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
-
 
   // Delete the test database
   txn = txn_manager.BeginTransaction();

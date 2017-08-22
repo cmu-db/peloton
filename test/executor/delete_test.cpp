@@ -102,7 +102,7 @@ TEST_F(DeleteTests, VariousOperations) {
   create_executor.Init();
   create_executor.Execute();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
             1);
   LOG_INFO("Table created!");
