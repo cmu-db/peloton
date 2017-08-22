@@ -107,7 +107,7 @@ class NetworkConnection {
 
  private:
 
-  ProcessInitialState ProcessInitialPacket();
+  ProcessInitialState ProcessInitial();
 
   /* Routine to deal with the first packet from the client */
   bool ProcessInitialPacket(InputPacket* pkt);

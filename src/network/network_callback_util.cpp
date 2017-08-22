@@ -67,7 +67,10 @@ void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
   LOG_TRACE("Event callback fired for connfd: %d", connfd);
   NetworkConnection *conn = static_cast<NetworkConnection *>(arg);
   PL_ASSERT(conn != nullptr);
-  conn->event_flags = ev_flags;
+  if (connfd > 0) {
+    conn->event_flags = ev_flags;
+  }
+
 #ifdef LOG_DEBUG_ENABLED
   if (ev_flags == EV_READ)
     assert(connfd == conn->sock_fd);
