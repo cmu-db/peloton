@@ -355,7 +355,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
                    DEFAULT_DB_NAME, "test2", txn),
                peloton::Exception);
   txn_manager.CommitTransaction(txn);
-}  // namespace test
+}
 
 TEST_F(OptimizerSQLTests, GroupByTest) {
   // Insert additional tuples to test group by

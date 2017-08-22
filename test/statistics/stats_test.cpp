@@ -44,8 +44,9 @@ class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
-  settings::SettingsManager::SetInt(settings::SettingId::stats_mode, STATS_TYPE_ENABLE);
-  
+  settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
+                                    STATS_TYPE_ENABLE);
+
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);
   aggregator.GetAggregatedStats().ResetQueryCount();
@@ -124,24 +125,25 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   // Create database, table and index
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
-  auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+  auto name_column =
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog->CreateDatabase("emp_db", txn);
   catalog::Catalog::GetInstance()->CreateTable("emp_db", "department_table",
                                                std::move(table_schema), txn);
-  txn_manager.CommitTransaction(txn);
 
   // Create multiple stat worker threads
   int num_threads = 8;
-  storage::Database *database = catalog->GetDatabaseWithName("emp_db");
+  storage::Database *database = catalog->GetDatabaseWithName("emp_db", txn);
   storage::DataTable *table = database->GetTableWithName("department_table");
+  txn_manager.CommitTransaction(txn);
   LaunchParallelTest(num_threads, TransactionTest, database, table);
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);
@@ -189,7 +191,6 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
             num_threads * NUM_ITERATION * NUM_INDEX_INSERT);
 
   txn = txn_manager.BeginTransaction();
-  //  catalog->DropTable("emp_db", "department_table", txn);
   catalog->DropDatabaseWithName("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 }
@@ -443,5 +444,5 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  catalog->DropDatabaseWithName("emp_db", txn);
 //  txn_manager.CommitTransaction(txn);
 //}
-}  // namespace stats
+}  // namespace test
 }  // namespace peloton

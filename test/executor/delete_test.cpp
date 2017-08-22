@@ -41,8 +41,10 @@ namespace test {
 class DeleteTests : public PelotonTest {};
 
 void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                                 table_name);
+  // auto table =
+  // catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+  //                                                                table_name);
+  (void)database_name;
   std::unique_ptr<Statement> statement;
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   executor::ExecuteResult status;
@@ -56,9 +58,9 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
 
-  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
+  statement.reset(new Statement("SELECT", "SELECT * FROM " + table_name));
   auto select_stmt =
-      peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
+      peloton_parser.BuildParseTree("SELECT * FROM " + table_name);
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -99,7 +101,6 @@ TEST_F(DeleteTests, VariousOperations) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
@@ -107,7 +108,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Table created!");
 
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
