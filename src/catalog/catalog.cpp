@@ -598,14 +598,7 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
  * */
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string &database_name, concurrency::Transaction *txn) const {
-  // FIXME: enforce caller to use txn
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  bool single_statement_txn = false;
-  auto storage_manager = storage::StorageManager::GetInstance();
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  PL_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
   oid_t database_oid =
@@ -616,11 +609,8 @@ storage::Database *Catalog::GetDatabaseWithName(
     throw CatalogException("Database " + database_name + " is not found");
   }
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return storage_manager->GetDatabaseWithOid(database_oid);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  return storage_manager->GetDatabaseWithOid(database_object->database_oid);
 }
 
 /* Check table from pg_table with table_name using txn,
@@ -630,14 +620,7 @@ storage::Database *Catalog::GetDatabaseWithName(
 storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
                                               const std::string &table_name,
                                               concurrency::Transaction *txn) {
-  // FIXME: enforce caller to use txn
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto storage_manager = storage::StorageManager::GetInstance();
-  bool single_statement_txn = false;
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  PL_ASSERT(txn != nullptr);
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
@@ -659,10 +642,9 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
     throw CatalogException("Table " + table_name + " is not found");
   }
 
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-  return storage_manager->GetTableWithOid(database_oid, table_oid);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  return storage_manager->GetTableWithOid(table_object->database_oid,
+                                          table_object->table_oid);
 }
 
 /* Check table from pg_table with table_name using txn,
@@ -761,10 +743,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction(
-      "substr",
-      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
-      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                         type::TypeId::INTEGER},
+              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -773,10 +754,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction(
-      "replace",
-      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                          type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},

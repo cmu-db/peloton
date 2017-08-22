@@ -36,12 +36,14 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Check the table in catalog
   storage::DataTable *table;
+  txn = txn_manager.BeginTransaction();
   try {
     table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                              "test");
+                                                              "test", txn);
   } catch (CatalogException &e) {
     table = nullptr;
   }
+  txn_manager.CommitTransaction(txn);
   EXPECT_NE(table, nullptr);
 
   std::vector<StatementResult> result;
