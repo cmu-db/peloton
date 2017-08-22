@@ -45,9 +45,9 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   // Create table
   txn = txn_manager.BeginTransaction();
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -63,9 +63,8 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   auto *parameter_expr = new expression::ParameterValueExpression(0);
   auto *tuple_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-  auto *scan_expr =
-      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
-                                           tuple_expr, parameter_expr);
+  auto *scan_expr = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
@@ -110,9 +109,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   // Create table
   txn = txn_manager.BeginTransaction();
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -127,7 +126,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto table_name = std::string("department_table");
   auto database_name = DEFAULT_DB_NAME;
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name);
+      database_name, table_name, txn);
   auto schema = target_table->GetSchema();
 
   TargetList tlist;
@@ -150,7 +149,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto *tuple_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto *where_expr = new expression::ComparisonExpression(
-                     ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto &schema_columns = schema->GetColumns();
   for (uint i = 0; i < schema_columns.size(); i++) {
@@ -209,9 +208,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // Create table
   txn = txn_manager.BeginTransaction();
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -286,9 +285,9 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
 
   // Create table
   txn = txn_manager.BeginTransaction();
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -308,7 +307,8 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   table_ref->table_info_ = new parser::TableInfo();
   table_ref->table_info_->table_name = name;
 
-  auto id_col = new char[strlen("id") + 1], name_col = new char[strlen("name") + 1];
+  auto id_col = new char[strlen("id") + 1],
+       name_col = new char[strlen("name") + 1];
   strcpy(id_col, "id");
   strcpy(name_col, "name");
   insert_statement->table_ref_ = table_ref;
@@ -318,7 +318,7 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   //    type::ValueFactory::GetNullValue();  // The value is not important
   // at  this point
   auto constant_expr_1 = new expression::ConstantValueExpression(
-    type::ValueFactory::GetIntegerValue(1).Copy());
+      type::ValueFactory::GetIntegerValue(1).Copy());
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
   auto exprs = new std::vector<expression::AbstractExpression *>();
   exprs->push_back(constant_expr_1);
@@ -338,7 +338,8 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   LOG_INFO("Binding values");
   auto values = new std::vector<type::Value>();
   values->push_back(type::ValueFactory::GetVarcharValue(
-      (std::string)"CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
+                        (std::string) "CS",
+                        TestingHarness::GetInstance().GetTestingPool()).Copy());
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   // bind values to parameters in plan
   insert_plan->SetParameterValues(values);
@@ -353,7 +354,6 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   delete insert_plan;
   delete insert_statement;
 }
-
 
 }  // namespace test
 }  // namespace peloton
