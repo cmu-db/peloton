@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// packet_manager.h
+// protocol_handler.h
 //
 // Identification: src/include/network/postgres_protocol_handler.h
 //

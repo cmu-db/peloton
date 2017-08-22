@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// packet_manager.h
+// protocol_handler.h
 //
-// Identification: src/include/network/packet_manager.h
+// Identification: src/include/network/protocol_handler.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
