@@ -59,6 +59,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -70,6 +71,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
+  txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME, txn);
@@ -160,6 +162,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -171,6 +174,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
+  txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME, txn);
