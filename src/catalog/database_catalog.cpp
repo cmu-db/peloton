@@ -15,8 +15,8 @@
 #include "catalog/database_catalog.h"
 
 #include "concurrency/transaction.h"
+#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"

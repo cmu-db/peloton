@@ -31,12 +31,13 @@
 #include <unordered_map>
 
 #include "catalog/abstract_catalog.h"
-#include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
 #include "executor/logical_tile.h"
 
 namespace peloton {
 namespace catalog {
+
+class IndexCatalogObject;
+class ColumnCatalogObject;
 
 class TableCatalogObject {
   friend class TableCatalog;
@@ -67,13 +68,8 @@ class TableCatalogObject {
         valid_column_objects(false),
         txn(txn) {}
 
- private:
-  // Get index objects
-  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
-  bool EvictIndexObject(oid_t index_oid);
-  bool EvictIndexObject(const std::string &index_name);
-
  public:
+  // Get indexes
   void EvictAllIndexObjects();
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
   GetIndexObjects(bool cached_only = false);
@@ -84,13 +80,7 @@ class TableCatalogObject {
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, bool cached_only = false);
 
- private:
-  // Get column objects
-  bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
-  bool EvictColumnObject(oid_t column_id);
-  bool EvictColumnObject(const std::string &column_name);
-
- public:
+  // Get columns
   void EvictAllColumnObjects();
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(bool cached_only = false);
@@ -110,6 +100,16 @@ class TableCatalogObject {
   oid_t database_oid;
 
  private:
+  // Get index objects
+  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
+  bool EvictIndexObject(oid_t index_oid);
+  bool EvictIndexObject(const std::string &index_name);
+
+  // Get column objects
+  bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
+  bool EvictColumnObject(oid_t column_id);
+  bool EvictColumnObject(const std::string &column_name);
+
   // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
