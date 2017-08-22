@@ -49,9 +49,12 @@ TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
-  std::vector<oid_t> key_attrs =
-      catalog::IndexCatalog::GetInstance()->GetIndexedAttributes(
-          INDEX_CATALOG_PKEY_OID, txn);
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
+          CATALOG_DATABASE_NAME, txn);
+  auto table_object = database_object->GetTableObject(INDEX_CATALOG_NAME);
+  auto index_object = table_object->GetIndexObject(INDEX_CATALOG_PKEY_OID);
+  std::vector<oid_t> key_attrs = index_object->key_attrs;
   txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ("EMP_DB", catalog::Catalog::GetInstance()
@@ -153,18 +156,9 @@ TEST_F(CatalogTests, TableObject) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  oid_t database_oid =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid("EMP_DB", txn);
   auto database_object =
       catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
-  EXPECT_EQ(database_object->database_oid, database_oid);
-
-  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
-      "department_table", database_oid, txn);
-  auto table_object = catalog::TableCatalog::GetInstance()->GetTableObject(
-      "department_table", database_oid, txn);
-  EXPECT_EQ(table_object->table_oid, table_oid);
-  EXPECT_EQ(table_object->database_oid, database_oid);
+  auto table_object = database_object->GetTableObject("department_table");
 
   auto index_objects = table_object->GetIndexObjects();
   auto column_objects = table_object->GetColumnObjects();
@@ -172,7 +166,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(1, index_objects.size());
   EXPECT_EQ(2, column_objects.size());
 
-  EXPECT_EQ(table_oid, column_objects[0]->table_oid);
+  EXPECT_EQ(table_object->table_oid, column_objects[0]->table_oid);
   EXPECT_EQ("id", column_objects[0]->column_name);
   EXPECT_EQ(0, column_objects[0]->column_id);
   EXPECT_EQ(0, column_objects[0]->column_offset);
@@ -184,7 +178,7 @@ TEST_F(CatalogTests, TableObject) {
       column_objects[0]
           ->is_not_null);  // Should this be true because it is a primary key?
 
-  EXPECT_EQ(table_oid, column_objects[1]->table_oid);
+  EXPECT_EQ(table_object->table_oid, column_objects[1]->table_oid);
   EXPECT_EQ("name", column_objects[1]->column_name);
   EXPECT_EQ(1, column_objects[1]->column_id);
   EXPECT_EQ(4, column_objects[1]->column_offset);
@@ -202,20 +196,22 @@ TEST_F(CatalogTests, DroppingTable) {
                    ->GetTableCount());
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  oid_t database_oid =
-      catalog::Catalog::GetInstance()->GetDatabaseWithName("EMP_DB")->GetOid();
+  auto database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+  EXPECT_NE(nullptr, database_object);
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
 
-  oid_t department_table_oid =
-      catalog::TableCatalog::GetInstance()->GetTableOid("department_table",
-                                                        database_oid, txn);
+  database_object =
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMB_DB", txn);
+  auto department_table_object =
+      database_object->GetTableObject("department_table");
   txn_manager.CommitTransaction(txn);
   //  catalog::Catalog::GetInstance()->PrintCatalogs();
   EXPECT_EQ(2, catalog::Catalog::GetInstance()
                    ->GetDatabaseWithName("EMP_DB")
                    ->GetTableCount());
 
-  EXPECT_EQ(INVALID_OID, department_table_oid);
+  EXPECT_EQ(INVALID_OID, department_table_object->table_oid);
 
   // Try to drop again
   txn = txn_manager.BeginTransaction();
