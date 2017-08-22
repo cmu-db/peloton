@@ -50,9 +50,9 @@ storage::Database *TestingExecutorUtil::InitializeDatabase(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto result = catalog->CreateDatabase(db_name, txn);
-  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
-  auto database = catalog->GetDatabaseWithName(db_name);
+  auto database = catalog->GetDatabaseWithName(db_name, txn);
+  txn_manager.CommitTransaction(txn);
   return (database);
 }
 
@@ -113,8 +113,9 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
-                                    "COL_D", !is_inlined);    // inlined.
+      auto column =
+          catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
+                          "COL_D", !is_inlined);      // inlined.
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
