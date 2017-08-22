@@ -70,6 +70,7 @@ TEST_F(CostTests, ScanCostTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   // create table with name test
   CreateAndLoadTable();
@@ -77,6 +78,7 @@ TEST_F(CostTests, ScanCostTest) {
   // Collect stats
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
 
+  txn = txn_manager.BeginTransaction();
   auto table_stats = GetTableStatsWithName("test", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_NE(table_stats, nullptr);
