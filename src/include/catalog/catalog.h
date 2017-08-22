@@ -15,13 +15,13 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 
 namespace peloton {
 
 namespace catalog {
 class Schema;
+class DatabaseCatalogObject;
+class TableCatalogObject;
 }
 
 namespace concurrency {
@@ -148,6 +148,15 @@ class Catalog {
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &table_name,
                                        concurrency::Transaction *txn);
+
+  /* Check table from pg_database with database_name using txn,
+   * get it from storage layer using table_oid,
+   * throw exception and abort txn if not exists/invisible
+   * */
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
+      const std::string &database_name, concurrency::Transaction *txn);
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
+      oid_t database_oid, concurrency::Transaction *txn);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
