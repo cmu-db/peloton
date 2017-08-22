@@ -519,8 +519,11 @@ ResultType Catalog::DropTable(const std::string &database_name,
 
   // check if table exists
   auto table_object = database_object->GetTableObject(table_name);
-  if (table_object == nullptr)
-    throw CatalogException("Can't find table " + table_name + " to drop");
+  if (table_object == nullptr) {
+    // return transaction type as SUCCESS
+    // drop table if exists foo;
+    return ResultType::SUCCESS;
+  }
 
   ResultType result =
       DropTable(database_object->database_oid, table_object->table_oid, txn);

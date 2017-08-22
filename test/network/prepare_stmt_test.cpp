@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include "common/harness.h"
-#include "gtest/gtest.h"
 #include "common/logger.h"
+#include "gtest/gtest.h"
 #include "network/network_manager.h"
 #include "util/string_util.h"
-#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 
 #define NUM_THREADS 1
 
@@ -76,12 +76,11 @@ void *PrepareStatementTest(int port) {
     // %d",conn->protocol_handler_.ExistCachedStatement("searchstmt"));
     EXPECT_EQ(R.size(), 1);
     EXPECT_TRUE(conn->protocol_handler_.ExistCachedStatement("searchstmt"));
+    LOG_INFO("[PrepareStatementTest] Client has closed");
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
-
-  LOG_INFO("[PrepareStatementTest] Client has closed");
   return NULL;
 }
 
