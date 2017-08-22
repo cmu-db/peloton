@@ -757,12 +757,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  log_manager.RegisterWorker(current_txn->GetThreadId());
-  log_manager.StartTxn(current_txn);
+  auto &log_manager = logging::ReorderedPhyLogLogManager::GetInstance();
+
+  //log_manager.StartLogging();
+  //log_manager.RegisterWorker(current_txn->GetThreadId());
 
   cid_t end_commit_id = current_txn->GetCommitId();
   eid_t epoch_id = current_txn->GetEpochId();
-
+  
   // generate transaction id.
   auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
@@ -870,8 +872,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // we require the GC to delete tuple from index only once.
         // recycle old version, delete from index
         // the gc should be responsible for recycling the newer empty version.
-        gc_set->operator[](tile_group_id)[tuple_slot] =
-            GCVersionType::COMMIT_DELETE;
+        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
+        log_manager.StartPersistTxn(end_commit_id);
         logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
                 LogRecordType::TUPLE_DELETE,
@@ -879,6 +881,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
                 epoch_id);
         current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::INSERT) {
+
+
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
         // set the begin commit id to persist insert

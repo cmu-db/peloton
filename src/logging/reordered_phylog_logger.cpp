@@ -341,8 +341,13 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
         auto schema = table->GetSchema();
 
         // Decode the tuple from the record
-        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-        tuple->DeserializeWithHeaderFrom(record_decode);//, this->recovery_pools_[thread_id].get());
+        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema,true));
+       // record_decode.ReadInt();
+        for(oid_t oid = 0; oid < schema->GetColumns().size(); oid++){
+            type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
+            tuple->SetValue(oid, val);
+        }
+        //tuple->DeserializeWithHeaderFrom(record_decode);//, this->recovery_pools_[thread_id].get());
 
         // Install the record
         InstallTupleRecord(record_type, tuple.get(), table, current_cid);
