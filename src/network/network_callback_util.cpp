@@ -2,13 +2,13 @@
 //
 //                         Peloton
 //
-// network_callbacks.cpp
+// network_callback_util.cpp
 //
 // Implements Libevent callbacks for the protocol and their helpers
 //
-// Identification: src/network/network_callbacks.cpp
+// Identification: src/network/network_callbacks_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -64,7 +64,7 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 
 void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
                                 short ev_flags, void *arg) {
-  LOG_DEBUG("Event callback fired for connfd: %d", connfd);
+  LOG_TRACE("Event callback fired for connfd: %d", connfd);
   NetworkConnection *conn = static_cast<NetworkConnection *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;

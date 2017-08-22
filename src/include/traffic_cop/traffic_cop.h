@@ -6,7 +6,7 @@
 //
 // Identification: src/include/traffic_cop/traffic_cop.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

@@ -6,7 +6,7 @@
 //
 // Identification: src/network/network_connection.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -175,7 +175,7 @@ ReadState NetworkConnection::FillReadBuffer() {
       else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
                         rbuf_.GetMaxSize() - rbuf_.buf_size);
-        LOG_INFO("When filling read buffer, read %ld bytes", bytes_read);
+        LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
       }
 
       if (bytes_read > 0) {
@@ -583,12 +583,9 @@ void NetworkConnection::Reset() {
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
-  if (conn->event_flags == EV_READ && conn->state == ConnState::CONN_GET_RESULT) {
-//    LOG_DEBUG("return");
-    return;
-  }
+
   while (done == false) {
-    LOG_DEBUG("current state: %d", (int)conn->state);
+    LOG_TRACE("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -695,13 +692,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
                                                           (size_t) conn->thread_id);
           switch (status) {
             case ProcessPacketResult::TERMINATE:
-//          LOG_INFO("ProcessPacketResult: terminate");
               // packet processing can't proceed further
               conn->TransitState(ConnState::CONN_CLOSING);
               break;
             case ProcessPacketResult::COMPLETE:
               // We should have responses ready to send
-//          LOG_INFO("ProcessPacketResult: complete");
               conn->TransitState(ConnState::CONN_WRITE);
               break;
             case ProcessPacketResult::PROCESSING: {
@@ -779,7 +774,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
     }
   }
-  LOG_DEBUG("END of while loop");
+  LOG_TRACE("END of while loop");
 }
 }  // namespace network
 }  // namespace peloton

@@ -6,7 +6,7 @@
 //
 // Identification: src/traffic_cop/traffic_cop.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -134,37 +134,6 @@ ResultType TrafficCop::AbortQueryHelper() {
   }
 }
 
-//ResultType TrafficCop::ExecuteStatement(
-//    const std::string &query, std::vector<StatementResult> &result,
-//    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-//    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
-//
-//  LOG_TRACE("Received %s", query.c_str());
-//
-//  std::string unnamed_statement = "unnamed";
-//  auto statement = PrepareStatement(unnamed_statement, query, error_message);
-//  if (statement.get() == nullptr) {
-//    rows_changed = 0;
-//    return ResultType::FAILURE;
-//  }
-//  // Then, execute the statement
-//  bool unnamed = true;
-//  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-//  std::vector<type::Value> params;
-//  auto status =
-//      ExecuteStatement(statement, params, unnamed, nullptr, result_format,
-//                       result, rows_changed, error_message, thread_id);
-//
-//  if (status == ResultType::SUCCESS) {
-//    LOG_TRACE("Execution succeeded!");
-//    tuple_descriptor = statement->GetTupleDescriptor();
-//  } else {
-//    LOG_TRACE("Execution failed!");
-//  }
-//
-//  return status;
-//}
-
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
@@ -177,18 +146,18 @@ ResultType TrafficCop::ExecuteStatement(
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-  LOG_INFO("Execute Statement of name: %s",
+  LOG_TRACE("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
-  LOG_INFO("Execute Statement of query: %s",
+  LOG_TRACE("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
-  LOG_INFO("Execute Statement Plan:\n%s",
+  LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_INFO("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
-  LOG_INFO("----QueryType: %d--------", (int)statement->GetQueryType());
+  LOG_TRACE("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
+  LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
   try {
     switch (statement->GetQueryType()) {
       case QueryType::QUERY_BEGIN:
-        LOG_INFO("QUERY_BEGIN");
+        LOG_TRACE("QUERY_BEGIN");
         return BeginQueryHelper(thread_id);
       case QueryType::QUERY_COMMIT:
         return CommitQueryHelper();
@@ -248,14 +217,11 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(task_callback_arg_);
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
-    LOG_INFO("Submit Task into MonoQueuePool");
-    if (true) {
-      is_queuing_ = true;
-//      p_status_.m_result = ResultType::QUEUING;
-      return p_status_;
-    } else {
-      ExecuteStatementPlanGetResult();
-    }
+    LOG_TRACE("Submit Task into MonoQueuePool");
+
+    is_queuing_ = true;
+    return p_status_;
+
   } else {
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
@@ -387,7 +353,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_DEBUG("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
       LOG_DEBUG("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif

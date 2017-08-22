@@ -6,7 +6,7 @@
 //
 // Identification: src/threadpool/worker.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,10 +36,10 @@ void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
       }
       continue;
     }
-    LOG_INFO("Grab one task, going to execute it");
+    LOG_TRACE("Grab one task, going to execute it");
     // call the threadpool
     t->ExecuteTask();
-    LOG_INFO("Finish one task");
+    LOG_TRACE("Finish one task");
     empty_count = 0;
   }
 }
