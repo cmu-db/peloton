@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 #include "common/logger.h"
 #include "parser/table_ref.h"

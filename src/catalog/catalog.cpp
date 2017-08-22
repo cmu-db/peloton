@@ -650,6 +650,49 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
+std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
+    const std::string &database_name, concurrency::Transaction *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to get table object " +
+                           database_name);
+
+  LOG_TRACE("Looking for database %s", database_name.c_str());
+
+  // Check in pg_database, throw exception and abort txn if not exists
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+
+  if (!database_object || database_object->database_oid == INVALID_OID) {
+    throw CatalogException("Database " + database_name + " is not found");
+  }
+
+  return database_object;
+}
+
+std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
+    oid_t database_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to get database object " +
+                           std::to_string(database_oid));
+
+  LOG_TRACE("Looking for database %u", database_oid);
+
+  // Check in pg_database, throw exception and abort txn if not exists
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+
+  if (!database_object || database_object->database_oid == INVALID_OID) {
+    throw CatalogException("Database " + std::to_string(database_oid) +
+                           " is not found");
+  }
+
+  return database_object;
+}
+
+/* Check table from pg_table with table_name using txn,
+ * get it from storage layer using table_oid,
+ * throw exception and abort txn if not exists/invisible
+ * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &table_name,
     concurrency::Transaction *txn) {

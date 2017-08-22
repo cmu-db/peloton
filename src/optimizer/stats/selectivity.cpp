@@ -14,6 +14,10 @@
 
 #include "concurrency/transaction_manager_factory.h"
 
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/column_catalog.h"
+
 namespace peloton {
 namespace optimizer {
 
