@@ -15,15 +15,15 @@
 #include <vector>
 
 #include "catalog/catalog.h"
+#include "codegen/buffering_consumer.h"
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
-#include "codegen/buffering_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
 #include "planner/binding_context.h"
-#include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 
 #include "common/harness.h"
 #include "executor/testing_executor_util.h"
@@ -39,8 +39,8 @@ namespace test {
 class PelotonCodeGenTest : public PelotonTest {
  public:
   enum class TableId : uint32_t { _1 = 44, _2 = 45, _3 = 46, _4 = 47 };
-
-  const uint32_t test_db_id = INVALID_OID;
+  // never use INVALID_OID
+  const uint32_t test_db_id = INVALID_OID - 1;
 
   PelotonCodeGenTest();
 
@@ -76,8 +76,8 @@ class PelotonCodeGenTest : public PelotonTest {
 
   std::unique_ptr<expression::AbstractExpression> ConstDecimalExpr(double val);
 
-  std::unique_ptr<expression::AbstractExpression> ColRefExpr(
-      type::TypeId type, uint32_t col_id);
+  std::unique_ptr<expression::AbstractExpression> ColRefExpr(type::TypeId type,
+                                                             uint32_t col_id);
 
   std::unique_ptr<expression::AbstractExpression> CmpExpr(
       ExpressionType cmp_type,
