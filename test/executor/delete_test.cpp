@@ -65,7 +65,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
+  auto tuple_descriptor = traffic_cop.GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
@@ -217,7 +217,7 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
-      tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
+      traffic_cop.GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
                                             result, result_format);
