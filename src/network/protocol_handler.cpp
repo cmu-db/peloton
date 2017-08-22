@@ -16,17 +16,16 @@
 namespace peloton {
 namespace network {
 
-  ProtocolHandler::ProtocolHandler() {
-    traffic_cop_.reset(new tcop::TrafficCop());
+  ProtocolHandler::ProtocolHandler(tcop::TrafficCop *traffic_cop) {
+    this->traffic_cop_ = traffic_cop;
   }
 
   ProtocolHandler::~ProtocolHandler() {}
 
-  bool ProtocolHandler::ProcessPacket(
+ProcessPacketResult ProtocolHandler::ProcessPacket(
       UNUSED_ATTRIBUTE InputPacket* pkt,
-      UNUSED_ATTRIBUTE const size_t thread_id)
-  {
-    return false;
+      UNUSED_ATTRIBUTE const size_t thread_id) {
+    return ProcessPacketResult::TERMINATE;
   }
 
   /* Manage the startup packet */
@@ -35,6 +34,7 @@ namespace network {
 
   void ProtocolHandler::Reset() {}
 
+  void ProtocolHandler::GetResult() {}
 }  // namespace network
 }  // namespace peloton
 

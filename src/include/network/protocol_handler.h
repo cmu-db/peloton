@@ -26,18 +26,21 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class ProtocolHandler {
  public:
 
-  ProtocolHandler();
+  ProtocolHandler(tcop::TrafficCop *traffic_cop);
 
   virtual ~ProtocolHandler();
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  virtual bool ProcessPacket(InputPacket* pkt, const size_t thread_id);
+  virtual ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   virtual void SendInitialResponse();
+
   virtual void Reset();
+
+  virtual void GetResult();
 
   // Should we send the buffered packets right away?
   bool force_flush = false;
@@ -48,11 +51,9 @@ class ProtocolHandler {
 
 
   // The traffic cop used for this connection
-  std::unique_ptr<tcop::TrafficCop> traffic_cop_;
+  tcop::TrafficCop* traffic_cop_;
 
 };
-
-
 
 }  // namespace network
 }  // namespace peloton

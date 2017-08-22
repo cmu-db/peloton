@@ -55,10 +55,17 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
   }
+
+  if (workpool_event == nullptr) {
+    workpool_event = event_new(thread->GetEventBase(), -1, EV_WRITE|EV_PERSIST,
+    CallbackUtil::EventHandler, this);
+  }
+
   event_add(network_event, nullptr);
-  // should put the initialization else where.. check correctness first.
-  protocol_handler_.traffic_cop_->SetTaskCallback(TriggerStateMachine, network_event);
-//  pkt_manager.traffic_cop_->event_ = event;
+  event_add(workpool_event, nullptr);
+
+  //TODO:: should put the initialization else where.. check correctness first.
+  traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
 }
 
 void NetworkConnection::TriggerStateMachine(void* arg) {
@@ -67,10 +74,10 @@ void NetworkConnection::TriggerStateMachine(void* arg) {
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {
-  #ifdef LOG_TRACE_ENABLED
-    if (next_state != state)
-      LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
-  #endif
+#ifdef LOG_TRACE_ENABLED
+  if (next_state != state)
+  LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
+#endif
   state = next_state;
 }
 
@@ -433,7 +440,9 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
   }
 
   protocol_handler_ =
-      ProtocolHandlerFactory::CreateProtocolHandler(ProtocolHandlerType::Postgres);
+      ProtocolHandlerFactory::CreateProtocolHandler(
+          ProtocolHandlerType::Postgres, &traffic_cop_);
+
   protocol_handler_->SendInitialResponse();
 
   return true;
@@ -539,6 +548,7 @@ void NetworkConnection::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
   event_del(network_event);
+  event_del(workpool_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
   Reset();
@@ -566,6 +576,7 @@ void NetworkConnection::Reset() {
   }
   state = ConnState::CONN_INVALID;
   rpkt.Reset();
+  traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;
 }
@@ -577,7 +588,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
     return;
   }
   while (done == false) {
-//    LOG_DEBUG("current state: %d", (int)conn->state);
+    LOG_DEBUG("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -629,36 +640,33 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       case ConnState::CONN_PROCESS: {
         ProcessPacketResult status;
 
-        if(conn->ssl_sent_) {
-            // start SSL handshake
-            // TODO: consider free conn_SSL_context
-            conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
-            if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
-              LOG_ERROR("Failed to set SSL fd");
-              PL_ASSERT(false);
-            }
-            int ssl_accept_ret;
-            if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-              LOG_ERROR("Failed to accept (handshake) client SSL context.");
-              LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
-              // TODO: consider more about proper action
-              PL_ASSERT(false);
-              conn->TransitState(ConnState::CONN_CLOSED);
-            }
-            LOG_ERROR("SSL handshake completed");
-            conn->ssl_sent_ = false;
+        if (conn->ssl_sent_) {
+          // start SSL handshake
+          // TODO: consider free conn_SSL_context
+          conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+          if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
+            LOG_ERROR("Failed to set SSL fd");
+            PL_ASSERT(false);
+          }
+          int ssl_accept_ret;
+          if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
+            LOG_ERROR("Failed to accept (handshake) client SSL context.");
+            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
+            // TODO: consider more about proper action
+            PL_ASSERT(false);
+            conn->TransitState(ConnState::CONN_CLOSED);
+          }
+          LOG_ERROR("SSL handshake completed");
+          conn->ssl_sent_ = false;
         }
 
         if (conn->protocol_handler_ == nullptr) {
           switch (conn->ProcessInitialPacket()) {
-            case ProcessInitialState::PROCESS_INITIAL_SUCCESS:
-              conn->TransitState(ConnState::CONN_WRITE);
+            case ProcessInitialState::PROCESS_INITIAL_SUCCESS:conn->TransitState(ConnState::CONN_WRITE);
               break;
-            case ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED:
-              conn->TransitState(ConnState::CONN_WAIT);
+            case ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED:conn->TransitState(ConnState::CONN_WAIT);
               break;
-            case ProcessInitialState::PROCESS_INITIAL_FAILED:
-              conn->TransitState(ConnState::CONN_CLOSING);
+            case ProcessInitialState::PROCESS_INITIAL_FAILED:conn->TransitState(ConnState::CONN_CLOSING);
               break;
           }
         } else {
@@ -674,7 +682,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
           if (conn->rpkt.is_initialized == false) {
             // packet needs to be initialized with rest of the contents
-            if (PostgresProtocolHandler::ReadPacket(conn->rbuf_,conn->rpkt) == false) {
+            if (PostgresProtocolHandler::ReadPacket(conn->rbuf_, conn->rpkt) == false) {
               // need more data
               conn->TransitState(ConnState::CONN_WAIT);
               break;
@@ -684,30 +692,41 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
           // Process all other packets
           status = conn->protocol_handler_->ProcessPacket(&conn->rpkt,
-                                                         (size_t)conn->thread_id);
-        switch (status) {
-          case ProcessPacketResult::TERMINATE:
+                                                          (size_t) conn->thread_id);
+          switch (status) {
+            case ProcessPacketResult::TERMINATE:
 //          LOG_INFO("ProcessPacketResult: terminate");
-            // packet processing can't proceed further
-            conn->TransitState(ConnState::CONN_CLOSING);
-            break;
-          case ProcessPacketResult::COMPLETE:
-            // We should have responses ready to send
+              // packet processing can't proceed further
+              conn->TransitState(ConnState::CONN_CLOSING);
+              break;
+            case ProcessPacketResult::COMPLETE:
+              // We should have responses ready to send
 //          LOG_INFO("ProcessPacketResult: complete");
-            conn->TransitState(ConnState::CONN_WRITE);
-            break;
-          case ProcessPacketResult::PROCESSING:
-          default:
-//          LOG_INFO("ProcessPacketResult: queueing");
-            conn->TransitState(ConnState::CONN_GET_RESULT);
-            done = true;
+              conn->TransitState(ConnState::CONN_WRITE);
+              break;
+            case ProcessPacketResult::PROCESSING: {
+              if (event_del(conn->network_event) == -1) {
+                //TODO: There may be better way to handle this error
+                LOG_ERROR("Failed to delete event");
+                PL_ASSERT(false);
+              }
+              LOG_TRACE("ProcessPacketResult: queueing");
+              conn->TransitState(ConnState::CONN_GET_RESULT);
+              done = true;
+              break;
+            }
+          }
         }
         break;
       }
 
       case ConnState::CONN_GET_RESULT: {
-        conn->protocol_handler_.GetResult();
-        conn->protocol_handler_.traffic_cop_->is_queuing_ = false;
+        if (event_add(conn->network_event, nullptr) < 0) {
+          LOG_ERROR("Failed to add event");
+          PL_ASSERT(false);
+        }
+        conn->protocol_handler_->GetResult();
+        conn->traffic_cop_.is_queuing_ = false;
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
@@ -760,6 +779,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
     }
   }
+  LOG_DEBUG("END of while loop");
 }
 }  // namespace network
 }  // namespace peloton

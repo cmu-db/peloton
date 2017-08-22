@@ -59,7 +59,7 @@ class NetworkConnection {
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
-
+  tcop::TrafficCop traffic_cop_;
  private:
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer

@@ -19,7 +19,6 @@
 
 #include "container/lock_free_queue.h"
 #include "event.h"
-#include "tcop/tcop.h"
 
 namespace peloton {
 namespace threadpool {

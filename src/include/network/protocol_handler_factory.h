@@ -30,7 +30,7 @@ enum class ProtocolHandlerType {
 class ProtocolHandlerFactory {
  public:
   static std::unique_ptr<ProtocolHandler>
-  CreateProtocolHandler(ProtocolHandlerType type);
+  CreateProtocolHandler(ProtocolHandlerType type, tcop::TrafficCop *trafficCop);
 
 };
 }
