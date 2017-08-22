@@ -12,13 +12,13 @@
 
 #include "statistics/testing_stats_util.h"
 
-#include "executor/testing_executor_util.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/insert_executor.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/mock_executor.h"
 #include "executor/seq_scan_executor.h"
+#include "executor/testing_executor_util.h"
 #include "executor/update_executor.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
@@ -33,9 +33,9 @@ namespace peloton {
 namespace test {
 
 void TestingStatsUtil::ShowTable(std::string database_name,
-                               std::string table_name) {
-  catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
+                                 std::string table_name) {
   std::unique_ptr<Statement> statement;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
@@ -43,21 +43,24 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   std::vector<StatementResult> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));
+  // using transaction to optimize
+  auto txn = txn_manager.BeginTransaction();
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, nullptr));
+      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                   result, result_format);
+  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params, result,
+                                   result_format);
+  txn_manager.CommitTransaction(txn);
 }
 
 storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
-                                             int first_col_val,
-                                             int second_col_val,
-                                             int third_col_val,
-                                             int fourth_col_val) {
+                                               int first_col_val,
+                                               int second_col_val,
+                                               int third_col_val,
+                                               int fourth_col_val) {
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   storage::Tuple tuple(schema, true);
   tuple.SetValue(0, type::ValueFactory::GetIntegerValue(first_col_val),
@@ -75,9 +78,10 @@ storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
-std::shared_ptr<stats::QueryMetric::QueryParams> TestingStatsUtil::GetQueryParams(
-    std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
-    std::shared_ptr<uchar> &val_buf) {
+std::shared_ptr<stats::QueryMetric::QueryParams>
+TestingStatsUtil::GetQueryParams(std::shared_ptr<uchar> &type_buf,
+                                 std::shared_ptr<uchar> &format_buf,
+                                 std::shared_ptr<uchar> &val_buf) {
   // Type
   uchar *type_buf_data = new uchar[1];
   type_buf_data[0] = 'x';
@@ -105,9 +109,9 @@ std::shared_ptr<stats::QueryMetric::QueryParams> TestingStatsUtil::GetQueryParam
 void TestingStatsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   if (has_primary_key) {
     catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
     id_column.AddConstraint(constraint);
@@ -130,7 +134,7 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
 }
 
 std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
-                                                         std::string val) {
+                                                           std::string val) {
   std::shared_ptr<Statement> statement;
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
@@ -163,12 +167,16 @@ std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
 
 void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // using transaction to optimize
+  auto txn = txn_manager.BeginTransaction();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, nullptr));
+      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, txn));
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

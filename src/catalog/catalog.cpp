@@ -604,8 +604,7 @@ storage::Database *Catalog::GetDatabaseWithName(
   oid_t database_oid =
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
 
-  if (database_oid == INVALID_OID) {
-    txn_manager.AbortTransaction(txn);  // Implicitly abort txn
+  if (database_object == nullptr) {
     throw CatalogException("Database " + database_name + " is not found");
   }
 
