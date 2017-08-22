@@ -12,9 +12,9 @@
 
 #include "planner/drop_plan.h"
 
+#include "catalog/catalog.h"
 #include "parser/drop_statement.h"
 #include "storage/data_table.h"
-#include "catalog/catalog.h"
 
 namespace peloton {
 namespace planner {
@@ -40,16 +40,15 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree,
 
     try {
       target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-        parse_tree->GetDatabaseName(), table_name, txn);
-    }
-    catch (CatalogException &e) {
+          parse_tree->GetDatabaseName(), table_name, txn);
+    } catch (CatalogException &e) {
       // Dropping a table which doesn't exist
+      // missing == true, when using syntax drop table if exists foo
       if (missing == false) {
-        throw e;
+        throw & e;
       }
     }
-  }
-  else if (parse_tree->type == parser::DropStatement::EntityType::kTrigger) {
+  } else if (parse_tree->type == parser::DropStatement::EntityType::kTrigger) {
     // note parse_tree->table_name is different from parse_tree->GetTableName()
     table_name = std::string(parse_tree->table_name_of_trigger);
     trigger_name = std::string(parse_tree->trigger_name);
