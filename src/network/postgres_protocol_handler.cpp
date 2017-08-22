@@ -53,45 +53,15 @@ const std::unordered_map<std::string, std::string>
 				("TimeZone", "US/Eastern");
 // clang-format on
 
-std::vector<PostgresProtocolHandler *> PostgresProtocolHandler::postgres_protocol_handlers_;
-std::mutex PostgresProtocolHandler::postgres_protocol_handlers_mutex_;
-
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
     : ProtocolHandler(traffic_cop),
       txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
-  {
-    std::lock_guard<std::mutex> lock(PostgresProtocolHandler::postgres_protocol_handlers_mutex_);
-    PostgresProtocolHandler::postgres_protocol_handlers_.push_back(this);
-    LOG_DEBUG("Registered new PostgresProtocolHandler [count=%d]",
-              (int)PostgresProtocolHandler::postgres_protocol_handlers_.size());
-  }
 }
 
-PostgresProtocolHandler::~PostgresProtocolHandler() {
-  {
-    std::lock_guard<std::mutex> lock(PostgresProtocolHandler::postgres_protocol_handlers_mutex_);
-    PostgresProtocolHandler::postgres_protocol_handlers_.erase(
-        std::remove(PostgresProtocolHandler::postgres_protocol_handlers_.begin(),
-                    PostgresProtocolHandler::postgres_protocol_handlers_.end(), this),
-        PostgresProtocolHandler::postgres_protocol_handlers_.end());
-    LOG_DEBUG("Removed PostgresProtocolHandler [count=%d]",
-              (int)PostgresProtocolHandler::postgres_protocol_handlers_.size());
-  }
-}
+PostgresProtocolHandler::~PostgresProtocolHandler() {}
 
-void PostgresProtocolHandler::InvalidatePreparedStatements(oid_t table_id) {
-  if (table_statement_cache_.find(table_id) == table_statement_cache_.end()) {
-    return;
-  }
-  LOG_DEBUG("Marking all PreparedStatements that access table '%d' as invalid",
-            (int)table_id);
-  for (auto statement : table_statement_cache_[table_id]) {
-    LOG_DEBUG("Setting PreparedStatement '%s' as needing to be replanned",
-              statement->GetStatementName().c_str());
-    statement->SetNeedsPlan(true);
-  }
-}
 
+// TODO: This function is used when txn cache is done
 void PostgresProtocolHandler::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
   auto new_statement = traffic_cop_->PrepareStatement(
@@ -481,7 +451,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   skipped_stmt_ = false;
   Statement::ParseQueryTypeString(query_string, query_type_string);
   Statement::MapToQueryType(query_type_string, query_type);
-  LOG_DEBUG("Parse Statement %s", query_string.c_str());
   // For an empty query or a query to be filtered, just send parse complete
   // response and don't execute
   if (query_string == "" || HardcodedExecuteFilter(query_type) == false) {
@@ -887,8 +856,9 @@ ProcessPacketResult PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pk
 ProcessPacketResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
-  std::vector<StatementResult> results;
+  protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   std::string error_message, portal_name;
+
   GetStringToken(pkt, portal_name);
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
@@ -903,7 +873,7 @@ ProcessPacketResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt
       CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected_);
     }
     skipped_stmt_ = false;
-    return ProcessPacketResult::TERMINATE;
+    return ProcessPacketResult::COMPLETE;
   }
 
   auto portal = portals_[portal_name];
@@ -972,10 +942,11 @@ void PostgresProtocolHandler::GetResult() {
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
+      LOG_TRACE("JDBC result");
       ExecExecuteMessageGetResult(status);
       break;
     case NetworkProtocolType::POSTGRES_PSQL:
-    default:
+      LOG_TRACE("PSQL result");
       ExecQueryMessageGetResult(status);
   }
 }
@@ -1130,7 +1101,7 @@ ProcessPacketResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, con
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
       force_flush = true;
       return ExecQueryMessage(pkt, thread_id);
-    } break;
+    }
     case NetworkMessageType::PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
       ExecParseMessage(pkt);

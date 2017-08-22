@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// protocol_handler.h
+// packet_manager.h
 //
 // Identification: src/include/network/postgres_protocol_handler.h
 //
@@ -102,10 +102,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   // Extracts the contents of Postgres packet from the read socket buffer
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
-  // TODO This is a hack for index changing
-  static std::vector<PostgresProtocolHandler*> GetPostgresProtocolHandlers() {
-    return (PostgresProtocolHandler::postgres_protocol_handlers_);
-  }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -232,11 +228,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   static const std::unordered_map<std::string, std::string>
       parameter_status_map_;
 
-  // HACK: Global list of ProtocolHandler instances
-  // We need this in order to reset statement caches when the catalog changes
-  // We need to think of a more elegant solution for this
-  static std::vector<PostgresProtocolHandler*> postgres_protocol_handlers_;
-  static std::mutex postgres_protocol_handlers_mutex_;
 };
 
 }  // namespace network

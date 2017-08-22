@@ -182,7 +182,7 @@ ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
   rows_changed = p_status_.m_processed;
-  LOG_DEBUG("rows_changed %d", rows_changed);
+  LOG_TRACE("rows_changed %d", rows_changed);
   is_queuing_ = false;
   return p_status_.m_result;
 }

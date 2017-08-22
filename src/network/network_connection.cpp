@@ -42,7 +42,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   } else {
     // Reuse the event object if already initialized
     if (event_del(network_event) == -1) {
-      LOG_ERROR("Failed to delete event");
+      LOG_ERROR("Failed to delete network event");
       PL_ASSERT(false);
     }
 
@@ -51,7 +51,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                                CallbackUtil::EventHandler, this);
 
     if (result != 0) {
-      LOG_ERROR("Failed to update event");
+      LOG_ERROR("Failed to update network event");
       PL_ASSERT(false);
     }
   }
@@ -59,6 +59,17 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   if (workpool_event == nullptr) {
     workpool_event = event_new(thread->GetEventBase(), -1, EV_WRITE|EV_PERSIST,
     CallbackUtil::EventHandler, this);
+  } else {
+    if (event_del(workpool_event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(workpool_event, thread->GetEventBase(), -1,
+                                EV_WRITE|EV_PERSIST, CallbackUtil::EventHandler, this);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
   }
 
   event_add(network_event, nullptr);
@@ -302,10 +313,11 @@ WriteState NetworkConnection::FlushWriteBuffer() {
             return WriteState::WRITE_ERROR;
           }
           // We should go to CONN_WRITE state
+          LOG_DEBUG("WRITE NOT READY");
           return WriteState::WRITE_NOT_READY;
         } else {
           // fatal errors
-          LOG_ERROR("Fatal error during write");
+          LOG_ERROR("Fatal error during write, errno %d", errno);
           return WriteState::WRITE_ERROR;
         }
       }
@@ -344,11 +356,12 @@ std::string NetworkConnection::WriteBufferToString() {
   return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
 }
 
-ProcessInitialState NetworkConnection::ProcessInitialPacket() {
+ProcessInitialState NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
 
   if (rpkt.header_parsed == false) {
     // parse out the header first
+    // TODO: this is a hack
     if (PostgresProtocolHandler::ReadStartupPacketHeader(rbuf_, rpkt) == false) {
       // need more data
       return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
@@ -358,6 +371,7 @@ ProcessInitialState NetworkConnection::ProcessInitialPacket() {
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
+    //TODO: this is a hack
     if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
       // need more data
       return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
@@ -365,24 +379,13 @@ ProcessInitialState NetworkConnection::ProcessInitialPacket() {
   }
 
   // We need to handle startup packet first
-  int status_res = ProcessInitialPacket(&rpkt);
 
-  if (status_res == 0) {
+  if (!ProcessInitialPacket(&rpkt)) {
     return ProcessInitialState::PROCESS_INITIAL_FAILED;
   }
   return ProcessInitialState::PROCESS_INITIAL_SUCCESS;
 }
 
-bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
-  UNUSED(pkt);
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
-  protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->force_flush = true;
-  ssl_sent_ = true;
-  return true;
-}
 /*
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
@@ -403,6 +406,17 @@ bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
     LOG_TRACE("process startup packet");
     return ProcessStartupPacket(pkt, proto_version);
   }
+}
+
+bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
+  UNUSED(pkt);
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  // TODO: consider more about a proper response
+  response->msg_type = NetworkMessageType::SSL_YES;
+  protocol_handler_->responses.push_back(std::move(response));
+  protocol_handler_->force_flush = true;
+  ssl_sent_ = true;
+  return true;
 }
 
 bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
@@ -606,7 +620,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         switch (res) {
           case ReadState::READ_DATA_RECEIVED:
             // wait for some other event
-            conn->TransitState(ConnState::CONN_PROCESS);
+            if (conn->protocol_handler_ == nullptr) {
+              conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
+            }
+            else {
+              conn->TransitState(ConnState::CONN_PROCESS);
+            }
             break;
 
           case ReadState::READ_NO_DATA_RECEIVED:
@@ -634,9 +653,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         break;
       }
 
-      case ConnState::CONN_PROCESS: {
-        ProcessPacketResult status;
-
+      case ConnState::CONN_PROCESS_INITIAL: {
         if (conn->ssl_sent_) {
           // start SSL handshake
           // TODO: consider free conn_SSL_context
@@ -657,61 +674,71 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           conn->ssl_sent_ = false;
         }
 
-        if (conn->protocol_handler_ == nullptr) {
-          switch (conn->ProcessInitialPacket()) {
-            case ProcessInitialState::PROCESS_INITIAL_SUCCESS:conn->TransitState(ConnState::CONN_WRITE);
-              break;
-            case ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED:conn->TransitState(ConnState::CONN_WAIT);
-              break;
-            case ProcessInitialState::PROCESS_INITIAL_FAILED:conn->TransitState(ConnState::CONN_CLOSING);
-              break;
+        switch (conn->ProcessInitial()) {
+          case ProcessInitialState::PROCESS_INITIAL_SUCCESS: {
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
           }
-        } else {
-          if (conn->rpkt.header_parsed == false) {
-            // parse out the header first
-            if (PostgresProtocolHandler::ReadPacketHeader(conn->rbuf_, conn->rpkt) == false) {
-              // need more data
-              conn->TransitState(ConnState::CONN_WAIT);
-              break;
-            }
+          case ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED: {
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
           }
-          PL_ASSERT(conn->rpkt.header_parsed == true);
-
-          if (conn->rpkt.is_initialized == false) {
-            // packet needs to be initialized with rest of the contents
-            if (PostgresProtocolHandler::ReadPacket(conn->rbuf_, conn->rpkt) == false) {
-              // need more data
-              conn->TransitState(ConnState::CONN_WAIT);
-              break;
-            }
-          }
-          PL_ASSERT(conn->rpkt.is_initialized == true);
-
-          // Process all other packets
-          status = conn->protocol_handler_->ProcessPacket(&conn->rpkt,
-                                                          (size_t) conn->thread_id);
-          switch (status) {
-            case ProcessPacketResult::TERMINATE:
-              // packet processing can't proceed further
-              conn->TransitState(ConnState::CONN_CLOSING);
-              break;
-            case ProcessPacketResult::COMPLETE:
-              // We should have responses ready to send
-              conn->TransitState(ConnState::CONN_WRITE);
-              break;
-            case ProcessPacketResult::PROCESSING: {
-              if (event_del(conn->network_event) == -1) {
-                //TODO: There may be better way to handle this error
-                LOG_ERROR("Failed to delete event");
-                PL_ASSERT(false);
-              }
-              LOG_TRACE("ProcessPacketResult: queueing");
-              conn->TransitState(ConnState::CONN_GET_RESULT);
-              done = true;
-              break;
-            }
+          case ProcessInitialState::PROCESS_INITIAL_FAILED: {
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
           }
         }
+
+        break;
+      }
+
+      case ConnState::CONN_PROCESS: {
+        ProcessPacketResult status;
+
+        if (conn->rpkt.header_parsed == false) {
+          // parse out the header first
+          if (PostgresProtocolHandler::ReadPacketHeader(conn->rbuf_, conn->rpkt) == false) {
+            // need more data
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          }
+        }
+        PL_ASSERT(conn->rpkt.header_parsed == true);
+
+        if (conn->rpkt.is_initialized == false) {
+          // packet needs to be initialized with rest of the contents
+          if (PostgresProtocolHandler::ReadPacket(conn->rbuf_, conn->rpkt) == false) {
+            // need more data
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          }
+        }
+        PL_ASSERT(conn->rpkt.is_initialized == true);
+          // Process all other packets
+        status = conn->protocol_handler_->ProcessPacket(&conn->rpkt,
+                                                        (size_t) conn->thread_id);
+        switch (status) {
+          case ProcessPacketResult::TERMINATE:
+            // packet processing can't proceed further
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          case ProcessPacketResult::COMPLETE:
+            // We should have responses ready to send
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
+          case ProcessPacketResult::PROCESSING: {
+            if (event_del(conn->network_event) == -1) {
+              //TODO: There may be better way to handle this error
+              LOG_ERROR("Failed to delete event");
+              PL_ASSERT(false);
+            }
+            LOG_TRACE("ProcessPacketResult: queueing");
+            conn->TransitState(ConnState::CONN_GET_RESULT);
+            done = true;
+            break;
+          }
+        }
+
         break;
       }
 
