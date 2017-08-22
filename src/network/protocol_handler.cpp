@@ -353,7 +353,7 @@ ProcessPacketResult ProtocolHandler::ExecQueryMessage(InputPacket *pkt, const si
     query.pop_back();
   }
   boost::trim(query);
-
+  traffic_cop_->protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
   if (!query.empty()) {
     std::vector<StatementResult> result;
     std::vector<FieldInfo> tuple_descriptor;
@@ -958,6 +958,7 @@ ProcessPacketResult ProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
 ProcessPacketResult ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
+  traffic_cop_->protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   std::string portal_name;
 
   GetStringToken(pkt, portal_name);
@@ -1016,7 +1017,14 @@ ProcessPacketResult ProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
 void ProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult();
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
-  ExecExecuteMessageGetResult(status);
+  switch (traffic_cop_->protocol_type_) {
+    case NetworkProtocolType::POSTGRES_JDBC:
+      ExecExecuteMessageGetResult(status);
+      break;
+    case NetworkProtocolType::POSTGRES_PSQL:
+    default:
+      ExecQueryMessageGetResult(status);
+  }
 }
 
 void ProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {

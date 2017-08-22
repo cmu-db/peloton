@@ -1330,6 +1330,10 @@ enum class ProcessPacketResult {
   PROCESSING,
 };
 
+enum class NetworkProtocolType {
+  POSTGRES_JDBC,
+  POSTGRES_PSQL,
+};
 //struct IOTrigger {
 //  int event_fd_;
 //  inline IOTrigger(int event_fd):event_fd_(event_fd) {
