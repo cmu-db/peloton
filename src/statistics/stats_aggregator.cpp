@@ -196,8 +196,7 @@ void StatsAggregator::UpdateMetrics() {
   auto database_count = storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
        database_offset++) {
-    auto database =
-        storage_manager->GetDatabaseWithOffset(database_offset);
+    auto database = storage_manager->GetDatabaseWithOffset(database_offset);
 
     // Update database metrics table
     auto database_oid = database->GetOid();
@@ -329,11 +328,10 @@ void StatsAggregator::UnregisterContext(std::thread::id id) {
 }
 
 storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
-  auto catalog = catalog::Catalog::GetInstance();
-  PL_ASSERT(storage::StorageManager::GetInstance()->GetDatabaseCount() >
-            0);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  PL_ASSERT(storage_manager->GetDatabaseCount() > 0);
   storage::Database *catalog_database =
-      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+      storage_manager->GetDatabaseWithOid(CATALOG_DATABASE_OID);
   PL_ASSERT(catalog_database != nullptr);
   auto metrics_table = catalog_database->GetTableWithName(table_name);
   PL_ASSERT(metrics_table != nullptr);
