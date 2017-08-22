@@ -40,9 +40,9 @@ TEST_F(DropTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -64,16 +64,16 @@ TEST_F(DropTests, DroppingTable) {
                        std::move(table_schema2), txn);
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 2);
+  txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
+            2);
 
   // Now dropping the table using the executer
-  txn = txn_manager.BeginTransaction();
   catalog->DropTable(DEFAULT_DB_NAME, "department_table", txn);
-  txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
+            1);
 
   // free the database just created
-  txn = txn_manager.BeginTransaction();
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

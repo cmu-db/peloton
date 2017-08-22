@@ -175,8 +175,10 @@ TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
   auto catalog = catalog::Catalog::GetInstance();
   std::string samples_table_name =
       GenerateSamplesTableName(database_id, table_id);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   auto data_table =
-      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name);
+      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name, txn);
 
   auto col_count = data_table->GetSchema()->GetColumnCount();
   std::vector<oid_t> column_ids;
@@ -184,8 +186,6 @@ TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
     column_ids.push_back(col_id);
   }
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -201,11 +201,11 @@ void TupleSamplesStorage::GetColumnSamples(
   auto catalog = catalog::Catalog::GetInstance();
   std::string samples_table_name =
       GenerateSamplesTableName(database_id, table_id);
-  auto data_table =
-      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name);
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  auto data_table =
+      catalog->GetTableWithName(SAMPLES_DB_NAME, samples_table_name, txn);
+
   std::vector<oid_t> column_ids({column_id});
   auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);
   txn_manager.CommitTransaction(txn);

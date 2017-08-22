@@ -62,19 +62,19 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Creating table");
   LOG_INFO(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
-          "INT, dept_name TEXT);");
+      "INT, dept_name TEXT);");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("CREATE",
                                 "CREATE TABLE department_table(dept_id INT "
-                                    "PRIMARY KEY, student_id INT, dept_name "
-                                    "TEXT);"));
+                                "PRIMARY KEY, student_id INT, dept_name "
+                                "TEXT);"));
 
   auto& peloton_parser = parser::PostgresParser::GetInstance();
 
   LOG_INFO("Building parse tree...");
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
-          "dept_name TEXT);");
+      "dept_name TEXT);");
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -86,8 +86,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
@@ -95,27 +94,27 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
             1);
 
   // Inserting a tuple end-to-end
-  txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
-          "VALUES (1,52,'hello_1');");
+      "VALUES (1,52,'hello_1');");
   statement.reset(new Statement("INSERT",
                                 "INSERT INTO department_table(dept_id, "
-                                    "student_id, dept_name) VALUES "
-                                    "(1,52,'hello_1');"));
+                                "student_id, dept_name) VALUES "
+                                "(1,52,'hello_1');"));
 
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
-          "(1,52,'hello_1');");
+      "(1,52,'hello_1');");
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -124,10 +123,9 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -152,22 +150,21 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("INDEX CREATED!");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table");
+      DEFAULT_DB_NAME, "department_table", txn);
   // Expected 2 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 
   // free the database just created
-  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

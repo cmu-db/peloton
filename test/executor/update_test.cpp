@@ -152,13 +152,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
@@ -176,13 +177,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
+            1);
 
   LOG_INFO("Table created!");
 
   storage::DataTable* table =
-      catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table");
+      catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table", txn);
+  txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
@@ -191,17 +193,17 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,manager_id,dept_name) "
-          "VALUES (1,12,'hello_1');");
+      "VALUES (1,12,'hello_1');");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("INSERT",
                                 "INSERT INTO "
-                                    "department_table(dept_id,manager_id,dept_name)"
-                                    " VALUES (1,12,'hello_1');"));
+                                "department_table(dept_id,manager_id,dept_name)"
+                                " VALUES (1,12,'hello_1');"));
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
-          "(1,12,'hello_1');");
+      "(1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
@@ -213,8 +215,7 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %s",
@@ -244,10 +245,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -261,14 +261,14 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE "
-          "dept_id = 1");
+      "dept_id = 1");
   statement.reset(new Statement("UPDATE",
                                 "UPDATE department_table SET manager_id = "
-                                    "manager_id + 1 WHERE dept_id = 1"));
+                                "manager_id + 1 WHERE dept_id = 1"));
   LOG_INFO("Building parse tree...");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = "
-          "1");
+      "1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
@@ -276,10 +276,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -302,10 +301,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -331,10 +329,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");

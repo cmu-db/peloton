@@ -60,8 +60,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
 
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
@@ -70,12 +69,12 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
             1);
 
-  txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
@@ -87,22 +86,21 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
             2);
 
   // Inserting a tuple to table_a
-  txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO table_a(aid, value) VALUES (1,1);");
@@ -114,10 +112,9 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_a!");
@@ -136,10 +133,9 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_b!");
@@ -158,8 +154,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
 
   result_format = std::vector<int>(4, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Join completed!");

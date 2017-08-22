@@ -55,10 +55,11 @@ void CreateAndLoadTable() {
   }
 }
 
-std::shared_ptr<TableStats> GetTableStatsWithName(std::string table_name) {
+std::shared_ptr<TableStats> GetTableStatsWithName(
+    std::string table_name, concurrency::Transaction *txn) {
   auto catalog = catalog::Catalog::GetInstance();
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, table_name);
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, table_name, txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
   auto stats_storage = StatsStorage::GetInstance();
@@ -69,7 +70,6 @@ TEST_F(CostTests, ScanCostTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 
   // create table with name test
   CreateAndLoadTable();
@@ -77,7 +77,8 @@ TEST_F(CostTests, ScanCostTest) {
   // Collect stats
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
 
-  auto table_stats = GetTableStatsWithName("test");
+  auto table_stats = GetTableStatsWithName("test", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_NE(table_stats, nullptr);
   EXPECT_EQ(table_stats->num_rows, N_ROW);
 

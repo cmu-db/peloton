@@ -77,13 +77,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
             1);
 
   // Inserting a tuple end-to-end
-  txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_TRACE("Inserting a tuple...");
   LOG_TRACE(

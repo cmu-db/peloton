@@ -71,14 +71,16 @@ TEST_F(AnalyzeSQLTests, AnalyzeSingleTableTest) {
   EXPECT_EQ(result, peloton::ResultType::SUCCESS);
 
   // Check stats information in catalog
+  txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  storage::Database *catalog_database = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  storage::DataTable *db_column_stats_collector_table = catalog_database->GetTableWithName(COLUMN_STATS_CATALOG_NAME);
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(std::string(CATALOG_DATABASE_NAME), txn);
+  storage::DataTable *db_column_stats_collector_table =
+      catalog_database->GetTableWithName(COLUMN_STATS_CATALOG_NAME);
   EXPECT_NE(db_column_stats_collector_table, nullptr);
   EXPECT_EQ(db_column_stats_collector_table->GetTupleCount(), 4);
 
   // Free the database
-  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

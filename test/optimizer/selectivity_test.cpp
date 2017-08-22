@@ -1,4 +1,4 @@
- //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -59,7 +59,6 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
@@ -72,8 +71,9 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   }
 
   auto catalog = catalog::Catalog::GetInstance();
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME);
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
   oid_t column_id = 0;  // first column
@@ -160,20 +160,21 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
 
   int nrow = 100;
   for (int i = 1; i <= nrow; i++) {
     std::stringstream ss;
-    ss << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1 << ", 'string');";
+    ss << "INSERT INTO test VALUES (" << i << ", " << i % 3 + 1
+       << ", 'string');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
   auto catalog = catalog::Catalog::GetInstance();
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME);
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, TEST_TABLE_NAME, txn);
+  txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
   oid_t column_id1 = 1;
