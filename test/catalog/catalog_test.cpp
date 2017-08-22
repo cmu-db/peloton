@@ -202,7 +202,8 @@ TEST_F(CatalogTests, DroppingTable) {
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
 
   database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMB_DB", txn);
+      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+  EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table");
   txn_manager.CommitTransaction(txn);
@@ -211,7 +212,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    ->GetDatabaseWithName("EMP_DB")
                    ->GetTableCount());
 
-  EXPECT_EQ(INVALID_OID, department_table_object->table_oid);
+  EXPECT_EQ(nullptr, department_table_object);
 
   // Try to drop again
   txn = txn_manager.BeginTransaction();
@@ -223,7 +224,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    ->GetDatabaseWithName("EMP_DB")
                    ->GetTableCount());
 
-  EXPECT_EQ(ResultType::FAILURE, result);
+  EXPECT_EQ(ResultType::SUCCESS, result);
 
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
@@ -233,7 +234,7 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_EQ(2, catalog::Catalog::GetInstance()
                    ->GetDatabaseWithName("EMP_DB")
                    ->GetTableCount());
-  EXPECT_EQ(ResultType::FAILURE, result);
+  EXPECT_EQ(ResultType::SUCCESS, result);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();
