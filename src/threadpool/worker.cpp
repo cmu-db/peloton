@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "threadpool/worker.h"
-
+#include "common/logger.h"
 #define EMPTY_COUNT_BOUND 10
 #define WORKER_PAUSE_TIME 10
 

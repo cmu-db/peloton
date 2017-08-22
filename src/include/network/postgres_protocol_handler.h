@@ -21,8 +21,9 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
+#include "type/types.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
@@ -36,13 +37,13 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class PostgresProtocolHandler: public ProtocolHandler {
  public:
   // TODO we need to somehow make this virtual?
-  PostgresProtocolHandler();
+  PostgresProtocolHandler(tcop::TrafficCop *traffic_cop);
 
   ~PostgresProtocolHandler();
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -67,6 +68,10 @@ class PostgresProtocolHandler: public ProtocolHandler {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     return statement_cache_itr != statement_cache_.end();
   }
+
+  void ExecExecuteMessageGetResult();
+
+  void GetResult();
 
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
@@ -140,7 +145,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   bool HardcodedExecuteFilter(QueryType query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket* pkt);
@@ -149,24 +154,22 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void ExecBindMessage(InputPacket* pkt);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  bool ExecDescribeMessage(InputPacket* pkt);
+  ProcessPacketResult ExecDescribeMessage(InputPacket* pkt);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessPacketResult ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the optional CLOSE message of the extended query protocol */
   void ExecCloseMessage(InputPacket* pkt);
 
+  void ExecExecuteMessageGetResult(ResultType status);
+
+  void ExecQueryMessageGetResult(ResultType status);
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
-  enum ProtocolState{
-    NO_PROTOCOL,
-    SIMPLE_QUERY_PROTOCOL,
-    EXTENDED_QUERY_PROTOCOL
-  };
 
-  ProtocolState protocol_;
+  NetworkProtocolType protocol_type_;
 
   // Manage standalone queries
   std::shared_ptr<Statement> unnamed_statement_;
@@ -207,7 +210,20 @@ class PostgresProtocolHandler: public ProtocolHandler {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
+  std::shared_ptr<Statement> statement_;
 
+  std::string error_message_;
+
+  std::vector<StatementResult> results_;
+
+  int rows_affected_ = 0;
+
+  std::vector<type::Value> param_values_;
+
+
+  QueryType query_type_;
+
+  std::string query_;
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA

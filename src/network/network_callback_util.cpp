@@ -64,11 +64,14 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 
 void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
                                 short ev_flags, void *arg) {
-  LOG_TRACE("Event callback fired for connfd: %d", connfd);
+  LOG_DEBUG("Event callback fired for connfd: %d", connfd);
   NetworkConnection *conn = static_cast<NetworkConnection *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
-  PL_ASSERT(connfd == conn->sock_fd);
+#ifdef LOG_DEBUG_ENABLED
+  if (ev_flags == EV_READ)
+    assert(connfd == conn->sock_fd);
+#endif
   NetworkConnection::StateMachine(conn);
 }
 

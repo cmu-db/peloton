@@ -17,13 +17,14 @@
 namespace peloton {
 namespace network {
   std::unique_ptr<ProtocolHandler>
-  ProtocolHandlerFactory::CreateProtocolHandler(ProtocolHandlerType type) {
+  ProtocolHandlerFactory::CreateProtocolHandler(ProtocolHandlerType type,
+  tcop::TrafficCop* traffic_cop) {
 
     switch (type) {
       case ProtocolHandlerType::Postgres: {
         return
             std::unique_ptr<PostgresProtocolHandler>(
-                new PostgresProtocolHandler());
+                new PostgresProtocolHandler(traffic_cop));
       }
       default:
         return nullptr;

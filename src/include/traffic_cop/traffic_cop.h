@@ -121,7 +121,6 @@ class TrafficCop {
 
   bool is_queuing_;
 
-  NetworkProtocolType protocol_type_;
 //  struct event* event_;
  private:
 

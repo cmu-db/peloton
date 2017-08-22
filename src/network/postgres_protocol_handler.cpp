@@ -28,6 +28,7 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "network/marshal.h"
+#include "settings/settings_manager.h"
 
 
 
@@ -56,8 +57,9 @@ const std::unordered_map<std::string, std::string>
 std::vector<PostgresProtocolHandler *> PostgresProtocolHandler::postgres_protocol_handlers_;
 std::mutex PostgresProtocolHandler::postgres_protocol_handlers_mutex_;
 
-PostgresProtocolHandler::PostgresProtocolHandler()
-    : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
+PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
+    : ProtocolHandler(traffic_cop),
+      txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
   {
     std::lock_guard<std::mutex> lock(PostgresProtocolHandler::postgres_protocol_handlers_mutex_);
     PostgresProtocolHandler::postgres_protocol_handlers_.push_back(this);
@@ -222,8 +224,10 @@ void PostgresProtocolHandler::CompleteCommand(const std::string &query, const Qu
     case QueryType::QUERY_INSERT:
       tag += " 0 " + std::to_string(rows);
       break;
-     case QueryType::QUERY_CREATE:
+    case QueryType::QUERY_CREATE:
       tag += " TABLE";
+      break;
+    case QueryType::QUERY_PREPARE:
       break;
     default:
       tag += " " + std::to_string(rows);
@@ -271,7 +275,7 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
 // ';' being split into multiple queries.
 // However, the multi-statement queries has been split by the psql client and
 // there is no need to split the query again.
-void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
+ProcessPacketResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
 
@@ -280,6 +284,8 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
     query.pop_back();
   }
   boost::trim(query);
+
+  protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
 
   if (!query.empty()) {
     std::vector<StatementResult> result;
@@ -292,15 +298,19 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
 
     QueryType query_type;
     Statement::MapToQueryType(query_type_string_, query_type);
-    std::stringstream stream(query_type_string_);
+
+    query_ = query;
+    query_type_ = query_type;
 
     switch (query_type) {
       case QueryType::QUERY_PREPARE:
       {
         std::string statement_name;
-        stream >> statement_name;
-        std::size_t pos = query.find("AS");
-        std::string statement_query = query.substr(pos + 3);
+        std::vector<std::string> tokens;
+        boost::split(tokens, query_, boost::is_any_of("(), "));
+        statement_name = tokens.at(1);
+        std::size_t pos = boost::to_upper_copy(query_).find("AS");
+        std::string statement_query = query_.substr(pos + 3);
         boost::trim(statement_query);
 
         // Prepare statement
@@ -316,7 +326,8 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
           SendErrorResponse(
               {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           LOG_TRACE("ExecQuery Error");
-          return;
+          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+          return ProcessPacketResult::COMPLETE;
         }
 
         auto entry = std::make_pair(statement_name, statement);
@@ -329,7 +340,6 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
       case QueryType::QUERY_EXECUTE:
       {
         std::string statement_name;
-        std::shared_ptr<Statement> statement;
         std::vector<type::Value> param_values;
         bool unnamed = false;
         std::vector<std::string> tokens;
@@ -339,19 +349,22 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
         statement_name = tokens.at(1);
         auto statement_cache_itr = statement_cache_.find(statement_name);
         if (statement_cache_itr != statement_cache_.end()) {
-          statement = *statement_cache_itr;
+          statement_ = *statement_cache_itr;
         }
         // Did not find statement with same name
         else {
-          std::string error_message = "The prepared statement does not exist";
-          LOG_ERROR("%s", error_message.c_str());
+          error_message_ = "The prepared statement does not exist";
+          LOG_ERROR("%s", error_message_.c_str());
           SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+          return ProcessPacketResult::COMPLETE;
         }
 
-        std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+        query_type_ = statement_->GetQueryType();
+        query_ = statement_->GetQueryString();
+        std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
+        result_format_ = result_format;
 
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
           std::string param_str = tokens.at(idx);
@@ -363,37 +376,50 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
         }
 
         if (param_values.size() > 0) {
-          statement->GetPlanTree()->SetParameterValues(&param_values);
+          statement_->GetPlanTree()->SetParameterValues(&param_values);
         }
+        param_values_ = param_values;
 
         auto status =
-                traffic_cop_->ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                             result, rows_affected, error_message, thread_id);
+                traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
+                             results_, rows_affected_, error_message_, thread_id);
 
-        if (status == ResultType::SUCCESS) {
-          tuple_descriptor = statement->GetTupleDescriptor();
-        } else {
-          SendErrorResponse(
-                {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+        if (traffic_cop_->is_queuing_) {
+          return ProcessPacketResult::PROCESSING;
         }
-      	break;
+
+        ExecQueryMessageGetResult(status);
+        return ProcessPacketResult::COMPLETE;
       }
       default:
       {
-        // execute the query using traffic_cop
-        auto status = traffic_cop_->ExecuteStatement(
-            query, result, tuple_descriptor, rows_affected, error_message,
-            thread_id);
-
-      // check status
-        if (status == ResultType::FAILURE) {
+        // prepareStatement
+        std::string unnamed_statement = "unnamed";
+        statement_ = traffic_cop_->PrepareStatement(unnamed_statement, query_,
+                                                    error_message);
+        if (statement_.get() == nullptr) {
+          rows_affected = 0;
           SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
-          return;
+          return ProcessPacketResult::COMPLETE;
         }
+        // ExecuteStatment
+        std::vector<type::Value> param_values;
+        param_values_ = param_values;
+        bool unnamed = false;
+        std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
+        result_format_ = result_format;
+        // should param_values and result_format be local variable?
+        // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
+        auto status =
+            traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
+                                           results_, rows_affected_, error_message_, thread_id);
+        if (traffic_cop_->is_queuing_) {
+          return ProcessPacketResult::PROCESSING;
+        }
+        ExecQueryMessageGetResult(status);
+        return ProcessPacketResult::COMPLETE;
       }
     }
 
@@ -404,7 +430,7 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
     SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
     // The response to the SimpleQueryCommand is the query string.
-    CompleteCommand(query, query_type, rows_affected);
+    CompleteCommand(query_, query_type_, rows_affected);
   } else {
     SendEmptyQueryResponse();
   }
@@ -415,6 +441,30 @@ void PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t th
   // I switched to strong types, this obviously doesn't work. So I
   // switched it to be NetworkTransactionStateType::IDLE. I don't know
   // we just don't always send back the internal txn state?
+  SendReadyForQuery(NetworkTransactionStateType::IDLE);
+  return ProcessPacketResult::COMPLETE;
+}
+
+void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
+  std::vector<FieldInfo> tuple_descriptor;
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = statement_->GetTupleDescriptor();
+  } else if (status == ResultType::FAILURE) { // check status
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
+  }
+
+  // send the attribute names
+  PutTupleDescriptor(tuple_descriptor);
+
+  // send the result rows
+  SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
+
+  // The response to the SimpleQueryCommand is the query string.
+  CompleteCommand(query_, query_type_, rows_affected_);
+
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
 
@@ -475,11 +525,12 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   statement->SetParamTypes(param_types);
 
   // Stat
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) != STATS_TYPE_INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
     query_type_buf.buf = PacketCopyBytes(type_buf_begin, type_buf_len);
+
 
     // Unnamed statement
     if (unnamed_query) {
@@ -630,7 +681,8 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID && num_params > 0) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) != STATS_TYPE_INVALID
+      && num_params > 0) {
     // Make a copy of format for stat collection
     stats::QueryMetric::QueryParamBuf param_format_buf;
     param_format_buf.len = format_buf_len;
@@ -789,13 +841,13 @@ size_t PostgresProtocolHandler::ReadParamValue(
   return end - begin;
 }
 
-bool PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
+ProcessPacketResult PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::NO_DATA_RESPONSE;
     responses.push_back(std::move(response));
-    return true;
+    return ProcessPacketResult::COMPLETE;
   }
 
   ByteBuf mode;
@@ -814,7 +866,7 @@ bool PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
-      return false;
+      return ProcessPacketResult::COMPLETE;
     }
 
     auto portal = portal_itr->second;
@@ -822,7 +874,7 @@ bool PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
-      return false;
+      return ProcessPacketResult::TERMINATE;
     }
 
     auto statement = portal->GetStatement();
@@ -830,15 +882,14 @@ bool PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
   } else {
     LOG_TRACE("Describe a prepared statement");
   }
-  return true;
+  return ProcessPacketResult::COMPLETE;
 }
 
-void PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
+ProcessPacketResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
                                        const size_t thread_id) {
   // EXECUTE message
   std::vector<StatementResult> results;
   std::string error_message, portal_name;
-  int rows_affected = 0;
   GetStringToken(pkt, portal_name);
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
@@ -850,46 +901,53 @@ void PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       std::string skipped_query_type_string;
       Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
-      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected);
+      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected_);
     }
     skipped_stmt_ = false;
-    return;
+    return ProcessPacketResult::TERMINATE;
   }
 
   auto portal = portals_[portal_name];
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
     SendReadyForQuery(txn_state_);
-    return;
+    return ProcessPacketResult::TERMINATE;
   }
 
-  auto statement = portal->GetStatement();
-  const auto &query_type = statement->GetQueryType();
+  statement_ = portal->GetStatement();
 
   auto param_stat = portal->GetParamStat();
-  if (statement.get() == nullptr) {
+  if (statement_.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     SendReadyForQuery(txn_state_);
-    return;
+    return ProcessPacketResult::TERMINATE;
   }
 
-  auto statement_name = statement->GetStatementName();
+  auto statement_name = statement_->GetStatementName();
   bool unnamed = statement_name.empty();
-  auto param_values = portal->GetParameters();
+  param_values_ = portal->GetParameters();
 
   auto status = traffic_cop_->ExecuteStatement(
-      statement, param_values, unnamed, param_stat, result_format_, results,
-      rows_affected, error_message, thread_id);
+      statement_, param_values_, unnamed, param_stat, result_format_, results_,
+      rows_affected_, error_message_, thread_id);
+  if (traffic_cop_->is_queuing_) {
+    return ProcessPacketResult::PROCESSING;
+  }
+  ExecExecuteMessageGetResult(status);
+  return ProcessPacketResult::COMPLETE;
+}
 
+void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
+  const auto &query_type = statement_->GetQueryType();
   switch (status) {
     case ResultType::FAILURE:
-      LOG_ERROR("Failed to execute: %s", error_message.c_str());
+      LOG_ERROR("Failed to execute: %s", error_message_.c_str());
       SendErrorResponse(
-          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
       return;
     case ResultType::ABORTED:
       if (query_type != QueryType::QUERY_ROLLBACK) {
@@ -901,12 +959,25 @@ void PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       }
       return;
     default: {
-      auto tuple_descriptor = statement->GetTupleDescriptor();
-      SendDataRows(results, tuple_descriptor.size(), rows_affected);
+      auto tuple_descriptor = statement_->GetTupleDescriptor();
+      SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
       // The reponse to ExecuteCommand is the query_type string token.
-      CompleteCommand(statement->GetQueryTypeString(), query_type, rows_affected);
+      CompleteCommand(statement_->GetQueryTypeString(), query_type, rows_affected_);
       return;
     }
+  }
+}
+
+void PostgresProtocolHandler::GetResult() {
+  traffic_cop_->ExecuteStatementPlanGetResult();
+  auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  switch (protocol_type_) {
+    case NetworkProtocolType::POSTGRES_JDBC:
+      ExecExecuteMessageGetResult(status);
+      break;
+    case NetworkProtocolType::POSTGRES_PSQL:
+    default:
+      ExecQueryMessageGetResult(status);
   }
 }
 
@@ -1050,7 +1121,7 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
+ProcessPacketResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -1058,8 +1129,8 @@ bool PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t threa
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      ExecQueryMessage(pkt, thread_id);
       force_flush = true;
+      return ExecQueryMessage(pkt, thread_id);
     } break;
     case NetworkMessageType::PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
@@ -1072,11 +1143,11 @@ bool PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t threa
     case NetworkMessageType::DESCRIBE_COMMAND: {
       LOG_TRACE("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt);
-    } break;
+    }
     case NetworkMessageType::EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
-      ExecExecuteMessage(pkt, thread_id);
-    } break;
+      return ExecExecuteMessage(pkt, thread_id);
+    }
     case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
@@ -1089,20 +1160,20 @@ bool PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const size_t threa
     case NetworkMessageType::TERMINATE_COMMAND: {
       LOG_TRACE("TERMINATE_COMMAND");
       force_flush = true;
-      return false;
-    } break;
+      return ProcessPacketResult::TERMINATE;
+    }
     case NetworkMessageType::NULL_COMMAND: {
       LOG_TRACE("NULL");
       force_flush = true;
-      return false;
-    } break;
+      return ProcessPacketResult::TERMINATE;
+    }
     default: {
       LOG_ERROR("Packet type not supported yet: %d (%c)",
                 static_cast<int>(pkt->msg_type),
                 static_cast<unsigned char>(pkt->msg_type));
     }
   }
-  return true;
+  return ProcessPacketResult::COMPLETE;
 }
 
 /*
@@ -1141,6 +1212,8 @@ void PostgresProtocolHandler::Reset() {
   responses.clear();
   unnamed_statement_.reset();
   result_format_.clear();
+  results_.clear();
+  param_values_.clear();
   txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();
@@ -1149,8 +1222,6 @@ void PostgresProtocolHandler::Reset() {
   table_statement_cache_.clear();
   portals_.clear();
   pkt_cntr_ = 0;
-
-  traffic_cop_->Reset();
 }
 
 }  // namespace network
