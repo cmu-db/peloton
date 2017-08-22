@@ -28,16 +28,27 @@
 #include <mutex>
 
 #include "catalog/abstract_catalog.h"
-#include "catalog/table_catalog.h"
 #include "executor/logical_tile.h"
 
 namespace peloton {
 namespace catalog {
 
+class TableCatalogObject;
+class IndexCatalogObject;
+
 class DatabaseCatalogObject {
+  friend class DatabaseCatalog;
+  friend class TableCatalog;
+  friend class CatalogCache;
+
  public:
-  DatabaseCatalogObject()
-      : database_oid(INVALID_OID), database_name(), txn(nullptr) {}
+  DatabaseCatalogObject(oid_t database_oid = INVALID_OID)
+      : database_oid(database_oid),
+        database_name(),
+        table_objects_cache(),
+        table_name_cache(),
+        valid_table_objects(false),
+        txn(nullptr) {}
   DatabaseCatalogObject(executor::LogicalTile *tile,
                         concurrency::Transaction *txn)
       : database_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
@@ -55,6 +66,13 @@ class DatabaseCatalogObject {
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
       const std::string &index_name);
+  bool IsValidTableObjects() {
+    // return true if this database object contains all table
+    // objects within the database
+    return valid_table_objects;
+  }
+  std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
+  GetTableObjects(bool cached_only = false);
 
   // database oid
   const oid_t database_oid;
@@ -66,6 +84,11 @@ class DatabaseCatalogObject {
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
   bool EvictTableObject(oid_t table_oid);
   bool EvictTableObject(const std::string &table_name);
+  void SetValidTableObjects(bool valid = true) { valid_table_objects = valid; }
+
+  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
+  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
+      const std::string &index_name);
 
   // cache for table name to oid translation
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>

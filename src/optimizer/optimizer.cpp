@@ -15,6 +15,7 @@
 #include "optimizer/optimizer.h"
 
 #include "catalog/manager.h"
+#include "catalog/column_catalog.h"
 
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"

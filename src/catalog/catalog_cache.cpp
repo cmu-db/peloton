@@ -13,6 +13,8 @@
 #include <memory>
 
 #include "catalog/catalog_cache.h"
+
+#include "catalog/database_catalog.h"
 #include "common/logger.h"
 
 namespace peloton {
