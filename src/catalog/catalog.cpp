@@ -561,7 +561,8 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
                            std::to_string(index_oid));
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  auto index_object =
+      IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
                            " to drop");
@@ -757,9 +758,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                         type::TypeId::INTEGER},
-              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction(
+      "substr",
+      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -768,9 +770,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                          type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction(
+      "replace",
+      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},

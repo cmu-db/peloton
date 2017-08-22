@@ -44,20 +44,14 @@ class DatabaseCatalogObject {
         database_name(tile->GetValue(0, 1).ToString()),
         txn(txn) {}
 
-  bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
-  bool EvictTableObject(oid_t table_oid);
-  bool EvictTableObject(const std::string &table_name);
-
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, bool cached_only = false);
 
-  oid_t GetOid() const { return database_oid; }
-  std::string GetDBName() const { return database_name; }
-
-  // private:
+  // oid_t GetOid() const { return database_oid; }
+  // std::string GetDBName() const { return database_name; }
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
       const std::string &index_name);
@@ -67,6 +61,11 @@ class DatabaseCatalogObject {
 
   // database name
   std::string database_name;
+
+ private:
+  bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
+  bool EvictTableObject(oid_t table_oid);
+  bool EvictTableObject(const std::string &table_name);
 
   // cache for table name to oid translation
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
