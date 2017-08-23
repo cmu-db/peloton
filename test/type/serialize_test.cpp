@@ -57,6 +57,22 @@ TEST_F(SerializeTests, SerializeValueToFileTest) {
     EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(value2));
 }
 
+
+TEST_F(SerializeTests, SerializeVarlenValueToFileTest) {
+    auto value = type::ValueFactory::GetVarcharValue("hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello");
+    CopySerializeOutput output_buffer;
+    output_buffer.Reset();
+    value.SerializeTo(output_buffer);
+    auto filename = FileUtil::WriteTempFile(output_buffer.Data());
+    tempFiles.push_back(filename);
+    //auto file = FileUtil::GetFile(filename);
+    //CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
+    CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
+    auto value2 = type::Value::DeserializeFrom(input_buffer, type::TypeId::VARCHAR);
+    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(value2));
+}
+
+
 TEST_F(SerializeTests, SerializeValuesToFileTest) {
     auto value1 = type::ValueFactory::GetIntegerValue(type::PELOTON_INT32_MAX);
     auto value2 = type::ValueFactory::GetDecimalValue(type::PELOTON_DECIMAL_MAX);

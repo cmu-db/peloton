@@ -18,6 +18,7 @@ namespace peloton {
 namespace logging {
 
 bool LogBuffer::WriteData(const char *data, size_t len) {
+  //Fix for catalog bootstrap without buffers
   if(this == nullptr)
       return true;
   if (unlikely_branch(size_ + len > log_buffer_capacity_)) {

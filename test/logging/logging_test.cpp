@@ -49,7 +49,7 @@ class LoggingTests : public PelotonTest {};
     logging::DurabilityFactory::Configure(LoggingType::ON,CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
     auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
     auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SNAPSHOT);
-    log_manager.SetDirectories({"/tmp/log"});
+    log_manager.SetDirectories({"/tmp/test"});
     log_manager.StartLoggers();
     //log_manager.RegisterWorker(1);
     log_manager.StartPersistTxn(txn->GetCommitId());
