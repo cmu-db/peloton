@@ -100,8 +100,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid,
-       this](const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid, this](
+          const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
         bool res = garbage_ctx->epoch_id_ <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
@@ -214,6 +214,29 @@ void TransactionLevelGCManager::AddToRecycleMap(
         recycle_queue_map_[table_id]->Enqueue(location);
       }
     }
+  }
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  for (auto &entry : *(garbage_ctx->gc_object_set_.get())) {
+    oid_t database_oid = Get<0>(entry);
+    oid_t table_oid = Get<1>(entry);
+    oid_t index_oid = Get<2>(entry);
+    PL_ASSERT(database_oid != INVALID_OID);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+    PL_ASSERT(database != nullptr);
+    if (table_oid == INVALID_OID) {
+      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+      continue;
+    }
+    auto table = database->GetTableWithOid(table_oid);
+    PL_ASSERT(table != nullptr);
+    if (index_oid == INVALID_OID) {
+      database->DropTableWithOid(table_oid);
+      continue;
+    }
+    auto index = table->GetIndexWithOid(index_oid);
+    PL_ASSERT(index != nullptr);
+    table->DropIndexWithOid(index_oid);
   }
 }
 

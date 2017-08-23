@@ -482,9 +482,10 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
                            " does not exist in pg_database");
 
   // Register database in garbage collector
-  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  storage_manager->GetDatabaseWithOid(database_oid);
   txn->GetGCObjectSetPtr()->emplace_back(database_oid, INVALID_OID,
                                          INVALID_OID);
+  return ResultType::SUCCESS;
 
   // Instead of dropping actual database object
   // LOG_TRACE("Dropping database with oid: %d", database_oid);
@@ -537,8 +538,8 @@ ResultType Catalog::DropTable(const std::string &database_name,
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
-  // auto storage_manager = storage::StorageManager::GetInstance();
-  // auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
   // LOG_TRACE("Deleting table!");
   // STEP 1, read index_oids from pg_index, and iterate through
   auto database_object =
@@ -553,6 +554,7 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
   // STEP 4, add dropped table object to gc
+  database->GetTableWithOid(table_oid);
   auto gc_object_set = txn->GetGCObjectSetPtr();
   gc_object_set->emplace_back(database_oid, table_oid, INVALID_OID);
   return ResultType::SUCCESS;
@@ -584,7 +586,7 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
   auto table = storage_manager->GetTableWithOid(table_object->database_oid,
                                                 index_object->table_oid);
   // register index object in garbage collector
-  auto index = table->GetIndexWithOid(index_oid);
+  table->GetIndexWithOid(index_oid);
   txn->GetGCObjectSetPtr()->emplace_back(table_object->database_oid,
                                          table_object->table_oid, index_oid);
   // instead of drop index in storage level table
