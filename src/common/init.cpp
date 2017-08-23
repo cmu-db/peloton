@@ -107,7 +107,7 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
-  log_manager.SetDirectories({"/home/paulo/log"});
+  log_manager.SetDirectories({"/tmp/log"});
   log_manager.DoRecovery();
   log_manager.StartLoggers();
 

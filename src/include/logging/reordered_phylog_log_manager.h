@@ -76,10 +76,6 @@ public:
 
   virtual void SetDirectories(std::string logging_dir) override {
     logger_dir_ = logging_dir;
-
-    if (!logging_dir.empty()) {
-      pepoch_dir_ = logging_dir;
-    }
     // check the existence of logging directories.
     // if not exists, then create the directory.
     //for (auto logging_dir : logging_dirs) {
@@ -107,11 +103,6 @@ public:
       return buffer_ptr_;
   }
 
-  // Worker side logic
-  //virtual void RegisterWorker(size_t thread_id) override;
-  //virtual void DeregisterWorker() override;
-
-  virtual void StartTxn() override ;
 
   void LogInsert(const ItemPointer &tuple_pos);
   void LogUpdate(const ItemPointer &tuple_pos);
@@ -126,17 +117,11 @@ public:
   virtual void DoRecovery(const size_t &begin_eid UNUSED_ATTRIBUTE) override {}
   virtual void StartLoggers() override;
   virtual void StopLoggers() override;
-
-  void RunPepochLogger();
-
 private:
-  size_t RecoverPepoch();
 
   void WriteRecordToBuffer(LogRecord &record);
 
 private:
-  //std::atomic<oid_t> worker_count_;
-
   std::string logger_dir_;
 
   CopySerializeOutput output_buffer_;
@@ -145,12 +130,11 @@ private:
 
   ReorderedPhyLogLogger* logger_;
 
-  std::unique_ptr<std::thread> pepoch_thread_;
-  volatile bool is_running_;
+//  std::unique_ptr<std::thread> pepoch_thread_;
+  bool is_running_;
 
-  std::string pepoch_dir_ = "/home/paulo/log";
+//  std::string pepoch_dir_ = "/tmp/log";
 
-  const std::string pepoch_filename_ = "pepoch";
 };
 
 }
