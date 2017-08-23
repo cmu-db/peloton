@@ -18,11 +18,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include "catalog/catalog_cache.h"
 #include "common/exception.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "type/types.h"
-#include "catalog/catalog_cache.h"
 
 namespace peloton {
 
@@ -109,7 +109,13 @@ class Transaction : public Printable {
 
   inline std::shared_ptr<GCSet> GetGCSetPtr() { return gc_set_; }
 
+  inline std::shared_ptr<GCObjectSet> GetGCObjectSetPtr() {
+    return gc_object_set_;
+  }
+
   inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
+
+  inline bool IsGCObjectSetEmpty() { return gc_object_set_->size() == 0; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -159,7 +165,7 @@ class Transaction : public Printable {
 
   // this set contains data location that needs to be gc'd in the transaction.
   std::shared_ptr<GCSet> gc_set_;
-
+  std::shared_ptr<GCObjectSet> gc_object_set_;
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
 

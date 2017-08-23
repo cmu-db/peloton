@@ -8,7 +8,7 @@
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
 
@@ -537,9 +537,9 @@ ResultType Catalog::DropTable(const std::string &database_name,
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
-  auto storage_manager = storage::StorageManager::GetInstance();
-  auto database = storage_manager->GetDatabaseWithOid(database_oid);
-  LOG_TRACE("Deleting table!");
+  // auto storage_manager = storage::StorageManager::GetInstance();
+  // auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  // LOG_TRACE("Deleting table!");
   // STEP 1, read index_oids from pg_index, and iterate through
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
@@ -552,8 +552,9 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
   // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // STEP 4
-  database->DropTableWithOid(table_oid);
+  // STEP 4, add dropped table object to gc
+  auto gc_object_set = txn->GetGCObjectSetPtr();
+  gc_object_set->emplace_back(database_oid, table_oid, INVALID_OID);
   return ResultType::SUCCESS;
 }
 
