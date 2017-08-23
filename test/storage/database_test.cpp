@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
+#include "concurrency/transaction_manager_factory.h"
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
@@ -38,9 +39,14 @@ TEST_F(DatabaseTests, AddDropTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+               CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // Only GC will remove the actual database object
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 }
-
 
 TEST_F(DatabaseTests, AddDropTableTest) {
   // ADD!
@@ -59,16 +65,21 @@ TEST_F(DatabaseTests, AddDropTableTest) {
 
   EXPECT_TRUE(database->GetTableCount() == 1);
 
-
   database->DropTableWithOid(table_oid);
-  
+
   EXPECT_TRUE(database->GetTableCount() == 0);
 
   data_table.release();
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+               CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // Only GC will remove the actual database object
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 }
 
 }  // namespace test
