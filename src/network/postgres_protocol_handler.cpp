@@ -29,9 +29,6 @@
 #include "network/marshal.h"
 #include "settings/settings_manager.h"
 
-
-
-
 namespace peloton {
 namespace network {
 
@@ -59,7 +56,6 @@ PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
 }
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
-
 
 // TODO: This function is used when txn cache is done
 void PostgresProtocolHandler::ReplanPreparedStatement(Statement *statement) {
@@ -100,7 +96,6 @@ void PostgresProtocolHandler::SendInitialResponse() {
     MakeHardcodedParameterStatus(*it);
   }
 
-  //TODO: This should be done after protocol handler is created
   // ready-for-query packet -> 'Z'
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 

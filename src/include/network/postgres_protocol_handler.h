@@ -56,8 +56,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
     return table_statement_cache_[table_id];
   }
 
-  void InvalidatePreparedStatements(oid_t table_id);
-
 
   // Ugh... this should not be here but we have no choice...
   void ReplanPreparedStatement(Statement* statement);
@@ -68,8 +66,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     return statement_cache_itr != statement_cache_.end();
   }
-
-  void ExecExecuteMessageGetResult();
 
   void GetResult();
 
