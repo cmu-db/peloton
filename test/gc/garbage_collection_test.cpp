@@ -16,13 +16,13 @@
 #include "gc/gc_manager.h"
 #include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager.h"
+#include "concurrency/transaction_manager_factory.h"
 
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "storage/tile_group.h"
-
-
 
 namespace peloton {
 namespace test {
@@ -33,7 +33,8 @@ namespace test {
 
 class GarbageCollectionTests : public PelotonTest {};
 
-void UpdateTuple(storage::DataTable *table, const int update_num, const int total_num) {
+void UpdateTuple(storage::DataTable *table, const int update_num,
+                 const int total_num) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -47,7 +48,8 @@ void UpdateTuple(storage::DataTable *table, const int update_num, const int tota
   EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
 }
 
-void DeleteTuple(storage::DataTable *table, const int delete_num, const int total_num) {
+void DeleteTuple(storage::DataTable *table, const int delete_num,
+                 const int total_num) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -61,7 +63,8 @@ void DeleteTuple(storage::DataTable *table, const int delete_num, const int tota
   EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
 }
 
-void SelectTuple(storage::DataTable *table, const int select_num, const int total_num) {
+void SelectTuple(storage::DataTable *table, const int select_num,
+                 const int total_num) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -83,15 +86,14 @@ int GarbageNum(storage::DataTable *table) {
   int old_num = 0;
 
   while (current_tile_group_offset_ < table_tile_group_count_) {
-    auto tile_group =
-      table->GetTileGroup(current_tile_group_offset_++);
+    auto tile_group = table->GetTileGroup(current_tile_group_offset_++);
     auto tile_group_header = tile_group->GetHeader();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
       auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-      if(tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid != MAX_CID) {
+      if (tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid != MAX_CID) {
         old_num++;
       }
     }
@@ -105,16 +107,14 @@ int GarbageNum(storage::DataTable *table) {
 int RecycledNum(storage::DataTable *table) {
   int count = 0;
   auto table_id = table->GetOid();
-  while(!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
+  while (!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
   return count;
 }
 
-
 TEST_F(GarbageCollectionTests, UpdateTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -123,7 +123,6 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
 
-  
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("UPDATE_DB");
@@ -132,8 +131,8 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
 
   // create a table with only one key
   const int num_key = 1;
-  std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "UPDATE_TABLE", db_id, INVALID_OID, 1234, true));
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "UPDATE_TABLE", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -152,14 +151,14 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   EXPECT_EQ(1, old_num);
   // nothing is recycled yet.
   EXPECT_EQ(0, recycle_num);
-  
+
   epoch_manager.SetCurrentEpochId(2);
 
   // get expired epoch id.
-  // as the current epoch id is set to 2, 
+  // as the current epoch id is set to 2,
   // the expected expired epoch id should be 1.
   auto expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(1, expired_eid);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -195,10 +194,15 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   gc_manager.StopGC();
 
   table.release();
-  
+
   // DROP!
   TestingExecutorUtil::DeleteDatabase("UPDATE_DB");
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+               CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
   for (auto &gc_thread : gc_threads) {
     gc_thread->join();
@@ -206,10 +210,9 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
 }
 
 TEST_F(GarbageCollectionTests, DeleteTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
-  
+
   std::vector<std::unique_ptr<std::thread>> gc_threads;
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -220,8 +223,8 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
   // create a table with only one key
   const int num_key = 1;
-  std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "DELETE_TABLE", db_id, INVALID_OID, 1234, true));
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "DELETE_TABLE", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -240,14 +243,14 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   EXPECT_EQ(1, old_num);
   // nothing is recycled yet.
   EXPECT_EQ(0, recycle_num);
-  
+
   epoch_manager.SetCurrentEpochId(2);
 
   // get expired epoch id.
-  // as the current epoch id is set to 2, 
+  // as the current epoch id is set to 2,
   // the expected expired epoch id should be 1.
   auto expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(1, expired_eid);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -281,17 +284,23 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   // the deleted version and the empty version.
   // however, the txn will explicitly pass one version (the deleted
   // version) to the GC manager.
-  // The GC itself should be responsible for recycling the 
+  // The GC itself should be responsible for recycling the
   // empty version.
   EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
 
   table.release();
-  
+
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DELETE_DB");
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
   for (auto &gc_thread : gc_threads) {
     gc_thread->join();

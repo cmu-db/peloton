@@ -16,11 +16,11 @@
 #include "gc/transaction_level_gc_manager.h"
 #include "concurrency/epoch_manager.h"
 
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
-
 
 namespace peloton {
 
@@ -68,7 +68,8 @@ ResultType DeleteTuple(storage::DataTable *table, const int key) {
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType SelectTuple(storage::DataTable *table, const int key, std::vector<int> &results) {
+ResultType SelectTuple(storage::DataTable *table, const int key,
+                       std::vector<int> &results) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -84,7 +85,6 @@ ResultType SelectTuple(storage::DataTable *table, const int key, std::vector<int
 
 // update -> delete
 TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -93,7 +93,6 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
 
-  
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("DATABASE0");
@@ -102,8 +101,8 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
 
   // create a table with only one key
   const int num_key = 1;
-  std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -112,14 +111,14 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   //===========================
   auto ret = UpdateTuple(table.get(), 0);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
-  
+
   epoch_manager.SetCurrentEpochId(2);
 
   // get expired epoch id.
-  // as the current epoch id is set to 2, 
+  // as the current epoch id is set to 2,
   // the expected expired epoch id should be 1.
   auto expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(1, expired_eid);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -136,9 +135,8 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
 
   epoch_manager.SetCurrentEpochId(3);
 
-
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(2, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -162,10 +160,10 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   epoch_manager.SetCurrentEpochId(4);
 
   // get expired epoch id.
-  // as the current epoch id is set to 4, 
+  // as the current epoch id is set to 4,
   // the expected expired epoch id should be 3.
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(3, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -182,9 +180,8 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
 
   epoch_manager.SetCurrentEpochId(5);
 
-
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(4, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -198,19 +195,23 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   EXPECT_EQ(1, reclaimed_count);
 
   EXPECT_EQ(0, unlinked_count);
-  
 
   table.release();
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DATABASE0");
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
 // insert -> delete -> insert
 TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -219,7 +220,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  
+
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
   auto database = TestingExecutorUtil::InitializeDatabase("DATABASE1");
@@ -228,11 +229,10 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
 
   // create a table with only one key
   const int num_key = 1;
-  std::unique_ptr<storage::DataTable> table(
-    TestingTransactionUtil::CreateTable(num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
-
 
   //===========================
   // insert a tuple here.
@@ -243,10 +243,10 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   epoch_manager.SetCurrentEpochId(2);
 
   // get expired epoch id.
-  // as the current epoch id is set to 2, 
+  // as the current epoch id is set to 2,
   // the expected expired epoch id should be 1.
   auto expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(1, expired_eid);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -264,7 +264,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   epoch_manager.SetCurrentEpochId(3);
 
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(2, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -278,7 +278,6 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   EXPECT_EQ(0, reclaimed_count);
 
   EXPECT_EQ(0, unlinked_count);
-
 
   //===========================
   // select the tuple.
@@ -299,10 +298,10 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   epoch_manager.SetCurrentEpochId(4);
 
   // get expired epoch id.
-  // as the current epoch id is set to 4, 
+  // as the current epoch id is set to 4,
   // the expected expired epoch id should be 3.
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(3, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -320,7 +319,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   epoch_manager.SetCurrentEpochId(5);
 
   expired_eid = epoch_manager.GetExpiredEpochId();
-  
+
   EXPECT_EQ(4, expired_eid);
 
   current_eid = epoch_manager.GetCurrentEpochId();
@@ -349,7 +348,6 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   ret = InsertTuple(table.get(), 100);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
-
   //===========================
   // select the tuple.
   //===========================
@@ -362,12 +360,15 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("DATABASE1");
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
-
-
 
 }  // namespace test
 }  // namespace peloton
-
