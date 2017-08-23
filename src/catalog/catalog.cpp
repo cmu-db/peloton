@@ -481,16 +481,21 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
     throw CatalogException("Database record: " + std::to_string(database_oid) +
                            " does not exist in pg_database");
 
-  // Drop actual database object
-  LOG_TRACE("Dropping database with oid: %d", database_oid);
-  std::lock_guard<std::mutex> lock(catalog_mutex);
-  bool found_database =
-      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-  if (!found_database) {
-    LOG_TRACE("Database %d is not found!", database_oid);
-    return ResultType::FAILURE;
-  }
-  return ResultType::SUCCESS;
+  // Register database in garbage collector
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  txn->GetGCObjectSetPtr()->emplace_back(database_oid, INVALID_OID,
+                                         INVALID_OID);
+
+  // Instead of dropping actual database object
+  // LOG_TRACE("Dropping database with oid: %d", database_oid);
+  // std::lock_guard<std::mutex> lock(catalog_mutex);
+  // bool found_database =
+  //     storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+  // if (!found_database) {
+  //   LOG_TRACE("Database %d is not found!", database_oid);
+  //   return ResultType::FAILURE;
+  // }
+  // return ResultType::SUCCESS;
 }
 
 /*@brief   Drop table
@@ -577,8 +582,13 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(table_object->database_oid,
                                                 index_object->table_oid);
-  // drop index in storage level table
-  table->DropIndexWithOid(index_oid);
+  // register index object in garbage collector
+  auto index = table->GetIndexWithOid(index_oid);
+  txn->GetGCObjectSetPtr()->emplace_back(table_object->database_oid,
+                                         table_object->table_oid, index_oid);
+  // instead of drop index in storage level table
+  // table->DropIndexWithOid(index_oid);
+
   // drop record in pg_index
   IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
   LOG_TRACE("Successfully drop index %d for table %s", index_oid,
@@ -784,10 +794,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction(
-      "substr",
-      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
-      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                         type::TypeId::INTEGER},
+              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -796,10 +805,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction(
-      "replace",
-      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                          type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
