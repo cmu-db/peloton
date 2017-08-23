@@ -51,9 +51,7 @@ class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
 
-  explicit CreatePlan(storage::DataTable *table);
-
-  explicit CreatePlan(std::string name, std::string database_name,
+  explicit CreatePlan(std::string table_name, std::string database_name,
                       std::unique_ptr<catalog::Schema> schema,
                       CreateType c_type);
 
@@ -64,7 +62,9 @@ class CreatePlan : public AbstractPlan {
   const std::string GetInfo() const { return "Create Plan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new CreatePlan(target_table_));
+    return std::unique_ptr<AbstractPlan>(new CreatePlan(
+        table_name, database_name,
+        std::unique_ptr<catalog::Schema>(table_schema), create_type));
   }
 
   std::string GetIndexName() const { return index_name; }
@@ -112,9 +112,6 @@ protected:
                                      const parser::ColumnDefinition *col);
 
  private:
-  // Target Table
-  storage::DataTable *target_table_ = nullptr;
-
   // Table Name
   std::string table_name;
 

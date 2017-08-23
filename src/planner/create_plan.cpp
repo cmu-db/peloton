@@ -20,15 +20,10 @@
 namespace peloton {
 namespace planner {
 
-CreatePlan::CreatePlan(storage::DataTable *table) {
-  target_table_ = table;
-  table_schema = nullptr;
-}
-
-CreatePlan::CreatePlan(std::string name, std::string database_name,
+CreatePlan::CreatePlan(std::string table_name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
                        CreateType c_type) {
-  table_name = name;
+  table_name = table_name;
   this->database_name = database_name;
   table_schema = schema.release();
   create_type = c_type;
@@ -159,8 +154,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     trigger_name = std::string(parse_tree->trigger_name);
     if (parse_tree->trigger_when) {
       trigger_when.reset(parse_tree->trigger_when->Copy());
-    }
-    else {
+    } else {
       trigger_when.reset();
     }
     trigger_type = parse_tree->trigger_type;
@@ -209,8 +203,7 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
 expression::AbstractExpression *CreatePlan::GetTriggerWhen() const {
   if (trigger_when) {
     return trigger_when->Copy();
-  }
-  else {
+  } else {
     return nullptr;
   }
 }
