@@ -27,7 +27,7 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
  public:
   DeleteTranslatorTest() : PelotonCodeGenTest() {}
 
-  size_t GetCurrentTableSize(TableId table_id) {
+  size_t GetCurrentTableSize(oid_t table_id) {
     planner::SeqScanPlan scan{&GetTestTable(table_id), nullptr, {0, 1}};
     planner::BindingContext context;
     scan.PerformBinding(context);
@@ -37,10 +37,10 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
     return buffer.GetOutputTuples().size();
   }
 
-  TableId TestTableId1() { return TableId::_1; }
-  TableId TestTableId2() { return TableId::_2; }
-  TableId TestTableId3() { return TableId::_3; }
-  TableId TestTableId4() { return TableId::_4; }
+  oid_t TestTableId1() { return test_table_oids[0]; }
+  oid_t TestTableId2() { return test_table_oids[1]; }
+  oid_t TestTableId3() { return test_table_oids[2]; }
+  oid_t TestTableId4() { return test_table_oids[3]; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
  private:

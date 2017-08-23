@@ -24,7 +24,7 @@ class OrderByTranslatorTest : public PelotonCodeGenTest {
  public:
   OrderByTranslatorTest() : PelotonCodeGenTest() {}
 
-  TableId TestTableId() { return TableId::_1; }
+  oid_t TestTableId() { return test_table_oids[0]; }
 };
 
 TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {

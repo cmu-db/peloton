@@ -32,7 +32,7 @@ class GroupByTranslatorTest : public PelotonCodeGenTest {
     LoadTestTable(TestTableId(), num_rows);
   }
 
-  TableId TestTableId() const { return TableId::_1; }
+  oid_t TestTableId() const { return test_table_oids[0]; }
 };
 
 TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
@@ -82,7 +82,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
 
   // Compile and run
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -143,7 +143,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -203,7 +203,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -265,7 +265,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -325,7 +325,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results. We expect four because the "A" col increases by 10 for each
   // row. For 10 rows, the four rows with A = 60, 70, 80, 90 are valid.
@@ -379,7 +379,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -437,7 +437,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // There should only be a single output row
   const auto &results = buffer.GetOutputTuples();

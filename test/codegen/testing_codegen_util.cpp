@@ -28,20 +28,26 @@ namespace test {
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest()
-    : test_db(new storage::Database(test_db_id)) {
-  // Create test table
-  CreateTestTables();
+PelotonCodeGenTest::PelotonCodeGenTest() {
+  auto *catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
-  // Add DB to catalog
-  catalog::Catalog::GetInstance()->AddDatabase(test_db);
+  // create test db
+  catalog->CreateDatabase(test_db_name, txn);
+  test_db = catalog->GetDatabaseWithName(test_db_name, txn);
+
+  // Create test table
+  CreateTestTables(txn);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->DropDatabaseWithOid(test_db_id, txn);
+  auto result = catalog->DropDatabaseWithName(test_db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
 }
@@ -51,8 +57,10 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   bool is_inlined = true;
 
   // Create the columns
-  static const uint32_t int_size = type::Type::GetTypeSize(type::TypeId::INTEGER);
-  static const uint32_t dec_size = type::Type::GetTypeSize(type::TypeId::DECIMAL);
+  static const uint32_t int_size =
+      type::Type::GetTypeSize(type::TypeId::INTEGER);
+  static const uint32_t dec_size =
+      type::Type::GetTypeSize(type::TypeId::DECIMAL);
   std::vector<catalog::Column> cols = {
       catalog::Column{type::TypeId::INTEGER, int_size, "COL_A", is_inlined},
       catalog::Column{type::TypeId::INTEGER, int_size, "COL_B", is_inlined},
@@ -72,43 +80,20 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
 }
 
 // Create all the test tables, but don't load any data
-void PelotonCodeGenTest::CreateTestTables() {
-  const int tuples_per_tilegroup = 32;
-  const bool adapt_table = false;
-  const bool own_schema = true;
+void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
+  auto *catalog = catalog::Catalog::GetInstance();
 
-  // Table 1
-  auto table1_schema = CreateTestSchema();
-  auto *table1 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), (uint32_t)TableId::_1, table1_schema.release(),
-      "table1", tuples_per_tilegroup, own_schema, adapt_table);
-
-  // Table 2
-  auto table2_schema = CreateTestSchema();
-  auto *table2 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), (uint32_t)TableId::_2, table2_schema.release(),
-      "table2", tuples_per_tilegroup, own_schema, adapt_table);
-
-  // Table 3
-  auto table3_schema = CreateTestSchema();
-  auto *table3 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), (uint32_t)TableId::_3, table3_schema.release(),
-      "table3", tuples_per_tilegroup, own_schema, adapt_table);
-
-  // Table 4
-  auto table4_schema = CreateTestSchema();
-  auto *table4 = storage::TableFactory::GetDataTable(
-      GetDatabase().GetOid(), (uint32_t)TableId::_4, table4_schema.release(),
-      "table4", tuples_per_tilegroup, own_schema, adapt_table);
-
-  // Insert all tables into the test database
-  GetDatabase().AddTable(table1, false);
-  GetDatabase().AddTable(table2, false);
-  GetDatabase().AddTable(table3, false);
-  GetDatabase().AddTable(table4, false);
+  for (int i = 0; i < 4; i++) {
+    auto table_schema = CreateTestSchema();
+    catalog->CreateTable(test_db_name, test_table_names[i],
+                         std::move(table_schema), txn);
+    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
+                                                      test_table_names[i],
+                                                      txn)->table_oid);
+  }
 }
 
-void PelotonCodeGenTest::LoadTestTable(TableId table_id, uint32_t num_rows,
+void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
                                        bool insert_nulls) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -166,9 +151,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, consumer, &stats);
 
   // Run
-  compiled_query->Execute(*txn,
-                          std::unique_ptr<executor::ExecutorContext> (
-                             new executor::ExecutorContext{txn}).get(),
+  compiled_query->Execute(*txn, std::unique_ptr<executor::ExecutorContext>(
+                                    new executor::ExecutorContext{txn}).get(),
                           consumer_state);
 
   txn_manager.CommitTransaction(txn);
