@@ -233,6 +233,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
     PL_ASSERT(table != nullptr);
     if (index_oid == INVALID_OID) {
       database->DropTableWithOid(table_oid);
+      LOG_DEBUG("GCing table %u", table_oid);
       continue;
     }
     auto index = table->GetIndexWithOid(index_oid);

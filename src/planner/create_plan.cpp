@@ -22,12 +22,11 @@ namespace planner {
 
 CreatePlan::CreatePlan(std::string table_name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
-                       CreateType c_type) {
-  table_name = table_name;
-  this->database_name = database_name;
-  table_schema = schema.release();
-  create_type = c_type;
-}
+                       CreateType c_type)
+    : table_name(table_name),
+      database_name(database_name),
+      table_schema(schema.release()),
+      create_type(c_type) {}
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   table_name = parse_tree->GetTableName();

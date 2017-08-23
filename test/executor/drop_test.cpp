@@ -36,6 +36,7 @@ class DropTests : public PelotonTest {};
 
 TEST_F(DropTests, DroppingTable) {
   auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -65,12 +66,16 @@ TEST_F(DropTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
+  EXPECT_EQ((int)catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                ->GetTableObjects()
+                .size(),
             2);
 
   // Now dropping the table using the executer
   catalog->DropTable(DEFAULT_DB_NAME, "department_table", txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
+  EXPECT_EQ((int)catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                ->GetTableObjects()
+                .size(),
             1);
 
   // free the database just created
