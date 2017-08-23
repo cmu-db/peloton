@@ -1199,9 +1199,7 @@ std::ostream &operator<<(std::ostream &os, const GCVersionType &type);
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, GCVersionType>> 
     GCSet;
 
-// object type
-enum class ObjectType { INVALID = 0, DATABASE = 1, TABLE = 2, INDEX = 3 };
-typedef std::vector<std::pair<void *, ObjectType>> GcObjectSet;
+typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GcObjectSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
