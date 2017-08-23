@@ -14,10 +14,10 @@
 
 #include "optimizer/optimizer.h"
 
-#include "catalog/manager.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/manager.h"
+#include "catalog/table_catalog.h"
 
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
@@ -142,7 +142,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan((parser::DropStatement *)tree, txn));
+          new planner::DropPlan((parser::DropStatement *)tree));
       ddl_plan = move(drop_plan);
       break;
     }
