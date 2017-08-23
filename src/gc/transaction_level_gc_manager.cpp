@@ -19,6 +19,7 @@
 #include "storage/database.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace gc {
@@ -218,9 +219,9 @@ void TransactionLevelGCManager::AddToRecycleMap(
 
   auto storage_manager = storage::StorageManager::GetInstance();
   for (auto &entry : *(garbage_ctx->gc_object_set_.get())) {
-    oid_t database_oid = Get<0>(entry);
-    oid_t table_oid = Get<1>(entry);
-    oid_t index_oid = Get<2>(entry);
+    oid_t database_oid = std::get<0>(entry);
+    oid_t table_oid = std::get<1>(entry);
+    oid_t index_oid = std::get<2>(entry);
     PL_ASSERT(database_oid != INVALID_OID);
     auto database = storage_manager->GetDatabaseWithOid(database_oid);
     PL_ASSERT(database != nullptr);
