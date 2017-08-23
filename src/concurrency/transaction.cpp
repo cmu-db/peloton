@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/transaction.h"
 
 #include <sstream>
@@ -57,16 +56,14 @@ Transaction::Transaction(const size_t thread_id,
 
 Transaction::Transaction(const size_t thread_id,
                          const IsolationLevelType isolation,
-                         const cid_t &read_id,
-                         const cid_t &commit_id) {
+                         const cid_t &read_id, const cid_t &commit_id) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
 Transaction::~Transaction() {}
 
 void Transaction::Init(const size_t thread_id,
-                       const IsolationLevelType isolation,
-                       const cid_t &read_id,
+                       const IsolationLevelType isolation, const cid_t &read_id,
                        const cid_t &commit_id) {
   read_id_ = read_id;
 
@@ -87,6 +84,7 @@ void Transaction::Init(const size_t thread_id,
   insert_count_ = 0;
 
   gc_set_.reset(new GCSet());
+  gc_object_set_.reset(new GCObjectSet());
 
   on_commit_triggers_.reset();
 }
@@ -140,7 +138,7 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
 void Transaction::RecordUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  
+
   if (IsInRWSet(location)) {
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
@@ -170,13 +168,12 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
 void Transaction::RecordInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  
+
   if (IsInRWSet(location)) {
     PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
     ++insert_count_;
-
   }
 }
 
