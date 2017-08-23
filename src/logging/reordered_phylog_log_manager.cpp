@@ -53,7 +53,8 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
 
   // First serialize the epoch to current output buffer
   // TODO: Eliminate this extra copy
-  auto &output = output_buffer_;
+  if(likely_branch(is_running_)){
+    auto &output = output_buffer_;
 
   // Reset the output buffer
   output.Reset();
@@ -138,6 +139,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
     is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
     PL_ASSERT(is_success);
   }
+  }
 }
 
 
@@ -154,25 +156,6 @@ void ReorderedPhyLogLogManager::EndPersistTxn(cid_t current_cid) {
 //  tl_worker_ctx->current_commit_eid = MAX_EID;
 }
 
-void ReorderedPhyLogLogManager::StartTxn(){ //concurrency::Transaction *txn) {
-//  PL_ASSERT(tl_worker_ctx);
-//  size_t cur_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
-
-//  tl_worker_ctx->current_commit_eid = cur_eid;
-
-//  size_t epoch_idx = cur_eid % concurrency::EpochManager::GetEpochQueueCapacity();
-
-//  if (tl_worker_ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == true) {
-//    RegisterNewBufferToEpoch(std::move(tl_worker_ctx->buffer_pool.GetBuffer(cur_eid)));
-//  }
-
-  // Record the txn timer
-  //DurabilityFactory::StartTxnTimer(cur_eid, tl_worker_ctx);
-
-  // Handle the commit id
-//  cid_t txn_cid = txn->GetCommitId();
-//  tl_worker_ctx->current_cid = txn_cid;
-}
 
 void ReorderedPhyLogLogManager::LogInsert(const ItemPointer &tuple_pos) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, tuple_pos);
@@ -191,121 +174,20 @@ void ReorderedPhyLogLogManager::LogDelete(const ItemPointer &tuple_pos_deleted) 
 }
 
 void ReorderedPhyLogLogManager::DoRecovery(){
-  //size_t end_eid = RecoverPepoch();
-//  size_t recovery_thread_per_logger = (size_t) ceil(recovery_thread_count_ * 1.0 / logger_count_);
-
-//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-//    LOG_DEBUG("Start logger %d for recovery", (int) logger_id);
-    // TODO: properly set this two eid
     logger_->StartRecovery();
-//  }
-
-//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
     logger_->WaitForRecovery();
-//  }
-
-  // Rebuild all secondary indexes
-//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-    //logger_->StartIndexRebulding(logger_count_);
-//  }
-
-//  for (size_t logger_id = 0; logger_id < logger_count_; ++logger_id) {
-//    logger_->WaitForIndexRebuilding();
-//  }
-
-  // Reset the epoch manager
-//  concurrency::EpochManagerFactory::GetInstance().Reset(end_eid + 1);
-}
+ }
 
 void ReorderedPhyLogLogManager::StartLoggers() {
-    logger_->StartLogging();
-//    logger_->manager_ = this;
+  logger_->SetLogBuffer(buffer_ptr_);
+  logger_->StartLogging();
   is_running_ = true;
-  pepoch_thread_.reset(new std::thread(&ReorderedPhyLogLogManager::RunPepochLogger, this));
 }
 
 void ReorderedPhyLogLogManager::StopLoggers() {
-    logger_->StopLogging();
+  logger_->StopLogging();
   is_running_ = false;
-  pepoch_thread_->join();
-}
 
-void ReorderedPhyLogLogManager::RunPepochLogger() {
-
-  FileHandle file_handle;
-  std::string filename = pepoch_dir_ + "/" + pepoch_filename_;
-  // Create a new file
-  if (LoggingUtil::OpenFile(filename.c_str(), "wb", file_handle) == false) {
-    LOG_ERROR("Unable to create pepoch file %s\n", filename.c_str());
-    exit(EXIT_FAILURE);
-  }
-
-
-  while (true) {
-    if (is_running_ == false) {
-      break;
-    }
-
-    std::this_thread::sleep_for(std::chrono::microseconds
-                                  (concurrency::EpochManagerFactory::GetInstance().GetEpochLengthInMicroSecQuarter())
-    );
-
-    size_t curr_persist_epoch_id = MAX_EID;
-//    for (auto &logger : loggers_) {
-      size_t logger_pepoch_id = logger_->GetPersistEpochId();
-      if (logger_pepoch_id < curr_persist_epoch_id) {
-        curr_persist_epoch_id = logger_pepoch_id;
-      }
-//    }
-
-    PL_ASSERT(curr_persist_epoch_id < MAX_EID);
-    size_t glob_peid = global_persist_epoch_id_.load();
-    if (curr_persist_epoch_id > glob_peid) {
-      // we should post the pepoch id after the fsync -- Jiexi
-      fwrite((const void *) (&curr_persist_epoch_id), sizeof(curr_persist_epoch_id), 1, file_handle.file);
-      global_persist_epoch_id_ = curr_persist_epoch_id;
-      // printf("global persist epoch id = %d\n", (int)global_persist_epoch_id_);
-      // Call fsync
-      LoggingUtil::FFlushFsync(file_handle);
-    }
-  }
-
-  // Safely close the file
-  bool res = LoggingUtil::CloseFile(file_handle);
-  if (res == false) {
-    LOG_ERROR("Cannot close pepoch file");
-    exit(EXIT_FAILURE);
-  }
-
-}
-
-size_t ReorderedPhyLogLogManager::RecoverPepoch() {
-  FileHandle file_handle;
-  std::string filename = pepoch_dir_ + "/" + pepoch_filename_;
-  // Create a new file
-  if (LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle) == false) {
-    LOG_ERROR("Unable to open pepoch file %s\n", filename.c_str());
-    exit(EXIT_FAILURE);
-  }
-
-  size_t persist_epoch_id = 0;
-
-  while (true) {
-    if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &persist_epoch_id, sizeof(persist_epoch_id)) == false) {
-      LOG_DEBUG("Reach the end of the log file");
-      break;
-    }
-    //printf("persist_epoch_id = %d\n", (int)persist_epoch_id);
-  }
-
-  // Safely close the file
-  bool res = LoggingUtil::CloseFile(file_handle);
-  if (res == false) {
-    LOG_ERROR("Cannot close pepoch file");
-    exit(EXIT_FAILURE);
-  }
-
-  return persist_epoch_id;
 }
 
 }

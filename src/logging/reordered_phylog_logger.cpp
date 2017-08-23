@@ -19,6 +19,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index_factory.h"
 
+#include "catalog/column.h"
 #include "catalog/manager.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/container_tuple.h"
@@ -246,7 +247,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
   size_t buf_size = 4096;
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
-
+  std::vector<catalog::Column> columns;
   // TODO: Need some file integrity check. Now we just rely on the the pepoch id and the checkpoint eid
   while (true) {
     // Read the frame length
@@ -336,6 +337,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
         oid_t database_id = (oid_t) record_decode.ReadLong();
         oid_t table_id = (oid_t) record_decode.ReadLong();
 
+
         // XXX: We still rely on an alive catalog manager
         auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
         auto schema = table->GetSchema();
@@ -351,6 +353,26 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
 
         // Install the record
         InstallTupleRecord(record_type, tuple.get(), table, current_cid);
+        if(database_id == 16777216){ //catalog database oid
+            switch (table_id){
+                case 33554433: //pg_table
+                    {auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
+                    database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
+                    LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
+                    break;}
+                case 33554435: //pg_attribute
+                    {
+                    std::string typeId = tuple->GetValue(4).ToString();
+                    type::TypeId column_type = StringToTypeId(typeId);
+                    if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
+                        //columns.push_back(catalog::Column(column_type,));
+                    } else {
+                        columns.push_back(catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
+                    }
+                    LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
+                    break;}
+            }
+        }
         break;
       }
       default:
@@ -451,17 +473,17 @@ void ReorderedPhyLogLogger::Run() {
 
   //size_t file_epoch_count = 1; //(size_t)(new_file_interval_ / epoch_manager.GetEpochDurationMilliSecond());
 
-  std::list<std::pair<FileHandle*, size_t>> file_handles;
+  //std::list<std::pair<FileHandle*, size_t>> file_handles;
 
-  FileHandle *new_file_handle = new FileHandle();
-  file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
+  //FileHandle *new_file_handle = new FileHandle();
+  //file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
 
-  std::string filename = GetLogFileFullPath(current_file_eid_);
+  //std::string filename = GetLogFileFullPath(current_file_eid_);
   // Create a new file
-  if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
+  /*if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
     LOG_ERROR("Unable to create log file %s\n", filename.c_str());
     exit(EXIT_FAILURE);
-  }
+  }*/
 
 //  auto &epoch_mamager = concurrency::EpochManagerFactory::GetInstance();
 
@@ -666,7 +688,6 @@ void ReorderedPhyLogLogger::PersistEpochEnd(FileHandle &file_handle, const size_
 }
 
 void ReorderedPhyLogLogger::PersistLogBuffer(LogBuffer* log_buffer) {
-    current_file_eid_ = current_file_eid_ + 1;
     FileHandle *new_file_handle = new FileHandle();
     //file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
 
@@ -694,6 +715,8 @@ void ReorderedPhyLogLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     }
 
     delete new_file_handle;
+    current_file_eid_ = current_file_eid_ + 1;
+
 //    new_file_handle = nullptr;
 
   // Return the buffer to the worker
