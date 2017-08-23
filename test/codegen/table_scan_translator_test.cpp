@@ -33,7 +33,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  TableId TestTableId() { return TableId::_1; }
+  oid_t TestTableId() { return test_table_oids[0]; }
 
  private:
   uint32_t num_rows_to_insert = 64;
@@ -58,7 +58,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
@@ -72,7 +72,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // Setup the scan plan node
-  auto &table = GetTestTable(TestTableId());
+  auto& table = GetTestTable(TestTableId());
   planner::SeqScanPlan scan{&table, a_gt_20.release(), {0, 1, 2}};
 
   // Do binding
@@ -104,7 +104,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
       CmpLtExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(20));
 
   // Setup the scan plan node
-  auto &table = GetTestTable(TestTableId());
+  auto& table = GetTestTable(TestTableId());
   planner::SeqScanPlan scan{&table, b_lt_20.release(), {0, 1, 2}};
 
   // Do binding
@@ -118,7 +118,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(2, results.size());
 
   // First tuple should be (0, 1)
@@ -148,7 +148,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   // 2) Setup the scan plan node
-  auto &table = GetTestTable(TestTableId());
+  auto& table = GetTestTable(TestTableId());
   planner::SeqScanPlan scan{&table, a_gt_40.release(), {0, 1}};
 
   // 3) Do binding
@@ -162,7 +162,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
@@ -182,7 +182,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
-  auto *conj_eq = new expression::ConjunctionExpression(
+  auto* conj_eq = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   // 2) Setup the scan plan node
@@ -341,8 +341,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   auto* b_rhs_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* b_minus_a = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER,
-      b_rhs_col_exp, a_col_exp);
+      ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER, b_rhs_col_exp,
+      a_col_exp);
 
   // b = b - a
   auto* b_lhs_col_exp =
@@ -381,8 +381,8 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto* const_1_exp = ConstIntExpr(2).release();
   auto* a_div_1 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_DIVIDE, type::TypeId::INTEGER,
-      a_rhs_col_exp, const_1_exp);
+      ExpressionType::OPERATOR_DIVIDE, type::TypeId::INTEGER, a_rhs_col_exp,
+      const_1_exp);
 
   // a = a / 1
   auto* a_lhs_col_exp =
@@ -423,8 +423,8 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   auto* b_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto* a_mul_b = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_rhs_col_exp, b_col_exp);
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT, a_rhs_col_exp,
+      b_col_exp);
 
   // a = a * b
   auto* a_lhs_col_exp =

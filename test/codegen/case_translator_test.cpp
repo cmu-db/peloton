@@ -34,7 +34,7 @@ class CaseTranslatorTest : public PelotonCodeGenTest {
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  TableId TestTableId() { return TableId::_1; }
+  oid_t TestTableId() { return test_table_oids[0]; }
 
  private:
   uint32_t num_rows_to_insert = 64;

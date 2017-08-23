@@ -33,14 +33,15 @@ namespace test {
 
 //===----------------------------------------------------------------------===//
 // Common base class for all codegen tests. This class four test tables that all
-// the codegen components use. Their ID's are available through the TableId
+// the codegen components use. Their ID's are available through the oid_t
 // enumeration.
 //===----------------------------------------------------------------------===//
 class PelotonCodeGenTest : public PelotonTest {
  public:
-  enum class TableId : uint32_t { _1 = 44, _2 = 45, _3 = 46, _4 = 47 };
-  // never use INVALID_OID
-  const uint32_t test_db_id = INVALID_OID - 1;
+  std::string test_db_name = "PELOTON_CODEGEN";
+  std::vector<std::string> test_table_names = {"table1", "table2", "table3",
+                                               "table4"};
+  std::vector<oid_t> test_table_oids;
 
   PelotonCodeGenTest();
 
@@ -50,7 +51,7 @@ class PelotonCodeGenTest : public PelotonTest {
   storage::Database &GetDatabase() const { return *test_db; }
 
   // Get the test table with the given ID
-  storage::DataTable &GetTestTable(TableId table_id) const {
+  storage::DataTable &GetTestTable(oid_t table_id) const {
     return *GetDatabase().GetTableWithOid(static_cast<uint32_t>(table_id));
   }
 
@@ -58,10 +59,10 @@ class PelotonCodeGenTest : public PelotonTest {
   std::unique_ptr<catalog::Schema> CreateTestSchema() const;
 
   // Create the test tables
-  void CreateTestTables();
+  void CreateTestTables(concurrency::Transaction *txn);
 
   // Load the given table with the given number of rows
-  void LoadTestTable(TableId table_id, uint32_t num_rows,
+  void LoadTestTable(oid_t table_id, uint32_t num_rows,
                      bool insert_nulls = false);
 
   // Compile and execute the given plan

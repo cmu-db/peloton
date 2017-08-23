@@ -36,9 +36,9 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
     LoadTestTable(RightTableId(), 8 * num_rows);
   }
 
-  TableId LeftTableId() const { return TableId::_1; }
+  oid_t LeftTableId() const { return test_table_oids[0]; }
 
-  TableId RightTableId() const { return TableId::_2; }
+  oid_t RightTableId() const { return test_table_oids[1]; }
 
   storage::DataTable &GetLeftTable() const {
     return GetTestTable(LeftTableId());
