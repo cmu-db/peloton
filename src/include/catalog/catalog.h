@@ -15,6 +15,8 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 
 namespace peloton {
 
