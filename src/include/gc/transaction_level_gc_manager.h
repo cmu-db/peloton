@@ -12,17 +12,17 @@
 
 #pragma once
 
+#include <list>
+#include <map>
 #include <thread>
 #include <unordered_map>
-#include <map>
 #include <vector>
-#include <list>
 
-#include "type/types.h"
-#include "common/logger.h"
 #include "common/init.h"
+#include "common/logger.h"
 #include "common/thread_pool.h"
 #include "gc/gc_manager.h"
+#include "type/types.h"
 
 #include "container/lock_free_queue.h"
 
@@ -32,36 +32,33 @@ namespace gc {
 #define MAX_QUEUE_LENGTH 100000
 #define MAX_ATTEMPT_COUNT 100000
 
-
 struct GarbageContext {
   GarbageContext() : epoch_id_(INVALID_EID) {}
-  GarbageContext(std::shared_ptr<GCSet> gc_set, 
-                 const eid_t &epoch_id) {
-    gc_set_ = gc_set;
-    epoch_id_ = epoch_id;
-  }
+  GarbageContext(std::shared_ptr<GCSet> gc_set,
+                 std::shared_ptr<GCObjectSet> gc_object_set,
+                 const eid_t &epoch_id)
+      : gc_set_(gc_set), gc_object_set_(gc_object_set), epoch_id_(epoch_id) {}
 
   std::shared_ptr<GCSet> gc_set_;
+  std::shared_ptr<GCObjectSet> gc_object_set_;
   eid_t epoch_id_;
 };
 
 class TransactionLevelGCManager : public GCManager {
-public:
-  TransactionLevelGCManager(const int thread_count) 
-    : gc_thread_count_(thread_count),
-      reclaim_maps_(thread_count) {
-
+ public:
+  TransactionLevelGCManager(const int thread_count)
+      : gc_thread_count_(thread_count), reclaim_maps_(thread_count) {
     unlink_queues_.reserve(thread_count);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
-        new LockFreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
-      );
+      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>>
+          unlink_queue(new LockFreeQueue<std::shared_ptr<GarbageContext>>(
+              MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
     }
   }
 
-  virtual ~TransactionLevelGCManager() { }
+  virtual ~TransactionLevelGCManager() {}
 
   // this function cleans up all the member variables in the class object.
   virtual void Reset() override {
@@ -70,9 +67,9 @@ public:
 
     unlink_queues_.reserve(gc_thread_count_);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
-        new LockFreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
-      );
+      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>>
+          unlink_queue(new LockFreeQueue<std::shared_ptr<GarbageContext>>(
+              MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
     }
@@ -84,18 +81,19 @@ public:
     is_running_ = false;
   }
 
-  static TransactionLevelGCManager& GetInstance(const int thread_count = 1) {
+  static TransactionLevelGCManager &GetInstance(const int thread_count = 1) {
     static TransactionLevelGCManager gc_manager(thread_count);
     return gc_manager;
   }
 
-  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) override {
+  virtual void StartGC(
+      std::vector<std::unique_ptr<std::thread>> &gc_threads) override {
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
     gc_threads.resize(gc_thread_count_);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
-
+      gc_threads[i].reset(
+          new std::thread(&TransactionLevelGCManager::Running, this, i));
     }
   }
 
@@ -103,7 +101,8 @@ public:
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
     for (int i = 0; i < gc_thread_count_; ++i) {
-      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
+      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this,
+                                      std::move(i));
     }
   };
 
@@ -112,14 +111,18 @@ public:
     this->is_running_ = false;
   }
 
-  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const eid_t &epoch_id, const size_t &thread_id) override;
+  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set,
+                                  std::shared_ptr<GCObjectSet> gc_object_set,
+                                  const eid_t &epoch_id,
+                                  const size_t &thread_id) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
   virtual void RegisterTable(const oid_t &table_id) override {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
-      std::shared_ptr<LockFreeQueue<ItemPointer>> recycle_queue(new LockFreeQueue<ItemPointer>(MAX_QUEUE_LENGTH));
+      std::shared_ptr<LockFreeQueue<ItemPointer>> recycle_queue(
+          new LockFreeQueue<ItemPointer>(MAX_QUEUE_LENGTH));
       recycle_queue_map_[table_id] = recycle_queue;
     }
   }
@@ -131,16 +134,13 @@ public:
     }
   }
 
-  virtual size_t GetTableCount() override {
-    return recycle_queue_map_.size();
-  }
+  virtual size_t GetTableCount() override { return recycle_queue_map_.size(); }
 
   int Unlink(const int &thread_id, const eid_t &expired_eid);
 
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
-private:
-
+ private:
   inline unsigned int HashToThread(const size_t &thread_id) {
     return (unsigned int)thread_id % gc_thread_count_;
   }
@@ -153,15 +153,15 @@ private:
 
   bool ResetTuple(const ItemPointer &);
 
-  // this function iterates the gc context and unlinks every version 
+  // this function iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
-  void UnlinkVersions(const std::shared_ptr<GarbageContext>& garbage_ctx);
+  void UnlinkVersions(const std::shared_ptr<GarbageContext> &garbage_ctx);
 
   // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -170,8 +170,10 @@ private:
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
-  std::vector<std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
-  
+  std::vector<
+      std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>>
+      unlink_queues_;
+
   // local queues for to-be-unlinked tuples.
   // # local_unlink_queues == # gc_threads
   std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
@@ -180,13 +182,14 @@ private:
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
   // # reclaim_maps == # gc_threads
-  std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>> reclaim_maps_;
+  std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>>
+      reclaim_maps_;
 
   // queues for to-be-reused tuples.
   // # recycle_queue_maps == # tables
-  std::unordered_map<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>> recycle_queue_map_;
-
+  std::unordered_map<oid_t,
+                     std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>
+      recycle_queue_map_;
 };
 }
-}
-
+}  // namespace peloton

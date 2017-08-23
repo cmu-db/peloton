@@ -12,13 +12,13 @@
 
 #include "gc/transaction_level_gc_manager.h"
 
-#include "storage/tuple.h"
+#include "catalog/manager.h"
+#include "common/container_tuple.h"
+#include "concurrency/epoch_manager_factory.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/database.h"
 #include "storage/tile_group.h"
-#include "catalog/manager.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "concurrency/epoch_manager_factory.h"
-#include "common/container_tuple.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace gc {
@@ -51,7 +51,7 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   uint32_t backoff_shifts = 0;
   while (true) {
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-    
+
     auto expired_eid = epoch_manager.GetExpiredEpochId();
 
     // When the DBMS has started working but it never processes any transaction,
@@ -81,17 +81,17 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   }
 }
 
-
-void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, 
-                                                   const eid_t &epoch_id, 
-                                                   const size_t &thread_id) {
+void TransactionLevelGCManager::RecycleTransaction(
+    std::shared_ptr<GCSet> gc_set, std::shared_ptr<GCObjectSet> gc_object_set,
+    const eid_t &epoch_id, const size_t &thread_id) {
   // Add the garbage context to the lock-free queue
-  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, epoch_id));
+  std::shared_ptr<GarbageContext> gc_context(
+      new GarbageContext(gc_set, gc_object_set, epoch_id));
   unlink_queues_[HashToThread(thread_id)]->Enqueue(gc_context);
 }
 
-int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired_eid) {
-  
+int TransactionLevelGCManager::Unlink(const int &thread_id,
+                                      const eid_t &expired_eid) {
   int tuple_counter = 0;
 
   // check if any garbage can be unlinked from indexes.
@@ -100,19 +100,18 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-    [&garbages, &tuple_counter, expired_eid, this]
-        (const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
-      bool res = garbage_ctx->epoch_id_ <= expired_eid;
-      if (res == true) {
-        // unlink versions from version chain and indexes
-        UnlinkVersions(garbage_ctx);
-        // Add to the garbage map
-        garbages.push_back(garbage_ctx);
-        tuple_counter++;
-      }
-      return res;
-    }
-  );
+      [&garbages, &tuple_counter, expired_eid,
+       this](const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
+        bool res = garbage_ctx->epoch_id_ <= expired_eid;
+        if (res == true) {
+          // unlink versions from version chain and indexes
+          UnlinkVersions(garbage_ctx);
+          // Add to the garbage map
+          garbages.push_back(garbage_ctx);
+          tuple_counter++;
+        }
+        return res;
+      });
 
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
     std::shared_ptr<GarbageContext> garbage_ctx;
@@ -122,11 +121,11 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
     }
 
     if (garbage_ctx->epoch_id_ <= expired_eid) {
+      // as the global expired epoch id is no less than the garbage version's
+      // epoch id, it means that no active transactions can read the version. As
+      // a result, we can delete all the tuples from the indexes to which it
+      // belongs.
 
-      // as the global expired epoch id is no less than the garbage version's epoch id,
-      // it means that no active transactions can read the version.
-      // As a result, we can delete all the tuples from the indexes to which it belongs.
-      
       // unlink versions from version chain and indexes
       UnlinkVersions(garbage_ctx);
       // Add to the garbage map
@@ -142,17 +141,19 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
   // once the current epoch id is expired, then we know all the transactions
   // that are active at this time point will be committed/aborted.
   // at that time point, it is safe to recycle the version.
-  eid_t safe_expired_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
+  eid_t safe_expired_eid =
+      concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
 
-  for(auto& item : garbages){
-      reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));
+  for (auto &item : garbages) {
+    reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));
   }
   LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
   return tuple_counter;
 }
 
 // executed by a single thread. so no synchronization is required.
-int TransactionLevelGCManager::Reclaim(const int &thread_id, const eid_t &expired_eid) {
+int TransactionLevelGCManager::Reclaim(const int &thread_id,
+                                       const eid_t &expired_eid) {
   int gc_counter = 0;
 
   // we delete garbage in the free list
@@ -161,8 +162,8 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id, const eid_t &expire
     const eid_t garbage_eid = garbage_ctx_entry->first;
     auto garbage_ctx = garbage_ctx_entry->second;
 
-    // if the global expired epoch id is no less than the garbage version's epoch id,
-    // then recycle the garbage version
+    // if the global expired epoch id is no less than the garbage version's
+    // epoch id, then recycle the garbage version
     if (garbage_eid <= expired_eid) {
       AddToRecycleMap(garbage_ctx);
 
@@ -251,32 +252,29 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
 void TransactionLevelGCManager::UnlinkVersions(
     const std::shared_ptr<GarbageContext> &garbage_ctx) {
   for (auto entry : *(garbage_ctx->gc_set_.get())) {
-    for (auto &element : entry.second) {  
+    for (auto &element : entry.second) {
       UnlinkVersion(ItemPointer(entry.first, element.first), element.second);
     }
   }
 }
 
 // delete a tuple from all its indexes it belongs to.
-void TransactionLevelGCManager::UnlinkVersion(
-    const ItemPointer location, GCVersionType type) {
-
+void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
+                                              GCVersionType type) {
   // get indirection from the indirection array.
   auto tile_group =
       catalog::Manager::GetInstance().GetTileGroup(location.block);
-  
-  // if the corresponding tile group is deconstructed, 
+
+  // if the corresponding tile group is deconstructed,
   // then do nothing.
   if (tile_group == nullptr) {
     return;
   }
 
-  auto tile_group_header = catalog::Manager::GetInstance()
-                               .GetTileGroup(location.block)
-                               ->GetHeader();
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
 
-  ItemPointer *indirection =
-      tile_group_header->GetIndirection(location.offset);
+  ItemPointer *indirection = tile_group_header->GetIndirection(location.offset);
 
   // do nothing if indirection is null
   if (indirection == nullptr) {
@@ -290,13 +288,13 @@ void TransactionLevelGCManager::UnlinkVersion(
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   PL_ASSERT(table != nullptr);
 
-
-  // NOTE: for now, we only consider unlinking tuple versions from primary indexes.
+  // NOTE: for now, we only consider unlinking tuple versions from primary
+  // indexes.
   if (type == GCVersionType::COMMIT_UPDATE) {
     // the gc'd version is an old version.
     // this version needs to be reclaimed by the GC.
     // if the version differs from the previous one in some columns where
-    // secondary indexes are built on, then we need to unlink the previous 
+    // secondary indexes are built on, then we need to unlink the previous
     // version from the secondary index.
   } else if (type == GCVersionType::COMMIT_DELETE) {
     // the gc'd version is an old version.
@@ -306,7 +304,7 @@ void TransactionLevelGCManager::UnlinkVersion(
   } else if (type == GCVersionType::ABORT_UPDATE) {
     // the gc'd version is a newly created version.
     // if the version differs from the previous one in some columns where
-    // secondary indexes are built on, then we need to unlink this version 
+    // secondary indexes are built on, then we need to unlink this version
     // from the secondary index.
 
   } else if (type == GCVersionType::ABORT_DELETE) {
@@ -314,31 +312,27 @@ void TransactionLevelGCManager::UnlinkVersion(
     // need to recycle this version.
     // no index manipulation needs to be made.
   } else {
-    PL_ASSERT(type == GCVersionType::ABORT_INSERT || 
-              type == GCVersionType::COMMIT_INS_DEL || 
+    PL_ASSERT(type == GCVersionType::ABORT_INSERT ||
+              type == GCVersionType::COMMIT_INS_DEL ||
               type == GCVersionType::ABORT_INS_DEL);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
-
       auto index = table->GetIndex(idx);
       if (index == nullptr) continue;
       auto index_schema = index->GetKeySchema();
       auto indexed_columns = index_schema->GetIndexedColumns();
 
       // build key.
-      std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
-      current_key->SetFromTuple(&current_tuple, indexed_columns, index->GetPool());
+      std::unique_ptr<storage::Tuple> current_key(
+          new storage::Tuple(index_schema, true));
+      current_key->SetFromTuple(&current_tuple, indexed_columns,
+                                index->GetPool());
 
       index->DeleteEntry(current_key.get(), indirection);
     }
-
   }
-
-
-
 }
 
 }  // namespace gc
 }  // namespace peloton
-
