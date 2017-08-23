@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "planner/abstract_plan.h"
 #include "concurrency/transaction.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace storage {
@@ -32,13 +32,9 @@ class DropPlan : public AbstractPlan {
  public:
   DropPlan() = delete;
 
-  explicit DropPlan(storage::DataTable *table);
+  explicit DropPlan(std::string name);
 
-  explicit DropPlan(std::string name,
-                    concurrency::Transaction *txn);
-
-  explicit DropPlan(parser::DropStatement *parse_tree,
-                    concurrency::Transaction *txn);
+  explicit DropPlan(parser::DropStatement *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DROP; }
 
@@ -49,7 +45,7 @@ class DropPlan : public AbstractPlan {
   }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new DropPlan(target_table_));
+    return std::unique_ptr<AbstractPlan>(new DropPlan(table_name));
   }
 
   std::string GetTableName() const { return table_name; }
@@ -64,7 +60,7 @@ class DropPlan : public AbstractPlan {
   DropType drop_type = DropType::TABLE;
 
   // Target Table
-  storage::DataTable *target_table_ = nullptr;
+  // storage::DataTable *target_table_ = nullptr;
   std::string table_name;
   std::string trigger_name;
   bool missing;

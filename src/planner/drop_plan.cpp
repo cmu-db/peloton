@@ -19,15 +19,10 @@
 namespace peloton {
 namespace planner {
 
-DropPlan::DropPlan(storage::DataTable *table) {
-  target_table_ = table;
-  missing = false;
-}
-
-DropPlan::DropPlan(std::string name, concurrency::Transaction *txn) {
+DropPlan::DropPlan(std::string name) {
   table_name = name;
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name, txn);
+  // target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
+  //     DEFAULT_DB_NAME, table_name, txn);
   missing = false;
 }
 
@@ -38,16 +33,16 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree,
     // Set it up for the moment , cannot seem to find it in DropStatement
     missing = parse_tree->missing;
 
-    try {
-      target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-          parse_tree->GetDatabaseName(), table_name, txn);
-    } catch (CatalogException &e) {
-      // Dropping a table which doesn't exist
-      // missing == true, when using syntax drop table if exists foo
-      if (missing == false) {
-        throw & e;
-      }
-    }
+    // try {
+    //   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
+    //       parse_tree->GetDatabaseName(), table_name, txn);
+    // } catch (CatalogException &e) {
+    //   // Dropping a table which doesn't exist
+    //   // missing == true, when using syntax drop table if exists foo
+    //   if (missing == false) {
+    //     throw & e;
+    //   }
+    // }
   } else if (parse_tree->type == parser::DropStatement::EntityType::kTrigger) {
     // note parse_tree->table_name is different from parse_tree->GetTableName()
     table_name = std::string(parse_tree->table_name_of_trigger);

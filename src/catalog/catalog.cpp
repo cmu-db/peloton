@@ -520,9 +520,8 @@ ResultType Catalog::DropTable(const std::string &database_name,
   // check if table exists
   auto table_object = database_object->GetTableObject(table_name);
   if (table_object == nullptr) {
-    // return transaction type as SUCCESS
     // drop table if exists foo;
-    return ResultType::SUCCESS;
+    return ResultType::FAILURE;
   }
 
   ResultType result =
@@ -785,9 +784,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                         type::TypeId::INTEGER},
-              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction(
+      "substr",
+      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -796,9 +796,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                          type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction(
+      "replace",
+      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
