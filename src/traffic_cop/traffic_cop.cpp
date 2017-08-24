@@ -204,6 +204,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     curr_state.second = ResultType::SUCCESS;
     txn = txn_manager.BeginTransaction(thread_id);
     single_statement_txn_ = true;
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   } else {
     // get ptr to current active txn
     txn = curr_state.first;
