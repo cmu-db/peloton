@@ -37,7 +37,7 @@ class ProtocolHandler {
   //  bool ManageStartupPacket();
   virtual void SendInitialResponse();
 
-  virtual ProcessPacketResult Process(Buffer &rbuf, const size_t thread_id);
+  virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 
   virtual void Reset();
 

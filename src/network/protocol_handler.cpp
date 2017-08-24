@@ -27,10 +27,10 @@ namespace network {
   //  bool ManageStartupPacket();
   void ProtocolHandler::SendInitialResponse() {}
 
-  ProcessPacketResult ProtocolHandler::Process(
+  ProcessResult ProtocolHandler::Process(
       UNUSED_ATTRIBUTE Buffer& rbuf,
       UNUSED_ATTRIBUTE const size_t thread_id) {
-    return ProcessPacketResult::TERMINATE;
+    return ProcessResult::TERMINATE;
   }
 
   void ProtocolHandler::Reset() {}

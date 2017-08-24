@@ -355,34 +355,61 @@ std::string NetworkConnection::WriteBufferToString() {
   return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
 }
 
-ProcessInitialState NetworkConnection::ProcessInitial() {
+ProcessResult NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
   InputPacket rpkt;
+
   if (rpkt.header_parsed == false) {
     // parse out the header first
-    // TODO: this is a hack
-    if (PostgresProtocolHandler::ReadStartupPacketHeader(rbuf_, rpkt) == false) {
+    if (ReadStartupPacketHeader(rbuf_, rpkt) == false) {
       // need more data
-      return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
+      return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
   PL_ASSERT(rpkt.header_parsed == true);
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    //TODO: this is a hack
+    //TODO: If other protocols are added, this need to be changed
     if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
       // need more data
-      return ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED;
+      return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
 
   // We need to handle startup packet first
 
   if (!ProcessInitialPacket(&rpkt)) {
-    return ProcessInitialState::PROCESS_INITIAL_FAILED;
+    return ProcessResult::TERMINATE;
   }
-  return ProcessInitialState::PROCESS_INITIAL_SUCCESS;
+  return ProcessResult::COMPLETE;
+}
+
+// TODO: This function is now dedicated for postgres packet
+bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt) {
+  size_t initial_read_size = sizeof(int32_t);
+
+  if (!rbuf.IsReadDataAvailable(initial_read_size)){
+    return false;
+  }
+
+  // extract packet contents size
+  //content lengths should exclude the length
+  rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
+
+  // do we need to use the extended buffer for this packet?
+  rpkt.is_extended = (rpkt.len > rbuf.GetMaxSize());
+
+  if (rpkt.is_extended) {
+    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
+    // reserve space for the extended buffer
+    rpkt.ReserveExtendedBuffer();
+  }
+
+  // we have processed the data, move buffer pointer
+  rbuf.buf_ptr += initial_read_size;
+  rpkt.header_parsed = true;
+  return true;
 }
 
 /*
@@ -673,46 +700,49 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         }
 
         switch (conn->ProcessInitial()) {
-          case ProcessInitialState::PROCESS_INITIAL_SUCCESS: {
+          case ProcessResult::COMPLETE: {
             conn->TransitState(ConnState::CONN_WRITE);
             break;
           }
-          case ProcessInitialState::PROCESS_INITIAL_MORE_DATA_NEEDED: {
+          case ProcessResult::MORE_DATA_REQUIRED: {
             conn->TransitState(ConnState::CONN_WAIT);
             break;
           }
-          case ProcessInitialState::PROCESS_INITIAL_FAILED: {
+          case ProcessResult::TERMINATE: {
             conn->TransitState(ConnState::CONN_CLOSING);
             break;
           }
+          default: // PROCESSING is impossible to happens in initial packets
+            break;
         }
-
         break;
       }
 
       case ConnState::CONN_PROCESS: {
-        ProcessPacketResult status;
+        ProcessResult status;
 
         status = conn->protocol_handler_->Process(conn->rbuf_,
                                                         (size_t) conn->thread_id);
+
         switch (status) {
-          case ProcessPacketResult::MORE_DATA_REQUIRED:
+          case ProcessResult::MORE_DATA_REQUIRED:
             conn->TransitState(ConnState::CONN_WAIT);
-          case ProcessPacketResult::TERMINATE:
+            break;
+          case ProcessResult::TERMINATE:
             // packet processing can't proceed further
             conn->TransitState(ConnState::CONN_CLOSING);
             break;
-          case ProcessPacketResult::COMPLETE:
+          case ProcessResult::COMPLETE:
             // We should have responses ready to send
             conn->TransitState(ConnState::CONN_WRITE);
             break;
-          case ProcessPacketResult::PROCESSING: {
+          case ProcessResult::PROCESSING: {
             if (event_del(conn->network_event) == -1) {
               //TODO: There may be better way to handle this error
               LOG_ERROR("Failed to delete event");
               PL_ASSERT(false);
             }
-            LOG_TRACE("ProcessPacketResult: queueing");
+            LOG_TRACE("ProcessResult: queueing");
             conn->TransitState(ConnState::CONN_GET_RESULT);
             done = true;
             break;
