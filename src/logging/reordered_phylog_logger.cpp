@@ -160,7 +160,7 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
     auto insert_tg_header = catalog::Manager::GetInstance().GetTileGroup(insert_location.block)->GetHeader();
 
     // Get the lock before trying to insert it into the primary index
-    txn_id_t old_txn_id = LockTuple(insert_tg_header, insert_location.offset);
+    UNUSED_ATTRIBUTE txn_id_t old_txn_id = LockTuple(insert_tg_header, insert_location.offset);
     PL_ASSERT(old_txn_id == INVALID_TXN_ID);
 
     // TODO: Move some logic into data_table (some logics are similar to DataTable.InsertTuple) -- Jiexi
@@ -444,7 +444,7 @@ void ReorderedPhyLogLogger::RebuildSecIndexForTable(const size_t logger_count, s
   // Loop all the tile groups, shared by thread id
   for (size_t tg_idx = logger_id_; tg_idx < tg_count; tg_idx += logger_count) {
     auto tg = table->GetTileGroup(tg_idx).get();
-    auto tg_header = tg->GetHeader();
+    UNUSED_ATTRIBUTE auto tg_header = tg->GetHeader();
     //auto tg_id = tg->GetTileGroupId();
     oid_t active_tuple_count = tg->GetNextTupleSlot();
 
