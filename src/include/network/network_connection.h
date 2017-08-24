@@ -29,6 +29,8 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "type/types.h"
+
 #include "network_thread.h"
 #include "network_master_thread.h"
 #include "protocol_handler.h"
@@ -106,7 +108,10 @@ class NetworkConnection {
 
  private:
 
-  ProcessInitialState ProcessInitial();
+  ProcessResult ProcessInitial();
+
+  // Extracts the header of a Postgres start up packet from the read socket buffer
+  static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
 
   /* Routine to deal with the first packet from the client */
   bool ProcessInitialPacket(InputPacket* pkt);

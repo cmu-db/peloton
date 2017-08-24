@@ -41,11 +41,11 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
   ~PostgresProtocolHandler();
 
-  ProcessPacketResult Process(Buffer &rbuf, const size_t thread_id);
+  ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
+  ProcessResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -86,17 +86,16 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
 
   // Packet Reading Function
-  // Extracts the header of a Postgres start up packet from the read socket buffer
-  static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
-
-  // Extracts the header of a Postgres packet from the read socket buffer
-  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt);
-
   // Extracts the contents of Postgres packet from the read socket buffer
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
 
  private:
+
+  // Packet Reading Function
+  // Extracts the header of a Postgres packet from the read socket buffer
+  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -134,7 +133,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   bool HardcodedExecuteFilter(QueryType query_type);
 
   /* Execute a Simple query protocol message */
-  ProcessPacketResult ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessResult ExecQueryMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket* pkt);
@@ -143,10 +142,10 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void ExecBindMessage(InputPacket* pkt);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  ProcessPacketResult ExecDescribeMessage(InputPacket* pkt);
+  ProcessResult ExecDescribeMessage(InputPacket* pkt);
 
   /* Process the EXECUTE message of the extended query protocol */
-  ProcessPacketResult ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
+  ProcessResult ExecExecuteMessage(InputPacket* pkt, const size_t thread_id);
 
   /* Process the optional CLOSE message of the extended query protocol */
   void ExecCloseMessage(InputPacket* pkt);
