@@ -151,7 +151,7 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
     std::function<bool (const void *)> fn = [](const void *t UNUSED_ATTRIBUTE) -> bool {return true;};
 
     // Allocate a slot from the table's tile group
-    ItemPointer insert_location = table->InsertTuple(tuple); // This function does not insert indexes
+    ItemPointer insert_location = table->InsertTuple(tuple,nullptr); // This function does not insert indexes
     if (insert_location.block == INVALID_OID) {
       LOG_ERROR("Failed to get tuple slot");
       return false;
