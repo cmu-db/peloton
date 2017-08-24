@@ -1192,6 +1192,12 @@ std::ostream &operator<<(std::ostream &os, const GCVersionType &type);
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, GCVersionType>>
     GCSet;
 
+enum class DDLType {
+  INVALID,
+  CREATE,
+  DROP,
+};
+typedef std::vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
 typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GCObjectSet;
 
 //===--------------------------------------------------------------------===//
@@ -1292,12 +1298,11 @@ typedef std::vector<MultiTableExpression> MultiTablePredicates;
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
                            unsigned, expression::ExprHasher,
-                           expression::ExprEqualCmp>
-    ExprMap;
+                           expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
 typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
-                           expression::ExprHasher, expression::ExprEqualCmp>
-    ExprSet;
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
 
 std::string PropertyTypeToString(PropertyType type);
 

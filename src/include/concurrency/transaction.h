@@ -75,6 +75,16 @@ class Transaction : public Printable {
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
+  void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
+    rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
+                                DDLType::CREATE);
+  }
+
+  void RecordDrop(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
+    rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
+                                DDLType::DROP);
+  }
+
   void RecordRead(const ItemPointer &);
 
   void RecordReadOwn(const ItemPointer &);
@@ -106,6 +116,7 @@ class Transaction : public Printable {
   }
 
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
+  inline const CreateDropSet &GetCreateDropSet() { return rw_object_set_; }
 
   inline std::shared_ptr<GCSet> GetGCSetPtr() { return gc_set_; }
 
@@ -162,10 +173,12 @@ class Transaction : public Printable {
   eid_t epoch_id_;
 
   ReadWriteSet rw_set_;
+  CreateDropSet rw_object_set_;
 
   // this set contains data location that needs to be gc'd in the transaction.
   std::shared_ptr<GCSet> gc_set_;
   std::shared_ptr<GCObjectSet> gc_object_set_;
+
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
 
