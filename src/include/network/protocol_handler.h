@@ -32,11 +32,12 @@ class ProtocolHandler {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  virtual ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   virtual void SendInitialResponse();
+
+  virtual ProcessPacketResult Process(Buffer &rbuf, const size_t thread_id);
 
   virtual void Reset();
 
@@ -49,6 +50,7 @@ class ProtocolHandler {
   // so that we don't have to new packet each time
   ResponseBuffer responses;
 
+  InputPacket rpkt;                // Used for reading a single Postgres packet
 
   // The traffic cop used for this connection
   tcop::TrafficCop* traffic_cop_;

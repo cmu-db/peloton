@@ -41,6 +41,8 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
   ~PostgresProtocolHandler();
 
+  ProcessPacketResult Process(Buffer &rbuf, const size_t thread_id);
+
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
   ProcessPacketResult ProcessPacket(InputPacket* pkt, const size_t thread_id);
@@ -49,12 +51,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   //  bool ManageStartupPacket();
   void SendInitialResponse();
   void Reset();
-
-  // Returns a vector of all the PreparedStatements that this ProtocolHandler has
-  // that reference the given table id
-  const std::vector<Statement*> GetPreparedStatements(oid_t table_id) {
-    return table_statement_cache_[table_id];
-  }
 
 
   // Ugh... this should not be here but we have no choice...
@@ -66,6 +62,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     return statement_cache_itr != statement_cache_.end();
   }
+
 
   void GetResult();
 
