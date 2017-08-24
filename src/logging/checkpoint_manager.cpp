@@ -34,7 +34,6 @@ namespace logging {
     
     // reload all the files with file name containing "persist epoch id"
     RecoverCheckpoint(persist_epoch_id, database_structures);
-    printf("recovered checkpoint epoch id = %lu\n", persist_epoch_id);
     return persist_epoch_id;
   }
 
@@ -172,11 +171,9 @@ namespace logging {
         // PL_ASSERT(target_table);
 
         // size_t num_tuples = (size_t)target_table->GetNumberOfTuples();
-        // printf("table %lu: num tuples = %lu\n", (size_t)table_idx, num_tuples);
         // for (size_t index_id = 0; index_id < target_table->GetIndexCount(); ++index_id) {
         //   auto index = target_table->GetIndex(index_id);
-        //   printf("index %lu: num tuples = %lu\n", index_id, (size_t) index->GetNumberOfTuples());
-        // }
+        //  }
 
 
       }  // end table looping
