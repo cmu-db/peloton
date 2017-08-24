@@ -121,7 +121,6 @@ TEST_F(SerializeTests, SerializeValuesToFileTest) {
     auto file = FileUtil::GetFile(filename);
     auto a = memcmp(file.c_str(), output_buffer.Data(), output_buffer.Size());
 
-    std::cout << "\nXXXXXXXXXXXX " << a << " XXXXXXX\n" << std::endl;
     CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
     //CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
     auto tuple2 = storage::Tuple(schema, true);

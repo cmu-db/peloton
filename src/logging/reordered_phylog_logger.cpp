@@ -248,6 +248,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
   std::vector<catalog::Column> columns;
+  current_file_eid_++;
   // TODO: Need some file integrity check. Now we just rely on the the pepoch id and the checkpoint eid
   while (true) {
     // Read the frame length
