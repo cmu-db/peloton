@@ -1082,6 +1082,32 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
   return true;
 }
 
+ProcessPacketResult PostgresProtocolHandler::Process(Buffer &rbuf, const size_t thread_id) {
+  if (rpkt.header_parsed == false) {
+    // parse out the header first
+    if (ReadPacketHeader(rbuf, rpkt) == false) {
+      // need more data
+      return ProcessPacketResult::MORE_DATA_REQUIRED;
+    }
+  }
+  PL_ASSERT(rpkt.header_parsed == true);
+
+  if (rpkt.is_initialized == false) {
+    // packet needs to be initialized with rest of the contents
+    if (PostgresProtocolHandler::ReadPacket(rbuf, rpkt) == false) {
+      // need more data
+      return ProcessPacketResult::MORE_DATA_REQUIRED;
+    }
+  }
+
+  auto process_status = ProcessPacket(&rpkt, thread_id);
+
+  rpkt.Reset();
+
+  return process_status;
+}
+
+
 /*
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
@@ -1175,6 +1201,7 @@ void PostgresProtocolHandler::Reset() {
   force_flush = false;
 
   responses.clear();
+  rpkt.Reset();
   unnamed_statement_.reset();
   result_format_.clear();
   results_.clear();

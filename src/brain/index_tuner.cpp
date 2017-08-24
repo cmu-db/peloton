@@ -25,7 +25,6 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
-#include "network/postgres_protocol_handler.h"
 
 namespace peloton {
 namespace brain {

@@ -35,7 +35,6 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   this->thread_id = thread->GetThreadID();
 
   // clear out packet
-  rpkt.Reset();
   if (network_event == nullptr) {
     network_event = event_new(thread->GetEventBase(), sock_fd, event_flags,
                       CallbackUtil::EventHandler, this);
@@ -358,7 +357,7 @@ std::string NetworkConnection::WriteBufferToString() {
 
 ProcessInitialState NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
-
+  InputPacket rpkt;
   if (rpkt.header_parsed == false) {
     // parse out the header first
     // TODO: this is a hack
@@ -589,7 +588,6 @@ void NetworkConnection::Reset() {
     protocol_handler_->Reset();
   }
   state = ConnState::CONN_INVALID;
-  rpkt.Reset();
   traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;
@@ -695,29 +693,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       case ConnState::CONN_PROCESS: {
         ProcessPacketResult status;
 
-        if (conn->rpkt.header_parsed == false) {
-          // parse out the header first
-          if (PostgresProtocolHandler::ReadPacketHeader(conn->rbuf_, conn->rpkt) == false) {
-            // need more data
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-          }
-        }
-        PL_ASSERT(conn->rpkt.header_parsed == true);
-
-        if (conn->rpkt.is_initialized == false) {
-          // packet needs to be initialized with rest of the contents
-          if (PostgresProtocolHandler::ReadPacket(conn->rbuf_, conn->rpkt) == false) {
-            // need more data
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-          }
-        }
-        PL_ASSERT(conn->rpkt.is_initialized == true);
-          // Process all other packets
-        status = conn->protocol_handler_->ProcessPacket(&conn->rpkt,
+        status = conn->protocol_handler_->Process(conn->rbuf_,
                                                         (size_t) conn->thread_id);
         switch (status) {
+          case ProcessPacketResult::MORE_DATA_REQUIRED:
+            conn->TransitState(ConnState::CONN_WAIT);
           case ProcessPacketResult::TERMINATE:
             // packet processing can't proceed further
             conn->TransitState(ConnState::CONN_CLOSING);
@@ -757,8 +737,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         // examine write packets result
         switch (conn->WritePackets()) {
           case WriteState::WRITE_COMPLETE: {
-            // Input Packet can now be reset, before we parse the next packet
-            conn->rpkt.Reset();
             if (!conn->UpdateEvent(EV_READ | EV_PERSIST)) {
               LOG_ERROR("Failed to update event, closing");
               conn->TransitState(ConnState::CONN_CLOSING);

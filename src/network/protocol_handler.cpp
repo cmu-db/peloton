@@ -22,15 +22,16 @@ namespace network {
 
   ProtocolHandler::~ProtocolHandler() {}
 
-ProcessPacketResult ProtocolHandler::ProcessPacket(
-      UNUSED_ATTRIBUTE InputPacket* pkt,
-      UNUSED_ATTRIBUTE const size_t thread_id) {
-    return ProcessPacketResult::TERMINATE;
-  }
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   void ProtocolHandler::SendInitialResponse() {}
+
+  ProcessPacketResult ProtocolHandler::Process(
+      UNUSED_ATTRIBUTE Buffer& rbuf,
+      UNUSED_ATTRIBUTE const size_t thread_id) {
+    return ProcessPacketResult::TERMINATE;
+  }
 
   void ProtocolHandler::Reset() {}
 
