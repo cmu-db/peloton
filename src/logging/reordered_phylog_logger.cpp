@@ -365,9 +365,9 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
                     std::string typeId = tuple->GetValue(4).ToString();
                     type::TypeId column_type = StringToTypeId(typeId);
                     if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
-                        //columns.push_back(catalog::Column(column_type,));
-                    } else {
                         columns.push_back(catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
+                    } else {
+                        columns.push_back(catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
                     }
                     LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
                     break;}
