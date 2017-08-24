@@ -179,6 +179,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
     std::lock_guard<std::mutex> lock(catalog_mutex);
     storage_manager->AddDatabaseToStorageManager(database);
   }
+  // put database object into rw_object_set
+  txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
 
   // Insert database record into pg_db
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
@@ -243,6 +245,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       database_object->database_oid, table_oid, schema.release(), table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
   database->AddTable(table, is_catalog);
+  // put data table object into rw_object_set
+  txn->RecordCreate(database_object->database_oid, table_oid, INVALID_OID);
 
   // Update pg_table with table info
   pg_table->InsertTable(table_oid, table_name, database_object->database_oid,
@@ -266,7 +270,6 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                 table_name.c_str());
     }
   }
-
   CreatePrimaryIndex(database_object->database_oid, table_oid, txn);
   return ResultType::SUCCESS;
 }
@@ -323,6 +326,8 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
       index::IndexFactory::GetIndex(index_metadata));
   table->AddIndex(pkey_index);
 
+  // put index object into rw_object_set
+  txn->RecordCreate(database_oid, table_oid, index_oid);
   // insert index record into index_catalog(pg_index) table
   IndexCatalog::GetInstance()->InsertIndex(
       index_oid, index_name, table_oid, IndexType::BWTREE,
@@ -430,6 +435,8 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       index::IndexFactory::GetIndex(index_metadata));
   table->AddIndex(key_index);
 
+  // Put index object into rw_object_set
+  txn->RecordCreate(database_oid, table_oid, index_oid);
   // Insert index record into pg_index
   IndexCatalog::GetInstance()->InsertIndex(
       index_oid, index_name, table_oid, index_type, index_constraint,
@@ -437,7 +444,6 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 
   LOG_TRACE("Successfully add index for table %s contains %d indexes",
             table->GetName().c_str(), (int)table->GetValidIndexCount());
-
   return ResultType::SUCCESS;
 }
 
@@ -481,12 +487,11 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
     throw CatalogException("Database record: " + std::to_string(database_oid) +
                            " does not exist in pg_database");
 
-  // Register database in garbage collector
+  // put database object into rw_object_set
   storage_manager->GetDatabaseWithOid(database_oid);
-  txn->GetGCObjectSetPtr()->emplace_back(database_oid, INVALID_OID,
-                                         INVALID_OID);
-  return ResultType::SUCCESS;
+  txn->RecordDrop(database_oid, INVALID_OID, INVALID_OID);
 
+  return ResultType::SUCCESS;
   // Instead of dropping actual database object
   // LOG_TRACE("Dropping database with oid: %d", database_oid);
   // std::lock_guard<std::mutex> lock(catalog_mutex);
@@ -553,10 +558,10 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
   // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // STEP 4, add dropped table object to gc
+  // STEP 4: put database object into rw_object_set
   database->GetTableWithOid(table_oid);
-  auto gc_object_set = txn->GetGCObjectSetPtr();
-  gc_object_set->emplace_back(database_oid, table_oid, INVALID_OID);
+  txn->RecordDrop(database_oid, table_oid, INVALID_OID);
+
   return ResultType::SUCCESS;
 }
 
@@ -585,17 +590,15 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(table_object->database_oid,
                                                 index_object->table_oid);
-  // register index object in garbage collector
-  table->GetIndexWithOid(index_oid);
-  txn->GetGCObjectSetPtr()->emplace_back(table_object->database_oid,
-                                         table_object->table_oid, index_oid);
-  // instead of drop index in storage level table
-  // table->DropIndexWithOid(index_oid);
-
   // drop record in pg_index
   IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
   LOG_TRACE("Successfully drop index %d for table %s", index_oid,
             table->GetName().c_str());
+
+  // register index object in rw_object_set
+  table->GetIndexWithOid(index_oid);
+  txn->RecordDrop(table_object->database_oid, table_object->table_oid,
+                  index_oid);
 
   return ResultType::SUCCESS;
 }
@@ -797,9 +800,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                         type::TypeId::INTEGER},
-              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction(
+      "substr",
+      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -808,9 +812,10 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                          type::TypeId::VARCHAR},
-              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction(
+      "replace",
+      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
