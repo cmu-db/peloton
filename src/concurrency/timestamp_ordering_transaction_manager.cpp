@@ -934,7 +934,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   auto gc_set = current_txn->GetGCSetPtr();
   auto gc_object_set = current_txn->GetGCObjectSetPtr();
 
-  for (auto &obj : rw_object_set) {
+  for (int i = rw_object_set.size() - 1; i >= 0; i--) {
+    auto &obj = rw_object_set[i];
     auto ddl_type = std::get<3>(obj);
     if (ddl_type == DDLType::DROP) continue;
     oid_t database_oid = std::get<0>(obj);
