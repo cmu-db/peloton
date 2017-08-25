@@ -667,9 +667,10 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
  * */
 std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
     const std::string &database_name, concurrency::Transaction *txn) {
-  if (txn == nullptr)
+  if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
                            database_name);
+  }
 
   LOG_TRACE("Looking for database %s", database_name.c_str());
 
@@ -686,9 +687,10 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
 
 std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
     oid_t database_oid, concurrency::Transaction *txn) {
-  if (txn == nullptr)
+  if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get database object " +
                            std::to_string(database_oid));
+  }
 
   LOG_TRACE("Looking for database %u", database_oid);
 
@@ -711,13 +713,10 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &table_name,
     concurrency::Transaction *txn) {
-  // FIXME: enforce caller to use txn
-  // auto &txn_manager =
-  // concurrency::TransactionManagerFactory::GetInstance(); bool
-  // single_statement_txn = false; if (txn == nullptr) {
-  //   single_statement_txn = true;
-  //   txn = txn_manager.BeginTransaction();
-  // }
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to get table object " +
+                           database_name + "." + table_name);
+  }
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
@@ -741,6 +740,37 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   // if (single_statement_txn) {
   //   txn_manager.CommitTransaction(txn);
   // }
+  return table_object;
+}
+
+std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
+    oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to get table object " +
+                           std::to_string(database_oid) + "." +
+                           std::to_string(table_oid));
+  }
+
+  LOG_TRACE("Looking for table %u in database %u", table_oid, database_oid);
+
+  // Check in pg_database, throw exception and abort txn if not exists
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+
+  if (!database_object || database_object->database_oid == INVALID_OID) {
+    throw CatalogException("Database " + std::to_string(database_oid) +
+                           " is not found");
+  }
+
+  // Check in pg_table using txn
+  auto table_object = database_object->GetTableObject(table_oid);
+
+  if (!table_object || table_object->table_oid == INVALID_OID) {
+    // throw table not found exception and explicitly abort txn
+    throw CatalogException("Table " + std::to_string(table_oid) +
+                           " is not found");
+  }
+
   return table_object;
 }
 
@@ -800,10 +830,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::Ascii);
   AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction(
-      "substr",
-      {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
-      type::TypeId::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                         type::TypeId::INTEGER},
+              type::TypeId::VARCHAR, expression::StringFunctions::Substr);
   AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -812,10 +841,9 @@ void Catalog::InitializeFunctions() {
               expression::StringFunctions::OctetLength);
   AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
               type::TypeId::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction(
-      "replace",
-      {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-      type::TypeId::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                          type::TypeId::VARCHAR},
+              type::TypeId::VARCHAR, expression::StringFunctions::Replace);
   AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
               type::TypeId::VARCHAR, expression::StringFunctions::LTrim);
   AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},

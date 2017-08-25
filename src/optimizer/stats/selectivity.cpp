@@ -14,8 +14,6 @@
 
 #include "concurrency/transaction_manager_factory.h"
 
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 
 namespace peloton {
@@ -156,10 +154,8 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   // Check whether column type is VARCHAR.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(database_id,
-                                                                 txn);
-  auto table_object = database_object->GetTableObject(table_id);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      database_id, table_id, txn);
   auto column_type = table_object->GetColumnObject(column_id)->column_type;
   txn_manager.CommitTransaction(txn);
 

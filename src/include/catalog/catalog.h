@@ -167,6 +167,8 @@ class Catalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &database_name, const std::string &table_name,
       concurrency::Transaction *txn);
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONs
   //===--------------------------------------------------------------------===//

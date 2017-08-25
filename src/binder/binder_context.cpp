@@ -13,8 +13,6 @@
 #include "binder/binder_context.h"
 
 #include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 #include "common/logger.h"
 #include "parser/table_ref.h"
@@ -65,9 +63,8 @@ bool BinderContext::GetColumnPosTuple(
     auto table_oid = std::get<1>(table_id_tuple);
 
     // get table object first and use the column name to get column object
-    auto database_object =
-        catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(db_oid, txn);
-    auto table_object = database_object->GetTableObject(table_oid, txn);
+    auto table_object =
+        catalog::Catalog::GetInstance()->GetTableObject(db_oid, table_oid, txn);
     auto column_object = table_object->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
 

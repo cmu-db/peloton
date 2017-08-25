@@ -103,6 +103,10 @@ class DatabaseCatalogObject {
 };
 
 class DatabaseCatalog : public AbstractCatalog {
+  friend class CatalogCache;
+  friend class Catalog;
+  friend class TableCatalog;
+
  public:
   ~DatabaseCatalog();
 
@@ -120,6 +124,7 @@ class DatabaseCatalog : public AbstractCatalog {
                       type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteDatabase(oid_t database_oid, concurrency::Transaction *txn);
 
+ private:
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
