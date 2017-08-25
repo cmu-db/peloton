@@ -69,10 +69,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
   // get catalog table oid
-  auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-      CATALOG_DATABASE_OID, txn);
-  auto catalog_table_object =
-      database_object->GetTableObject(catalog_table_name);
+  auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
+      CATALOG_DATABASE_NAME, catalog_table_name, txn);
 
   // set catalog_table_
   try {

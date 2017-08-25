@@ -15,9 +15,7 @@
 #include "optimizer/optimizer.h"
 
 #include "catalog/column_catalog.h"
-#include "catalog/database_catalog.h"
 #include "catalog/manager.h"
-#include "catalog/table_catalog.h"
 
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
@@ -162,11 +160,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
-        auto database_object =
-            catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
-                create_stmt->GetDatabaseName(), txn);
-        auto table_object =
-            database_object->GetTableObject(create_stmt->GetTableName());
+        auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
           // Check if column is missing

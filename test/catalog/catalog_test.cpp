@@ -52,10 +52,8 @@ TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
-  auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(
-          CATALOG_DATABASE_NAME, txn);
-  auto table_object = database_object->GetTableObject(INDEX_CATALOG_NAME);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME, txn);
   auto index_object = table_object->GetIndexObject(INDEX_CATALOG_PKEY_OID);
   std::vector<oid_t> key_attrs = index_object->key_attrs;
 
@@ -158,9 +156,8 @@ TEST_F(CatalogTests, TableObject) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
-  auto table_object = database_object->GetTableObject("department_table");
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      "EMP_DB", "department_table", txn);
 
   auto index_objects = table_object->GetIndexObjects();
   auto column_objects = table_object->GetColumnObjects();
@@ -200,12 +197,12 @@ TEST_F(CatalogTests, DroppingTable) {
       3,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   auto database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+      catalog::Catalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
   EXPECT_NE(nullptr, database_object);
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
 
   database_object =
-      catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+      catalog::Catalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table");
