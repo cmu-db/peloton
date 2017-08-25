@@ -50,7 +50,7 @@ class ProtocolHandler {
   // so that we don't have to new packet each time
   ResponseBuffer responses;
 
-  InputPacket rpkt;                // Used for reading a single Postgres packet
+  InputPacket request;                // Used for reading a single request
 
   // The traffic cop used for this connection
   tcop::TrafficCop* traffic_cop_;

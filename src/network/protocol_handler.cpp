@@ -33,7 +33,11 @@ namespace network {
     return ProcessResult::TERMINATE;
   }
 
-  void ProtocolHandler::Reset() {}
+  void ProtocolHandler::Reset() {
+    force_flush = false;
+    responses.clear();
+    request.Reset();
+  }
 
   void ProtocolHandler::GetResult() {}
 }  // namespace network
