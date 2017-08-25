@@ -52,7 +52,7 @@ const std::unordered_map<std::string, std::string>
 
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
     : ProtocolHandler(traffic_cop),
-      txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
+      txn_state_(NetworkTransactionStateType::IDLE) {
 }
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
@@ -1055,26 +1055,26 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
 }
 
 ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf, const size_t thread_id) {
-  if (rpkt.header_parsed == false) {
+  if (request.header_parsed == false) {
     // parse out the header first
-    if (ReadPacketHeader(rbuf, rpkt) == false) {
+    if (ReadPacketHeader(rbuf, request) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-  PL_ASSERT(rpkt.header_parsed == true);
+  PL_ASSERT(request.header_parsed == true);
 
-  if (rpkt.is_initialized == false) {
+  if (request.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    if (PostgresProtocolHandler::ReadPacket(rbuf, rpkt) == false) {
+    if (PostgresProtocolHandler::ReadPacket(rbuf, request) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
 
-  auto process_status = ProcessPacket(&rpkt, thread_id);
+  auto process_status = ProcessPacket(&request, thread_id);
 
-  rpkt.Reset();
+  request.Reset();
 
   return process_status;
 }
@@ -1170,10 +1170,8 @@ void PostgresProtocolHandler::SendReadyForQuery(NetworkTransactionStateType txn_
 }
 
 void PostgresProtocolHandler::Reset() {
-  force_flush = false;
+  ProtocolHandler::Reset();
 
-  responses.clear();
-  rpkt.Reset();
   unnamed_statement_.reset();
   result_format_.clear();
   results_.clear();
@@ -1185,7 +1183,6 @@ void PostgresProtocolHandler::Reset() {
   statement_cache_.clear();
   table_statement_cache_.clear();
   portals_.clear();
-  pkt_cntr_ = 0;
 }
 
 }  // namespace network

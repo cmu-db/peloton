@@ -23,7 +23,7 @@ namespace network {
 // checks for parsing overflows
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
                           UNUSED_ATTRIBUTE size_t size) {
-  LOG_TRACE("rpkt->len: %lu", rpkt->len);
+  LOG_TRACE("request->len: %lu", rpkt->len);
   PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
