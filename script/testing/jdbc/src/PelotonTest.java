@@ -145,7 +145,7 @@ public class PelotonTest {
   }
 
   public void Close() throws SQLException {
-    System.out.println("Close called");
+    //System.out.println("Close called");
     conn.close();
   }
 
@@ -155,7 +155,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Init() throws SQLException {
-    System.out.println("Init");
+    //System.out.println("Init");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
@@ -617,6 +617,47 @@ public class PelotonTest {
     }
     conn.commit();
   }
+ 
+  public void Multiple_Batch_Insert() throws Exception {
+    int BATCH_SIZE = 200, BATCH_COUNT = 10;
+    Statement st = conn.createStatement();
+    PreparedStatement stmt = conn.prepareStatement("INSERT INTO MultiBatchTable values(?)");
+    ResultSet rs;
+    conn.setAutoCommit(false);
+    try {
+      st.execute("DROP TABLE IF EXISTS MultiBatchTable; CREATE TABLE MultiBatchTable(id integer)");
+      conn.commit();
+      for (int i = 0; i < BATCH_COUNT; i++) {
+        for (int j = 0; j < BATCH_SIZE; j++) {
+          stmt.setInt(1, i * BATCH_SIZE + j);
+          stmt.addBatch();
+        }
+        int[] res;
+        res = stmt.executeBatch();
+      }
+      // check result;
+      String SELECT_TOTAL_COUNT = "SELECT COUNT(*) FROM MultiBatchTable";
+      System.out.println("count");
+      System.out.println("-------");
+      rs = st.executeQuery(SELECT_TOTAL_COUNT);
+      while (rs.next()) {
+        System.out.println(rs.getString(1));
+      }
+      System.out.println();
+      String SELECT_RANGE_COUNT = "SELECT COUNT(*) FROM MultiBatchTable WHERE id >= 100 AND id < 200";
+      System.out.println("count");
+      System.out.println("-------");
+      rs = st.executeQuery(SELECT_RANGE_COUNT);
+      while (rs.next()) {
+        System.out.println(rs.getString(1));
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+      throw e.getNextException();
+    }
+    rs.close();
+    st.close();
+  }
 
   public void Copy_Test(String filePath) throws Exception{
     // Execute some queries
@@ -649,9 +690,6 @@ public class PelotonTest {
     }
     System.out.println("Copy finished");
   }
-
-
-
 
   public void Invalid_SQL() throws SQLException {
     conn.setAutoCommit(true);
@@ -782,7 +820,17 @@ public class PelotonTest {
         }
       } else if (args[0].equals("simple")) {
       	SingleTest();
+      } else if (args[0].equals("batch")) {
+        BatchTest();
       }
+  }
+  
+  static public void BatchTest() throws Exception {
+    System.out.println("===== Batch Test =====");
+    PelotonTest pt = new PelotonTest();
+    pt.Init();
+    pt.Multiple_Batch_Insert();
+    pt.Close();
   }
 
   static public void SingleTest() throws Exception {
