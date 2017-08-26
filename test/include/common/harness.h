@@ -119,7 +119,6 @@ class PelotonTest : public ::testing::Test {
 
     // Shut down GFLAGS.
     ::google::ShutDownCommandLineFlags();
-
   }
 };
 

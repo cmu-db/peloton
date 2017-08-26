@@ -20,6 +20,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
+#include "catalog/settings_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/date_functions.h"
 #include "expression/string_functions.h"
@@ -140,6 +141,7 @@ void Catalog::Bootstrap() {
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
+  SettingsCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
 }

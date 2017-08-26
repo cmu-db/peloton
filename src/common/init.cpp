@@ -13,6 +13,7 @@
 #include "common/init.h"
 
 #include <google/protobuf/stubs/common.h>
+#include <gflags/gflags.h>
 
 #include "brain/index_tuner.h"
 #include "brain/layout_tuner.h"
@@ -20,6 +21,7 @@
 #include "common/thread_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 
@@ -46,7 +48,7 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (FLAGS_index_tuner == true) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -54,7 +56,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (FLAGS_layout_tuner == true) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -62,6 +64,7 @@ void PelotonInit::Initialize() {
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
+  settings::SettingsManager::GetInstance()->InitializeCatalog();
 
   // begin a transaction
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -76,13 +79,13 @@ void PelotonInit::Initialize() {
 
 void PelotonInit::Shutdown() {
   // shut down index tuner
-  if (FLAGS_index_tuner == true) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (FLAGS_layout_tuner == true) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
     auto& layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
@@ -98,8 +101,8 @@ void PelotonInit::Shutdown() {
   // shutdown protocol buf library
   google::protobuf::ShutdownProtobufLibrary();
 
-  // Shut down GFLAGS.
-  ::google::ShutDownCommandLineFlags();
+  // clear parameters
+  google::ShutDownCommandLineFlags();
 }
 
 void PelotonInit::SetUpThread() {}
