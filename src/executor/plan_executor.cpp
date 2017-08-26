@@ -216,7 +216,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
     case PlanNodeType::INVALID:
-    LOG_ERROR("Invalid plan node type ");
+      LOG_ERROR("Invalid plan node type ");
       break;
 
     case PlanNodeType::SEQSCAN:
@@ -296,8 +296,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
           new executor::PopulateIndexExecutor(plan, executor_context);
       break;
     default:
-    LOG_ERROR("Unsupported plan node type : %s",
-              PlanNodeTypeToString(plan_node_type).c_str());
+      LOG_ERROR("Unsupported plan node type : %s",
+                PlanNodeTypeToString(plan_node_type).c_str());
       break;
   }
   LOG_TRACE("Adding %s Executor", PlanNodeTypeToString(plan_node_type).c_str());
