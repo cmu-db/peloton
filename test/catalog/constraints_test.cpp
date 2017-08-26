@@ -29,7 +29,7 @@
 #define DEFAULT_VALUE 11111
 
 #define CONSTRAINT_NOTNULL_TEST
-// #define CONSTRAINT_DEFAULT_TEST
+#define CONSTRAINT_DEFAULT_TEST
 //#define CONSTRAINT_CHECK_TEST
 
 namespace peloton {
@@ -136,8 +136,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
     }
   }
   std::vector<catalog::MultiConstraint> multi_constraints;
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints));
+  TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
 
   // Bootstrap
   std::vector<StatementResult> result;
