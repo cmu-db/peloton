@@ -23,6 +23,7 @@
 
 namespace peloton {
 namespace concurrency {
+
 // timestamp ordering requires a spinlock field for protecting the atomic access
 // to txn_id field and last_reader_cid field.
 Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
@@ -86,6 +87,7 @@ TimestampOrderingTransactionManager::GetInstance(
     const ProtocolType protocol, const IsolationLevelType isolation,
     const ConflictAvoidanceType conflict) {
   static TimestampOrderingTransactionManager txn_manager;
+
   txn_manager.Init(protocol, isolation, conflict);
 
   return txn_manager;
