@@ -35,9 +35,9 @@ class Column : public Printable {
   Column(type::TypeId value_type, size_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID)
-      : column_type(value_type),
+      : column_name(column_name),
+        column_type(value_type),
         fixed_length(INVALID_OID),
-        column_name(column_name),
         is_inlined(is_inlined),
         column_offset(column_offset) {
     SetInlined();
@@ -115,6 +115,9 @@ class Column : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // name of the column
+  std::string column_name;
+
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -130,9 +133,6 @@ class Column : public Printable {
   // if the column is inlined, this is set to 0
   // else, it is set to length of the variable length column
   size_t variable_length = 0;
-
-  // name of the column
-  std::string column_name;
 
   // is the column inlined ?
   bool is_inlined = false;
