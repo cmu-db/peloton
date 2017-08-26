@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include "type/types.h"
+#include <memory>
 #include "common/sql_node_visitor.h"
-#include "parser/sql_statement.h"
 #include "expression/abstract_expression.h"
+#include "parser/sql_statement.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace parser {
@@ -64,16 +65,16 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) delete[] (key);
+      for (auto key : *primary_key) delete[](key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[] (key);
+      for (auto key : *foreign_key_source) delete[](key);
       delete foreign_key_source;
     }
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[] (key);
+      for (auto key : *foreign_key_sink) delete[](key);
       delete foreign_key_sink;
     }
     if (multi_unique_cols) {
@@ -166,7 +167,7 @@ struct ColumnDefinition {
  */
 class CreateStatement : public TableRefStatement {
  public:
-  enum CreateType { kTable, kDatabase, kIndex };
+  enum CreateType { kTable, kDatabase, kIndex, kTrigger };
 
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
@@ -184,18 +185,35 @@ class CreateStatement : public TableRefStatement {
       for (auto attr : *index_attrs) delete[] (attr);
       delete index_attrs;
     }
+    if (trigger_funcname) {
+      for (auto t : *trigger_funcname) delete[](t);
+      delete trigger_funcname;
+    }
+    if (trigger_args) {
+      for (auto t : *trigger_args) delete[](t);
+      delete trigger_args;
+    }
+    if (trigger_columns) {
+      for (auto t : *trigger_columns) delete[](t);
+      delete trigger_columns;
+    }
 
     if (index_name != nullptr) {
       delete[] (index_name);
     }
-    if (database_name != nullptr) {
-      delete[] (database_name);
+    if (trigger_name) {
+      delete[](trigger_name);
+    }
+    if (database_name) {
+      delete[](database_name);
+    }
+
+    if (trigger_when) {
+      delete trigger_when;
     }
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CreateType type;
   bool if_not_exists;
@@ -206,9 +224,17 @@ class CreateStatement : public TableRefStatement {
   IndexType index_type;
 
   char* index_name = nullptr;
+  char* trigger_name = nullptr;
   char* database_name = nullptr;
 
   bool unique = false;
+
+  std::vector<char*>* trigger_funcname = nullptr;
+  std::vector<char*>* trigger_args = nullptr;
+  std::vector<char*>* trigger_columns = nullptr;
+  expression::AbstractExpression* trigger_when = nullptr;
+  int16_t trigger_type;  // information about row, timing, events, access by
+                         // pg_trigger
 };
 
 }  // namespace parser

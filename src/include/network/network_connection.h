@@ -29,7 +29,6 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "configuration/configuration.h"
 #include "network_thread.h"
 #include "network_master_thread.h"
 #include "protocol_handler.h"

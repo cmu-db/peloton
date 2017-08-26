@@ -26,6 +26,10 @@ namespace parser {
 class CreateStatement;
 }
 
+namespace Expression {
+class AbstractExpression;
+}
+
 namespace planner {
 
 /**
@@ -81,12 +85,28 @@ class CreatePlan : public AbstractPlan {
 
   inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
 
- protected:
+  // interfaces for triggers
 
-  // This is a helper method for extracting foreign key information
-  // and storing it in an internal struct.
-  void ProcessForeignKeyConstraint(const std::string table_name,
-                                   const parser::ColumnDefinition *col);
+  std::string GetTriggerName() const { return trigger_name; }
+
+  std::vector<std::string> GetTriggerFuncName() const {
+    return trigger_funcname;
+  }
+
+  std::vector<std::string> GetTriggerArgs() const { return trigger_args; }
+
+  std::vector<std::string> GetTriggerColumns() const { return trigger_columns; }
+
+  // Remeber to release the pointer
+  expression::AbstractExpression *GetTriggerWhen() const;
+
+  int16_t GetTriggerType() const { return trigger_type; }
+
+protected:
+    // This is a helper method for extracting foreign key information
+    // and storing it in an internal struct.
+    void ProcessForeignKeyConstraint(const std::string table_name,
+                                     const parser::ColumnDefinition *col);
 
  private:
   // Target Table
@@ -118,6 +138,12 @@ class CreatePlan : public AbstractPlan {
 
   // ColumnDefinition for multi-column constraints (including foreign key)
   std::vector<ForeignKeyInfo> foreign_keys;
+  std::string trigger_name;
+  std::vector<std::string> trigger_funcname;
+  std::vector<std::string> trigger_args;
+  std::vector<std::string> trigger_columns;
+  std::unique_ptr<expression::AbstractExpression> trigger_when = nullptr;
+  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);

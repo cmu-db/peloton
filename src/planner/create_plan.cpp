@@ -15,6 +15,7 @@
 #include "expression/constant_value_expression.h"
 #include "storage/data_table.h"
 #include "type/types.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -48,7 +49,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         // XXX: Why should we always continue here?
         continue;
       }
-  
+
       type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name, col->primary);
@@ -71,7 +72,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         column_constraints.push_back(constraint);
         LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name);
       }
-      
+
       // TODO: check if foreign key just on column
       if (col->foreign_key_source != nullptr) {
         LOG_TRACE("FK source: %lu", col->foreign_key_source->size());
@@ -149,6 +150,27 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
     unique = parse_tree->unique;
   }
+  if (parse_tree->type == parse_tree->CreateType::kTrigger) {
+    create_type = CreateType::TRIGGER;
+    trigger_name = std::string(parse_tree->trigger_name);
+    if (parse_tree->trigger_when) {
+      trigger_when.reset(parse_tree->trigger_when->Copy());
+    }
+    else {
+      trigger_when.reset();
+    }
+    trigger_type = parse_tree->trigger_type;
+
+    for (auto s : *(parse_tree->trigger_funcname)) {
+      trigger_funcname.push_back(s);
+    }
+    for (auto s : *(parse_tree->trigger_args)) {
+      trigger_args.push_back(s);
+    }
+    for (auto s : *(parse_tree->trigger_columns)) {
+      trigger_columns.push_back(s);
+    }
+  }
   // TODO check type CreateType::kDatabase
 }
 
@@ -178,6 +200,15 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string table_name,
   LOG_DEBUG("Added a foreign key constraint toward sink table %s",
             fkey_info.sink_table_name.c_str());
   foreign_keys.push_back(fkey_info);
+}
+
+expression::AbstractExpression *CreatePlan::GetTriggerWhen() const {
+  if (trigger_when) {
+    return trigger_when->Copy();
+  }
+  else {
+    return nullptr;
+  }
 }
 
 }  // namespace planner

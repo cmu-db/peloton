@@ -18,6 +18,7 @@
 #include "logging/log_manager.h"
 #include "gc/gc_manager_factory.h"
 #include "storage/tile_group.h"
+#include "settings/settings_manager.h"
 
 
 namespace peloton {
@@ -66,7 +67,7 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
   
   }
   
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .StartTimer();
@@ -76,6 +77,11 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
 }
 
 void TransactionManager::EndTransaction(Transaction *current_txn) {
+
+  // fire all on commit triggees
+  if (current_txn->GetResult() == ResultType::SUCCESS) {
+    current_txn->ExecOnCommitTriggers();
+  }
 
   auto &epoch_manager = EpochManagerFactory::GetInstance();
 
@@ -104,7 +110,7 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
   delete current_txn;
   current_txn = nullptr;
   
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();

@@ -15,6 +15,8 @@
 
 #include "network/network_manager.h"
 
+#include "settings/settings_manager.h"
+
 namespace peloton {
 namespace network {
 
@@ -75,10 +77,10 @@ NetworkManager::NetworkManager() {
   master_thread_ =
       std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
-  port_ = FLAGS_port;
-  max_connections_ = FLAGS_max_connections;
-  private_key_file_ = FLAGS_private_key_file;
-  certificate_file_ = FLAGS_certificate_file;
+  port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
+  max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
+  private_key_file_ = settings::SettingsManager::GetString(settings::SettingId::private_key_file);
+  certificate_file_ = settings::SettingsManager::GetString(settings::SettingId::certificate_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -94,7 +96,7 @@ NetworkManager::NetworkManager() {
 }
 
 void NetworkManager::StartServer() {
-  if (FLAGS_socket_family == "AF_INET") {
+  if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;

@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "common/platform.h"
 #include "common/macros.h"
+#include "trigger/trigger.h"
 
 #include <chrono>
 #include <thread>
@@ -47,6 +48,48 @@ namespace concurrency {
  *    d : delete
  *    i : insert
  */
+
+Transaction::Transaction(const size_t thread_id,
+                         const IsolationLevelType isolation,
+                         const cid_t &read_id) {
+  Init(thread_id, isolation, read_id);
+}
+
+Transaction::Transaction(const size_t thread_id,
+                         const IsolationLevelType isolation,
+                         const cid_t &read_id,
+                         const cid_t &commit_id) {
+  Init(thread_id, isolation, read_id, commit_id);
+}
+
+Transaction::~Transaction() {}
+
+void Transaction::Init(const size_t thread_id,
+                       const IsolationLevelType isolation,
+                       const cid_t &read_id,
+                       const cid_t &commit_id) {
+  read_id_ = read_id;
+
+  // commit id can be set at a transaction's commit phase.
+  commit_id_ = commit_id;
+
+  // set txn_id to commit_id.
+  txn_id_ = commit_id_;
+
+  epoch_id_ = read_id_ >> 32;
+
+  thread_id_ = thread_id;
+
+  isolation_level_ = isolation;
+
+  is_written_ = false;
+
+  insert_count_ = 0;
+
+  gc_set_.reset(new GCSet());
+
+  on_commit_triggers_.reset();
+}
 
 RWType Transaction::GetRWType(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
@@ -181,6 +224,19 @@ const std::string Transaction::GetInfo() const {
      << " Result : " << result_;
 
   return os.str();
+}
+
+void Transaction::AddOnCommitTrigger(trigger::TriggerData &trigger_data) {
+  if (on_commit_triggers_ == nullptr) {
+    on_commit_triggers_.reset(new trigger::TriggerSet());
+  }
+  on_commit_triggers_->push_back(trigger_data);
+}
+
+void Transaction::ExecOnCommitTriggers() {
+  if (on_commit_triggers_ != nullptr) {
+    on_commit_triggers_->ExecTriggers();
+  }
 }
 
 }  // namespace concurrency

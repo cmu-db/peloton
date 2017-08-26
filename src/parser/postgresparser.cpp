@@ -27,6 +27,7 @@
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/pg_query.h"
+#include "parser/pg_trigger.h"
 #include "parser/pg_list.h"
 #include "parser/postgresparser.h"
 #include "type/types.h"
@@ -34,6 +35,13 @@
 
 namespace peloton {
 namespace parser {
+
+// helper for c_str copy
+static char* cstrdup(const char* c_str) {
+  char* new_str = new char[strlen(c_str) + 1];
+  strcpy(new_str, c_str);
+  return new_str;
+}
 
 PostgresParser::PostgresParser() {}
 
@@ -732,6 +740,27 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
   return result;
 }
 
+// This function takes in the whenClause part of a Postgres CreateTrigStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::WhenTransform(Node* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+  expression::AbstractExpression* result = nullptr;
+  switch (root->type) {
+    case T_A_Expr: {
+      result = AExprTransform(reinterpret_cast<A_Expr*>(root));
+      break;
+    }
+    case T_BoolExpr: {
+      result = BoolExprTransform(reinterpret_cast<BoolExpr*>(root));
+      break;
+    }
+    default: { LOG_ERROR("WHEN of type %d not supported yet...", root->type); }
+  }
+  return result;
+}
+
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object
 parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
@@ -963,6 +992,56 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   return result;
 }
 
+// This function takes in a Postgres CreateTrigStmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// CreateTrigStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateTriggerTransform(
+    CreateTrigStmt* root) {
+  parser::CreateStatement* result =
+      new parser::CreateStatement(CreateStatement::kTrigger);
+
+  // funcname
+  result->trigger_funcname = new std::vector<char*>;
+  if (root->funcname) {
+    for (auto cell = root->funcname->head; cell != nullptr; cell = cell->next) {
+      char* name = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_funcname->push_back(cstrdup(name));
+    }
+  }
+  // args
+  result->trigger_args = new std::vector<char*>;
+  if (root->args) {
+    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+      char* arg = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_args->push_back(cstrdup(arg));
+    }
+  }
+  // columns
+  result->trigger_columns = new std::vector<char*>;
+  if (root->columns) {
+    for (auto cell = root->columns->head; cell != nullptr; cell = cell->next) {
+      char* column = (reinterpret_cast<value*>(cell->data.ptr_value))->val.str;
+      result->trigger_columns->push_back(cstrdup(column));
+    }
+  }
+  // when
+  result->trigger_when = WhenTransform(root->whenClause);
+
+  int16_t& tgtype = result->trigger_type;
+  TRIGGER_CLEAR_TYPE(tgtype);
+  if (root->row) TRIGGER_SETT_ROW(tgtype);
+  tgtype |= root->timing;
+  tgtype |= root->events;
+
+  result->table_info_ = new TableInfo();
+  result->table_info_->table_name = cstrdup(root->relation->relname);
+
+  result->trigger_name = cstrdup(root->trigname);
+
+  return result;
+}
+
 // This function takes in a Postgres CreatedbStmt parsenode
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
@@ -975,6 +1054,19 @@ parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt* root) {
 }
 
 parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
+  switch (root->removeType) {
+    case ObjectType::OBJECT_TABLE:
+      return DropTableTransform(root);
+    case ObjectType::OBJECT_TRIGGER:
+      return DropTriggerTransform(root);
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+        "Drop of ObjectType %d not supported yet...\n", root->removeType));
+    }
+  }
+}
+
+parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     res->missing = root->missing_ok;
@@ -982,10 +1074,19 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
     auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
     LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
     table_info->table_name = cstrdup(
-        reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
+      reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
   }
+  return res;
+}
+
+parser::DropStatement* PostgresParser::DropTriggerTransform(DropStmt* root) {
+  auto res = new DropStatement(DropStatement::EntityType::kTrigger);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List*>(cell->data.ptr_value);
+  res->table_name_of_trigger = cstrdup(reinterpret_cast<value*>(list->head->data.ptr_value)->val.str);
+  res->trigger_name = cstrdup(reinterpret_cast<value*>(list->head->next->data.ptr_value)->val.str);
   return res;
 }
 
@@ -1227,6 +1328,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
+      break;
+    case T_CreateTrigStmt:
+      result = CreateTriggerTransform(reinterpret_cast<CreateTrigStmt*>(stmt));
       break;
     case T_UpdateStmt:
       result = UpdateTransform((UpdateStmt*)stmt);

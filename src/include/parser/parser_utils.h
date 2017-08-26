@@ -6,7 +6,7 @@
 //
 // Identification: src/include/parser/parser_utils.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,13 +19,30 @@
 namespace peloton {
 namespace parser {
 
-void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent);
-void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent);
-void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent);
-void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent);
-void GetExpressionInfo(const expression::AbstractExpression* expr,
+class ParserUtils {
+public:
+  static std::string GetSelectStatementInfo(SelectStatement* stmt,
+                                            uint num_indent);
+  static std::string GetInsertStatementInfo(InsertStatement* stmt,
+                                            uint num_indent);
+  static std::string GetCreateStatementInfo(CreateStatement* stmt,
+                                            uint num_indent);
+  static std::string GetDeleteStatementInfo(DeleteStatement* stmt,
+                                            uint num_indent);
+  static std::string GetUpdateStatementInfo(UpdateStatement* stmt,
+                                            uint num_indent);
+  static std::string GetCopyStatementInfo(CopyStatement* stmt,
+                                          uint num_indent);
+  static std::string GetExpressionInfo(
+                       const expression::AbstractExpression* expr,
                        uint num_indent);
-std::string CharsToStringDestructive(char * str);
+  static std::string GetOperatorExpression(
+                       const expression::AbstractExpression* expr,
+                       uint num_indent);
+  static std::string GetTableRefInfo(const TableRef* table, uint num_indent);
+private:
+  static std::string indent(uint num_indent);
+};
 
 }  // namespace parser
 }  // namespace peloton

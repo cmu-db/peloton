@@ -55,7 +55,7 @@ bool UpdateExecutor::DInit() {
 }
 
 bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
-                                             storage::TileGroup *tile_group, 
+                                             storage::TileGroup *tile_group,
                                              storage::TileGroupHeader *tile_group_header,
                                              oid_t physical_tuple_id,
                                              ItemPointer &old_location) {
@@ -138,18 +138,31 @@ bool UpdateExecutor::DExecute() {
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
-  
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
+
+  auto executor_pool = executor_context_->GetPool();
+  auto target_table_schema = target_table_->GetSchema();
+  auto column_count = target_table_schema->GetColumnCount();
+
+  trigger::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-before-update triggers!");
+      trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_STATEMENT, current_txn);
+    }
+  }
 
   // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
 
     storage::TileGroup *tile_group = source_tile->GetBaseTile(0)->GetTileGroup();
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-    
+
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
@@ -162,7 +175,7 @@ bool UpdateExecutor::DExecute() {
     // then we need to retrieve the latest version of this tuple.
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
-      
+
       auto &manager = catalog::Manager::GetInstance();
       tile_group = manager.GetTileGroup(old_location.block).get();
       tile_group_header = tile_group->GetHeader();
@@ -179,10 +192,18 @@ bool UpdateExecutor::DExecute() {
     }
     ///////////////////////////////////////////////////////////
 
-    bool is_owner = 
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_ROW)) {
+        LOG_TRACE("target table has per-row-before-update triggers!");
+        trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_ROW, current_txn);
+      }
+    }
+
+    bool is_owner =
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
 
-    bool is_written = 
+    bool is_written =
         transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
 
     // Prepare to examine primary key
@@ -192,25 +213,22 @@ bool UpdateExecutor::DExecute() {
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
     if (is_owner == true && is_written == true) {
-
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
         ret =
-            PerformUpdatePrimaryKey(is_owner, tile_group, 
+            PerformUpdatePrimaryKey(is_owner, tile_group,
                                     tile_group_header, physical_tuple_id,
                                     old_location);
-
         // Examine the result
         if (ret == true) {
           executor_context_->num_processed += 1;  // updated one
         }
-        // When fail, ownership release is done inside PerformUpdatePrimaryKey
+          // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
           return false;
         }
       }
-
-      // Normal update (no primary key)
+        // Normal update (no primary key)
       else {
         // We have already owned a version
 
@@ -224,13 +242,13 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
     }
-    // if we have already obtained the ownership
+      // if we have already obtained the ownership
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
       bool is_ownable =
           is_owner || transaction_manager.IsOwnable(
-                          current_txn, tile_group_header, physical_tuple_id);
+              current_txn, tile_group_header, physical_tuple_id);
 
       if (is_ownable == true) {
         // if the tuple is not owned by any transaction and is visible to
@@ -238,7 +256,7 @@ bool UpdateExecutor::DExecute() {
 
         bool acquire_ownership_success =
             is_owner || transaction_manager.AcquireOwnership(
-                            current_txn, tile_group_header, physical_tuple_id);
+                current_txn, tile_group_header, physical_tuple_id);
 
         if (acquire_ownership_success == false) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -249,20 +267,20 @@ bool UpdateExecutor::DExecute() {
 
         if (update_node.GetUpdatePrimaryKey()) {
           // Update primary key
-          ret = PerformUpdatePrimaryKey(is_owner, tile_group, 
-                                        tile_group_header, physical_tuple_id, 
+          ret = PerformUpdatePrimaryKey(is_owner, tile_group,
+                                        tile_group_header, physical_tuple_id,
                                         old_location);
 
           if (ret == true) {
             executor_context_->num_processed += 1;  // updated one
           }
-          // When fail, ownership release is done inside PerformUpdatePrimaryKey
+            // When fail, ownership release is done inside PerformUpdatePrimaryKey
           else {
             return false;
           }
         }
 
-        // Normal update (no primary key)
+          // Normal update (no primary key)
         else {
           // if it is the latest version and not locked by other threads, then
           // insert a new version.
@@ -322,15 +340,65 @@ bool UpdateExecutor::DExecute() {
 
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
+
+          // execute after-update-row triggers and
+          // record on-commit-update-row triggers into current transaction
+          if (trigger_list != nullptr) {
+            LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+            if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW) ||
+                trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_ROW)) {
+              std::unique_ptr<storage::Tuple> real_old_tuple(
+                  new storage::Tuple(target_table_schema, true));
+              std::unique_ptr<storage::Tuple> real_new_tuple(
+                  new storage::Tuple(target_table_schema, true));
+              for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+                type::Value val = (old_tuple.GetValue(column_itr));
+                real_old_tuple->SetValue(column_itr, val, executor_pool);
+              }
+              for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+                type::Value val = (new_tuple.GetValue(column_itr));
+                real_new_tuple->SetValue(column_itr, val, executor_pool);
+              }
+
+              if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW)) {
+                LOG_TRACE("target table has per-row-after-update triggers!");
+                trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_ROW,
+                                           current_txn,
+                                           real_new_tuple.get(),
+                                           executor_context_,
+                                           real_old_tuple.get());
+              }
+              if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_ROW)) {
+                LOG_TRACE("target table has per-row-on-commit-update triggers!");
+                trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_ROW,
+                                           current_txn,
+                                           real_new_tuple.get(),
+                                           executor_context_,
+                                           real_old_tuple.get());
+              }
+            }
+          }
         }
       } else {
-
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(current_txn,
-                                                 ResultType::FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
         return false;
       }
+    }
+  }
+
+  // execute after-update-statement triggers and
+  // record on-commit-update-statement triggers into current transaction
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-after-update triggers!");
+      trigger_list->ExecTriggers(TriggerType::AFTER_UPDATE_STATEMENT, current_txn);
+    }
+    if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_UPDATE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-on-commit-update triggers!");
+      trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_STATEMENT, current_txn);
     }
   }
   return true;
