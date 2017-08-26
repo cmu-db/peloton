@@ -124,31 +124,85 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
-bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
-  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
-
-  oid_t column_count = schema->GetColumnCount();
-  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_TRACE(
-          "%u th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
-          column_itr);
-      return false;
-    }
+bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
+                              oid_t column_idx) const {
+  if (tuple->IsNull(column_idx)) {
+    LOG_TRACE(
+        "%u th attribute in the tuple was NULL. It is non-nullable "
+        "attribute.",
+        column_idx);
+    return false;
   }
-
   return true;
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
-  // First, check NULL constraints
-  if (CheckNulls(tuple) == false) {
-    LOG_TRACE("Not NULL constraint violated");
-    throw ConstraintException("Not NULL constraint violated : " +
-                              std::string(tuple->GetInfo()));
-    return false;
-  }
+  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
+
+  // For each column in the table, check to see whether they have
+  // any constraints. Then if they do, make sure that the
+  // given tuple does not violate them.
+  //
+  // TODO: PAVLO 2017-07-15
+  //       We should create a faster way of check the constraints for each
+  //       column. Like maybe can store a list of just columns that
+  //       even have constraints defined so that we don't have to
+  //       look at each column individually.
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    std::vector<catalog::Constraint> column_cons =
+        schema->GetColumn(column_itr).GetConstraints();
+    for (auto cons : column_cons) {
+      ConstraintType type = cons.GetType();
+      switch (type) {
+        case ConstraintType::NOTNULL: {
+          if (CheckNotNulls(tuple, column_itr) == false) {
+            std::string error = StringUtil::Format(
+                "%s constraint violated on column '%s' : %s",
+                ConstraintTypeToString(type).c_str(),
+                schema->GetColumn(column_itr).GetName().c_str(),
+                tuple->GetInfo().c_str()
+            );
+            throw ConstraintException(error);
+          }
+          break;
+        }
+        case ConstraintType::CHECK: {
+//          std::pair<ExpressionType, type::Value> exp = cons.GetCheckExpression();
+//          if (CheckExp(tuple, column_itr, exp) == false) {
+//            LOG_TRACE("CHECK EXPRESSION constraint violated");
+//            throw ConstraintException(
+//                "CHECK EXPRESSION constraint violated : " +
+//                std::string(tuple->GetInfo()));
+//          }
+          break;
+        }
+        case ConstraintType::UNIQUE: {
+          break;
+        }
+        case ConstraintType::DEFAULT: {
+          // Should not be handled here
+          // Handled in higher hierarchy
+          break;
+        }
+        case ConstraintType::PRIMARY: {
+          break;
+        }
+        case ConstraintType::FOREIGN: {
+          break;
+        }
+        case ConstraintType::EXCLUSION: {
+          break;
+        }
+        default: {
+          std::string error = StringUtil::Format("ConstraintType '%s' is not supported",
+                                                 ConstraintTypeToString(type).c_str());
+          LOG_TRACE("%s", error.c_str());
+          throw ConstraintException(error);
+        }
+      } // SWITCH
+    } // FOR (constraints)
+  } // FOR (columns)
   return true;
 }
 
@@ -166,7 +220,14 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // in-place update at executor level.
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                         bool check_constraint) {
+  // assert(tuple);
+  if (check_constraint && tuple != nullptr) {
+    if (CheckConstraints(tuple) == false)
+      return INVALID_ITEMPOINTER;
+  }
+
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -517,9 +578,9 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_TRACE("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
-
+        LOG_INFO("BEGIN checking referred table");
+        
+        std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
@@ -877,16 +938,13 @@ oid_t DataTable::GetValidIndexCount() const {
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
-    for (auto fk_column : key->GetFKColumnNames()) {
+    for (auto fk_column : key->GetSourceColumnIds()) {
       schema->AddConstraint(fk_column, constraint);
     }
-    // TODO :: We need this one..
-    catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys_.push_back(fk);
+    foreign_keys_.push_back(key);
   }
 }
 
@@ -904,7 +962,27 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
   }
 }
 
-oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
+
+// Adds to the list of tables for which this table's PK is the foreign key sink
+void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    foreign_key_sources_.push_back(source_table_name);
+  }
+}
+
+// Remove a table for which this table's PK is the foreign key sink
+void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
+  {
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
+      if (foreign_key_sources_[i] == source_table_name) {
+        foreign_key_sources_.erase(foreign_key_sources_.begin()+i);
+      }
+    }
+  }
+}
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(

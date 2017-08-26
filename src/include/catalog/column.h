@@ -32,7 +32,7 @@ class Column : public Printable {
     // Nothing to see...
   }
 
-  Column(type::TypeId value_type, oid_t column_length,
+  Column(type::TypeId value_type, size_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID)
       : column_type(value_type),
@@ -58,22 +58,22 @@ class Column : public Printable {
   void SetInlined();
 
   // Set the appropriate column length
-  void SetLength(oid_t column_length);
+  void SetLength(size_t column_length);
 
   oid_t GetOffset() const { return column_offset; }
 
   std::string GetName() const { return column_name; }
 
-  oid_t GetLength() const {
+  size_t GetLength() const {
     if (is_inlined)
       return fixed_length;
     else
       return variable_length;
   }
 
-  oid_t GetFixedLength() const { return fixed_length; }
+  size_t GetFixedLength() const { return fixed_length; }
 
-  oid_t GetVariableLength() const { return variable_length; }
+  size_t GetVariableLength() const { return variable_length; }
 
   inline type::TypeId GetType() const { return column_type; }
 
@@ -81,11 +81,22 @@ class Column : public Printable {
 
   inline bool IsPrimary() const { return is_primary_; }
 
+  inline bool IsUnique() const { return is_unique_; }
+
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
-    constraints.push_back(constraint);
+    if (constraint.GetType() == ConstraintType::DEFAULT) {
+      // Add the default constraint to the front
+      constraints.insert(constraints.begin(), constraint);
+    } else {
+      constraints.push_back(constraint);
+    }
+
     if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
+    }
+    if (constraint.GetType() == ConstraintType::UNIQUE) {
+      is_unique_ = true;
     }
   }
 
@@ -114,14 +125,11 @@ class Column : public Printable {
 
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column
-  oid_t fixed_length;  //  = INVALID_OID;
-
- public:
-  // TODO: These should all be made private
+  size_t fixed_length;  //  = INVALID_OID;
 
   // if the column is inlined, this is set to 0
   // else, it is set to length of the variable length column
-  oid_t variable_length = INVALID_OID;
+  size_t variable_length = 0;
 
   // name of the column
   std::string column_name;
@@ -131,6 +139,9 @@ class Column : public Printable {
 
   // is the column contained the primary key?
   bool is_primary_ = false;
+
+  // is the column unique
+  bool is_unique_ = false;
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;

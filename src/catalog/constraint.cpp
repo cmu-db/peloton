@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/constraint.h"
-#include "type/types.h"
 
 #include <sstream>
 
@@ -21,7 +20,12 @@ namespace catalog {
 const std::string Constraint::GetInfo() const {
   std::ostringstream os;
   os << "Constraint[" << GetName() << ", "
-     << ConstraintTypeToString(constraint_type) << "]";
+     << ConstraintTypeToString(constraint_type);
+
+  if (GetType() == ConstraintType::CHECK) {
+    os << ", " << exp.first << " " << exp.second.GetInfo();
+  }
+  os << "]";
   return os.str();
 }
 

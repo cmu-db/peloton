@@ -25,11 +25,12 @@ namespace parser {
  * @brief Represents definition of a table column
  */
 struct ColumnDefinition {
-  enum DataType {
+  enum class DataType {
     INVALID,
 
     PRIMARY,
     FOREIGN,
+    MULTIUNIQUE,
 
     CHAR,
     INT,
@@ -49,29 +50,15 @@ struct ColumnDefinition {
     VARBINARY
   };
 
-  enum FKConstrActionType {
-    NOACTION,
-    RESTRICT,
-    CASCADE,
-    SETNULL,
-    SETDEFAULT
-  };
-
-  enum FKConstrMatchType {
-    SIMPLE,
-    PARTIAL,
-    FULL
-  };
-
   ColumnDefinition(DataType type) : type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == TEXT)
+    if (type == DataType::TEXT)
       varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
   ColumnDefinition(char* name, DataType type) : name(name), type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == TEXT)
+    if (type == DataType::TEXT)
       varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
@@ -89,6 +76,11 @@ struct ColumnDefinition {
       for (auto key : *foreign_key_sink) delete[] (key);
       delete foreign_key_sink;
     }
+    if (multi_unique_cols) {
+      for (auto key : *multi_unique_cols) delete[] (key);
+      delete multi_unique_cols;
+    }
+
     delete[] name;
     if (table_info_ != nullptr)
       delete table_info_;
@@ -100,60 +92,45 @@ struct ColumnDefinition {
 
   static type::TypeId GetValueType(DataType type) {
     switch (type) {
-      case INT:
-      case INTEGER:
+      case DataType::INT:
+      case DataType::INTEGER:
         return type::TypeId::INTEGER;
-        break;
-
-      case TINYINT:
+      case DataType::TINYINT:
         return type::TypeId::TINYINT;
-        break;
-      case SMALLINT:
+      case DataType::SMALLINT:
         return type::TypeId::SMALLINT;
-        break;
-      case BIGINT:
+      case DataType::BIGINT:
         return type::TypeId::BIGINT;
-        break;
 
-      // case DOUBLE:
-      // case FLOAT:
-      //  return type::Type::DOUBLE;
-      //  break;
-
-      case DECIMAL:
-      case DOUBLE:
-      case FLOAT:
+      case DataType::DECIMAL:
+      case DataType::DOUBLE:
+      case DataType::FLOAT:
         return type::TypeId::DECIMAL;
-        break;
 
-      case BOOLEAN:
+      case DataType::BOOLEAN:
         return type::TypeId::BOOLEAN;
-        break;
 
       // case ADDRESS:
       //  return type::Type::ADDRESS;
       //  break;
 
-      case TIMESTAMP:
+      case DataType::TIMESTAMP:
         return type::TypeId::TIMESTAMP;
-        break;
 
-      case CHAR:
-      case TEXT:
-      case VARCHAR:
+      case DataType::CHAR:
+      case DataType::TEXT:
+      case DataType::VARCHAR:
         return type::TypeId::VARCHAR;
-        break;
 
-      case VARBINARY:
+      case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
-        break;
 
-      case INVALID:
-      case PRIMARY:
-      case FOREIGN:
+      case DataType::INVALID:
+      case DataType::PRIMARY:
+      case DataType::FOREIGN:
+      case DataType::MULTIUNIQUE:
       default:
         return type::TypeId::INVALID;
-        break;
     }
   }
 
@@ -173,6 +150,8 @@ struct ColumnDefinition {
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;
   std::vector<char*>* foreign_key_sink = nullptr;
+
+  std::vector<char *>* multi_unique_cols = nullptr;
 
   char* foreign_key_table_name = nullptr;
   FKConstrActionType foreign_key_delete_action;

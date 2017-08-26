@@ -78,7 +78,6 @@ class TestingSQLUtil {
   static std::string GetResultValueAsString(
       const std::vector<StatementResult> &result, size_t index) {
     std::string value(result[index].second.begin(), result[index].second.end());
-
     return value;
   }
 
