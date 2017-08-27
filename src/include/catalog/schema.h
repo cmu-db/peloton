@@ -111,7 +111,7 @@ class Schema : public Printable {
 
   // Returns fixed length
   inline size_t GetLength(const oid_t column_id) const {
-    return columns[column_id].GetFixedLength();
+    return columns[column_id].GetLength();
   }
 
   inline size_t GetVariableLength(const oid_t column_id) const {
