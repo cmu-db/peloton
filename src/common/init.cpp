@@ -60,13 +60,13 @@ void PelotonInit::Initialize() {
   //  log_manager.SetRecoveryThreadCount(1);
 //    log_manager.RegisterWorker();
 //    log_manager.DoRecovery(0);
-  //auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-  //log_manager.SetDirectories({"/home/paulo/log"});
-  //log_manager.StartLoggers();
+  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+//  log_manager.SetDirectories({"/home/paulo/log"});
+//  log_manager.StartLoggers();
 
   //checkpoint_manager.SetCheckpointInterval(30);
   //checkpoint_manager.StartCheckpointing();
-  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+//  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
 
 
 //  logging::ReorderedPhyLogLogManager::GetInstance().SetDirectories({"/home/paulo/log"});
