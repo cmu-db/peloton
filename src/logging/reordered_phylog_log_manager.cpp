@@ -54,17 +54,16 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
   // First serialize the epoch to current output buffer
   // TODO: Eliminate this extra copy
   if(likely_branch(is_running_)){
-    auto &output = output_buffer_;
 
   // Reset the output buffer
-  output.Reset();
+  output_buffer_.Reset();
 
   // Reserve for the frame length
-  size_t start = output.Position();
-  output.WriteInt(0);
+  size_t start = output_buffer_.Position();
+  output_buffer_.WriteInt(0);
 
   LogRecordType type = record.GetType();
-  output.WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
+  output_buffer_.WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
 
   switch (type) {
     case LogRecordType::TUPLE_INSERT:
@@ -76,8 +75,8 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
       std::vector<catalog::Column> columns;
 
       // Write down the database id and the table id
-      output.WriteLong(tg->GetDatabaseId());
-      output.WriteLong(tg->GetTableId());
+      output_buffer_.WriteLong(tg->GetDatabaseId());
+      output_buffer_.WriteLong(tg->GetTableId());
 
       // size_t start = output.Position();
       // output.WriteInt(0);
@@ -94,7 +93,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
       );
       for(oid_t oid = 0; oid < columns.size(); oid++){
         auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(output);
+        val.SerializeTo(output_buffer_);
       }
       // output.WriteIntAt(start, (int32_t)output.Size());
 
@@ -102,7 +101,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
     }
     case LogRecordType::TRANSACTION_BEGIN:
     case LogRecordType::TRANSACTION_COMMIT: {
-      output.WriteLong(record.GetCommitId());
+      output_buffer_.WriteLong(record.GetCommitId());
       break;
     }
       // case LOGRECORD_TYPE_EPOCH_BEGIN:
@@ -124,11 +123,11 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
 
   // Add the frame length
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
-  int32_t length = output.Position() - start - sizeof(int32_t);
-  output.WriteIntAt(start, length);
+  int32_t length = output_buffer_.Position() - start - sizeof(int32_t);
+  output_buffer_.WriteIntAt(start, length);
 
   // Copy the output buffer into current buffer
-  bool is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
+  bool is_success = buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
   if (is_success == false) {
     // A buffer is full, pass it to the front end logger
     // Get a new buffer and register it to current epoch
@@ -136,7 +135,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
     buffer_ptr_ = new LogBuffer();
     //buffer_ptr = RegisterNewBufferToEpoch(std::move(GetBuffer()));
     // Write it again
-    is_success = buffer_ptr_->WriteData(output.Data(), output.Size());
+    is_success = buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
     PL_ASSERT(is_success);
   }
   }

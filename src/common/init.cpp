@@ -48,7 +48,7 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
-  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
+//  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
 
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
