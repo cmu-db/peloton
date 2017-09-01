@@ -205,6 +205,7 @@ Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
   if (len == PELOTON_VALUE_NULL) {
     return Value(type_id_, nullptr, 0, false);
   } else {
+//      len = std::min(len,in. )
     const char *data = (char *)in.getRawPointer(len);
     return Value(type_id_, data, len, false);
   }

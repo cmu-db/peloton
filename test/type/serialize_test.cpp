@@ -22,6 +22,8 @@
 #include "executor/testing_executor_util.h"
 #include "storage/tuple.h"
 #include "type/serializeio.h"
+#include "logging/log_buffer.h"
+#include "logging/logging_util.h"
 #include "util/file_util.h"
 
 namespace peloton {
@@ -45,31 +47,74 @@ class SerializeTests : public PelotonTest {
 };
 
 TEST_F(SerializeTests, SerializeValueToFileTest) {
-    auto value = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_MAX);
+    type::Value value = type::ValueFactory::GetIntegerValue(1);
+    logging::LogBuffer* buf = new logging::LogBuffer();
     CopySerializeOutput output_buffer;
+    size_t buf_size = 4096;
+    std::unique_ptr<char[]> buffer(new char[buf_size]);
     output_buffer.Reset();
     value.SerializeTo(output_buffer);
-    auto filename = FileUtil::WriteTempFile(output_buffer.Data());
-    tempFiles.push_back(filename);
-    auto file = FileUtil::GetFile(filename);
-    CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
-    auto value2 = type::Value::DeserializeFrom(input_buffer, type::TypeId::INTEGER);
-    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(value2));
+    buf->WriteData(output_buffer.Data(), output_buffer.Size());
+    FileHandle *new_file_handle = new FileHandle();
+
+    std::string filename = "test_file";
+    // Create a new file
+    logging::LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle);
+    fwrite((const void *) (buf->GetData()), buf->GetSize(), 1, new_file_handle->file);
+    buf->Reset();
+
+//  Call fsync
+    logging::LoggingUtil::FFlushFsync(*new_file_handle);
+
+    logging::LoggingUtil::CloseFile(*new_file_handle);
+
+    delete new_file_handle;
+
+    new_file_handle = new FileHandle();
+    logging::LoggingUtil::OpenFile(filename.c_str(), "rb", *new_file_handle);
+
+    logging::LoggingUtil::ReadNBytesFromFile(*new_file_handle, (void *) buffer.get(), output_buffer.Size());
+
+    CopySerializeInput record_decode((const void *) buffer.get(), output_buffer.Size());
+
+    type::Value val = type::Value::DeserializeFrom(record_decode, type::TypeId::INTEGER);
+    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
 }
 
 
 TEST_F(SerializeTests, SerializeVarlenValueToFileTest) {
-    auto value = type::ValueFactory::GetVarcharValue("hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello");
+    type::Value value = type::ValueFactory::GetVarcharValue("hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello");
+    logging::LogBuffer* buf = new logging::LogBuffer();
     CopySerializeOutput output_buffer;
+    size_t buf_size = 4096;
+    std::unique_ptr<char[]> buffer(new char[buf_size]);
     output_buffer.Reset();
     value.SerializeTo(output_buffer);
-    auto filename = FileUtil::WriteTempFile(output_buffer.Data());
-    tempFiles.push_back(filename);
-    //auto file = FileUtil::GetFile(filename);
-    //CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
-    CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
-    auto value2 = type::Value::DeserializeFrom(input_buffer, type::TypeId::VARCHAR);
-    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(value2));
+    buf->WriteData(output_buffer.Data(), output_buffer.Size());
+    FileHandle *new_file_handle = new FileHandle();
+
+    std::string filename = "test_file";
+    // Create a new file
+    logging::LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle);
+    fwrite((const void *) (buf->GetData()), buf->GetSize(), 1, new_file_handle->file);
+    buf->Reset();
+
+//  Call fsync
+    logging::LoggingUtil::FFlushFsync(*new_file_handle);
+
+    logging::LoggingUtil::CloseFile(*new_file_handle);
+
+    delete new_file_handle;
+
+    new_file_handle = new FileHandle();
+    logging::LoggingUtil::OpenFile(filename.c_str(), "rb", *new_file_handle);
+
+    logging::LoggingUtil::ReadNBytesFromFile(*new_file_handle, (void *) buffer.get(), output_buffer.Size());
+
+    CopySerializeInput record_decode((const void *) buffer.get(), output_buffer.Size());
+
+    type::Value val = type::Value::DeserializeFrom(record_decode, type::TypeId::VARCHAR);
+    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
 }
 
 
@@ -98,7 +143,7 @@ TEST_F(SerializeTests, SerializeValuesToFileTest) {
     EXPECT_EQ(type::CMP_TRUE,value3.CompareEquals(valuefinal3));
 }
 
-/*TEST_F(SerializeTests, SerializeTupleToFileTest) {
+TEST_F(SerializeTests, SerializeTupleToFileTest) {
     std::vector<catalog::Column> columns;
     columns.push_back(catalog::Column(type::TypeId::INTEGER, 4, "column_a", true, 0));
     columns.push_back(catalog::Column(type::TypeId::DECIMAL, 8, "column_b", true, 4));
@@ -113,21 +158,40 @@ TEST_F(SerializeTests, SerializeValuesToFileTest) {
     tuple.SetValue(1,value2);
     tuple.SetValue(2,value3);
 
+    logging::LogBuffer* buf = new logging::LogBuffer();
     CopySerializeOutput output_buffer;
+    size_t buf_size = 4096;
+    std::unique_ptr<char[]> buffer(new char[buf_size]);
     output_buffer.Reset();
     tuple.SerializeTo(output_buffer);
+    buf->WriteData(output_buffer.Data(), output_buffer.Size());
+    FileHandle *new_file_handle = new FileHandle();
 
-    auto filename = FileUtil::WriteTempFile(output_buffer.Data());
-    auto file = FileUtil::GetFile(filename);
-    auto a = memcmp(file.c_str(), output_buffer.Data(), output_buffer.Size());
+    std::string filename = "test_file";
+    // Create a new file
+    logging::LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle);
+    fwrite((const void *) (buf->GetData()), buf->GetSize(), 1, new_file_handle->file);
+    buf->Reset();
 
-    CopySerializeInput input_buffer(file.c_str(), output_buffer.Size());
-    //CopySerializeInput input_buffer(output_buffer.Data(), output_buffer.Size());
+//  Call fsync
+    logging::LoggingUtil::FFlushFsync(*new_file_handle);
+
+    logging::LoggingUtil::CloseFile(*new_file_handle);
+
+    delete new_file_handle;
+
+    new_file_handle = new FileHandle();
+    logging::LoggingUtil::OpenFile(filename.c_str(), "rb", *new_file_handle);
+
+    logging::LoggingUtil::ReadNBytesFromFile(*new_file_handle, (void *) buffer.get(), output_buffer.Size());
+
+    CopySerializeInput record_decode((const void *) buffer.get(), output_buffer.Size());
     auto tuple2 = storage::Tuple(schema, true);
-    tuple2.DeserializeWithHeaderFrom(input_buffer);
+    tuple2.DeserializeWithHeaderFrom(record_decode);
+
 
     EXPECT_EQ(0,tuple.Compare(tuple2));
-}*/
+}
 
 }  // End test namespace
 }  // End peloton namespace
