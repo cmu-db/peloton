@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -24,6 +23,10 @@ class DataTable;
 }
 namespace parser {
 class CreateStatement;
+}
+
+namespace Expression {
+class AbstractExpression;
 }
 
 namespace planner {
@@ -77,14 +80,7 @@ class CreatePlan : public AbstractPlan {
   std::vector<std::string> GetTriggerColumns() const { return trigger_columns; }
 
   // Remeber to release the pointer
-  expression::AbstractExpression *GetTriggerWhen() const {
-    if (trigger_when) {
-      return trigger_when->Copy();
-    }
-    else {
-      return nullptr;
-    }
-  }
+  expression::AbstractExpression *GetTriggerWhen() const;
 
   int16_t GetTriggerType() const { return trigger_type; }
 

@@ -341,6 +341,8 @@ bool UpdateExecutor::DExecute() {
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
 
+          // execute after-update-row triggers and
+          // record on-commit-update-row triggers into current transaction
           if (trigger_list != nullptr) {
             LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
             if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW) ||
@@ -386,6 +388,8 @@ bool UpdateExecutor::DExecute() {
     }
   }
 
+  // execute after-update-statement triggers and
+  // record on-commit-update-statement triggers into current transaction
   if (trigger_list != nullptr) {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT)) {

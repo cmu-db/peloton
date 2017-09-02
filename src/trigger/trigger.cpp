@@ -191,11 +191,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
 
     if (IsOnCommit(exec_type)) {
       PL_ASSERT(txn != nullptr);
-      if (txn->GetOnCommitTriggers() == nullptr) {
-        txn->InitOnCommitTriggers();
-      }
-      // Defer triggers firing until transaction committed
-      txn->GetOnCommitTriggers()->push_back(trigger_data);
+      txn->AddOnCommitTrigger(trigger_data);
     }
     else {
       // apply all triggers on the tuple

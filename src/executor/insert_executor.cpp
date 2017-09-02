@@ -133,6 +133,8 @@ bool InsertExecutor::DExecute() {
       executor_context_->num_processed += 1;  // insert one
     }
 
+    // execute after-insert-statement triggers and
+    // record on-commit-insert-statement triggers into current transaction
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT)) {
@@ -227,6 +229,8 @@ bool InsertExecutor::DExecute() {
 
       executor_context_->num_processed += 1;  // insert one
 
+      // execute after-insert-row triggers and
+      // record on-commit-insert-row triggers into current transaction
       new_tuple = tuple;
       if (trigger_list != nullptr) {
         LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
@@ -252,7 +256,8 @@ bool InsertExecutor::DExecute() {
         }
       }
     }
-
+    // execute after-insert-statement triggers and
+    // record on-commit-insert-statement triggers into current transaction
     trigger_list = target_table->GetTriggerList();
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());

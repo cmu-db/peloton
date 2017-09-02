@@ -210,7 +210,8 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
     }
-
+    // execute after-delete-row triggers and
+    // record on-commit-delete-row triggers into current transaction
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
       if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW) ||
@@ -238,7 +239,8 @@ bool DeleteExecutor::DExecute() {
       }
     }
   }
-
+  // execute after-delete-statement triggers and
+  // record on-commit-delete-statement triggers into current transaction
   if (trigger_list != nullptr) {
     LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
     if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT)) {

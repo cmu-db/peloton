@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "executor/logical_tile.h"
+#include "trigger/trigger.h"
 
 namespace peloton {
 namespace catalog {

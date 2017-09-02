@@ -14,8 +14,7 @@
 
 #include "parser/create_statement.h"
 #include "storage/data_table.h"
-#include "catalog/schema.h"
-#include "catalog/column.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -47,7 +46,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // we may need to change this. Just skip foreign key constraint for now
       if (col->type == parser::ColumnDefinition::FOREIGN)
         continue;
-        
+
       type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
@@ -65,7 +64,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       }
 
       auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-          std::string(col->name), false);
+                                    std::string(col->name), false);
       if (!column.IsInlined()) {
         column.SetLength(col->varlen);
       }
@@ -123,6 +122,15 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     }
   }
   // TODO check type CreateType::kDatabase
+}
+
+expression::AbstractExpression *CreatePlan::GetTriggerWhen() const {
+  if (trigger_when) {
+    return trigger_when->Copy();
+  }
+  else {
+    return nullptr;
+  }
 }
 
 }  // namespace planner

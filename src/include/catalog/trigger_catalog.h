@@ -34,11 +34,15 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog_defaults.h"
-#include "trigger/trigger.h"
 
 #define TRIGGER_CATALOG_NAME "pg_trigger"
 
 namespace peloton {
+
+namespace trigger {
+class TriggerList;
+}  // namespace trigger
+
 namespace catalog {
 
 class TriggerCatalog : public AbstractCatalog {
