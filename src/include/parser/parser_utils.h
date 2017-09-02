@@ -19,7 +19,12 @@
 namespace peloton {
 namespace parser {
 
+<<<<<<< 81add772e8e4a9d7c11547d9e025a95b2df65fe4
 class ParserUtils {
+=======
+class ParserUtils
+{
+>>>>>>> Fix for Issue #736
 public:
   static std::string GetSelectStatementInfo(SelectStatement* stmt,
                                             uint num_indent);
@@ -40,8 +45,11 @@ public:
                        const expression::AbstractExpression* expr,
                        uint num_indent);
   static std::string GetTableRefInfo(const TableRef* table, uint num_indent);
+<<<<<<< 81add772e8e4a9d7c11547d9e025a95b2df65fe4
 private:
   static std::string indent(uint num_indent);
+=======
+>>>>>>> Fix for Issue #736
 };
 
 }  // namespace parser
