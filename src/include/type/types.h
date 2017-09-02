@@ -641,6 +641,9 @@ enum class CreateType {
   INDEX = 3,                  // index create type
   CONSTRAINT = 4              // constraint create type
 };
+std::string CreateTypeToString(CreateType type);
+CreateType StringToCreateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CreateType &type);
 
 //===--------------------------------------------------------------------===//
 // Statement Types
@@ -768,12 +771,16 @@ std::ostream &operator<<(std::ostream &os, const InsertType &type);
 //===--------------------------------------------------------------------===//
 
 enum class CopyType {
-  IMPORT_CSV,     // Import csv data to database
-  IMPORT_TSV,     // Import tsv data to database
-  EXPORT_CSV,     // Export data to csv file
-  EXPORT_STDOUT,  // Export data to std out
-  EXPORT_OTHER,   // Export data to other file format
+  INVALID = INVALID_TYPE_ID,  // Invalid copy type
+  IMPORT_CSV,                 // Import csv data to database
+  IMPORT_TSV,                 // Import tsv data to database
+  EXPORT_CSV,                 // Export data to csv file
+  EXPORT_STDOUT,              // Export data to std out
+  EXPORT_OTHER                // Export data to other file format
 };
+std::string CopyTypeToString(CopyType type);
+CopyType StringToCopyType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CopyType &type);
 
 //===--------------------------------------------------------------------===//
 // Payload Types

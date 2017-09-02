@@ -99,7 +99,7 @@ class SQLStatementList : public Printable {
     // clean up statements
     for (auto stmt : statements) delete stmt;
 
-    free((char*)parser_msg);
+    delete (char*)parser_msg;
   }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }
