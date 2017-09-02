@@ -1480,6 +1480,66 @@ std::ostream &operator<<(std::ostream &os, const InsertType &type) {
 }
 
 //===--------------------------------------------------------------------===//
+// CopyType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CopyTypeToString(CopyType type) {
+  switch (type) {
+    case CopyType::INVALID: {
+      return "INVALID";
+    }
+    case CopyType::IMPORT_CSV: {
+      return "IMPORT_CSV";
+    }
+    case CopyType::IMPORT_TSV: {
+      return "IMPORT_TSV";
+    }
+    case CopyType::EXPORT_CSV: {
+      return "EXPORT_CSV";
+    }
+    case CopyType::EXPORT_STDOUT: {
+      return "EXPORT_STDOUT";
+    }
+    case CopyType::EXPORT_OTHER: {
+      return "EXPORT_OTHER";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CopyType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CopyType StringToCopyType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CopyType::INVALID;
+  } else if (upper_str == "IMPORT_CSV") {
+    return CopyType::IMPORT_CSV;
+  } else if (upper_str == "IMPORT_TSV") {
+    return CopyType::IMPORT_TSV;
+  } else if (upper_str == "EXPORT_CSV") {
+    return CopyType::EXPORT_CSV;
+  } else if (upper_str == "EXPORT_STDOUT") {
+    return CopyType::EXPORT_STDOUT;
+  } else if (upper_str == "EXPORT_OTHER") {
+    return CopyType::EXPORT_OTHER;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No CopyType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return CopyType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const CopyType &type) {
+  os << CopyTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//
 

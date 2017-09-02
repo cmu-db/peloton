@@ -68,8 +68,6 @@ SKIP_FILES_LIST = [
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
     "src/include/parser/sql_scanner.h", # There is a free() in comments
-    "src/parser/parser_utils.cpp",
-    "src/include/parser/sql_statement.h",
     "src/include/index/bloom_filter.h",
     "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
