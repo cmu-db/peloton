@@ -13,6 +13,9 @@
 #include "executor/create_executor.h"
 
 #include "catalog/catalog.h"
+#include "catalog/trigger_catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "common/logger.h"
 #include "concurrency/transaction.h"
 #include "executor/executor_context.h"

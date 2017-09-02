@@ -13,6 +13,7 @@
 #include "executor/drop_executor.h"
 
 #include "catalog/catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "common/logger.h"
 #include "concurrency/transaction.h"
 #include "executor/executor_context.h"
