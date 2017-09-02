@@ -13,6 +13,9 @@
 #include <cstdio>
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
