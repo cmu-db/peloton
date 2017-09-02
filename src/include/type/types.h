@@ -656,6 +656,9 @@ enum class DropType {
   CONSTRAINT = 4,             // constraint drop type
   TRIGGER = 5                 // trigger drop type
 };
+std::string CreateTypeToString(CreateType type);
+CreateType StringToCreateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CreateType &type);
 
 //===--------------------------------------------------------------------===//
 // Statement Types

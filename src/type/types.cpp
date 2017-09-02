@@ -317,6 +317,58 @@ bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
   }
   return true;
 }
+//===--------------------------------------------------------------------===//
+// CreateType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CreateTypeToString(CreateType type) {
+  switch (type) {
+    case CreateType::INVALID: {
+      return "INVALID";
+    }
+    case CreateType::DB: {
+      return "DB";
+    }
+    case CreateType::TABLE: {
+      return "TABLE";
+    }
+    case CreateType::INDEX: {
+      return "INDEX";
+    }
+    case CreateType::CONSTRAINT: {
+      return "CONSTRAINT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CreateType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CreateType StringToCreateType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CreateType::INVALID;
+  } else if (upper_str == "DB") {
+    return CreateType::DB;
+  } else if (upper_str == "TABLE") {
+    return CreateType::TABLE;
+  } else if (upper_str == "INDEX") {
+    return CreateType::INDEX;
+  } else if (upper_str == "CONSTRAINT") {
+    return CreateType::CONSTRAINT;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No CreateType conversion from string '%s'", upper_str.c_str()));
+  }
+  return CreateType::INVALID;
+}
+std::ostream& operator<<(std::ostream& os, const CreateType& type) {
+  os << CreateTypeToString(type);
+  return os;
+}
 
 //===--------------------------------------------------------------------===//
 // Statement - String Utilities
