@@ -14,6 +14,7 @@
 #include <boost/algorithm/string.hpp>
 #include <cstdio>
 #include <unordered_map>
+#include <include/parser/postgresparser.h>
 
 #include "common/cache.h"
 #include "common/macros.h"
@@ -61,7 +62,7 @@ PostgresProtocolHandler::~PostgresProtocolHandler() {}
 void PostgresProtocolHandler::ReplanPreparedStatement(Statement *statement) {
   std::string error_message;
   auto new_statement = traffic_cop_->PrepareStatement(
-      statement->GetStatementName(), statement->GetQueryString(),
+      statement->GetStatementName(), statement->GetQueryString(), statement->GetSQLStmtParseTree(),
       error_message);
   // But then rip out its query plan and stick it in our old statement
   if (new_statement.get() == nullptr) {
@@ -242,80 +243,63 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
 ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  int rows_affected = 0;
 
-  // pop out the last character if it is ';'
-  if (query.back() == ';') {
-    query.pop_back();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  // TODO: HAS TO UPDATE query_ and query_type_
+
+  if (!sql_stmt_list->is_valid) {
+    // For invalid queries, call traffic_cop's function to abort
+    // transaction if exists
+    traffic_cop_->AbortInvalidStmt();
+    // Send error message back
+    std::string error_message = "Error parsing SQL statement";
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return ProcessResult::COMPLETE;
   }
-  boost::trim(query);
 
-  protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
+  if (sql_stmt_list->GetNumStatements() == 0) {
+    SendEmptyQueryResponse();
+  }
 
-  if (!query.empty()) {
-    std::vector<StatementResult> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected = 0;
-
-    std::string query_type_string_;
-    Statement::ParseQueryTypeString(query, query_type_string_);
-
-    QueryType query_type;
-    Statement::MapToQueryType(query_type_string_, query_type);
-
-    query_ = query;
-    query_type_ = query_type;
-
-    switch (query_type) {
-      case QueryType::QUERY_PREPARE:
-      {
-        std::string statement_name;
-        std::vector<std::string> tokens;
-        boost::split(tokens, query_, boost::is_any_of("(), "));
-        statement_name = tokens.at(1);
-        std::size_t pos = boost::to_upper_copy(query_).find("AS");
-        std::string statement_query = query_.substr(pos + 3);
-        boost::trim(statement_query);
-
-        // Prepare statement
+  for (auto sql_stmt : sql_stmt_list->GetStatements()) {
+    switch (sql_stmt->GetType()) {
+      case StatementType::PREPARE: {
         std::shared_ptr<Statement> statement(nullptr);
+        // Get statement name
+        parser::PrepareStatement* prep_stmt = (parser::PrepareStatement*) sql_stmt;
+        std::string stmt_name = prep_stmt->name;
+        //TODO: shoudl be a SQLStatementList here
+        parser::SQLStatement* prep_query = prep_stmt->query->GetStatement(0);
+        std::string error_message;
+        // TODO: Do we need query_string in statement??
+        statement = traffic_cop_->PrepareStatement(stmt_name, prep_query->GetInfo(), prep_query, error_message);
 
-        LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-                statement_query.c_str());
-
-        statement = traffic_cop_->PrepareStatement(statement_name, statement_query,
-                                                 error_message);
-        if (statement.get() == nullptr) {
-          skipped_stmt_ = true;
-          SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          LOG_TRACE("ExecQuery Error");
-          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+        if (statement == nullptr) {
+          // TODO: the txn has been aborted already, skip the query
+          // Should we send a 'already rollback' notification here?
           return ProcessResult::COMPLETE;
         }
-
-        auto entry = std::make_pair(statement_name, statement);
+        auto entry = std::make_pair(stmt_name, statement);
         statement_cache_.insert(entry);
         for (auto table_id : statement->GetReferencedTables()) {
           table_statement_cache_[table_id].push_back(statement.get());
         }
         break;
       }
-      case QueryType::QUERY_EXECUTE:
-      {
-        std::string statement_name;
-        std::vector<type::Value> param_values;
-        bool unnamed = false;
-        std::vector<std::string> tokens;
-
-        boost::split(tokens, query, boost::is_any_of("(), "));
-
-        statement_name = tokens.at(1);
-        auto statement_cache_itr = statement_cache_.find(statement_name);
+      case StatementType::EXECUTE: {
+        parser::ExecuteStatement* exec_stmt = (parser::ExecuteStatement*)sql_stmt;
+        std::string stmt_name = exec_stmt->name;
+        auto statement_cache_itr = statement_cache_.find(stmt_name);
         if (statement_cache_itr != statement_cache_.end()) {
           statement_ = *statement_cache_itr;
         }
-        // Did not find statement with same name
+          // Did not find statement with same name
         else {
           error_message_ = "The prepared statement does not exist";
           LOG_ERROR("%s", error_message_.c_str());
@@ -324,12 +308,14 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
           return ProcessResult::COMPLETE;
         }
-
+        // TODO: should set quer_ here
+//        query_ = statement_->GetQueryString();
         query_type_ = statement_->GetQueryType();
-        query_ = statement_->GetQueryString();
         std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
         result_format_ = result_format;
 
+        std::vector<type::Value> param_values;
+        std::vector<std::string> tokens;
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
           std::string param_str = tokens.at(idx);
           boost::trim(param_str);
@@ -344,9 +330,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         }
         param_values_ = param_values;
 
+        bool unnamed = false;
         auto status =
-                traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
-                             results_, rows_affected_, error_message_, thread_id);
+            traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
+                                           results_, rows_affected_, error_message_, thread_id);
 
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
@@ -354,18 +341,12 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
 
         ExecQueryMessageGetResult(status);
         return ProcessResult::COMPLETE;
-      }
-      default:
-      {
-        // prepareStatement
-        std::string unnamed_statement = "unnamed";
-        statement_ = traffic_cop_->PrepareStatement(unnamed_statement, query_,
-                                                    error_message);
-        if (statement_.get() == nullptr) {
-          rows_affected = 0;
-          SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-          SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      };
+      default: {
+        std::string stmt_name = "unamed";
+        statement_ = traffic_cop_->PrepareStatement(stmt_name, sql_stmt->GetInfo(), sql_stmt, error_message_);
+        if (statement_ == nullptr) {
+          //Just skip the stmt
           return ProcessResult::COMPLETE;
         }
         // ExecuteStatment
@@ -386,7 +367,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         return ProcessResult::COMPLETE;
       }
     }
-
     // send the attribute names
     PutTupleDescriptor(tuple_descriptor);
 
@@ -395,8 +375,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
 
     // The response to the SimpleQueryCommand is the query string.
     CompleteCommand(query_, query_type_, rows_affected);
-  } else {
-    SendEmptyQueryResponse();
   }
 
   // PAVLO: 2017-01-15
@@ -436,42 +414,63 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
  * exec_parse_message - handle PARSE message
  */
 void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
-  std::string error_message, statement_name, query_string, query_type_string;
+  std::string error_message, statement_name, query, query_type_string;
   GetStringToken(pkt, statement_name);
   QueryType query_type;
 
   // Read prepare statement name
   // Read query string
-  GetStringToken(pkt, query_string);
-  skipped_stmt_ = false;
-  Statement::ParseQueryTypeString(query_string, query_type_string);
-  Statement::MapToQueryType(query_type_string, query_type);
-  // For an empty query or a query to be filtered, just send parse complete
-  // response and don't execute
-  if (query_string == "" || HardcodedExecuteFilter(query_type) == false) {
-    skipped_stmt_ = true;
-    skipped_query_string_ = std::move(query_string);
-    skipped_query_type_ = std::move(query_type);
+  GetStringToken(pkt, query);
 
-    // Send Parse complete response
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+
+  if (!sql_stmt_list->is_valid) {
+    // For invalid queries, call traffic_cop's function to abort
+    // transaction if exists
+    traffic_cop_->AbortInvalidStmt();
+    // Send error message back
+    std::string error_message = "Error parsing SQL statement";
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
+  }
+  if (sql_stmt_list->GetNumStatements() == 0) {
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::PARSE_COMPLETE;
     responses.push_back(std::move(response));
     return;
   }
 
+//  skipped_stmt_ = false;
+//  Statement::ParseQueryTypeString(query_string, query_type_string);
+//  Statement::MapToQueryType(query_type_string, query_type);
+//  // For an empty query or a query to be filtered, just send parse complete
+//  // response and don't execute
+//  if (query_string == "" || HardcodedExecuteFilter(query_type) == false) {
+//    skipped_stmt_ = true;
+//    skipped_query_string_ = std::move(query_string);
+//    skipped_query_type_ = std::move(query_type);
+//
+//    // Send Parse complete response
+//    std::unique_ptr<OutputPacket> response(new OutputPacket());
+//    response->msg_type = NetworkMessageType::PARSE_COMPLETE;
+//    responses.push_back(std::move(response));
+//    return;
+//  }
+  parser::SQLStatement *sql_stmt = sql_stmt_list->GetStatement(0);
+  StatementType stmt_type = sql_stmt->GetType();
+  query_type = StatementTypeToQueryType(stmt_type, sql_stmt);
+
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
   LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-            query_string.c_str());
-  statement = traffic_cop_->PrepareStatement(statement_name, query_string,
+            query.c_str());
+  statement = traffic_cop_->PrepareStatement(statement_name, query, sql_stmt,
                                              error_message);
   if (statement.get() == nullptr) {
-    skipped_stmt_ = true;
-    SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-    LOG_TRACE("ExecParse Error");
     return;
   }
 

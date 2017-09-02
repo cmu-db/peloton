@@ -10,24 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/parser/statements.h>
 #include "include/traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
-#include "common/abstract_tuple.h"
-#include "common/exception.h"
-#include "common/logger.h"
-#include "common/macros.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
-#include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
 
 #include "type/type.h"
 #include "type/types.h"
 #include "threadpool/mono_queue_pool.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace tcop {
@@ -319,17 +316,30 @@ void TrafficCop::ExecuteStatementPlanGetResult(executor::ExecuteResult &p_status
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &statement_name, const std::string &query_string,
+    const std::string &stmt_name,
+    const std::string &query_string,
+    parser::SQLStatement* sql_stmt,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
+<<<<<<< e82dc839f615ceb322168e64ca4bdb19387025c1
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
   // multi-statement txn from member variable single_statement_txn_
+=======
+  // TODO: Get query type from PARSE TREE
+  // Create a map here, to map from StatementType to QueryType
+  StatementType stmt_type = sql_stmt->GetType();
+  QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt);
+  std::shared_ptr<Statement> statement(new Statement(stmt_name, query_type, query_string, sql_stmt));
+  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from member variables,
+  // tcop_txn_state_. We can also get single-statement txn or multi-statement txn from member variable
+  // single_statement_txn_
+>>>>>>> initial step put parser outside of PrepareStatement
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // --multi-statements except BEGIN in a transaction
   if (!tcop_txn_state_.empty()) {
@@ -340,13 +350,18 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // because nullptr will directly return ResultType::FAILURE to
     // packet_manager
     if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-      return statement;
+      return nullptr;
     }
   } else {
+<<<<<<< e82dc839f615ceb322168e64ca4bdb19387025c1
     // Begin new transaction when received single-statement query or "BEGIN"
     // from multi-statement query
     if (statement->GetQueryType() ==
         QueryType::QUERY_BEGIN) {  // only begin a new transaction
+=======
+    // Begin new transaction when received single-statement query or "BEGIN" from multi-statement query
+    if (query_type == QueryType::QUERY_BEGIN) {  // only begin a new transaction
+>>>>>>> initial step put parser outside of PrepareStatement
       // note this transaction is not single-statement transaction
       LOG_TRACE("BEGIN");
       single_statement_txn_ = false;
@@ -364,6 +379,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
+<<<<<<< e82dc839f615ceb322168e64ca4bdb19387025c1
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
@@ -388,6 +404,20 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       }
       break;
     }
+=======
+  LOG_TRACE("Optimizer Build Peloton Plan Tree...");
+  auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt, tcop_txn_state_.top().first);
+  statement->SetPlanTree(plan);
+  // Get the tables that our plan references so that we know how to
+  // invalidate it at a later point when the catalog changes
+  const std::set<oid_t> table_oids = planner::PlanUtil::GetTablesReferenced(plan.get());
+  statement->SetReferencedTables(table_oids);
+
+  if (stmt_type == StatementType::SELECT) {
+    auto tuple_descriptor = GenerateTupleDescriptor(sql_stmt);
+    statement->SetTupleDescriptor(tuple_descriptor);
+  }
+>>>>>>> initial step put parser outside of PrepareStatement
 
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
@@ -396,9 +426,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 #endif
     return statement;
-  } catch (Exception &e) {
-    error_message = e.what();
-    if (single_statement_txn_) {
+}
+
+void TrafficCop::AbortInvalidStmt() {
+  if (single_statement_txn_) {
       LOG_DEBUG("SINGLE ABORT!");
       AbortQueryHelper();
     } else {  // multi-statment txn
@@ -406,8 +437,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         tcop_txn_state_.top().second = ResultType::ABORTED;
       }
     }
-    return nullptr;
-  }
 }
 
 void TrafficCop::GetDataTables(
@@ -427,7 +456,10 @@ void TrafficCop::GetDataTables(
       GetDataTables(from_table->join->right, target_tables);
     }
   }
+<<<<<<< e82dc839f615ceb322168e64ca4bdb19387025c1
 
+=======
+>>>>>>> initial step put parser outside of PrepareStatement
   // Query has multiple tables. Recursively add all tables
   else {
     for (auto table : *(from_table->list)) {

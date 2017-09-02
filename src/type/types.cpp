@@ -21,7 +21,8 @@
 #include "common/macros.h"
 #include "type/value_factory.h"
 #include "util/string_util.h"
-
+#include "parser/transaction_statement.h"
+#include "parser/sql_statement.h"
 namespace peloton {
 
 FileHandle INVALID_FILE_HANDLE;
@@ -465,6 +466,37 @@ std::ostream& operator<<(std::ostream& os, const StatementType& type) {
   os << StatementTypeToString(type);
   return os;
 }
+
+
+QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement *sql_stmt) {
+  QueryType query_type;
+  std::unordered_map<StatementType, QueryType>::iterator it  = type_map.find(stmt_type);
+  if (it != type_map.end()) {
+    query_type = it -> second;
+  } else {
+    switch(stmt_type) {
+      case StatementType::TRANSACTION:
+        switch(((parser::TransactionStatement*) sql_stmt)->type) {
+          case parser::TransactionStatement::CommandType::kBegin:
+            query_type = QueryType::QUERY_BEGIN;
+            break;
+          case parser::TransactionStatement::CommandType::kCommit:
+            query_type = QueryType::QUERY_COMMIT;
+            break;
+          case parser::TransactionStatement::CommandType::kRollback:
+            query_type = QueryType::QUERY_ROLLBACK;
+            break;
+        }
+        break;
+      default:
+        // TODO: When to get QUERY_SET, QUERY_SHOW????
+        query_type = QueryType::QUERY_OTHER;
+    }
+  }
+}
+
+
+
 
 //===--------------------------------------------------------------------===//
 // Expression - String Utilities

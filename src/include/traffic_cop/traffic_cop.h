@@ -80,6 +80,7 @@ class TrafficCop {
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
+                                              parser::SQLStatement* sql_stmt,
                                               std::string &error_message,
                                               const size_t thread_id = 0);
 
@@ -111,6 +112,8 @@ class TrafficCop {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
+
+  void AbortInvalidStmt();
 
   executor::ExecuteResult p_status_;
 

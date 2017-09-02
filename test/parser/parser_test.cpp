@@ -27,6 +27,23 @@ namespace test {
 
 class ParserTests : public PelotonTest {};
 
+TEST_F(ParserTests, PrepareTest) {
+  std::vector<std::string> queries;
+  queries.push_back("prepare func1 as insert into foo values($1);");
+  queries.push_back("execute func1(1)");
+  for (auto query : queries) {
+    parser::SQLStatementList* stmt_list =
+        parser::PostgresParser::ParseSQLString(query.c_str());
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+    LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    delete stmt_list;
+  }
+}
+
 TEST_F(ParserTests, BasicTest) {
   std::vector<std::string> queries;
 

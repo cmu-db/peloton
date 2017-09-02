@@ -32,6 +32,7 @@
 #include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "parser/sql_statement.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -703,6 +704,15 @@ enum class QueryType {
   QUERY_EXECUTE,   // execute query
   QUERY_OTHER,     // other queries
 };
+QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
+
+std::unordered_map<StatementType, QueryType> type_map {
+    {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
+    {StatementType::PREPARE, QueryType::QUERY_PREPARE},
+    {StatementType::INSERT, QueryType::QUERY_INSERT},
+    {StatementType::CREATE, QueryType::QUERY_CREATE}
+};
+
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
