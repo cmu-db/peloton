@@ -12,6 +12,7 @@
 
 
 #include "catalog/catalog.h"
+#include "storage/abstract_table.h"
 #include "common/harness.h"
 #include "trigger/trigger.h"
 #include "executor/executors.h"
