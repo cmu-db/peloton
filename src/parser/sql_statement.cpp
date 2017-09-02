@@ -43,16 +43,22 @@ const std::string SQLStatement::GetInfo() const {
   int indent = 1;
   switch (stmt_type) {
     case StatementType::SELECT:
-      GetSelectStatementInfo((SelectStatement*)this, indent);
+      os << ParserUtils::GetSelectStatementInfo((SelectStatement*)this, indent);
       break;
     case StatementType::INSERT:
-      GetInsertStatementInfo((InsertStatement*)this, indent);
+      os << ParserUtils::GetInsertStatementInfo((InsertStatement*)this, indent);
       break;
     case StatementType::CREATE:
-      GetCreateStatementInfo((CreateStatement*)this, indent);
+      os << ParserUtils::GetCreateStatementInfo((CreateStatement*)this, indent);
       break;
     case StatementType::DELETE:
-      GetDeleteStatementInfo((DeleteStatement*)this, indent);
+      os << ParserUtils::GetDeleteStatementInfo((DeleteStatement*)this, indent);
+      break;
+    case StatementType::COPY:
+      os << ParserUtils::GetCopyStatementInfo((CopyStatement*)this, indent);
+      break;
+    case StatementType::UPDATE:
+      os << ParserUtils::GetUpdateStatementInfo((UpdateStatement*)this, indent);
       break;
     default:
       break;
