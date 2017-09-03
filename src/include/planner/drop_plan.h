@@ -54,12 +54,19 @@ class DropPlan : public AbstractPlan {
 
   std::string GetTableName() const { return table_name; }
 
+  std::string GetTriggerName() const { return trigger_name; }
+
+  DropType GetDropType() const { return drop_type; }
+
   bool IsMissing() const { return missing; }
 
  private:
+  DropType drop_type = DropType::TABLE;
+
   // Target Table
   storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+  std::string trigger_name;
   bool missing;
 
  private:

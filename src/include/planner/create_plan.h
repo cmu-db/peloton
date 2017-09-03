@@ -25,6 +25,10 @@ namespace parser {
 class CreateStatement;
 }
 
+namespace Expression {
+class AbstractExpression;
+}
+
 namespace planner {
 
 class CreatePlan : public AbstractPlan {
@@ -63,6 +67,23 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
+  // interfaces for triggers
+
+  std::string GetTriggerName() const { return trigger_name; }
+
+  std::vector<std::string> GetTriggerFuncName() const {
+    return trigger_funcname;
+  }
+
+  std::vector<std::string> GetTriggerArgs() const { return trigger_args; }
+
+  std::vector<std::string> GetTriggerColumns() const { return trigger_columns; }
+
+  // Remeber to release the pointer
+  expression::AbstractExpression *GetTriggerWhen() const;
+
+  int16_t GetTriggerType() const { return trigger_type; }
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
@@ -90,6 +111,13 @@ class CreatePlan : public AbstractPlan {
 
   // UNIQUE INDEX flag
   bool unique;
+
+  std::string trigger_name;
+  std::vector<std::string> trigger_funcname;
+  std::vector<std::string> trigger_args;
+  std::vector<std::string> trigger_columns;
+  std::unique_ptr<expression::AbstractExpression> trigger_when = nullptr;
+  int16_t trigger_type; // information about row, timing, events, access by pg_trigger
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);

@@ -21,6 +21,10 @@
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 #include "storage/tuple_iterator.h"
+#include "trigger/trigger.h"
+#include "storage/tuple.h"
+#include "catalog/catalog.h"
+#include "catalog/trigger_catalog.h"
 
 namespace peloton {
 namespace executor {
@@ -74,10 +78,17 @@ bool InsertExecutor::DExecute() {
             target_table->GetTupleCount());
   auto executor_pool = executor_context_->GetPool();
 
+  trigger::TriggerList* trigger_list = target_table->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-before-insert triggers!");
+      trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_STATEMENT, current_txn);
+    }
+  }
+
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_TRACE("Insert executor :: 1 child ");
-
     if (!children_[0]->Execute()) {
       return false;
     }
@@ -122,12 +133,23 @@ bool InsertExecutor::DExecute() {
       executor_context_->num_processed += 1;  // insert one
     }
 
+    // execute after-insert-statement triggers and
+    // record on-commit-insert-statement triggers into current transaction
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT)) {
+        LOG_TRACE("target table has per-statement-after-insert triggers!");
+        trigger_list->ExecTriggers(TriggerType::AFTER_INSERT_STATEMENT, current_txn);
+      }
+      if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_INSERT_STATEMENT)) {
+        LOG_TRACE("target table has per-statement-on-commit-insert triggers!");
+        trigger_list->ExecTriggers(TriggerType::ON_COMMIT_INSERT_STATEMENT, current_txn);
+      }
+    }
     return true;
   }
-  // Inserting a collection of tuples from plan node
+    // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    LOG_TRACE("Insert executor :: 0 child ");
-
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
@@ -160,14 +182,36 @@ bool InsertExecutor::DExecute() {
       if (!project_info) {
         tuple = node.GetTuple(insert_itr);
       }
+
+      trigger::TriggerList* trigger_list = target_table->GetTriggerList();
+
+      auto new_tuple = tuple;
+      if (trigger_list != nullptr) {
+        LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        if (trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_ROW)) {
+          LOG_TRACE("target table has per-row-before-insert triggers!");
+          LOG_TRACE("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          trigger_list->ExecTriggers(TriggerType::BEFORE_INSERT_ROW,
+                                     current_txn,
+                                     const_cast<storage::Tuple *> (tuple),
+                                     executor_context_,
+                                     nullptr, &new_tuple);
+          LOG_TRACE("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+        }
+      }
+
+      if (new_tuple == nullptr) {
+        // trigger doesn't allow this tuple to be inserted
+        LOG_TRACE("this tuple is rejected by trigger");
+        continue;
+      }
+
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer location =
-          target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
-      LOG_TRACE("Inserted into location: %u, %u", location.block,
-                location.offset);
-      if (tuple->GetColumnCount() > 2) {
-        type::Value val = (tuple->GetValue(2));
+          target_table->InsertTuple(new_tuple, current_txn, &index_entry_ptr);
+      if (new_tuple->GetColumnCount() > 2) {
+        type::Value val = (new_tuple->GetValue(2));
         LOG_TRACE("value: %s", val.GetInfo().c_str());
       }
 
@@ -184,12 +228,51 @@ bool InsertExecutor::DExecute() {
                 target_table->GetTupleCount());
 
       executor_context_->num_processed += 1;  // insert one
-    }
 
+      // execute after-insert-row triggers and
+      // record on-commit-insert-row triggers into current transaction
+      new_tuple = tuple;
+      if (trigger_list != nullptr) {
+        LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+        if (trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_ROW)) {
+          LOG_TRACE("target table has per-row-after-insert triggers!");
+          LOG_TRACE("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          trigger_list->ExecTriggers(TriggerType::AFTER_INSERT_ROW,
+                                     current_txn,
+                                     const_cast<storage::Tuple *> (tuple),
+                                     executor_context_,
+                                     nullptr, &new_tuple);
+          LOG_TRACE("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+        }
+        if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_INSERT_ROW)) {
+          LOG_TRACE("target table has per-row-on-commit-insert triggers!");
+          LOG_TRACE("address of the origin tuple before firing triggers: 0x%lx", long(tuple));
+          trigger_list->ExecTriggers(TriggerType::ON_COMMIT_INSERT_ROW,
+                                     current_txn,
+                                     const_cast<storage::Tuple *> (tuple),
+                                     executor_context_,
+                                     nullptr, &new_tuple);
+          LOG_TRACE("address of the new tuple after firing triggers: 0x%lx", long(new_tuple));
+        }
+      }
+    }
+    // execute after-insert-statement triggers and
+    // record on-commit-insert-statement triggers into current transaction
+    trigger_list = target_table->GetTriggerList();
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT)) {
+        LOG_TRACE("target table has per-statement-after-insert triggers!");
+        trigger_list->ExecTriggers(TriggerType::AFTER_INSERT_STATEMENT, current_txn);
+      }
+      if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_INSERT_STATEMENT)) {
+        LOG_TRACE("target table has per-statement-on-commit-insert triggers!");
+        trigger_list->ExecTriggers(TriggerType::ON_COMMIT_INSERT_STATEMENT, current_txn);
+      }
+    }
     done_ = true;
     return true;
   }
-
   return true;
 }
 

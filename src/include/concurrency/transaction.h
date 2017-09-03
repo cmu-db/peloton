@@ -24,6 +24,12 @@
 #include "type/types.h"
 
 namespace peloton {
+
+namespace trigger {
+class TriggerSet;
+class TriggerData;
+}  // namespace trigger
+
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
@@ -36,18 +42,14 @@ class Transaction : public Printable {
  public:
   Transaction(const size_t thread_id,
               const IsolationLevelType isolation,
-              const cid_t &read_id) {
-    Init(thread_id, isolation, read_id);
-  }
+              const cid_t &read_id);
 
   Transaction(const size_t thread_id,
               const IsolationLevelType isolation,
               const cid_t &read_id, 
-              const cid_t &commit_id) {
-    Init(thread_id, isolation, read_id, commit_id);
-  }
+              const cid_t &commit_id);
 
-  ~Transaction() {}
+  ~Transaction();
 
  private:
 
@@ -60,28 +62,7 @@ class Transaction : public Printable {
   void Init(const size_t thread_id, 
             const IsolationLevelType isolation, 
             const cid_t &read_id, 
-            const cid_t &commit_id) {
-    read_id_ = read_id;
-
-    // commit id can be set at a transaction's commit phase.
-    commit_id_ = commit_id;
-
-    // set txn_id to commit_id.
-    txn_id_ = commit_id_;
-
-    epoch_id_ = read_id_ >> 32;
-
-    thread_id_ = thread_id;
-
-    isolation_level_ = isolation;
-
-    is_written_ = false;
-    
-    insert_count_ = 0;
-    
-    gc_set_.reset(new GCSet());
-  }
-
+            const cid_t &commit_id);
 
  public:
   //===--------------------------------------------------------------------===//
@@ -112,6 +93,10 @@ class Transaction : public Printable {
   bool RecordDelete(const ItemPointer &);
 
   RWType GetRWType(const ItemPointer &);
+
+  void AddOnCommitTrigger(trigger::TriggerData &trigger_data);
+
+  void ExecOnCommitTriggers();
 
   bool IsInRWSet(const ItemPointer &location) {
 
@@ -152,6 +137,8 @@ class Transaction : public Printable {
     return isolation_level_;
   }
 
+
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -187,6 +174,8 @@ class Transaction : public Printable {
   size_t insert_count_;
 
   IsolationLevelType isolation_level_;
+
+  std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
 };
 
