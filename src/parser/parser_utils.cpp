@@ -201,7 +201,10 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement* stmt,
 
   if (stmt->columns != nullptr) {
     for (ColumnDefinition* col : *(stmt->columns)) {
+<<<<<<< HEAD
       if (col->name == nullptr) {continue;}
+=======
+>>>>>>> c4d7701a8168c63799eb78404be704ddb0d2150e
       output += indent(num_indent);
       if (col->type == ColumnDefinition::DataType::PRIMARY) {
         output += "-> PRIMARY KEY : ";
