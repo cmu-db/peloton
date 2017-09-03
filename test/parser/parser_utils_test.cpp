@@ -6,11 +6,7 @@
 //
 // Identification: test/parser/parser_utils_test.cpp
 //
-<<<<<<< 81add772e8e4a9d7c11547d9e025a95b2df65fe4
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
-=======
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
->>>>>>> Fix for Issue #736
 //
 //===----------------------------------------------------------------------===//
 
