@@ -1026,10 +1026,10 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(
   tgtype |= root->timing;
   tgtype |= root->events;
 
-  result->table_info_ = new TableInfo();
-  result->table_info_->table_name = cstrdup(root->relation->relname);
+  result->table_info_.reset(new TableInfo());
+  result->table_info_->table_name.reset(cstrdup(root->relation->relname));
 
-  result->trigger_name = cstrdup(root->trigname);
+  result->trigger_name.reset(cstrdup(root->trigname));
 
   return result;
 }
@@ -1067,7 +1067,7 @@ parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
     LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
     table_info->table_name.reset(cstrdup(
       reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str));
-    res->table_info_ = table_info;
+    res->table_info_.reset(table_info);
     break;
   }
   return res;

@@ -87,13 +87,13 @@ class TriggerTests : public PelotonTest {
 
     auto table_ref = new parser::TableRef(TableReferenceType::NAME);
     parser::TableInfo *table_info = new parser::TableInfo();
-    table_info->table_name = table_name_c;
-    table_ref->table_info_ = table_info;
-    insert_node->table_ref_ = table_ref;
+    table_info->table_name.reset(table_name_c);
+    table_ref->table_info_.reset(table_info);
+    insert_node->table_ref_.reset(table_ref);
 
-    insert_node->columns = new std::vector<char *>;
-    insert_node->columns->push_back(col_1_c);
-    insert_node->columns->push_back(col_2_c);
+    insert_node->columns.reset(new std::vector<std::unique_ptr<char[]>>);
+    insert_node->columns->push_back(std::unique_ptr<char[]>(col_1_c));
+    insert_node->columns->push_back(std::unique_ptr<char[]>(col_2_c));
 
     insert_node->insert_values =
         new std::vector<std::vector<expression::AbstractExpression *> *>;
@@ -106,10 +106,10 @@ class TriggerTests : public PelotonTest {
     values_ptr->push_back(new expression::ConstantValueExpression(
         type::ValueFactory::GetVarcharValue(text)));
 
-    insert_node->select = new parser::SelectStatement();
+    insert_node->select.reset(new parser::SelectStatement());
 
-    planner::InsertPlan node(table, insert_node->columns,
-                             insert_node->insert_values);
+    planner::InsertPlan node(table, insert_node->columns.get(),
+                             insert_node->insert_values.get());
     executor::InsertExecutor executor(&node, context.get());
 
     EXPECT_TRUE(executor.Init());
