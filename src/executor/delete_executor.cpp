@@ -25,6 +25,10 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/trigger_catalog.h"
+#include "trigger/trigger.h"
+#include "catalog/table_catalog.h"
+#include "parser/pg_trigger.h"
 
 namespace peloton {
 namespace executor {
@@ -88,6 +92,19 @@ bool DeleteExecutor::DExecute() {
   LOG_TRACE("Transaction ID: %lu",
             executor_context_->GetTransaction()->GetTransactionId());
 
+  auto executor_pool = executor_context_->GetPool();
+  auto target_table_schema = target_table_->GetSchema();
+  auto column_count = target_table_schema->GetColumnCount();
+
+  trigger::TriggerList* trigger_list = target_table_->GetTriggerList();
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-before-delete triggers!");
+      trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT, current_txn);
+    }
+  }
+
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
 
@@ -101,7 +118,7 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    // if running at snapshot isolation, 
+    // if running at snapshot isolation,
     // then we need to retrieve the latest version of this tuple.
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
@@ -121,13 +138,34 @@ bool DeleteExecutor::DExecute() {
 
     // if the current transaction is the creator of this version.
     // which means the current transaction has already updated the version.
+
+    std::unique_ptr<storage::Tuple> real_tuple(
+        new storage::Tuple(target_table_schema, true));
+    bool tuple_is_materialzed = false;
+
+    // check whether there are per-row-before-delete triggers on this table using trigger catalog
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_ROW)) {
+        ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+        // Materialize the logical tile tuple
+        for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+          type::Value val = (logical_tile_tuple.GetValue(column_itr));
+          real_tuple->SetValue(column_itr, val, executor_pool);
+        }
+        tuple_is_materialzed = true;
+        LOG_TRACE("target table has per-row-before-delete triggers!");
+        trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_ROW,
+                                   current_txn,
+                                   real_tuple.get(), executor_context_);
+      }
+    }
+
     if (is_owner == true && is_written == true) {
       // if the transaction is the owner of the tuple, then directly update in place.
       LOG_TRACE("The current transaction is the owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
-
     } else {
-
       bool is_ownable = is_owner ||
           transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
 
@@ -165,7 +203,6 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.PerformDelete(current_txn, old_location, new_location);
 
         executor_context_->num_processed += 1;  // deleted one
-
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
@@ -173,8 +210,48 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
     }
+    // execute after-delete-row triggers and
+    // record on-commit-delete-row triggers into current transaction
+    if (trigger_list != nullptr) {
+      LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+      if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW) ||
+          trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_ROW)) {
+        if (!tuple_is_materialzed) {
+          ContainerTuple<LogicalTile> logical_tile_tuple(source_tile.get(), visible_tuple_id);
+          // Materialize the logical tile tuple
+          for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+            type::Value val = (logical_tile_tuple.GetValue(column_itr));
+            real_tuple->SetValue(column_itr, val, executor_pool);
+          }
+        }
+        if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW)) {
+          LOG_TRACE("target table has per-row-after-delete triggers!");
+          trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_ROW,
+                                     current_txn,
+                                     real_tuple.get(), executor_context_);
+        }
+        if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_ROW)) {
+          LOG_TRACE("target table has per-row-on-commit-delete triggers!");
+          trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_ROW,
+                                     current_txn,
+                                     real_tuple.get(), executor_context_);
+        }
+      }
+    }
   }
-
+  // execute after-delete-statement triggers and
+  // record on-commit-delete-statement triggers into current transaction
+  if (trigger_list != nullptr) {
+    LOG_TRACE("size of trigger list in target table: %d", trigger_list->GetTriggerListSize());
+    if (trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-after-delete triggers!");
+      trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT, current_txn);
+    }
+    if (trigger_list->HasTriggerType(TriggerType::ON_COMMIT_DELETE_STATEMENT)) {
+      LOG_TRACE("target table has per-statement-on-commit-delete triggers!");
+      trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_STATEMENT, current_txn);
+    }
+  }
   return true;
 }
 

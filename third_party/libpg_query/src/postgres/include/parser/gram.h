@@ -960,8 +960,8 @@ typedef union YYSTYPE
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
 }
-/* Line 1529 of yacc.c.  */
-#line 965 "gram.h"
+/* Line 1489 of yacc.c.  */
+#line 965 "src_backend_parser_gram.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

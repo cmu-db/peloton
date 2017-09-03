@@ -12,6 +12,8 @@
 
 #include "catalog/catalog.h"
 
+#include "common/exception.h"
+#include "common/macros.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/column_catalog.h"
@@ -21,6 +23,8 @@
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/date_functions.h"
 #include "expression/string_functions.h"
@@ -142,6 +146,8 @@ void Catalog::Bootstrap() {
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
+
+  TriggerCatalog::GetInstance(txn);
 
   txn_manager.CommitTransaction(txn);
 }

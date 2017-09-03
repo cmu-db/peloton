@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "type/type_id.h"
+#include "parser/pg_trigger.h"
 
 namespace peloton {
 
@@ -91,7 +92,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class PostgresValueType {
   INVALID = INVALID_TYPE_ID,
   BOOLEAN = 16,
-  TINYINT = 16, // BOOLEAN is an alias for TINYINT
+  TINYINT = 16,  // BOOLEAN is an alias for TINYINT
   SMALLINT = 21,
   INTEGER = 23,
   VARBINARY = 17,
@@ -639,7 +640,21 @@ enum class CreateType {
   DB = 1,                     // db create type
   TABLE = 2,                  // table create type
   INDEX = 3,                  // index create type
-  CONSTRAINT = 4              // constraint create type
+  CONSTRAINT = 4,             // constraint create type
+  TRIGGER = 5                 // trigger create type
+};
+
+//===--------------------------------------------------------------------===//
+// Drop Types
+//===--------------------------------------------------------------------===//
+
+enum class DropType {
+  INVALID = INVALID_TYPE_ID,  // invalid drop type
+  DB = 1,                     // db drop type
+  TABLE = 2,                  // table drop type
+  INDEX = 3,                  // index drop type
+  CONSTRAINT = 4,             // constraint drop type
+  TRIGGER = 5                 // trigger drop type
 };
 
 //===--------------------------------------------------------------------===//
@@ -920,6 +935,55 @@ typedef enum LayoutType {
   LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
   LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
 } LayoutType;
+
+//===--------------------------------------------------------------------===//
+// Trigger Types
+//===--------------------------------------------------------------------===//
+
+enum class TriggerType {
+  BEFORE_INSERT_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT |
+                            TRIGGER_TYPE_ROW,
+  BEFORE_INSERT_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT |
+                            TRIGGER_TYPE_STATEMENT,
+  BEFORE_UPDATE_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE |
+                            TRIGGER_TYPE_ROW,
+  BEFORE_UPDATE_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE |
+                            TRIGGER_TYPE_STATEMENT,
+  BEFORE_DELETE_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE |
+                            TRIGGER_TYPE_ROW,
+  BEFORE_DELETE_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE |
+                            TRIGGER_TYPE_STATEMENT,
+  AFTER_INSERT_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT |
+                            TRIGGER_TYPE_ROW,
+  AFTER_INSERT_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT |
+                            TRIGGER_TYPE_STATEMENT,
+  AFTER_UPDATE_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE |
+                            TRIGGER_TYPE_ROW,
+  AFTER_UPDATE_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE |
+                            TRIGGER_TYPE_STATEMENT,
+  AFTER_DELETE_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE |
+                            TRIGGER_TYPE_ROW,
+  AFTER_DELETE_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE |
+                            TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_INSERT_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT |
+                                TRIGGER_TYPE_ROW,
+  ON_COMMIT_INSERT_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT |
+                                TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_UPDATE_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE |
+                                TRIGGER_TYPE_ROW,
+  ON_COMMIT_UPDATE_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE |
+                                TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_DELETE_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE |
+                                TRIGGER_TYPE_ROW,
+  ON_COMMIT_DELETE_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE |
+                                TRIGGER_TYPE_STATEMENT,
+};
+
+const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
+                             TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_AFTER |
+                             TRIGGER_TYPE_COMMIT |
+                             TRIGGER_TYPE_INSERT | TRIGGER_TYPE_DELETE |
+                             TRIGGER_TYPE_UPDATE;
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
