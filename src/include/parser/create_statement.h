@@ -151,11 +151,6 @@ class CreateStatement : public TableRefStatement {
 
   virtual ~CreateStatement() {}
 
-    if (trigger_when) {
-      delete trigger_when;
-    }
-  }
-
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CreateType type;
