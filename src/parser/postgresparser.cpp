@@ -1397,7 +1397,9 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
   auto result = new parser::UpdateStatement();
   result->table.reset(RangeVarTransform(update_stmt->relation));
   result->where.reset(WhereTransform(update_stmt->whereClause));
-  result->updates.reset(UpdateTargetTransform(update_stmt->targetList));
+  for (auto &clause : *UpdateTargetTransform(update_stmt->targetList)) {
+    result->updates.emplace_back(std::move(clause));
+  }
   return result;
 }
 

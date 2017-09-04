@@ -43,16 +43,16 @@ std::string ParserUtils::GetTableRefInfo(const TableRef* table,
     case TableReferenceType::JOIN:
       os << indent(num_indent) << "-> Join Table\n";
       os << indent(num_indent + 1) + "-> Left\n";
-      os << GetTableRefInfo(table->join->left, num_indent + 2) << "\n";
+      os << GetTableRefInfo(table->join->left.get(), num_indent + 2) << "\n";
       os << indent(num_indent + 1) << "-> Right\n";
-      os << GetTableRefInfo(table->join->right, num_indent + 2) << "\n";
+      os << GetTableRefInfo(table->join->right.get(), num_indent + 2) << "\n";
       os << indent(num_indent + 1) << "-> Join Condition\n";
-      os << GetExpressionInfo(table->join->condition, num_indent + 2) << "\n";
+      os << GetExpressionInfo(table->join->condition.get(), num_indent + 2) << "\n";
       break;
 
     case TableReferenceType::CROSS_PRODUCT:
-      for (TableRef* tbl : *table->list) {
-        os << GetTableRefInfo(tbl, num_indent) << "\n";
+      for (auto &tbl : table->list) {
+        os << GetTableRefInfo(tbl.get(), num_indent) << "\n";
       }
       break;
 
@@ -62,7 +62,7 @@ std::string ParserUtils::GetTableRefInfo(const TableRef* table,
       break;
   }
 
-  if (table->alias != NULL) {
+  if (!table->alias.empty()) {
     os << indent(num_indent + 1) << "Alias\n";
     os << indent(num_indent + 2) << table->alias << "\n";
   }
@@ -133,30 +133,30 @@ std::string ParserUtils::GetSelectStatementInfo(SelectStatement* stmt,
   std::ostringstream os;
   os << indent(num_indent) << "SelectStatement\n";
   os << indent(num_indent + 1) << "-> Fields:\n";
-  for (expression::AbstractExpression* expr : *(stmt->select_list))
-    os << GetExpressionInfo(expr, num_indent + 2);
+  for (auto &expr : stmt->select_list)
+    os << GetExpressionInfo(expr.get(), num_indent + 2);
 
   os << indent(num_indent + 1) + "-> Sources:\n";
   if (stmt->from_table != NULL) {
-    os << GetTableRefInfo(stmt->from_table, num_indent + 2);
+    os << GetTableRefInfo(stmt->from_table.get(), num_indent + 2);
   }
 
   if (stmt->where_clause != NULL) {
     os << indent(num_indent + 1) << "-> Search Conditions:\n";
-    os << GetExpressionInfo(stmt->where_clause, num_indent + 2);
+    os << GetExpressionInfo(stmt->where_clause.get(), num_indent + 2);
   }
 
   if (stmt->union_select != NULL) {
     os << indent(num_indent + 1) << "-> Union:\n";
-    os << GetSelectStatementInfo(stmt->union_select, num_indent + 2);
+    os << GetSelectStatementInfo(stmt->union_select.get(), num_indent + 2);
   }
 
   if (stmt->order != NULL) {
     os << indent(num_indent + 1) << "-> OrderBy:\n";
-    for (size_t idx = 0; idx < stmt->order->exprs->size(); idx++) {
-      auto expr = stmt->order->exprs->at(idx);
-      auto type = stmt->order->types->at(idx);
-      os << GetExpressionInfo(expr, num_indent + 2);
+    for (size_t idx = 0; idx < stmt->order->exprs.size(); idx++) {
+      auto &expr = stmt->order->exprs.at(idx);
+      auto &type = stmt->order->types.at(idx);
+      os << GetExpressionInfo(expr.get(), num_indent + 2);
       if (type == kOrderAsc)
         os << indent(num_indent + 2) << "ascending\n";
       else
@@ -166,7 +166,7 @@ std::string ParserUtils::GetSelectStatementInfo(SelectStatement* stmt,
 
   if (stmt->group_by != NULL) {
     os << indent(num_indent + 1) << "-> GroupBy:\n";
-    for (auto column : *(stmt->group_by->columns)) {
+    for (auto &column : stmt->group_by->columns) {
       os << indent(num_indent + 2) << column->GetInfo() << "\n";
     }
     if (stmt->group_by->having) {
@@ -192,27 +192,27 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement* stmt,
     os << indent(num_indent + 1) << stmt->index_name << "\n";
     os << indent(num_indent) << "INDEX : table : " << stmt->GetTableName()
        << " unique : " << stmt->unique << " attrs : ";
-    for (auto key : *(stmt->index_attrs)) os << key << " ";
+    for (auto &key : stmt->index_attrs) os << key << " ";
     os << "\n";
   } else if (stmt->type == CreateStatement::CreateType::kTable) {
     os << indent(num_indent + 1) << stmt->GetTableName() << "\n";
   }
 
-  if (stmt->columns != nullptr) {
-    for (ColumnDefinition* col : *(stmt->columns)) {
-      if (col->name == nullptr) {continue;}
+  if (!stmt->columns.empty()) {
+    for (auto &col : stmt->columns) {
+      if (col->name.empty()) {continue;}
       os << indent(num_indent);
       if (col->type == ColumnDefinition::DataType::PRIMARY) {
         os << "-> PRIMARY KEY : ";
-        for (auto key : *(col->primary_key)) os << key << " ";
+        for (auto &key : col->primary_key) os << key << " ";
         os << "\n";
       } else if (col->type == ColumnDefinition::DataType::FOREIGN) {
         os << "-> FOREIGN KEY : References " << col->name << " Source : ";
-        for (auto key : *(col->foreign_key_source)) {
+        for (auto &key : col->foreign_key_source) {
           os << key << " ";
         }
         os << "Sink : ";
-        for (auto key : *(col->foreign_key_sink)) {
+        for (auto &key : col->foreign_key_sink) {
           os << key << " ";
         }
         os << "\n";
@@ -233,24 +233,24 @@ std::string ParserUtils::GetInsertStatementInfo(InsertStatement* stmt,
   std::ostringstream os;
   os << indent(num_indent) << "InsertStatment\n";
   os << indent(num_indent + 1) << stmt->GetTableName() + "\n";
-  if (stmt->columns != NULL) {
+  if (!stmt->columns.empty()) {
     os << indent(num_indent + 1) << "-> Columns\n";
-    for (char* col_name : *stmt->columns) {
+    for (auto &col_name : stmt->columns) {
       os << indent(num_indent + 2) << col_name << "\n";
     }
   }
   switch (stmt->type) {
     case InsertType::VALUES:
       os << indent(num_indent + 1) << "-> Values\n";
-      for (auto value_item : *stmt->insert_values) {
+      for (auto &value_item : stmt->insert_values) {
         // TODO this is a debugging method which is currently unused.
-        for (expression::AbstractExpression* expr : *value_item) {
-          os << GetExpressionInfo(expr, num_indent + 2);
+        for (auto &expr : value_item) {
+          os << GetExpressionInfo(expr.get(), num_indent + 2);
         }
       }
       break;
     case InsertType::SELECT:
-      os << GetSelectStatementInfo(stmt->select, num_indent + 1);
+      os << GetSelectStatementInfo(stmt->select.get(), num_indent + 1);
       break;
     default:
       break;
@@ -270,14 +270,14 @@ std::string ParserUtils::GetUpdateStatementInfo(UpdateStatement* stmt,
                                                 uint num_indent) {
   std::ostringstream os;
   os << indent(num_indent) << "UpdateStatment\n";
-  os << GetTableRefInfo(stmt->table, num_indent + 1);
+  os << GetTableRefInfo(stmt->table.get(), num_indent + 1);
   os << indent(num_indent) << "-> Updates :: \n";
-  for (UpdateClause* update : *(stmt->updates)) {
+  for (auto &update : stmt->updates) {
     os << indent(num_indent + 1) << "Column: " << update->column << "\n";
-    os << GetExpressionInfo(update->value, num_indent + 1);
+    os << GetExpressionInfo(update->value.get(), num_indent + 1);
   }
   os << indent(num_indent) << "-> Where :: "
-     << GetExpressionInfo(stmt->where, num_indent + 1);
+     << GetExpressionInfo(stmt->where.get(), num_indent + 1);
   return os.str();
 }
 
@@ -287,7 +287,7 @@ std::string ParserUtils::GetCopyStatementInfo(CopyStatement* stmt,
   os << indent(num_indent) << "CopyStatment\n";
   os << indent(num_indent) << "-> Type :: " << CopyTypeToString(stmt->type)
      << "\n";
-  os << GetTableRefInfo(stmt->cpy_table, num_indent + 1);
+  os << GetTableRefInfo(stmt->cpy_table.get(), num_indent + 1);
 
   os << indent(num_indent) << "-> File Path :: " << stmt->file_path << "\n";
   os << indent(num_indent) << "-> Delimiter :: " << stmt->delimiter << "\n";
