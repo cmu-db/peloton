@@ -48,7 +48,7 @@ class DropStatement : public TableRefStatement {
       : TableRefStatement(StatementType::DROP),
         type(type),
         table_name_of_trigger(cstrdup(table_name_of_trigger.c_str())),
-        trigger_name(cstrdup(trigger_name.c_str())) {}
+        trigger_name(trigger_name) {}
 
   virtual ~DropStatement() {}
 
@@ -57,14 +57,14 @@ class DropStatement : public TableRefStatement {
   }
 
   EntityType type;
-  std::unique_ptr<char[]> database_name = nullptr;
-  std::unique_ptr<char[]> index_name = nullptr;
-  std::unique_ptr<char[]> prep_stmt = nullptr;
+  std::string database_name;
+  std::string index_name;
+  std::string prep_stmt;
   bool missing;
 
   // drop trigger
-  char* table_name_of_trigger = nullptr;
-  char* trigger_name = nullptr;
+  std::string table_name_of_trigger = nullptr;
+  std::string trigger_name = nullptr;
 };
 
 }  // namespace parser

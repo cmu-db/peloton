@@ -30,8 +30,7 @@ class CopyStatement : public SQLStatement {
       : SQLStatement(StatementType::COPY),
         cpy_table(nullptr),
         type(type),
-        file_path(nullptr),
-        delimiter(','){};
+        delimiter(',') {};
 
   virtual ~CopyStatement() {}
 
@@ -43,7 +42,7 @@ class CopyStatement : public SQLStatement {
 
   CopyType type;
 
-  std::unique_ptr<char[]> file_path;
+  std::string file_path;
   char delimiter;
 };
 

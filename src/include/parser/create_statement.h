@@ -87,7 +87,6 @@ struct ColumnDefinition {
 
       // case ADDRESS:
       //  return type::Type::ADDRESS;
-      //  break;
 
       case DataType::TIMESTAMP:
         return type::TypeId::TIMESTAMP;
@@ -109,7 +108,7 @@ struct ColumnDefinition {
     }
   }
 
-  std::unique_ptr<char[]> name = nullptr;
+  std::string name = nullptr;
 
   // The name of the table and its database
   std::unique_ptr<TableInfo> table_info_ = nullptr;
@@ -122,13 +121,13 @@ struct ColumnDefinition {
   std::unique_ptr<expression::AbstractExpression> default_value = nullptr;
   std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
-  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> primary_key = nullptr;
-  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_source = nullptr;
-  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> foreign_key_sink = nullptr;
+  std::vector<std::string> primary_key;
+  std::vector<std::string> foreign_key_source;
+  std::vector<std::string> foreign_key_sink;
 
-  std::vector<char *>* multi_unique_cols = nullptr;
+  std::vector<std::string> multi_unique_cols;
 
-  char* foreign_key_table_name = nullptr;
+  std::string foreign_key_table_name;
   FKConstrActionType foreign_key_delete_action;
   FKConstrActionType foreign_key_update_action;
   FKConstrMatchType foreign_key_match_type;
@@ -156,21 +155,21 @@ class CreateStatement : public TableRefStatement {
   CreateType type;
   bool if_not_exists;
 
-  std::unique_ptr<std::vector<std::unique_ptr<ColumnDefinition>>> columns;
-  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> index_attrs = nullptr;
+  std::vector<std::unique_ptr<ColumnDefinition>> columns;
+  std::vector<std::string> index_attrs;
 
   IndexType index_type;
 
-  std::unique_ptr<char[]> index_name = nullptr;
-  std::unique_ptr<char[]> trigger_name = nullptr;
-  std::unique_ptr<char[]> database_name = nullptr;
+  std::string index_name;
+  std::string trigger_name;
+  std::string database_name;
 
   bool unique = false;
 
-  std::vector<char*>* trigger_funcname = nullptr;
-  std::vector<char*>* trigger_args = nullptr;
-  std::vector<char*>* trigger_columns = nullptr;
-  expression::AbstractExpression* trigger_when = nullptr;
+  std::vector<std::string> trigger_funcname;
+  std::vector<std::string> trigger_args;
+  std::vector<std::string> trigger_columns;
+  expression::AbstractExpression* trigger_when;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
 };

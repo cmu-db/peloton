@@ -33,8 +33,8 @@ class ExecuteStatement : public SQLStatement {
     v->Visit(this);
   }
 
-  std::unique_ptr<char[]> name;
-  std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>> parameters;
+  std::string name;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> parameters;
 };
 
 }  // namespace parser

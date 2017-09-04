@@ -64,7 +64,7 @@ class PrepareStatement : public SQLStatement {
     v->Visit(this);
   }
 
-  std::unique_ptr<char[]> name;
+  std::string name;
   std::unique_ptr<SQLStatementList> query;
   std::vector<std::unique_ptr<expression::ParameterValueExpression>>
       placeholders;
