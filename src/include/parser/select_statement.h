@@ -62,7 +62,7 @@ class LimitDescription {
  */
 class GroupByDescription {
  public:
-  GroupByDescription() : columns(nullptr), having(nullptr) {}
+  GroupByDescription() : having(nullptr) {}
 
   ~GroupByDescription() {}
 
@@ -84,7 +84,6 @@ class SelectStatement : public SQLStatement {
       : SQLStatement(StatementType::SELECT),
         from_table(nullptr),
         select_distinct(false),
-        select_list(nullptr),
         where_clause(nullptr),
         group_by(nullptr),
         union_select(nullptr),
@@ -110,8 +109,8 @@ class SelectStatement : public SQLStatement {
   bool is_for_update;
 
  public:
-  const std::vector<std::unique_ptr<expression::AbstractExpression>>* getSelectList() const {
-    return select_list.get();
+  const std::vector<std::unique_ptr<expression::AbstractExpression>>& getSelectList() const {
+    return select_list;
   }
 
   void UpdateWhereClause(expression::AbstractExpression* expr) {

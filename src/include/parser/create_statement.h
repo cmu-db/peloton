@@ -108,7 +108,7 @@ struct ColumnDefinition {
     }
   }
 
-  std::string name = nullptr;
+  std::string name;
 
   // The name of the table and its database
   std::unique_ptr<TableInfo> table_info_ = nullptr;
@@ -145,8 +145,7 @@ class CreateStatement : public TableRefStatement {
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
         type(type),
-        if_not_exists(false),
-        columns(nullptr){};
+        if_not_exists(false) {};
 
   virtual ~CreateStatement() {}
 

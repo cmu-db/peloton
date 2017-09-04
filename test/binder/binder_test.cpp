@@ -92,8 +92,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
       "ORDER BY a1";
 
   auto parse_tree = parser.BuildParseTree(selectSQL);
-  auto selectStmt =
-      dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0).get());
+  auto selectStmt = dynamic_cast<parser::SelectStatement*>(
+          parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
 
   oid_t db_oid =
@@ -106,12 +106,12 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check select_list
   LOG_INFO("Checking select list");
-  auto tupleExpr =
-      (expression::TupleValueExpression*)(*selectStmt->select_list)[0].get();
+  auto tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      selectStmt->select_list[0].get());
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   EXPECT_EQ(type::TypeId::INTEGER, tupleExpr->GetValueType());
-  tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1].get();
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->select_list[1].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   EXPECT_EQ(type::TypeId::VARCHAR, tupleExpr->GetValueType());
@@ -136,11 +136,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check Group By and Having
   LOG_INFO("Checking group by");
   tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0).get();
+      (expression::TupleValueExpression*)selectStmt->group_by->columns.at(0).get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
-  tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1).get();
+  tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      selectStmt->group_by->columns.at(1).get());
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   tupleExpr =
@@ -151,7 +151,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check Order By
   LOG_INFO("Checking order by");
   tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->order->exprs->at(0);
+      (expression::TupleValueExpression*)selectStmt->order->exprs.at(0).get();
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
 
   // Check alias ambiguous
@@ -161,7 +161,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
+  selectStmt = dynamic_cast<parser::SelectStatement*>(
+      parse_tree->GetStatements().at(0).get());
   try {
     binder->BindNameToNode(selectStmt);
     EXPECT_TRUE(false);
@@ -176,14 +177,15 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
+  selectStmt = dynamic_cast<parser::SelectStatement*>(
+      parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
   LOG_INFO("Checking where clause");
-  tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(0);
+  tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      selectStmt->where_clause->GetChild(0));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
-  tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(1);
+  tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      selectStmt->where_clause->GetChild(1));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 1));  // a1
 
   // Test alias and select_list
@@ -194,13 +196,14 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder.reset(new binder::BindNodeVisitor(txn));
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
-  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0).get());
+  selectStmt = dynamic_cast<parser::SelectStatement*>(
+      parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
-  tupleExpr =
-      (expression::TupleValueExpression*)(selectStmt->select_list->at(0).get());
+  tupleExpr = dynamic_cast<expression::TupleValueExpression*>(
+      selectStmt->select_list.at(0).get());
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));
-  tupleExpr =
-      (expression::TupleValueExpression*)(selectStmt->select_list->at(1).get());
+  tupleExpr = dynamic_cast<expression::TupleValueExpression*>(
+      selectStmt->select_list.at(1).get());
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
   txn_manager.CommitTransaction(txn);
   // Delete the test database
@@ -236,14 +239,13 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   LOG_INFO("Checking first condition in where clause");
-  auto tupleExpr =
-      (expression::TupleValueExpression*)deleteStmt->expr->GetChild(0)
-          ->GetChild(1);
+  auto tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      deleteStmt->expr->GetChild(0)->GetChild(1));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 0));
 
   LOG_INFO("Checking second condition in where clause");
-  tupleExpr = (expression::TupleValueExpression*)deleteStmt->expr->GetChild(1)
-                  ->GetChild(0);
+  tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
+      deleteStmt->expr->GetChild(1)->GetChild(0));
   EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
@@ -251,5 +253,6 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
+
 }  // namespace test
 }  // namespace peloton

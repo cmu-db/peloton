@@ -63,8 +63,8 @@ class DropStatement : public TableRefStatement {
   bool missing;
 
   // drop trigger
-  std::string table_name_of_trigger = nullptr;
-  std::string trigger_name = nullptr;
+  std::string table_name_of_trigger;
+  std::string trigger_name;
 };
 
 }  // namespace parser

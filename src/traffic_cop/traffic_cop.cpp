@@ -378,12 +378,11 @@ void TrafficCop::GetDataTables(
     std::vector<storage::DataTable *> &target_tables) {
   if (from_table == nullptr) return;
 
-  if (from_table->list == NULL) {
+  if (from_table->list.empty()) {
     if (from_table->join == NULL) {
-      auto *target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              from_table->GetDatabaseName(), from_table->GetTableName(),
-              GetCurrentTxnState().first));
+      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+          from_table->GetDatabaseName(), from_table->GetTableName(),
+          GetCurrentTxnState().first);
       target_tables.push_back(target_table);
     } else {
       GetDataTables(from_table->join->left.get(), target_tables);
@@ -393,7 +392,7 @@ void TrafficCop::GetDataTables(
 
   // Query has multiple tables. Recursively add all tables
   else {
-    for (auto& table : *(from_table->list)) {
+    for (auto& table : from_table->list) {
       GetDataTables(table.get(), target_tables);
     }
   }
@@ -421,7 +420,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   GetDataTables(select_stmt->from_table.get(), target_tables);
 
   int count = 0;
-  for (auto& expr : *(select_stmt->select_list)) {
+  for (auto& expr : select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {

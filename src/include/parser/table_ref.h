@@ -31,11 +31,8 @@ class JoinDefinition;
 struct TableRef {
   TableRef(TableReferenceType type)
       : type(type),
-        schema(nullptr),
         table_info_(nullptr),
-        alias(nullptr),
         select(nullptr),
-        list(nullptr),
         join(nullptr) {}
 
   virtual ~TableRef();
@@ -54,25 +51,27 @@ struct TableRef {
   std::unique_ptr<JoinDefinition> join;
 
   // Convenience accessor methods
-  inline bool HasSchema() { return schema != nullptr; }
+  inline bool HasSchema() { return !schema.empty(); }
 
   // Get the name of the database of this table
-  inline const char* GetDatabaseName() const {
-    if (table_info_ == nullptr || table_info_->database_name == nullptr) {
+  inline std::string GetDatabaseName() const {
+    if (table_info_ == nullptr || table_info_->database_name.empty()) {
       return DEFAULT_DB_NAME;
     }
-    return table_info_->database_name.get();
+    return table_info_->database_name;
   }
 
   // Get the name of the table
-  inline const char* GetTableAlias() const {
-    if (alias != nullptr)
-      return alias.get();
+  inline std::string GetTableAlias() const {
+    if (!alias.empty())
+      return alias;
     else
-      return table_info_->table_name.get();
+      return table_info_->table_name;
   }
 
-  inline const char* GetTableName() const { return table_info_->table_name.get(); }
+  inline std::string GetTableName() const {
+    return table_info_->table_name;
+  }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };

@@ -35,11 +35,9 @@ class UpdateClause {
 
   UpdateClause* Copy() {
     UpdateClause* new_clause = new UpdateClause();
-    std::string str(column.get());
-    char* new_cstr = new char[str.length() + 1];
-    std::strcpy(new_cstr, str.c_str());
+    std::string str(column);
+    new_clause->column = column;
     expression::AbstractExpression* new_expr = value->Copy();
-    new_clause->column.reset(new_cstr);
     new_clause->value.reset(new_expr);
     return new_clause;
   }
