@@ -6,7 +6,7 @@
 //
 // Identification: src/parser/parser_utils.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,61 +19,41 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 
 namespace peloton {
 namespace parser {
 
-std::string indent(uint num_indent) { return std::string(num_indent, '\t'); }
-
-void inprint(UNUSED_ATTRIBUTE int64_t val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%lu", val);
+std::string ParserUtils::indent(uint num_indent) {
+  return std::string(num_indent * 2, ' ');
 }
 
-void inprint(UNUSED_ATTRIBUTE float val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%f", val);
-}
-
-void inprint(UNUSED_ATTRIBUTE const char* val,
-             UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%s", val);
-}
-
-void inprint(UNUSED_ATTRIBUTE const char* val,
-             UNUSED_ATTRIBUTE const char* val2,
-             UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%s -> %s", val, val2);
-}
-
-void inprintC(UNUSED_ATTRIBUTE char val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%c", val);
-}
-
-void inprintU(UNUSED_ATTRIBUTE uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_TRACE("%lu", val);
-}
-
-void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
+std::string ParserUtils::GetTableRefInfo(const TableRef* table,
+                                         uint num_indent) {
+  std::ostringstream os;
   switch (table->type) {
     case TableReferenceType::NAME:
-      inprint(table->GetTableName(), num_indent);
+      os << indent(num_indent) << table->GetTableName() << "\n";
       break;
 
     case TableReferenceType::SELECT:
-      GetSelectStatementInfo(table->select, num_indent);
+      os << GetSelectStatementInfo(table->select, num_indent) << "\n";
       break;
 
     case TableReferenceType::JOIN:
-      inprint("-> Join Table", num_indent);
-      inprint("-> Left", num_indent + 1);
-      PrintTableRefInfo(table->join->left, num_indent + 2);
-      inprint("-> Right", num_indent + 1);
-      PrintTableRefInfo(table->join->right, num_indent + 2);
-      inprint("-> Join Condition", num_indent + 1);
-      GetExpressionInfo(table->join->condition, num_indent + 2);
+      os << indent(num_indent) << "-> Join Table\n";
+      os << indent(num_indent + 1) + "-> Left\n";
+      os << GetTableRefInfo(table->join->left, num_indent + 2) << "\n";
+      os << indent(num_indent + 1) << "-> Right\n";
+      os << GetTableRefInfo(table->join->right, num_indent + 2) << "\n";
+      os << indent(num_indent + 1) << "-> Join Condition\n";
+      os << GetExpressionInfo(table->join->condition, num_indent + 2) << "\n";
       break;
 
     case TableReferenceType::CROSS_PRODUCT:
-      for (TableRef* tbl : *table->list) PrintTableRefInfo(tbl, num_indent);
+      for (TableRef* tbl : *table->list) {
+        os << GetTableRefInfo(tbl, num_indent) << "\n";
+      }
       break;
 
     case TableReferenceType::INVALID:
@@ -83,200 +63,234 @@ void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
   }
 
   if (table->alias != NULL) {
-    inprint("Alias", num_indent + 1);
-    inprint(table->alias, num_indent + 2);
+    os << indent(num_indent + 1) << "Alias\n";
+    os << indent(num_indent + 2) << table->alias << "\n";
   }
+  return os.str();
 }
 
-void PrintOperatorExpression(const expression::AbstractExpression* expr,
-                             uint num_indent) {
+std::string ParserUtils::GetOperatorExpression(
+    const expression::AbstractExpression* expr, uint num_indent) {
   if (expr == NULL) {
-    inprint("null", num_indent);
-    return;
+    return indent(num_indent) + "null\n";
   }
 
-  GetExpressionInfo(expr->GetChild(0), num_indent + 1);
+  std::ostringstream os;
+  os << GetExpressionInfo(expr->GetChild(0), num_indent + 1) << "\n";
   if (expr->GetChild(1) != NULL)
-    GetExpressionInfo(expr->GetChild(1), num_indent + 1);
+    os << GetExpressionInfo(expr->GetChild(1), num_indent + 1) << "\n";
+  return os.str();
 }
 
-void GetExpressionInfo(const expression::AbstractExpression* expr,
-                       uint num_indent) {
+std::string ParserUtils::GetExpressionInfo(
+    const expression::AbstractExpression* expr, uint num_indent) {
   if (expr == NULL) {
-    inprint("null", num_indent);
-    return;
+    return indent(num_indent) + "null\n";
   }
 
-  LOG_TRACE("-> Expr Type :: %s",
-            ExpressionTypeToString(expr->GetExpressionType()).c_str());
+  std::ostringstream os;
+  os << indent(num_indent) << "-> Expr Type :: "
+     << ExpressionTypeToString(expr->GetExpressionType()) << "\n";
 
   switch (expr->GetExpressionType()) {
     case ExpressionType::STAR:
-      inprint("*", num_indent);
+      os << indent(num_indent) << "*\n";
       break;
     case ExpressionType::VALUE_TUPLE:
-      inprint((expr)->GetInfo().data(), num_indent);
-      inprint(((expression::TupleValueExpression*)expr)->GetTableName().data(),
-              num_indent);
-      inprint(((expression::TupleValueExpression*)expr)->GetColumnName().data(),
-              num_indent);
+      os << indent(num_indent) << expr->GetInfo() << "\n";
+      os << indent(num_indent)
+         << ((expression::TupleValueExpression*)expr)->GetTableName() << "\n";
+      os << indent(num_indent)
+         << ((expression::TupleValueExpression*)expr)->GetColumnName() << "\n";
       break;
     case ExpressionType::COMPARE_GREATERTHAN:
-      inprint((expr)->GetInfo().data(), num_indent);
+      os << indent(num_indent) << expr->GetInfo() << "\n";
       for (size_t i = 0; i < (expr)->GetChildrenSize(); ++i) {
-        inprint(((expr)->GetChild(i))->GetInfo().data(), num_indent);
+        os << indent(num_indent) << ((expr)->GetChild(i))->GetInfo() << "\n";
       }
       break;
     case ExpressionType::VALUE_CONSTANT:
-      inprint((expr)->GetInfo().data(), num_indent);
+      os << indent(num_indent) << expr->GetInfo() << "\n";
       break;
     case ExpressionType::FUNCTION_REF:
-      inprint(expr->GetInfo().data(), num_indent);
+      os << indent(num_indent) << expr->GetInfo() << "\n";
       break;
     default:
-      PrintOperatorExpression(expr, num_indent);
+      os << GetOperatorExpression(expr, num_indent);
       break;
   }
 
   // TODO: Fix this
-  // if (expr->alias != NULL) {
-  //  inprint("Alias", num_indent+1); inprint(expr->alias, num_indent+2);
-  //}
+  if (expr->alias.size() != 0) {
+    os << indent(num_indent + 1) << "Alias\n";
+    os << indent(num_indent + 2) << expr->alias;
+  }
+  return os.str();
 }
 
-void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
-  inprint("SelectStatement", num_indent);
-  inprint("-> Fields:", num_indent + 1);
+std::string ParserUtils::GetSelectStatementInfo(SelectStatement* stmt,
+                                                uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "SelectStatement\n";
+  os << indent(num_indent + 1) << "-> Fields:\n";
   for (expression::AbstractExpression* expr : *(stmt->select_list))
-    GetExpressionInfo(expr, num_indent + 2);
+    os << GetExpressionInfo(expr, num_indent + 2);
 
-  inprint("-> Sources:", num_indent + 1);
+  os << indent(num_indent + 1) + "-> Sources:\n";
   if (stmt->from_table != NULL) {
-    PrintTableRefInfo(stmt->from_table, num_indent + 2);
+    os << GetTableRefInfo(stmt->from_table, num_indent + 2);
   }
 
   if (stmt->where_clause != NULL) {
-    inprint("-> Search Conditions:", num_indent + 1);
-    GetExpressionInfo(stmt->where_clause, num_indent + 2);
+    os << indent(num_indent + 1) << "-> Search Conditions:\n";
+    os << GetExpressionInfo(stmt->where_clause, num_indent + 2);
   }
 
   if (stmt->union_select != NULL) {
-    inprint("-> Union:", num_indent + 1);
-    GetSelectStatementInfo(stmt->union_select, num_indent + 2);
+    os << indent(num_indent + 1) << "-> Union:\n";
+    os << GetSelectStatementInfo(stmt->union_select, num_indent + 2);
   }
 
   if (stmt->order != NULL) {
-    inprint("-> OrderBy:", num_indent + 1);
+    os << indent(num_indent + 1) << "-> OrderBy:\n";
     for (size_t idx = 0; idx < stmt->order->exprs->size(); idx++) {
       auto expr = stmt->order->exprs->at(idx);
       auto type = stmt->order->types->at(idx);
-      GetExpressionInfo(expr, num_indent + 2);
+      os << GetExpressionInfo(expr, num_indent + 2);
       if (type == kOrderAsc)
-        inprint("ascending", num_indent + 2);
+        os << indent(num_indent + 2) << "ascending\n";
       else
-        inprint("descending", num_indent + 2);
+        os << indent(num_indent + 2) << "descending\n";
     }
   }
 
   if (stmt->group_by != NULL) {
-    inprint("-> GroupBy:", num_indent + 1);
+    os << indent(num_indent + 1) << "-> GroupBy:\n";
     for (auto column : *(stmt->group_by->columns)) {
-      inprint(column->GetInfo().data(), num_indent + 2);
+      os << indent(num_indent + 2) << column->GetInfo() << "\n";
     }
     if (stmt->group_by->having) {
-      inprint(stmt->group_by->having->GetInfo().data(), num_indent + 2);
+      os << indent(num_indent + 2) << stmt->group_by->having->GetInfo() << "\n";
     }
   }
 
   if (stmt->limit != NULL) {
-    inprint("-> Limit:", num_indent + 1);
-    inprint(stmt->limit->limit, num_indent + 2);
-    inprint(stmt->limit->offset, num_indent + 2);
+    os << indent(num_indent + 1) << "-> Limit:\n";
+    os << indent(num_indent + 2) << std::to_string(stmt->limit->limit) << "\n";
+    os << indent(num_indent + 2) << std::to_string(stmt->limit->offset) << "\n";
   }
+  return os.str();
 }
 
-void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
-  inprint("CreateStatment", num_indent);
-  inprintU(stmt->type, num_indent + 1);
+std::string ParserUtils::GetCreateStatementInfo(CreateStatement* stmt,
+                                                uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "CreateStatment\n";
+  os << indent(num_indent + 1) << stmt->type << "\n";
 
   if (stmt->type == CreateStatement::CreateType::kIndex) {
-    inprint(stmt->index_name, num_indent + 1);
-    std::cout << indent(num_indent);
-    printf("INDEX : table : %s unique : %d attrs : ",
-           stmt->GetTableName().c_str(), stmt->unique);
-    for (auto key : *(stmt->index_attrs)) printf("%s ", key);
-    printf("\n");
+    os << indent(num_indent + 1) << stmt->index_name << "\n";
+    os << indent(num_indent) << "INDEX : table : " << stmt->GetTableName()
+       << " unique : " << stmt->unique << " attrs : ";
+    for (auto key : *(stmt->index_attrs)) os << key << " ";
+    os << "\n";
   } else if (stmt->type == CreateStatement::CreateType::kTable) {
-    inprint(stmt->GetTableName().c_str(), num_indent + 1);
+    os << indent(num_indent + 1) << stmt->GetTableName() << "\n";
   }
 
   if (stmt->columns != nullptr) {
     for (ColumnDefinition* col : *(stmt->columns)) {
-      std::cout << indent(num_indent);
+      if (col->name == nullptr) {continue;}
+      os << indent(num_indent);
       if (col->type == ColumnDefinition::DataType::PRIMARY) {
-        printf("-> PRIMARY KEY : ");
-        for (auto key : *(col->primary_key)) printf("%s ", key);
-        printf("\n");
+        os << "-> PRIMARY KEY : ";
+        for (auto key : *(col->primary_key)) os << key << " ";
+        os << "\n";
       } else if (col->type == ColumnDefinition::DataType::FOREIGN) {
-        printf("-> FOREIGN KEY : References %s Source : ", col->name);
-        for (auto key : *(col->foreign_key_source)) printf("%s ", key);
-        printf("Sink : ");
-        for (auto key : *(col->foreign_key_sink)) printf("%s ", key);
-        printf("\n");
+        os << "-> FOREIGN KEY : References " << col->name << " Source : ";
+        for (auto key : *(col->foreign_key_source)) {
+          os << key << " ";
+        }
+        os << "Sink : ";
+        for (auto key : *(col->foreign_key_sink)) {
+          os << key << " ";
+        }
+        os << "\n";
       } else {
-        printf(
-            "-> COLUMN REF : %s %d not null : %d primary : %d unique %d varlen "
-            "%lu \n",
-            col->name, col->type, col->not_null, col->primary, col->unique,
-            col->varlen);
+        os << "-> COLUMN REF : " << col->name << " " << col->type
+           << " not null : " << col->not_null << " primary : "
+           << col->primary << " unique " << col->unique << " varlen "
+           << col->varlen << "\n";
       }
     }
   }
+  return os.str();
 }
 
-void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
-  inprint("InsertStatment", num_indent);
-  inprint(stmt->GetTableName().c_str(), num_indent + 1);
+std::string ParserUtils::GetInsertStatementInfo(InsertStatement* stmt,
+                                                uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "InsertStatment\n";
+  os << indent(num_indent + 1) << stmt->GetTableName() + "\n";
   if (stmt->columns != NULL) {
-    inprint("-> Columns", num_indent + 1);
+    os << indent(num_indent + 1) << "-> Columns\n";
     for (char* col_name : *stmt->columns) {
-      inprint(col_name, num_indent + 2);
+      os << indent(num_indent + 2) << col_name << "\n";
     }
   }
   switch (stmt->type) {
     case InsertType::VALUES:
-      inprint("-> Values", num_indent + 1);
+      os << indent(num_indent + 1) << "-> Values\n";
       for (auto value_item : *stmt->insert_values) {
         // TODO this is a debugging method which is currently unused.
         for (expression::AbstractExpression* expr : *value_item) {
-          GetExpressionInfo(expr, num_indent + 2);
+          os << GetExpressionInfo(expr, num_indent + 2);
         }
       }
       break;
     case InsertType::SELECT:
-      GetSelectStatementInfo(stmt->select, num_indent + 1);
+      os << GetSelectStatementInfo(stmt->select, num_indent + 1);
       break;
     default:
       break;
   }
+  return os.str();
 }
 
-void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
-  inprint("InsertStatment", num_indent);
-  inprint(stmt->GetTableName().c_str(), num_indent + 1);
-  return;
+std::string ParserUtils::GetDeleteStatementInfo(DeleteStatement* stmt,
+                                                uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "DeleteStatment\n";
+  os << indent(num_indent + 1) << stmt->GetTableName() << "\n";
+  return os.str();
 }
 
-std::string CharsToStringDestructive(char* str) {
-  // this should not make an extra copy because of the return value optimization
-  // ..hopefully
-  if (str == nullptr) {
-    return "";
-  } else {
-    std::string ret_string(str);
-    delete str;
-    return ret_string;
+std::string ParserUtils::GetUpdateStatementInfo(UpdateStatement* stmt,
+                                                uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "UpdateStatment\n";
+  os << GetTableRefInfo(stmt->table, num_indent + 1);
+  os << indent(num_indent) << "-> Updates :: \n";
+  for (UpdateClause* update : *(stmt->updates)) {
+    os << indent(num_indent + 1) << "Column: " << update->column << "\n";
+    os << GetExpressionInfo(update->value, num_indent + 1);
   }
+  os << indent(num_indent) << "-> Where :: "
+     << GetExpressionInfo(stmt->where, num_indent + 1);
+  return os.str();
+}
+
+std::string ParserUtils::GetCopyStatementInfo(CopyStatement* stmt,
+                                              uint num_indent) {
+  std::ostringstream os;
+  os << indent(num_indent) << "CopyStatment\n";
+  os << indent(num_indent) << "-> Type :: " << CopyTypeToString(stmt->type)
+     << "\n";
+  os << GetTableRefInfo(stmt->cpy_table, num_indent + 1);
+
+  os << indent(num_indent) << "-> File Path :: " << stmt->file_path << "\n";
+  os << indent(num_indent) << "-> Delimiter :: " << stmt->delimiter << "\n";
+  return os.str();
 }
 
 }  // namespace parser
