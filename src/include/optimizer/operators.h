@@ -147,13 +147,13 @@ class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
 class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      storage::DataTable *target_table, std::vector<std::unique_ptr<char[]>> *columns,
-      std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *
+      storage::DataTable *target_table, const std::vector<std::string> *columns,
+      const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
           values);
 
   storage::DataTable *target_table;
-  std::vector<std::unique_ptr<char[]>> *columns;
-  std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *values;
+  const std::vector<std::string> *columns;
+  const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *values;
 };
 
 class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
@@ -179,10 +179,10 @@ class LogicalDelete : public OperatorNode<LogicalDelete> {
 class LogicalUpdate : public OperatorNode<LogicalUpdate> {
  public:
   static Operator make(storage::DataTable *target_table,
-                       std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates);
+                       const std::vector<std::unique_ptr<parser::UpdateClause>>* updates);
 
   storage::DataTable *target_table;
-  std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates;
+  const std::vector<std::unique_ptr<parser::UpdateClause>>* updates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -335,13 +335,13 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      storage::DataTable *target_table, std::vector<std::unique_ptr<char[]>> *columns,
-      std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *
+      storage::DataTable *target_table, const std::vector<std::string> *columns,
+      const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
           values);
 
   storage::DataTable *target_table;
-  std::vector<std::unique_ptr<char[]>> *columns;
-  std::vector<std::unique_ptr<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>> *values;
+  const std::vector<std::string> *columns;
+  const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *values;
 };
 
 class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
@@ -366,10 +366,10 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
   static Operator make(storage::DataTable *target_table,
-  std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates);
+  const std::vector<std::unique_ptr<parser::UpdateClause>>* updates);
 
   storage::DataTable *target_table;
-  std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates;
+  const std::vector<std::unique_ptr<parser::UpdateClause>>* updates;
 };
 
 //===--------------------------------------------------------------------===//

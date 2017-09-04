@@ -41,7 +41,7 @@ AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
   table_name_ = analyze_stmt->GetTableName();
   column_names_ = std::vector<char*>();
   for (auto& name : analyze_stmt->GetColumnNames())
-    column_names_.push_back(name.get());
+    column_names_.push_back((char*)name.c_str());
   if (!table_name_.empty()) {
     target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
         analyze_stmt->GetDatabaseName(), table_name_, txn);

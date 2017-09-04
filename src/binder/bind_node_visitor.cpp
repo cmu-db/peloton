@@ -36,7 +36,7 @@ void BindNodeVisitor::Visit(const parser::SelectStatement *node) {
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
-  for (auto& select_element : *(node->select_list)) {
+  for (auto& select_element : node->select_list) {
     select_element->Accept(this);
   }
 
@@ -59,8 +59,8 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
   else if (node->join != nullptr)
     node->join->Accept(this);
   // Multiple tables
-  else if (node->list != nullptr) {
-    for (auto& table : *(node->list)) table->Accept(this);
+  else if (!node->list.empty()) {
+    for (auto& table : node->list) table->Accept(this);
   }
   // Single table
   else {
@@ -69,13 +69,13 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
 }
 
 void BindNodeVisitor::Visit(const parser::GroupByDescription *node) {
-  for (auto& col : *(node->columns)) {
+  for (auto& col : node->columns) {
     col->Accept(this);
   }
   if (node->having != nullptr) node->having->Accept(this);
 }
 void BindNodeVisitor::Visit(const parser::OrderDescription *node) {
-  for (auto expr : *(node->exprs))
+  for (auto& expr : node->exprs)
     if (expr != nullptr) expr->Accept(this);
 }
 

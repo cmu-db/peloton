@@ -30,7 +30,7 @@ namespace parser {
 class PrepareStatement : public SQLStatement {
  public:
   PrepareStatement()
-      : SQLStatement(StatementType::PREPARE), name(nullptr), query(nullptr) {}
+      : SQLStatement(StatementType::PREPARE), query(nullptr) {}
 
   virtual ~PrepareStatement() {}
 

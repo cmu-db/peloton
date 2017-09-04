@@ -31,9 +31,9 @@ namespace parser {
 struct TableInfo {
   ~TableInfo() {}
 
-  std::unique_ptr<char[]> table_name = nullptr;
+  std::string table_name;
 
-  std::unique_ptr<char[]> database_name = nullptr;
+  std::string database_name;
 };
 
 // Base class for every SQLStatement
@@ -63,14 +63,16 @@ class TableRefStatement : public SQLStatement {
 
   virtual ~TableRefStatement() {}
 
-  virtual inline std::string GetTableName() const { return table_info_->table_name.get(); }
+  virtual inline std::string GetTableName() const {
+    return table_info_->table_name;
+  }
 
   // Get the name of the database of this table
   virtual inline std::string GetDatabaseName() const {
-    if (table_info_->database_name == nullptr) {
+    if (table_info_->database_name.empty()) {
       return DEFAULT_DB_NAME;
     }
-    return table_info_->database_name.get();
+    return table_info_->database_name;
   }
 
   std::unique_ptr<TableInfo> table_info_ = nullptr;

@@ -170,7 +170,6 @@ TEST_F(ParserTests, SelectParserTest) {
   parser::SelectStatement* stmt =
       (parser::SelectStatement*)list->GetStatement(0);
 
-  EXPECT_NOTNULL(stmt->select_list);
   EXPECT_NOTNULL(stmt->from_table);
   EXPECT_NOTNULL(stmt->group_by);
   EXPECT_NOTNULL(stmt->order);
@@ -180,26 +179,26 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_NULL(stmt->union_select);
 
   // Select List
-  EXPECT_EQ(stmt->select_list->size(), 2);
-  EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(),
+  EXPECT_EQ(stmt->select_list.size(), 2);
+  EXPECT_EQ(stmt->select_list.at(0)->GetExpressionType(),
             ExpressionType::VALUE_TUPLE);
-  EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(),
+  EXPECT_EQ(stmt->select_list.at(1)->GetExpressionType(),
             ExpressionType::AGGREGATE_SUM);
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join.get();
   EXPECT_EQ(stmt->from_table->type, TableReferenceType::JOIN);
   EXPECT_NOTNULL(join);
-  EXPECT_STREQ(join->left->GetTableName(), "customers");
-  EXPECT_STREQ(join->right->GetTableName(), "orders");
-  EXPECT_STREQ(join->left->GetDatabaseName(), "order_db");
+  EXPECT_STREQ(join->left->GetTableName().c_str(), "customers");
+  EXPECT_STREQ(join->right->GetTableName().c_str(), "orders");
+  EXPECT_STREQ(join->left->GetDatabaseName().c_str(), "order_db");
 
   // Group By
-  EXPECT_EQ(stmt->group_by->columns->size(), 1);
+  EXPECT_EQ(stmt->group_by->columns.size(), 1);
 
   // Order By
-  EXPECT_EQ(stmt->order->types->at(0), parser::kOrderDesc);
-  EXPECT_EQ(stmt->order->exprs->at(0)->GetExpressionType(),
+  EXPECT_EQ(stmt->order->types.at(0), parser::kOrderDesc);
+  EXPECT_EQ(stmt->order->exprs.at(0)->GetExpressionType(),
             ExpressionType::AGGREGATE_SUM);
 
   // Limit
@@ -404,7 +403,7 @@ TEST_F(ParserTests, CopyTest) {
         static_cast<parser::CopyStatement*>(result->GetStatement(0));
 
     EXPECT_EQ(copy_stmt->delimiter, ',');
-    EXPECT_STREQ(copy_stmt->file_path.get(), "/home/user/output.csv");
+    EXPECT_STREQ(copy_stmt->file_path.c_str(), "/home/user/output.csv");
 
     if (result != nullptr) {
       LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());

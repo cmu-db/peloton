@@ -259,7 +259,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
   PL_ASSERT(col_prop != nullptr);
 
   output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::HASH,
-                                            &op->columns, op->having);
+                                       &op->columns, op->having);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
@@ -269,7 +269,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
   PL_ASSERT(col_prop != nullptr);
 
   output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::SORTED,
-                                            &op->columns, op->having);
+                                       &op->columns, op->having);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
@@ -379,7 +379,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
 
   // Evaluate update expression and add to target list
   for (auto& update : *(op->updates)) {
-    auto column = std::string(update->column.get());
+    auto column = update->column;
     auto col_id = schema->GetColumnID(column);
     if (update_col_ids.find(col_id) != update_col_ids.end())
       throw SyntaxException("Multiple assignments to same column " + column);

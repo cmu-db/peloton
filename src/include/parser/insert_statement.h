@@ -29,8 +29,6 @@ class InsertStatement : SQLStatement {
   InsertStatement(InsertType type)
       : SQLStatement(StatementType::INSERT),
         type(type),
-        columns(nullptr),
-        insert_values(nullptr),
         select(nullptr) {}
 
   virtual ~InsertStatement() {}
@@ -46,7 +44,7 @@ class InsertStatement : SQLStatement {
 
   InsertType type;
   std::vector<std::string> columns;
-  std::vector<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>>
+  std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
       insert_values;
   std::unique_ptr<SelectStatement> select;
 

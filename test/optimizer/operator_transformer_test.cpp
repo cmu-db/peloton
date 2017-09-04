@@ -69,7 +69,7 @@ class OperatorTransformerTests : public PelotonTest {
     auto ref_stmt = parsed_stmt->GetStatement(0);
     binder::BindNodeVisitor binder(txn);
     binder.BindNameToNode(ref_stmt);
-    auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0).get();
+    auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list.at(0).get();
     txn_manager.CommitTransaction(txn);
     LOG_INFO("Expected: %s", true_predicates.c_str());
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());

@@ -32,7 +32,7 @@ class CopyPlan : public AbstractPlan {
  public:
   CopyPlan() = delete;
 
-  explicit CopyPlan(char *file_path, bool deserialize_parameters)
+  explicit CopyPlan(std::string file_path, bool deserialize_parameters)
       : file_path(file_path), deserialize_parameters(deserialize_parameters) {
     LOG_DEBUG("Creating a Copy Plan");
   }

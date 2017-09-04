@@ -25,7 +25,7 @@ namespace parser {
 class ExecuteStatement : public SQLStatement {
  public:
   ExecuteStatement()
-      : SQLStatement(StatementType::EXECUTE), name(nullptr), parameters(nullptr) {}
+      : SQLStatement(StatementType::EXECUTE) {}
 
   virtual ~ExecuteStatement() {}
 

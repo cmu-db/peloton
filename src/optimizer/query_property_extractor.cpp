@@ -43,7 +43,7 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
 
   // Generate PropertyColumns
   vector<shared_ptr<expression::AbstractExpression>> output_expressions;
-  for (auto& col : *select_stmt->select_list) {
+  for (auto& col : select_stmt->select_list) {
     // Recursively deduce expression value type
     expression::ExpressionUtil::EvaluateExpression({ExprMap()}, col.get());
     // Recursively deduce expression name
@@ -74,11 +74,11 @@ void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   vector<bool> sort_ascendings;
   vector<shared_ptr<expression::AbstractExpression>> sort_cols;
-  auto len = node->exprs->size();
+  auto len = node->exprs.size();
   for (size_t idx = 0; idx < len; idx++) {
-    auto &expr = node->exprs->at(idx);
+    auto &expr = node->exprs.at(idx);
     sort_cols.emplace_back(expr->Copy());
-    sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
+    sort_ascendings.push_back(node->types.at(idx) == parser::kOrderAsc);
   }
 
   property_set_.AddProperty(shared_ptr<PropertySort>(
