@@ -29,6 +29,24 @@ namespace peloton {
         return thread_pool;
     }
 
+    network::NetworkManager &
+    PelotonMain::GetNetworkManager() {
+        return network_manager;
+    }
+
+    concurrency::EpochManager *PelotonMain::GetEpochManager() {
+        return epoch_manager;
+    }
+
+    gc::GCManager *PelotonMain::GetGCManager() {
+        return gc_manager;
+    }
+
+    PelotonMain::PelotonMain() {
+        epoch_manager = &(concurrency::EpochManagerFactory::GetInstance());
+        gc_manager  = &(gc::GCManagerFactory::GetInstance());
+    }
+
     void PelotonMain::Initialize() {
         CONNECTION_THREAD_COUNT = std::thread::hardware_concurrency();
         LOGGING_THREAD_COUNT = 1;
@@ -44,10 +62,10 @@ namespace peloton {
         storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 
         // start epoch.
-        concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+        epoch_manager->StartEpoch();
 
         // start GC.
-        gc::GCManagerFactory::GetInstance().StartGC();
+        gc_manager->StartGC();
 
         // start index tuner
         if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
@@ -93,10 +111,10 @@ namespace peloton {
         }
 
         // shut down GC.
-        gc::GCManagerFactory::GetInstance().StopGC();
+        gc_manager->StopGC();
 
         // shut down epoch.
-        concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+        epoch_manager->StopEpoch();
 
         thread_pool.Shutdown();
 

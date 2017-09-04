@@ -19,6 +19,8 @@
 #include "gc/gc_manager_factory.h"
 #include "storage/tile_group.h"
 #include "settings/settings_manager.h"
+#include "peloton_main/peloton_main.h"
+#include "concurrency/epoch_manager.h"
 
 
 namespace peloton {
@@ -34,21 +36,24 @@ ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
 Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const IsolationLevelType type) {
   
   Transaction *txn = nullptr;
+
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  auto *epoch_manager = peloton_main.GetEpochManager();
   
   if (type == IsolationLevelType::READ_ONLY) {
 
     // transaction processing with decentralized epoch manager
-    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
+    cid_t read_id = epoch_manager->EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
     txn = new Transaction(thread_id, type, read_id); 
   
   } else if (type == IsolationLevelType::SNAPSHOT) {
     
     // transaction processing with decentralized epoch manager
     // the DBMS must acquire 
-    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
+    cid_t read_id = epoch_manager->EnterEpoch(thread_id, TimestampType::SNAPSHOT_READ);
 
     if (protocol_ == ProtocolType::TIMESTAMP_ORDERING) {
-      cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::COMMIT);
+      cid_t commit_id = epoch_manager->EnterEpoch(thread_id, TimestampType::COMMIT);
       
       txn = new Transaction(thread_id, type, read_id, commit_id);
     } else {
@@ -62,7 +67,7 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // - REPEATABLE_READS, or 
     // - READ_COMMITTED.
     // transaction processing with decentralized epoch manager
-    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, TimestampType::READ);
+    cid_t read_id = epoch_manager->EnterEpoch(thread_id, TimestampType::READ);
     txn = new Transaction(thread_id, type, read_id); 
   
   }
@@ -83,15 +88,17 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  auto *epoch_manager = peloton_main.GetEpochManager();
+  auto *gc_manager = peloton_main.GetGCManager();
 
-  epoch_manager.ExitEpoch(current_txn->GetThreadId(), current_txn->GetEpochId());
+  epoch_manager->ExitEpoch(current_txn->GetThreadId(), current_txn->GetEpochId());
   
   if (current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
 
     if (current_txn->GetResult() == ResultType::SUCCESS) {
       if (current_txn->IsGCSetEmpty() != true) {
-        gc::GCManagerFactory::GetInstance().
+          gc_manager->
             RecycleTransaction(current_txn->GetGCSetPtr(), 
                                current_txn->GetEpochId(), 
                                current_txn->GetThreadId());
@@ -99,9 +106,9 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
     } else {
       if (current_txn->IsGCSetEmpty() != true) {
         // consider what parameter we should use.
-        gc::GCManagerFactory::GetInstance().
+          gc_manager->
             RecycleTransaction(current_txn->GetGCSetPtr(), 
-                               epoch_manager.GetNextEpochId(),
+                               epoch_manager->GetNextEpochId(),
                                current_txn->GetThreadId());
       }
     }
@@ -116,6 +123,11 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
         .RecordLatency();
   }
 }
+
+    cid_t TransactionManager::GetExpiredCid() {
+      peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+      return peloton_main.GetEpochManager()->GetExpiredCid();
+    }
 
 // this function checks whether a concurrent transaction is inserting the same
 // tuple

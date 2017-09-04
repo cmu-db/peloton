@@ -18,5 +18,16 @@ namespace concurrency {
 
 EpochType EpochManagerFactory::epoch_ = EpochType::DECENTRALIZED_EPOCH;
 
+    EpochManager& EpochManagerFactory::GetInstance() {
+        switch (epoch_) {
+
+            case EpochType::DECENTRALIZED_EPOCH:
+                return DecentralizedEpochManager::GetInstance();
+
+            default:
+                return DecentralizedEpochManager::GetInstance();
+        }
+    }
+
 }
 }

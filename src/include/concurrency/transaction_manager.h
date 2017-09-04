@@ -146,9 +146,7 @@ class TransactionManager {
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a
   // precise value.
-  cid_t GetExpiredCid() {
-    return EpochManagerFactory::GetInstance().GetExpiredCid();
-  }
+  cid_t GetExpiredCid();
 
   IsolationLevelType GetIsolationLevel() {
     return isolation_level_;

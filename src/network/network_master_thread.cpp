@@ -12,6 +12,7 @@
 
 
 #include "network/network_master_thread.h"
+#include "peloton_main/peloton_main.h"
 
 #define MASTER_THREAD_ID -1
 
@@ -45,15 +46,16 @@ NetworkMasterThread::NetworkMasterThread(const int num_threads,
 void NetworkMasterThread::Start() {
   auto &threads = GetWorkerThreads();
 
+      peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+      auto *epoch_manager = peloton_main.GetEpochManager();
+
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
       EpochType::DECENTRALIZED_EPOCH) {
     for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-      concurrency::EpochManagerFactory::GetInstance().RegisterThread(thread_id);
+      epoch_manager->RegisterThread(thread_id);
     }
   }
-
-  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
 
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "common/thread_pool.h"
+#include "network/network_manager.h"
+#include "concurrency/epoch_manager.h"
+#include "gc/gc_manager.h"
 
 namespace peloton {
 
@@ -10,8 +13,13 @@ namespace peloton {
 
     class PelotonMain {
     private:
-        peloton::ThreadPool thread_pool;
+        ThreadPool thread_pool;
+        network::NetworkManager network_manager;
+        concurrency::EpochManager *epoch_manager;
+        gc::GCManager *gc_manager;
     public:
+        PelotonMain();
+
         void Initialize();
 
         void Shutdown();
@@ -23,6 +31,12 @@ namespace peloton {
         static PelotonMain &GetInstance();
 
         ThreadPool &GetThreadPool();
+
+        network::NetworkManager &GetNetworkManager();
+
+        concurrency::EpochManager *GetEpochManager();
+
+        gc::GCManager *GetGCManager();
     };
 
 }

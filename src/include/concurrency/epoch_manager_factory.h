@@ -14,22 +14,14 @@
 #pragma once
 
 #include "concurrency/decentralized_epoch_manager.h"
+#include "concurrency/epoch_manager.h"
 
 namespace peloton {
 namespace concurrency {
 
 class EpochManagerFactory {
  public:
-  static EpochManager& GetInstance() {
-    switch (epoch_) {
-
-      case EpochType::DECENTRALIZED_EPOCH:
-        return DecentralizedEpochManager::GetInstance();
-
-      default:
-        return DecentralizedEpochManager::GetInstance();
-    }
-  }
+  static EpochManager& GetInstance();
 
   static void Configure(EpochType epoch) {
     epoch_ = epoch;

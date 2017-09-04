@@ -45,11 +45,8 @@ int main(int argc, char *argv[]) {
     // Setup
     peloton_main.Initialize();
 
-    // Create NetworkManager object
-    peloton::network::NetworkManager network_manager;
-    
     // Start NetworkManager
-    network_manager.StartServer();
+    peloton_main.GetNetworkManager().StartServer();
   }
   catch(peloton::ConnectionException exception){
     // Nothing to do here!
