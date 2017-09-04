@@ -28,7 +28,7 @@ namespace parser {
  */
 class UpdateClause {
  public:
-  std::unique_ptr<char[]> column;
+  std::string column;
   std::unique_ptr<expression::AbstractExpression> value;
 
   ~UpdateClause() {}

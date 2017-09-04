@@ -42,15 +42,15 @@ struct TableRef {
 
   TableReferenceType type;
 
-  std::unique_ptr<char[]> schema;
+  std::string schema;
 
   // Expression of database name and table name
   std::unique_ptr<TableInfo> table_info_ = nullptr;
 
-  std::unique_ptr<char[]> alias;
+  std::string alias;
 
   SelectStatement* select;
-  std::unique_ptr<std::vector<std::unique_ptr<TableRef>>> list;
+  std::vector<std::unique_ptr<TableRef>> list;
   std::unique_ptr<JoinDefinition> join;
 
   // Convenience accessor methods

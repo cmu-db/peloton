@@ -26,8 +26,7 @@ class AnalyzeStatement : public SQLStatement {
  public:
   AnalyzeStatement()
       : SQLStatement(StatementType::ANALYZE),
-        analyze_table(nullptr),
-        analyze_columns(nullptr) {};
+        analyze_table(nullptr) {};
 
   virtual ~AnalyzeStatement() {}
 
@@ -38,11 +37,8 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetTableName();
   }
 
-  const std::vector<std::unique_ptr<char[]>>& GetColumnNames() const {
-    if (analyze_columns == nullptr) {
-      return NULL_COLUMN;
-    }
-    return (*analyze_columns);
+  const std::vector<std::string>& GetColumnNames() const {
+    return analyze_columns;
   }
 
   std::string GetDatabaseName() const {
@@ -57,10 +53,9 @@ class AnalyzeStatement : public SQLStatement {
   }
 
   std::unique_ptr<parser::TableRef> analyze_table;
-  std::unique_ptr<std::vector<std::unique_ptr<char[]>>> analyze_columns;
+  std::vector<std::string> analyze_columns;
 
   const std::string INVALID_NAME = "";
-  const std::vector<std::unique_ptr<char[]>> NULL_COLUMN = {};
 };
 
 }  // namespace parser

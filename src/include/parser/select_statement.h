@@ -32,19 +32,12 @@ class OrderDescription {
  public:
   OrderDescription() {}
 
-  virtual ~OrderDescription() {
-    delete types;
-
-    for (auto expr : *exprs)
-      delete expr;
-
-    delete exprs;
-  }
+  virtual ~OrderDescription() {}
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
-  std::vector<OrderType>* types;
-  std::vector<expression::AbstractExpression*>* exprs;
+  std::vector<OrderType> types;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> exprs;
 };
 
 /**
@@ -75,7 +68,7 @@ class GroupByDescription {
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
-  std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>> columns;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> columns;
   std::unique_ptr<expression::AbstractExpression> having;
 };
 
@@ -107,7 +100,7 @@ class SelectStatement : public SQLStatement {
 
   std::unique_ptr<TableRef> from_table;
   bool select_distinct;
-  std::unique_ptr<std::vector<std::unique_ptr<expression::AbstractExpression>>> select_list;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> select_list;
   std::unique_ptr<expression::AbstractExpression> where_clause;
   std::unique_ptr<GroupByDescription> group_by;
 
