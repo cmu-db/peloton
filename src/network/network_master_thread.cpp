@@ -53,11 +53,13 @@ void NetworkMasterThread::Start() {
     }
   }
 
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
     threads.push_back(std::shared_ptr<NetworkWorkerThread>(
         new NetworkWorkerThread(thread_id)));
-    thread_pool.SubmitDedicatedTask(NetworkMasterThread::StartWorker,
+    peloton_main.GetThreadPool().SubmitDedicatedTask(NetworkMasterThread::StartWorker,
                                     threads[thread_id].get());
   }
 

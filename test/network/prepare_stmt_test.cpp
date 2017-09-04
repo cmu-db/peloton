@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "peloton_main/peloton_main.h"
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
@@ -86,7 +87,8 @@ void *PrepareStatementTest(int port) {
 }
 
 TEST_F(PrepareStmtTests, PrepareStatementTest) {
-  peloton::PelotonInit::Initialize();
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  peloton_main.Initialize();
   LOG_INFO("Server initialized");
   peloton::network::NetworkManager network_manager;
   int port = 15721;
@@ -99,7 +101,7 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
 
   network_manager.CloseServer();
   serverThread.join();
-  peloton::PelotonInit::Shutdown();
+  peloton_main.Shutdown();
   LOG_INFO("Peloton has shut down");
 }
 

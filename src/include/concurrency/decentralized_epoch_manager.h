@@ -20,7 +20,7 @@
 #include "type/types.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "common/init.h"
+#include "peloton_main/peloton_main.h"
 #include "common/thread_pool.h"
 #include "concurrency/epoch_manager.h"
 #include "concurrency/local_epoch.h"
@@ -74,8 +74,9 @@ public:
 
   virtual void StartEpoch() override {
     LOG_TRACE("Starting epoch");
+    peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
     this->is_running_ = true;
-    thread_pool.SubmitDedicatedTask(&DecentralizedEpochManager::Running, this);
+    peloton_main.GetThreadPool().SubmitDedicatedTask(&DecentralizedEpochManager::Running, this);
   }
 
   virtual void StopEpoch() override {

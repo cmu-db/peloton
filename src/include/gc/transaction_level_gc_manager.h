@@ -20,7 +20,7 @@
 
 #include "type/types.h"
 #include "common/logger.h"
-#include "common/init.h"
+#include "peloton_main/peloton_main.h"
 #include "common/thread_pool.h"
 #include "gc/gc_manager.h"
 
@@ -101,9 +101,10 @@ public:
 
   virtual void StartGC() override {
     LOG_TRACE("Starting GC");
+    peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
     this->is_running_ = true;
     for (int i = 0; i < gc_thread_count_; ++i) {
-      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
+      peloton_main.GetThreadPool().SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
     }
   };
 
