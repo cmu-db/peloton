@@ -52,7 +52,6 @@ class UpdateStatement : public SQLStatement {
   UpdateStatement()
       : SQLStatement(StatementType::UPDATE),
         table(nullptr),
-        updates(nullptr),
         where(nullptr) {}
 
   virtual ~UpdateStatement() {}
@@ -63,7 +62,7 @@ class UpdateStatement : public SQLStatement {
 
   // TODO: switch to char* instead of TableRef
   std::unique_ptr<TableRef> table;
-  std::unique_ptr<std::vector<std::unique_ptr<UpdateClause>>> updates;
+  std::vector<std::unique_ptr<UpdateClause>> updates;
   std::unique_ptr<expression::AbstractExpression> where = nullptr;
 };
 

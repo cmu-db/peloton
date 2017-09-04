@@ -270,7 +270,7 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
       op->table->GetDatabaseName(), op->table->GetTableName(), txn_);
 
   auto update_expr = std::make_shared<OperatorExpression>(
-      LogicalUpdate::make(target_table, op->updates.get()));
+      LogicalUpdate::make(target_table, &op->updates));
 
   auto table_scan = std::make_shared<OperatorExpression>(
       LogicalGet::make(target_table, op->table->GetTableName(), true));

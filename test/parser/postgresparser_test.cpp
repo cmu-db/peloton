@@ -338,27 +338,26 @@ TEST_F(PostgresParserTests, ColumnUpdateTest) {
     EXPECT_EQ(sql_stmt->GetType(), StatementType::UPDATE);
     auto update_stmt = (parser::UpdateStatement *)(sql_stmt);
     auto table = update_stmt->table.get();
-    auto updates = update_stmt->updates.get();
+    auto &updates = update_stmt->updates;
     auto where_clause = update_stmt->where.get();
 
     EXPECT_NE(table, nullptr);
     EXPECT_NE(table->table_info_, nullptr);
     EXPECT_EQ(table->table_info_->table_name, "customer");
 
-    EXPECT_NE(updates, nullptr);
-    EXPECT_EQ(updates->size(), 2);
-    EXPECT_EQ((*updates)[0]->column, "c_balance");
-    EXPECT_EQ((*updates)[0]->value->GetExpressionType(),
+    EXPECT_EQ(updates.size(), 2);
+    EXPECT_EQ(updates[0]->column, "c_balance");
+    EXPECT_EQ(updates[0]->value->GetExpressionType(),
               ExpressionType::VALUE_TUPLE);
     expression::TupleValueExpression *column_value_0 =
-        (expression::TupleValueExpression *)((*updates)[0]->value.get());
+        (expression::TupleValueExpression *)(updates[0]->value.get());
     EXPECT_EQ(column_value_0->GetColumnName(), "c_balance");
 
-    EXPECT_EQ((*updates)[1]->column, "c_delivery_cnt");
-    EXPECT_EQ((*updates)[1]->value->GetExpressionType(),
+    EXPECT_EQ(updates[1]->column, "c_delivery_cnt");
+    EXPECT_EQ(updates[1]->value->GetExpressionType(),
               ExpressionType::VALUE_TUPLE);
     expression::TupleValueExpression *column_value_1 =
-        (expression::TupleValueExpression *)((*updates)[1]->value.get());
+        (expression::TupleValueExpression *)(updates[1]->value.get());
     EXPECT_EQ(column_value_1->GetColumnName(), "c_delivery_cnt");
 
     EXPECT_NE(where_clause, nullptr);
@@ -392,16 +391,16 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
 
   // TODO: Uncomment when the AExpressionTransfrom supports operator expression
   // Test First Set Condition
-  EXPECT_EQ(update_stmt->updates->at(0)->column, "s_quantity");
+  EXPECT_EQ(update_stmt->updates.at(0)->column, "s_quantity");
   auto constant =
-      (expression::ConstantValueExpression *)update_stmt->updates->at(0)->value.get();
+      (expression::ConstantValueExpression *)update_stmt->updates.at(0)->value.get();
   EXPECT_TRUE(constant->GetValue().CompareEquals(
       type::ValueFactory::GetDecimalValue(48)));
 
   // Test Second Set Condition
-  EXPECT_EQ(update_stmt->updates->at(1)->column, "s_ytd");
+  EXPECT_EQ(update_stmt->updates.at(1)->column, "s_ytd");
   auto op_expr =
-      (expression::OperatorExpression *)update_stmt->updates->at(1)->value.get();
+      (expression::OperatorExpression *)update_stmt->updates.at(1)->value.get();
   auto child1 = (expression::TupleValueExpression *)op_expr->GetChild(0);
   EXPECT_EQ(child1->GetColumnName(), "s_ytd");
   auto child2 = (expression::ConstantValueExpression *)op_expr->GetChild(1);
@@ -488,7 +487,7 @@ TEST_F(PostgresParserTests, StringUpdateTest) {
       "2");
 
   // Check update clause
-  auto update_clause = update->updates->at(0).get();
+  auto update_clause = update->updates.at(0).get();
   EXPECT_EQ(update_clause->column, "ol_delivery_d");
   auto value = update_clause->value.get();
   EXPECT_EQ(value->GetExpressionType(), ExpressionType::VALUE_CONSTANT);

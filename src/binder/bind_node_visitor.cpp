@@ -84,7 +84,7 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
-  for (auto& update : *(node->updates)) {
+  for (auto& update : node->updates) {
     update->value->Accept(this);
   }
 
