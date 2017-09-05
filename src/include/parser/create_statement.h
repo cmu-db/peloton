@@ -168,7 +168,7 @@ class CreateStatement : public TableRefStatement {
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when;
+  std::unique_ptr<expression::AbstractExpression> trigger_when;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
 };

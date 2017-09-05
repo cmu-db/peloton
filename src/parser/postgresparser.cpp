@@ -1007,7 +1007,7 @@ parser::SQLStatement* PostgresParser::CreateTriggerTransform(
     }
   }
   // when
-  result->trigger_when = WhenTransform(root->whenClause);
+  result->trigger_when.reset(WhenTransform(root->whenClause));
 
   int16_t& tgtype = result->trigger_type;
   TRIGGER_CLEAR_TYPE(tgtype);

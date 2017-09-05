@@ -923,7 +923,7 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   // when
   // Check the expression tree of trigger_when is identical to the query
   // Need to check type and value of each node.
-  auto when = create_trigger_stmt->trigger_when;
+  auto &when = create_trigger_stmt->trigger_when;
   EXPECT_NE(nullptr, when);
   EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
   EXPECT_EQ(2, when->GetChildrenSize());
