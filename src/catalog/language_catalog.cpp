@@ -70,7 +70,7 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
 }
 
 oid_t LanguageCatalog::GetLanguageOid(const std::string &lanname,
-                                             concurrency::Transaction *txn) {
+                                      concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({ColumnId::OID});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
