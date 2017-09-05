@@ -48,11 +48,11 @@ class Statement : public Printable {
   ~Statement();
 
 // TODO: later should be removed, test psql first
-  static void ParseQueryTypeString(const std::string& query_string,
-                             std::string& query_type_string);
- 
-  static void MapToQueryType(const std::string& query_type_string,
-                             QueryType& query_type);
+//  static void ParseQueryTypeString(const std::string& query_string,
+//                             std::string& query_type_string);
+//
+//  static void MapToQueryType(const std::string& query_type_string,
+//                             QueryType& query_type);
 
   std::vector<FieldInfo> GetTupleDescriptor() const;
 

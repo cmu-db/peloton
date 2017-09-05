@@ -710,9 +710,10 @@ enum class QueryType {
   QUERY_SHOW = 17,                 // show query
   QUERY_SELECT = 18,
   QUERY_OTHER = 19,
+  QUERY_INVALID = 20,
 };
 std::string QueryTypeToString(QueryType query_type);
-//QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
+QueryType StringToQueryType(std::string str);
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types

@@ -168,13 +168,11 @@ void PostgresProtocolHandler::SendDataRows(std::vector<StatementResult> &results
   rows_affected = numrows;
 }
 
-void PostgresProtocolHandler::CompleteCommand(const std::string &query, const QueryType &query_type, int rows) {
+void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
-//  std::string query_type_string;
-//  Statement::ParseQueryTypeString(query, query_type_string);
   std::string tag = QueryTypeToString(query_type);
-  LOG_INFO("CompleteCommand: %s, %s", query.c_str(), tag.c_str());
+  LOG_INFO("CompleteCommand: %s", tag.c_str());
   switch (query_type) {
     /* After Begin, we enter a txn block */
     case QueryType::QUERY_BEGIN:
@@ -301,7 +299,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       for (auto table_id : statement->GetReferencedTables()) {
         table_statement_cache_[table_id].push_back(statement.get());
       }
-      CompleteCommand(query_, query_type_, 0);
+      CompleteCommand(query_type_, 0);
       // PAVLO: 2017-01-15
       // There used to be code here that would invoke this method passing
       // in NetworkMessageType::READY_FOR_QUERY as the argument. But when
@@ -389,7 +387,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   // send the result rows
   SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
   // The response to the SimpleQueryCommand is the query string.
-  CompleteCommand(query_, query_type_, rows_affected_);
+  CompleteCommand(query_type_, rows_affected_);
   LOG_INFO("Send ready for query");
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
@@ -400,32 +398,38 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
 void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   std::string error_message, statement_name, query, query_type_string;
   GetStringToken(pkt, statement_name);
-  QueryType query_type;
-
-  // Read prepare statement name
-  // Read query string
   GetStringToken(pkt, query);
   // TODO: Why do we set skippd_stmt_ here?????
   skipped_stmt_ = false;
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
-
-  if (!sql_stmt_list->is_valid) {
-    // For invalid queries, call traffic_cop's function to abort
-    // transaction if exists
-    traffic_cop_->AbortInvalidStmt();
-    // Send error message back
-    std::string error_message = "Error parsing SQL statement";
-    SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-    SendReadyForQuery(NetworkTransactionStateType::IDLE);
-    return;
+  std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
+  parser::SQLStatement* sql_stmt;
+  QueryType query_type;
+  try {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+    if (!sql_stmt_list->is_valid) {
+      // For invalid queries, call traffic_cop's function to abort
+      // transaction if exists
+      traffic_cop_->AbortInvalidStmt();
+      // Send error message back
+      std::string error_message = "Error parsing SQL statement";
+      SendErrorResponse(
+         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+      SendReadyForQuery(NetworkTransactionStateType::IDLE);
+      return;
+    }
   }
-  auto sql_stmt = sql_stmt_list->GetStatement(0);
-  query_type = parser::StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
-  if (sql_stmt_list->GetNumStatements() == 0 || HardcodedExecuteFilter(query_type) == false) {
+  catch (Exception &e) {
+    // TODO: Hack, if the statement is not supported yet
+  }
+  bool skip = (sql_stmt_list->GetNumStatements() == 0);
+  if (!skip) {
+    sql_stmt = sql_stmt_list->GetStatement(0);
+    query_type = parser::StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
+  }
+  skip = skip || !HardcodedExecuteFilter(query_type);
+  if (skip) {
     skipped_stmt_ = true;
-    // TODO: Shall we use query here????
     skipped_query_string_ = std::move(query);
     skipped_query_type_ = std::move(query_type);
     std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -433,26 +437,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     responses.push_back(std::move(response));
     return;
   }
-
-//  skipped_stmt_ = false;
-//  Statement::ParseQueryTypeString(query_string, query_type_string);
-//  Statement::MapToQueryType(query_type_string, query_type);
-//  // For an empty query or a query to be filtered, just send parse complete
-//  // response and don't execute
-//  if (query_string == "" || HardcodedExecuteFilter(query_type) == false) {
-//    skipped_stmt_ = true;
-//    skipped_query_string_ = std::move(query_string);
-//    skipped_query_type_ = std::move(query_type);
-//
-//    // Send Parse complete response
-//    std::unique_ptr<OutputPacket> response(new OutputPacket());
-//    response->msg_type = NetworkMessageType::PARSE_COMPLETE;
-//    responses.push_back(std::move(response));
-//    return;
-//  }
-  StatementType stmt_type = sql_stmt->GetType();
-  query_type = parser::StatementTypeToQueryType(stmt_type, sql_stmt);
-
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
@@ -482,7 +466,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
     query_type_buf.buf = PacketCopyBytes(type_buf_begin, type_buf_len);
-
 
     // Unnamed statement
     if (unnamed_query) {
@@ -851,10 +834,8 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
     if (skipped_query_string_ == "") {
       SendEmptyQueryResponse();
     } else {
-      std::string skipped_query_type_string;
-      Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
-      CompleteCommand(skipped_query_type_string, skipped_query_type_, rows_affected_);
+      CompleteCommand(skipped_query_type_, rows_affected_);
     }
     skipped_stmt_ = false;
     return ProcessResult::COMPLETE;
@@ -914,7 +895,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
       auto tuple_descriptor = statement_->GetTupleDescriptor();
       SendDataRows(results_, tuple_descriptor.size(), rows_affected_);
       // The reponse to ExecuteCommand is the query_type string token.
-      CompleteCommand(statement_->GetQueryTypeString(), query_type, rows_affected_);
+      CompleteCommand(query_type, rows_affected_);
       return;
     }
   }

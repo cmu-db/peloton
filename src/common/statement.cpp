@@ -18,55 +18,36 @@
 
 #include "common/logger.h"
 #include "planner/abstract_plan.h"
-
+#include "parser/postgresparser.h"
 namespace peloton {
- std::unordered_map<std::string, QueryType> Statement::query_type_map_ {
-    {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
-    {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"SET", QueryType::QUERY_SET},
-    {"SHOW", QueryType::QUERY_SHOW}, {"INSERT", QueryType::QUERY_INSERT},
-    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE},
-    {"CREATE", QueryType::QUERY_CREATE_TABLE}
-  };
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)
     : statement_name_(statement_name), query_string_(query_string) {
-  ParseQueryTypeString(query_string_, query_type_string_);
-  MapToQueryType(query_type_string_, query_type_);
+  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
+  try {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+    if (!sql_stmt_list->is_valid) {
+      throw ParserException("Error Parsing SQL statement");
+    }
+  } // If the statement is invalid or not supported yet
+  catch (Exception &e) {
+    LOG_ERROR("%s", e.what());
+  }
+  if (sql_stmt_list->GetNumStatements() == 0) {
+    LOG_ERROR("Empty statement");
+  }
+  auto sql_stmt_ = sql_stmt_list->GetStatement(0);
+  query_string_ = query_string;
+  query_type_ = StatementTypeToQueryType(sql_stmt_->GetType(), sql_stmt_);
 }
-//Statement::Statement(const std::string& statement_name,
-//                     const std::string& query_string)
-//    : statement_name_(statement_name), query_string_(query_string) {
-//  ParseQueryTypeString(query_string_, query_type_string_);
-//  MapToQueryType(query_type_string_, query_type_);
-//}
-  Statement::Statement(const std::string &stmt_name, QueryType query_type,
-                       std::string query_string, parser::SQLStatement *sql_stmt)
+Statement::Statement(const std::string &stmt_name, QueryType query_type,
+                     std::string query_string, parser::SQLStatement *sql_stmt)
       : statement_name_(stmt_name), query_type_(query_type),
         query_string_(query_string), sql_stmt_(sql_stmt),
         query_type_string_(QueryTypeToString(query_type)){};
 
 Statement::~Statement() {}
-
-void Statement::ParseQueryTypeString(const std::string& query_string,
-                                     std::string& query_type_string) {
-  std::stringstream stream(query_string);
-  stream >> query_type_string;
-  if (query_type_string.back() == ';') {
-    query_type_string.pop_back();
-  }
-  boost::to_upper(query_type_string);
-}
-
-void Statement::MapToQueryType(const std::string& query_type_string,
-                               QueryType& query_type) {
-  std::unordered_map<std::string, QueryType>::iterator it;
-  it = query_type_map_.find(query_type_string);
-  if (it != query_type_map_.end()) {
-    query_type = it->second;
-  } else {
-    query_type = QueryType::QUERY_OTHER;
-  }
-}
 
 std::vector<FieldInfo> Statement::GetTupleDescriptor() const {
   return tuple_descriptor_;
