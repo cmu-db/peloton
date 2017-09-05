@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 
-#include <include/catalog/catalog.h>
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "settings/settings_manager.h"

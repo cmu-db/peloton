@@ -798,6 +798,14 @@ Catalog::~Catalog() {
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
+// add a new built-in function ("internal" language) into record
+// store the function in pg_proc as well as function::BuiltInFunctions
+// arguments:
+//    name & argument_types : function name and arg types used in SQL
+//    return_type : the return type
+//    prolang   : the oid of which language the function is
+//    func_name : the function name in C++ source code (should be unique)
+//    func_ptr  : the pointer to the function
 void Catalog::AddFunction(const std::string &name,
                           const std::vector<type::TypeId> &argument_types,
                           const type::TypeId return_type,
@@ -820,6 +828,9 @@ const FunctionData Catalog::GetFunction(
   auto txn = txn_manager.BeginTransaction();
   FunctionData result;
   oid_t prolang = ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
+
+  // if the function is "internal", then look up the map in function::BuiltInFunctions
+  // to get the function pointer
   if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) == "internal") {
     result.argument_types_ = argument_types;
     result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
@@ -839,6 +850,7 @@ void Catalog::InitializeLanguages() {
   if (!initialized) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
+    // add "internal" language
     if (!LanguageCatalog::GetInstance()->
         InsertLanguage("internal", pool_.get(), txn)) {
       txn_manager.AbortTransaction(txn);
