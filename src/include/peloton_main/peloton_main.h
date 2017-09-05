@@ -7,36 +7,36 @@
 
 namespace peloton {
 
-    //===--------------------------------------------------------------------===//
+//===--------------------------------------------------------------------===//
 // Global Setup and Teardown
 //===--------------------------------------------------------------------===//
 
-    class PelotonMain {
-    private:
-        ThreadPool thread_pool;
-        network::NetworkManager network_manager;
-        concurrency::EpochManager *epoch_manager;
-        gc::GCManager *gc_manager;
-    public:
-        PelotonMain();
+class PelotonMain {
+ private:
+  ThreadPool thread_pool;
+  network::NetworkManager network_manager;
+  concurrency::EpochManager *epoch_manager;
+  gc::GCManager *gc_manager;
 
-        void Initialize();
+ public:
+  PelotonMain();
 
-        void Shutdown();
+  void Initialize();
 
-        static void SetUpThread();
+  void Shutdown();
 
-        static void TearDownThread();
+  static void SetUpThread();
 
-        static PelotonMain &GetInstance();
+  static void TearDownThread();
 
-        ThreadPool &GetThreadPool();
+  static PelotonMain &GetInstance();
 
-        network::NetworkManager &GetNetworkManager();
+  ThreadPool &GetThreadPool();
 
-        concurrency::EpochManager *GetEpochManager();
+  network::NetworkManager &GetNetworkManager();
 
-        gc::GCManager *GetGCManager();
-    };
+  concurrency::EpochManager *GetEpochManager();
 
+  gc::GCManager *GetGCManager();
+};
 }
