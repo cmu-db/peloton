@@ -22,7 +22,6 @@
 // 0: language_oid (unique & primary key)
 // 1: lanname (secondary key 0)
 //===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "catalog/abstract_catalog.h"

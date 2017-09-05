@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// function_wrapper.h
+//
+// Identification: src/include/codegen/function_wrapper.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "type/types.h"
@@ -19,5 +32,5 @@ class FunctionWrapper {
   static const char *VarcharWrapper(int64_t func, int n_args, ...);
 };
 
-}
-}
+}  // namespace codegen
+}  // namespace peloton

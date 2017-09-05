@@ -24,5 +24,6 @@ type::Value DecimalFunctions::Sqrt(const std::vector<type::Value>& args) {
   }
   return args[0].Sqrt();
 }
-}
-}
+
+}  // namespace function
+}  // namespace peloton

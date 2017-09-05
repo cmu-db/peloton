@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// function_translator.cpp
+//
+// Identification: src/codegen/expression/function_translator.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "codegen/expression/function_translator.h"
 #include "codegen/type/sql_type.h"
 #include "expression/function_expression.h"

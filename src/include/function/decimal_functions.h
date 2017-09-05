@@ -19,9 +19,11 @@
 
 namespace peloton {
 namespace function {
+
 class DecimalFunctions {
  public:
   static type::Value Sqrt(const std::vector<type::Value>& args);
 };
+
 }  // namespace expression
 }  // namespace peloton

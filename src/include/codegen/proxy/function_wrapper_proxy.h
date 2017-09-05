@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// function_wrapper_proxy.h
+//
+// Identification: src/include/codegen/proxy/function_wrapper_proxy.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "codegen/function_wrapper.h"

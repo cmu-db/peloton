@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// function_wrapper.cpp
+//
+// Identification: src/codegen/function_wrapper.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include <stdarg.h>
 #include "codegen/function_wrapper.h"
 #include "type/value_factory.h"
@@ -128,5 +141,5 @@ const char* FunctionWrapper::VarcharWrapper(int64_t func, int n_args, ...) {
   return str;
 }
 
-}
-}
+}  // namespace codegen
+}  // namespace peloton

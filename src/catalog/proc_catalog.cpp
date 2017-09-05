@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include <sstream>
 #include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
-#include "storage/tuple.h"
 
 namespace peloton {
 namespace catalog {
@@ -169,5 +169,5 @@ oid_t ProcCatalog::GetProLang(const std::string &proname,
   return prolang;
 }
 
-} // namespace catalog
-} // namespace peloton
+}  // namespace catalog
+}  // namespace peloton

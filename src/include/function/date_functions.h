@@ -33,5 +33,6 @@ class DateFunctions {
   // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value>& args);
 };
+
 }  // namespace expression
 }  // namespace peloton
