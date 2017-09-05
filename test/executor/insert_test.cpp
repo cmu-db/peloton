@@ -121,7 +121,7 @@ TEST_F(InsertTests, InsertRecord) {
   values_ptr2.push_back(std::unique_ptr<expression::AbstractExpression>(
       new expression::ConstantValueExpression(type::ValueFactory::GetVarcharValue("Hello"))));
 
-  values_ptr.at(0).reset(new expression::ConstantValueExpression(
+  insert_node->insert_values[0].at(0).reset(new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(90)));
   planner::InsertPlan node3(table, &insert_node->columns,
                             &insert_node->insert_values);
