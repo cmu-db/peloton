@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// function_translator.h
+//
+// Identification: src/include/codegen/expression/function_translator.h
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "codegen/expression/expression_translator.h"
@@ -8,7 +21,7 @@ namespace peloton {
 
 namespace expression {
 class FunctionExpression;
-}  // namespace expression
+}
 
 namespace codegen {
 

@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// query_metrics_catalog.cpp
+// trigger_catalog.cpp
 //
-// Identification: src/catalog/query_metrics_catalog.cpp
+// Identification: src/catalog/trigger_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "catalog/trigger_catalog.h"
 

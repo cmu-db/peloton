@@ -58,5 +58,6 @@ class StringFunctions {
   // from the start and end of string
   static type::Value BTrim(const std::vector<type::Value>& args);
 };
+
 }  // namespace expression
 }  // namespace peloton
