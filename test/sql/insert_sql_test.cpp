@@ -29,7 +29,7 @@ void CreateAndLoadTable() {
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
-
+  LOG_INFO("Next");
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
@@ -55,6 +55,7 @@ void CreateAndLoadTable3() {
 }
 
 TEST_F(InsertSQLTest, InsertOneValue) {
+  LOG_INFO("START");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -68,7 +69,7 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
-
+  LOG_INFO("finish creating table");
   // INSERT a tuple
   std::string query("INSERT INTO test VALUES (5, 55, 555);");
 
@@ -76,11 +77,13 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+  LOG_INFO("GeneratePlanWithOptimizer");
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
   EXPECT_EQ(1, rows_changed);
+  LOG_INFO("GeneratePlanWithOptimizer1");
 
   // SELECT to find out if the data is correctly inserted
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
@@ -90,11 +93,13 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 2));
+  LOG_INFO("GeneratePlanWithOptimizer2");
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+  LOG_INFO("Commit Transaction");
 }
 
 TEST_F(InsertSQLTest, InsertMultipleValues) {

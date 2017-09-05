@@ -119,7 +119,6 @@ class TrafficCop {
 
   bool is_queuing_;
 
-//  struct event* event_;
  private:
 
   // The optimizer used for this connection
@@ -134,7 +133,6 @@ class TrafficCop {
   std::vector<StatementResult> result_;
   void(* task_callback_)(void *);
   void * task_callback_arg_;
-//  IOTrigger io_trigger_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
@@ -174,8 +172,6 @@ struct ExecutePlanArg {
       result_(result),
       result_format_(result_format),
       p_status_(p_status) {}
-//      event_(event) {}
-//      io_trigger_(io_trigger) { }
 
   std::shared_ptr<planner::AbstractPlan> plan_;
   concurrency::Transaction *txn_;
@@ -183,8 +179,19 @@ struct ExecutePlanArg {
   std::vector<StatementResult> &result_;
   const std::vector<int> &result_format_;
   executor::ExecuteResult &p_status_;
-//  struct event* event_;
-//  IOTrigger *io_trigger_;
+
+ public:
+  void mycheckValid() {
+    PL_ASSERT(plan_.get());
+    PL_ASSERT(txn_);
+    for (const type::Value value : params_) {
+      LOG_INFO("%s", value.ToString().c_str());
+    }
+    for (int result_f : result_format_) {
+      LOG_INFO("%d", result_f);
+    }
+    LOG_INFO("%d", p_status_.m_processed);
+  }
 };
 
 }  // namespace tcop

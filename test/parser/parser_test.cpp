@@ -39,7 +39,6 @@ TEST_F(ParserTests, PrepareTest) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
                 stmt_list->error_line, stmt_list->error_col);
     }
-    LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
 }

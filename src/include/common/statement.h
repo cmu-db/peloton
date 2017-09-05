@@ -19,6 +19,7 @@
 
 #include "common/printable.h"
 #include "type/types.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace planner {
@@ -40,11 +41,13 @@ class Statement : public Printable {
   Statement(Statement&&) = delete;
   Statement& operator=(Statement&&) = delete;
 
-//  Statement(const std::string& statement_name, const std::string& query_string);
-  Statement(const std::string& statement_name, QueryType query_type, std::string query_string, parser::SQLStatement *sql_stmt);
+  Statement(const std::string& statement_name, const std::string& query_string);
+  Statement(const std::string& statement_name, QueryType query_type,
+            std::string query_string, parser::SQLStatement *sql_stmt);
 
   ~Statement();
 
+// TODO: later should be removed, test psql first
   static void ParseQueryTypeString(const std::string& query_string,
                              std::string& query_type_string);
  
@@ -91,20 +94,18 @@ class Statement : public Printable {
   // logical name of statement
   std::string statement_name_;
 
-  parser::SQLStatement *sql_stmt_;
-
+  // enum value of query_type
   QueryType query_type_;
 
   // query string
   std::string query_string_;
-//
-//  // first token in query
-//  // Keep the string token of the query_type because it is returned
-//  // as responses after executing commands.
-//  std::string query_type_string_;
-//
-//  // enum value of query_type
-//  QueryType query_type_;
+
+  parser::SQLStatement *sql_stmt_;
+
+  // first token in query
+  // Keep the string token of the query_type because it is returned
+  // as responses after executing commands.
+  std::string query_type_string_;
 
   // format codes of the parameters
   std::vector<int32_t> param_types_;

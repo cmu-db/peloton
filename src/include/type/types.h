@@ -24,15 +24,12 @@
 #include <vector>
 
 #include "type/type_id.h"
-<<<<<<< 6d42bebabbbbe5f6d274cca7541d4d3c1843306c
 #include "parser/pg_trigger.h"
 
-=======
->>>>>>> add event trigger back to network thread when worker threads finishes one task. Bug exists now, core dump
 #include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "parser/sql_statement.h"
+//#include "parser/sql_statement.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -693,26 +690,29 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 //===--------------------------------------------------------------------===//
 
 enum class QueryType {
-  QUERY_BEGIN,     // begin query
-  QUERY_COMMIT,    // commit query
-  QUERY_CREATE,    // create query
-  QUERY_ROLLBACK,  // rollback query
-  QUERY_INSERT,    // insert query
-  QUERY_SET,       // set query
-  QUERY_SHOW,      // show query
-  QUERY_PREPARE,   // prepare query
-  QUERY_EXECUTE,   // execute query
-  QUERY_OTHER,     // other queries
+  QUERY_BEGIN = 0,                // begin query
+  QUERY_COMMIT = 1,               // commit query
+  QUERY_ROLLBACK = 2,             // rollback query
+  QUERY_CREATE_TABLE = 3,               // create query
+  QUERY_CREATE_DB = 4,
+  QUERY_CREATE_INDEX = 5,
+  QUERY_DROP = 6,                // other queries
+  QUERY_INSERT = 7,               // insert query
+  QUERY_PREPARE = 8,	      // prepare query
+  QUERY_EXECUTE = 9, 	      // execute query
+  QUERY_UPDATE = 10,
+  QUERY_DELETE = 11,
+  QUERY_RENAME = 12,
+  QUERY_ALTER = 13,
+  QUERY_COPY = 14,
+  QUERY_ANALYZE = 15,
+  QUERY_SET = 16,                  // set query
+  QUERY_SHOW = 17,                 // show query
+  QUERY_SELECT = 18,
+  QUERY_OTHER = 19,
 };
-QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
-
-std::unordered_map<StatementType, QueryType> type_map {
-    {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
-    {StatementType::PREPARE, QueryType::QUERY_PREPARE},
-    {StatementType::INSERT, QueryType::QUERY_INSERT},
-    {StatementType::CREATE, QueryType::QUERY_CREATE}
-};
-
+std::string QueryTypeToString(QueryType query_type);
+//QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types

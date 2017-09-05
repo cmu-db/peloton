@@ -20,18 +20,19 @@
 #include "planner/abstract_plan.h"
 
 namespace peloton {
-std::unordered_map<std::string, QueryType> Statement::query_type_map_{
-    {"BEGIN", QueryType::QUERY_BEGIN},
-    {"COMMIT", QueryType::QUERY_COMMIT},
-    {"ABORT", QueryType::QUERY_ROLLBACK},
-    {"ROLLBACK", QueryType::QUERY_ROLLBACK},
-    {"SET", QueryType::QUERY_SET},
-    {"SHOW", QueryType::QUERY_SHOW},
-    {"INSERT", QueryType::QUERY_INSERT},
-    {"PREPARE", QueryType::QUERY_PREPARE},
-    {"EXECUTE", QueryType::QUERY_EXECUTE},
-    {"CREATE", QueryType::QUERY_CREATE}};
-
+ std::unordered_map<std::string, QueryType> Statement::query_type_map_ {
+    {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
+    {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"SET", QueryType::QUERY_SET},
+    {"SHOW", QueryType::QUERY_SHOW}, {"INSERT", QueryType::QUERY_INSERT},
+    {"PREPARE", QueryType::QUERY_PREPARE}, {"EXECUTE", QueryType::QUERY_EXECUTE},
+    {"CREATE", QueryType::QUERY_CREATE_TABLE}
+  };
+Statement::Statement(const std::string& statement_name,
+                     const std::string& query_string)
+    : statement_name_(statement_name), query_string_(query_string) {
+  ParseQueryTypeString(query_string_, query_type_string_);
+  MapToQueryType(query_type_string_, query_type_);
+}
 //Statement::Statement(const std::string& statement_name,
 //                     const std::string& query_string)
 //    : statement_name_(statement_name), query_string_(query_string) {
@@ -41,7 +42,8 @@ std::unordered_map<std::string, QueryType> Statement::query_type_map_{
   Statement::Statement(const std::string &stmt_name, QueryType query_type,
                        std::string query_string, parser::SQLStatement *sql_stmt)
       : statement_name_(stmt_name), query_type_(query_type),
-        query_string_(query_string), sql_stmt_(sql_stmt) {};
+        query_string_(query_string), sql_stmt_(sql_stmt),
+        query_type_string_(QueryTypeToString(query_type)){};
 
 Statement::~Statement() {}
 
@@ -82,7 +84,7 @@ void Statement::SetQueryString(const std::string& query_string) {
 
 std::string Statement::GetQueryString() const { return query_string_; }
 
-//std::string Statement::GetQueryTypeString() const { return query_type_string_; }
+std::string Statement::GetQueryTypeString() const { return query_type_string_; }
 
 QueryType Statement::GetQueryType() const { return query_type_; }
 

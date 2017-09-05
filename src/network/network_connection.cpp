@@ -627,7 +627,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_TRACE("current state: %d", (int)conn->state);
+    LOG_INFO("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -745,7 +745,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               LOG_ERROR("Failed to delete event");
               PL_ASSERT(false);
             }
-            LOG_TRACE("ProcessResult: queueing");
+            LOG_INFO("ProcessResult: queueing");
             conn->TransitState(ConnState::CONN_GET_RESULT);
             done = true;
             break;
@@ -756,6 +756,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_GET_RESULT: {
+        LOG_INFO("CONN_GET_RESULT");
         if (event_add(conn->network_event, nullptr) < 0) {
           LOG_ERROR("Failed to add event");
           PL_ASSERT(false);
@@ -812,7 +813,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
     }
   }
-  LOG_TRACE("END of while loop");
+  LOG_INFO("END of while loop");
 }
 }  // namespace network
 }  // namespace peloton

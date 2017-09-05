@@ -466,38 +466,30 @@ std::ostream& operator<<(std::ostream& os, const StatementType& type) {
   os << StatementTypeToString(type);
   return os;
 }
-
-
-QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement *sql_stmt) {
-  QueryType query_type;
-  std::unordered_map<StatementType, QueryType>::iterator it  = type_map.find(stmt_type);
-  if (it != type_map.end()) {
-    query_type = it -> second;
-  } else {
-    switch(stmt_type) {
-      case StatementType::TRANSACTION:
-        switch(((parser::TransactionStatement*) sql_stmt)->type) {
-          case parser::TransactionStatement::CommandType::kBegin:
-            query_type = QueryType::QUERY_BEGIN;
-            break;
-          case parser::TransactionStatement::CommandType::kCommit:
-            query_type = QueryType::QUERY_COMMIT;
-            break;
-          case parser::TransactionStatement::CommandType::kRollback:
-            query_type = QueryType::QUERY_ROLLBACK;
-            break;
-        }
-        break;
-      default:
-        // TODO: When to get QUERY_SET, QUERY_SHOW????
-        query_type = QueryType::QUERY_OTHER;
-    }
+std::string QueryTypeToString(QueryType query_type) {
+  switch(query_type) {
+    case QueryType::QUERY_BEGIN:return "BEGIN";
+    case QueryType::QUERY_COMMIT:return "COMMIT";
+    case QueryType::QUERY_ROLLBACK:return "ROLLBACK";
+    case QueryType::QUERY_CREATE_DB:return "CREATE DATABASE";
+    case QueryType::QUERY_CREATE_INDEX: return "CREATE INDEX";
+    case QueryType::QUERY_CREATE_TABLE: return "CREATE TABLE";
+    case QueryType::QUERY_DROP:return "DROP";
+    case QueryType::QUERY_INSERT:return "INSERT";
+    case QueryType::QUERY_SET: return "SET";
+    case QueryType::QUERY_SHOW: return "SHOW";
+    case QueryType::QUERY_UPDATE: return "UPDATE";
+    case QueryType::QUERY_ALTER: return "ALTER";
+    case QueryType::QUERY_DELETE: return "DELETE";
+    case QueryType::QUERY_COPY: return "COPY";
+    case QueryType::QUERY_ANALYZE: return "ANALYZE";
+    case QueryType::QUERY_RENAME: return "RENAME";
+    case QueryType::QUERY_PREPARE: return "PREPARE";
+    case QueryType::QUERY_EXECUTE: return "EXECUTE";
+    case QueryType::QUERY_SELECT: return "SELECT";
+    case QueryType::QUERY_OTHER: default: return "OTHER";
   }
 }
-
-
-
-
 //===--------------------------------------------------------------------===//
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
