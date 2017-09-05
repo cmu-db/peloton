@@ -179,8 +179,9 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  auto *gc_manager = peloton_main.GetGCManager();
+  auto free_item_pointer = gc_manager->ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {

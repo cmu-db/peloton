@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "peloton_main/peloton_main.h"
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
@@ -153,7 +154,8 @@ TEST_F(PacketManagerTests, RollbackTest) {
  * Callback method to close server after client finishes
  */
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
-  peloton::PelotonInit::Initialize();
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  peloton_main.Initialize();
   LOG_INFO("Server initialized");
   peloton::network::NetworkManager network_manager;
 
@@ -168,7 +170,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 
   network_manager.CloseServer();
   serverThread.join();
-  peloton::PelotonInit::Shutdown();
+  peloton_main.Shutdown();
   LOG_INFO("Peloton has shut down");
 }
 

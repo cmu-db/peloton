@@ -19,6 +19,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/container_tuple.h"
+#include "peloton_main/peloton_main.h"
 
 namespace peloton {
 namespace gc {
@@ -50,9 +51,10 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   PL_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
   while (true) {
-    auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+    peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+    auto *epoch_manager = peloton_main.GetEpochManager();
     
-    auto expired_eid = epoch_manager.GetExpiredEpochId();
+    auto expired_eid = epoch_manager->GetExpiredEpochId();
 
     // When the DBMS has started working but it never processes any transaction,
     // we may see expired_eid == MAX_EID.
@@ -142,7 +144,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired
   // once the current epoch id is expired, then we know all the transactions
   // that are active at this time point will be committed/aborted.
   // at that time point, it is safe to recycle the version.
-  eid_t safe_expired_eid = concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId();
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+  eid_t safe_expired_eid = peloton_main.GetEpochManager()->GetCurrentEpochId();
 
   for(auto& item : garbages){
       reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));

@@ -46,7 +46,8 @@ void Database::AddTable(storage::DataTable *table, bool is_catalog) {
 
     if (is_catalog == false) {
       // Register table to GC manager.
-      auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+      peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+      auto *gc_manager = peloton_main.GetGCManager();
       assert(gc_manager != nullptr);
       gc_manager->RegisterTable(table->GetOid());
     }
@@ -79,7 +80,8 @@ void Database::DropTableWithOid(const oid_t table_oid) {
     std::lock_guard<std::mutex> lock(database_mutex);
 
     // Deregister table from GC manager.
-    auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+    peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
+    auto *gc_manager = peloton_main.GetGCManager();
     assert(gc_manager != nullptr);
     gc_manager->DeregisterTable(table_oid);
 

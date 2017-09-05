@@ -14,7 +14,7 @@
 
 #include <gflags/gflags.h>
 #include "settings/settings_manager.h"
-#include "common/init.h"
+#include "peloton_main/peloton_main.h"
 #include "common/logger.h"
 #include "network/network_manager.h"
 
@@ -40,22 +40,21 @@ int main(int argc, char *argv[]) {
     settings->ShowInfo();
   }
 
+  peloton::PelotonMain &peloton_main = peloton::PelotonMain::GetInstance();
   try {
     // Setup
-    peloton::PelotonInit::Initialize();
+    peloton_main.Initialize();
 
-    // Create NetworkManager object
-    peloton::network::NetworkManager network_manager;
-    
     // Start NetworkManager
-    network_manager.StartServer();
+    peloton_main.GetNetworkManager().StartServer();
   }
   catch(peloton::ConnectionException exception){
     // Nothing to do here!
   }
 
   // Teardown
-  peloton::PelotonInit::Shutdown();
+  peloton_main.Shutdown();
+
 
   return 0;
 }

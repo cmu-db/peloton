@@ -1,16 +1,8 @@
-//===----------------------------------------------------------------------===//
 //
-//                         Peloton
+// Created by Min Huang on 8/28/17.
 //
-// init.cpp
-//
-// Identification: src/common/init.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 
-#include "common/init.h"
+#include "peloton_main/peloton_main.h"
 
 #include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
@@ -25,9 +17,29 @@
 
 namespace peloton {
 
-ThreadPool thread_pool;
+PelotonMain& PelotonMain::GetInstance() {
+  static PelotonMain peloton_main;
+  return peloton_main;
+}
 
-void PelotonInit::Initialize() {
+ThreadPool& PelotonMain::GetThreadPool() { return thread_pool; }
+
+network::NetworkManager& PelotonMain::GetNetworkManager() {
+  return network_manager;
+}
+
+concurrency::EpochManager* PelotonMain::GetEpochManager() {
+  return epoch_manager;
+}
+
+gc::GCManager* PelotonMain::GetGCManager() { return gc_manager; }
+
+PelotonMain::PelotonMain() {
+  epoch_manager = &(concurrency::EpochManagerFactory::GetInstance());
+  gc_manager = &(gc::GCManagerFactory::GetInstance());
+}
+
+void PelotonMain::Initialize() {
   CONNECTION_THREAD_COUNT = std::thread::hardware_concurrency();
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
@@ -42,10 +54,10 @@ void PelotonInit::Initialize() {
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 
   // start epoch.
-  concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+  epoch_manager->StartEpoch();
 
   // start GC.
-  gc::GCManagerFactory::GetInstance().StartGC();
+  gc_manager->StartGC();
 
   // start index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
@@ -77,7 +89,7 @@ void PelotonInit::Initialize() {
   txn_manager.CommitTransaction(txn);
 }
 
-void PelotonInit::Shutdown() {
+void PelotonMain::Shutdown() {
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
@@ -91,10 +103,10 @@ void PelotonInit::Shutdown() {
   }
 
   // shut down GC.
-  gc::GCManagerFactory::GetInstance().StopGC();
+  gc_manager->StopGC();
 
   // shut down epoch.
-  concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+  epoch_manager->StopEpoch();
 
   thread_pool.Shutdown();
 
@@ -105,8 +117,7 @@ void PelotonInit::Shutdown() {
   google::ShutDownCommandLineFlags();
 }
 
-void PelotonInit::SetUpThread() {}
+void PelotonMain::SetUpThread() {}
 
-void PelotonInit::TearDownThread() {}
-
-}  // namespace peloton
+void PelotonMain::TearDownThread() {}
+}

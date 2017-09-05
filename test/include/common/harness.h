@@ -21,7 +21,6 @@
 
 #include "common/macros.h"
 #include "common/logger.h"
-#include "common/init.h"
 #include "type/types.h"
 #include "gc/gc_manager_factory.h"
 
