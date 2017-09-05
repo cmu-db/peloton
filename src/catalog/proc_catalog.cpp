@@ -46,6 +46,8 @@ ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
       false, IndexType::BWTREE, txn);
 }
 
+// generate a string representation for an argument type vector
+// e.g. vector{TypeId::INTEGER, TypeId::BOOLEAN} --> "integer,boolean"
 std::string ProcCatalog::TypeArrayToString(
     const std::vector<type::TypeId> types) {
   std::string result = "";
@@ -57,6 +59,8 @@ std::string ProcCatalog::TypeArrayToString(
   return result;
 }
 
+// get argument type vector from its string representation
+// e.g. "integer,boolean" --> vector{TypeId::INTEGER, TypeId::BOOLEAN}
 std::vector<type::TypeId> ProcCatalog::StringToTypeArray(
     const std::string &types) {
   std::vector<type::TypeId> result;
@@ -97,6 +101,7 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   return InsertTuple(std::move(tuple), txn);
 }
 
+// get prosrc by name and argument types
 std::string ProcCatalog::GetProSrc(const std::string &proname,
                                    const std::vector<type::TypeId> &proargtypes,
                                    concurrency::Transaction *txn) {
@@ -121,6 +126,7 @@ std::string ProcCatalog::GetProSrc(const std::string &proname,
   return prosrc;
 }
 
+// get return type by name and argument types
 type::TypeId ProcCatalog::GetProRetType(const std::string &proname,
                                         const std::vector<type::TypeId> &proargtypes,
                                         concurrency::Transaction *txn) {
@@ -145,6 +151,7 @@ type::TypeId ProcCatalog::GetProRetType(const std::string &proname,
   return prorettype;
 }
 
+// get language type by name and argument types
 oid_t ProcCatalog::GetProLang(const std::string &proname,
                               const std::vector<type::TypeId> &proargtypes,
                               concurrency::Transaction *txn) {

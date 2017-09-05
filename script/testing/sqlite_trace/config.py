@@ -3,7 +3,7 @@ pg_database = "SQLite_trace_test"
 pg_username = "jenkins"
 pg_password = "jenkinsTest123"
 
-# parameters for connecting to postgresql
+# parameters for connecting to peloton
 peloton_path = "../../../build/bin/peloton"
 peloton_port = 52726
 peloton_username = ""

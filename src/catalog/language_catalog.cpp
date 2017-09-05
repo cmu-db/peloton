@@ -21,8 +21,8 @@ namespace catalog {
 
 LanguageCatalog *LanguageCatalog::GetInstance(
     concurrency::Transaction *txn) {
-  static std::unique_ptr<LanguageCatalog> language_catalog(new LanguageCatalog(txn));
-  return language_catalog.get();
+  static LanguageCatalog language_catalog{txn};
+  return &language_catalog;
 }
 
 LanguageCatalog::~LanguageCatalog() {};
@@ -34,13 +34,13 @@ LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
                           "language_oid   INT NOT NULL PRIMARY KEY, "
                           "lanname        VARCHAR NOT NULL);",
                       txn) {
-
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME,
       {"lanname"}, LANGUAGE_CATALOG_NAME "_skey0",
       false, IndexType::BWTREE, txn);
 }
 
+// insert a new language by name
 bool LanguageCatalog::InsertLanguage(const std::string &lanname,
                                      type::AbstractPool *pool,
                                      concurrency::Transaction *txn) {
@@ -58,9 +58,10 @@ bool LanguageCatalog::InsertLanguage(const std::string &lanname,
   return InsertTuple(std::move(tuple), txn);
 }
 
+// delete a language by name
 bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
                                      concurrency::Transaction *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
+  oid_t index_offset = IndexId::SECONDARY_KEY_0;
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
@@ -68,6 +69,7 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+// get language_oid by name
 oid_t LanguageCatalog::GetLanguageOid(const std::string &lanname,
                                       concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({ColumnId::OID});
@@ -89,6 +91,7 @@ oid_t LanguageCatalog::GetLanguageOid(const std::string &lanname,
   return language_oid;
 }
 
+// get language name by oid
 std::string LanguageCatalog::GetLanguageName(oid_t language_oid,
                                              concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({ColumnId::LANNAME});
