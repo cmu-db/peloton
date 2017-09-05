@@ -1,6 +1,8 @@
 #pragma once
 
 #include "codegen/expression/expression_translator.h"
+#include "codegen/function_wrapper.h"
+#include <unordered_set>
 
 namespace peloton {
 
@@ -22,6 +24,11 @@ class FunctionTranslator : public ExpressionTranslator {
   // Return the result of the function call
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
+ private:
+  codegen::Value CallWrapperFunction(
+      peloton::type::TypeId ret_type,
+      std::vector<llvm::Value*> &args,
+      CodeGen &codegen) const;
 };
 
 }  // namespace codegen

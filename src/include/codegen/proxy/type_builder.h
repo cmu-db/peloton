@@ -103,6 +103,28 @@ struct TypeBuilder<Ret (*)(Args...)> {
   }
 };
 
+/// Regular C-style functions with variable arguments
+template <typename Ret, typename... Args>
+struct TypeBuilder<Ret(Args..., ...)> {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
+    llvm::Type *ret_type = TypeBuilder<Ret>::GetType(codegen);
+    std::vector<llvm::Type *> arg_types = {
+        TypeBuilder<Args>::GetType(codegen)...};
+    return llvm::FunctionType::get(ret_type, arg_types, true);
+  }
+};
+
+/// C-style function pointer with variable arguments
+template <typename Ret, typename... Args>
+struct TypeBuilder<Ret (*)(Args..., ...)> {
+  static llvm::Type *GetType(CodeGen &codegen) ALWAYS_INLINE {
+    llvm::Type *ret_type = TypeBuilder<Ret>::GetType(codegen);
+    std::vector<llvm::Type *> arg_types = {
+        TypeBuilder<Args>::GetType(codegen)...};
+    return llvm::FunctionType::get(ret_type, arg_types, true)->getPointerTo();
+  }
+};
+
 /// Member functions
 template <typename R, typename T, typename... Args>
 struct TypeBuilder<R (T::*)(Args...)> {

@@ -182,6 +182,11 @@ struct MemFn<R (*)(Args...), T, F> {
   static void *Get() { return reinterpret_cast<void *>(F); }
 };
 
+template <typename R, typename... Args, typename T, T F>
+struct MemFn<R (*)(Args..., ...), T, F> {
+  static void *Get() { return reinterpret_cast<void *>(F); }
+};
+
 }  // namespace detail
 }  // namespace proxy
 

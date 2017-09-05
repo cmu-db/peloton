@@ -98,6 +98,8 @@ class CodeGen {
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
 
+  llvm::Value *CallStrlen(llvm::Value *str);
+
   //===--------------------------------------------------------------------===//
   // Arithmetic with overflow logic - These methods perform the desired math op,
   // on the provided left and right argument and return the result of the op
