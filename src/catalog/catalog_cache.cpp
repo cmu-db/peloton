@@ -56,7 +56,6 @@ bool CatalogCache::InsertDatabaseObject(
 * @return  true if database_oid is found and evicted; false if not found
 */
 bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_objects_cache.find(database_oid);
   if (it == database_objects_cache.end()) {
     return false;  // database oid not found in cache
@@ -74,7 +73,6 @@ bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
 * @return  true if database_name is found and evicted; false if not found
 */
 bool CatalogCache::EvictDatabaseObject(const std::string &database_name) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_name_cache.find(database_name);
   if (it == database_name_cache.end()) {
     return false;  // database name not found in cache
