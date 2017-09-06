@@ -171,10 +171,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->column_type);
   EXPECT_EQ(true, column_objects[0]->is_inlined);
   EXPECT_EQ(true, column_objects[0]->is_primary);
-  EXPECT_EQ(
-      false,
-      column_objects[0]
-          ->is_not_null);  // Should this be true because it is a primary key?
+  EXPECT_EQ(false, column_objects[0]->is_not_null);
 
   EXPECT_EQ(table_object->table_oid, column_objects[1]->table_oid);
   EXPECT_EQ("name", column_objects[1]->column_name);
