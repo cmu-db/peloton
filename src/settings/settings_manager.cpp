@@ -10,15 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <gflags/gflags.h>
 
-#include "common/exception.h"
-#include "type/ephemeral_pool.h"
-#include "type/value_factory.h"
 #include "catalog/settings_catalog.h"
+#include "common/exception.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "type/ephemeral_pool.h"
 #include "settings/settings_manager.h"
+#include "util/stringbox_util.h"
 
 #define __SETTING_GFLAGS_DECLARE__
 #include "settings/settings_macro.h"
@@ -41,21 +40,18 @@ std::string SettingsManager::GetString(SettingId id) {
 }
 
 void SettingsManager::SetInt(SettingId id, int32_t value) {
-  GetInstance()->SetValue(
-      id, type::ValueFactory::GetIntegerValue(value));
+  GetInstance()->SetValue(id, type::ValueFactory::GetIntegerValue(value));
 }
 
 void SettingsManager::SetBool(SettingId id, bool value) {
-  GetInstance()->SetValue(
-      id, type::ValueFactory::GetBooleanValue(value));
+  GetInstance()->SetValue(id, type::ValueFactory::GetBooleanValue(value));
 }
 
 void SettingsManager::SetString(SettingId id, const std::string &value) {
-  GetInstance()->SetValue(
-      id, type::ValueFactory::GetVarcharValue(value));
+  GetInstance()->SetValue(id, type::ValueFactory::GetVarcharValue(value));
 }
 
-SettingsManager* SettingsManager::GetInstance() {
+SettingsManager *SettingsManager::GetInstance() {
   static SettingsManager settings_manager;
   return &settings_manager;
 }
@@ -70,11 +66,11 @@ void SettingsManager::InitializeCatalog() {
   for (auto s : settings_) {
     // TODO: Use Update instead Delete & Insert
     settings_catalog->DeleteSetting(s.second.name, txn);
-    if (!settings_catalog->InsertSetting(s.second.name, s.second.value.ToString(),
-                                         s.second.value.GetTypeId(),
-                                         s.second.desc, "", "", s.second.default_value.ToString(),
-                                         s.second.is_mutable, s.second.is_persistent,
-                                         pool, txn)) {
+    if (!settings_catalog->InsertSetting(
+            s.second.name, s.second.value.ToString(),
+            s.second.value.GetTypeId(), s.second.desc, "", "",
+            s.second.default_value.ToString(), s.second.is_mutable,
+            s.second.is_persistent, pool, txn)) {
       txn_manager.AbortTransaction(txn);
       throw SettingsException("failed to initialize catalog pg_settings on " +
                               s.second.name);
@@ -85,39 +81,36 @@ void SettingsManager::InitializeCatalog() {
 }
 
 const std::string SettingsManager::GetInfo() const {
-  std::ostringstream str;
-  str << "//===-------------- PELOTON SETTINGURATION --------------===//" << std::endl;
-  str << std::endl;
+  const uint32_t box_width = 60;
+  const std::string title = "PELOTON SETTINGS";
 
-  str << "Port: " << GetInt(SettingId::port) << std::endl;
-  str << "Socket Family: " << GetString(SettingId::socket_family) << std::endl;
-  str << "Statistics: " << (GetInt(SettingId::stats_mode) ? "enabled" : "disabled") << std::endl;
-  str << "Max Connections: " << GetInt(SettingId::max_connections) << std::endl;
-  str << "Index Tuner: " << (GetBool(SettingId::index_tuner) ? "enabled" : "disabled") << std::endl;
-  str << "Layout Tuner: " << (GetBool(SettingId::layout_tuner) ? "enabled" : "disabled") << std::endl;
-  str << "Code-generation: " << (GetBool(SettingId::codegen) ? "enabled" : "disabled") << std::endl;
+  std::string info;
+  info.append(StringUtil::Format("%*s\n", box_width/2 + title.length()/2, title.c_str()));
+  info.append(StringUtil::Repeat("=", box_width)).append("\n");
 
-  str << std::endl;
-  str << "//===---------------------------------------------------===//" << std::endl;
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family", GetString(SettingId::socket_family).c_str()));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Statistics", GetInt(SettingId::stats_mode) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections", GetInt(SettingId::max_connections)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Index Tuner", GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Layout Tuner", GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Code-generation", GetBool(SettingId::codegen) ? "enabled" : "disabled"));
 
-  return str.str();
+  return StringBoxUtil::Box(info);
 }
 
-void SettingsManager::ShowInfo() {
-  LOG_INFO("%s", GetInfo().c_str());
-}
+void SettingsManager::ShowInfo() { LOG_INFO("\n%s\n", GetInfo().c_str()); }
 
-void SettingsManager::DefineSetting(
-    SettingId id, const std::string &name,
-    const type::Value &value,
-    const std::string &description,
-    const type::Value &default_value,
-    bool is_mutable, bool is_persistent) {
+void SettingsManager::DefineSetting(SettingId id, const std::string &name,
+                                    const type::Value &value,
+                                    const std::string &description,
+                                    const type::Value &default_value,
+                                    bool is_mutable, bool is_persistent) {
   if (settings_.find(id) != settings_.end()) {
     throw SettingsException("settings " + name + " already exists");
   }
   settings_.emplace(id, Param(name, value, description, default_value,
-                     is_mutable, is_persistent));
+                              is_mutable, is_persistent));
 }
 
 type::Value SettingsManager::GetValue(SettingId id) {
@@ -149,11 +142,10 @@ bool SettingsManager::InsertIntoCatalog(const Param &param) {
   type::AbstractPool *pool = pool_.get();
   // TODO: Use Update instead Delete & Insert
   settings_catalog->DeleteSetting(param.name, txn);
-  if (!settings_catalog->InsertSetting(param.name, param.value.ToString(),
-                                       param.value.GetTypeId(),
-                                       param.desc, "", "", param.default_value.ToString(),
-                                       param.is_mutable, param.is_persistent,
-                                       pool, txn)) {
+  if (!settings_catalog->InsertSetting(
+          param.name, param.value.ToString(), param.value.GetTypeId(),
+          param.desc, "", "", param.default_value.ToString(), param.is_mutable,
+          param.is_persistent, pool, txn)) {
     txn_manager.AbortTransaction(txn);
     return false;
   }
@@ -164,12 +156,11 @@ bool SettingsManager::InsertIntoCatalog(const Param &param) {
 SettingsManager::SettingsManager() {
   catalog_initialized_ = false;
   pool_.reset(new type::EphemeralPool());
-  #define __SETTING_DEFINE__
-  #include "settings/settings_macro.h"
-  #include "settings/settings.h"
-  #undef __SETTING_DEFINE__
+#define __SETTING_DEFINE__
+#include "settings/settings_macro.h"
+#include "settings/settings.h"
+#undef __SETTING_DEFINE__
 }
 
-} // namespace settings
-} // namespace peloton
-
+}  // namespace settings
+}  // namespace peloton

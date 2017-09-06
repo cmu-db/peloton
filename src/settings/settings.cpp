@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <gflags/gflags.h>
+
 #include "type/types.h"
 
 // gflags DEFINE
