@@ -197,7 +197,6 @@ bool TableCatalogObject::InsertColumnObject(
  * @return  true if column_id is found and evicted; false if not found
  */
 bool TableCatalogObject::EvictColumnObject(oid_t column_id) {
-  // std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects) return false;
 
   // find column name from column name cache
@@ -218,7 +217,6 @@ bool TableCatalogObject::EvictColumnObject(oid_t column_id) {
  * @return  true if column_name is found and evicted; false if not found
  */
 bool TableCatalogObject::EvictColumnObject(const std::string &column_name) {
-  // std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects) return false;
 
   // find column name from column name cache
@@ -238,7 +236,6 @@ bool TableCatalogObject::EvictColumnObject(const std::string &column_name) {
  * @return  true if column_name is found and evicted; false if not found
  */
 void TableCatalogObject::EvictAllColumnObjects() {
-  // std::lock_guard<std::mutex> lock(column_cache_lock);
   column_objects.clear();
   column_names.clear();
   valid_column_objects = false;
@@ -249,7 +246,6 @@ void TableCatalogObject::EvictAllColumnObjects() {
  */
 std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnObjects(bool cached_only) {
-  // std::lock_guard<std::mutex> lock(column_cache_lock);
   if (!valid_column_objects && !cached_only) {
     // get column catalog objects from pg_column
     ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
