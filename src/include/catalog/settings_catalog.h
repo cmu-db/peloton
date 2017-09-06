@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -19,12 +18,11 @@ namespace peloton {
 namespace catalog {
 
 class SettingsCatalog : public AbstractCatalog {
-public:
+ public:
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog *GetInstance(
-          concurrency::Transaction *txn = nullptr);
+  static SettingsCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -32,9 +30,9 @@ public:
   bool InsertSetting(const std::string &name, const std::string &value,
                      type::TypeId value_type, const std::string &description,
                      const std::string &min_value, const std::string &max_value,
-                     const std::string &default_value,
-                     bool is_mutable, bool is_persistent,
-                     type::AbstractPool *pool, concurrency::Transaction *txn);
+                     const std::string &default_value, bool is_mutable,
+                     bool is_persistent, type::AbstractPool *pool,
+                     concurrency::Transaction *txn);
 
   bool DeleteSetting(const std::string &name, concurrency::Transaction *txn);
 
@@ -60,7 +58,7 @@ public:
     // Add new columns here in creation order
   };
 
-private:
+ private:
   SettingsCatalog(concurrency::Transaction *txn);
 
   enum class IndexId {
