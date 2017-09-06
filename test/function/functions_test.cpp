@@ -78,7 +78,7 @@ TEST_F(FunctionsTests, CatalogTest) {
 
   auto func_data = catalog->GetFunction(func_name, arg_types);
   EXPECT_EQ(ret_type, func_data.return_type_);
-  EXPECT_EQ(TestFunc, func_data.func_ptr_);
+  EXPECT_EQ((int64_t)TestFunc, (int64_t)func_data.func_ptr_);
 }
 
 TEST_F(FunctionsTests, FuncCallTest) {
