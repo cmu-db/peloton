@@ -63,7 +63,6 @@ TEST_F(CatalogTests, CreatingDatabase) {
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, key_attrs.size());
   EXPECT_EQ(0, key_attrs[0]);
-  // EXPECT_EQ("pg_index_pkey", index_name);
 }
 
 TEST_F(CatalogTests, CreatingTable) {
@@ -216,25 +215,24 @@ TEST_F(CatalogTests, DroppingTable) {
 
   // Try to drop again
   txn = txn_manager.BeginTransaction();
-  ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      "EMP_DB", "department_table", txn);
+  EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
+                   "EMP_DB", "department_table", txn),
+               CatalogException);
 
   EXPECT_EQ(
       2,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
-
-  EXPECT_EQ(ResultType::FAILURE, result);
 
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
-  result =
-      catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn);
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn),
+      CatalogException);
   EXPECT_EQ(
       2,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(ResultType::FAILURE, result);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();

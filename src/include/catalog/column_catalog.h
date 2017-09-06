@@ -25,7 +25,7 @@
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid & column_name (unique & primary key)
-// 1: table_oid & column_offset (unique)
+// 1: table_oid & column_id (unique)
 // 2: table_oid (non-unique)
 //
 //===----------------------------------------------------------------------===//
@@ -40,25 +40,9 @@ namespace catalog {
 
 class ColumnCatalogObject {
  public:
-  ColumnCatalogObject(oid_t table_oid = INVALID_OID)
-      : table_oid(table_oid),
-        column_name(),
-        column_id(-1),
-        column_offset(0),
-        column_type(type::TypeId::INVALID),
-        is_inlined(false),
-        is_primary(false),
-        is_not_null(false) {}
-  ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0)
-      : table_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
-        column_name(tile->GetValue(tupleId, 1).ToString()),
-        column_id(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
-        column_offset(tile->GetValue(tupleId, 3).GetAs<oid_t>()),
-        column_type(StringToTypeId(tile->GetValue(tupleId, 4).ToString())),
-        is_inlined(tile->GetValue(tupleId, 5).GetAs<bool>()),
-        is_primary(tile->GetValue(tupleId, 6).GetAs<bool>()),
-        is_not_null(tile->GetValue(tupleId, 7).GetAs<bool>()) {}
+  ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
+  // member variables
   oid_t table_oid;
   std::string column_name;
   oid_t column_id;
@@ -70,7 +54,9 @@ class ColumnCatalogObject {
 };
 
 class ColumnCatalog : public AbstractCatalog {
+  friend class ColumnCatalogObject;
   friend class TableCatalogObject;
+  friend class Catalog;
 
  public:
   // Global Singleton, only the first call requires passing parameters.
@@ -97,7 +83,7 @@ class ColumnCatalog : public AbstractCatalog {
 
  private:
   //===--------------------------------------------------------------------===//
-  // Read-only Related API(only called within table catalog object)
+  // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(oid_t table_oid, concurrency::Transaction *txn);
@@ -106,6 +92,26 @@ class ColumnCatalog : public AbstractCatalog {
                 concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
+
+  enum ColumnId {
+    TABLE_OID = 0,
+    COLUMN_NAME = 1,
+    COLUMN_ID = 2,
+    COLUMN_OFFSET = 3,
+    COLUMN_TYPE = 4,
+    IS_INLINED = 5,
+    IS_PRIMARY = 6,
+    IS_NOT_NULL = 7,
+    // Add new columns here in creation order
+  };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7};
+
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    SKEY_COLUMN_ID = 1,
+    SKEY_TABLE_OID = 2,
+    // Add new indexes here in creation order
+  };
 };
 
 }  // namespace catalog

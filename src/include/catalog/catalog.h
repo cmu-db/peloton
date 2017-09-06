@@ -138,7 +138,6 @@ class Catalog {
    * get it from storage layer using database_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  // FIXME: enforce caller not to use nullptr as txn
   storage::Database *GetDatabaseWithName(const std::string &db_name,
                                          concurrency::Transaction *txn) const;
 
@@ -146,7 +145,6 @@ class Catalog {
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  // FIXME: enforce caller not to use nullptr as txn
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &table_name,
                                        concurrency::Transaction *txn);

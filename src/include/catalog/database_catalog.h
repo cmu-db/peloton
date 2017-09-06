@@ -42,18 +42,8 @@ class DatabaseCatalogObject {
   friend class CatalogCache;
 
  public:
-  DatabaseCatalogObject(oid_t database_oid = INVALID_OID)
-      : database_oid(database_oid),
-        database_name(),
-        table_objects_cache(),
-        table_name_cache(),
-        valid_table_objects(false),
-        txn(nullptr) {}
   DatabaseCatalogObject(executor::LogicalTile *tile,
-                        concurrency::Transaction *txn)
-      : database_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
-        database_name(tile->GetValue(0, 1).ToString()),
-        txn(txn) {}
+                        concurrency::Transaction *txn);
 
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
@@ -74,10 +64,8 @@ class DatabaseCatalogObject {
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(bool cached_only = false);
 
-  // database oid
-  const oid_t database_oid;
-
-  // database name
+  // member variables
+  oid_t database_oid;
   std::string database_name;
 
  private:
@@ -95,7 +83,7 @@ class DatabaseCatalogObject {
       table_objects_cache;
   std::unordered_map<std::string, std::shared_ptr<TableCatalogObject>>
       table_name_cache;
-  // std::mutex table_cache_lock;
+  bool valid_table_objects;
 
   // Pointer to its corresponding transaction
   // This object is only visible during this transaction
@@ -103,9 +91,10 @@ class DatabaseCatalogObject {
 };
 
 class DatabaseCatalog : public AbstractCatalog {
+  friend class DatabaseCatalogObject;
+  friend class TableCatalog;
   friend class CatalogCache;
   friend class Catalog;
-  friend class TableCatalog;
 
  public:
   ~DatabaseCatalog();
@@ -126,24 +115,31 @@ class DatabaseCatalog : public AbstractCatalog {
 
  private:
   //===--------------------------------------------------------------------===//
-  // Read-only Related API
+  // Read Related API
   //===--------------------------------------------------------------------===//
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       oid_t database_oid, concurrency::Transaction *txn);
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &database_name, concurrency::Transaction *txn);
 
-  // Deprecated, use DatabaseCatalogObject
-  // std::string GetDatabaseName(oid_t database_oid,
-  //                             concurrency::Transaction *txn);
-  // oid_t GetDatabaseOid(const std::string &database_name,
-  //                      concurrency::Transaction *txn);
-
  private:
   DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                   concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
+
+  enum ColumnId {
+    DATABASE_OID = 0,
+    DATABASE_NAME = 1,
+    // Add new columns here in creation order
+  };
+  std::vector<oid_t> all_column_ids = {0, 1};
+
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    SKEY_DATABASE_NAME = 1,
+    // Add new indexes here in creation order
+  };
 };
 
 }  // namespace catalog

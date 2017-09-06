@@ -45,28 +45,8 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(oid_t table_oid = INVALID_OID)
-      : table_oid(table_oid),  // INVALID_OID represents an invalid object
-        table_name(),
-        database_oid(INVALID_OID),
-        index_objects(),
-        index_names(),
-        valid_index_objects(false),
-        column_objects(),
-        column_names(),
-        valid_column_objects(false),
-        txn(nullptr) {}
-  TableCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn)
-      : table_oid(tile->GetValue(0, 0).GetAs<oid_t>()),
-        table_name(tile->GetValue(0, 1).ToString()),
-        database_oid(tile->GetValue(0, 2).GetAs<oid_t>()),
-        index_objects(),
-        index_names(),
-        valid_index_objects(false),
-        column_objects(),
-        column_names(),
-        valid_column_objects(false),
-        txn(txn) {}
+  TableCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn,
+                     int tupleId = 0);
 
  public:
   // Get indexes
@@ -91,10 +71,7 @@ class TableCatalogObject {
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
 
-  // oid_t GetOid() const { return table_oid; }
-  // std::string GetName() const { return table_name; }
-  // oid_t GetDatabaseOid() const { return database_oid; }
-
+  // member variables
   const oid_t table_oid;
   std::string table_name;
   oid_t database_oid;
@@ -115,7 +92,6 @@ class TableCatalogObject {
   std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
       index_names;
   bool valid_index_objects;
-  // std::mutex index_cache_lock;
 
   // cache for *all* column catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
@@ -123,13 +99,13 @@ class TableCatalogObject {
   std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
       column_names;
   bool valid_column_objects;
-  // std::mutex column_cache_lock;
 
   // Pointer to its corresponding transaction
   concurrency::Transaction *txn;
 };
 
 class TableCatalog : public AbstractCatalog {
+  friend class TableCatalogObject;
   friend class DatabaseCatalogObject;
   friend class ColumnCatalog;
   friend class IndexCatalog;
@@ -162,20 +138,26 @@ class TableCatalog : public AbstractCatalog {
       const std::string &table_name, oid_t database_oid,
       concurrency::Transaction *txn);
 
-  // std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
-  // oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);
-  // oid_t GetTableOid(const std::string &table_name, oid_t database_oid,
-  //                   concurrency::Transaction *txn);
-  // std::vector<oid_t> GetTableOids(oid_t database_oid,
-  //                                 concurrency::Transaction *txn);
-  // std::vector<std::string> GetTableNames(oid_t database_oid,
-  //                                        concurrency::Transaction *txn);
-
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
+
+  enum ColumnId {
+    TABLE_OID = 0,
+    TABLE_NAME = 1,
+    DATABASE_OID = 2,
+    // Add new columns here in creation order
+  };
+  std::vector<oid_t> all_column_ids = {0, 1, 2};
+
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    SKEY_TABLE_NAME = 1,
+    SKEY_DATABASE_OID = 2,
+    // Add new indexes here in creation order
+  };
 };
 
 }  // namespace catalog

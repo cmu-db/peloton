@@ -33,7 +33,7 @@ static void *LaunchServer(peloton::network::NetworkManager network_manager,
   try {
     network_manager.SetPort(port);
     network_manager.StartServer();
-  } catch (peloton::ConnectionException exception) {
+  } catch (peloton::ConnectionException &exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
   return NULL;

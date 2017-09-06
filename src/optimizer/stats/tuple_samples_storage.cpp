@@ -89,7 +89,12 @@ ResultType TupleSamplesStorage::DeleteSamplesTable(
   auto catalog = catalog::Catalog::GetInstance();
   std::string samples_table_name =
       GenerateSamplesTableName(database_id, table_id);
-  auto result = catalog->DropTable(SAMPLES_DB_NAME, samples_table_name, txn);
+  ResultType result = ResultType::FAILURE;
+  try {
+    result = catalog->DropTable(SAMPLES_DB_NAME, samples_table_name, txn);
+  } catch (CatalogException &e) {
+    // Samples table does not exist, no need to drop
+  }
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);

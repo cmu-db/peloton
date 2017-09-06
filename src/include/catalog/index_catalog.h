@@ -43,16 +43,9 @@ class IndexCatalogObject {
   friend class TableCatalogObject;
 
  public:
-  IndexCatalogObject(oid_t index_oid = INVALID_OID)
-      : index_oid(index_oid),
-        index_name(),
-        table_oid(INVALID_OID),
-        index_type(IndexType::INVALID),
-        index_constraint(IndexConstraintType::INVALID),
-        unique_keys(false),
-        key_attrs() {}
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
+  // member variables
   const oid_t index_oid;
   const std::string index_name;
   const oid_t table_oid;
@@ -89,34 +82,39 @@ class IndexCatalog : public AbstractCatalog {
 
  private:
   //===--------------------------------------------------------------------===//
-  // Read-only Related API
+  // Read Related API
   //===--------------------------------------------------------------------===//
-  // std::shared_ptr<IndexCatalogObject> GetIndexObject(
-  //     oid_t index_oid, concurrency::Transaction *txn);
-  // std::shared_ptr<IndexCatalogObject> GetIndexObject(
-  //     const std::string &index_name, concurrency::Transaction *txn);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      oid_t index_oid, concurrency::Transaction *txn);
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      const std::string &index_name, concurrency::Transaction *txn);
   const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
   GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn);
-
-  // std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);
-  // oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn);
-  // IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn);
-  // IndexConstraintType GetIndexConstraint(oid_t index_oid,
-  //                                        concurrency::Transaction *txn);
-  // bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn);
-  // std::vector<oid_t> GetIndexedAttributes(oid_t index_oid,
-  //                                         concurrency::Transaction *txn);
-  // oid_t GetIndexOid(const std::string &index_name,
-  //                   concurrency::Transaction *txn);
-
-  // std::vector<oid_t> GetIndexOids(oid_t table_oid,
-  //                                 concurrency::Transaction *txn);
 
  private:
   IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::Transaction *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
+
+  enum ColumnId {
+    INDEX_OID = 0,
+    INDEX_NAME = 1,
+    TABLE_OID = 2,
+    INDEX_TYPE = 3,
+    INDEX_CONSTRAINT = 4,
+    UNIQUE_KEYS = 5,
+    INDEXED_ATTRIBUTES = 6,
+    // Add new columns here in creation order
+  };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6};
+
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    SKEY_INDEX_NAME = 1,
+    SKEY_TABLE_OID = 2,
+    // Add new indexes here in creation order
+  };
 };
 
 }  // namespace catalog

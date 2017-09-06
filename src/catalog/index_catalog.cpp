@@ -25,20 +25,29 @@ namespace peloton {
 namespace catalog {
 
 IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
-    : index_oid(tile->GetValue(tupleId, 0).GetAs<oid_t>()),
-      index_name(tile->GetValue(tupleId, 1).ToString()),
-      table_oid(tile->GetValue(tupleId, 2).GetAs<oid_t>()),
-      index_type(tile->GetValue(tupleId, 3).GetAs<IndexType>()),
-      index_constraint(tile->GetValue(tupleId, 4).GetAs<IndexConstraintType>()),
-      unique_keys(tile->GetValue(tupleId, 5).GetAs<bool>()) {
-  std::string attr_str = tile->GetValue(tupleId, 6).ToString();
+    : index_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_OID)
+                    .GetAs<oid_t>()),
+      index_name(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_NAME)
+                     .ToString()),
+      table_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      index_type(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_TYPE)
+                     .GetAs<IndexType>()),
+      index_constraint(
+          tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT)
+              .GetAs<IndexConstraintType>()),
+      unique_keys(tile->GetValue(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS)
+                      .GetAs<bool>()) {
+  std::string attr_str =
+      tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES)
+          .ToString();
   std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
   std::string tok;
 
   while (std::getline(ss, tok, ' ')) {
     key_attrs.push_back(std::stoi(tok));
   }
-  // LOG_DEBUG("the size for indexed key is %lu", key_attrs.size());
+  LOG_DEBUG("the size for indexed key is %lu", key_attrs.size());
 }
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
@@ -153,20 +162,20 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   for (oid_t indkey : indekeys) os << std::to_string(indkey) << " ";
   auto val6 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
 
-  tuple->SetValue(0, val0, pool);
-  tuple->SetValue(1, val1, pool);
-  tuple->SetValue(2, val2, pool);
-  tuple->SetValue(3, val3, pool);
-  tuple->SetValue(4, val4, pool);
-  tuple->SetValue(5, val5, pool);
-  tuple->SetValue(6, val6, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_OID, val0, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_NAME, val1, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::TABLE_OID, val2, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_TYPE, val3, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_CONSTRAINT, val4, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::UNIQUE_KEYS, val5, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEXED_ATTRIBUTES, val6, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
 }
 
 bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of index_oid
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
@@ -180,84 +189,81 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-// std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-//     oid_t index_oid, concurrency::Transaction *txn) {
-//   if (txn == nullptr) {
-//     throw CatalogException("Transaction is invalid!");
-//   }
-//   // try get from cache
-//   auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
-//   if (index_object) {
-//     return index_object;
-//   }
+std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
+    oid_t index_oid, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  if (index_object) {
+    return index_object;
+  }
 
-//   // cache miss, get from pg_index
-//   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
-//   oid_t index_offset = 0;  // Index of index_oid
-//   std::vector<type::Value> values;
-//   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+  // cache miss, get from pg_index
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
-//   auto result_tiles =
-//       GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-//   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1)
-//   {
-//     auto index_object =
-//         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
-//     // fetch all indexes into table object (cannot use the above index
-//     object)
-//     auto table_object = TableCatalog::GetInstance()->GetTableObject(
-//         index_object->table_oid, txn);
-//     PL_ASSERT(table_object &&
-//               table_object->table_oid == index_object->table_oid);
-//     return table_object->GetIndexObject(index_oid);
-//   } else {
-//     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(),
-//     index_oid);
-//   }
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    auto index_object =
+        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    // fetch all indexes into table object (cannot use the above index object)
+    auto table_object = TableCatalog::GetInstance()->GetTableObject(
+        index_object->table_oid, txn);
+    PL_ASSERT(table_object &&
+              table_object->table_oid == index_object->table_oid);
+    return table_object->GetIndexObject(index_oid);
+  } else {
+    LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
+  }
 
-//   return nullptr;
-// }
+  // return empty object if not found
+  return nullptr;
+}
 
-// std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-//     const std::string &index_name, concurrency::Transaction *txn) {
-//   if (txn == nullptr) {
-//     throw CatalogException("Transaction is invalid!");
-//   }
-//   // try get from cache
-//   auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
-//   if (index_object) {
-//     return index_object;
-//   }
+std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
+    const std::string &index_name, concurrency::Transaction *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
+  if (index_object) {
+    return index_object;
+  }
 
-//   // cache miss, get from pg_index
-//   std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
-//   oid_t index_offset = 1;  // Index of index_name
-//   std::vector<type::Value> values;
-//   values.push_back(
-//       type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
+  // cache miss, get from pg_index
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SKEY_INDEX_NAME;  // Index of index_name
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
 
-//   auto result_tiles =
-//       GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-//   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1)
-//   {
-//     auto index_object =
-//         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
-//     // fetch all indexes into table object (cannot use the above index
-//     object)
-//     auto table_object = TableCatalog::GetInstance()->GetTableObject(
-//         index_object->table_oid, txn);
-//     PL_ASSERT(table_object &&
-//               table_object->table_oid == index_object->table_oid);
-//     return table_object->GetIndexObject(index_name);
-//   } else {
-//     LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
-//               index_name.c_str());
-//   }
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    auto index_object =
+        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+    // fetch all indexes into table object (cannot use the above index object)
+    auto table_object = TableCatalog::GetInstance()->GetTableObject(
+        index_object->table_oid, txn);
+    PL_ASSERT(table_object &&
+              table_object->table_oid == index_object->table_oid);
+    return table_object->GetIndexObject(index_name);
+  } else {
+    LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
+              index_name.c_str());
+  }
 
-//   return nullptr;
-// }
+  // return empty object if not found
+  return nullptr;
+}
 
 /*@brief   get all index records from the same table
  * this function may be useful when calling DropTable
@@ -278,8 +284,8 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
   if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
-  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6});
-  oid_t index_offset = 2;  // Index of table_oid
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
@@ -296,277 +302,6 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
 
   return table_object->GetIndexObjects();
 }
-
-// std::string IndexCatalog::GetIndexName(oid_t index_oid,
-//                                        concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->index_name;
-//   } else {
-//     return std::string();
-//   }
-
-//   // std::vector<oid_t> column_ids({1});  // index_name
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // std::string index_name;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     index_name = (*result_tiles)[0]
-//   //                      ->GetValue(0, 0)
-//   //                      .ToString();  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return index_name;
-// }
-
-// oid_t IndexCatalog::GetTableOid(oid_t index_oid,
-//                                 concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->table_oid;
-//   } else {
-//     return INVALID_OID;
-//   }
-
-//   // std::vector<oid_t> column_ids({2});  // table_oid
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // oid_t table_oid = INVALID_OID;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     table_oid = (*result_tiles)[0]
-//   //                     ->GetValue(0, 0)
-//   //                     .GetAs<oid_t>();  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return table_oid;
-// }
-
-// IndexType IndexCatalog::GetIndexType(oid_t index_oid,
-//                                      concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->index_type;
-//   } else {
-//     return IndexType::INVALID;
-//   }
-
-//   // std::vector<oid_t> column_ids({3});  // index_type
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // IndexType index_type = IndexType::INVALID;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     index_type = static_cast<IndexType>(
-//   //         (*result_tiles)[0]
-//   //             ->GetValue(0, 0)
-//   //             .GetAs<int>());  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return index_type;
-// }
-
-// IndexConstraintType IndexCatalog::GetIndexConstraint(
-//     oid_t index_oid, concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->index_constraint;
-//   } else {
-//     return IndexConstraintType::INVALID;
-//   }
-
-//   // std::vector<oid_t> column_ids({4});  // index_constraint
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // IndexConstraintType index_constraint = IndexConstraintType::INVALID;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     index_constraint = static_cast<IndexConstraintType>(
-//   //         (*result_tiles)[0]
-//   //             ->GetValue(0, 0)
-//   //             .GetAs<int>());  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return index_constraint;
-// }
-
-// bool IndexCatalog::IsUniqueKeys(oid_t index_oid,
-//                                 concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->unique_keys;
-//   } else {
-//     return false;
-//   }
-
-//   // std::vector<oid_t> column_ids({5});  // unique_keys
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // bool unique_keys = false;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     unique_keys = (*result_tiles)[0]
-//   //                       ->GetValue(0, 0)
-//   //                       .GetAs<bool>();  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return unique_keys;
-// }
-
-// oid_t IndexCatalog::GetIndexOid(const std::string &index_name,
-//                                 concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_name, txn);
-//   if (index_object) {
-//     return index_object->index_oid;
-//   } else {
-//     return INVALID_OID;
-//   }
-
-//   // std::vector<oid_t> column_ids({0});  // index_oid
-//   // oid_t index_offset = 1;              // Index of index_name & table_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(
-//   //     type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // oid_t index_oid = INVALID_OID;
-//   // PL_ASSERT(result_tiles->size() <= 1);  // index_name & table_oid is
-//   unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     index_oid = (*result_tiles)[0]
-//   //                     ->GetValue(0, 0)
-//   //                     .GetAs<oid_t>();  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return index_oid;
-// }
-
-// /*@brief   return all the columns this index indexed
-//  * @param   index_oid
-//  * @param   txn  Transaction
-//  * @return  a vector of column oid(logical position)
-//  */
-// std::vector<oid_t> IndexCatalog::GetIndexedAttributes(
-//     oid_t index_oid, concurrency::Transaction *txn) {
-//   auto index_object = GetIndexObject(index_oid, txn);
-//   if (index_object) {
-//     return index_object->key_attrs;
-//   } else {
-//     return std::vector<oid_t>();
-//   }
-
-//   // std::vector<oid_t> column_ids({6});  // Indexed attributes
-//   // oid_t index_offset = 0;              // Index of index_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-//   // std::vector<oid_t> key_attrs;
-//   // std::string temp;
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
-//   // if (result_tiles->size() != 0) {
-//   //   PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//   //   if ((*result_tiles)[0]->GetTupleCount() != 0) {
-//   //     temp = (*result_tiles)[0]->GetValue(0, 0).ToString();
-//   //   }
-//   // }
-//   // LOG_TRACE("the string value for index keys is %s", temp.c_str());
-//   // // using " " as delimiter to split up string and turn into vector of
-//   oid_t
-//   // std::stringstream os(temp.c_str());  // Turn the string into a stream.
-//   // std::string tok;
-
-//   // while (std::getline(os, tok, ' ')) {
-//   //   key_attrs.push_back(std::stoi(tok));
-//   // }
-//   // LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
-//   // return key_attrs;
-// }
-
-// /*@brief   get all index records from the same table
-//  * this function may be useful when calling DropTable
-//  * @param   table_oid
-//  * @param   txn  Transaction
-//  * @return  a vector of index oid
-//  */
-// std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
-//                                               concurrency::Transaction *txn)
-//                                               {
-//   auto index_objects = GetIndexObjects(table_oid, txn);
-//   std::vector<oid_t> results;
-//   for (auto it = index_objects.begin(); it != index_objects.end(); it++) {
-//     auto index_object = it->second;
-//     results.push_back(index_object->index_oid);
-//   }
-//   return results;
-
-//   // std::vector<oid_t> column_ids({0});  // index_oid
-//   // oid_t index_offset = 2;              // Index of table_oid
-//   // std::vector<type::Value> values;
-//   // values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-//   // auto result_tiles =
-//   //     GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-//   // std::vector<oid_t> index_oids;
-//   // for (auto &tile : (*result_tiles)) {
-//   //   for (auto tuple_id : *tile) {
-//   //     index_oids.emplace_back(
-//   //         tile->GetValue(tuple_id, 0)
-//   //             .GetAs<oid_t>());  // After projection left 1 column
-//   //   }
-//   // }
-
-//   // return index_oids;
-// }
 
 }  // namespace catalog
 }  // namespace peloton
