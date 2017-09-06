@@ -29,7 +29,6 @@ bool CatalogCache::InsertDatabaseObject(
   if (!database_object || database_object->database_oid == INVALID_OID) {
     return false;  // invalid object
   }
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
 
   // check if already in cache
   if (database_objects_cache.find(database_object->database_oid) !=
@@ -94,7 +93,6 @@ bool CatalogCache::EvictDatabaseObject(const std::string &database_name) {
 */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     oid_t database_oid) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_objects_cache.find(database_oid);
   if (it == database_objects_cache.end()) {
     return nullptr;
@@ -108,7 +106,6 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
 */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     const std::string &database_name) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   auto it = database_name_cache.find(database_name);
   if (it == database_name_cache.end()) {
     return nullptr;
@@ -122,7 +119,6 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
 */
 std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
     oid_t table_oid) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   for (auto it = database_objects_cache.begin();
        it != database_objects_cache.end(); ++it) {
     auto database_object = it->second;
@@ -138,7 +134,6 @@ std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
 */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
     oid_t index_oid) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   for (auto it = database_objects_cache.begin();
        it != database_objects_cache.end(); ++it) {
     auto database_object = it->second;
@@ -154,7 +149,6 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
     const std::string &index_name) {
-  // std::lock_guard<std::mutex> lock(database_cache_lock);
   for (auto it = database_objects_cache.begin();
        it != database_objects_cache.end(); ++it) {
     auto database_object = it->second;

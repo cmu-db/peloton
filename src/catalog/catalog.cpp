@@ -16,14 +16,14 @@
 #include "common/macros.h"
 
 #include "catalog/column_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/index_catalog.h"
+#include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/table_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -76,13 +76,17 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID, txn);
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
-              std::vector<oid_t>({1}), DATABASE_CATALOG_NAME "_skey0",
-              IndexType::BWTREE, IndexConstraintType::UNIQUE, true, txn, true);
+              {DatabaseCatalog::ColumnId::DATABASE_NAME},
+              DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              IndexConstraintType::UNIQUE, true, txn, true);
 
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
-              std::vector<oid_t>({1, 2}), TABLE_CATALOG_NAME "_skey0",
-              IndexType::BWTREE, IndexConstraintType::UNIQUE, true, txn, true);
-  CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID, std::vector<oid_t>({2}),
+              {TableCatalog::ColumnId::TABLE_NAME,
+               TableCatalog::ColumnId::DATABASE_OID},
+              TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              IndexConstraintType::UNIQUE, true, txn, true);
+  CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
+              {TableCatalog::ColumnId::DATABASE_OID},
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
 
@@ -92,28 +96,31 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
-      std::vector<oid_t>({0, 1}), pool_.get(), txn);
+      {ColumnCatalog::ColumnId::TABLE_OID,
+       ColumnCatalog::ColumnId::COLUMN_NAME},
+      pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      std::vector<oid_t>({0, 2}), pool_.get(), txn);
+      {ColumnCatalog::ColumnId::TABLE_OID, ColumnCatalog::ColumnId::COLUMN_ID},
+      pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
-      false, std::vector<oid_t>({0}), pool_.get(), txn);
+      false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
-      std::vector<oid_t>({0}), pool_.get(), txn);
+      {IndexCatalog::ColumnId::INDEX_OID}, pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      std::vector<oid_t>({1}), pool_.get(), txn);
+      {IndexCatalog::ColumnId::INDEX_NAME}, pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
-      std::vector<oid_t>({2}), pool_.get(), txn);
+      {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
@@ -492,16 +499,6 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
   txn->RecordDrop(database_oid, INVALID_OID, INVALID_OID);
 
   return ResultType::SUCCESS;
-  // Instead of dropping actual database object
-  // LOG_TRACE("Dropping database with oid: %d", database_oid);
-  // std::lock_guard<std::mutex> lock(catalog_mutex);
-  // bool found_database =
-  //     storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-  // if (!found_database) {
-  //   LOG_TRACE("Database %d is not found!", database_oid);
-  //   return ResultType::FAILURE;
-  // }
-  // return ResultType::SUCCESS;
 }
 
 /*@brief   Drop table
@@ -526,27 +523,36 @@ ResultType Catalog::DropTable(const std::string &database_name,
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
   if (database_object == nullptr)
-    throw CatalogException("Drop Table: " + database_name + " does not exist");
+    throw CatalogException("Drop Table: database " + database_name +
+                           " does not exist");
 
   // check if table exists
   auto table_object = database_object->GetTableObject(table_name);
-  if (table_object == nullptr) {
-    // drop table if exists foo;
-    return ResultType::FAILURE;
-  }
+  if (table_object == nullptr)
+    throw CatalogException("Drop Table: table " + table_name +
+                           " does not exist");
 
   ResultType result =
       DropTable(database_object->database_oid, table_object->table_oid, txn);
   return result;
 }
 
+/*@brief   Drop table
+ * 1. drop all the indexes on actual table, and drop index records in pg_index
+ * 2. drop all the columns records in pg_attribute
+ * 3. drop table record in pg_table
+ * 4. delete actual table(storage level), cleanup schema, foreign keys,
+ * tile_groups
+ * @param   database_oid    the database which the dropped table belongs to
+ * @param   table_oid       the dropped table name
+ * @param   txn             Transaction
+ * @return  Transaction ResultType(SUCCESS or FAILURE)
+ */
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
-  // LOG_TRACE("Deleting table!");
-  // STEP 1, read index_oids from pg_index, and iterate through
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
   auto table_object = database_object->GetTableObject(table_oid);
@@ -554,11 +560,9 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
 
   for (auto it : index_objects) DropIndex(it.second->index_oid, txn);
-  // STEP 2
   ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
-  // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // STEP 4: put database object into rw_object_set
+
   database->GetTableWithOid(table_oid);
   txn->RecordDrop(database_oid, table_oid, INVALID_OID);
 
@@ -582,8 +586,10 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
                            " to drop");
   }
-  // the tricky thing about drop index is that you only know index oid or index
-  // table_oid and you must obtain database_object-->table_object in reverse way
+  // the tricky thing about drop index is that you only know index oid or
+  // index
+  // table_oid and you must obtain database_object-->table_object in reverse
+  // way
   // invalidate index cache object in table_catalog
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(index_object->table_oid, txn);
@@ -656,6 +662,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
     throw CatalogException("Table " + table_name + " is not found");
   }
 
+  // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();
   return storage_manager->GetTableWithOid(table_object->database_oid,
                                           table_object->table_oid);

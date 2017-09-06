@@ -60,7 +60,6 @@ class CatalogCache {
       database_objects_cache;
   std::unordered_map<std::string, std::shared_ptr<DatabaseCatalogObject>>
       database_name_cache;
-  // std::mutex database_cache_lock;
 };
 
 }  // namespace catalog

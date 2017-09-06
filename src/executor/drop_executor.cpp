@@ -47,22 +47,25 @@ bool DropExecutor::DExecute() {
       auto table_name = node.GetTableName();
       auto current_txn = context_->GetTransaction();
 
+      if (node.IsMissing()) {
+        try {
+          auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+              DEFAULT_DB_NAME, table_name, current_txn);
+        } catch (CatalogException &e) {
+          LOG_TRACE("Table %s does not exist.", table_name.c_str());
+          return false;
+        }
+      }
+
       ResultType result = catalog::Catalog::GetInstance()->DropTable(
           DEFAULT_DB_NAME, table_name, current_txn);
       current_txn->SetResult(result);
 
       if (current_txn->GetResult() == ResultType::SUCCESS) {
         LOG_TRACE("Dropping table succeeded!");
-      } else if (current_txn->GetResult() == ResultType::FAILURE &&
-          node.IsMissing()) {
-        current_txn->SetResult(ResultType::SUCCESS);
-        LOG_TRACE("Dropping table Succeeded!");
-      } else if (current_txn->GetResult() == ResultType::FAILURE &&
-          !node.IsMissing()) {
-        LOG_TRACE("Dropping table Failed!");
       } else {
-        LOG_TRACE("Result is: %s", ResultTypeToString(
-            current_txn->GetResult()).c_str());
+        LOG_TRACE("Result is: %s",
+                  ResultTypeToString(current_txn->GetResult()).c_str());
       }
       break;
     }
@@ -79,21 +82,21 @@ bool DropExecutor::DExecute() {
       if (current_txn->GetResult() == ResultType::SUCCESS) {
         LOG_TRACE("Dropping trigger succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-          node.IsMissing()) {
+                 node.IsMissing()) {
         current_txn->SetResult(ResultType::SUCCESS);
         LOG_TRACE("Dropping trigger Succeeded!");
       } else if (current_txn->GetResult() == ResultType::FAILURE &&
-          !node.IsMissing()) {
+                 !node.IsMissing()) {
         LOG_TRACE("Dropping trigger Failed!");
       } else {
-        LOG_TRACE("Result is: %s", ResultTypeToString(
-            current_txn->GetResult()).c_str());
+        LOG_TRACE("Result is: %s",
+                  ResultTypeToString(current_txn->GetResult()).c_str());
       }
       break;
     }
     default: {
-      throw NotImplementedException(StringUtil::Format(
-          "Drop type %d not supported yet.\n", dropType));
+      throw NotImplementedException(
+          StringUtil::Format("Drop type %d not supported yet.\n", dropType));
     }
   }
 

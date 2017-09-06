@@ -21,6 +21,27 @@
 namespace peloton {
 namespace catalog {
 
+ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
+                                         int tupleId)
+    : table_oid(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
+                      .ToString()),
+      column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
+                    .GetAs<oid_t>()),
+      column_offset(
+          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
+              .GetAs<oid_t>()),
+      column_type(StringToTypeId(
+          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
+              .ToString())),
+      is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
+                     .GetAs<bool>()),
+      is_primary(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY)
+                     .GetAs<bool>()),
+      is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
+                      .GetAs<bool>()) {}
+
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool,
                                           concurrency::Transaction *txn) {
@@ -34,12 +55,13 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_attribute
-  AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
+  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
+           COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
-           IndexConstraintType::UNIQUE);
-  AddIndex({0}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
-           IndexConstraintType::DEFAULT);
+  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID}, COLUMN_CATALOG_SKEY0_OID,
+           COLUMN_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
+  AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
+           COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
   // Insert columns into pg_attribute
   oid_t column_id = 0;
@@ -148,14 +170,14 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
   auto val6 = type::ValueFactory::GetBooleanValue(is_primary);
   auto val7 = type::ValueFactory::GetBooleanValue(is_not_null);
 
-  tuple->SetValue(0, val0, pool);
-  tuple->SetValue(1, val1, pool);
-  tuple->SetValue(2, val2, pool);
-  tuple->SetValue(3, val3, pool);
-  tuple->SetValue(4, val4, pool);
-  tuple->SetValue(5, val5, pool);
-  tuple->SetValue(6, val6, pool);
-  tuple->SetValue(7, val7, pool);
+  tuple->SetValue(ColumnId::TABLE_OID, val0, pool);
+  tuple->SetValue(ColumnId::COLUMN_NAME, val1, pool);
+  tuple->SetValue(ColumnId::COLUMN_ID, val2, pool);
+  tuple->SetValue(ColumnId::COLUMN_OFFSET, val3, pool);
+  tuple->SetValue(ColumnId::COLUMN_TYPE, val4, pool);
+  tuple->SetValue(ColumnId::IS_INLINED, val5, pool);
+  tuple->SetValue(ColumnId::IS_PRIMARY, val6, pool);
+  tuple->SetValue(ColumnId::IS_NOT_NULL, val7, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -164,7 +186,8 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
 bool ColumnCatalog::DeleteColumn(oid_t table_oid,
                                  const std::string &column_name,
                                  concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of table_oid & column_name
+  oid_t index_offset =
+      IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(
@@ -186,7 +209,7 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
  */
 bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                                   concurrency::Transaction *txn) {
-  oid_t index_offset = 2;  // Index of table_oid
+  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
@@ -202,7 +225,6 @@ const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::Transaction *txn) {
   // try get from cache
-  // auto table_object = txn->catalog_cache.GetTableObject(table_oid);
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->table_oid == table_oid);
@@ -210,8 +232,8 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   if (column_objects.size() != 0) return column_objects;
 
   // cache miss, get from pg_attribute
-  std::vector<oid_t> column_ids({0, 1, 2, 3, 4, 5, 6, 7});
-  oid_t index_offset = 2;  // Index of table_oid
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
