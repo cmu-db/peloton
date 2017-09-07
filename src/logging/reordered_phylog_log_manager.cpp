@@ -23,36 +23,7 @@
 namespace peloton {
 namespace logging {
 
-// register worker threads to the log manager before execution.
-// note that we always construct logger prior to worker.
-// this function is called by each worker thread.
-
-/*void ReorderedPhyLogLogManager::RegisterWorker(size_t thread_id) {
-  PL_ASSERT(tl_worker_ctx == nullptr);
-  //  shuffle worker to logger
-  tl_worker_ctx = new WorkerContext(worker_count_++, thread_id);
-  size_t logger_id = HashToLogger(tl_worker_ctx->worker_id);
-
-  loggers_[0]->RegisterWorker();
-}*/
-
-// deregister worker threads.
-/*void ReorderedPhyLogLogManager::DeregisterWorker() {
-  PL_ASSERT(tl_worker_ctx != nullptr);
-
-  size_t logger_id = HashToLogger(tl_worker_ctx->worker_id);
-
-  loggers_[logger_id]->DeregisterWorker(tl_worker_ctx);
-}*/
-
 void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
-//  WorkerContext *ctx = tl_worker_ctx;
-//  LOG_DEBUG("Worker %d write a record", ctx->worker_id);
-
-//  PL_ASSERT(ctx);
-
-  // First serialize the epoch to current output buffer
-  // TODO: Eliminate this extra copy
   if(likely_branch(is_running_)){
 
   // Reset the output buffer
@@ -78,8 +49,6 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
 
-      // size_t start = output.Position();
-      // output.WriteInt(0);
 
       // Write the full tuple into the buffer
       for(auto schema : tg->GetTileSchemas()){
@@ -95,31 +64,22 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(output_buffer_);
       }
-      // output.WriteIntAt(start, (int32_t)output.Size());
 
       break;
     }
-    case LogRecordType::TRANSACTION_BEGIN:
+    case LogRecordType::TRANSACTION_BEGIN: {
+      output_buffer_.WriteLong(record.GetCommitId());
+      break;
+  }
     case LogRecordType::TRANSACTION_COMMIT: {
       output_buffer_.WriteLong(record.GetCommitId());
       break;
     }
-      // case LOGRECORD_TYPE_EPOCH_BEGIN:
-      // case LOGRECORD_TYPE_EPOCH_END: {
-      //   output.WriteLong((uint64_t) ctx->current_eid);
-      //   break;
-      // }
     default: {
       LOG_ERROR("Unsupported log record type");
       PL_ASSERT(false);
     }
   }
-
-//  size_t epoch_idx = ctx->current_commit_eid % concurrency::EpochManager::GetEpochQueueCapacity();
-
-//  PL_ASSERT(ctx->per_epoch_buffer_ptrs[epoch_idx].empty() == false);
- // LogBuffer* buffer_ptr = logging::LogBufferPool::GetBuffer();//ctx->per_epoch_buffer_ptrs[epoch_idx].top().get();
- // PL_ASSERT(buffer_ptr);
 
   // Add the frame length
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes

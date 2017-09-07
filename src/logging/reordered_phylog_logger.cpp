@@ -130,7 +130,9 @@ txn_id_t ReorderedPhyLogLogger::LockTuple(storage::TileGroupHeader *tg_header, o
 
 void ReorderedPhyLogLogger::UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id) {
   PL_ASSERT(new_txn_id == INVALID_TXN_ID || new_txn_id == INITIAL_TXN_ID);
-  tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t) (this->logger_id_), new_txn_id);
+  LOG_DEBUG("Transaction ID before %lu", new_txn_id);
+  txn_id_t a = tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t) (this->logger_id_), new_txn_id);
+  LOG_DEBUG("Transaction ID after %lu", a);
 }
 
 bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid) {
@@ -151,7 +153,7 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
     std::function<bool (const void *)> fn = [](const void *t UNUSED_ATTRIBUTE) -> bool {return true;};
 
     // Allocate a slot from the table's tile group
-    ItemPointer insert_location = table->InsertTuple(tuple,nullptr); // This function does not insert indexes
+    ItemPointer insert_location = table->InsertTuple(tuple,nullptr); // This function does insert indexes
     if (insert_location.block == INVALID_OID) {
       LOG_ERROR("Failed to get tuple slot");
       return false;
@@ -360,6 +362,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
                     {auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
                     database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
                     LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
+                    columns.clear();
                     break;}
                 case 33554435: //pg_attribute
                     {
@@ -592,65 +595,8 @@ void ReorderedPhyLogLogger::Run() {
 //         LoggingUtil::FFlushFsync(*file_handle);
         } // end for
 
-//        worker_ctx_ptr->persist_eid = worker_current_eid - 1;
-
-//        if (min_workers_persist_eid == INVALID_EID || min_workers_persist_eid > (worker_current_eid - 1)) {
-//          min_workers_persist_eid = worker_current_eid - 1;
-//        }
-
-//      } // end for
-
-//      if (min_workers_persist_eid == INVALID_EID) {
-        // in this case, it is likely that there's no registered worker or there's nothing to persist.
-//        worker_map_lock_.Unlock();
-//        continue;
-//      }
-
-      // Currently when there is a long running txn, the logger can only know the worker's eid when the worker is committing the txn.
-      // We should switch to localized epoch manager to solve this problem.
-      // XXX: work around. We should switch to localized epoch manager to solve this problem
-//      if (min_workers_persist_eid < persist_epoch_id_) {
-//        min_workers_persist_eid = persist_epoch_id_;
-//      }
-
-//      PL_ASSERT(min_workers_persist_eid >= persist_epoch_id_);
-
-//      persist_epoch_id_ = min_workers_persist_eid;
-
-     // auto list_iter = file_handles.begin();
-
-//      while (list_iter != file_handles.end()) {
-//        if (list_iter->second + file_epoch_count <= persist_epoch_id_) {
-//          FileHandle *file_handle = list_iter->first;
-
-          // Safely close the file
-
 }
-//      worker_map_lock_.Unlock();
-//    }
   }
-
-  // Close the log file
-  // TODO: Seek and write the integrity information in the header
-
-  // Safely close all the files
-
-//  auto list_iter = file_handles.begin();
-
-//  while (list_iter != file_handles.end()) {
-//    FileHandle *file_handle = list_iter->first;
-
-//    bool res = LoggingUtil::CloseFile(*file_handle);
-//    if (res == false) {
-//      LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
-//      exit(EXIT_FAILURE);
-//    }
-
-//    delete file_handle;
-//    file_handle = nullptr;
-
-//    list_iter = file_handles.erase(list_iter);
-//  }
 }
 
 void ReorderedPhyLogLogger::PersistEpochBegin(FileHandle &file_handle, const size_t epoch_id) {
@@ -692,17 +638,13 @@ void ReorderedPhyLogLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     FileHandle *new_file_handle = new FileHandle();
     //file_handles.push_back(std::make_pair(new_file_handle, current_file_eid_));
 
-    std::string filename = GetLogFileFullPath(current_file_eid_);
+    std::string filename = GetLogFileFullPath(0);
     // Create a new file
-    if (LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle) == false) {
+    if (LoggingUtil::OpenFile(filename.c_str(), "ab", *new_file_handle) == false) {
       LOG_ERROR("Unable to create log file %s\n", filename.c_str());
       exit(EXIT_FAILURE);
     }
-    //if (epoch_id >= current_file_eid && epoch_id < current_file_eid + file_epoch_count) {
-      //file_handle = new_file_handle;
-      //break;
-    //}
-  //}
+
     fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, new_file_handle->file);
     log_buffer->Reset();
 
@@ -718,19 +660,7 @@ void ReorderedPhyLogLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     delete new_file_handle;
     current_file_eid_ = current_file_eid_ + 1;
 
-//    new_file_handle = nullptr;
 
-  // Return the buffer to the worker
-  //log_buffer->Reset();
-
-  /*auto itr = worker_map_.find(log_buffer->GetWorkerId());
-  if (itr != worker_map_.end()) {
-    itr->second->buffer_pool.PutBuffer(std::move(log_buffer));
-  } else {
-    // In this case, the worker is already terminated and removed
-    // Release the buffer
-    log_buffer.reset(nullptr);
-  }*/
 }
 
 
