@@ -18,6 +18,7 @@
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "function/functions.h"
+#include "codegen/function/functions.h"
 
 namespace peloton {
 
@@ -64,7 +65,9 @@ struct FunctionData {
   // funtion's return type
   type::TypeId return_type_;
   // pointer to the funtion
-  type::Value (*func_ptr_)(const std::vector<type::Value> &);
+  function::BuiltInFuncType func_ptr_;
+  // pointer to the codegen funtion
+  codegen::function::BuiltInFuncType codegen_func_ptr_;
 };
 
 class Catalog {
@@ -193,6 +196,7 @@ class Catalog {
                    oid_t prolang,
                    const std::string &func_name,
                    function::BuiltInFuncType func_ptr,
+                   codegen::function::BuiltInFuncType codegen_func_ptr,
                    concurrency::Transaction *txn);
 
   const FunctionData GetFunction(const std::string &name,

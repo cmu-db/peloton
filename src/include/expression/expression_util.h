@@ -527,6 +527,7 @@ class ExpressionUtil {
                func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+                                                 func_data.codegen_func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
     } else if (expr->GetExpressionType() ==
@@ -777,6 +778,7 @@ class ExpressionUtil {
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_, argtypes);
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+                                                 func_data.codegen_func_ptr_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
     }
