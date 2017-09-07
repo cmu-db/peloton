@@ -831,9 +831,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // add old version into gc set.
         // may need to delete versions from secondary indexes.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
-        log_manager.StartPersistTxn(end_commit_id);
+        log_manager.StartPersistTxn(102);
         log_manager.LogUpdate(new_version);
-        log_manager.EndPersistTxn(end_commit_id);
+        log_manager.EndPersistTxn(102);
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
