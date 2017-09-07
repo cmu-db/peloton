@@ -28,8 +28,6 @@
 #include "catalog/trigger_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "function/functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -812,6 +810,7 @@ void Catalog::AddFunction(const std::string &name,
                           oid_t prolang,
                           const std::string &func_name,
                           function::BuiltInFuncType func_ptr,
+                          codegen::function::BuiltInFuncType codegen_func_ptr_,
                           concurrency::Transaction *txn) {
   if (!ProcCatalog::GetInstance()->
       InsertProc(name, return_type, argument_types,
@@ -819,6 +818,7 @@ void Catalog::AddFunction(const std::string &name,
     throw CatalogException("Failed to add function " + func_name);
   }
   function::BuiltInFunctions::AddFunction(func_name, func_ptr);
+  codegen::function::BuiltInFunctions::AddFunction(func_name, codegen_func_ptr_);
 }
 
 const FunctionData Catalog::GetFunction(
@@ -836,7 +836,8 @@ const FunctionData Catalog::GetFunction(
     result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
     result.return_type_ = ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
     result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
-    if (result.func_ptr_ != nullptr) {
+    result.codegen_func_ptr_ = codegen::function::BuiltInFunctions::GetFuncByName(result.func_name_);
+    if (result.func_ptr_ != nullptr || result.codegen_func_ptr_ != nullptr) {
       txn_manager.CommitTransaction(txn);
       return result;
     }
@@ -877,47 +878,64 @@ void Catalog::InitializeFunctions() {
        * string functions
        */
       AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER, prolang,
-                  "Ascii", function::StringFunctions::Ascii, txn);
+                  "Ascii", function::StringFunctions::Ascii,
+                  codegen::function::StringFunctions::Ascii, txn);
       AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, prolang,
-                  "Chr", function::StringFunctions::Chr, txn);
+                  "Chr", function::StringFunctions::Chr,
+                  codegen::function::StringFunctions::Chr, txn);
       AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
                   type::TypeId::VARCHAR, prolang,
-                  "Concat", function::StringFunctions::Concat, txn);
+                  "Concat", function::StringFunctions::Concat,
+                  codegen::function::StringFunctions::Concat, txn);
       AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
                              type::TypeId::INTEGER},
                   type::TypeId::VARCHAR, prolang,
-                  "Substr", function::StringFunctions::Substr, txn);
+                  "Substr", function::StringFunctions::Substr,
+                  codegen::function::StringFunctions::Substr, txn);
       AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
                   prolang,
-                  "CharLength", function::StringFunctions::CharLength, txn);
+                  "CharLength", function::StringFunctions::CharLength,
+                  codegen::function::StringFunctions::CharLength, txn);
       AddFunction("octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
                   prolang,
-                  "OctetLength", function::StringFunctions::OctetLength, txn);
+                  "OctetLength", function::StringFunctions::OctetLength,
+                  codegen::function::StringFunctions::OctetLength, txn);
       AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
                   type::TypeId::VARCHAR, prolang,
-                  "Repeat", function::StringFunctions::Repeat, txn);
+                  "Repeat", function::StringFunctions::Repeat,
+                  codegen::function::StringFunctions::Repeat, txn);
       AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
                               type::TypeId::VARCHAR},
                   type::TypeId::VARCHAR, prolang,
-                  "Replace", function::StringFunctions::Replace, txn);
+                  "Replace", function::StringFunctions::Replace,
+                  codegen::function::StringFunctions::Replace, txn);
       AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
                   type::TypeId::VARCHAR, prolang,
-                  "LTrim", function::StringFunctions::LTrim, txn);
+                  "LTrim", function::StringFunctions::LTrim,
+                  codegen::function::StringFunctions::LTrim, txn);
       AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
                   type::TypeId::VARCHAR, prolang,
-                  "RTrim", function::StringFunctions::RTrim, txn);
+                  "RTrim", function::StringFunctions::RTrim,
+                  codegen::function::StringFunctions::RTrim, txn);
       AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
                   type::TypeId::VARCHAR, prolang,
-                  "btrim", function::StringFunctions::BTrim, txn);
+                  "btrim", function::StringFunctions::BTrim,
+                  codegen::function::StringFunctions::BTrim, txn);
+
+      /**
+       * decimal functions
+       */
       AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                  prolang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
+                  prolang, "Sqrt", function::DecimalFunctions::Sqrt,
+                  codegen::function::DecimalFunctions::Sqrt, txn);
 
       /**
        * date functions
        */
       AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
                   type::TypeId::DECIMAL, prolang,
-                  "Extract", function::DateFunctions::Extract, txn);
+                  "Extract", function::DateFunctions::Extract,
+                  codegen::function::DateFunctions::Extract, txn);
     }
     catch (CatalogException e) {
       txn_manager.AbortTransaction(txn);

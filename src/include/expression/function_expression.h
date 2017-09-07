@@ -15,6 +15,9 @@
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "type/value.h"
+#include "codegen/codegen.h"
+#include "function/functions.h"
+#include "codegen/function/functions.h"
 
 namespace peloton {
 namespace expression {
@@ -29,18 +32,21 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION),
         func_name_(func_name),
-        func_ptr_(nullptr) {
+        func_ptr_(nullptr),
+        codegen_func_ptr_(nullptr) {
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
   }
 
-  FunctionExpression(type::Value (*func_ptr)(const std::vector<type::Value>&),
+  FunctionExpression(function::BuiltInFuncType func_ptr,
+                     codegen::function::BuiltInFuncType codegen_func_ptr,
                      type::TypeId return_type,
                      const std::vector<type::TypeId>& arg_types,
                      const std::vector<AbstractExpression*>& children)
       : AbstractExpression(ExpressionType::FUNCTION, return_type),
         func_ptr_(func_ptr),
+        codegen_func_ptr_(codegen_func_ptr),
         func_arg_types_(arg_types) {
     for (auto& child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
@@ -49,10 +55,12 @@ class FunctionExpression : public AbstractExpression {
   }
 
   void SetFunctionExpressionParameters(
-      type::Value (*func_ptr)(const std::vector<type::Value>&),
+      function::BuiltInFuncType func_ptr,
+      codegen::function::BuiltInFuncType codegen_func_ptr,
       type::TypeId val_type,
       const std::vector<type::TypeId>& arg_types) {
     func_ptr_ = func_ptr;
+    codegen_func_ptr_ = codegen_func_ptr;
     return_value_type_ = val_type;
     func_arg_types_ = arg_types;
     CheckChildrenTypes(children_, func_name_);
@@ -83,7 +91,8 @@ class FunctionExpression : public AbstractExpression {
 
   std::string func_name_;
 
-  type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;
+  function::BuiltInFuncType func_ptr_;
+  codegen::function::BuiltInFuncType codegen_func_ptr_;
 
   std::vector<type::TypeId> func_arg_types_;
 
@@ -94,6 +103,7 @@ class FunctionExpression : public AbstractExpression {
       : AbstractExpression(other),
         func_name_(other.func_name_),
         func_ptr_(other.func_ptr_),
+        codegen_func_ptr_(other.codegen_func_ptr_),
         func_arg_types_(other.func_arg_types_) {}
 
  private:

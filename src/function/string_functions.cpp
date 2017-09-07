@@ -37,7 +37,7 @@ type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   int32_t val = args[0].GetAs<int32_t>();
-  std::string str(1, char(static_cast<char>(val)));
+  std::string str(1, static_cast<char>(val));
   return type::ValueFactory::GetVarcharValue(str);
 }
 
