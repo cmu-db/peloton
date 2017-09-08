@@ -149,6 +149,22 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   }
 }
 
+/* @brief   Get table catalog object from cache (cached_only == true),
+            or all the way from storage (cached_only == false)
+ * @param   cached_only   if cached only, return nullptr on a cache miss
+ * @return  Shared pointer to the requested table catalog object
+ */
+std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
+DatabaseCatalogObject::GetTableObjects(bool cached_only) {
+  if (!cached_only && !valid_table_objects) {
+    // cache miss get from pg_table
+    return TableCatalog::GetInstance()->GetTableObjects(database_oid, txn);
+  }
+  // make sure to check IsValidTableObjects() before getting table objects
+  PL_ASSERT(valid_table_objects);
+  return table_objects_cache;
+}
+
 /*@brief   search index catalog object from all cached database objects
 * @param   index_oid
 * @return  index catalog object; if not found return null
