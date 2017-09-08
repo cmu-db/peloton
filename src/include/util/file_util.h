@@ -1,13 +1,12 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
 // file_util.h
 //
-// Identification: /peloton/src/include/common/file_util.h
+// Identification: /src/include/common/file_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -80,4 +79,4 @@ class FileUtil {
   }
 };
 
-}  // END peloton
+}  // namespace peloton

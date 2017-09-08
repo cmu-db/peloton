@@ -4,7 +4,7 @@
 //
 // string_util.cpp
 //
-// Identification: /peloton/src/util/string_util.cpp
+// Identification: /src/util/string_util.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
