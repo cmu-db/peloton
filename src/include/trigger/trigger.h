@@ -35,8 +35,9 @@ class Trigger;
 
 class TriggerData {
  public:
-  // This field is the type of trigger, but it is called `tg_event` in Postgres. Try to
-  // keep the variable name same, but not create a new type like TriggerEvent
+  // This field is the type of trigger, but it is called `tg_event` in Postgres.
+  // Try to keep the variable name same, but not create a new type like
+  // TriggerEvent
   int16_t tg_event;
   Trigger *tg_trigger;
   storage::Tuple *tg_trigtuple; // i.e. old tuple
