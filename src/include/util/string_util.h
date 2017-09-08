@@ -1,13 +1,12 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
 //
 // string_util.h
 //
-// Identification: /peloton/src/include/common/string_util.h
+// Identification: /src/include/common/string_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -125,4 +124,4 @@ class StringUtil {
                                         const std::string &split);
 };
 
-}  // END peloton
+}  // namespace peloton
