@@ -36,9 +36,7 @@ class BinderContext;
 // can bind to.
 class BinderContext {
  public:
-  std::shared_ptr<BinderContext> upper_context;
-
-  BinderContext() { upper_context = nullptr; }
+  BinderContext() : upper_context_(nullptr) {}
 
   // Update the table alias map given a table reference (in the from clause)
   void AddTable(parser::TableRef* table_ref,
@@ -59,8 +57,8 @@ class BinderContext {
   // corresponding tabld id tuple. Also set the value type
   // Note that this is just a helper function and it is independent of
   // the context.
-  static bool GetColumnPosTuple(std::string& col_name,
-                                std::tuple<oid_t, oid_t>& table_id_tuple,
+  static bool GetColumnPosTuple(const std::string& col_name,
+                                const std::tuple<oid_t, oid_t>& table_id_tuple,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 type::TypeId& value_type,
                                 concurrency::Transaction* txn);
@@ -70,7 +68,7 @@ class BinderContext {
   // This function is used when the table alias is absent in the
   // TupleValueExpression
   static bool GetColumnPosTuple(std::shared_ptr<BinderContext> current_context,
-                                std::string& col_name,
+                                const std::string& col_name,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 std::string& table_alias,
                                 type::TypeId& value_type,
@@ -81,9 +79,16 @@ class BinderContext {
                               std::string& alias,
                               std::tuple<oid_t, oid_t>* id_tuple_ptr);
 
+  std::shared_ptr<BinderContext> GetUpperContext() { return upper_context_; }
+
+  void SetUpperContext(std::shared_ptr<BinderContext> upper_context) {
+    upper_context_ = upper_context;
+  }
+
  private:
   // Map table alias to <db_id, table_id>
   std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
+  std::shared_ptr<BinderContext> upper_context_;
 };
 
 }  // namespace binder
