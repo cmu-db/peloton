@@ -66,5 +66,5 @@ class MultiConstraint : public Printable {
   std::string constraint_name;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

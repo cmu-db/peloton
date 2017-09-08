@@ -66,8 +66,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   traffic_cop.CommitQueryHelper();
 }
 
@@ -78,16 +78,15 @@ TEST_F(DeleteTests, VariousOperations) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
-
-//  optimizer::SimpleOptimizer optimizer;
+  //  optimizer::SimpleOptimizer optimizer;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -110,14 +109,13 @@ TEST_F(DeleteTests, VariousOperations) {
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");
 
-
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
-          "(1,'hello_1');");
+      "(1,'hello_1');");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement(
       "INSERT",
@@ -144,13 +142,12 @@ TEST_F(DeleteTests, VariousOperations) {
   traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
 
-
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
-          "(2,'hello_2');");
+      "(2,'hello_2');");
   statement.reset(new Statement(
       "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');"));
@@ -164,21 +161,20 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
   traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
 
-
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
-          "(3,'hello_2');");
+      "(3,'hello_2');");
   statement.reset(new Statement(
       "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');"));
@@ -192,14 +188,13 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
   traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
-
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
@@ -222,8 +217,8 @@ TEST_F(DeleteTests, VariousOperations) {
   auto tuple_descriptor =
       tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Counted Tuples!");
@@ -246,14 +241,13 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
   traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
-
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
@@ -273,14 +267,13 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
+                                            result, result_format);
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
   traffic_cop.CommitQueryHelper();
   ShowTable(DEFAULT_DB_NAME, "department_table");
-
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
