@@ -18,11 +18,7 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(
-  concurrency::Transaction *txn, 
-  std::string default_database_name) 
-: txn_(txn),
-  default_database_name_(default_database_name) {
+BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn) : txn_(txn) {
   context_ = nullptr;
 }
 
@@ -34,11 +30,8 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   // Save the upper level context
   auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
-  context_->upper_context = pre_context;
-  if (node->from_table != nullptr){
-    node->from_table->Accept(this);
-  }
-  
+  context_->SetUpperContext(pre_context);
+  if (node->from_table != nullptr) node->from_table->Accept(this);
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
@@ -48,7 +41,7 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   }
 
   // Restore the upper level context
-  context_ = context_->upper_context;
+  context_ = context_->GetUpperContext();
 }
 
 // Some sub query nodes inside SelectStatement
@@ -71,7 +64,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddTable(node, default_database_name_ ,txn_);
+    context_->AddTable(node, txn_);
   }
 }
 
@@ -103,7 +96,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
-  node->TryBindDatabaseName(default_database_name_);
+
   context_->AddTable(node->GetDatabaseName(), node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
@@ -146,7 +139,8 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
                    ::tolower);
 
     type::TypeId value_type;
-    // Table name not specified in the expression
+    // Table name not specified in the expression. Loop through all the table
+    // in the binder context.
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
                                             table_name, value_type, txn_))

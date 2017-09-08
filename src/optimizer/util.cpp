@@ -146,17 +146,19 @@ void GetPredicateColumns(const catalog::Schema* schema,
 
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableChild(1))
-                                ->GetValueType()).c_str());
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(1))->GetValueIdx()).Copy());
+                    expression->GetModifiableChild(1))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -174,17 +176,19 @@ void GetPredicateColumns(const catalog::Schema* schema,
 
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableChild(0))
-                                ->GetValueType()).c_str());
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(0))->GetValueIdx()).Copy());
+                    expression->GetModifiableChild(0))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
@@ -201,7 +205,7 @@ void GetPredicateColumns(const catalog::Schema* schema,
 void ExtractPredicates(expression::AbstractExpression* expr,
                        SingleTablePredicates& where_predicates,
                        MultiTablePredicates& join_predicates) {
-  // Split expression
+  // Split a complex predicate into a set of predicates connected by AND.
   std::vector<expression::AbstractExpression*> predicates;
   SplitPredicates(expr, predicates);
 
@@ -243,14 +247,15 @@ expression::AbstractExpression* ConstructJoinPredicate(
  */
 void SplitPredicates(expression::AbstractExpression* expr,
                      std::vector<expression::AbstractExpression*>& predicates) {
-  // Traverse down the expression tree along conjunction
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+    // Traverse down the expression tree along conjunction
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       SplitPredicates(expr->GetModifiableChild(i), predicates);
     }
-    return;
+  } else {
+    // Find an expression that is the child of conjunction expression
+    predicates.push_back(expr);
   }
-  predicates.push_back(expr);
 }
 
 /**

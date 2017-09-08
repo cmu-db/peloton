@@ -15,7 +15,6 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/column_manager.h"
 #include "optimizer/memo.h"
 #include "optimizer/property_set.h"
 #include "optimizer/rule.h"
@@ -72,7 +71,8 @@ class Optimizer : public AbstractOptimizer {
    * return: the DDL plan if it is a DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
-      parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::Transaction *txn);
+      parser::SQLStatement *tree, bool &is_ddl_stmt,
+      concurrency::Transaction *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
@@ -80,8 +80,8 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the root group expression for the inserted query
    */
-  std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree,
-                                                   concurrency::Transaction *txn);
+  std::shared_ptr<GroupExpression> InsertQueryTree(
+      parser::SQLStatement *tree, concurrency::Transaction *txn);
 
   /* GetQueryTreeRequiredProperties - get the required physical properties for
    * a peloton query tree.
@@ -227,7 +227,6 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Member variables
   Memo memo_;
-  ColumnManager column_manager_;
 
   // Rules to transform logical plan to equivalent logical plans
   std::vector<std::unique_ptr<Rule>> logical_transformation_rules_;
@@ -236,5 +235,5 @@ class Optimizer : public AbstractOptimizer {
   std::vector<std::unique_ptr<Rule>> physical_implementation_rules_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

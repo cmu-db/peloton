@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/sql_node_visitor.h"
 #include <unordered_set>
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -58,7 +58,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(parser::AnalyzeStatement *op) override;
 
  private:
-  std::shared_ptr<OperatorExpression> output_expr;
+  std::shared_ptr<OperatorExpression> output_expr_;
   MultiTablePredicates join_predicates_;
   std::unordered_set<std::string> table_alias_set_;
 
@@ -67,8 +67,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   int output_size;
   bool output_inlined;
   concurrency::Transaction *txn_;
-
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

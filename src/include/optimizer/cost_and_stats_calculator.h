@@ -15,18 +15,11 @@
 #include "optimizer/operator_visitor.h"
 
 namespace peloton {
-
-namespace optimizer {
-class ColumnManager;
-}
-
 namespace optimizer {
 
 // Derive cost and stats for a physical operator
 class CostAndStatsCalculator : public OperatorVisitor {
  public:
-  CostAndStatsCalculator(ColumnManager &manager) : manager_(manager) {}
-
   void CalculateCostAndStats(
       std::shared_ptr<GroupExpression> gexpr,
       const PropertySet *output_properties,
@@ -66,8 +59,6 @@ class CostAndStatsCalculator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  ColumnManager &manager_;
-
   // We cannot use reference here because otherwise we have to initialize them
   // when constructing the class
   std::shared_ptr<GroupExpression> gexpr_;
