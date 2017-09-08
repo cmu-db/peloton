@@ -11,9 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "trigger/trigger.h"
-#include "expression/constant_value_expression.h"
+#include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
 #include "concurrency/transaction.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace trigger {
@@ -52,8 +53,8 @@ Trigger::Trigger(const std::string &name, int16_t type,
  * [right expr type] ( [type] [value] | [column type] [column id] )
  *
  */
-void Trigger::SerializeWhen(SerializeOutput &output, oid_t table_oid,
-                            concurrency::Transaction *txn) {
+void Trigger::SerializeWhen(SerializeOutput &output, oid_t database_oid,
+                            oid_t table_oid, concurrency::Transaction *txn) {
   size_t start = output.Position();
   output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
   if (trigger_when != nullptr) {
@@ -85,14 +86,12 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t table_oid,
           case ExpressionType::VALUE_TUPLE: {
             auto e =
                 static_cast<const expression::TupleValueExpression *>(expr);
-            std::string column = e->GetColumnName();
-            auto column_type =
-                catalog::ColumnCatalog::GetInstance()->GetColumnType(
-                    table_oid, column, txn);
-            auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(
-                table_oid, column, txn);
-            output.WriteInt(static_cast<int>(column_type));
-            output.WriteInt(static_cast<int>(column_id));
+            auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+                database_oid, table_oid, txn);
+            auto column_object =
+                table_object->GetColumnObject(e->GetColumnName());
+            output.WriteInt(static_cast<int>(column_object->column_type));
+            output.WriteInt(static_cast<int>(column_object->column_id));
             break;
           }
           default:
@@ -220,8 +219,8 @@ storage::Tuple *Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   // Another concern is that currently UDF is mainly designed for read-only
   // operations without SQL statements, but mostly, functions invoked by a
   // trigger need to apply SQL statements on databases. Hope
-  // `ExecCallTriggerFunc` could be truly implemented after these problems
-  // are resolved.
+  // `ExecCallTriggerFunc`
+  // could be truly implemented after these problems are resolved.
   return trigger_data.tg_newtuple;
 }
 

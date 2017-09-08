@@ -98,8 +98,8 @@ class Trigger {
   }
 
   //only apply to the simple case: old.balance != new.balance
-  void SerializeWhen(SerializeOutput &output, oid_t table_oid,
-                     concurrency::Transaction *txn);
+  void SerializeWhen(SerializeOutput &output, oid_t database_oid,
+                     oid_t table_oid, concurrency::Transaction *txn);
   expression::AbstractExpression* DeserializeWhen(SerializeInput &input);
 
  private:

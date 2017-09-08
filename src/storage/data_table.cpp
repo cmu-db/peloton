@@ -119,7 +119,6 @@ DataTable::~DataTable() {
     auto oid = indirection_array->GetOid();
     catalog_manager.DropIndirectionArray(oid);
   }
-
   // AbstractTable cleans up the schema
 }
 
@@ -560,8 +559,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(
+    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -1197,8 +1196,6 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 }
 
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
-  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
-      table_name, database_oid, txn);
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance()->GetTriggers(table_oid, txn);
 }

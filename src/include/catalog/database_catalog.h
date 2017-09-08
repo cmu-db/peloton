@@ -51,11 +51,6 @@ class DatabaseCatalogObject {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, bool cached_only = false);
 
-  // oid_t GetOid() const { return database_oid; }
-  // std::string GetDBName() const { return database_name; }
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
-      const std::string &index_name);
   bool IsValidTableObjects() {
     // return true if this database object contains all table
     // objects within the database
