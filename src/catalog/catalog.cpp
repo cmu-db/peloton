@@ -483,10 +483,11 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
                            std::to_string(database_oid));
   auto storage_manager = storage::StorageManager::GetInstance();
   // Drop actual tables in the database
-  auto table_oids =
-      TableCatalog::GetInstance()->GetTableOids(database_oid, txn);
-  for (auto table_oid : table_oids) {
-    DropTable(database_oid, table_oid, txn);
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+  auto table_objects = database_object->GetTableObjects();
+  for (auto it : table_objects) {
+    DropTable(database_oid, it.second->table_oid, txn);
   }
 
   // Drop database record in catalog
@@ -622,8 +623,8 @@ storage::Database *Catalog::GetDatabaseWithName(
   PL_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
-  oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
 
   if (database_object == nullptr) {
     throw CatalogException("Database " + database_name + " is not found");
@@ -646,21 +647,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
             database_name.c_str());
 
   // Check in pg_database, throw exception and abort txn if not exists
-  auto database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
-
-  if (database_oid == INVALID_OID) {
-    throw CatalogException("Database " + database_name + " is not found");
-  }
-
-  // Check in pg_table using txn
-  auto table_oid =
-      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
-
-  if (table_oid == INVALID_OID) {
-    // throw table not found exception and explicitly abort txn
-    throw CatalogException("Table " + table_name + " is not found");
-  }
+  auto table_object = GetTableObject(database_name, table_name, txn);
 
   // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();

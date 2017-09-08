@@ -72,7 +72,7 @@ class TableCatalogObject {
       const std::string &column_name, bool cached_only = false);
 
   // member variables
-  const oid_t table_oid;
+  oid_t table_oid;
   std::string table_name;
   oid_t database_oid;
 
@@ -109,6 +109,7 @@ class TableCatalog : public AbstractCatalog {
   friend class DatabaseCatalogObject;
   friend class ColumnCatalog;
   friend class IndexCatalog;
+  friend class Catalog;
 
  public:
   ~TableCatalog();
@@ -137,6 +138,8 @@ class TableCatalog : public AbstractCatalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, oid_t database_oid,
       concurrency::Transaction *txn);
+  std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
+  GetTableObjects(oid_t database_oid, concurrency::Transaction *txn);
 
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

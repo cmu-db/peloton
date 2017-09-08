@@ -177,32 +177,29 @@ bool CreateExecutor::DExecute() {
 
     trigger::Trigger newTrigger(node);
 
-    oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, current_txn);
-    oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, current_txn);
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+        database_name, table_name, current_txn);
 
-    // durable trigger: insert the information of this trigger in the trigger catalog table
+    // durable trigger: insert the information of this trigger in the trigger
+    // catalog table
     auto time_stamp = type::ValueFactory::GetTimestampValue(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
 
     CopySerializeOutput output;
-    newTrigger.SerializeWhen(output, table_oid, current_txn);
+    newTrigger.SerializeWhen(output, table_object->database_oid,
+                             table_object->table_oid, current_txn);
     auto when = type::ValueFactory::GetVarbinaryValue(
-        (const unsigned char*)output.Data(),
-        (int32_t)output.Size(), true);
+        (const unsigned char *)output.Data(), (int32_t)output.Size(), true);
 
     catalog::TriggerCatalog::GetInstance()->InsertTrigger(
-        table_oid, trigger_name,
-        newTrigger.GetTriggerType(),
-        newTrigger.GetFuncname(),
-        newTrigger.GetArgs(),
-        when,
-        time_stamp,
+        table_object->table_oid, trigger_name, newTrigger.GetTriggerType(),
+        newTrigger.GetFuncname(), newTrigger.GetArgs(), when, time_stamp,
         pool_.get(), current_txn);
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name);
+        catalog::Catalog::GetInstance()->GetTableWithName(
+            database_name, table_name, current_txn);
     target_table->UpdateTriggerListFromCatalog(current_txn);
 
     // hardcode SUCCESS result for current_txn

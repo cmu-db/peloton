@@ -48,7 +48,6 @@ class CatalogCache {
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
       const std::string &index_name);
 
-  // private:
   // database catalog cache interface
   bool InsertDatabaseObject(
       std::shared_ptr<DatabaseCatalogObject> database_object);

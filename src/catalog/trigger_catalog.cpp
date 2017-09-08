@@ -45,15 +45,17 @@ TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgrelid", "tgtype"},
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
+      {ColumnId::TABLE_OID, ColumnId::TRIGGER_TYPE},
       TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgrelid"},
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey1", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgname", "tgrelid"},
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
+      {ColumnId::TRIGGER_NAME, ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
 }
 
@@ -104,22 +106,11 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
   }
 
   // Checking if statement is valid
-  oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
-  if (database_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find database  %s!", database_name.c_str());
-    return ResultType::FAILURE;
-  }
-
-  oid_t table_oid =
-      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
-  if (table_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find table %s!", table_name.c_str());
-    return ResultType::FAILURE;
-  }
+  auto table_object =
+      Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
 
   oid_t trigger_oid = TriggerCatalog::GetInstance()->GetTriggerOid(
-      trigger_name, table_oid, txn);
+      trigger_name, table_object->table_oid, txn);
   if (trigger_oid == INVALID_OID) {
     LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
     return ResultType::FAILURE;
@@ -127,13 +118,14 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
   LOG_INFO("trigger %d will be deleted!", trigger_oid);
 
-  bool delete_success = DeleteTriggerByName(trigger_name, table_oid, txn);
+  bool delete_success =
+      DeleteTriggerByName(trigger_name, table_object->table_oid, txn);
   if (delete_success) {
     LOG_DEBUG("Delete trigger successfully");
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name);
+                                                          table_name, txn);
     target_table->UpdateTriggerListFromCatalog(txn);
     return ResultType::SUCCESS;
   }
