@@ -14,6 +14,7 @@
 
 #include <memory>
 #include "catalog/column.h"
+#include "catalog/multi_constraint.h"
 #include "common/printable.h"
 #include "type/type.h"
 #include "boost/algorithm/string.hpp"
@@ -110,7 +111,7 @@ class Schema : public Printable {
 
   // Returns fixed length
   inline size_t GetLength(const oid_t column_id) const {
-    return columns[column_id].GetFixedLength();
+    return columns[column_id].GetLength();
   }
 
   inline size_t GetVariableLength(const oid_t column_id) const {
@@ -125,9 +126,15 @@ class Schema : public Printable {
     return columns[column_id];
   }
 
+  /**
+   * For the given column name, return its offset in this table.
+   * If the column does not exist, it will return INVALID_OID
+   * @param col_name
+   * @return
+   */
   inline oid_t GetColumnID(std::string col_name) const {
-    oid_t index = -1;
-    for (oid_t i = 0; i < columns.size(); ++i) {
+    oid_t index = INVALID_OID;
+    for (oid_t i = 0, cnt = columns.size(); i < cnt; ++i) {
       if (columns[i].GetName() == col_name) {
         index = i;
         break;
@@ -171,6 +178,28 @@ class Schema : public Printable {
     return true;
   }
 
+  // For single column default
+  inline bool AllowDefault(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Get the default value for the column
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return constraint.getDefaultValue();
+      }
+    }
+
+    return nullptr;
+  }
+
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
                             const catalog::Constraint &constraint) {
@@ -187,6 +216,14 @@ class Schema : public Printable {
     }
   }
 
+  inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {
+    multi_constraints.push_back(mc);
+  }
+
+  inline std::vector<MultiConstraint> GetMultiConstraints() {
+    return multi_constraints;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -199,6 +236,9 @@ class Schema : public Printable {
 
   // keeps track of unlined columns
   std::vector<oid_t> uninlined_columns;
+
+  // keeps multi_constraints
+  std::vector<MultiConstraint> multi_constraints;
 
   // keep these in sync with the vectors above
   oid_t column_count = INVALID_OID;

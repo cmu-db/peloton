@@ -920,7 +920,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
               reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
         }
       } else if (constraint->contype == CONSTR_FOREIGN) {
-        auto col = new ColumnDefinition(ColumnDefinition::FOREIGN);
+        auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
         col->table_info_ = new TableInfo();
         col->foreign_key_source = new std::vector<char*>();
         col->foreign_key_sink = new std::vector<char*>();

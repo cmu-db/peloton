@@ -51,8 +51,6 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
   char *value_location = GetDataPtr(column_offset);
   UNUSED_ATTRIBUTE size_t column_length =
       tuple_schema_->GetLength(column_offset);
-  if (is_inlined == false)
-    column_length = tuple_schema_->GetVariableLength(column_offset);
 
   LOG_TRACE("column_offset: %d; value_location %p; column_length %d; type %d",
             column_offset, value_location, column_length, type);

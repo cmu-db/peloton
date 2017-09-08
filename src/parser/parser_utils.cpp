@@ -217,8 +217,9 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement* stmt,
         }
         os << "\n";
       } else {
-        os << "-> COLUMN REF : " << col->name << " " << col->type
-           << " not null : " << col->not_null << " primary : "
+        os << "-> COLUMN REF : " << col->name << " "
+           // << col->type << " not null : "
+           << col->not_null << " primary : "
            << col->primary << " unique " << col->unique << " varlen "
            << col->varlen << "\n";
       }

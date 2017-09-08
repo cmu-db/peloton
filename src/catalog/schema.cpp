@@ -65,12 +65,12 @@ Schema::Schema(const std::vector<Column> &columns)
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].GetType());
 
-    if (columns[column_itr].is_inlined)
+    if (columns[column_itr].IsInlined())
       column_lengths.push_back(columns[column_itr].GetFixedLength());
     else
       column_lengths.push_back(columns[column_itr].GetVariableLength());
 
-    column_names.push_back(columns[column_itr].column_name);
+    column_names.push_back(columns[column_itr].GetName());
     is_inlined.push_back(columns[column_itr].IsInlined());
   }
 

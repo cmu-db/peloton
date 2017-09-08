@@ -269,6 +269,17 @@ ResultType Catalog::CreateTable(const std::string &database_name,
           column.GetType(), column.IsInlined(), column.GetConstraints(),
           pool_.get(), txn);
       column_id++;
+
+      // Create index on unique single column
+      if (column.IsUnique()) {
+        std::string col_name = column.GetName();
+        std::vector<std::string> index_attr = {col_name};
+        std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
+        CreateIndex(database_name, table_name, index_attr, index_name,
+                    true, IndexType::BWTREE, txn);
+        LOG_DEBUG("Added a UNIQUE index on %s in %s.",
+                  col_name.c_str(), table_name.c_str());
+      }
     }
 
     CreatePrimaryIndex(database_oid, table_oid, txn);
@@ -455,7 +466,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       for (auto &attr : index_attr) {
         // TODO: Shall we use pg_attribute to check column_ids instead?
         for (oid_t i = 0; i < columns.size(); ++i) {
-          if (attr == columns[i].column_name) {
+          if (attr == columns[i].GetName()) {
             key_attrs.push_back(i);
             break;
           }
