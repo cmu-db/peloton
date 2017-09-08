@@ -62,7 +62,8 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
-      adapt_table_(adapt_table) {
+      adapt_table_(adapt_table),
+      trigger_list_(new trigger::TriggerList()) {
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -89,9 +90,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (size_t i = 0; i < active_indirection_array_count_; ++i) {
     AddDefaultIndirectionArray(i);
   }
-
-  // create a trigger list
-  trigger_list = new trigger::TriggerList();
 }
 
 DataTable::~DataTable() {
@@ -120,11 +118,6 @@ DataTable::~DataTable() {
   for (auto indirection_array : active_indirection_arrays_) {
     auto oid = indirection_array->GetOid();
     catalog_manager.DropIndirectionArray(oid);
-  }
-  
-  // free memory used by trigger list
-  if (trigger_list) {
-    delete trigger_list;
   }
 
   // AbstractTable cleans up the schema
@@ -171,20 +164,20 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
                 "%s constraint violated on column '%s' : %s",
                 ConstraintTypeToString(type).c_str(),
                 schema->GetColumn(column_itr).GetName().c_str(),
-                tuple->GetInfo().c_str()
-            );
+                tuple->GetInfo().c_str());
             throw ConstraintException(error);
           }
           break;
         }
         case ConstraintType::CHECK: {
-//          std::pair<ExpressionType, type::Value> exp = cons.GetCheckExpression();
-//          if (CheckExp(tuple, column_itr, exp) == false) {
-//            LOG_TRACE("CHECK EXPRESSION constraint violated");
-//            throw ConstraintException(
-//                "CHECK EXPRESSION constraint violated : " +
-//                std::string(tuple->GetInfo()));
-//          }
+          //          std::pair<ExpressionType, type::Value> exp =
+          //          cons.GetCheckExpression();
+          //          if (CheckExp(tuple, column_itr, exp) == false) {
+          //            LOG_TRACE("CHECK EXPRESSION constraint violated");
+          //            throw ConstraintException(
+          //                "CHECK EXPRESSION constraint violated : " +
+          //                std::string(tuple->GetInfo()));
+          //          }
           break;
         }
         case ConstraintType::UNIQUE: {
@@ -205,14 +198,15 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
           break;
         }
         default: {
-          std::string error = StringUtil::Format("ConstraintType '%s' is not supported",
-                                                 ConstraintTypeToString(type).c_str());
+          std::string error =
+              StringUtil::Format("ConstraintType '%s' is not supported",
+                                 ConstraintTypeToString(type).c_str());
           LOG_TRACE("%s", error.c_str());
           throw ConstraintException(error);
         }
-      } // SWITCH
-    } // FOR (constraints)
-  } // FOR (columns)
+      }  // SWITCH
+    }    // FOR (constraints)
+  }      // FOR (columns)
   return true;
 }
 
@@ -234,8 +228,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
   // assert(tuple);
   if (check_constraint && tuple != nullptr) {
-    if (CheckConstraints(tuple) == false)
-      return INVALID_ITEMPOINTER;
+    if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
   }
 
   //=============== garbage collection==================
@@ -572,12 +565,12 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
-    try{
-        ref_table = (storage::DataTable *)storage::StorageManager::GetInstance()
-            ->GetTableWithOid(database_oid, sink_table_id);
+    try {
+      ref_table = (storage::DataTable *)storage::StorageManager::GetInstance()
+                      ->GetTableWithOid(database_oid, sink_table_id);
     } catch (CatalogException &e) {
-        LOG_TRACE("Can't find table %d! Return false", sink_table_id);
-        return false;
+      LOG_TRACE("Can't find table %d! Return false", sink_table_id);
+      return false;
     }
     int ref_table_index_count = ref_table->GetIndexCount();
 
@@ -589,7 +582,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
-        
+
         std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(schema, key_attrs));
@@ -988,7 +981,7 @@ void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
     for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
       if (foreign_key_sources_[i] == source_table_name) {
-        foreign_key_sources_.erase(foreign_key_sources_.begin()+i);
+        foreign_key_sources_.erase(foreign_key_sources_.begin() + i);
       }
     }
   }
@@ -1186,32 +1179,29 @@ column_map_type DataTable::GetDefaultLayout() const {
 }
 
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {
-  trigger_list->AddTrigger(new_trigger);
+  trigger_list_->AddTrigger(new_trigger);
 }
 
 int DataTable::GetTriggerNumber() {
-  return trigger_list->GetTriggerListSize();
+  return trigger_list_->GetTriggerListSize();
 }
 
-trigger::Trigger* DataTable::GetTriggerByIndex(int n) {
-  if (trigger_list->GetTriggerListSize() <= n)
-    return nullptr;
-  return trigger_list->Get(n);
+trigger::Trigger *DataTable::GetTriggerByIndex(int n) {
+  if (trigger_list_->GetTriggerListSize() <= n) return nullptr;
+  return trigger_list_->Get(n);
 }
 
-trigger::TriggerList* DataTable::GetTriggerList() {
-  if (trigger_list->GetTriggerListSize() <= 0)
-    return nullptr;
-  return trigger_list;
+trigger::TriggerList *DataTable::GetTriggerList() {
+  if (trigger_list_->GetTriggerListSize() <= 0) return nullptr;
+  return trigger_list_.get();
 }
 
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
-  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
-  if (trigger_list) {
-    delete trigger_list;
-  }
-  trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggers(table_oid, txn);
+  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
+      table_name, database_oid, txn);
+  trigger_list_ =
+      catalog::TriggerCatalog::GetInstance()->GetTriggers(table_oid, txn);
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton
