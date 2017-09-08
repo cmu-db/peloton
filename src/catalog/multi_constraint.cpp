@@ -35,5 +35,5 @@ const std::string MultiConstraint::GetInfo() const {
   return os.str();
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton

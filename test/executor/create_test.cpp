@@ -6,7 +6,7 @@
 //
 // Identification: test/executor/create_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,9 +46,9 @@ TEST_F(CreateTests, CreatingTable) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -91,9 +91,9 @@ TEST_F(CreateTests, CreatingTrigger) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "balance", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "balance", true);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -187,7 +187,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
@@ -219,7 +219,8 @@ TEST_F(CreateTests, CreatingTrigger) {
   }
 }
 
-// This test is added because there was a bug for triggers without "when". After fixing that,
+// This test is added because there was a bug for triggers without "when". After
+// fixing that,
 // we add this test to avoid problem like that happen in the future.
 TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // Bootstrap
@@ -228,18 +229,18 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "balance", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "balance", true);
   auto name_column =
-    catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   // Schema
   std::unique_ptr<catalog::Schema> table_schema(
-    new catalog::Schema({id_column, name_column}));
+      new catalog::Schema({id_column, name_column}));
 
   std::unique_ptr<executor::ExecutorContext> context(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
 
   // Create plans
   planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
@@ -253,14 +254,14 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
-              ->GetDatabaseWithName(DEFAULT_DB_NAME)
-              ->GetTableCount(),
+                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetTableCount(),
             1);
 
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
   std::string query =
-    "CREATE TRIGGER check_update "
+      "CREATE TRIGGER check_update "
       "BEFORE UPDATE OF balance ON accounts "
       "FOR EACH ROW "
       "EXECUTE PROCEDURE check_account_update();";
@@ -268,7 +269,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-    static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -282,7 +283,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
@@ -290,8 +291,8 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                      "accounts");
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                        "accounts");
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
@@ -323,9 +324,9 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "balance", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "balance", true);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -372,16 +373,19 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
 
   // check whether the trigger catalog table contains this new trigger
-  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(DEFAULT_DB_NAME, txn);
-  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid("accounts", database_oid, txn);
-  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(table_oid,
-                              (TRIGGER_TYPE_ROW|TRIGGER_TYPE_BEFORE|TRIGGER_TYPE_UPDATE), txn);
+  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(
+      DEFAULT_DB_NAME, txn);
+  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
+      "accounts", database_oid, txn);
+  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(
+      table_oid, (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE),
+      txn);
 
   txn_manager.CommitTransaction(txn);
 
@@ -395,10 +399,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
 
   if (stmt_list) {
     delete stmt_list;
-  }
-
-  if (trigger_list) {
-    delete trigger_list;
   }
 }
 
