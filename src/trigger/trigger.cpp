@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "trigger/trigger.h"
 #include "expression/constant_value_expression.h"
 #include "catalog/column_catalog.h"
@@ -28,10 +27,8 @@ Trigger::Trigger(const peloton::planner::CreatePlan &plan) {
   trigger_type = plan.GetTriggerType();
 }
 
-Trigger::Trigger(const std::string &name,
-                 int16_t type,
-                 const std::string &function_name,
-                 const std::string &arguments,
+Trigger::Trigger(const std::string &name, int16_t type,
+                 const std::string &function_name, const std::string &arguments,
                  const void *fire_condition) {
   trigger_name = name;
   trigger_type = type;
@@ -41,7 +38,7 @@ Trigger::Trigger(const std::string &name,
   for (unsigned int i = 0; i < strs.size(); i++) {
     trigger_args.push_back(strs[i]);
   }
-  int size = *(int*)fire_condition;
+  int size = *(int *)fire_condition;
   CopySerializeInput input(fire_condition, size);
   trigger_when = DeserializeWhen(input);
 }
@@ -61,34 +58,39 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t table_oid,
   output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
   if (trigger_when != nullptr) {
     if (trigger_when->GetChildrenSize() != 2) {
-      LOG_ERROR("only simple predicates are supported; "
-                "for example: NEW.some_columne != some_value or "
-                "NEW.some_columne = OLD.some_columne");
-    }
-    else {
+      LOG_ERROR(
+          "only simple predicates are supported; "
+          "for example: NEW.some_columne != some_value or "
+          "NEW.some_columne = OLD.some_columne");
+    } else {
       auto left = trigger_when->GetChild(0);
       auto right = trigger_when->GetChild(1);
       auto compare = trigger_when->GetExpressionType();
 
       output.WriteInt(static_cast<int>(compare));
 
-      std::vector<const expression::AbstractExpression*> exprs = {left, right};
+      std::vector<const expression::AbstractExpression *> exprs = {left, right};
 
       for (auto expr : exprs) {
         output.WriteInt(static_cast<int>(expr->GetExpressionType()));
         switch (expr->GetExpressionType()) {
           case ExpressionType::VALUE_CONSTANT: {
-            auto value = static_cast<const expression::ConstantValueExpression *>(
-                            expr)->GetValue();
+            auto value =
+                static_cast<const expression::ConstantValueExpression *>(expr)
+                    ->GetValue();
             output.WriteInt(static_cast<int>(value.GetTypeId()));
             value.SerializeTo(output);
             break;
           }
           case ExpressionType::VALUE_TUPLE: {
-            auto e = static_cast<const expression::TupleValueExpression *>(expr);
+            auto e =
+                static_cast<const expression::TupleValueExpression *>(expr);
             std::string column = e->GetColumnName();
-            auto column_type = catalog::ColumnCatalog::GetInstance()->GetColumnType(table_oid, column, txn);
-            auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(table_oid, column, txn);
+            auto column_type =
+                catalog::ColumnCatalog::GetInstance()->GetColumnType(
+                    table_oid, column, txn);
+            auto column_id = catalog::ColumnCatalog::GetInstance()->GetColumnId(
+                table_oid, column, txn);
             output.WriteInt(static_cast<int>(column_type));
             output.WriteInt(static_cast<int>(column_id));
             break;
@@ -103,12 +105,13 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t table_oid,
   output.WriteIntAt(start, total_size);
 }
 
-expression::AbstractExpression* Trigger::DeserializeWhen(SerializeInput &input) {
+expression::AbstractExpression *Trigger::DeserializeWhen(
+    SerializeInput &input) {
   expression::AbstractExpression *trigger_when = nullptr;
   int total_size = input.ReadInt();
   if ((unsigned)total_size > sizeof(int)) {
     ExpressionType compare = ExpressionType(input.ReadInt());
-    std::vector<expression::AbstractExpression*> exprs;
+    std::vector<expression::AbstractExpression *> exprs;
     for (int i = 0; i < 2; ++i) {
       expression::AbstractExpression *expr = nullptr;
       ExpressionType expr_type = ExpressionType(input.ReadInt());
@@ -122,7 +125,8 @@ expression::AbstractExpression* Trigger::DeserializeWhen(SerializeInput &input) 
         case ExpressionType::VALUE_TUPLE: {
           type::TypeId column_type = type::TypeId(input.ReadInt());
           int column_id = input.ReadInt();
-          expr = new expression::TupleValueExpression(column_type, 0, column_id);
+          expr =
+              new expression::TupleValueExpression(column_type, 0, column_id);
           break;
         }
         default:
@@ -132,7 +136,8 @@ expression::AbstractExpression* Trigger::DeserializeWhen(SerializeInput &input) 
       }
       exprs.push_back(expr);
     }
-    trigger_when = new expression::ComparisonExpression(compare, exprs[0], exprs[1]);
+    trigger_when =
+        new expression::ComparisonExpression(compare, exprs[0], exprs[1]);
   }
   return trigger_when;
 }
@@ -172,17 +177,18 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
   for (unsigned i = 0; i < triggers.size(); i++) {
     Trigger &obj = triggers[i];
     int16_t trigger_type = obj.GetTriggerType();
-    //check valid type
+    // check valid type
     if (!CheckTriggerType(trigger_type, exec_type)) continue;
 
-    //TODO: check if trigger is enabled
+    // TODO: check if trigger is enabled
 
     expression::AbstractExpression *predicate_ = obj.GetTriggerWhen();
     if (predicate_ != nullptr) {
       if (executor_context_ != nullptr) {
-        auto tuple_new = (const AbstractTuple *) new_tuple;
-        auto tuple_old = (const AbstractTuple *) old_tuple;
-        auto eval = predicate_->Evaluate(tuple_new, tuple_old, executor_context_);
+        auto tuple_new = (const AbstractTuple *)new_tuple;
+        auto tuple_old = (const AbstractTuple *)old_tuple;
+        auto eval =
+            predicate_->Evaluate(tuple_new, tuple_old, executor_context_);
         if (!eval.IsTrue()) continue;
       }
     }
@@ -192,8 +198,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
     if (IsOnCommit(exec_type)) {
       PL_ASSERT(txn != nullptr);
       txn->AddOnCommitTrigger(trigger_data);
-    }
-    else {
+    } else {
       // apply all triggers on the tuple
       storage::Tuple *ret = obj.ExecCallTriggerFunc(trigger_data);
       if (result) *result = ret;
@@ -214,8 +219,9 @@ storage::Tuple *Trigger::ExecCallTriggerFunc(TriggerData &trigger_data) {
   // One concern is that UDF is not supported in the master branch currently.
   // Another concern is that currently UDF is mainly designed for read-only
   // operations without SQL statements, but mostly, functions invoked by a
-  // trigger need to apply SQL statements on databases. Hope `ExecCallTriggerFunc`
-  // could be truly implemented after these problems are resolved.
+  // trigger need to apply SQL statements on databases. Hope
+  // `ExecCallTriggerFunc` could be truly implemented after these problems
+  // are resolved.
   return trigger_data.tg_newtuple;
 }
 
