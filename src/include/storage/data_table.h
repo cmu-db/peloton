@@ -410,7 +410,7 @@ class DataTable : public AbstractTable {
   static oid_t invalid_tile_group_id;
 
   // trigger list
-  trigger::TriggerList* trigger_list;
+  std::unique_ptr<trigger::TriggerList> trigger_list_;
 };
 
 }  // namespace storage

@@ -23,8 +23,7 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog *TriggerCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+TriggerCatalog *TriggerCatalog::GetInstance(concurrency::Transaction *txn) {
   static std::unique_ptr<TriggerCatalog> trigger_catalog(
       new TriggerCatalog(txn));
 
@@ -46,27 +45,22 @@ TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
-      {"tgrelid", "tgtype"}, TRIGGER_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgrelid", "tgtype"},
+      TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
-      {"tgrelid"}, TRIGGER_CATALOG_NAME "_skey1",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgrelid"},
+      TRIGGER_CATALOG_NAME "_skey1", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
-      {"tgname", "tgrelid"}, TRIGGER_CATALOG_NAME "_skey2",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {"tgname", "tgrelid"},
+      TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
 }
 
 TriggerCatalog::~TriggerCatalog() {}
 
-bool TriggerCatalog::InsertTrigger(oid_t table_oid,
-                                   std::string trigger_name,
-                                   int16_t trigger_type,
-                                   std::string proc_oid,
+bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
+                                   int16_t trigger_type, std::string proc_oid,
                                    std::string function_arguments,
                                    type::Value fire_condition,
                                    type::Value timestamp,
@@ -103,29 +97,29 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
                                        const std::string &table_name,
                                        const std::string &trigger_name,
                                        concurrency::Transaction *txn) {
-
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to drop trigger: %s", table_name.c_str());
+    LOG_TRACE("Do not have transaction to drop trigger: %s",
+              table_name.c_str());
     return ResultType::FAILURE;
   }
 
   // Checking if statement is valid
   oid_t database_oid =
-    DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
   if (database_oid == INVALID_OID) {
     LOG_TRACE("Cannot find database  %s!", database_name.c_str());
     return ResultType::FAILURE;
   }
 
   oid_t table_oid =
-    TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
+      TableCatalog::GetInstance()->GetTableOid(table_name, database_oid, txn);
   if (table_oid == INVALID_OID) {
     LOG_TRACE("Cannot find table %s!", table_name.c_str());
     return ResultType::FAILURE;
   }
 
-  oid_t trigger_oid =
-    TriggerCatalog::GetInstance()->GetTriggerOid(trigger_name, table_oid, txn);
+  oid_t trigger_oid = TriggerCatalog::GetInstance()->GetTriggerOid(
+      trigger_name, table_oid, txn);
   if (trigger_oid == INVALID_OID) {
     LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
     return ResultType::FAILURE;
@@ -161,8 +155,7 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
   oid_t trigger_oid = INVALID_OID;
   if (result_tiles->size() == 0) {
     LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
-  }
-  else {
+  } else {
     LOG_INFO("size of the result tiles = %lu", result_tiles->size());
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
@@ -183,15 +176,13 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-trigger::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
-                                                         int16_t trigger_type,
-                                                         concurrency::Transaction *txn) {
+std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
+    oid_t table_oid, int16_t trigger_type, concurrency::Transaction *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
-  std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME,
-                                 ColumnId::FIRE_CONDITION,
-                                 ColumnId::FUNCTION_OID,
-                                 ColumnId::FUNCTION_ARGS});
+  std::vector<oid_t> column_ids(
+      {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
+       ColumnId::FUNCTION_ARGS});
   oid_t index_offset = IndexId::TABLE_TYPE_KEY_0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -208,36 +199,36 @@ trigger::TriggerList* TriggerCatalog::GetTriggersByType(oid_t table_oid,
   }
 
   // create the trigger list
-  trigger::TriggerList* newTriggerList = new trigger::TriggerList();
+  std::unique_ptr<trigger::TriggerList> new_trigger_list{
+      new trigger::TriggerList()};
   if (result_tiles != nullptr) {
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
         // create a new trigger instance
-        trigger::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
-                                     trigger_type,
-                                     (*result_tiles)[i]->GetValue(j, 2).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 3).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 1).GetData());
-        newTriggerList->AddTrigger(newTrigger);
+        trigger::Trigger new_trigger(
+            (*result_tiles)[i]->GetValue(j, 0).ToString(), trigger_type,
+            (*result_tiles)[i]->GetValue(j, 2).ToString(),
+            (*result_tiles)[i]->GetValue(j, 3).ToString(),
+            (*result_tiles)[i]->GetValue(j, 1).GetData());
+        new_trigger_list->AddTrigger(new_trigger);
       }
     }
   }
-  return newTriggerList;
+  return new_trigger_list;
 }
 
-trigger::TriggerList* TriggerCatalog::GetTriggers(oid_t table_oid,
-                                                  concurrency::Transaction *txn) {
+std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
+    oid_t table_oid, concurrency::Transaction *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
-  std::vector<oid_t> column_ids({ColumnId::TRIGGER_NAME,
-                                 ColumnId::TRIGGER_TYPE,
-                                 ColumnId::FIRE_CONDITION,
-                                 ColumnId::FUNCTION_OID,
-                                 ColumnId::FUNCTION_ARGS});
+  std::vector<oid_t> column_ids(
+      {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
+       ColumnId::FUNCTION_OID, ColumnId::FUNCTION_ARGS});
   oid_t index_offset = IndexId::TABLE_KEY_1;
   std::vector<type::Value> values;
-  // where database_oid = args.database_oid and table_oid = args.table_oid and trigger_type = args.trigger_type
+  // where database_oid = args.database_oid and table_oid = args.table_oid and
+  // trigger_type = args.trigger_type
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // the result is a vector of executor::LogicalTile
@@ -251,24 +242,26 @@ trigger::TriggerList* TriggerCatalog::GetTriggers(oid_t table_oid,
   }
 
   // create the trigger list
-  trigger::TriggerList* newTriggerList = new trigger::TriggerList();
+  std::unique_ptr<trigger::TriggerList> new_trigger_list{
+      new trigger::TriggerList()};
   if (result_tiles != nullptr) {
     for (unsigned int i = 0; i < result_tiles->size(); i++) {
       size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
       for (size_t j = 0; j < tuple_count; j++) {
         // create a new trigger instance
-        trigger::Trigger newTrigger((*result_tiles)[i]->GetValue(j, 0).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>(),
-                                     (*result_tiles)[i]->GetValue(j, 3).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 4).ToString(),
-                                     (*result_tiles)[i]->GetValue(j, 2).GetData());
-        newTriggerList->AddTrigger(newTrigger);
+        trigger::Trigger new_trigger(
+            (*result_tiles)[i]->GetValue(j, 0).ToString(),
+            (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>(),
+            (*result_tiles)[i]->GetValue(j, 3).ToString(),
+            (*result_tiles)[i]->GetValue(j, 4).ToString(),
+            (*result_tiles)[i]->GetValue(j, 2).GetData());
+        new_trigger_list->AddTrigger(new_trigger);
       }
     }
   }
 
-  return newTriggerList;
+  return new_trigger_list;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+}  // namespace catalog
+}  // namespace peloton
