@@ -98,8 +98,10 @@ class InsertPlan : public AbstractPlan {
     return dummy;
   }
 
-  bool operator==(AbstractPlan &rhs) const override;
-  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
 
  private:
   // Target table

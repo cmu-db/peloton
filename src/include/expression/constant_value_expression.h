@@ -47,8 +47,8 @@ class ConstantValueExpression : public AbstractExpression {
   virtual bool operator==(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;
-    auto &const_expr = (ConstantValueExpression &)rhs;
-    return value_.CompareEquals(const_expr.value_);
+    auto &other = static_cast<const ConstantValueExpression &>(rhs);
+    return value_.CompareEquals(other.value_);
   }
 
   virtual bool operator!=(const AbstractExpression &rhs) const override {

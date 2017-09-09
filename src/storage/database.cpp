@@ -85,7 +85,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
     gc_manager->DeregisterTable(table_oid);
 
     // Deregister table from Query Cache manager
-    codegen::QueryCache::Instance().RemoveCache(table_oid);
+    codegen::QueryCache::Instance().Remove(table_oid);
 
     oid_t table_offset = 0;
     for (auto table : tables) {

@@ -68,11 +68,11 @@ bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
   return (*this == plan);
 }
 
-bool UpdatePlan::operator==(AbstractPlan &rhs) const {
+bool UpdatePlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::UpdatePlan &>(rhs);
+  auto &other = static_cast<const planner::UpdatePlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);

@@ -35,11 +35,11 @@ bool HashPlan::Equals(planner::AbstractPlan &plan) const {
   return (*this == plan);
 }
 
-bool HashPlan::operator==(AbstractPlan &rhs) const {
+bool HashPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
  
-  auto &other = reinterpret_cast<planner::HashPlan &>(rhs);
+  auto &other = static_cast<const planner::HashPlan &>(rhs);
   auto hash_key_size = GetHashKeys().size();
   if (hash_key_size != other.GetHashKeys().size())
     return false;
