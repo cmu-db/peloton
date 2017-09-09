@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/catalog.h"
 #include "storage/abstract_table.h"
 #include "common/harness.h"
@@ -32,8 +31,8 @@ class TriggerTests : public PelotonTest {
   std::string col_2 = "dept_name";
 
   // helper for c_str copy
-  static char* cstrdup(const char* c_str) {
-    char* new_str = new char[strlen(c_str) + 1];
+  static char *cstrdup(const char *c_str) {
+    char *new_str = new char[strlen(c_str) + 1];
     strcpy(new_str, c_str);
     return new_str;
   }
@@ -44,22 +43,21 @@ class TriggerTests : public PelotonTest {
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
     // Insert a table first
-    auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                     type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                     col_1, true);
-    auto name_column =
-      catalog::Column(type::TypeId::VARCHAR, 32, col_2, false);
+    auto id_column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        col_1, true);
+    auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, col_2, false);
 
     // Schema
     std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({id_column, name_column}));
+        new catalog::Schema({id_column, name_column}));
 
     std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
+        new executor::ExecutorContext(txn));
 
     // Create plans
-    planner::CreatePlan node(table_name, DEFAULT_DB_NAME, std::move(table_schema),
-                             CreateType::TABLE);
+    planner::CreatePlan node(table_name, DEFAULT_DB_NAME,
+                             std::move(table_schema), CreateType::TABLE);
 
     // Create executer
     executor::CreateExecutor executor(&node, context.get());
@@ -78,15 +76,14 @@ class TriggerTests : public PelotonTest {
     char *col_1_c = cstrdup(col_1.c_str());
     char *col_2_c = cstrdup(col_2.c_str());
 
-
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, std::string(table_name));
+        DEFAULT_DB_NAME, std::string(table_name), txn);
 
     std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
+        new executor::ExecutorContext(txn));
 
     std::unique_ptr<parser::InsertStatement> insert_node(
-      new parser::InsertStatement(InsertType::VALUES));
+        new parser::InsertStatement(InsertType::VALUES));
 
     auto table_ref = new parser::TableRef(TableReferenceType::NAME);
     parser::TableInfo *table_info = new parser::TableInfo();
@@ -99,15 +96,15 @@ class TriggerTests : public PelotonTest {
     insert_node->columns->push_back(col_2_c);
 
     insert_node->insert_values =
-      new std::vector<std::vector<expression::AbstractExpression *> *>;
+        new std::vector<std::vector<expression::AbstractExpression *> *>;
     auto values_ptr = new std::vector<expression::AbstractExpression *>;
     insert_node->insert_values->push_back(values_ptr);
 
     values_ptr->push_back(new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(number)));
+        type::ValueFactory::GetIntegerValue(number)));
 
     values_ptr->push_back(new expression::ConstantValueExpression(
-      type::ValueFactory::GetVarcharValue(text)));
+        type::ValueFactory::GetVarcharValue(text)));
 
     insert_node->select = new parser::SelectStatement();
 
@@ -122,17 +119,19 @@ class TriggerTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  void CreateTriggerHelper(std::string query, int trigger_number, std::string trigger_name) {
+  void CreateTriggerHelper(std::string query, int trigger_number,
+                           std::string trigger_name) {
     // Bootstrap
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto parser = parser::PostgresParser::GetInstance();
     catalog::Catalog::GetInstance()->Bootstrap();
 
-    std::unique_ptr<parser::SQLStatementList> stmt_list(parser.BuildParseTree(query).release());
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser.BuildParseTree(query).release());
     EXPECT_TRUE(stmt_list->is_valid);
     EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
     auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+        static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
     // Create plans
     planner::CreatePlan plan(create_trigger_stmt);
@@ -143,15 +142,16 @@ class TriggerTests : public PelotonTest {
     // Execute the create trigger
     auto txn = txn_manager.BeginTransaction();
     std::unique_ptr<executor::ExecutorContext> context2(
-      new executor::ExecutorContext(txn));
+        new executor::ExecutorContext(txn));
     executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
     createTriggerExecutor.Init();
     createTriggerExecutor.Execute();
-    txn_manager.CommitTransaction(txn);
 
     // Check the effect of creation
     storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, table_name);
+        catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                          table_name, txn);
+    txn_manager.CommitTransaction(txn);
     EXPECT_EQ(trigger_number, target_table->GetTriggerNumber());
     trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
     EXPECT_EQ(trigger_name, new_trigger->GetTriggerName());
@@ -168,7 +168,8 @@ TEST_F(TriggerTests, BasicTest) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list1(parser.BuildParseTree(query1).release());
+  std::unique_ptr<parser::SQLStatementList> stmt_list1(
+      parser.BuildParseTree(query1).release());
   EXPECT_TRUE(stmt_list1->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list1->GetStatement(0)->GetType());
   auto create_trigger_stmt1 =
@@ -191,7 +192,8 @@ TEST_F(TriggerTests, BasicTest) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list2(parser.BuildParseTree(query2).release());
+  std::unique_ptr<parser::SQLStatementList> stmt_list2(
+      parser.BuildParseTree(query2).release());
   EXPECT_TRUE(stmt_list2->is_valid);
   auto create_trigger_stmt2 =
       static_cast<parser::CreateStatement *>(stmt_list2->GetStatement(0));
@@ -207,22 +209,15 @@ TEST_F(TriggerTests, BasicTest) {
   trigger::TriggerList trigger_list;
   trigger_list.AddTrigger(trigger1);
   EXPECT_EQ(1, trigger_list.GetTriggerListSize());
-  EXPECT_TRUE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_UPDATE_ROW));
-  EXPECT_FALSE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_DELETE_ROW));
-  EXPECT_FALSE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_INSERT_ROW));
+  EXPECT_TRUE(trigger_list.HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_FALSE(trigger_list.HasTriggerType(TriggerType::BEFORE_DELETE_ROW));
+  EXPECT_FALSE(trigger_list.HasTriggerType(TriggerType::BEFORE_INSERT_ROW));
 
   trigger_list.AddTrigger(trigger2);
   EXPECT_EQ(2, trigger_list.GetTriggerListSize());
-  EXPECT_TRUE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_UPDATE_ROW));
-  EXPECT_TRUE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_DELETE_ROW));
-  EXPECT_FALSE(trigger_list.HasTriggerType(
-      TriggerType::BEFORE_INSERT_ROW));
-
+  EXPECT_TRUE(trigger_list.HasTriggerType(TriggerType::BEFORE_UPDATE_ROW));
+  EXPECT_TRUE(trigger_list.HasTriggerType(TriggerType::BEFORE_DELETE_ROW));
+  EXPECT_FALSE(trigger_list.HasTriggerType(TriggerType::BEFORE_INSERT_ROW));
 }
 
 // Test trigger type: before & after, each row, insert
@@ -238,15 +233,16 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   // Create statement (before row insert)
 
   std::string query =
-    "CREATE TRIGGER b_r_insert_trigger "
+      "CREATE TRIGGER b_r_insert_trigger "
       "BEFORE INSERT ON accounts "
       "FOR EACH ROW WHEN (NEW.dept_id = 2333) "
       "EXECUTE PROCEDURE b_r_insert_trigger_func();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(parser.BuildParseTree(query).release());
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-    static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -271,16 +267,16 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   // Execute the create trigger
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  txn_manager.CommitTransaction(txn);
 
   // Check the effect of creation
   storage::DataTable *target_table =
-    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                      "accounts");
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                        "accounts", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "b_r_insert_trigger");
@@ -290,10 +286,12 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_ROW));
 
   // create another trigger in simple way (after row insert)
-  CreateTriggerHelper("CREATE TRIGGER a_r_insert_trigger "
-                        "After INSERT ON accounts "
-                        "FOR EACH ROW "
-                        "EXECUTE PROCEDURE a_r_insert_trigger_func();", 2, "a_r_insert_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER a_r_insert_trigger "
+      "After INSERT ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE a_r_insert_trigger_func();",
+      2, "a_r_insert_trigger");
 
   InsertTupleHelper(2333, "LTI");
 
@@ -305,7 +303,6 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 // Test trigger type: after, statement, insert
@@ -321,15 +318,16 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   // Create statement
 
   std::string query =
-    "CREATE TRIGGER a_s_insert_trigger "
+      "CREATE TRIGGER a_s_insert_trigger "
       "AFTER INSERT ON accounts "
       "FOR EACH STATEMENT "
       "EXECUTE PROCEDURE a_s_insert_trigger_func();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(parser.BuildParseTree(query).release());
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-    static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -354,23 +352,24 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   // Execute the create trigger
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  txn_manager.CommitTransaction(txn);
 
   // Check the effect of creation
   storage::DataTable *target_table =
-    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                      "accounts");
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                        "accounts", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "a_s_insert_trigger");
 
   trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(1, new_trigger_list->GetTriggerListSize());
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::AFTER_INSERT_STATEMENT));
 
   InsertTupleHelper(2333, "LTI");
 
@@ -382,9 +381,7 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
-
 
 // Test other types of trigger in a relatively simple way. Because the workflow
 // is similar, and it is costly to manage redundant test cases.
@@ -399,56 +396,75 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
 
   // Create statement
 
-
   // BRUpdateTriggers
-  CreateTriggerHelper("CREATE TRIGGER b_r_update_trigger "
-                        "BEFORE UPDATE ON accounts "
-                        "FOR EACH ROW "
-                        "EXECUTE PROCEDURE b_r_update_trigger_func();", 1, "b_r_update_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER b_r_update_trigger "
+      "BEFORE UPDATE ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE b_r_update_trigger_func();",
+      1, "b_r_update_trigger");
   // ARUpdateTriggers
-  CreateTriggerHelper("CREATE TRIGGER a_r_update_trigger "
-                        "AFTER UPDATE ON accounts "
-                        "FOR EACH ROW "
-                        "EXECUTE PROCEDURE a_r_update_trigger();", 2, "a_r_update_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER a_r_update_trigger "
+      "AFTER UPDATE ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE a_r_update_trigger();",
+      2, "a_r_update_trigger");
   // BRDeleteTriggers
-  CreateTriggerHelper("CREATE TRIGGER b_r_delete_trigger "
-                        "BEFORE DELETE ON accounts "
-                        "FOR EACH ROW "
-                        "EXECUTE PROCEDURE b_r_delete_trigger();", 3, "b_r_delete_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER b_r_delete_trigger "
+      "BEFORE DELETE ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE b_r_delete_trigger();",
+      3, "b_r_delete_trigger");
   // ARDeleteTriggers
-  CreateTriggerHelper("CREATE TRIGGER a_r_delete_trigger "
-                        "AFTER DELETE ON accounts "
-                        "FOR EACH ROW "
-                        "EXECUTE PROCEDURE a_r_delete_trigger();", 4, "a_r_delete_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER a_r_delete_trigger "
+      "AFTER DELETE ON accounts "
+      "FOR EACH ROW "
+      "EXECUTE PROCEDURE a_r_delete_trigger();",
+      4, "a_r_delete_trigger");
   // BSInsertTriggers
-  CreateTriggerHelper("CREATE TRIGGER b_s_insert_trigger "
-                        "BEFORE INSERT ON accounts "
-                        "FOR EACH STATEMENT "
-                        "EXECUTE PROCEDURE b_s_insert_trigger();", 5, "b_s_insert_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER b_s_insert_trigger "
+      "BEFORE INSERT ON accounts "
+      "FOR EACH STATEMENT "
+      "EXECUTE PROCEDURE b_s_insert_trigger();",
+      5, "b_s_insert_trigger");
   // BSUpdateTriggers
-  CreateTriggerHelper("CREATE TRIGGER b_s_update_trigger "
-                        "BEFORE UPDATE ON accounts "
-                        "FOR EACH STATEMENT "
-                        "EXECUTE PROCEDURE b_s_update_trigger();", 6, "b_s_update_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER b_s_update_trigger "
+      "BEFORE UPDATE ON accounts "
+      "FOR EACH STATEMENT "
+      "EXECUTE PROCEDURE b_s_update_trigger();",
+      6, "b_s_update_trigger");
   // ASUpdateTriggers
-  CreateTriggerHelper("CREATE TRIGGER a_s_update_trigger "
-                        "AFTER UPDATE ON accounts "
-                        "FOR EACH STATEMENT "
-                        "EXECUTE PROCEDURE a_s_update_trigger();", 7, "a_s_update_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER a_s_update_trigger "
+      "AFTER UPDATE ON accounts "
+      "FOR EACH STATEMENT "
+      "EXECUTE PROCEDURE a_s_update_trigger();",
+      7, "a_s_update_trigger");
   // BSDeleteTriggers
-  CreateTriggerHelper("CREATE TRIGGER b_s_delete_trigger "
-                        "BEFORE DELETE ON accounts "
-                        "FOR EACH STATEMENT "
-                        "EXECUTE PROCEDURE b_s_delete_trigger();", 8, "b_s_delete_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER b_s_delete_trigger "
+      "BEFORE DELETE ON accounts "
+      "FOR EACH STATEMENT "
+      "EXECUTE PROCEDURE b_s_delete_trigger();",
+      8, "b_s_delete_trigger");
   // ASDeleteTriggers
-  CreateTriggerHelper("CREATE TRIGGER a_s_delete_trigger "
-                        "AFTER DELETE ON accounts "
-                        "FOR EACH STATEMENT "
-                        "EXECUTE PROCEDURE a_s_delete_trigger();", 9, "a_s_delete_trigger");
+  CreateTriggerHelper(
+      "CREATE TRIGGER a_s_delete_trigger "
+      "AFTER DELETE ON accounts "
+      "FOR EACH STATEMENT "
+      "EXECUTE PROCEDURE a_s_delete_trigger();",
+      9, "a_s_delete_trigger");
 
-
+  auto txn = txn_manager.BeginTransaction();
   storage::DataTable *target_table =
-    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, table_name);
+      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                        table_name, txn);
+  txn_manager.CommitTransaction(txn);
 
   trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
   EXPECT_EQ(9, new_trigger_list->GetTriggerListSize());
@@ -456,11 +472,16 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_ROW));
   EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_ROW));
   EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_ROW));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT));
-  EXPECT_TRUE(new_trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::BEFORE_INSERT_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::BEFORE_UPDATE_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::AFTER_UPDATE_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::BEFORE_DELETE_STATEMENT));
+  EXPECT_TRUE(
+      new_trigger_list->HasTriggerType(TriggerType::AFTER_DELETE_STATEMENT));
 
   // Invoke triggers directly
   new_trigger_list->ExecTriggers(TriggerType::BEFORE_UPDATE_ROW);
@@ -470,16 +491,14 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   new_trigger_list->ExecTriggers(TriggerType::BEFORE_DELETE_STATEMENT);
   new_trigger_list->ExecTriggers(TriggerType::AFTER_DELETE_STATEMENT);
 
-
   // TODO: the effect of this operation should be verified automatically.
   // The UDF should be called after this operation happens.
   // Auto check can be implemented after UDF is implemented.
 
   // free the database just created
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 }
 }

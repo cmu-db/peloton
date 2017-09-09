@@ -20,13 +20,13 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/executor_context.h"
-#include "planner/create_plan.h"
-#include "trigger/trigger.h"
-#include "storage/data_table.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "parser/postgresparser.h"
 #include "parser/pg_trigger.h"
+#include "parser/postgresparser.h"
+#include "planner/create_plan.h"
+#include "storage/data_table.h"
+#include "trigger/trigger.h"
 
 #include "gtest/gtest.h"
 
@@ -69,10 +69,10 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            1);
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
@@ -114,11 +114,11 @@ TEST_F(CreateTests, CreatingTrigger) {
   executor.Init();
   executor.Execute();
 
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
 
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
@@ -163,13 +163,15 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           left)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(left)
+                ->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           right)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(right)
+                ->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level
@@ -191,12 +193,12 @@ TEST_F(CreateTests, CreatingTrigger) {
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  txn_manager.CommitTransaction(txn);
 
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts");
+                                                        "accounts", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
@@ -252,11 +254,11 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   executor.Init();
   executor.Execute();
 
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
 
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
@@ -287,12 +289,12 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  txn_manager.CommitTransaction(txn);
 
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts");
+                                                        "accounts", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "check_update");
@@ -347,11 +349,11 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   executor.Init();
   executor.Execute();
 
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
 
   // Create statement
   auto parser = parser::PostgresParser::GetInstance();
@@ -379,13 +381,11 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   createTriggerExecutor.Execute();
 
   // check whether the trigger catalog table contains this new trigger
-  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()->GetDatabaseOid(
-      DEFAULT_DB_NAME, txn);
-  oid_t table_oid = catalog::TableCatalog::GetInstance()->GetTableOid(
-      "accounts", database_oid, txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      DEFAULT_DB_NAME, "accounts", txn);
   auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(
-      table_oid, (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE),
-      txn);
+      table_object->table_oid,
+      (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE), txn);
 
   txn_manager.CommitTransaction(txn);
 

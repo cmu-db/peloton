@@ -101,10 +101,10 @@ TEST_F(DeleteTests, VariousOperations) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            1);
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   LOG_INFO("Table created!");
 
   storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
