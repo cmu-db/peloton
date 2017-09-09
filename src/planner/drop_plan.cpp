@@ -19,7 +19,7 @@
 namespace peloton {
 namespace planner {
 
-DropPlan::DropPlan(std::string name) {
+DropPlan::DropPlan(const std::string &name) {
   table_name = name;
   missing = false;
 }

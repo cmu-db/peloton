@@ -32,7 +32,7 @@ class DropPlan : public AbstractPlan {
  public:
   DropPlan() = delete;
 
-  explicit DropPlan(std::string name);
+  explicit DropPlan(const std::string &name);
 
   explicit DropPlan(parser::DropStatement *parse_tree);
 

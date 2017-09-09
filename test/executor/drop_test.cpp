@@ -91,14 +91,14 @@ TEST_F(DropTests, DroppingTrigger) {
   auto txn = txn_manager.BeginTransaction();
 
   // Create a table first
-  auto id_column = catalog::Column(type::TypeId::INTEGER,
-                                   type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                   "dept_id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "dept_id", true);
   auto name_column =
-    catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
-    new catalog::Schema({id_column, name_column}));
+      new catalog::Schema({id_column, name_column}));
 
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -108,34 +108,33 @@ TEST_F(DropTests, DroppingTrigger) {
                        std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
-
   // Create a trigger
   auto parser = parser::PostgresParser::GetInstance();
   std::string query =
-    "CREATE TRIGGER update_dept_name "
+      "CREATE TRIGGER update_dept_name "
       "BEFORE UPDATE OF dept_name ON department_table "
       "EXECUTE PROCEDURE log_update_dept_name();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(parser.BuildParseTree(query).release());
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-    static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::CreateExecutor createTriggerExecutor(&plan, context.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  txn_manager.CommitTransaction(txn);
-
 
   // Check the effect of creation
   storage::DataTable *target_table =
-    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                      "department_table");
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, "department_table", txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
   EXPECT_EQ(new_trigger->GetTriggerName(), "update_dept_name");
@@ -143,13 +142,15 @@ TEST_F(DropTests, DroppingTrigger) {
   LOG_INFO("Create trigger finishes. Now drop it.");
 
   // Drop statement and drop plan
-  parser::DropStatement drop_statement(parser::DropStatement::EntityType::kTrigger, "department_table", "update_dept_name");
-  planner::DropPlan drop_plan(&drop_statement, txn);
+  parser::DropStatement drop_statement(
+      parser::DropStatement::EntityType::kTrigger, "department_table",
+      "update_dept_name");
+  planner::DropPlan drop_plan(&drop_statement);
 
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   executor::DropExecutor drop_executor(&drop_plan, context2.get());
   drop_executor.Init();
   drop_executor.Execute();
@@ -162,8 +163,11 @@ TEST_F(DropTests, DroppingTrigger) {
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
   catalog->DropTable(DEFAULT_DB_NAME, "department_table", txn);
+  EXPECT_EQ(0, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(0, catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount());
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
