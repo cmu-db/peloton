@@ -70,11 +70,11 @@ void HashJoinPlan::HandleSubplanBinding(bool is_left,
   }
 }
 
-bool HashJoinPlan::operator==(AbstractPlan &rhs) const {
+bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::HashJoinPlan &>(rhs);
+  auto &other = static_cast<const planner::HashJoinPlan &>(rhs);
   if (GetJoinType() != other.GetJoinType())
     return false;
 

@@ -138,11 +138,11 @@ bool AggregatePlan::AreEqual(
   return true;
 }
 
-bool AggregatePlan::operator==(AbstractPlan &rhs) const {
+bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::AggregatePlan &>(rhs);
+  auto &other = static_cast<const planner::AggregatePlan &>(rhs);
 
   // Predicate
   auto *pred = GetPredicate();

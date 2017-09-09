@@ -44,11 +44,11 @@ void OrderByPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
-bool OrderByPlan::operator==(AbstractPlan &rhs) const {
+bool OrderByPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::OrderByPlan &>(rhs);
+  auto &other = static_cast<const planner::OrderByPlan &>(rhs);
   // Sort Keys 
   size_t sort_keys_count = GetSortKeys().size();
   if (sort_keys_count != other.GetSortKeys().size())
