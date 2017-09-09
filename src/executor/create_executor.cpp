@@ -122,7 +122,7 @@ bool CreateExecutor::DExecute() {
             std::vector<std::string> source_col_names = fk.foreign_key_sources;
             std::string index_name =
                 source_table->GetName() + "_FK_" + std::to_string(count);
-            catalog->CreateIndex(database_name, source_table->GetName(), source_col_names,
+            catalog->CreateIndex(database_name, source_table->GetName(), source_col_ids,
                 index_name, false, IndexType::BWTREE, current_txn);
             count++;
 
