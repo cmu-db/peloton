@@ -266,11 +266,11 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
-bool SeqScanPlan::operator==(AbstractPlan &rhs) const {
+bool SeqScanPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::SeqScanPlan &>(rhs);
+  auto &other = static_cast<const planner::SeqScanPlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);

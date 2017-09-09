@@ -34,23 +34,26 @@ class QueryCache {
     return query_cache;
   }
 
-  Query* Find(const std::shared_ptr<planner::AbstractPlan>& key);
+  Query* Find(const std::shared_ptr<planner::AbstractPlan> &key);
 
-  void Add(const std::shared_ptr<planner::AbstractPlan>& key,
-           std::unique_ptr<Query> val);
+  void Add(const std::shared_ptr<planner::AbstractPlan> &key,
+           std::unique_ptr<Query> &&val);
 
-  size_t GetCacheSize() { return max_size_; }
+  size_t GetSize() { return max_size_; }
 
-  void SetCacheSize(size_t max_size) {
-    ResizeCache(max_size);
+  void SetSize(size_t max_size) {
+    Resize(max_size);
     max_size_ = max_size;
   }
 
-  size_t GetSize() { return cache_map_.size(); }
+  size_t GetCount() { return cache_map_.size(); }
 
-  void ClearCache() { cache_map_.clear(); }
+  void Clear() {
+    cache_map_.clear();
+    query_list_.clear();
+  }
 
-  void RemoveCache(const oid_t table_oid);
+  void Remove(const oid_t table_oid);
 
  private:
   // Can't consturct
@@ -64,7 +67,7 @@ class QueryCache {
     }
   };
 
-  void ResizeCache(size_t target_size) {
+  void Resize(size_t target_size) {
     while (cache_map_.size() > target_size) {
       auto last_it = query_list_.end();
       last_it--;

@@ -43,8 +43,10 @@ class DeletePlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new DeletePlan(target_table_));
   }
 
-  bool operator==(AbstractPlan &rhs) const override;
-  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
 
  private:
   storage::DataTable *target_table_ = nullptr;

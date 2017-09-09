@@ -208,11 +208,11 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
-bool InsertPlan::operator==(AbstractPlan &rhs) const {
+bool InsertPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::InsertPlan &>(rhs);
+  auto &other = static_cast<const planner::InsertPlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);

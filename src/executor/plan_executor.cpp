@@ -115,10 +115,8 @@ void PlanExecutor::ExecutePlan(
     auto compiled_query = compiler.Compile(*plan, consumer);
     compiled_query->Execute(*txn, executor_context.get(),
                             reinterpret_cast<char *>(consumer.GetState()));
-    codegen::QueryCache::Instance().Add(std::move(plan),
-                                        std::move(compiled_query));
-  }
-  else {
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
     query->Execute(*txn, executor_context.get(),
                    reinterpret_cast<char *>(consumer.GetState()));
   }

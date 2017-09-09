@@ -34,11 +34,11 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
   GetProjectInfo()->PerformRebinding(context, inputs);
 }
 
-bool ProjectionPlan::operator==(AbstractPlan &rhs) const {
+bool ProjectionPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::ProjectionPlan &>(rhs);
+  auto &other = static_cast<const planner::ProjectionPlan &>(rhs);
   // compare proj_info
   auto *proj_info = GetProjectInfo();
   auto *other_proj_info = other.GetProjectInfo();

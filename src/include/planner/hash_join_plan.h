@@ -91,8 +91,10 @@ class HashJoinPlan : public AbstractJoinPlan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
-  bool operator==(AbstractPlan &rhs) const override;
-  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
 
  private:
   std::vector<oid_t> outer_column_ids_;

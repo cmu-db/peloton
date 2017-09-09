@@ -27,11 +27,11 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
-bool DeletePlan::operator==(AbstractPlan &rhs) const {
+bool DeletePlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
-  auto &other = reinterpret_cast<planner::DeletePlan &>(rhs);
+  auto &other = static_cast<const planner::DeletePlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);

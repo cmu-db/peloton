@@ -113,8 +113,10 @@ class AbstractPlan : public Printable {
   }
   virtual int SerializeSize() { return 0; }
 
-  virtual bool operator==(AbstractPlan &rhs) const;
-  virtual bool operator!=(AbstractPlan &rhs) const { return !(*this == rhs); }
+  virtual bool operator==(const AbstractPlan &rhs) const;
+  virtual bool operator!=(const AbstractPlan &rhs) const {
+    return !(*this == rhs);
+  }
 
  protected:
   // only used by its derived classes (when deserialization)

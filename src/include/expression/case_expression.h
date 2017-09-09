@@ -104,7 +104,10 @@ class CaseExpression : public AbstractExpression {
   }
 
   bool operator==(const AbstractExpression &rhs) const override {
-    auto &other = (expression::CaseExpression &)rhs;
+    if (exp_type_ != rhs.GetExpressionType())
+      return false;
+
+    auto &other = static_cast<const expression::CaseExpression &>(rhs);
     auto clause_size = GetWhenClauseSize();
     if (clause_size != other.GetWhenClauseSize())
       return false;

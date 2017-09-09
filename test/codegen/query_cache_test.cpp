@@ -204,12 +204,12 @@ TEST_F(QueryCacheTest, SimpleCache) {
   const auto& results2 = buffer2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results2.size());
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
-  codegen::QueryCache::Instance().ClearCache();
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 TEST_F(QueryCacheTest, CacheSeqScanPlan) {
@@ -251,12 +251,12 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
-  codegen::QueryCache::Instance().ClearCache();
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 TEST_F(QueryCacheTest, CacheHashJoinPlan) {
@@ -307,12 +307,12 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
               type::CMP_TRUE);
   }
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
-  codegen::QueryCache::Instance().ClearCache();
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 TEST_F(QueryCacheTest, CacheOrderByPlan) {
@@ -380,12 +380,12 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
           nullptr);
   EXPECT_EQ(found, 1);
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
-  codegen::QueryCache::Instance().ClearCache();
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 TEST_F(QueryCacheTest, CacheAggregatePlan) {
@@ -397,7 +397,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   auto is_equal = (*agg_plan1.get() == *agg_plan2.get());
   EXPECT_EQ(is_equal, true);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
   codegen::BufferingConsumer buffer2{{0, 1}, context2};
@@ -408,7 +408,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   // Check results
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(results1.size(), 59);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(agg_plan2, buffer2,
@@ -418,8 +418,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_EQ(results2.size(), 59);
 
   // Clean the query cache and leaves only one query
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
-  codegen::QueryCache::Instance().ClearCache();
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  codegen::QueryCache::Instance().Clear();
 
   // Check the correctness of LRU
   auto agg_plan3 = GetAggregatePlan();
@@ -427,12 +427,12 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   agg_plan3->PerformBinding(context3);
   auto found = (codegen::QueryCache::Instance().Find(agg_plan3) != nullptr);
   EXPECT_EQ(found, false);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 TEST_F(QueryCacheTest, PerformanceBenchmark) {
 
-  codegen::QueryCache::Instance().ClearCache();
+  codegen::QueryCache::Instance().Clear();
   Timer<std::ratio<1, 1000>> timer1, timer2;
 
   timer1.Start();

@@ -51,7 +51,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto result = catalog->DropDatabaseWithName(test_db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
-  codegen::QueryCache::Instance().ClearCache();
+  codegen::QueryCache::Instance().Clear();
 }
 
 // Create the test schema for all the tables
@@ -179,10 +179,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
                             std::unique_ptr<executor::ExecutorContext> (
                                 new executor::ExecutorContext{txn}).get(),
                             consumer_state);
-    codegen::QueryCache::Instance().Add(std::move(plan),
-                                        std::move(compiled_query));
-  }
-  else {
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
     query->Execute(*txn,
                    std::unique_ptr<executor::ExecutorContext> (
                        new executor::ExecutorContext{txn}).get(),

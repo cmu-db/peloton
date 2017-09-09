@@ -29,8 +29,8 @@ Query* QueryCache::Find(const std::shared_ptr<planner::AbstractPlan> &key) {
   return it->second->second.get();
 }
 
-void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan>& key,
-                     std::unique_ptr<Query> val) {
+void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan> &key,
+                     std::unique_ptr<Query> &&val) {
   query_list_.push_front(make_pair(key, std::move(val)));
   cache_map_.insert(make_pair(key, query_list_.begin()));
 }
@@ -38,19 +38,19 @@ void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan>& key,
 oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) {
  switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN: {
-      auto &dplan = reinterpret_cast<const planner::SeqScanPlan &>(plan);
+      auto &dplan = static_cast<const planner::SeqScanPlan &>(plan);
       return dplan.GetTable()->GetOid();
     }
     case PlanNodeType::DELETE: {
-      auto &dplan = reinterpret_cast<const planner::DeletePlan &>(plan);
+      auto &dplan = static_cast<const planner::DeletePlan &>(plan);
       return dplan.GetTable()->GetOid();
     }
     case PlanNodeType::INSERT: {
-      auto &dplan = reinterpret_cast<const planner::InsertPlan &>(plan);
+      auto &dplan = static_cast<const planner::InsertPlan &>(plan);
       return dplan.GetTable()->GetOid();
     }
     case PlanNodeType::UPDATE: {
-      auto &dplan = reinterpret_cast<const planner::UpdatePlan &>(plan);
+      auto &dplan = static_cast<const planner::UpdatePlan &>(plan);
       return dplan.GetTable()->GetOid();
     }
     default: { break; }
@@ -61,15 +61,14 @@ oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) {
     return GetOidFromPlan(*plan.GetChild(0));
 }
 
-void QueryCache::RemoveCache(const oid_t table_oid) {
+void QueryCache::Remove(const oid_t table_oid) {
   for (auto it = cache_map_.begin(); it != cache_map_.end(); ) {
     oid_t oid = GetOidFromPlan(*it->first.get());
     if (oid == table_oid) {
       query_list_.erase(it->second);
       it = cache_map_.erase(it); 
-    }
-    else {
-       ++it;
+    } else {
+      ++it;
     }
   }
 }

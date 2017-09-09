@@ -53,8 +53,10 @@ class UpdatePlan : public AbstractPlan {
         new UpdatePlan(target_table_, project_info_->Copy()));
   }
 
-  bool operator==(AbstractPlan &rhs) const override;
-  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
 
  private:
   storage::DataTable *target_table_;

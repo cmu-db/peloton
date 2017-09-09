@@ -129,12 +129,15 @@ class AggregatePlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
-  bool operator==(AbstractPlan &rhs) const override;
-  bool operator!=(AbstractPlan &rhs) const override { return !(*this == rhs); }
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
 
  private:
   bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,
-                const std::vector<planner::AggregatePlan::AggTerm> &B) const;
+                const std::vector<planner::AggregatePlan::AggTerm> &B)
+      const;
 
  private:
   /* For projection */
