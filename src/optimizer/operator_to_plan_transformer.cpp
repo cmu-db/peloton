@@ -72,11 +72,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   vector<oid_t> column_ids =
       GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
 
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
@@ -85,12 +82,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
 
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
   vector<ExpressionType> expr_types;
   vector<type::Value> values;
@@ -463,15 +457,29 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
 }
 
 // Generate predicate for scan plan
+//expression::AbstractExpression *
+//OperatorToPlanTransformer::GeneratePredicateForScan(
+//    const PropertyPredicate *predicate_prop, const std::string &alias,
+//    const storage::DataTable *table) {
+//  expression::AbstractExpression *predicate = nullptr;
+//  if (predicate_prop != nullptr) {
+//    ExprMap table_expr_map;
+//    GenerateTableExprMap(table_expr_map, alias, table);
+//    predicate = predicate_prop->GetPredicate()->Copy();
+//    expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
+//  }
+//  return predicate;
+//}
+
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
-    const PropertyPredicate *predicate_prop, const std::string &alias,
+    const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
     const storage::DataTable *table) {
   expression::AbstractExpression *predicate = nullptr;
-  if (predicate_prop != nullptr) {
+  if (predicate_expr != nullptr) {
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, alias, table);
-    predicate = predicate_prop->GetPredicate()->Copy();
+    predicate = predicate_expr->Copy();
     expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
   }
   return predicate;

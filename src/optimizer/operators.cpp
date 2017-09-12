@@ -30,10 +30,12 @@ Operator LeafOperator::make(GroupID group) {
 // Get
 //===--------------------------------------------------------------------===//
 Operator LogicalGet::make(storage::DataTable *table, std::string alias,
+                          std::shared_ptr<expression::AbstractExpression> predicate,
                           bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
+  get->predicate = predicate;
   get->is_for_update = update;
   util::to_lower_string(get->table_alias);
   return Operator(get);
@@ -185,11 +187,14 @@ Operator DummyScan::make() {
 // SeqScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalSeqScan::make(
-    storage::DataTable *table, std::string alias, bool update) {
+    storage::DataTable *table, std::string alias,
+    std::shared_ptr<expression::AbstractExpression> predicate,
+    bool update) {
   assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
   scan->table_alias = alias;
+  scan->predicate = predicate;
   scan->is_for_update = update;
   return Operator(scan);
 }
@@ -211,11 +216,14 @@ hash_t PhysicalSeqScan::Hash() const {
 // IndexScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
-    storage::DataTable *table, std::string alias, bool update) {
+    storage::DataTable *table, std::string alias,
+    std::shared_ptr<expression::AbstractExpression> predicate,
+    bool update) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
   scan->is_for_update = update;
+  scan->predicate = predicate;
   scan->table_alias = alias;
   return Operator(scan);
 }

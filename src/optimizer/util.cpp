@@ -203,7 +203,7 @@ void GetPredicateColumns(const catalog::Schema* schema,
  * Extract single table precates and multi-table predicates from the expr
  */
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicates& where_predicates,
+                       SingleTablePredicatesMap& single_table_predicates_map,
                        MultiTablePredicates& join_predicates) {
   // Split a complex predicate into a set of predicates connected by AND.
   std::vector<expression::AbstractExpression*> predicates;
@@ -216,9 +216,14 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     // Deep copy expression to avoid memory leak
     if (table_alias_set.size() > 1)
       join_predicates.emplace_back(
-          MultiTableExpression(predicate->Copy(), table_alias_set));
-    else
-      where_predicates.emplace_back(predicate->Copy());
+          AnnotatedExpression(predicate->Copy(), table_alias_set));
+    else {
+      std::string table_alias = StringUtil::Lower(*(table_alias_set.begin()));
+      if (single_table_predicates_map.find(table_alias) == single_table_predicates_map.end())
+        single_table_predicates_map[table_alias] = {predicate->Copy()};
+      else
+        single_table_predicates_map[table_alias].emplace_back(predicate->Copy());
+    }
   }
 }
 
@@ -259,7 +264,7 @@ void SplitPredicates(expression::AbstractExpression* expr,
 }
 
 /**
- * Combine a vector of expressions with AND (deep copy each expr)
+ * Combine a vector of expressions with AND
  */
 expression::AbstractExpression* CombinePredicates(
     std::vector<expression::AbstractExpression*> predicates) {

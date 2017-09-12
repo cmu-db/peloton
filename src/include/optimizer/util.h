@@ -72,7 +72,7 @@ expression::AbstractExpression* CombinePredicates(
     std::vector<expression::AbstractExpression*> predicates);
 
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicates& where_predicates,
+                       SingleTablePredicatesMap& where_predicates,
                        MultiTablePredicates& join_predicates);
 
 expression::AbstractExpression* ConstructJoinPredicate(
