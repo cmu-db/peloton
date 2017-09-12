@@ -246,6 +246,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
   // Status
   //size_t current_eid = INVALID_EID;
   cid_t current_cid = INVALID_CID;
+  cid_t starting_cid = INVALID_CID;
   size_t buf_size = 4096;
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
@@ -323,6 +324,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
           LOG_ERROR("Mismatched txn in log record");
           return false;
         }
+        starting_cid = current_cid;
         current_cid = INVALID_CID;
         break;
       } case LogRecordType::TUPLE_UPDATE:
@@ -385,7 +387,10 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
     }
 
   }
-
+  if(starting_cid != INVALID_CID){
+      auto& epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+      epoch_manager.SetCurrentEpochId(starting_cid);
+  }
   return true;
 }
 
