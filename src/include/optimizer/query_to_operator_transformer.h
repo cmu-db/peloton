@@ -25,6 +25,10 @@ namespace concurrency {
 class Transaction;
 }
 
+namespace expression {
+class AbstractExpression;
+}
+
 namespace optimizer {
 
 class OperatorExpression;
@@ -60,6 +64,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
  private:
   std::shared_ptr<OperatorExpression> output_expr_;
   MultiTablePredicates join_predicates_;
+  SingleTablePredicatesMap single_table_predicates_map;
   std::unordered_set<std::string> table_alias_set_;
 
   // For expr nodes

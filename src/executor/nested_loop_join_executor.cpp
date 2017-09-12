@@ -111,15 +111,17 @@ bool NestedLoopJoinExecutor::DExecute() {
                                                        left_tile_row_itr_);
 
       // Grab the values
-      std::vector<type::Value> join_values;
-      for (auto column_id : join_column_ids_left) {
-        type::Value predicate_value = left_tuple.GetValue(column_id);
-        join_values.push_back(predicate_value);
-      }
+      if (!join_column_ids_left.empty() && !join_column_ids_right.empty()) {
+        std::vector<type::Value> join_values;
+        for (auto column_id : join_column_ids_left) {
+          type::Value predicate_value = left_tuple.GetValue(column_id);
+          join_values.push_back(predicate_value);
+        }
 
-      // Pass the columns and values to right executor
-      LOG_TRACE("Update the new value for index predicate");
-      children_[1]->UpdatePredicate(join_column_ids_right, join_values);
+        // Pass the columns and values to right executor
+        LOG_TRACE("Update the new value for index predicate");
+        children_[1]->UpdatePredicate(join_column_ids_right, join_values);
+      }
 
       // Execute the right child to get the right tile
       if (children_[1]->Execute() == true) {

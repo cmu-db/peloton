@@ -51,12 +51,15 @@ class LeafOperator : OperatorNode<LeafOperator> {
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
   static Operator make(storage::DataTable *table = nullptr,
-                       std::string alias = "", bool update = false);
+                       std::string alias = "",
+                       std::shared_ptr<expression::AbstractExpression> predicate = nullptr,
+                       bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
+  std::shared_ptr<expression::AbstractExpression> predicate;
   storage::DataTable *table;
   std::string table_alias;
   bool is_for_update;
@@ -199,11 +202,14 @@ class DummyScan : public OperatorNode<DummyScan> {
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
   static Operator make(storage::DataTable *table, std::string alias,
+                       std::shared_ptr<expression::AbstractExpression> predicate,
                        bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
+
+  std::shared_ptr<expression::AbstractExpression> predicate;
   std::string table_alias;
   bool is_for_update;
   storage::DataTable *table_;
@@ -215,11 +221,14 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
   static Operator make(storage::DataTable *table, std::string alias,
+                       std::shared_ptr<expression::AbstractExpression> predicate,
                        bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
+
+  std::shared_ptr<expression::AbstractExpression> predicate;
   std::string table_alias;
   bool is_for_update;
   storage::DataTable *table_;

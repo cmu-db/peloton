@@ -99,11 +99,7 @@ void QueryPropertyExtractor::Visit(
     op->select->Accept(this);
 }
 
-void QueryPropertyExtractor::Visit(parser::DeleteStatement *op) {
-  if (op->expr != nullptr) {
-    property_set_.AddProperty(
-        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->expr->Copy())));
-  }
+void QueryPropertyExtractor::Visit(parser::DeleteStatement *) {
   property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
       vector<shared_ptr<expression::AbstractExpression>>())));
 }
@@ -117,10 +113,6 @@ void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE parser::UpdateStatement *op) {
-  if (op->where != nullptr) {
-    property_set_.AddProperty(
-        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->where->Copy())));
-  }
   property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
       vector<shared_ptr<expression::AbstractExpression>>())));
 }
