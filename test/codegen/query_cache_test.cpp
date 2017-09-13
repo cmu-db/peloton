@@ -42,8 +42,8 @@ class QueryCacheTest : public PelotonCodeGenTest {
     LoadTestTable(RightTableId(), 4 * num_rows_to_insert);
   }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
-  TableId TestTableId() { return TableId::_1; }
-  TableId RightTableId() { return TableId::_2; }
+  oid_t TestTableId() { return test_table_oids[0]; }
+  oid_t RightTableId() { return test_table_oids[1]; }
 
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
