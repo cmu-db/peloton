@@ -103,17 +103,18 @@ const std::string AbstractExpression::GetInfo() const {
 }
 
 bool AbstractExpression::AreEqual(const AbstractExpression *expr1,
-                                  const AbstractExpression *expr2) const {
+                                  const AbstractExpression *expr2) {
   if (expr1 == nullptr && expr2 == nullptr)
     return true;
   if (expr1 == nullptr && expr2 != nullptr)
+    return false;
+  if (expr1 != nullptr && expr2 == nullptr)
     return false;
   return (*expr1 == *expr2);
 }
 
 bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
-  if (exp_type_ != rhs.exp_type_ ||
-      children_.size() != rhs.children_.size())
+  if (exp_type_ != rhs.exp_type_ || children_.size() != rhs.children_.size())
     return false;
 
   for (unsigned i = 0; i < children_.size(); i++) {
