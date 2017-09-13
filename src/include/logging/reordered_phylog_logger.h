@@ -104,7 +104,7 @@ private:
   void RebuildSecIndexForTable(const size_t logger_count, storage::DataTable *table);
 
   bool ReplayLogFile(FileHandle &file_handle);//, size_t checkpoint_eid, size_t pepoch_eid);
-  bool InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid);
+  bool InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location);
 
   // Return value is the swapped txn id, either INVALID_TXNID or INITIAL_TXNID
   txn_id_t LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset);
