@@ -38,8 +38,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
 
   switch (type) {
     case LogRecordType::TUPLE_INSERT:
-    case LogRecordType::TUPLE_DELETE:
-    case LogRecordType::TUPLE_UPDATE: {
+     {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -48,6 +47,9 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
       // Write down the database id and the table id
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
+
+      output_buffer_.WriteLong(tuple_pos.block);
+      output_buffer_.WriteLong(tuple_pos.offset);
 
 
       // Write the full tuple into the buffer
@@ -67,6 +69,71 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
 
       break;
     }
+  case LogRecordType::TUPLE_DELETE:
+  {
+      auto &manager = catalog::Manager::GetInstance();
+      auto tuple_pos = record.GetItemPointer();
+      auto tg = manager.GetTileGroup(tuple_pos.block).get();
+      //std::vector<catalog::Column> columns;
+
+      // Write down the database id and the table id
+      output_buffer_.WriteLong(tg->GetDatabaseId());
+      output_buffer_.WriteLong(tg->GetTableId());
+
+
+      // Write the full tuple into the buffer
+      /*for(auto schema : tg->GetTileSchemas()){
+          for(auto column : schema.GetColumns()){
+              columns.push_back(column);
+          }
+      }
+
+      ContainerTuple<storage::TileGroup> container_tuple(
+        tg, tuple_pos.offset
+      );
+      for(oid_t oid = 0; oid < columns.size(); oid++){
+        auto val = container_tuple.GetValue(oid);
+        val.SerializeTo(output_buffer_);
+      }*/
+      output_buffer_.WriteLong(tuple_pos.block);
+      output_buffer_.WriteLong(tuple_pos.offset);
+
+
+      break;
+  }
+  case LogRecordType::TUPLE_UPDATE:
+  {
+      auto &manager = catalog::Manager::GetInstance();
+      auto tuple_pos = record.GetItemPointer();
+      auto tg = manager.GetTileGroup(tuple_pos.block).get();
+      std::vector<catalog::Column> columns;
+
+      // Write down the database id and the table id
+      output_buffer_.WriteLong(tg->GetDatabaseId());
+      output_buffer_.WriteLong(tg->GetTableId());
+
+      output_buffer_.WriteLong(tuple_pos.block);
+      output_buffer_.WriteLong(tuple_pos.offset);
+
+
+      // Write the full tuple into the buffer
+      for(auto schema : tg->GetTileSchemas()){
+          for(auto column : schema.GetColumns()){
+              columns.push_back(column);
+          }
+      }
+
+      ContainerTuple<storage::TileGroup> container_tuple(
+        tg, tuple_pos.offset
+      );
+      for(oid_t oid = 0; oid < columns.size(); oid++){
+        auto val = container_tuple.GetValue(oid);
+        val.SerializeTo(output_buffer_);
+      }
+
+
+      break;
+  }
     case LogRecordType::TRANSACTION_BEGIN: {
       output_buffer_.WriteLong(record.GetCommitId());
       break;
