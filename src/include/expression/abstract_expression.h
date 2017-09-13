@@ -127,8 +127,9 @@ class AbstractExpression : public Printable {
 
   const std::string GetInfo() const;
 
-  virtual bool AreEqual(const AbstractExpression *expr1,
-                        const AbstractExpression *expr2) const;
+  static bool AreEqual(const AbstractExpression *expr1,
+                       const AbstractExpression *expr2);
+
   virtual bool operator==(const AbstractExpression &rhs) const;
   virtual bool operator!=(const AbstractExpression &rhs) const {
     return !(*this == rhs);

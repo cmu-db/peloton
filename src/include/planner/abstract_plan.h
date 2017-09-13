@@ -135,5 +135,20 @@ class AbstractPlan : public Printable {
   DISALLOW_COPY_AND_MOVE(AbstractPlan);
 };
 
+class Equal {
+ public:
+  bool operator()(const std::shared_ptr<planner::AbstractPlan> &a,
+                  const std::shared_ptr<planner::AbstractPlan> &b) const {
+    return *a.get() == *b.get();
+  }
+};
+
+class Hash {
+ public:
+  size_t operator()(const std::shared_ptr<planner::AbstractPlan> &plan) const {
+    return static_cast<size_t>(plan->Hash());
+  }
+};
+
 }  // namespace planner
 }  // namespace peloton

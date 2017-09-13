@@ -176,7 +176,7 @@ std::string ProjectInfo::Debug() const {
 }
 
 hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {
-  hash_t hash = HashUtil::Hash(&attribute.attribute_info.type);
+  hash_t hash = HashUtil::Hash(&attribute.attribute_info.type.type_id);
   hash = HashUtil::CombineHashes(hash,
       HashUtil::Hash(&attribute.attribute_info.attribute_id));
   hash = HashUtil::CombineHashes(hash, attribute.expr->Hash());

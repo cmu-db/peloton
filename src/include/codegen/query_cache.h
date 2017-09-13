@@ -21,12 +21,14 @@ namespace codegen {
 
 // Query cache implementation that maps an AbstractPlan with a CodeGen query
 // using LRU eviction policy. The cache is implemented as a singleton.
-// Potential future enhancements:
-//   1) Apply other interesting eviction policies
+// Potential enhancements (major):
+//   1) Persistency may increase the performance when rebooted
+//   2) Apply other eviction policies
 //     e.g. Keep some heavy compilation workloads by mixing policies
-//   2) Manually keep some of the compiled results in the cache
-//   3) Configure the cache size
-//   4) Persistency may increase the performance when rebooted
+//   3) Have a cache per table
+// Potential enhancements (minor):
+//   1) Manually keep some of the compiled results in the cache
+//   2) Configure the cache size
 class QueryCache {
  public:
   static QueryCache& Instance() {
@@ -39,11 +41,11 @@ class QueryCache {
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
            std::unique_ptr<Query> &&val);
 
-  size_t GetSize() { return max_size_; }
+  size_t GetSize() { return size_; }
 
-  void SetSize(size_t max_size) {
-    Resize(max_size);
-    max_size_ = max_size;
+  void SetSize(size_t size) {
+    Resize(size);
+    size_ = size;
   }
 
   size_t GetCount() { return cache_map_.size(); }
@@ -58,20 +60,6 @@ class QueryCache {
  private:
   // Can't consturct
   QueryCache() {}
-
-  struct Compare {
-    bool operator()(const std::shared_ptr<planner::AbstractPlan> &a,
-                    const std::shared_ptr<planner::AbstractPlan> &b) const {
-      return *a.get() == *b.get();
-    }
-  };
-
-  struct Hash {
-    hash_t operator()(const std::shared_ptr<planner::AbstractPlan> &plan)
-        const {
-      return plan->Hash();
-    }
-  };
 
   void Resize(size_t target_size) {
     while (cache_map_.size() > target_size) {
@@ -89,9 +77,10 @@ class QueryCache {
                       std::unique_ptr<Query>>> query_list_;
 
   std::unordered_map<std::shared_ptr<planner::AbstractPlan>,
-           decltype(query_list_.begin()), Hash, Compare> cache_map_;
+           decltype(query_list_.begin()),
+           planner::Hash, planner::Equal> cache_map_;
 
-  size_t max_size_ = 0;
+  size_t size_ = 0;
 };
 
 }  // namespace codegen
