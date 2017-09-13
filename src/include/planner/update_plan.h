@@ -60,6 +60,9 @@ class UpdatePlan : public AbstractPlan {
   }
 
   bool Equals(planner::AbstractPlan &plan) const override;
+
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);

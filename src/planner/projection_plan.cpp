@@ -36,6 +36,22 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
   GetProjectInfo()->PerformRebinding(context, inputs);
 }
 
+hash_t ProjectionPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+
+  auto schema = GetSchema();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&schema));
+
+  for (const oid_t col_id : GetColumnIds()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&col_id));
+  }
+
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool ProjectionPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

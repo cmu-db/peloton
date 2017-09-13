@@ -175,11 +175,36 @@ std::string ProjectInfo::Debug() const {
   return (buffer.str());
 }
 
+hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {
+  hash_t hash = HashUtil::Hash(&attribute.attribute_info.type);
+  hash = HashUtil::CombineHashes(hash,
+      HashUtil::Hash(&attribute.attribute_info.attribute_id));
+  hash = HashUtil::CombineHashes(hash, attribute.expr->Hash());
+  return hash;
+}
+
+hash_t ProjectInfo::Hash() const {
+  hash_t hash = 0;
+
+  for (size_t i = 0; i < GetTargetList().size(); i++) {
+    Target t = GetTargetList().at(i);
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&t.first));
+    hash = HashUtil::CombineHashes(hash, Hash(t.second));
+  }
+
+  for (size_t i = 0; i < GetDirectMapList().size(); i++) {
+    DirectMap dm = GetDirectMapList().at(i);
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.first));
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.first));
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.second));
+  }
+  return hash;
+}
 
 bool ProjectInfo::AreEqual(const planner::DerivedAttribute &A,
                            const planner::DerivedAttribute &B) const {
-  //if (A.attribute_info.type != B.attribute_info.type)
-  //  return false;
+  if (A.attribute_info.type != B.attribute_info.type)
+    return false;
   if (A.attribute_info.attribute_id != B.attribute_info.attribute_id)
     return false;
   return *A.expr == *B.expr;

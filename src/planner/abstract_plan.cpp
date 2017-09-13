@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "expression/expression_util.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace planner {
@@ -59,6 +60,14 @@ void AbstractPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
+}
+
+hash_t AbstractPlan::Hash() const {
+  hash_t hash = 0;
+  for (auto &child : GetChildren()) {
+    hash = HashUtil::CombineHashes(hash, child->Hash());
+  }
+  return hash;
 }
 
 bool AbstractPlan::operator==(const AbstractPlan &rhs) const {

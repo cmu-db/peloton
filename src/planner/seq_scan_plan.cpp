@@ -6,7 +6,7 @@
 //
 // Identification: src/planner/seq_scan_plan.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -264,6 +264,20 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
+}
+
+hash_t SeqScanPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
+  if (GetPredicate() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  for (auto &column_id : GetColumnIds()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&column_id));
+  }
+  auto is_update = IsForUpdate();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_update));
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
 bool SeqScanPlan::operator==(const AbstractPlan &rhs) const {

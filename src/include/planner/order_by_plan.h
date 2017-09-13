@@ -80,6 +80,8 @@ class OrderByPlan : public AbstractPlan {
         new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);

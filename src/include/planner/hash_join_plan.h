@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/hash_join_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -93,6 +93,8 @@ class HashJoinPlan : public AbstractJoinPlan {
         schema_copy, outer_column_ids_, build_bloomfilter_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
 
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {

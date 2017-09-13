@@ -71,6 +71,8 @@ class SeqScanPlan : public AbstractScan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);

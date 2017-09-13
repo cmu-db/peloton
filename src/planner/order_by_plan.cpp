@@ -44,6 +44,25 @@ void OrderByPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+hash_t OrderByPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  for (const oid_t sort_key : GetSortKeys()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&sort_key));
+  }
+
+  for (const bool flag : GetDescendFlags()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&flag));
+  }
+
+  for (const oid_t col_id : GetOutputColumnIds()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&col_id));
+  }
+
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool OrderByPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

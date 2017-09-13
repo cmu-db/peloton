@@ -175,6 +175,17 @@ bool InsertPlan::Equals(AbstractPlan &plan) const {
   return (*this == plan);
 }
 
+hash_t InsertPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
+  if (GetProjectInfo() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+  auto count = GetBulkInsertCount();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&count));
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool InsertPlan::operator==(AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

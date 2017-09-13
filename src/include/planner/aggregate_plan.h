@@ -129,6 +129,8 @@ class AggregatePlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);
@@ -136,7 +138,9 @@ class AggregatePlan : public AbstractPlan {
 
  private:
   bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,
-                const std::vector<planner::AggregatePlan::AggTerm> &B)
+                const std::vector<planner::AggregatePlan::AggTerm> &B) const;
+
+  hash_t Hash(const std::vector<planner::AggregatePlan::AggTerm> &agg_terms)
       const;
 
  private:

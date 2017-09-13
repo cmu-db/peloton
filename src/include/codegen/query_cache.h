@@ -59,11 +59,17 @@ class QueryCache {
   // Can't consturct
   QueryCache() {}
 
-  // Compartor function of AbstractPlan
   struct Compare {
-    bool operator()(const std::shared_ptr<planner::AbstractPlan>& a,
-                    const std::shared_ptr<planner::AbstractPlan>& b) const {
-      return !(*a.get() == *b.get());
+    bool operator()(const std::shared_ptr<planner::AbstractPlan> &a,
+                    const std::shared_ptr<planner::AbstractPlan> &b) const {
+      return *a.get() == *b.get();
+    }
+  };
+
+  struct Hash {
+    hash_t operator()(const std::shared_ptr<planner::AbstractPlan> &plan)
+        const {
+      return plan->Hash();
     }
   };
 
@@ -82,8 +88,8 @@ class QueryCache {
   std::list<std::pair<std::shared_ptr<planner::AbstractPlan>,
                       std::unique_ptr<Query>>> query_list_;
 
-  std::map<std::shared_ptr<planner::AbstractPlan>,
-           decltype(query_list_.begin()), Compare> cache_map_;
+  std::unordered_map<std::shared_ptr<planner::AbstractPlan>,
+           decltype(query_list_.begin()), Hash, Compare> cache_map_;
 
   size_t max_size_ = 0;
 };
