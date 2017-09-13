@@ -15,6 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/comparison_expression.h"
 #include "common/sql_node_visitor.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
@@ -101,6 +102,17 @@ class CaseExpression : public AbstractExpression {
     if (default_expr_ != nullptr) {
       default_expr_->PerformBinding(binding_contexts);
     }
+  }
+
+  hash_t Hash() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    for (auto &clause : clauses_) {
+      hash = HashUtil::CombineHashes(hash, clause.first->Hash());
+      hash = HashUtil::CombineHashes(hash, clause.second->Hash());
+    }
+    if (default_expr_ != nullptr)
+      hash = HashUtil::CombineHashes(hash, default_expr_->Hash());
+    return hash;
   }
 
   bool operator==(const AbstractExpression &rhs) const override {
