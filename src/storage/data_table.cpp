@@ -1205,6 +1205,15 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
+
+hash_t DataTable::Hash() const {
+  auto oid = GetOid();
+  hash_t hash = HashUtil::Hash(&oid);
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(GetName().c_str(),
+                                                           GetName().length()));
+  auto db_oid = GetOid();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&db_oid));
+  return hash;
 }
 
 bool DataTable::Equals(const storage::DataTable &other) const {

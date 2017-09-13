@@ -70,6 +70,29 @@ void HashJoinPlan::HandleSubplanBinding(bool is_left,
   }
 }
 
+hash_t HashJoinPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  auto join_type = GetJoinType();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&join_type));
+  if (GetPredicate() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  if (GetProjInfo() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetProjInfo()->Hash());
+  std::vector<const expression::AbstractExpression *> keys;
+  GetLeftHashKeys(keys);
+  for (size_t i = 0; i < keys.size(); i++) {
+    hash = HashUtil::CombineHashes(hash, keys.at(i)->Hash());
+  }
+  keys.clear();
+  GetRightHashKeys(keys);
+  for (size_t i = 0; i < keys.size(); i++) {
+    hash = HashUtil::CombineHashes(hash, keys.at(i)->Hash());
+  }
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

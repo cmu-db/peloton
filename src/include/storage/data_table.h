@@ -289,6 +289,8 @@ class DataTable : public AbstractTable {
   ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
                                 bool check_constraint = true);
 
+  hash_t Hash() const;
+
   bool Equals(const storage::DataTable &other) const;
   bool operator==(const DataTable &rhs) const;
   bool operator!=(const DataTable &rhs) const { return !(*this == rhs); }

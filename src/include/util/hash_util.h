@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// util.h
+// hash_util.h
 //
 // Identification: src/include/util/hash_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
