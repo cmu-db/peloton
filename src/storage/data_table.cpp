@@ -1205,6 +1205,7 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
+}
 
 hash_t DataTable::Hash() const {
   auto oid = GetOid();
