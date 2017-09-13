@@ -53,6 +53,8 @@ class UpdatePlan : public AbstractPlan {
         new UpdatePlan(target_table_, project_info_->Copy()));
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);

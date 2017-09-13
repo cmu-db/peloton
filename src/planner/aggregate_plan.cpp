@@ -121,6 +121,42 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+hash_t AggregatePlan::Hash(
+    const std::vector<planner::AggregatePlan::AggTerm> &agg_terms) const {
+  hash_t hash = 0;
+  for (auto &agg_term : agg_terms) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.aggtype));
+    if (agg_term.expression != nullptr)
+      hash = HashUtil::CombineHashes(hash, agg_term.expression->Hash());
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.distinct));
+  }
+  return hash;
+}
+
+hash_t AggregatePlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  if (GetPredicate() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+
+  hash = HashUtil::CombineHashes(hash, Hash(GetUniqueAggTerms()));
+
+  if (GetProjectInfo() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+
+  for (const oid_t gb_col_id : GetGroupbyColIds()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&gb_col_id));
+  }
+
+  hash = HashUtil::CombineHashes(hash, GetOutputSchema()->Hash());
+
+  auto agg_strategy = GetAggregateStrategy();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_strategy));
+
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool AggregatePlan::AreEqual(
     const std::vector<planner::AggregatePlan::AggTerm> &A,
     const std::vector<planner::AggregatePlan::AggTerm> &B) const {

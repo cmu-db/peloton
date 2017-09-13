@@ -23,6 +23,7 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/value.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 
@@ -112,6 +113,8 @@ class AbstractPlan : public Printable {
     return false;
   }
   virtual int SerializeSize() { return 0; }
+
+  virtual hash_t Hash() const;
 
   virtual bool operator==(const AbstractPlan &rhs) const;
   virtual bool operator!=(const AbstractPlan &rhs) const {

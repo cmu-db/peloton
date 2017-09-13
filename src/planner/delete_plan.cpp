@@ -27,6 +27,13 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
   children[0]->SetParameterValues(values);
 }
 
+hash_t DeletePlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool DeletePlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

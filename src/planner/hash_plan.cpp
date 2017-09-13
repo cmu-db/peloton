@@ -27,6 +27,14 @@ void HashPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+hash_t HashPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  for (auto &hash_key : hash_keys_)
+    hash = HashUtil::CombineHashes(hash, hash_key->Hash());
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
 bool HashPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;

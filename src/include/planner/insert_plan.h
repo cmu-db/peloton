@@ -82,6 +82,8 @@ class InsertPlan : public AbstractPlan {
     return dummy;
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);

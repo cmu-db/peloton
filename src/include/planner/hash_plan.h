@@ -49,6 +49,8 @@ class HashPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new HashPlan(copied_hash_keys));
   }
 
+  hash_t Hash() const override;
+
   bool operator==(const AbstractPlan &rhs) const override;
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);
