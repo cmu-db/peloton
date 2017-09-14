@@ -429,14 +429,16 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
         oid_t tg_offset = (oid_t) record_decode.ReadLong();
 
         ItemPointer location(tg_block, tg_offset);
-        if(record_type != LogRecordType::TUPLE_DELETE){
+        auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
+            
             // XXX: We still rely on an alive catalog manager
-            auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
             auto schema = table->GetSchema();
 
             // Decode the tuple from the record
             std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema,true));
-           // record_decode.ReadInt();
+           
+        if(record_type != LogRecordType::TUPLE_DELETE){
+            // record_decode.ReadInt();
 
             for(oid_t oid = 0; oid < schema->GetColumns().size(); oid++){
                 type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
@@ -453,7 +455,8 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
         if(database_id == 16777216){ //catalog database oid
             switch (table_id){
                 case 33554433: //pg_table
-                    {auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
+                    {
+                    auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
                     database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
                     LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
                     columns.clear();
