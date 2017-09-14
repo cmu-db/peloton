@@ -174,8 +174,8 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
         // we should set the version before releasing the lock.
 
         new_tile_group_header->SetTransactionId(insert_location.offset,
-                                                INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+                                                INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         /*// we must guarantee that, at any time point, only one version is
         // visible.
