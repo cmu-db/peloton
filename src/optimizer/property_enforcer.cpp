@@ -52,10 +52,6 @@ void PropertyEnforcer::Visit(const PropertyLimit *) {
   output_gexpr_ =
     std::make_shared<GroupExpression>(PhysicalLimit::make(), child_groups);
 }
-  
-void PropertyEnforcer::Visit(const PropertyPredicate *) {}
-  
-
 
 }  // namespace optimizer
 }  // namespace peloton

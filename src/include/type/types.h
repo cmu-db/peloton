@@ -1266,7 +1266,6 @@ typedef std::vector<DirectMap> DirectMapList;
 
 enum class PropertyType {
   INVALID = INVALID_TYPE_ID,
-  PREDICATE,
   COLUMNS,
   DISTINCT,
   SORT,
