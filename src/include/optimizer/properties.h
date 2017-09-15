@@ -134,28 +134,5 @@ class PropertySort : public Property {
   std::vector<bool> sort_ascending_;
 };
 
-// Specifies the predicate that the tuples returned by the query should satisfy
-class PropertyPredicate : public Property {
- public:
-  PropertyPredicate(expression::AbstractExpression *predicate);
-
-  PropertyType Type() const override;
-
-  hash_t Hash() const override;
-
-  bool operator>=(const Property &r) const override;
-
-  void Accept(PropertyVisitor *v) const override;
-
-  std::string ToString() const override;
-
-  inline expression::AbstractExpression *GetPredicate() const {
-    return predicate_.get();
-  }
-
- private:
-  std::unique_ptr<expression::AbstractExpression> predicate_;
-};
-
 } // namespace optimizer
 } // namespace peloton

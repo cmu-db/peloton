@@ -456,21 +456,6 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
   return column_ids;
 }
 
-// Generate predicate for scan plan
-//expression::AbstractExpression *
-//OperatorToPlanTransformer::GeneratePredicateForScan(
-//    const PropertyPredicate *predicate_prop, const std::string &alias,
-//    const storage::DataTable *table) {
-//  expression::AbstractExpression *predicate = nullptr;
-//  if (predicate_prop != nullptr) {
-//    ExprMap table_expr_map;
-//    GenerateTableExprMap(table_expr_map, alias, table);
-//    predicate = predicate_prop->GetPredicate()->Copy();
-//    expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
-//  }
-//  return predicate;
-//}
-
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
     const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
@@ -632,34 +617,16 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // with predicate in join clause
   // TODO the two predicate should not be combined
   // But hash plan currently only have one predicate
-  vector<expression::AbstractExpression *> predicates;
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
-  if (predicate_prop != nullptr) {
-    auto where_predicate = predicate_prop->GetPredicate()->Copy();
-    LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
-    predicates.emplace_back(where_predicate);
-  }
-
   // Extract join columns
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate);
   vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys,
       right_hash_keys;
-  auto remaining_predicate = expression::ExpressionUtil::ExtractJoinColumns(
-      left_hash_keys, right_hash_keys, join_predicate);
-  if (remaining_predicate != nullptr) {
-    LOG_TRACE("remaining %s", remaining_predicate->GetInfo().c_str());
-    predicates.emplace_back(remaining_predicate);
-  }
 
   // Generate the combined predicate and evaluate it
   unique_ptr<expression::AbstractExpression> predicate{
-      util::CombinePredicates(predicates)};
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 predicate.get());
+      expression::ExpressionUtil::ExtractJoinColumns(
+      left_hash_keys, right_hash_keys, join_predicate)};
 
   unique_ptr<planner::AbstractPlan> join_plan;
   if (is_hash) {

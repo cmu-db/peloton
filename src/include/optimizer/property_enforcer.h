@@ -34,7 +34,6 @@ class PropertyEnforcer : public PropertyVisitor {
 
   virtual void Visit(const PropertyColumns *) override;
   virtual void Visit(const PropertySort *) override;
-  virtual void Visit(const PropertyPredicate *) override;
   virtual void Visit(const PropertyDistinct *) override;
   virtual void Visit(const PropertyLimit *) override;
 

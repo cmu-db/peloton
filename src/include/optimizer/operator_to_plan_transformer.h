@@ -97,9 +97,6 @@ class OperatorToPlanTransformer : public OperatorVisitor {
                                             const std::string &alias,
                                             const storage::DataTable *table);
 
-//  expression::AbstractExpression *GeneratePredicateForScan(
-//      const PropertyPredicate *predicate_prop, const std::string &alias, const storage::DataTable *table);
-
   expression::AbstractExpression *GeneratePredicateForScan(
       const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
       const storage::DataTable *table);
