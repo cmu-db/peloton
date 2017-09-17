@@ -48,7 +48,6 @@ void PlanExecutor::ExecutePlan(
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%lu)", txxn->GetTransactionId());
 
-//  ExecuteResult p_status;
   result.clear();
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));
