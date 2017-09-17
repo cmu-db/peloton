@@ -18,7 +18,6 @@
 #include "type/types.h"
 #include "catalog/catalog.h"
 #include "concurrency/testing_transaction_util.h"
-#include "tcop/tcop.h"
 #include "planner/plan_util.h"
 #include "planner/create_plan.h"
 #include "executor/executors.h"
