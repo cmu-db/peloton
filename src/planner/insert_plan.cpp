@@ -65,7 +65,7 @@ InsertPlan::InsertPlan(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
         int param_index = 0;
-        for (expression::AbstractExpression *elem : *values) {
+        for (auto& elem : values) {
           // Default value to be inserted
           if (elem == nullptr) {
             // No default value

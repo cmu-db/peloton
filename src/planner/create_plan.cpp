@@ -203,15 +203,15 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
   ForeignKeyInfo fkey_info;
 
   // Extract source and sink column names
-  for (auto key : *(col->foreign_key_source)) {
+  for (auto& key : col->foreign_key_source) {
     fkey_info.foreign_key_sources.push_back(key);
   }
-  for (auto key : *(col->foreign_key_sink)) {
+  for (auto& key : col->foreign_key_sink) {
     fkey_info.foreign_key_sinks.push_back(key);
   }
 
   // Extract table names
-  fkey_info.sink_table_name = strdup(col->table_info_->table_name);
+  fkey_info.sink_table_name = col->table_info_->table_name;
 
   // Extract delete and update actions
   fkey_info.upd_action = col->foreign_key_update_action;
