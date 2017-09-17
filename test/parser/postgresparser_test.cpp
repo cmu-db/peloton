@@ -632,11 +632,11 @@ TEST_F(PostgresParserTests, CreateTest) {
   EXPECT_EQ(column->varlen, 255);
 
   // Check Foreign Key Constraint
-  column = create_stmt->columns->at(4);
+  column = create_stmt->columns.at(4).get();
   EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
-  EXPECT_EQ("c_id", std::string(column->foreign_key_source->at(0)));
-  EXPECT_EQ("cid", std::string(column->foreign_key_sink->at(0)));
-  EXPECT_EQ("country", std::string(column->table_info_->table_name));
+  EXPECT_EQ("c_id", column->foreign_key_source.at(0));
+  EXPECT_EQ("cid", column->foreign_key_sink.at(0));
+  EXPECT_EQ("country", column->table_info_->table_name);
 
   delete stmt_list;
 }
@@ -781,10 +781,9 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   column = create_stmt->columns.at(1).get();
   EXPECT_EQ("b", column->name);
   EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
-  EXPECT_TRUE(column->foreign_key_sink != nullptr);
-  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
-  EXPECT_EQ("bb", std::string(column->foreign_key_sink->at(0)));
-  EXPECT_EQ("table2", std::string(column->table_info_->table_name));
+  EXPECT_TRUE(column->foreign_key_sink.size() == 1);
+  EXPECT_EQ("bb", column->foreign_key_sink.at(0));
+  EXPECT_EQ("table2", column->table_info_->table_name);
   EXPECT_EQ(FKConstrActionType::CASCADE, column->foreign_key_update_action);
   EXPECT_EQ(FKConstrActionType::NOACTION, column->foreign_key_delete_action);
   EXPECT_EQ(FKConstrMatchType::SIMPLE, column->foreign_key_match_type);
@@ -793,10 +792,9 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   column = create_stmt->columns.at(2).get();
   EXPECT_EQ("c", column->name);
   EXPECT_EQ(parser::ColumnDefinition::DataType::VARCHAR, column->type);
-  EXPECT_TRUE(column->foreign_key_sink != nullptr);
-  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
-  EXPECT_EQ("cc", std::string(column->foreign_key_sink->at(0)));
-  EXPECT_EQ("table3", std::string(column->table_info_->table_name));
+  EXPECT_TRUE(column->foreign_key_sink.size() == 1);
+  EXPECT_EQ("cc", column->foreign_key_sink.at(0));
+  EXPECT_EQ("table3", column->table_info_->table_name);
   EXPECT_EQ(FKConstrActionType::NOACTION, column->foreign_key_update_action);
   EXPECT_EQ(FKConstrActionType::SETNULL, column->foreign_key_delete_action);
   EXPECT_EQ(FKConstrMatchType::FULL, column->foreign_key_match_type);
@@ -825,12 +823,10 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   // Check Fifth column
   column = create_stmt->columns.at(4).get();
   EXPECT_EQ(parser::ColumnDefinition::DataType::FOREIGN, column->type);
-  EXPECT_TRUE(column->foreign_key_source != nullptr);
-  EXPECT_TRUE(column->foreign_key_source->size() == 1);
-  EXPECT_EQ("d", std::string(column->foreign_key_source->at(0).get()));
-  EXPECT_TRUE(column->foreign_key_sink != nullptr);
-  EXPECT_TRUE(column->foreign_key_sink->size() == 1);
-  EXPECT_EQ("dd", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_TRUE(column->foreign_key_source.size() == 1);
+  EXPECT_EQ("d", column->foreign_key_source.at(0));
+  EXPECT_TRUE(column->foreign_key_sink.size() == 1);
+  EXPECT_EQ("dd", column->foreign_key_sink.at(0));
   EXPECT_EQ("table4", std::string(column->table_info_->table_name));
   EXPECT_EQ(FKConstrActionType::SETDEFAULT, column->foreign_key_update_action);
   EXPECT_EQ(FKConstrActionType::NOACTION, column->foreign_key_delete_action);
