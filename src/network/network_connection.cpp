@@ -56,7 +56,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   }
 
   if (workpool_event == nullptr) {
-    workpool_event = event_new(thread->GetEventBase(), -1, EV_WRITE|EV_PERSIST,
+    workpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
     CallbackUtil::EventHandler, this);
   } else {
     if (event_del(workpool_event) == -1) {
@@ -64,7 +64,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
     auto result = event_assign(workpool_event, thread->GetEventBase(), -1,
-                                EV_WRITE|EV_PERSIST, CallbackUtil::EventHandler, this);
+                                EV_PERSIST, CallbackUtil::EventHandler, this);
     if (result != 0) {
       LOG_ERROR("Failed to update workpool event");
       PL_ASSERT(false);
