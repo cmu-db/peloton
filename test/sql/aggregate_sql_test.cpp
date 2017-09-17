@@ -76,12 +76,6 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
 }
 
 TEST_F(AggregateSQLTests, MinMaxTest) {
-<<<<<<< HEAD
-=======
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
->>>>>>> eb6cb8f0f... when exiting the test, 'pure virtual method called' bug occur, remove log
   // Create a table first
   // TODO: LM: I didn't test boolean here because we can't insert booleans
   // into the table
