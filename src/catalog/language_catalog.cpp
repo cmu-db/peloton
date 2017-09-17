@@ -36,7 +36,7 @@ LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
                       txn) {
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME,
-      {"lanname"}, LANGUAGE_CATALOG_NAME "_skey0",
+      {1}, LANGUAGE_CATALOG_NAME "_skey0",
       false, IndexType::BWTREE, txn);
 }
 

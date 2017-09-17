@@ -42,7 +42,7 @@ ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
 
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, PROC_CATALOG_NAME,
-      {"proname", "proargtypes"}, PROC_CATALOG_NAME "_skey0",
+      {1,3}, PROC_CATALOG_NAME "_skey0",
       false, IndexType::BWTREE, txn);
 }
 
