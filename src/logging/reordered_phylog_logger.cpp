@@ -130,9 +130,8 @@ txn_id_t ReorderedPhyLogLogger::LockTuple(storage::TileGroupHeader *tg_header, o
 
 void ReorderedPhyLogLogger::UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id) {
   PL_ASSERT(new_txn_id == INVALID_TXN_ID || new_txn_id == INITIAL_TXN_ID);
-  LOG_DEBUG("Transaction ID before %lu", new_txn_id);
-  txn_id_t a = tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t) (this->logger_id_), new_txn_id);
-  LOG_DEBUG("Transaction ID after %lu", a);
+  tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t) (this->logger_id_), new_txn_id);
+
 }
 
 bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location) {
@@ -159,23 +158,39 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
            LOG_ERROR("Failed to get tuple slot");
            return false;
          }
+         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
+       //  PL_ASSERT(cid > end_commit_id);
+         auto new_tile_group_header =
+             catalog::Manager::GetInstance().GetTileGroup(insert_location.block)->GetHeader();
+         new_tile_group_header->SetBeginCommitId(insert_location.offset,
+                                                 cur_cid);
+         new_tile_group_header->SetEndCommitId(insert_location.offset, cid);
 
-        auto cid = tile_group_header->GetEndCommitId(tuple_slot);
+
+         tile_group_header->SetEndCommitId(tuple_slot, cur_cid);
+
+         // we should set the version before releasing the lock.
+
+         new_tile_group_header->SetTransactionId(insert_location.offset,
+                                                 INITIAL_TXN_ID);
+         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+       // auto cid = tile_group_header->GetEndCommitId(tuple_slot);
       //  PL_ASSERT(cid > end_commit_id);
-        auto new_tile_group_header =
-            catalog::Manager::GetInstance().GetTileGroup(insert_location.block)->GetHeader();
-        new_tile_group_header->SetBeginCommitId(insert_location.offset,
-                                                cur_cid);
-        new_tile_group_header->SetEndCommitId(insert_location.offset, cid);
+//        auto new_tile_group_header =
+//            catalog::Manager::GetInstance().GetTileGroup(insert_location.block)->GetHeader();
+//        new_tile_group_header->SetBeginCommitId(insert_location.offset,
+//                                                cur_cid);
+//        new_tile_group_header->SetEndCommitId(insert_location.offset, MAX_CID);
 
 
-        tile_group_header->SetEndCommitId(tuple_slot, cur_cid);
+        //tile_group_header->SetEndCommitId(tuple_slot, cur_cid);
 
         // we should set the version before releasing the lock.
 
-        new_tile_group_header->SetTransactionId(insert_location.offset,
-                                                INITIAL_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+//        new_tile_group_header->SetTransactionId(insert_location.offset,
+//                                                INITIAL_TXN_ID);
+        //tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         /*// we must guarantee that, at any time point, only one version is
         // visible.
@@ -231,6 +246,7 @@ bool ReorderedPhyLogLogger::InstallTupleRecord(LogRecordType type, storage::Tupl
         tile_group_header->SetBeginCommitId(insert_location.offset, cur_cid);
         tile_group_header->SetEndCommitId(insert_location.offset, MAX_CID);
         tile_group_header->SetTransactionId(insert_location.offset, INITIAL_TXN_ID);
+        tile_group_header->SetNextItemPointer(insert_location.offset, INVALID_ITEMPOINTER);
 
       }
 //  if (itemptr_ptrs.empty()) {
@@ -411,24 +427,115 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
         break;
       }
       case LogRecordType::TUPLE_INSERT:
+        {if (current_cid == INVALID_CID){
+            LOG_ERROR("Invalid txn tuple record");
+            return false;
+          }
+
+          oid_t database_id = (oid_t) record_decode.ReadLong();
+          oid_t table_id = (oid_t) record_decode.ReadLong();
+
+          oid_t tg_block = (oid_t) record_decode.ReadLong();
+          oid_t tg_offset = (oid_t) record_decode.ReadLong();
+
+          //auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tg_block);
+          ItemPointer location(tg_block, tg_offset);
+          auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
+          auto schema = table->GetSchema();
+
+          std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema,true));
+              for(oid_t oid = 0; oid < schema->GetColumns().size(); oid++){
+                  type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
+                  tuple->SetValue(oid, val);
+              }
+              // Install the record
+              InstallTupleRecord(record_type, tuple.get(), table, current_cid, location);
+          //  tile_group->InsertTupleFromRecovery(current_cid,tg_offset,tuple.get());
+          if(database_id == 16777216){ //catalog database oid
+              switch (table_id){
+                  case 33554433: //pg_table
+                      {
+                      auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
+                      database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
+                      LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
+                      columns.clear();
+                      break;
+              }
+                  case 33554435: //pg_attribute
+                      {
+                      std::string typeId = tuple->GetValue(4).ToString();
+                      type::TypeId column_type = StringToTypeId(typeId);
+                      if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
+                          columns.insert(columns.begin(), catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
+                      } else {
+                          columns.insert(columns.begin(),catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
+                      }
+                      LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
+                      break;
+              }
+              }
+          }
+          break;
+    }
       case LogRecordType::TUPLE_DELETE:
+    {
+        if (current_cid == INVALID_CID){
+            LOG_ERROR("Invalid txn tuple record");
+            return false;
+          }
+
+          oid_t database_id = (oid_t) record_decode.ReadLong();
+          oid_t table_id = (oid_t) record_decode.ReadLong();
+
+          oid_t tg_block = (oid_t) record_decode.ReadLong();
+          oid_t tg_offset = (oid_t) record_decode.ReadLong();
+
+          ItemPointer location(tg_block, tg_offset);
+          auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
+
+
+              InstallTupleRecord(record_type, nullptr, table, current_cid, location);
+
+
+        //This code might be useful on drop
+        /*if(database_id == 16777216){ //catalog database oid
+              switch (table_id){
+                  case 33554433: //pg_table
+                      {
+                      auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
+                      database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
+                      LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
+                      columns.clear();
+                      break;}
+                  case 33554435: //pg_attribute
+                      {
+                      std::string typeId = tuple->GetValue(4).ToString();
+                      type::TypeId column_type = StringToTypeId(typeId);
+                      if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
+                          columns.insert(columns.begin(), catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
+                      } else {
+                          columns.insert(columns.begin(),catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
+                      }
+                      LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
+                      break;}
+              }
+          }*/
+          break;
+    }
       case LogRecordType::TUPLE_UPDATE:{
-        if (current_cid == INVALID_CID){// || current_eid == INVALID_EID) {
+        if (current_cid == INVALID_CID){
           LOG_ERROR("Invalid txn tuple record");
           return false;
         }
 
-//        if (current_eid < checkpoint_eid || current_eid > persist_eid) {
-//          break;
-//        }
 
         oid_t database_id = (oid_t) record_decode.ReadLong();
         oid_t table_id = (oid_t) record_decode.ReadLong();
 
-        oid_t tg_block = (oid_t) record_decode.ReadLong();
-        oid_t tg_offset = (oid_t) record_decode.ReadLong();
+        oid_t old_tg_block = (oid_t) record_decode.ReadLong();
+        oid_t old_tg_offset = (oid_t) record_decode.ReadLong();
 
-        ItemPointer location(tg_block, tg_offset);
+        ItemPointer location(old_tg_block, old_tg_offset);
         auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
             
             // XXX: We still rely on an alive catalog manager
@@ -437,8 +544,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
             // Decode the tuple from the record
             std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema,true));
            
-        if(record_type != LogRecordType::TUPLE_DELETE){
-            // record_decode.ReadInt();
+
 
             for(oid_t oid = 0; oid < schema->GetColumns().size(); oid++){
                 type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
@@ -448,9 +554,7 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
 
             // Install the record
             InstallTupleRecord(record_type, tuple.get(), table, current_cid, location);
-        } else {
-            InstallTupleRecord(record_type, nullptr, table, current_cid, location);
-        }
+
         //txn_manager.PerformInsert(txn, location);
         if(database_id == 16777216){ //catalog database oid
             switch (table_id){
@@ -466,9 +570,9 @@ bool ReorderedPhyLogLogger::ReplayLogFile(FileHandle &file_handle){ //, size_t c
                     std::string typeId = tuple->GetValue(4).ToString();
                     type::TypeId column_type = StringToTypeId(typeId);
                     if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
-                        columns.push_back(catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
+                        columns.insert(columns.begin(), catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>()));
                     } else {
-                        columns.push_back(catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
+                        columns.insert(columns.begin(),catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
                     }
                     LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
                     break;}
@@ -599,7 +703,7 @@ void ReorderedPhyLogLogger::Run() {
     if (is_running_ == false) { break; }
 
     std::this_thread::sleep_for(
-      std::chrono::microseconds(10000000));//epoch_manager.GetEpochLengthInMicroSecQuarter()));
+      std::chrono::microseconds(5000));//epoch_manager.GetEpochLengthInMicroSecQuarter()));
 
 //    size_t current_global_eid = epoch_manager.GetCurrentEpochId();
 
