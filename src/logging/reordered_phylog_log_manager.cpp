@@ -105,6 +105,7 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
   {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
+      auto old_tuple_pos = record.GetOldItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
       std::vector<catalog::Column> columns;
 
@@ -112,8 +113,8 @@ void ReorderedPhyLogLogManager::WriteRecordToBuffer(LogRecord &record) {
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
 
-      output_buffer_.WriteLong(tuple_pos.block);
-      output_buffer_.WriteLong(tuple_pos.offset);
+      output_buffer_.WriteLong(old_tuple_pos.block);
+      output_buffer_.WriteLong(old_tuple_pos.offset);
 
 
       // Write the full tuple into the buffer
@@ -188,8 +189,9 @@ void ReorderedPhyLogLogManager::LogInsert(const ItemPointer &tuple_pos) {
   WriteRecordToBuffer(record);
 }
 
-void ReorderedPhyLogLogManager::LogUpdate(const ItemPointer &tuple_pos) {
+void ReorderedPhyLogLogManager::LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, tuple_pos);
+  record.SetOldItemPointer(tuple_old_pos);
   WriteRecordToBuffer(record);
 }
 
