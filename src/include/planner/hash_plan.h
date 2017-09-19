@@ -58,6 +58,9 @@ class HashPlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t>
+          &index) const override;
  private:
   std::vector<HashKeyPtrType> hash_keys_;
 

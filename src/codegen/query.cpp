@@ -12,16 +12,21 @@
 
 #include "codegen/query.h"
 
-#include "storage/storage_manager.h"
+#include "codegen/query_parameters.h"
 #include "common/logger.h"
 #include "common/timer.h"
+#include "executor/executor_context.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
 
 // Constructor
 Query::Query(const planner::AbstractPlan &query_plan)
-    : query_plan_(query_plan) {}
+    : query_plan_(query_plan) {
+  // Collect all the parameter information from the query plan
+  query_plan_.ExtractParameters(parameters_, parameters_index_);
+}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
@@ -50,6 +55,7 @@ void Query::Execute(concurrency::Transaction &txn,
     concurrency::Transaction *txn;
     storage::StorageManager *catalog;
     executor::ExecutorContext *executor_context;
+    QueryParameters *query_parameters;
     char *consumer_arg;
     char rest[0];
   } PACKED;
@@ -60,6 +66,11 @@ void Query::Execute(concurrency::Transaction &txn,
   func_args->catalog = storage::StorageManager::GetInstance();
   func_args->executor_context = executor_context;
   func_args->consumer_arg = consumer_arg;
+
+  // Set up the query parameters
+  std::unique_ptr<QueryParameters> query_parameters{new QueryParameters(
+      parameters_, parameters_index_, executor_context->GetParams())};
+  func_args->query_parameters = query_parameters.get();
 
   // Timer
   Timer<std::ratio<1, 1000>> timer;

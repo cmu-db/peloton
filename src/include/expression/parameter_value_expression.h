@@ -57,6 +57,17 @@ class ParameterValueExpression : public AbstractExpression {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<planner::Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index) const
+      override {
+    AbstractExpression::ExtractParameters(parameters, index);
+
+    // Add a new parameter object for a parameter
+    parameters.push_back(planner::Parameter::CreateParameter(GetValueType(),
+                                                             GetValueIdx()));
+    index[this] = parameters.size() - 1;
+  };
+
  protected:
   int value_idx_;
 

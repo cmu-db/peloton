@@ -105,5 +105,16 @@ bool UpdatePlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void UpdatePlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+
+  auto *proj_info = GetProjectInfo();
+  if (proj_info != nullptr) {
+    proj_info->ExtractParameters(parameters, index);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

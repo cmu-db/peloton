@@ -76,6 +76,7 @@ class ValueFactory {
       UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     uint32_t len =
         static_cast<uint32_t>(value == nullptr ? 0u : strlen(value) + 1);
+    printf("value(%s)(%u)\n", value, len);
     return GetVarcharValue(value, len, manage_data);
   }
 

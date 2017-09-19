@@ -218,5 +218,29 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   return (AbstractPlan::operator==(rhs));
 }
 
+void AggregatePlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+  for (const auto &agg_term : GetUniqueAggTerms()) {
+    if (agg_term.expression != nullptr) {
+      agg_term.expression->ExtractParameters(parameters, index);
+    }
+  }
+
+  if (GetGroupbyColIds().size() > 0) {
+    // HashGroupBy
+    auto predicate = GetPredicate();
+    if (predicate != nullptr) {
+      predicate->ExtractParameters(parameters, index);
+    }
+
+    auto projection = GetProjectInfo();
+    if (projection != nullptr) {
+      projection->ExtractParameters(parameters, index);
+    }
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

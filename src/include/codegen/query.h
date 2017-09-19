@@ -14,6 +14,7 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 
@@ -27,6 +28,7 @@ class ExecutorContext;
 
 namespace planner {
 class AbstractPlan;
+class Parameter;
 }  // namespace planner
 
 namespace codegen {
@@ -68,6 +70,19 @@ class Query {
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
+  // Reset the parameters so that this query can be reused
+  void ReplaceParameters(const planner::AbstractPlan &plan) {
+    parameters_.clear();
+    parameters_index_.clear();
+    plan.ExtractParameters(parameters_, parameters_index_);
+  };
+
+  size_t GetParameterIdx(const expression::AbstractExpression *expression) {
+    auto param = parameters_index_.find(expression);
+    PL_ASSERT(param != parameters_index_.end());
+    return param->second;
+  }
+
  private:
   friend class QueryCompiler;
 
@@ -89,6 +104,11 @@ class Query {
   compiled_function_t init_func_;
   compiled_function_t plan_func_;
   compiled_function_t tear_down_func_;
+
+  // The parameters and mapping for expression and parameter ids to 
+  std::vector<planner::Parameter> parameters_;
+  std::unordered_map<const expression::AbstractExpression *, size_t>
+      parameters_index_;
 
  private:
   // This class cannot be copy or move-constructed

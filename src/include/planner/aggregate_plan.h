@@ -136,6 +136,10 @@ class AggregatePlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+      const override;
+
  private:
   bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,
                 const std::vector<planner::AggregatePlan::AggTerm> &B) const;

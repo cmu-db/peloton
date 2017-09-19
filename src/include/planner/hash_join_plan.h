@@ -101,6 +101,10 @@ class HashJoinPlan : public AbstractJoinPlan {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+      const override;
+
  private:
   std::vector<oid_t> outer_column_ids_;
 

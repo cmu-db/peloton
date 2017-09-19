@@ -139,6 +139,20 @@ class CaseExpression : public AbstractExpression {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<planner::Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index)
+      const override {
+    AbstractExpression::ExtractParameters(parameters, index);
+    for (const auto &clause : clauses_) {
+      clause.first->ExtractParameters(parameters, index);
+      clause.second->ExtractParameters(parameters, index);
+    }
+
+    if (GetDefault() != nullptr) {
+      default_expr_->ExtractParameters(parameters, index);
+    }
+  };
+
  private:
   // The list of case-when clauses
   std::vector<WhenClause> clauses_;

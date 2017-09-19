@@ -45,6 +45,10 @@ class ExpressionTranslator {
     return static_cast<const T &>(expression_);
   }
 
+ protected:
+  // The compilation state context
+  CompilationContext &context_;
+
  private:
   // The expression
   const expression::AbstractExpression &expression_;
