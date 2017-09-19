@@ -105,7 +105,7 @@ public:
 
 
   void LogInsert(const ItemPointer &tuple_pos);
-  void LogUpdate(const ItemPointer &tuple_pos);
+  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos);
   void LogDelete(const ItemPointer &tuple_pos_deleted);
 
   void StartPersistTxn(cid_t commit_id);

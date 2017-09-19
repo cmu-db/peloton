@@ -26,11 +26,11 @@ namespace logging {
 class LogRecord {
   friend class LogRecordFactory;
 private:
-  LogRecord(LogRecordType log_type, const ItemPointer &pos, 
+  LogRecord(LogRecordType log_type, const ItemPointer &pos,
             const eid_t epoch_id, const cid_t commit_id)
     : log_record_type_(log_type), 
-      tuple_pos_(pos), 
-      eid_(epoch_id), 
+      tuple_pos_(pos),
+      eid_(epoch_id),
       cid_(commit_id) {}
 
 public:
@@ -39,6 +39,8 @@ public:
   inline LogRecordType GetType() const { return log_record_type_; }
 
   inline void SetItemPointer(const ItemPointer &pos) { tuple_pos_ = pos; }
+
+  inline void SetOldItemPointer(const ItemPointer &pos) { old_tuple_pos_ = pos; }
 
   inline void SetEpochId(const eid_t epoch_id) { eid_ = epoch_id; }
 
@@ -55,9 +57,9 @@ public:
 private:
   LogRecordType log_record_type_;
 
-  ItemPointer tuple_pos_;
-  
   ItemPointer old_tuple_pos_;
+
+  ItemPointer tuple_pos_;
 
   eid_t eid_;
 
