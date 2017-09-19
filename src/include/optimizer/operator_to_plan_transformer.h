@@ -37,6 +37,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   OperatorToPlanTransformer();
 
   std::unique_ptr<planner::AbstractPlan> ConvertOpExpression(
+      Memo* memo,
       std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
       std::vector<PropertySet> *required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
@@ -98,7 +99,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
                                             const storage::DataTable *table);
 
   expression::AbstractExpression *GeneratePredicateForScan(
-      const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
+      expression::AbstractExpression* predicate_expr, const std::string &alias,
       const storage::DataTable *table);
 
   // Generate group by plan
@@ -119,6 +120,9 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   std::vector<ExprMap> children_expr_map_;
   ExprMap *output_expr_map_;
+
+  std::unordered_set<std::string> table_alias_set_;
+  Memo* memo_;
 };
 
 } // namespace optimizer

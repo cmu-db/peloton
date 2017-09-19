@@ -40,6 +40,7 @@ inline void to_lower_string(std::string& str) {
 template <class T>
 bool IsSubset(std::unordered_set<T>& super_set,
               std::unordered_set<T>& child_set) {
+  if (super_set.size() < child_set.size()) return false;
   for (auto element : child_set) {
     if (super_set.find(element) == super_set.end()) return false;
   }
@@ -76,7 +77,7 @@ void ExtractPredicates(expression::AbstractExpression* expr,
 
 expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
-    MultiTablePredicates& join_predicates);
+    std::vector<AnnotatedExpression>& join_predicates);
 
 std::vector<AnnotatedExpression> UpdatePredicates(
     std::string table_alias,

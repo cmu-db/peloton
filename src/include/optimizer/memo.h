@@ -61,13 +61,14 @@ class Memo {
 
   Group* GetGroupByID(GroupID id);
 
+  std::vector<AnnotatedExpression> predicates;
+
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
   std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
       group_expressions_;
   std::vector<Group> groups_;
-  std::vector<AnnotatedExpression> predicates_;
 };
 
 } // namespace optimizer
