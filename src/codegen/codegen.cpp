@@ -106,21 +106,6 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
   return CallFunc(printf_fn, printf_args);
 }
 
-llvm::Value *CodeGen::CallStrlen(llvm::Value *str) {
-  auto *strlen_fn = LookupBuiltin("strlen");
-  if (strlen_fn == nullptr) {
-    strlen_fn = RegisterBuiltin(
-        "strlen", llvm::TypeBuilder<int(const char *), false>::get(GetContext()),
-        reinterpret_cast<void *>(strlen));
-  }
-
-  // Collect all the arguments into a vector
-  std::vector<llvm::Value *> strlen_args{str};
-
-  // Call the function
-  return CallFunc(strlen_fn, strlen_args);
-}
-
 llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());

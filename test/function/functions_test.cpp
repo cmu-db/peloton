@@ -65,7 +65,7 @@ TEST_F(FunctionsTests, CatalogTest) {
   std::vector<type::TypeId> arg_types{type::TypeId::VARCHAR, type::TypeId::INTEGER};
 
   catalog->AddFunction(func_name, arg_types, type::TypeId::INTEGER,
-                       internal_oid, "TestFunc", TestFunc, nullptr, txn);
+                       internal_oid, "TestFunc", TestFunc, txn);
 
   oid_t prolang = pg_proc->GetProLang(func_name, arg_types, txn);
   EXPECT_EQ(internal_oid, prolang);
