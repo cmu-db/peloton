@@ -36,7 +36,7 @@ struct GExprPtrEq {
 };
 
 //===--------------------------------------------------------------------===//
-// Memo
+// Memo: Store metadata of the optimization for each query (GroupExpression, Predicates, etc.)
 //===--------------------------------------------------------------------===//
 class Memo {
  public:
@@ -67,6 +67,7 @@ class Memo {
   std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
       group_expressions_;
   std::vector<Group> groups_;
+  std::vector<AnnotatedExpression> predicates_;
 };
 
 } // namespace optimizer

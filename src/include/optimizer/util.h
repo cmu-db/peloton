@@ -72,12 +72,16 @@ expression::AbstractExpression* CombinePredicates(
     std::vector<expression::AbstractExpression*> predicates);
 
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicatesMap& where_predicates,
-                       MultiTablePredicates& join_predicates);
+                       std::vector<AnnotatedExpression>& predicates);
 
 expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
     MultiTablePredicates& join_predicates);
+
+std::vector<AnnotatedExpression> UpdatePredicates(
+    std::string table_alias,
+    std::vector<AnnotatedExpression>& predicates,
+    std::vector<AnnotatedExpression>& remaining_predicates)
 
 bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
                          const std::unordered_set<std::string>& r_group_alias,

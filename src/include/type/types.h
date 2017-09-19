@@ -1268,6 +1268,7 @@ enum class PropertyType {
   DISTINCT,
   SORT,
   LIMIT,
+  PREDICATE
 };
 std::string PropertyTypeToString(PropertyType type);
 PropertyType StringToPropertyType(const std::string &str);

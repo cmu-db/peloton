@@ -203,27 +203,18 @@ void GetPredicateColumns(const catalog::Schema* schema,
  * Extract single table precates and multi-table predicates from the expr
  */
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicatesMap& single_table_predicates_map,
-                       MultiTablePredicates& join_predicates) {
+                       std::vector<AnnotatedExpression>& predicates) {
   // Split a complex predicate into a set of predicates connected by AND.
-  std::vector<expression::AbstractExpression*> predicates;
-  SplitPredicates(expr, predicates);
+  std::vector<expression::AbstractExpression*> split_predicates;
+  SplitPredicates(expr, split_predicates);
 
-  for (auto predicate : predicates) {
+  for (auto predicate : split_predicates) {
     std::unordered_set<std::string> table_alias_set;
     expression::ExpressionUtil::GenerateTableAliasSet(predicate,
                                                       table_alias_set);
     // Deep copy expression to avoid memory leak
-    if (table_alias_set.size() > 1)
-      join_predicates.emplace_back(
-          AnnotatedExpression(predicate->Copy(), table_alias_set));
-    else {
-      std::string table_alias = StringUtil::Lower(*(table_alias_set.begin()));
-      if (single_table_predicates_map.find(table_alias) == single_table_predicates_map.end())
-        single_table_predicates_map[table_alias] = {predicate->Copy()};
-      else
-        single_table_predicates_map[table_alias].emplace_back(predicate->Copy());
-    }
+    predicates.emplace_back(
+        AnnotatedExpression(predicate->Copy(), table_alias_set));
   }
 }
 
@@ -234,9 +225,9 @@ void ExtractPredicates(expression::AbstractExpression* expr,
  */
 expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
-    MultiTablePredicates& join_predicates) {
+    std::vector<AnnotatedExpression>& join_predicates) {
   std::vector<expression::AbstractExpression*> qualified_exprs;
-  MultiTablePredicates new_join_predicates;
+  std::vector<AnnotatedExpression> new_join_predicates;
   for (auto predicate : join_predicates) {
     if (IsSubset(table_alias_set, predicate.table_alias_set))
       qualified_exprs.emplace_back(predicate.expr);
@@ -245,6 +236,22 @@ expression::AbstractExpression* ConstructJoinPredicate(
   }
   join_predicates = std::move(new_join_predicates);
   return CombinePredicates(qualified_exprs);
+}
+
+std::vector<AnnotatedExpression> UpdatePredicates(
+    std::string table_alias,
+    std::vector<AnnotatedExpression>& predicates,
+    std::vector<AnnotatedExpression>& remaining_predicates) {
+  std::vector<AnnotatedExpression> qualified_predicates;
+  std::vector<AnnotatedExpression> new_predicates;
+  for (auto predicate : predicates) {
+    if (predicate.table_alias_set.find(table_alias) != predicate.table_alias_set.end())
+      qualified_predicates.emplace_back(predicate);
+    else
+      new_predicates.emplace_back(predicate);
+  }
+  predicates = std::move(qualified_predicates);
+  return std::move(new_predicates);
 }
 
 /**
