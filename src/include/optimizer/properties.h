@@ -134,28 +134,5 @@ class PropertySort : public Property {
   std::vector<bool> sort_ascending_;
 };
 
-// A set of predicates group by involved tables
-class PropertyPredicates : public Property {
- public:
-  PropertyPredicates(std::vector<AnnotatedExpression> predicates);
-
-  PropertyType Type() const override;
-
-  hash_t Hash() const override;
-
-  bool operator>=(const Property &r) const override;
-
-  void Accept(PropertyVisitor *v) const override;
-
-  std::string ToString() const override;
-
-  inline std::vector<AnnotatedExpression> GetPredicates() {
-    return predicates_;
-  }
-
- private:
-  std::vector<AnnotatedExpression> predicates_;
-};
-
 } // namespace optimizer
 } // namespace peloton
