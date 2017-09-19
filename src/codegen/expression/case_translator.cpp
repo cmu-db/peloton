@@ -54,9 +54,6 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
     }
     when.EndIf(merge_bb);
   }
-  // Jump to the merging block from the internal If merging block
-  codegen->CreateBr(merge_bb);
-
   // Compute the default clause
   // default_ret will have the same type as one of the ret's from above
   codegen::Value default_ret =
@@ -64,6 +61,9 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
           ? row.DeriveValue(codegen, *expr.GetDefault())
           : ret.GetType().GetSqlType().GetNullValue(codegen);
   branch_vals.emplace_back(default_ret, codegen->GetInsertBlock());
+
+  // Jump to the merging block from the internal If merging block
+  codegen->CreateBr(merge_bb);
 
   // Push the merging block to the end and build the PHI on this merging block
   auto *func = codegen->GetInsertBlock()->getParent();

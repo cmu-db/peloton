@@ -16,6 +16,7 @@
 
 #include "common/printable.h"
 #include "planner/attribute_info.h"
+#include "planner/parameter.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -34,15 +35,15 @@ class Type;
 
 namespace executor {
 class ExecutorContext;
-}
+}  // namespace executor
 
 namespace planner {
 class BindingContext;
-}
+}  // namespace planner
 
 namespace type {
 class Value;
-}
+}  // namespace type
 
 namespace expression {
 
@@ -134,6 +135,13 @@ class AbstractExpression : public Printable {
   virtual bool operator!=(const AbstractExpression &rhs) const {
     return !(*this == rhs);
   }
+
+  virtual void ExtractParameters(std::vector<planner::Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index) const {
+    for (auto &child : children_) {
+      child->ExtractParameters(parameters, index);
+    }
+  };
 
   virtual hash_t Hash() const;
 

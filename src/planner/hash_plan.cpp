@@ -59,5 +59,19 @@ bool HashPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void HashPlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+
+  for (auto &hash_key : hash_keys_) {
+    auto *key_expr =
+        const_cast<expression::AbstractExpression *>(hash_key.get());
+    key_expr->ExtractParameters(parameters, index);
+  }
+}
+
+
+
 }  // namespace planner
 }  // namespace peloton

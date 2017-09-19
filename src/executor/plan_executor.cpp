@@ -130,7 +130,7 @@ void PlanExecutor::ExecutePlan(
       auto column_val = tuple.GetValue(i);
       auto str = column_val.IsNull() ? "" : column_val.ToString();
       PlanExecutor::copyFromTo(str, res.second);
-      LOG_TRACE("column content: [%s]", str.c_str());
+      LOG_INFO("column content: [%s]", str.c_str());
       result.push_back(std::move(res));
     }
   }

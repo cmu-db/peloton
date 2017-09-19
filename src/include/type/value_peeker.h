@@ -4,9 +4,9 @@
 //
 // value_peeker.h
 //
-// Identification: src/backend/type/value_peeker.h
+// Identification: src/include/type/value_peeker.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

@@ -81,5 +81,13 @@ bool ProjectionPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void ProjectionPlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+
+  GetProjectInfo()->ExtractParameters(parameters, index);
+}
+
 }  // namespace planner
 }  // namespace peloton

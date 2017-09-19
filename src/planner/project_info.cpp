@@ -241,5 +241,17 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   return true;
 }
 
+void ProjectInfo::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  if (isNonTrivial()) {
+    for (const auto &target : GetTargetList()) {
+      const auto &derived_attribute = target.second;
+      PL_ASSERT(derived_attribute.expr != nullptr);
+      derived_attribute.expr->ExtractParameters(parameters, index);
+    }
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

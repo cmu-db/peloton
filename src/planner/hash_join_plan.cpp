@@ -147,5 +147,28 @@ bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void HashJoinPlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+
+  std::vector<const expression::AbstractExpression *> left_hash_keys;
+  GetLeftHashKeys(left_hash_keys);
+  for (auto left_hash_key : left_hash_keys) {
+    left_hash_key->ExtractParameters(parameters, index);
+  }
+
+  std::vector<const expression::AbstractExpression *> right_hash_keys;
+  GetLeftHashKeys(right_hash_keys);
+  for (auto right_hash_key : right_hash_keys) {
+    right_hash_key->ExtractParameters(parameters, index);
+  }
+
+  auto predicate = GetPredicate();
+  if (predicate != nullptr) {
+    predicate->ExtractParameters(parameters, index);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

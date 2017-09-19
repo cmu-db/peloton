@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// constant_translator.h
+// parameter_translator.h
 //
-// Identification: src/include/codegen/expression/constant_translator.h
+// Identification: src/include/codegen/expression/parameter_translator.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -17,18 +17,18 @@
 namespace peloton {
 
 namespace expression {
-class ConstantValueExpression;
+class ParameterValueExpression;
 }  // namespace planner
 
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A const expression translator just produces the LLVM value version of the
+// A parameter expression translator just produces the LLVM value version of the
 // constant value within.
 //===----------------------------------------------------------------------===//
-class ConstantTranslator : public ExpressionTranslator {
+class ParameterTranslator : public ExpressionTranslator {
  public:
-  ConstantTranslator(const expression::ConstantValueExpression &exp,
+  ParameterTranslator(const expression::ParameterValueExpression &exp,
                      CompilationContext &ctx);
 
   // Produce the value that is the result of codegen-ing the expression

@@ -19,6 +19,7 @@
 #include "catalog/schema.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
+#include "planner/parameter.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
 #include "type/types.h"
@@ -128,6 +129,14 @@ class AbstractPlan : public Printable {
   virtual bool operator==(const AbstractPlan &rhs) const;
   virtual bool operator!=(const AbstractPlan &rhs) const {
     return !(*this == rhs);
+  }
+
+  virtual void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t>
+          &index) const {
+    for (auto &child : GetChildren()) {
+      child->ExtractParameters(parameters, index);
+    }
   }
 
  protected:

@@ -55,6 +55,16 @@ class ConstantValueExpression : public AbstractExpression {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<planner::Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index)
+      const override {
+    AbstractExpression::ExtractParameters(parameters, index);
+
+    // Add a new parameter object for a constant
+    parameters.push_back(planner::Parameter::CreateConstant(GetValue()));
+    index[this] = parameters.size() - 1;
+  };
+
   type::Value GetValue() const { return value_; }
 
   bool HasParameter() const override { return false; }

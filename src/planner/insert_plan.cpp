@@ -222,5 +222,19 @@ bool InsertPlan::operator==(AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void InsertPlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  if (GetChildren().size() == 0) {
+    auto *proj_info = GetProjectInfo();
+    if (proj_info != nullptr) {
+      proj_info->ExtractParameters(parameters, index);
+    }
+  } else {
+    PL_ASSERT(plan->GetChildren().size() == 1);
+    GetChild(0)->ExtractParameters(parameters, index);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

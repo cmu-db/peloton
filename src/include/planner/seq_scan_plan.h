@@ -78,6 +78,10 @@ class SeqScanPlan : public AbstractScan {
     return !(*this == rhs);
   }
 
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+      const override;
+
  private:
   DISALLOW_COPY_AND_MOVE(SeqScanPlan);
 };

@@ -316,5 +316,15 @@ bool SeqScanPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
+void SeqScanPlan::ExtractParameters(std::vector<Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+    const {
+  AbstractPlan::ExtractParameters(parameters, index);
+  auto predicate = GetPredicate();
+  if (predicate != nullptr) {
+    predicate->ExtractParameters(parameters, index);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

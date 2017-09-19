@@ -350,6 +350,7 @@ Value::~Value() {
   switch (type_id_) {
     case TypeId::VARBINARY:
     case TypeId::VARCHAR:
+      //printf("Value destructed(%s)(%s)(%s)(%d)\n", manage_data_?"var":"const", value_.varlen, value_.const_varlen, size_.len);
       if (manage_data_) {
         delete[] value_.varlen;
       }

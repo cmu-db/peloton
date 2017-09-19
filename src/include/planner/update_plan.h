@@ -14,6 +14,7 @@
 
 #include "parser/update_statement.h"
 #include "planner/abstract_plan.h"
+#include "planner/parameter.h"
 #include "planner/project_info.h"
 #include "type/types.h"
 
@@ -67,6 +68,10 @@ class UpdatePlan : public AbstractPlan {
   bool operator!=(const AbstractPlan &rhs) const override {
     return !(*this == rhs);
   }
+
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index)
+      const override;
 
  private:
   storage::DataTable *target_table_;

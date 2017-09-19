@@ -102,6 +102,10 @@ class ProjectInfo {
   bool operator==(const ProjectInfo &rhs) const;
   bool operator!=(const ProjectInfo &rhs) const { return !(*this == rhs); }
 
+  void ExtractParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t>
+          &index) const;
+
  private:
   bool AreEqual(const planner::DerivedAttribute &A,
                 const planner::DerivedAttribute &B) const;
