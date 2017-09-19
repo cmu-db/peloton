@@ -29,10 +29,10 @@ LanguageCatalog::~LanguageCatalog() {};
 
 LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                          "." LANGUAGE_CATALOG_NAME
-                          " ("
-                          "language_oid   INT NOT NULL PRIMARY KEY, "
-                          "lanname        VARCHAR NOT NULL);",
+                      "." LANGUAGE_CATALOG_NAME
+                      " ("
+                      "language_oid   INT NOT NULL PRIMARY KEY, "
+                      "lanname        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME,
