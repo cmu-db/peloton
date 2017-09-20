@@ -14,6 +14,7 @@
 
 #include <list>
 #include "codegen/query.h"
+#include "common/singleton.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -29,13 +30,8 @@ namespace codegen {
 // Potential enhancements (minor):
 //   1) Manually keep some of the compiled results in the cache
 //   2) Configure the cache size
-class QueryCache {
+class QueryCache : public Singleton<QueryCache> {
  public:
-  static QueryCache& Instance() {
-    static QueryCache query_cache;
-    return query_cache;
-  }
-
   Query* Find(const std::shared_ptr<planner::AbstractPlan> &key);
 
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
@@ -58,7 +54,8 @@ class QueryCache {
   void Remove(const oid_t table_oid);
 
  private:
-  // Can't consturct
+  friend class Singleton<QueryCache>;
+
   QueryCache() {}
 
   void Resize(size_t target_size) {
