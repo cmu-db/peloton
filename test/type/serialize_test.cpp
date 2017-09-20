@@ -78,7 +78,10 @@ TEST_F(SerializeTests, SerializeValueToFileTest) {
     CopySerializeInput record_decode((const void *) buffer.get(), output_buffer.Size());
 
     type::Value val = type::Value::DeserializeFrom(record_decode, type::TypeId::INTEGER);
+    delete new_file_handle;
+    delete buf;
     EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
+
 }
 
 
@@ -114,6 +117,8 @@ TEST_F(SerializeTests, SerializeVarlenValueToFileTest) {
     CopySerializeInput record_decode((const void *) buffer.get(), output_buffer.Size());
 
     type::Value val = type::Value::DeserializeFrom(record_decode, type::TypeId::VARCHAR);
+    delete new_file_handle;
+    delete buf;
     EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
 }
 
@@ -189,7 +194,9 @@ TEST_F(SerializeTests, SerializeTupleToFileTest) {
     auto tuple2 = storage::Tuple(schema, true);
     tuple2.DeserializeWithHeaderFrom(record_decode);
 
-
+    delete schema;
+    delete buf;
+    delete new_file_handle;
     EXPECT_EQ(0,tuple.Compare(tuple2));
 }
 

@@ -78,7 +78,6 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
-
   LOG_INFO("[SimpleQueryTest] Client has closed");
   return NULL;
 }
@@ -174,6 +173,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
   network_manager.CloseServer();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
+  remove("/tmp/log/log_0_0");
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
