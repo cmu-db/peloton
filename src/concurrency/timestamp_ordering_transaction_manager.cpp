@@ -757,10 +757,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::ReorderedPhyLogLogManager::GetInstance();
-
-  //log_manager.StartLogging();
-  //log_manager.RegisterWorker(current_txn->GetThreadId());
+  auto &log_manager = logging::WalLogManager::GetInstance();
 
   cid_t end_commit_id = current_txn->GetCommitId();
   eid_t epoch_id = current_txn->GetEpochId();
@@ -873,7 +870,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // recycle old version, delete from index
         // the gc should be responsible for recycling the newer empty version.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
-        log_manager.StartPersistTxn(100);
+        //log_manager.StartPersistTxn(end_commit_id);
         logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
                 LogRecordType::TUPLE_DELETE,

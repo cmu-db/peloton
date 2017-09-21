@@ -22,7 +22,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
-#include "threadpool/mono_queue_pool.h"
+#include "logging/wal_log_manager.h"
 #include "logging/wal_log_manager.h"
 namespace peloton {
 

@@ -260,10 +260,10 @@ TEST_F(SerializeTests, SerializeVarlenValueToFileTest) {
     auto tuple2 = storage::Tuple(schema, true);
     tuple2.DeserializeWithHeaderFrom(record_decode);
 
+    EXPECT_EQ(0,tuple.Compare(tuple2));
     delete schema;
     delete buf;
     delete new_file_handle;
-    EXPECT_EQ(0,tuple.Compare(tuple2));
     delete schema;
     delete buf;
     delete new_file_handle;
