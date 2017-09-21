@@ -198,6 +198,7 @@ void WalLogManager::StartLoggers() {
 
 void WalLogManager::StopLoggers() {
   logger_->StopLogging();
+  delete logger_;
   delete buffer_ptr_;
   is_running_ = false;
 
