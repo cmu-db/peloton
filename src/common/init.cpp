@@ -50,32 +50,10 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
-
-
   logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
-  //auto &checkpoint_manager = logging::DurabilityFactory::GetCheckpointerInstance();
-  //checkpoint_manager.SetDirectories({"/home/paulo/log"});
-  //checkpoint_manager.SetRecoveryThreadCount(1);
 
-  //size_t persist_checkpoint_eid = checkpoint_manager.DoRecovery();
-  //  log_manager.SetRecoveryThreadCount(1);
-//    log_manager.RegisterWorker();
-//    log_manager.DoRecovery(0);
   auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-//  log_manager.SetDirectories({"/home/paulo/log"});
-//  log_manager.StartLoggers();
 
-  //checkpoint_manager.SetCheckpointInterval(30);
-  //checkpoint_manager.StartCheckpointing();
-//  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-
-
-//  logging::ReorderedPhyLogLogManager::GetInstance().SetDirectories({"/home/paulo/log"});
-//  logging::CheckpointManagerFactory::Configure();
-//  logging::CheckpointManagerFactory::GetInstance().StartCheckpointing();
-//  logging::CheckpointManagerFactory::GetInstance().DoRecovery();
-//  logging::ReorderedPhyLogLogManager::GetInstance().DoRecovery(1);
-//  logging::ReorderedPhyLogLogManager::GetInstance().StartLoggers();
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -127,6 +105,7 @@ void PelotonInit::Shutdown() {
     layout_tuner.Stop();
   }
 
+  logging::DurabilityFactory::GetLoggerInstance().StopLoggers();
   // shut down GC.
   gc::GCManagerFactory::GetInstance().StopGC();
 
