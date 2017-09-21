@@ -487,32 +487,8 @@ void WalLogger::RebuildSecIndexForTable(storage::DataTable *table) {
   }
 }
 
-void WalLogger::Run() {
-  /**
-   *  Main loop
-   */
-  /*while (true) {
-    if (is_running_ == false) { break; }
 
-    std::this_thread::sleep_for(
-      std::chrono::microseconds(5000));
-    {
-
-          //===== timeout, buffer is not full ====//
-          if(log_buffer_ == nullptr || log_buffer_->Empty()){
-              log_buffer_ = WalLogManager::GetInstance().GetBuffer();
-          }
-          if(!log_buffer_->Empty())
-          {
-                PersistLogBuffer(log_buffer_);
-        }
-}
-  }*/
-}
-
-
-
-void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
+std::unique_ptr<LogBuffer> WalLogger::PersistLogBuffer(std::unique_ptr<LogBuffer> log_buffer) {
     FileHandle *new_file_handle = new FileHandle();
     if(likely_branch(log_buffer != nullptr)){
     std::string filename = GetLogFileFullPath(0);
@@ -535,7 +511,7 @@ void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     }
 }
     delete new_file_handle;
-
+return std::move(log_buffer);
 }
 
 
