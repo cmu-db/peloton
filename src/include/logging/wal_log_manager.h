@@ -97,9 +97,9 @@ public:
   }
 
 
-  void LogInsert(const ItemPointer &tuple_pos, cid_t current_cid);
-  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid);
-  void LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid);
+  void LogInsert(const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid);
+  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid);
+  void LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid, eid_t current_eid);
 
   void StartPersistTxn(cid_t commit_id);
   void EndPersistTxn(cid_t commit_id);
