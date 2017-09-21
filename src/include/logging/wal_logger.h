@@ -58,19 +58,13 @@ public:
 
   void StartLogging() {
     is_running_ = true;
-    logger_thread_.reset(new std::thread(&WalLogger::Run, this));
-  }
+   }
 
   void StopLogging() {
     is_running_ = false;
-    logger_thread_->join();
   }
 
-  void SetLogBuffer(LogBuffer* buf) {log_buffer_ = buf;}
-
-  void RequestLogBuffer();
-
-  void PersistLogBuffer(LogBuffer* log_buffer);
+  std::unique_ptr<LogBuffer> PersistLogBuffer(std::unique_ptr<LogBuffer> log_buffer);
 
 private:
   void Run();
