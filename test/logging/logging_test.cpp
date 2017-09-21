@@ -50,11 +50,7 @@ class LoggingTests : public PelotonTest {};
     auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
     log_manager.SetDirectories({"/tmp/test"});
     log_manager.StartLoggers();
-    //log_manager.RegisterWorker(1);
-    log_manager.StartPersistTxn(100);
-    log_manager.LogInsert(ItemPointer(table->GetTileGroup(0)->GetTileGroupId(),0));
-    log_manager.EndPersistTxn(100);
-    //log_manager.DeregisterWorker();;
+    log_manager.LogInsert(ItemPointer(table->GetTileGroup(0)->GetTileGroupId(),0), 5);
     log_manager.StopLoggers();
 
 
