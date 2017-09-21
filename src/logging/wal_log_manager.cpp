@@ -138,18 +138,8 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
   int32_t length = output_buffer_.Position() - start - sizeof(int32_t);
   output_buffer_.WriteIntAt(start, length);
+  buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
 
-  // Copy the output buffer into current buffer
-  bool is_success = buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
-  if (is_success == false) {
-    // A buffer is full, pass it to the front end logger
-    // Get a new buffer
-    logger_->PersistLogBuffer(buffer_ptr_);
-    buffer_ptr_ = new LogBuffer();
-    // Write it again
-    is_success = buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
-    PL_ASSERT(is_success);
-  }
   }
 }
 
@@ -169,20 +159,20 @@ void WalLogManager::EndPersistTxn(cid_t current_cid) {
 void WalLogManager::LogInsert(const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, tuple_pos, current_cid, current_eid);
   WriteRecordToBuffer(record);
-  logger_->PersistLogBuffer(buffer_ptr_);
+  buffer_ptr_ = logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, tuple_pos, current_cid, current_eid);
   record.SetOldItemPointer(tuple_old_pos);
   WriteRecordToBuffer(record);
-  logger_->PersistLogBuffer(buffer_ptr_);
+  logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_DELETE, tuple_pos_deleted,current_cid, current_eid);
   WriteRecordToBuffer(record);
-  logger_->PersistLogBuffer(buffer_ptr_);
+  logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::DoRecovery(){
@@ -191,15 +181,12 @@ void WalLogManager::DoRecovery(){
  }
 
 void WalLogManager::StartLoggers() {
-  logger_->SetLogBuffer(buffer_ptr_);
   logger_->StartLogging();
   is_running_ = true;
 }
 
 void WalLogManager::StopLoggers() {
   logger_->StopLogging();
-  delete logger_;
-  delete buffer_ptr_;
   is_running_ = false;
 
 }

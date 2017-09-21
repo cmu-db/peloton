@@ -83,17 +83,17 @@ public:
 
     logger_count_ = 1;
     for (size_t i = 0; i < logger_count_; ++i) {
-      logger_ = new WalLogger(0, logging_dir);
+      logger_ = std::make_unique<WalLogger>(0, logging_dir);
     }
-    buffer_ptr_ = new LogBuffer();
+    buffer_ptr_ =  std::make_unique<LogBuffer>();
   }
 
   virtual const std::string GetDirectories() override {
     return logger_dir_;
   }
 
-  LogBuffer* GetBuffer() {
-      return buffer_ptr_;
+  std::unique_ptr<LogBuffer> GetBuffer() {
+      return std::move(buffer_ptr_);
   }
 
 
@@ -118,9 +118,9 @@ private:
 
   CopySerializeOutput output_buffer_;
 
-  LogBuffer* buffer_ptr_;
+  std::unique_ptr<LogBuffer> buffer_ptr_;
 
-  WalLogger* logger_;
+  std::unique_ptr<WalLogger> logger_;
 
   bool is_running_;
 

@@ -165,7 +165,6 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
   int32_t length = output_buffer->Position() - start - sizeof(int32_t);
   output_buffer->WriteIntAt(start, length);
   return output_buffer;
-}
 void WalLogger::PersistLogBuffer(LogBuffer *log_buffer) {
   FileHandle *new_file_handle = new FileHandle();
   if (likely_branch(log_buffer != nullptr)) {
