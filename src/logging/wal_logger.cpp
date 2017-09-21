@@ -18,6 +18,10 @@
 #include <boost/algorithm/string.hpp>
 
 #include "catalog/manager.h"
+#include "catalog/column_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/database_catalog.h"
 #include "common/container_tuple.h"
 #include "logging/logging_util.h"
 #include "storage/tile_group.h"
@@ -38,6 +42,7 @@ void WalLogger::WriteTransaction(std::vector<LogRecord> log_records) {
       buf = new LogBuffer();
     }
     delete output;
+  closedir(dirp);
   }
   if (!buf->Empty()) {
     PersistLogBuffer(buf);
@@ -86,6 +91,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         val.SerializeTo(*(output_buffer));
       }
 
+                      catalog::TableCatalog::GetInstance()->GetNextOid();
                       if(index >= columns.size())
                       {
                           //Made to fit index as the last element
@@ -93,6 +99,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
                       }
                           columns[index] = tmp_col;
                         //  columns.insert(columns.begin(), catalog::Column();
+                      catalog::ColumnCatalog::GetInstance()->GetNextOid();
       break;
     }
     case LogRecordType::TUPLE_DELETE: {
