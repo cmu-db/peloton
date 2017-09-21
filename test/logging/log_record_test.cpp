@@ -32,7 +32,7 @@ TEST_F(LogRecordTests, LogRecordTest) {
 
   for (auto type : tuple_type_list) {
     logging::LogRecord tuple_record = 
-        logging::LogRecordFactory::CreateTupleRecord(type, ItemPointer(0, 0));
+        logging::LogRecordFactory::CreateTupleRecord(type, ItemPointer(0, 0), 5);
 
     EXPECT_EQ(tuple_record.GetType(), type);
   }
