@@ -69,11 +69,11 @@ private:
 
 class LogRecordFactory {
 public:
-  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos) {
+  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos, cid_t current_cid) {
     PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT || 
               log_type == LogRecordType::TUPLE_DELETE || 
               log_type == LogRecordType::TUPLE_UPDATE);
-    return LogRecord(log_type, pos, INVALID_EID, INVALID_CID);
+    return LogRecord(log_type, pos, INVALID_EID, current_cid);
   }
 
   static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
@@ -83,7 +83,7 @@ public:
   }
 
   static LogRecord CreateEpochRecord(const LogRecordType log_type, const eid_t epoch_id) {
-    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN || 
+    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN ||
               log_type == LogRecordType::EPOCH_END);
     return LogRecord(log_type, INVALID_ITEMPOINTER, epoch_id, INVALID_CID);
   }

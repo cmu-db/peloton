@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "logging/durability_factory.h"
-#include "logging/worker_context.h"
 #include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {

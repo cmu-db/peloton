@@ -18,12 +18,6 @@
 namespace peloton {
 namespace logging {
 
-  void LogManager::StartTxn(){
-  }
-
-  void LogManager::FinishPendingTxn() {
-  }
-
 
 
 }
