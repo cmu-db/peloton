@@ -14,10 +14,9 @@
 
 #include <sys/time.h>
 
-#include "logging/dummy_log_manager.h"
 #include "logging/phylog_checkpoint_manager.h"
 #include "logging/dummy_checkpoint_manager.h"
-#include "logging/reordered_phylog_log_manager.h"
+#include "logging/wal_log_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -25,13 +24,8 @@ namespace logging {
 class DurabilityFactory {
  public:
 
-  static ReorderedPhyLogLogManager& GetLoggerInstance() {
-    //switch (logging_type_) {
-     // case LoggingType::ON:
-        return ReorderedPhyLogLogManager::GetInstance();
-      //default:
-//        return DummyLogManager::GetInstance();
-//    }
+  static WalLogManager& GetLoggerInstance() {
+        return WalLogManager::GetInstance();
   }
 
   static CheckpointManager &GetCheckpointerInstance() {
@@ -58,10 +52,6 @@ class DurabilityFactory {
 
   inline static bool GenerateDetailedCsv() { return generate_detailed_csv_; }
 
-  /* Statistics */
-  //static void StartTxnTimer(size_t eid, WorkerContext *worker_ctx);
-  //static void StopTimersByPepoch(size_t persist_eid, WorkerContext *worker_ctx);
-  
   static uint64_t GetCurrentTimeInUsec() {
     struct timeval tv;
     gettimeofday(&tv, 0);

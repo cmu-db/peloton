@@ -16,18 +16,14 @@
 #include <thread>
 #include <list>
 #include <stack>
-#include <unordered_map>
 
-#include "libcuckoo/cuckoohash_map.hh"
 #include "concurrency/transaction.h"
-#include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
 #include "logging/log_buffer_pool.h"
 #include "logging/log_manager.h"
 #include "logging/logging_util.h"
-//#include "logging/worker_context.h"
-#include "logging/reordered_phylog_logger.h"
+#include "logging/wal_logger.h"
 #include "type/types.h"
 #include "type/serializer.h"
 #include "container/lock_free_queue.h"
@@ -46,7 +42,7 @@ namespace logging {
  * logging file layout :
  *
  *  -----------------------------------------------------------------------------
- *  | txn_cid | database_id | table_id | operation_type | data | ... | txn_end_flag
+ *  | txn_cid | database_id | table_id | operation_type | tilegroup and offset |data | ... | txn_end_flag
  *  -----------------------------------------------------------------------------
  *
  * NOTE: this layout is designed for physiological logging.
@@ -55,30 +51,28 @@ namespace logging {
  *
  */
 
-class ReorderedPhyLogLogManager : public LogManager {
-  ReorderedPhyLogLogManager(const ReorderedPhyLogLogManager &) = delete;
-  ReorderedPhyLogLogManager &operator=(const ReorderedPhyLogLogManager &) = delete;
-  ReorderedPhyLogLogManager(ReorderedPhyLogLogManager &&) = delete;
-  ReorderedPhyLogLogManager &operator=(ReorderedPhyLogLogManager &&) = delete;
+class WalLogManager : public LogManager {
+  WalLogManager(const WalLogManager &) = delete;
+  WalLogManager &operator=(const WalLogManager &) = delete;
+  WalLogManager(WalLogManager &&) = delete;
+  WalLogManager &operator=(WalLogManager &&) = delete;
 
 protected:
 
-  ReorderedPhyLogLogManager()
-    :// worker_count_(0),
-      is_running_(false) {}
+  WalLogManager()
+    :is_running_(false) {}
 
 public:
-  static ReorderedPhyLogLogManager &GetInstance() {
-    static ReorderedPhyLogLogManager log_manager;
+  static WalLogManager &GetInstance() {
+    static WalLogManager log_manager;
     return log_manager;
   }
-  virtual ~ReorderedPhyLogLogManager() {}
+  virtual ~WalLogManager() {}
 
   virtual void SetDirectories(std::string logging_dir) override {
     logger_dir_ = logging_dir;
     // check the existence of logging directories.
     // if not exists, then create the directory.
-    //for (auto logging_dir : logging_dirs) {
       if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false) {
         LOG_INFO("Logging directory %s is not accessible or does not exist", logging_dir.c_str());
         bool res = LoggingUtil::CreateDirectory(logging_dir.c_str(), 0700);
@@ -86,11 +80,10 @@ public:
           LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
         }
       }
-//    }
 
     logger_count_ = 1;
     for (size_t i = 0; i < logger_count_; ++i) {
-      logger_ = new ReorderedPhyLogLogger(0, logging_dir);
+      logger_ = new WalLogger(0, logging_dir);
     }
     buffer_ptr_ = new LogBuffer();
   }
@@ -104,9 +97,9 @@ public:
   }
 
 
-  void LogInsert(const ItemPointer &tuple_pos);
-  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos);
-  void LogDelete(const ItemPointer &tuple_pos_deleted);
+  void LogInsert(const ItemPointer &tuple_pos, cid_t current_cid);
+  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid);
+  void LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid);
 
   void StartPersistTxn(cid_t commit_id);
   void EndPersistTxn(cid_t commit_id);
@@ -114,7 +107,6 @@ public:
 
   // Logger side logic
   virtual void DoRecovery();
-  virtual void DoRecovery(const size_t &begin_eid UNUSED_ATTRIBUTE) override {}
   virtual void StartLoggers() override;
   virtual void StopLoggers() override;
 private:
@@ -128,12 +120,9 @@ private:
 
   LogBuffer* buffer_ptr_;
 
-  ReorderedPhyLogLogger* logger_;
+  WalLogger* logger_;
 
-//  std::unique_ptr<std::thread> pepoch_thread_;
   bool is_running_;
-
-//  std::string pepoch_dir_ = "/tmp/log";
 
 };
 

@@ -16,7 +16,6 @@
 #include <thread>
 #include <list>
 #include <stack>
-#include <unordered_map>
 
 #include "concurrency/transaction.h"
 #include "concurrency/epoch_manager.h"
@@ -24,8 +23,6 @@
 #include "logging/log_record.h"
 #include "logging/log_buffer_pool.h"
 #include "logging/log_manager.h"
-//#include "logging/reordered_phylog_log_manager.h"
-//#include "logging/worker_context.h"
 #include "type/types.h"
 #include "type/serializer.h"
 #include "container/lock_free_queue.h"
@@ -41,30 +38,27 @@ class TileGroupHeader;
 
 namespace logging {
 
-class ReorderedPhyLogLogger {
+class WalLogger {
 
 public:
-  ReorderedPhyLogLogger(const size_t &logger_id, const std::string &log_dir) :
+  WalLogger(const size_t &logger_id, const std::string &log_dir) :
     logger_id_(logger_id),
     log_dir_(log_dir),
     logger_thread_(nullptr),
     is_running_(false),
-    logger_output_buffer_(),
-    persist_epoch_id_(INVALID_EID) {}
-//    worker_map_lock_(),
-//    worker_map_() {}
+    logger_output_buffer_() {}
 
-  ~ReorderedPhyLogLogger() {}
+  ~WalLogger() {}
 
-  void StartRecovery(); //const size_t checkpoint_eid, const size_t persist_eid, const size_t recovery_thread_count);
-  void StartIndexRebulding(const size_t logger_count);
+  void StartRecovery();
+  void StartIndexRebulding();
 
   void WaitForRecovery();
   void WaitForIndexRebuilding();
 
   void StartLogging() {
     is_running_ = true;
-    logger_thread_.reset(new std::thread(&ReorderedPhyLogLogger::Run, this));
+    logger_thread_.reset(new std::thread(&WalLogger::Run, this));
   }
 
   void StopLogging() {
@@ -72,38 +66,29 @@ public:
     logger_thread_->join();
   }
 
-//  void RegisterWorker(WorkerContext *phylog_worker_ctx);
-//  void DeregisterWorker(WorkerContext *phylog_worker_ctx);
-
   void SetLogBuffer(LogBuffer* buf) {log_buffer_ = buf;}
 
   void RequestLogBuffer();
 
-  size_t GetPersistEpochId() const {
-    return persist_epoch_id_;
-  }
-
   void PersistLogBuffer(LogBuffer* log_buffer);
+
 private:
   void Run();
-
-  void PersistEpochBegin(FileHandle &file_handle, const size_t epoch_id);
-  void PersistEpochEnd(FileHandle &file_handle, const size_t epoch_id);
-
 
   std::string GetLogFileFullPath(size_t epoch_id) {
     return log_dir_ + "/" + logging_filename_prefix_ + "_" + std::to_string(logger_id_) + "_" + std::to_string(epoch_id);
   }
 
-  void GetSortedLogFileIdList();//const size_t checkpoint_eid, const size_t persist_eid);
+  void GetSortedLogFileIdList();
 
-  void RunRecoveryThread(const size_t thread_id);//, const size_t checkpoint_eid, const size_t persist_eid);
+  void RunRecoveryThread();
 
-  void RunSecIndexRebuildThread(const size_t logger_count);
+  void RunSecIndexRebuildThread();
 
-  void RebuildSecIndexForTable(const size_t logger_count, storage::DataTable *table);
+  void RebuildSecIndexForTable(storage::DataTable *table);
 
-  bool ReplayLogFile(FileHandle &file_handle);//, size_t checkpoint_eid, size_t pepoch_eid);
+  bool ReplayLogFile(FileHandle &file_handle);
+
   bool InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location);
 
   // Return value is the swapped txn id, either INVALID_TXNID or INITIAL_TXNID
@@ -146,7 +131,6 @@ private:
 
   const int new_file_interval_ = 500; // 500 milliseconds.
 
-  size_t current_file_eid_ = 0;
 };
 
 
