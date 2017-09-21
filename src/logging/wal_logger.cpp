@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <dirent.h>
 #include <cstdio>
+#include <boost/algorithm/string.hpp>
 
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
@@ -85,12 +86,22 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         val.SerializeTo(*(output_buffer));
       }
 
+                      if(index >= columns.size())
+                      {
+                          //Made to fit index as the last element
+                          columns.resize(index+1);
+                      }
+                          columns[index] = tmp_col;
+                        //  columns.insert(columns.begin(), catalog::Column();
       break;
     }
     case LogRecordType::TUPLE_DELETE: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
+//                boost::split(attrs, tuple->GetValue(6).ToString, boost::is_any_of(" "));
+              }
+              //Simply insert the tuple in the tilegroup directly
 
       // Write down the database id and the table id
       output_buffer->WriteLong(tg->GetDatabaseId());
@@ -98,7 +109,11 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
+                      auto db_oid = tg->GetValue(tg_offset, 2).GetAs<oid_t>();
+                      auto table_oid = tg->GetValue(tg_offset, 0).GetAs<oid_t>();
 
+
+            tg->DeleteTupleFromRecovery(current_cid, tg_offset);
       break;
     }
     case LogRecordType::TUPLE_UPDATE: {
@@ -134,6 +149,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
+      epoch_manager.StartEpoch();
 
       break;
     }

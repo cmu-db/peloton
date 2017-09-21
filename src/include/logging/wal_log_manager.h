@@ -42,7 +42,7 @@ namespace logging {
  * logging file layout :
  *
  *  -----------------------------------------------------------------------------
- *  | txn_cid | database_id | table_id | operation_type | tilegroup and offset |data | ... | txn_end_flag
+ *  | txn_eid | txn_cid | database_id | table_id | operation_type | tilegroup and offset |data | ... | txn_end_flag
  *  -----------------------------------------------------------------------------
  *
  * NOTE: this layout is designed for physiological logging.
