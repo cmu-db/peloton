@@ -48,8 +48,6 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
-//  auto &log_manager = logging::DurabilityFactory::GetLoggerInstance();
-
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -101,6 +99,7 @@ void PelotonInit::Shutdown() {
     layout_tuner.Stop();
   }
 
+  logging::DurabilityFactory::GetLoggerInstance().StopLoggers();
   // shut down GC.
   gc::GCManagerFactory::GetInstance().StopGC();
 

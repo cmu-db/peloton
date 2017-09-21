@@ -77,6 +77,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
           columns.push_back(column);
         }
       }
+          current_eid = record_decode.ReadLong();
 
       ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
       for (oid_t oid = 0; oid < columns.size(); oid++) {
@@ -113,7 +114,6 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
       output_buffer->WriteLong(old_tuple_pos.block);
       output_buffer->WriteLong(old_tuple_pos.offset);
-
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
       // Write the full tuple into the buffer

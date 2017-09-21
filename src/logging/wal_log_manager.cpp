@@ -35,6 +35,9 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
   LogRecordType type = record.GetType();
   output_buffer_.WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
 
+  output_buffer_.WriteLong(record.GetEpochId());
+  output_buffer_.WriteLong(record.GetCommitId());
+
   switch (type) {
     case LogRecordType::TUPLE_INSERT:
      {
@@ -42,15 +45,12 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
       std::vector<catalog::Column> columns;
-
-      output_buffer_.WriteLong(record.GetCommitId());
       // Write down the database id and the table id
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
 
       output_buffer_.WriteLong(tuple_pos.block);
       output_buffer_.WriteLong(tuple_pos.offset);
-
 
       // Write the full tuple into the buffer
       for(auto schema : tg->GetTileSchemas()){
@@ -75,7 +75,6 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
 
-      output_buffer_.WriteLong(record.GetCommitId());
       // Write down the database id and the table id
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
@@ -94,7 +93,6 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
       std::vector<catalog::Column> columns;
 
-      output_buffer_.WriteLong(record.GetCommitId());
       // Write down the database id and the table id
       output_buffer_.WriteLong(tg->GetDatabaseId());
       output_buffer_.WriteLong(tg->GetTableId());
@@ -168,21 +166,21 @@ void WalLogManager::EndPersistTxn(cid_t current_cid) {
 }
 
 
-void WalLogManager::LogInsert(const ItemPointer &tuple_pos, cid_t current_cid) {
-  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, tuple_pos, current_cid);
+void WalLogManager::LogInsert(const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
+  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, tuple_pos, current_cid, current_eid);
   WriteRecordToBuffer(record);
   logger_->PersistLogBuffer(buffer_ptr_);
 }
 
-void WalLogManager::LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid) {
-  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, tuple_pos, current_cid);
+void WalLogManager::LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
+  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, tuple_pos, current_cid, current_eid);
   record.SetOldItemPointer(tuple_old_pos);
   WriteRecordToBuffer(record);
   logger_->PersistLogBuffer(buffer_ptr_);
 }
 
-void WalLogManager::LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid) {
-  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_DELETE, tuple_pos_deleted,current_cid);
+void WalLogManager::LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid, eid_t current_eid) {
+  LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_DELETE, tuple_pos_deleted,current_cid, current_eid);
   WriteRecordToBuffer(record);
   logger_->PersistLogBuffer(buffer_ptr_);
 }
@@ -200,6 +198,7 @@ void WalLogManager::StartLoggers() {
 
 void WalLogManager::StopLoggers() {
   logger_->StopLogging();
+  delete buffer_ptr_;
   is_running_ = false;
 
 }
