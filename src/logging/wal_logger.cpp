@@ -343,6 +343,12 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
         auto old_tg = table->GetTileGroupById(old_tg_block);
         auto tg = table->GetTileGroupById(tg_block);
+        //The required tile group might not have been created yet
+        if(tg.get() == nullptr)
+        {
+          table->AddTileGroupWithOidForRecovery(tg_block);
+          tg = table->GetTileGroupById(tg_block);
+        }
 
             // XXX: We still rely on an alive catalog manager
             auto schema = table->GetSchema();
