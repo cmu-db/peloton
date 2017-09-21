@@ -23,6 +23,10 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/column.h"
 #include "catalog/manager.h"
+#include "catalog/column_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/database_catalog.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/container_tuple.h"
 #include "logging/logging_util.h"
@@ -99,6 +103,7 @@ void WalLogger::GetSortedLogFileIdList(){
   // Sort in descending order
   std::sort(file_eids_.begin(), file_eids_.end(), std::less<size_t>());
   max_replay_file_id_ = file_eids_.size() - 1;
+  closedir(dirp);
 
 }
 
@@ -123,7 +128,6 @@ bool WalLogger::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, st
 
     oid_t tile_group_id = location.block;
     auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-
       auto tuple_slot = location.offset;
 
 
@@ -275,6 +279,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                       auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
                       database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
                       LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
+                      catalog::TableCatalog::GetInstance()->GetNextOid();
                       columns.clear();
                       break;
               }
@@ -296,6 +301,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                           columns[index] = tmp_col;
                         //  columns.insert(columns.begin(), catalog::Column();
                       }
+                      catalog::ColumnCatalog::GetInstance()->GetNextOid();
                       LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
                       break;
               }
