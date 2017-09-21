@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <dirent.h>
 #include <cstdio>
+#include <boost/algorithm/string.hpp>
 #include "gc/gc_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index_factory.h"
@@ -196,6 +197,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
   std::vector<catalog::Column> columns;
+  std::vector<index::Index> indexes;
   while (true) {
     // Read the frame length
     if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &length_buf, 4) == false) {
@@ -238,10 +240,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         break;
       }
       case LogRecordType::TUPLE_INSERT:
-        {/*if (current_cid == INVALID_CID){
-            LOG_ERROR("Invalid txn tuple record");
-            return false;
-          }*/
+        {
           current_eid = record_decode.ReadLong();
           current_cid = record_decode.ReadLong();
 
@@ -267,7 +266,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                   type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
                   tuple->SetValue(oid, val);
               }
-              // Install the record
+              //Catalog is already created, we must do this transactionally
           if(database_id == CATALOG_DATABASE_OID){ //catalog database oid
               InstallTupleRecord(record_type, tuple.get(), table, current_cid, location);
               switch (table_id){
@@ -283,18 +282,32 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                       {
                       std::string typeId = tuple->GetValue(4).ToString();
                       type::TypeId column_type = StringToTypeId(typeId);
-                      //int index = stoi(tuple->GetValue(2).ToString());
+                      uint index = stoi(tuple->GetValue(2).ToString());
+                      if(index >= columns.size())
+                      {
+                          //Made to fit index as the last element
+                          columns.resize(index+1);
+                      }
                       if(column_type == type::TypeId::VARCHAR || column_type == type::TypeId::VARBINARY){
-                          catalog::Column a(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>());
-                          columns.push_back(a);
+                          catalog::Column tmp_col(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),false,tuple->GetValue(1).GetAs<oid_t>());
+                          columns[index] = tmp_col;
                       } else {
-                          columns.insert(columns.begin(), catalog::Column(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>()));
+                          catalog::Column tmp_col(column_type,type::Type::GetTypeSize(column_type),tuple->GetValue(1).ToString(),true,tuple->GetValue(1).GetAs<oid_t>());
+                          columns[index] = tmp_col;
+                        //  columns.insert(columns.begin(), catalog::Column();
                       }
                       LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
                       break;
               }
+              case INDEX_CATALOG_OID:
+              {
+                //Attributes must be changed once we have arraytype
+//                std::vector<std::string> attrs;
+//                boost::split(attrs, tuple->GetValue(6).ToString, boost::is_any_of(" "));
+              }
               }
           } else {
+              //Simply insert the tuple in the tilegroup directly
               tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
           }
           break;
@@ -311,14 +324,13 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
 
           auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_id, table_id);
           auto tg = table->GetTileGroupById(tg_block);
-          auto db_oid = tg->GetValue(tg_offset, 2).GetAs<oid_t>();
-          auto table_oid = tg->GetValue(tg_offset, 0).GetAs<oid_t>();
-          tg->DeleteTupleFromRecovery(current_cid, tg_offset);
         //This code might be useful on drop
         if(database_id == CATALOG_DATABASE_OID){ //catalog database oid
               switch (table_id){
                   case TABLE_CATALOG_OID: //pg_table
                       {
+                      auto db_oid = tg->GetValue(tg_offset, 2).GetAs<oid_t>();
+                      auto table_oid = tg->GetValue(tg_offset, 0).GetAs<oid_t>();
                       auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(db_oid); //Getting database oid from pg_table
                       database->DropTableWithOid(table_oid);
                       LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
@@ -327,6 +339,8 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
 
               }
           }
+
+            tg->DeleteTupleFromRecovery(current_cid, tg_offset);
           break;
     }
       case LogRecordType::TUPLE_UPDATE:{
@@ -396,9 +410,10 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
     }
 
   }
-  if(current_eid != INVALID_CID){
+  if(current_eid != INVALID_EID){
       auto& epoch_manager = concurrency::EpochManagerFactory::GetInstance();
       epoch_manager.Reset(current_eid);
+      epoch_manager.StartEpoch();
   }
   return true;
 }
