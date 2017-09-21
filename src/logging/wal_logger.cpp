@@ -107,6 +107,12 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       auto old_tuple_pos = record.GetOldItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
       std::vector<catalog::Column> columns;
+        //The required tile group might not have been created yet
+        if(tg.get() == nullptr)
+        {
+          table->AddTileGroupWithOidForRecovery(tg_block);
+          tg = table->GetTileGroupById(tg_block);
+        }
 
       // Write down the database id and the table id
       output_buffer->WriteLong(tg->GetDatabaseId());
