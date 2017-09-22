@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <dirent.h>
 #include <cstdio>
-#include <boost/algorithm/string.hpp>
 #include "gc/gc_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index_factory.h"
@@ -201,7 +200,8 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
   std::vector<catalog::Column> columns;
-  std::vector<index::Index> indexes;
+  //Store the pg_index tuples to defer index creation
+  std::vector<std::unique_ptr<storage::Tuple>> indexes;
   while (true) {
     // Read the frame length
     if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &length_buf, 4) == false) {
@@ -270,8 +270,9 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                   type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
                   tuple->SetValue(oid, val);
               }
-              //Catalog is already created, we must do this transactionally
+             //When inserts happen in catalog tables, there must be a corresponding data structure
           if(database_id == CATALOG_DATABASE_OID){ //catalog database oid
+               //Catalog is already created, we must do this transactionally
               InstallTupleRecord(record_type, tuple.get(), table, current_cid, location);
               switch (table_id){
                   case TABLE_CATALOG_OID: //pg_table
@@ -307,9 +308,12 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
               }
               case INDEX_CATALOG_OID:
               {
-                //Attributes must be changed once we have arraytype
-//                std::vector<std::string> attrs;
-//                boost::split(attrs, tuple->GetValue(6).ToString, boost::is_any_of(" "));
+
+
+                  LOG_DEBUG("\n\n\nPG_INDEX\n\n\n");
+                  indexes.push_back(std::move(tuple));
+                  catalog::IndexCatalog::GetInstance()->GetNextOid();
+
               }
               }
           } else {
@@ -342,6 +346,14 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                       LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
                       break;
               }
+              case INDEX_CATALOG_OID: //pg_index
+                  {
+                  std::vector<std::unique_ptr<storage::Tuple>>::iterator pos =
+                  std::find_if(indexes.begin(), indexes.end(), [&tg, &tg_offset](const std::unique_ptr<storage::Tuple> &arg) {
+                                                             return arg->GetValue(0).CompareEquals(tg->GetValue(tg_offset, 0)); });
+                  if(pos != indexes.end())
+                      indexes.erase(pos);
+                  }
 
               }
           }
@@ -421,6 +433,40 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
       epoch_manager.Reset(current_eid);
       epoch_manager.StartEpoch();
   }
+  //Index construction that was deferred from the reading records phase
+ /* for(auto const& tup : indexes){
+      std::vector<oid_t> key_attrs;
+      oid_t key_attr;
+      auto table_catalog = catalog::TableCatalog::GetInstance();
+      auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::READ_ONLY);
+      auto table_object = table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(),txn);
+      auto database_oid = table_object->database_oid;
+      auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_oid, table_object->table_oid);
+      concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+      auto tuple_schema = table->GetSchema();
+      std::stringstream iss( tup->GetValue(6).ToString() );
+      while ( iss >> key_attr )
+        key_attrs.push_back( key_attr );
+      auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
+
+     index::IndexMetadata* index_metadata = new index::IndexMetadata(tup->GetValue(1).ToString(),
+                                                                     tup->GetValue(0).GetAs<oid_t>(),
+                                                                     table->GetOid(),
+                                                                     database_oid,
+                                                                     static_cast<IndexType>(tup->GetValue(3).GetAs<oid_t>()),
+                                                                     static_cast<IndexConstraintType>(tup->GetValue(4).GetAs<oid_t>()),
+                                                                     tuple_schema,
+                                                                     key_schema,
+                                                                     key_attrs,
+                                                                     tup->GetValue(4).GetAs<bool>());
+        std::shared_ptr<index::Index> index(
+         index::IndexFactory::GetIndex(index_metadata));
+        table->AddIndex(index); */
+      //Attributes must be changed once we have arraytype
+  //}
+
+
   return true;
 }
 
