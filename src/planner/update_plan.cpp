@@ -105,7 +105,7 @@ bool UpdatePlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void UpdatePlan::ExtractParameters(std::vector<Parameter> &parameters,
+void UpdatePlan::ExtractParameters(std::vector<expression::Parameter> &parameters,
     std::unordered_map<const expression::AbstractExpression *, size_t> &index)
     const {
   AbstractPlan::ExtractParameters(parameters, index);

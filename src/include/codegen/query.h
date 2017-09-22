@@ -14,6 +14,7 @@
 
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
+#include "codegen/query_parameters.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -58,7 +59,8 @@ class Query {
   // Execute th e query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
   void Execute(concurrency::Transaction &txn,
-               executor::ExecutorContext *executor_context, char *consumer_arg,
+               executor::ExecutorContext *executor_context,
+               QueryParameters *parameters, char *consumer_arg,
                RuntimeStats *stats = nullptr);
 
   // Return the query plan
@@ -70,28 +72,23 @@ class Query {
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
-  // Reset the parameters so that this query can be reused
-  void ReplaceParameters(const planner::AbstractPlan &plan) {
-    parameters_.clear();
-    parameters_index_.clear();
-    plan.ExtractParameters(parameters_, parameters_index_);
-  };
-
   size_t GetParameterIdx(const expression::AbstractExpression *expression) {
-    auto param = parameters_index_.find(expression);
-    PL_ASSERT(param != parameters_index_.end());
-    return param->second;
+    return parameters_.GetParameterIdx(expression);
   }
 
  private:
   friend class QueryCompiler;
 
   // Constructor
-  Query(const planner::AbstractPlan &query_plan);
+  Query(const planner::AbstractPlan &query_plan,
+        const QueryParameters &parameters);
 
  private:
   // The query plan
   const planner::AbstractPlan &query_plan_;
+
+  // The parameters and mapping for expression and parameter ids to
+  const QueryParameters &parameters_;
 
   // The code context where the compiled code for the query goes
   CodeContext code_context_;
@@ -104,11 +101,6 @@ class Query {
   compiled_function_t init_func_;
   compiled_function_t plan_func_;
   compiled_function_t tear_down_func_;
-
-  // The parameters and mapping for expression and parameter ids to 
-  std::vector<planner::Parameter> parameters_;
-  std::unordered_map<const expression::AbstractExpression *, size_t>
-      parameters_index_;
 
  private:
   // This class cannot be copy or move-constructed

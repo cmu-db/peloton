@@ -110,11 +110,14 @@ void PlanExecutor::ExecutePlan(
 
   // Compile & execute the query
   codegen::QueryCompiler compiler;
+  codegen::QueryParameters parameters{*plan, params};
 
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
-    auto compiled_query = compiler.Compile(*plan, consumer);
-    compiled_query->Execute(*txn, executor_context.get(),
+    auto compiled_query = compiler.Compile(*plan, parameters, consumer);
+
+    // Set up the query parameters
+    compiled_query->Execute(*txn, executor_context.get(), &parameters,
                             reinterpret_cast<char *>(consumer.GetState()));
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   } else {

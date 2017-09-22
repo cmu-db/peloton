@@ -16,7 +16,7 @@
 
 #include "common/printable.h"
 #include "planner/attribute_info.h"
-#include "planner/parameter.h"
+#include "expression/parameter.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -136,7 +136,7 @@ class AbstractExpression : public Printable {
     return !(*this == rhs);
   }
 
-  virtual void ExtractParameters(std::vector<planner::Parameter> &parameters,
+  virtual void ExtractParameters(std::vector<Parameter> &parameters,
       std::unordered_map<const AbstractExpression *, size_t> &index) const {
     for (auto &child : children_) {
       child->ExtractParameters(parameters, index);

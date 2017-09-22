@@ -22,11 +22,9 @@ namespace peloton {
 namespace codegen {
 
 // Constructor
-Query::Query(const planner::AbstractPlan &query_plan)
-    : query_plan_(query_plan) {
-  // Collect all the parameter information from the query plan
-  query_plan_.ExtractParameters(parameters_, parameters_index_);
-}
+Query::Query(const planner::AbstractPlan &query_plan,
+             const QueryParameters &parameters)
+    : query_plan_(query_plan), parameters_(parameters) {}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
@@ -34,6 +32,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
 // functions throw exceptions.
 void Query::Execute(concurrency::Transaction &txn,
                     executor::ExecutorContext *executor_context,
+                    QueryParameters *query_parameters,
                     char *consumer_arg, RuntimeStats *stats) {
   CodeGen codegen{GetCodeContext()};
 
@@ -65,12 +64,8 @@ void Query::Execute(concurrency::Transaction &txn,
   func_args->txn = &txn;
   func_args->catalog = storage::StorageManager::GetInstance();
   func_args->executor_context = executor_context;
+  func_args->query_parameters = query_parameters;
   func_args->consumer_arg = consumer_arg;
-
-  // Set up the query parameters
-  std::unique_ptr<QueryParameters> query_parameters{new QueryParameters(
-      parameters_, parameters_index_, executor_context->GetParams())};
-  func_args->query_parameters = query_parameters.get();
 
   // Timer
   Timer<std::ratio<1, 1000>> timer;

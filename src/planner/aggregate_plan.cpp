@@ -218,7 +218,8 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   return (AbstractPlan::operator==(rhs));
 }
 
-void AggregatePlan::ExtractParameters(std::vector<Parameter> &parameters,
+void AggregatePlan::ExtractParameters(
+    std::vector<expression::Parameter> &parameters,
     std::unordered_map<const expression::AbstractExpression *, size_t> &index)
     const {
   AbstractPlan::ExtractParameters(parameters, index);

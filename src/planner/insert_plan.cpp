@@ -222,7 +222,7 @@ bool InsertPlan::operator==(AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void InsertPlan::ExtractParameters(std::vector<Parameter> &parameters,
+void InsertPlan::ExtractParameters(std::vector<expression::Parameter> &parameters,
     std::unordered_map<const expression::AbstractExpression *, size_t> &index)
     const {
   if (GetChildren().size() == 0) {
