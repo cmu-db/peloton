@@ -139,7 +139,7 @@ class CaseExpression : public AbstractExpression {
     return !(*this == rhs);
   }
 
-  void ExtractParameters(std::vector<planner::Parameter> &parameters,
+  void ExtractParameters(std::vector<Parameter> &parameters,
       std::unordered_map<const AbstractExpression *, size_t> &index)
       const override {
     AbstractExpression::ExtractParameters(parameters, index);

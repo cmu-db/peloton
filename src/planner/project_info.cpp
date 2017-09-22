@@ -241,7 +241,7 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   return true;
 }
 
-void ProjectInfo::ExtractParameters(std::vector<Parameter> &parameters,
+void ProjectInfo::ExtractParameters(std::vector<expression::Parameter> &parameters,
     std::unordered_map<const expression::AbstractExpression *, size_t> &index)
     const {
   if (isNonTrivial()) {

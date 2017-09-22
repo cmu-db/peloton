@@ -105,7 +105,7 @@ class InsertPlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
+  void ExtractParameters(std::vector<expression::Parameter> &parameters,
       std::unordered_map<const expression::AbstractExpression *, size_t> &index)
       const override;
 

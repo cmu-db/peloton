@@ -13,16 +13,17 @@
 #pragma once
 
 #include "abstract_plan.h"
-#include "type/types.h"
 #include "expression/abstract_expression.h"
+#include "type/types.h"
 
 namespace peloton {
+
+namespace expression {
+class Parameter;
+}
+
 namespace planner {
 
-/**
- * @brief
- *
- */
 class HashPlan : public AbstractPlan {
  public:
   typedef const expression::AbstractExpression HashKeyType;
@@ -58,7 +59,7 @@ class HashPlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
+  void ExtractParameters(std::vector<expression::Parameter> &parameters,
       std::unordered_map<const expression::AbstractExpression *, size_t>
           &index) const override;
  private:

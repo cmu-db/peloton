@@ -19,7 +19,6 @@
 #include "catalog/schema.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
-#include "planner/parameter.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
 #include "type/types.h"
@@ -39,6 +38,7 @@ class Schema;
 
 namespace expression {
 class AbstractExpression;
+class Parameter;
 }
 
 namespace planner {
@@ -131,7 +131,7 @@ class AbstractPlan : public Printable {
     return !(*this == rhs);
   }
 
-  virtual void ExtractParameters(std::vector<Parameter> &parameters,
+  virtual void ExtractParameters(std::vector<expression::Parameter> &parameters,
       std::unordered_map<const expression::AbstractExpression *, size_t>
           &index) const {
     for (auto &child : GetChildren()) {

@@ -18,12 +18,15 @@
 
 #include "abstract_scan_plan.h"
 #include "common/logger.h"
+#include "expression/abstract_expression.h"
 #include "type/serializer.h"
 #include "type/types.h"
-#include "expression/abstract_expression.h"
 
 namespace peloton {
 
+namespace expression {
+class Parameter;
+}
 namespace parser {
 class SelectStatement;
 }
@@ -78,7 +81,7 @@ class SeqScanPlan : public AbstractScan {
     return !(*this == rhs);
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
+  void ExtractParameters(std::vector<expression::Parameter> &parameters,
       std::unordered_map<const expression::AbstractExpression *, size_t> &index)
       const override;
 
