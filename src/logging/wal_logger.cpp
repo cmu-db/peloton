@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <dirent.h>
 #include <cstdio>
-#include <boost/algorithm/string.hpp>
 
 #include "catalog/manager.h"
 #include "catalog/column_catalog.h"
@@ -91,6 +90,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         val.SerializeTo(*(output_buffer));
       }
 
+               //Catalog is already created, we must do this transactionally
                       catalog::TableCatalog::GetInstance()->GetNextOid();
                       if(index >= columns.size())
                       {
@@ -106,7 +106,10 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
-//                boost::split(attrs, tuple->GetValue(6).ToString, boost::is_any_of(" "));
+                  LOG_DEBUG("\n\n\nPG_INDEX\n\n\n");
+                  indexes.push_back(std::move(tuple));
+                  catalog::IndexCatalog::GetInstance()->GetNextOid();
+
               }
               //Simply insert the tuple in the tilegroup directly
 
@@ -118,6 +121,14 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.offset);
                       auto db_oid = tg->GetValue(tg_offset, 2).GetAs<oid_t>();
                       auto table_oid = tg->GetValue(tg_offset, 0).GetAs<oid_t>();
+              case INDEX_CATALOG_OID: //pg_index
+                  {
+                  std::vector<std::unique_ptr<storage::Tuple>>::iterator pos =
+                  std::find_if(indexes.begin(), indexes.end(), [&tg, &tg_offset](const std::unique_ptr<storage::Tuple> &arg) {
+                                                             return arg->GetValue(0).CompareEquals(tg->GetValue(tg_offset, 0)); });
+                  if(pos != indexes.end())
+                      indexes.erase(pos);
+                  }
 
 
             tg->DeleteTupleFromRecovery(current_cid, tg_offset);
@@ -157,6 +168,40 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         val.SerializeTo(*(output_buffer));
       }
       epoch_manager.StartEpoch();
+  //Index construction that was deferred from the reading records phase
+ /* for(auto const& tup : indexes){
+      std::vector<oid_t> key_attrs;
+      oid_t key_attr;
+      auto table_catalog = catalog::TableCatalog::GetInstance();
+      auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::READ_ONLY);
+      auto table_object = table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(),txn);
+      auto database_oid = table_object->database_oid;
+      auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_oid, table_object->table_oid);
+      concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+      auto tuple_schema = table->GetSchema();
+      std::stringstream iss( tup->GetValue(6).ToString() );
+      while ( iss >> key_attr )
+        key_attrs.push_back( key_attr );
+      auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
+
+     index::IndexMetadata* index_metadata = new index::IndexMetadata(tup->GetValue(1).ToString(),
+                                                                     tup->GetValue(0).GetAs<oid_t>(),
+                                                                     table->GetOid(),
+                                                                     database_oid,
+                                                                     static_cast<IndexType>(tup->GetValue(3).GetAs<oid_t>()),
+                                                                     static_cast<IndexConstraintType>(tup->GetValue(4).GetAs<oid_t>()),
+                                                                     tuple_schema,
+                                                                     key_schema,
+                                                                     key_attrs,
+                                                                     tup->GetValue(4).GetAs<bool>());
+        std::shared_ptr<index::Index> index(
+         index::IndexFactory::GetIndex(index_metadata));
+        table->AddIndex(index); */
+      //Attributes must be changed once we have arraytype
+  //}
+
+
 
       break;
     }
