@@ -47,6 +47,7 @@ list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
 
 # --[ Open SSL
 list(APPEND Peloton_LINKER_LIBS "-lssl")
+list(APPEND Peloton_LINKER_LIBS "-ltbb")
 
 # --[ LLVM 3.7+
 find_package(LLVM 3.7 REQUIRED CONFIG)
