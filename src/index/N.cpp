@@ -10,7 +10,6 @@
 #include "index/N48.h"
 #include "index/N256.h"
 
-
 namespace peloton {
 namespace index {
 void N::setType(NTypes type) {
@@ -152,7 +151,7 @@ void N::insertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersi
   }
 }
 
-inline N *N::getChild(const uint8_t k, const N *node) {
+N *N::getChild(const uint8_t k, const N *node) {
   switch (node->getType()) {
     case NTypes::N4: {
       auto n = static_cast<const N4 *>(node);
