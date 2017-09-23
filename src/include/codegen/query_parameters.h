@@ -15,6 +15,7 @@
 #include "expression/parameter.h"
 #include "planner/abstract_plan.h"
 #include "type/value_peeker.h"
+#include "type/type_id.h"
 
 namespace peloton {
 
@@ -31,8 +32,7 @@ class QueryParameters {
     plan.ExtractParameters(parameters_, parameters_index_);
 
     // Set the values from the user's query parameters
-    // The constant expressions should have already been applied by this time
-    SetParameterExprValues(parameter_values);
+    SetParameterExpressionValues(parameter_values);
   }
 
   int8_t GetTinyInt(int32_t index) {
@@ -73,6 +73,7 @@ class QueryParameters {
     return peloton::type::ValuePeeker::PeekVarchar(
         parameters_[index].GetValue());
   }
+
   uint32_t GetVarcharLen(int32_t index) {
     return parameters_[index].GetValue().GetLength();
   }
@@ -84,16 +85,19 @@ class QueryParameters {
     return param->second;
   }
 
+  peloton::type::TypeId GetValueType(int32_t index) {
+    return parameters_[index].GetValue().GetTypeId();
+  }
+
  private:
   // Set values from parameters into member variables
-  void SetParameterExprValues(const std::vector<peloton::type::Value> &values) {
-    for (uint32_t i = 0; i < parameters_.size(); i++) {
+  void SetParameterExpressionValues(
+      const std::vector<peloton::type::Value> &values) {
+    for (size_t i = 0; i < parameters_.size(); i++) {
       auto &param = parameters_[i];
-      // Retrieve a value for each parameter and store it
       if (param.GetType() == expression::Parameter::Type::PARAMETER) {
-        auto param_value = values[param.GetParamIdx()].CastAs(
-            param.GetValueType());
-        parameters_[i] = expression::Parameter::CreateConstParameter(param_value);
+        auto value = values[param.GetParamIdx()];
+        parameters_[i] = expression::Parameter::CreateConstParameter(value);
       }
     }
   }

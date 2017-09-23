@@ -177,8 +177,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, *parameters.get(), consumer,
                                          &stats);
   // Run
-  compiled_query->Execute(*txn, std::unique_ptr<executor::ExecutorContext>(
-                                    new executor::ExecutorContext{txn}).get(),
+  compiled_query->Execute(*txn, executor_context.get(), parameters.get(),
                           consumer_state);
 
   txn_manager.CommitTransaction(txn);
@@ -187,8 +186,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     const std::shared_ptr<planner::AbstractPlan> &plan,
-    codegen::QueryResultConsumer &consumer,
-    char *consumer_state, std::vector<type::Value> *params) {
+    codegen::QueryResultConsumer &consumer, char *consumer_state,
+    std::vector<type::Value> *params, bool *cached) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -209,17 +208,16 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
 
   codegen::Query* query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
-    LOG_INFO("Compiling/Executing a new query");
     auto compiled_query = compiler.Compile(*plan, *parameters.get(), consumer,
                                            &stats);
     compiled_query->Execute(*txn, executor_context.get(), parameters.get(),
                             consumer_state);
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+    if (cached != nullptr) *cached = false;
   } else {
-    query->Execute(*txn,
-                   std::unique_ptr<executor::ExecutorContext> (
-                       new executor::ExecutorContext{txn}).get(),
+    query->Execute(*txn, executor_context.get(), parameters.get(),
                    consumer_state);
+    if (cached != nullptr) *cached = true;
   }
   txn_manager.CommitTransaction(txn);
 
@@ -237,13 +235,6 @@ std::unique_ptr<expression::AbstractExpression>
 PelotonCodeGenTest::ConstDecimalExpr(double val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(val));
-  return std::unique_ptr<expression::AbstractExpression>{expr};
-}
-
-std::unique_ptr<expression::AbstractExpression>
-PelotonCodeGenTest::ConstVarcharExpr(std::string str) {
-  auto *expr = new expression::ConstantValueExpression(
-      type::ValueFactory::GetVarcharValue(str));
   return std::unique_ptr<expression::AbstractExpression>{expr};
 }
 

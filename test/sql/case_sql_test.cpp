@@ -151,7 +151,6 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
 
 }
 
-
 TEST_F(CaseSQLTests, SimpleMultipleWhen) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

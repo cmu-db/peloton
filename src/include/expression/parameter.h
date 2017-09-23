@@ -29,9 +29,8 @@ class Parameter {
     return Parameter{value.GetTypeId(), value};
   }
 
-  static Parameter CreateParamParameter(peloton::type::TypeId type_id,
-                                        int32_t param_idx) {
-    return Parameter{type_id, param_idx};
+  static Parameter CreateParamParameter(int32_t param_idx) {
+    return Parameter{param_idx};
   }
 
   Type GetType() { return type_; }
@@ -52,8 +51,9 @@ class Parameter {
   Parameter(peloton::type::TypeId type_id, type::Value value)
       : type_(Type::CONSTANT), type_id_(type_id), value_(value) {}
 
-  Parameter(peloton::type::TypeId type_id, int32_t param_idx)
-      : type_(Type::PARAMETER), type_id_(type_id), param_idx_(param_idx) {}
+  Parameter(int32_t param_idx)
+      : type_(Type::PARAMETER), type_id_(type::TypeId::INVALID),
+        param_idx_(param_idx) {}
 
  private:
   Type type_;

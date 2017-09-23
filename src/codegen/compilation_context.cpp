@@ -26,8 +26,7 @@ namespace codegen {
 // Constructor
 CompilationContext::CompilationContext(Query &query,
                                        QueryResultConsumer &result_consumer)
-    : query_(query),
-      result_consumer_(result_consumer),
+    : query_(query), result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();

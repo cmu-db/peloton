@@ -199,7 +199,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
                          reinterpret_cast<char*>(buffer1.GetState()));
   const auto& results1 = buffer1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results1.size());
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetSize());
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // Execute a query cached
   codegen::BufferingConsumer buffer2{{0}, context2};

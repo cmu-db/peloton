@@ -71,9 +71,11 @@ class CompilationContext {
 
   RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
 
-  QueryResultConsumer &GetQueryResultConsumer() const {
-    return result_consumer_;
+  const QueryParameters &GetQueryParameters() const {
+    return query_.GetQueryParameters();
   }
+
+  QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
 
   // Get a pointer to the catalog object from the runtime state
   llvm::Value *GetCatalogPtr();

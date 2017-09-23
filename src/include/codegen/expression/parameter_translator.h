@@ -29,7 +29,7 @@ namespace codegen {
 class ParameterTranslator : public ExpressionTranslator {
  public:
   ParameterTranslator(const expression::ParameterValueExpression &exp,
-                     CompilationContext &ctx);
+                      CompilationContext &ctx);
 
   // Produce the value that is the result of codegen-ing the expression
   codegen::Value DeriveValue(CodeGen &codegen,
