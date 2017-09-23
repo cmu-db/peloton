@@ -30,13 +30,6 @@ void N16::insert(uint8_t key, N *n) {
   count++;
 }
 
-template<class NODE>
-void N16::copyTo(NODE *n) const {
-  for (unsigned i = 0; i < count; i++) {
-    n->insert(flipSign(keys[i]), children[i]);
-  }
-}
-
 bool N16::change(uint8_t key, N *val) {
   N **childPos = const_cast<N **>(getChildPos(key));
   assert(childPos != nullptr);

@@ -34,13 +34,6 @@ void N4::insert(uint8_t key, N *n) {
   count++;
 }
 
-template<class NODE>
-void N4::copyTo(NODE *n) const {
-  for (uint32_t i = 0; i < count; ++i) {
-    n->insert(keys[i], children[i]);
-  }
-}
-
 bool N4::change(uint8_t key, N *val) {
   for (uint32_t i = 0; i < count; ++i) {
     if (keys[i] == key) {

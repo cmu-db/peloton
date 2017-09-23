@@ -5,7 +5,10 @@
 #include <assert.h>
 #include <algorithm>
 #include "index/N.h"
+#include "index/N4.h"
+#include "index/N16.h"
 #include "index/N48.h"
+#include "index/N256.h"
 
 namespace peloton {
 namespace index {
@@ -25,15 +28,6 @@ void N48::insert(uint8_t key, N *n) {
   children[pos] = n;
   childIndex[key] = (uint8_t) pos;
   count++;
-}
-
-template<class NODE>
-void N48::copyTo(NODE *n) const {
-  for (unsigned i = 0; i < 256; i++) {
-    if (childIndex[i] != emptyMarker) {
-      n->insert(i, children[childIndex[i]]);
-    }
-  }
 }
 
 bool N48::change(uint8_t key, N *val) {
@@ -98,5 +92,6 @@ uint64_t N48::getChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *
   if (needRestart) goto restart;
   return v;
 }
+
 }
 }
