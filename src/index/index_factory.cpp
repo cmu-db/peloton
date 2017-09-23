@@ -76,6 +76,10 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetSkipListGenericKeyIndex(metadata);
     }
 
+    // ART
+  } else if (index_type == IndexType::ART) {
+    printf("creating a art index!");
+
   // -----------------------
   // ERROR
   // -----------------------
