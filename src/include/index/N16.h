@@ -51,7 +51,11 @@ public:
   void insert(uint8_t key, N *n);
 
   template<class NODE>
-  void copyTo(NODE *n) const;
+  void copyTo(NODE *n) const {
+    for (unsigned i = 0; i < count; i++) {
+      n->insert(flipSign(keys[i]), children[i]);
+    }
+  }
 
   bool change(uint8_t key, N *val);
 

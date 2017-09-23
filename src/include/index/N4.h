@@ -27,7 +27,11 @@ public:
   void insert(uint8_t key, N *n);
 
   template<class NODE>
-  void copyTo(NODE *n) const;
+  void copyTo(NODE *n) const {
+    for (uint32_t i = 0; i < count; ++i) {
+      n->insert(keys[i], children[i]);
+    }
+  }
 
   bool change(uint8_t key, N *val);
 

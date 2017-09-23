@@ -2,10 +2,10 @@
 // Created by Min Huang on 9/21/17.
 //
 
+#pragma once
+
 #ifndef PELOTON_N48_H
 #define PELOTON_N48_H
-
-#pragma once
 
 #include <stdint.h>
 #include <atomic>
@@ -30,7 +30,13 @@ public:
   void insert(uint8_t key, N *n);
 
   template<class NODE>
-  void copyTo(NODE *n) const;
+  void copyTo(NODE *n) const {
+    for (unsigned i = 0; i < 256; i++) {
+      if (childIndex[i] != emptyMarker) {
+        n->insert(i, children[childIndex[i]]);
+      }
+    }
+  }
 
   bool change(uint8_t key, N *val);
 
