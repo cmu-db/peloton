@@ -15,7 +15,6 @@
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
 #include "codegen/query_parameters.h"
-#include "planner/abstract_plan.h"
 
 namespace peloton {
 
@@ -65,6 +64,11 @@ class Query {
 
   // Return the query plan
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
+
+  // Return the query parameters
+  const codegen::QueryParameters &GetQueryParameters() const {
+    return parameters_;
+  }
 
   // Get the holder of the code
   CodeContext &GetCodeContext() { return code_context_; }

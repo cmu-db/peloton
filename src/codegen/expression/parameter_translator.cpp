@@ -34,8 +34,9 @@ codegen::Value ParameterTranslator::DeriveValue(
   llvm::Value *len = nullptr;
   std::vector<llvm::Value *> val_args = {context_.GetQueryParametersPtr(),
                                          codegen.Const32(parameter_index_)};
-  auto type_id =
-    GetExpressionAs<expression::ParameterValueExpression>().GetValueType();
+  auto &parameters =
+      const_cast<QueryParameters &>(context_.GetQueryParameters());
+  auto type_id = parameters.GetValueType(parameter_index_);
   switch (type_id) {
     case peloton::type::TypeId::TINYINT: {
       val = codegen.Call(QueryParametersProxy::GetTinyInt, val_args);
@@ -75,7 +76,6 @@ codegen::Value ParameterTranslator::DeriveValue(
                       TypeIdToString(type_id)};
     }
   }
-  
   return codegen::Value{type::SqlType::LookupType(type_id), val, len, nullptr};
 }
 

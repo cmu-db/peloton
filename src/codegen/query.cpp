@@ -15,7 +15,6 @@
 #include "codegen/query_parameters.h"
 #include "common/logger.h"
 #include "common/timer.h"
-#include "executor/executor_context.h"
 #include "storage/storage_manager.h"
 
 namespace peloton {

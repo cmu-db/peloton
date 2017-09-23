@@ -121,7 +121,6 @@ bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
     if (*children_[i].get() != *rhs.children_[i].get())
       return false;
   }
-
   return true;
 }
 

@@ -63,8 +63,7 @@ class ParameterValueExpression : public AbstractExpression {
     AbstractExpression::ExtractParameters(parameters, index);
 
     // Add a new parameter object for a parameter
-    parameters.push_back(Parameter::CreateParamParameter(GetValueType(),
-                                                         GetValueIdx()));
+    parameters.push_back(Parameter::CreateParamParameter(GetValueIdx()));
     index[this] = parameters.size() - 1;
   };
 

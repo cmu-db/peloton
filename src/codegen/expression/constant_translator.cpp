@@ -75,7 +75,6 @@ codegen::Value ConstantTranslator::DeriveValue(
       throw Exception{"Unknown constant value type " + TypeIdToString(type_id)};
     }
   }
-
   return codegen::Value{type::SqlType::LookupType(type_id), val, len, nullptr};
 }
 
