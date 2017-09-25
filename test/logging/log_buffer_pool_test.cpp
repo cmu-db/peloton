@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "logging/log_buffer_pool.h"
+//#include "logging/log_buffer_pool.h"
 #include "common/harness.h"
 
 namespace peloton {
