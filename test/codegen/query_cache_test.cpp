@@ -187,11 +187,11 @@ TEST_F(QueryCacheTest, SimpleCache) {
 
   // Check the plan is the same
   auto hash_equal = (scan1->Hash() == scan2->Hash());
-  EXPECT_EQ(hash_equal, true);
+  EXPECT_EQ(true, hash_equal);
 
   // Check the plan is the same
   auto is_equal = (*scan1.get() == *scan2.get());
-  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(true, is_equal);
 
   // Execute a new query
   codegen::BufferingConsumer buffer1{{0}, context1};
@@ -228,10 +228,10 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   scan2->PerformBinding(context2);
 
   auto hash_equal = (scan1->Hash() == scan2->Hash());
-  EXPECT_EQ(hash_equal, true);
+  EXPECT_EQ(true, hash_equal);
 
   auto is_equal = (*scan1.get() == *scan2.get());
-  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(true, is_equal);
 
   codegen::BufferingConsumer buffer1{{0, 1, 2}, context1};
 
@@ -275,10 +275,10 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   hj_plan2->PerformBinding(context2);
 
   auto hash_equal = (hj_plan1->Hash() == hj_plan2->Hash());
-  EXPECT_EQ(hash_equal, true);
+  EXPECT_EQ(true, hash_equal);
 
   bool is_equal = (*hj_plan1.get() == *hj_plan2.get());
-  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(true, is_equal);
 
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer1{{0, 1, 2, 3}, context1};
@@ -353,16 +353,16 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   order_by_plan_3->PerformBinding(context3);
 
   auto hash_equal = (order_by_plan_1->Hash() == order_by_plan_2->Hash());
-  EXPECT_EQ(hash_equal, true);
+  EXPECT_EQ(true, hash_equal);
 
   hash_equal = (order_by_plan_2->Hash() == order_by_plan_3->Hash());
-  EXPECT_EQ(hash_equal, false);
+  EXPECT_EQ(false, hash_equal);
 
   auto is_equal = (*order_by_plan_1.get() == *order_by_plan_2.get());
-  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(true, is_equal);
 
   is_equal = (*order_by_plan_1.get() == *order_by_plan_3.get());
-  EXPECT_EQ(is_equal, false);
+  EXPECT_EQ(false, is_equal);
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
   codegen::BufferingConsumer buffer2{{0, 1}, context2};
@@ -393,7 +393,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   auto found =
       (codegen::QueryCache::Instance().Find(std::move(order_by_plan_3)) ==
           nullptr);
-  EXPECT_EQ(found, 1);
+  EXPECT_EQ(true, found);
 
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
@@ -412,10 +412,10 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   agg_plan2->PerformBinding(context2);
 
   auto hash_equal = (agg_plan1->Hash() == agg_plan2->Hash());
-  EXPECT_EQ(hash_equal, true);
+  EXPECT_EQ(true, hash_equal);
 
   auto is_equal = (*agg_plan1.get() == *agg_plan2.get());
-  EXPECT_EQ(is_equal, true);
+  EXPECT_EQ(true, is_equal);
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
   codegen::BufferingConsumer buffer1{{0, 1}, context1};
@@ -434,7 +434,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
                          reinterpret_cast<char*>(buffer2.GetState()));
 
   const auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(results2.size(), 59);
+  EXPECT_EQ(59, results2.size());
 
   // Clean the query cache and leaves only one query
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
@@ -445,7 +445,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   planner::BindingContext context3;
   agg_plan3->PerformBinding(context3);
   auto found = (codegen::QueryCache::Instance().Find(agg_plan3) != nullptr);
-  EXPECT_EQ(found, false);
+  EXPECT_EQ(false, found);
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
