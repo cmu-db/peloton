@@ -138,9 +138,11 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
   int32_t length = output_buffer_.Position() - start - sizeof(int32_t);
   output_buffer_.WriteIntAt(start, length);
-  buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
-  logger_->PushBuffer(buffer_ptr_);
-  buffer_ptr_ = new LogBuffer();
+  if(!logger_->log_buffer_->WriteData(output_buffer_.Data(), output_buffer_.Size())){
+      logger_->PushBuffer(logger_->log_buffer_);
+      logger_->log_buffer_= new LogBuffer();
+      logger_->log_buffer_->WriteData(output_buffer_.Data(), output_buffer_.Size());
+  }
   }
 }
 
