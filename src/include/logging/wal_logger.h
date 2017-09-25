@@ -21,7 +21,6 @@
 #include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "logging/log_buffer_pool.h"
 #include "logging/log_manager.h"
 #include "type/types.h"
 #include "type/serializer.h"
