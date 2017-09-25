@@ -608,15 +608,20 @@ void WalLogger::Run() {
      if (is_running_ == false) { break; }
 
     std::this_thread::sleep_for(
-       std::chrono::microseconds(5000));
+       std::chrono::microseconds(500000));
      {
-        while(!log_buffers_.empty()){
-            buffers_lock_.Lock();
-            LogBuffer* b = PersistLogBuffer(log_buffers_[0]);
-            log_buffers_.erase(log_buffers_.begin());
-            delete b;
-            buffers_lock_.Unlock();
- }
+        if(!log_buffer_->Empty()){
+          log_buffers_.push_back(log_buffer_);
+          log_buffer_ = new LogBuffer();
+        }
+          //  write_buffers_.insert(write_buffers_.end(), log_buffers_.begin(), log_buffers_.end());
+          //  log_buffers_.clear();
+            for (auto buf : log_buffers_){
+                PersistLogBuffer(buf);
+                delete buf;
+            }
+            log_buffers_.clear();
+
    }
  }
 

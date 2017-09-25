@@ -63,6 +63,10 @@ public:
 
   void StopLogging() {
     is_running_ = false;
+    if(!log_buffer_->Empty()){
+        PersistLogBuffer(log_buffer_);
+    }
+    delete log_buffer_;
     logger_thread_->join();
   }
 
@@ -70,10 +74,12 @@ public:
 
 
   void PushBuffer(LogBuffer* buf){
-      buffers_lock_.Lock();
+      //buffers_lock_.Lock();
       log_buffers_.push_back(buf);
-      buffers_lock_.Unlock();
+      //buffers_lock_.Unlock();
   }
+
+  LogBuffer* log_buffer_ = new LogBuffer();
 
 private:
   void Run();
@@ -99,6 +105,7 @@ private:
   txn_id_t LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset);
   void UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id);
 
+
 private:
   size_t logger_id_;
   std::string log_dir_;
@@ -123,12 +130,15 @@ private:
   /* Log buffers */
   std::vector<LogBuffer*> log_buffers_;
 
+  std::vector<LogBuffer*> write_buffers_;
+
   size_t persist_epoch_id_;
 
   // The spin lock to protect the worker map. We only update this map when creating/terminating a new worker
   Spinlock buffers_lock_;
   // map from worker id to the worker's context.
   //std::unordered_map<oid_t, std::shared_ptr<WorkerContext>> worker_map_;
+
 
   const std::string logging_filename_prefix_ = "log";
 

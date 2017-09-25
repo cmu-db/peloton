@@ -27,7 +27,7 @@ class LogBuffer {
   friend class LogBufferPool;
 private:
   // constant
-  const static size_t log_buffer_capacity_ = 1024 * 4 ; // 4 KB
+  const static size_t log_buffer_capacity_ = 1024 * 512 ; // 512 KB
 
 public:
   LogBuffer():
