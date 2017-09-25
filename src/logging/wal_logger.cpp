@@ -115,6 +115,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
               }
               //Simply insert the tuple in the tilegroup directly
+              table->IncreaseTupleCount(1);
         if(record_eid > current_eid){
           current_eid =  record_eid;
         }
@@ -138,6 +139,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
 
             tg->DeleteTupleFromRecovery(current_cid, tg_offset);
+            table->IncreaseTupleCount(1);
       break;
     }
     case LogRecordType::TUPLE_UPDATE: {
@@ -281,10 +283,10 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
+       /* if(log_buffer_ != nullptr && !log_buffer_->Empty()){
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
-        }
+        }*/
             for (auto buf : log_buffers_){
                 PersistLogBuffer(buf);
                 delete buf;
