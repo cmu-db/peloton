@@ -38,12 +38,12 @@ class Parameter {
   peloton::type::TypeId GetValueType() { return type_id_; }
 
   type::Value &GetValue() {
-    PL_ASSERT(type_==Type::CONSTANT_EXPRESSION);
+    PL_ASSERT(type_==Type::CONSTANT);
     return value_;
   }
 
   uint32_t GetParamIdx() {
-    PL_ASSERT(type_==Type::PARAMETER_EXPRESSION);
+    PL_ASSERT(type_==Type::PARAMETER);
     return param_idx_;
   }
 

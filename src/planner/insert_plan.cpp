@@ -231,7 +231,7 @@ void InsertPlan::ExtractParameters(std::vector<expression::Parameter> &parameter
       proj_info->ExtractParameters(parameters, index);
     }
   } else {
-    PL_ASSERT(plan->GetChildren().size() == 1);
+    PL_ASSERT(GetChildren().size() == 1);
     GetChild(0)->ExtractParameters(parameters, index);
   }
 }
