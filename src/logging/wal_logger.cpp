@@ -280,10 +280,8 @@ void WalLogger::Run() {
     */
    while (true) {
      if (is_running_ == false) { break; }
-    std::this_thread::sleep_for(
-       std::chrono::microseconds(500000));
      {
-        if(!log_buffer_->Empty()){
+        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
         }
@@ -294,6 +292,9 @@ void WalLogger::Run() {
             log_buffers_.clear();
 
    }
+     std::this_thread::sleep_for(
+        std::chrono::microseconds(500000));
+
  }
 
 }
