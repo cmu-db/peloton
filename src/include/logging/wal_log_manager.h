@@ -101,7 +101,7 @@ public:
 
 
   // Logger side logic
-  virtual void DoRecovery();
+  virtual void DoRecovery() override;
   virtual void StartLoggers() override;
   virtual void StopLoggers() override;
 private:

@@ -22,6 +22,11 @@
 #include "common/logger.h"
 #include "logging/logging_util.h"
 
+
+//This is only for the mac build!!!
+#define DEFAULT_CHECKPOINT_INTERVAL 30
+
+
 namespace peloton {
 
 namespace storage {
@@ -123,7 +128,7 @@ protected:
 
   int checkpoint_interval_;
 
-  const int DEFAULT_CHECKPOINT_INTERVAL = 30;
+//  const int DEFAULT_CHECKPOINT_INTERVAL = 30;
 
   size_t checkpointer_count_;
   std::vector<std::string> checkpoint_dirs_;
