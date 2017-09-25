@@ -245,7 +245,10 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
       }
       case LogRecordType::TUPLE_INSERT:
         {
-          current_eid = record_decode.ReadLong();
+          eid_t record_eid = record_decode.ReadLong();
+          if(record_eid > current_eid){
+            current_eid =  record_eid;
+          }
           current_cid = record_decode.ReadLong();
 
           oid_t database_id = (oid_t) record_decode.ReadLong();
@@ -324,7 +327,10 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
     }
       case LogRecordType::TUPLE_DELETE:
     {
-        current_eid = record_decode.ReadLong();
+        eid_t record_eid = record_decode.ReadLong();
+        if(record_eid > current_eid){
+          current_eid =  record_eid;
+        }
         current_cid = record_decode.ReadLong();
           oid_t database_id = (oid_t) record_decode.ReadLong();
           oid_t table_id = (oid_t) record_decode.ReadLong();
@@ -362,7 +368,10 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
           break;
     }
       case LogRecordType::TUPLE_UPDATE:{
-        current_eid = record_decode.ReadLong();
+        eid_t record_eid = record_decode.ReadLong();
+        if(record_eid > current_eid){
+          current_eid =  record_eid;
+        }
         current_cid = record_decode.ReadLong();
         oid_t database_id = (oid_t) record_decode.ReadLong();
         oid_t table_id = (oid_t) record_decode.ReadLong();
@@ -433,12 +442,14 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
       epoch_manager.Reset(current_eid);
       epoch_manager.StartEpoch();
   }
-  //Index construction that was deferred from the reading records phase
- /* for(auto const& tup : indexes){
+  std::set<storage::DataTable*> tables_with_indexes;
+
+  //Index construction that was deferred from the read records phase
+  for(auto const& tup : indexes){
       std::vector<oid_t> key_attrs;
       oid_t key_attr;
       auto table_catalog = catalog::TableCatalog::GetInstance();
-      auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::READ_ONLY);
+      auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
       auto table_object = table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(),txn);
       auto database_oid = table_object->database_oid;
       auto table = storage::StorageManager::GetInstance()->GetTableWithOid(database_oid, table_object->table_oid);
@@ -462,11 +473,34 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                                                                      tup->GetValue(4).GetAs<bool>());
         std::shared_ptr<index::Index> index(
          index::IndexFactory::GetIndex(index_metadata));
-        table->AddIndex(index); */
+        table->AddIndex(index);
+        tables_with_indexes.insert(table);
       //Attributes must be changed once we have arraytype
-  //}
+  }
 
 
+  //add tuples to index TODO
+/*
+  for (storage::DataTable* table : tables_with_indexes) {
+      auto schema = table->GetSchema();
+      size_t tg_count = table->GetTileGroupCount();
+      for(oid_t tg = 0; tg<tg_count; tg++){
+          auto tile_group = table->GetTileGroup(tg);
+          for(oid_t offset = 0; offset < tile_group->GetActiveTupleCount(); offset++){
+            storage::Tuple* t = new storage::Tuple(schema, true);
+            for(size_t col = 0; col < schema->GetColumnCount(); col++){
+                t->SetValue(col, tile_group->GetValue(offset, col));
+            }
+            ItemPointer p(tg, offset);
+           // auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
+            table->InsertInIndexes(t, p, nullptr, nullptr);
+           // concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+          }
+
+      }
+
+  }
+*/
   return true;
 }
 
@@ -540,7 +574,7 @@ void WalLogger::RebuildSecIndexForTable(storage::DataTable *table) {
 }
 
 
-std::unique_ptr<LogBuffer> WalLogger::PersistLogBuffer(std::unique_ptr<LogBuffer> log_buffer) {
+LogBuffer* WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     FileHandle *new_file_handle = new FileHandle();
     if(likely_branch(log_buffer != nullptr)){
     std::string filename = GetLogFileFullPath(0);
@@ -563,9 +597,28 @@ std::unique_ptr<LogBuffer> WalLogger::PersistLogBuffer(std::unique_ptr<LogBuffer
     }
 }
     delete new_file_handle;
-return std::move(log_buffer);
+return log_buffer;
 }
 
+void WalLogger::Run() {
+   /**
+    *  Main loop
+    */
+   while (true) {
+     if (is_running_ == false) { break; }
+
+    std::this_thread::sleep_for(
+       std::chrono::microseconds(5000));
+     {
+        while(!log_buffers_.empty()){
+            buffers_lock_.Lock();
+            LogBuffer* b = PersistLogBuffer(log_buffers_[0]);
+            log_buffers_.erase(log_buffers_.begin());
+            delete b;
+            buffers_lock_.Unlock();
+ }
+   }
+ }
 
 }
-}
+}}

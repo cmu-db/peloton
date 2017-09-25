@@ -27,11 +27,10 @@ class LogBuffer {
   friend class LogBufferPool;
 private:
   // constant
-  const static size_t log_buffer_capacity_ = 1024 * 1024 * 32; // 32 MB
+  const static size_t log_buffer_capacity_ = 1024 * 4 ; // 4 KB
 
 public:
-  LogBuffer()://const size_t thread_id)://, const size_t eid) :
-     // thread_id_(thread_id), //eid_(eid),
+  LogBuffer():
       size_(0){
     data_ = new char[log_buffer_capacity_];
     PL_MEMSET(data_, 0, log_buffer_capacity_);
