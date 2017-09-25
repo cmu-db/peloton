@@ -322,6 +322,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
           } else {
               //Simply insert the tuple in the tilegroup directly
               tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
+              table->IncreaseTupleCount(1);
           }
           break;
     }
@@ -365,6 +366,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
           }
 
             tg->DeleteTupleFromRecovery(current_cid, tg_offset);
+            table->IncreaseTupleCount(1);
           break;
     }
       case LogRecordType::TUPLE_UPDATE:{
@@ -405,6 +407,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
             }
         tg->InsertTupleFromRecovery(current_cid,tg_offset,tuple.get());
         old_tg->UpdateTupleFromRecovery(current_cid, old_tg_offset, location);
+        table->IncreaseTupleCount(1);
         /*
         if(database_id == 16777216){ //catalog database oid
             switch (table_id){
@@ -607,10 +610,10 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
+       /* if(log_buffer_ != nullptr && !log_buffer_->Empty()){
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
-        }
+        }*/
             for (auto buf : log_buffers_){
                 PersistLogBuffer(buf);
                 delete buf;
