@@ -321,8 +321,11 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
               }
           } else {
               //Simply insert the tuple in the tilegroup directly
-              tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
+              auto tuple_id = tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
               table->IncreaseTupleCount(1);
+              if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+                table->AddDefaultTileGroup();
+              }
           }
           break;
     }
@@ -364,10 +367,11 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
 
               }
           }
-
-            tg->DeleteTupleFromRecovery(current_cid, tg_offset);
-            table->IncreaseTupleCount(1);
-          break;
+        auto tuple_id =  tg->DeleteTupleFromRecovery(current_cid, tg_offset);
+        table->IncreaseTupleCount(1);
+        if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+          table->AddDefaultTileGroup();
+        }
     }
       case LogRecordType::TUPLE_UPDATE:{
         eid_t record_eid = record_decode.ReadLong();
@@ -405,9 +409,12 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                 type::Value val = type::Value::DeserializeFrom(record_decode, schema->GetColumn(oid).GetType());
                 tuple->SetValue(oid, val);
             }
-        tg->InsertTupleFromRecovery(current_cid,tg_offset,tuple.get());
+       auto tuple_id =  tg->InsertTupleFromRecovery(current_cid,tg_offset,tuple.get());
         old_tg->UpdateTupleFromRecovery(current_cid, old_tg_offset, location);
         table->IncreaseTupleCount(1);
+        if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+          table->AddDefaultTileGroup();
+        }
         /*
         if(database_id == 16777216){ //catalog database oid
             switch (table_id){
@@ -440,6 +447,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
     }
 
   }
+
   if(current_eid != INVALID_EID){
       auto& epoch_manager = concurrency::EpochManagerFactory::GetInstance();
       epoch_manager.Reset(current_eid);
@@ -610,19 +618,20 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-       /* if(log_buffer_ != nullptr && !log_buffer_->Empty()){
+        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
-        }*/
-            for (auto buf : log_buffers_){
+        }
+            while(!log_buffers_.empty()){
+                auto buf = log_buffers_[0];
                 PersistLogBuffer(buf);
                 delete buf;
+                log_buffers_.erase(log_buffers_.begin());
             }
-            log_buffers_.clear();
 
    }
      std::this_thread::sleep_for(
-        std::chrono::microseconds(500000));
+        std::chrono::microseconds(5000));
 
  }
 

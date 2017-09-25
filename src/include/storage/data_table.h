@@ -286,6 +286,9 @@ class DataTable : public AbstractTable {
     default_active_indirection_array_count_ = active_indirection_array_count;
   }
 
+  // add a tile group to the table
+  oid_t AddDefaultTileGroup();
+
   // Claim a tuple slot in a tile group
   ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
 
@@ -312,8 +315,7 @@ class DataTable : public AbstractTable {
 
   bool CheckConstraints(const AbstractTuple *tuple) const;
 
-  // add a tile group to the table
-  oid_t AddDefaultTileGroup();
+
   // add a tile group to the table. replace the active_tile_group_id-th active
   // tile group.
   oid_t AddDefaultTileGroup(const size_t &active_tile_group_id);
