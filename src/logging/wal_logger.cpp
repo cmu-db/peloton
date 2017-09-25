@@ -116,6 +116,9 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
               }
               //Simply insert the tuple in the tilegroup directly
               table->IncreaseTupleCount(1);
+              if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+                table->AddDefaultTileGroup();
+              }
         if(record_eid > current_eid){
           current_eid =  record_eid;
         }
@@ -137,10 +140,11 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
                       indexes.erase(pos);
                   }
 
-
-            tg->DeleteTupleFromRecovery(current_cid, tg_offset);
-            table->IncreaseTupleCount(1);
+        auto tuple_id =  tg->DeleteTupleFromRecovery(current_cid, tg_offset);
+        table->IncreaseTupleCount(1);
       break;
+          table->AddDefaultTileGroup();
+        }
     }
     case LogRecordType::TUPLE_UPDATE: {
       auto &manager = catalog::Manager::GetInstance();
@@ -167,6 +171,8 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       for (auto schema : tg->GetTileSchemas()) {
         for (auto column : schema.GetColumns()) {
           columns.push_back(column);
+          table->AddDefaultTileGroup();
+        }
         }
       }
 
@@ -175,6 +181,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
+
       epoch_manager.StartEpoch();
   std::set<storage::DataTable*> tables_with_indexes;
 
@@ -283,19 +290,20 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-       /* if(log_buffer_ != nullptr && !log_buffer_->Empty()){
+        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
-        }*/
-            for (auto buf : log_buffers_){
+        }
+            while(!log_buffers_.empty()){
+                auto buf = log_buffers_[0];
                 PersistLogBuffer(buf);
                 delete buf;
+                log_buffers_.erase(log_buffers_.begin());
             }
-            log_buffers_.clear();
 
    }
      std::this_thread::sleep_for(
-        std::chrono::microseconds(500000));
+        std::chrono::microseconds(5000));
 
  }
 
