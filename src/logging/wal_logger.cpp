@@ -211,8 +211,8 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
   }
 
 
-  //add tuples to index TODO
-/*
+  //add tuples to index
+
   for (storage::DataTable* table : tables_with_indexes) {
       auto schema = table->GetSchema();
       size_t tg_count = table->GetTileGroupCount();
@@ -223,16 +223,16 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
             for(size_t col = 0; col < schema->GetColumnCount(); col++){
                 t->SetValue(col, tile_group->GetValue(offset, col));
             }
-            ItemPointer p(tg, offset);
+            ItemPointer p(tile_group->GetTileGroupId(), offset);
            // auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
-            table->InsertInIndexes(t, p, nullptr, nullptr);
+            ItemPointer* i = new ItemPointer(tg, offset);
+            table->InsertInIndexes(t, p, nullptr, &i);
            // concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
           }
 
       }
 
   }
-*/
 
       break;
     }
@@ -287,8 +287,6 @@ void WalLogger::Run() {
           log_buffers_.push_back(log_buffer_);
           log_buffer_ = new LogBuffer();
         }
-          //  write_buffers_.insert(write_buffers_.end(), log_buffers_.begin(), log_buffers_.end());
-          //  log_buffers_.clear();
             for (auto buf : log_buffers_){
                 PersistLogBuffer(buf);
                 delete buf;
