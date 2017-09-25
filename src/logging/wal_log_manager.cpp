@@ -139,7 +139,8 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
   int32_t length = output_buffer_.Position() - start - sizeof(int32_t);
   output_buffer_.WriteIntAt(start, length);
   buffer_ptr_->WriteData(output_buffer_.Data(), output_buffer_.Size());
-
+  logger_->PushBuffer(buffer_ptr_);
+  buffer_ptr_ = new LogBuffer();
   }
 }
 
@@ -159,20 +160,20 @@ void WalLogManager::EndPersistTxn(cid_t current_cid) {
 void WalLogManager::LogInsert(const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, tuple_pos, current_cid, current_eid);
   WriteRecordToBuffer(record);
-  buffer_ptr_ = logger_->PersistLogBuffer(std::move(buffer_ptr_));
+  //buffer_ptr_ = logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, tuple_pos, current_cid, current_eid);
   record.SetOldItemPointer(tuple_old_pos);
   WriteRecordToBuffer(record);
-  logger_->PersistLogBuffer(std::move(buffer_ptr_));
+  //logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid, eid_t current_eid) {
   LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_DELETE, tuple_pos_deleted,current_cid, current_eid);
   WriteRecordToBuffer(record);
-  logger_->PersistLogBuffer(std::move(buffer_ptr_));
+  //logger_->PersistLogBuffer(std::move(buffer_ptr_));
 }
 
 void WalLogManager::DoRecovery(){

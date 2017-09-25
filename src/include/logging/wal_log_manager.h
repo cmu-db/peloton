@@ -85,15 +85,11 @@ public:
     for (size_t i = 0; i < logger_count_; ++i) {
       logger_ = std::make_unique<WalLogger>(0, logging_dir);
     }
-    buffer_ptr_ =  std::make_unique<LogBuffer>();
+    buffer_ptr_ = new LogBuffer();
   }
 
   virtual const std::string GetDirectories() override {
     return logger_dir_;
-  }
-
-  std::unique_ptr<LogBuffer> GetBuffer() {
-      return std::move(buffer_ptr_);
   }
 
 
@@ -118,7 +114,7 @@ private:
 
   CopySerializeOutput output_buffer_;
 
-  std::unique_ptr<LogBuffer> buffer_ptr_;
+  LogBuffer* buffer_ptr_;
 
   std::unique_ptr<WalLogger> logger_;
 

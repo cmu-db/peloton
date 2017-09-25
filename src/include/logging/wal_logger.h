@@ -58,13 +58,22 @@ public:
 
   void StartLogging() {
     is_running_ = true;
+    logger_thread_.reset(new std::thread(&WalLogger::Run, this));
    }
 
   void StopLogging() {
     is_running_ = false;
+    logger_thread_->join();
   }
 
-  std::unique_ptr<LogBuffer> PersistLogBuffer(std::unique_ptr<LogBuffer> log_buffer);
+  LogBuffer* PersistLogBuffer(LogBuffer* log_buffer);
+
+
+  void PushBuffer(LogBuffer* buf){
+      buffers_lock_.Lock();
+      log_buffers_.push_back(buf);
+      buffers_lock_.Unlock();
+  }
 
 private:
   void Run();
@@ -84,6 +93,7 @@ private:
   bool ReplayLogFile(FileHandle &file_handle);
 
   bool InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location);
+
 
   // Return value is the swapped txn id, either INVALID_TXNID or INITIAL_TXNID
   txn_id_t LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset);
@@ -111,11 +121,12 @@ private:
   CopySerializeOutput logger_output_buffer_;
 
   /* Log buffers */
-  LogBuffer* log_buffer_;
+  std::vector<LogBuffer*> log_buffers_;
+
   size_t persist_epoch_id_;
 
   // The spin lock to protect the worker map. We only update this map when creating/terminating a new worker
-  //Spinlock worker_map_lock_;
+  Spinlock buffers_lock_;
   // map from worker id to the worker's context.
   //std::unordered_map<oid_t, std::shared_ptr<WorkerContext>> worker_map_;
 
