@@ -44,8 +44,8 @@ public:
     logger_id_(logger_id),
     log_dir_(log_dir),
     logger_thread_(nullptr),
-    is_running_(false),
-    logger_output_buffer_() {}
+    is_running_(false)
+    {}
 
   ~WalLogger() {}
 
@@ -69,13 +69,11 @@ public:
     logger_thread_->join();
   }
 
-  LogBuffer* PersistLogBuffer(LogBuffer* log_buffer);
+  void PersistLogBuffer(LogBuffer* log_buffer);
 
 
-  void PushBuffer(LogBuffer* buf){
-      //buffers_lock_.Lock();
-      log_buffers_.push_back(buf);
-      //buffers_lock_.Unlock();
+  void PushBuffer(CopySerializeOutput* buf){
+      log_buffers_.Enqueue(buf);
   }
 
   LogBuffer* log_buffer_ = new LogBuffer();
@@ -124,12 +122,10 @@ private:
   volatile bool is_running_;
 
   /* File system related */
-  CopySerializeOutput logger_output_buffer_;
+//  CopySerializeOutput logger_output_buffer_;
 
   /* Log buffers */
-  std::vector<LogBuffer*> log_buffers_;
-
-  std::vector<LogBuffer*> write_buffers_;
+  LockFreeQueue<CopySerializeOutput*> log_buffers_{100000};
 
   size_t persist_epoch_id_;
 
