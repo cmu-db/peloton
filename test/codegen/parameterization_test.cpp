@@ -174,7 +174,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_3.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_EQ(true, cached);
 }
 
 // Tests whether parameterization works for conjuction with Const Value Exprs
@@ -381,7 +381,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CMP_FALSE, results_3[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
-  EXPECT_EQ(false, cached);
+  EXPECT_EQ(true, cached);
 }
 
 // (1) Check to use a Parameter Value Expression
@@ -487,14 +487,14 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
 }
 
 TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
-  // SELECT a, b, c FROM table where a * ? = a * b; with ? = 1
+  // SELECT a, b, c FROM table where a * 1 = a * b;
   auto *a_lhs_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-  auto *param_1_exp = new expression::ParameterValueExpression(0);
-  type::Value param_a = type::ValueFactory::GetIntegerValue(1);
+  auto *const_1_exp = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(1));
   auto *a_mul_param = new expression::OperatorExpression(
       ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_lhs_col_exp, param_1_exp);
+      a_lhs_col_exp, const_1_exp);
 
   auto *a_rhs_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
@@ -513,16 +513,50 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
   scan->PerformBinding(context);
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
-  std::vector<type::Value> params = {param_a};
-
   bool cached;
   CompileAndExecuteCache(scan, buffer,
                          reinterpret_cast<char *>(buffer.GetState()),
-                         &params, &cached);
+                         nullptr, &cached);
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
   EXPECT_EQ(false, cached);
+
+  // SELECT a, b, c FROM table where a * ? = a * b; with ? = 1
+  auto *a_lhs_col_exp_2 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+  auto *param_1_exp_2 = new expression::ParameterValueExpression(0);
+  type::Value param_a_2 = type::ValueFactory::GetIntegerValue(1);
+  auto *a_mul_param_2 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
+      a_lhs_col_exp_2, param_1_exp_2);
+
+  auto *a_rhs_col_exp_2 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+  auto *b_col_exp_2 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
+  auto *a_mul_b_2 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
+      a_rhs_col_exp_2, b_col_exp_2);
+
+  auto *a_mul_param_eq_a_mul_b_2 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_mul_param_2, a_mul_b_2);
+
+  std::shared_ptr<planner::SeqScanPlan> scan_2{new planner::SeqScanPlan{
+      &GetTestTable(TestTableId()), a_mul_param_eq_a_mul_b_2, {0, 1, 2}}};
+  planner::BindingContext context_2;
+  scan->PerformBinding(context_2);
+  codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
+
+  std::vector<type::Value> params_2 = {param_a_2};
+
+  CompileAndExecuteCache(scan_2, buffer_2,
+                         reinterpret_cast<char *>(buffer_2.GetState()),
+                         &params_2, &cached);
+
+  const auto &results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(1, results_2.size());
+  EXPECT_EQ(true, cached);
 }
 
 }  // namespace test

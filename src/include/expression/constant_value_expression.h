@@ -51,8 +51,14 @@ class ConstantValueExpression : public AbstractExpression {
     return value_.CompareEquals(const_expr.value_);
   }
 
+  virtual hash_t HashForExactMatch() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, value_.Hash());
+  }
+
   virtual bool operator==(const AbstractExpression &rhs) const override {
-    if (exp_type_ != rhs.GetExpressionType())
+    auto type = rhs.GetExpressionType();
+    if (type != ExpressionType::VALUE_PARAMETER && exp_type_ != type)
       return false;
     // Do not hash value since we are going to parameterize and cache
     return true;
@@ -60,6 +66,13 @@ class ConstantValueExpression : public AbstractExpression {
 
   virtual bool operator!=(const AbstractExpression &rhs) const override {
     return !(*this == rhs);
+  }
+
+  virtual hash_t Hash() const override {
+    // Use VALUE_PARAMTER for parameterization with the compiled query cache
+    auto val = ExpressionType::VALUE_PARAMETER;
+    // Do not hash value since we are going to parameterize and cache
+    return HashUtil::Hash(&val);
   }
 
   void ExtractParameters(std::vector<Parameter> &parameters,
@@ -79,16 +92,6 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
-
-  virtual hash_t HashForExactMatch() const override {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    return HashUtil::CombineHashes(hash, value_.Hash());
-  }
-
-  virtual hash_t Hash() const override {
-    // Do not hash value since we are going to parameterize and cache
-    return HashUtil::Hash(&exp_type_);
-  }
 
   bool IsNullable() const override { return false; }
 
