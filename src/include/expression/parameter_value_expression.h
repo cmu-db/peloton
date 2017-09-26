@@ -46,10 +46,8 @@ class ParameterValueExpression : public AbstractExpression {
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   virtual bool operator==(const AbstractExpression &rhs) const override {
-    if (exp_type_ != rhs.GetExpressionType())
-      return false;
-    auto &other = static_cast<const ParameterValueExpression &>(rhs);
-    if (value_idx_ != other.GetValueIdx())
+    auto type = rhs.GetExpressionType();
+    if (type != ExpressionType::VALUE_CONSTANT && exp_type_ != type)
       return false;
     return true;
   }
@@ -59,8 +57,7 @@ class ParameterValueExpression : public AbstractExpression {
   }
 
   virtual hash_t Hash() const override {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    return HashUtil::CombineHashes(hash, HashUtil::Hash(&value_idx_));
+    return HashUtil::Hash(&exp_type_);
   }
 
   void ExtractParameters(std::vector<Parameter> &parameters,
