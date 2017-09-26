@@ -104,17 +104,6 @@ class CaseExpression : public AbstractExpression {
     }
   }
 
-  hash_t Hash() const override {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    for (auto &clause : clauses_) {
-      hash = HashUtil::CombineHashes(hash, clause.first->Hash());
-      hash = HashUtil::CombineHashes(hash, clause.second->Hash());
-    }
-    if (default_expr_ != nullptr)
-      hash = HashUtil::CombineHashes(hash, default_expr_->Hash());
-    return hash;
-  }
-
   bool operator==(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;
@@ -137,6 +126,17 @@ class CaseExpression : public AbstractExpression {
 
   bool operator!=(const AbstractExpression &rhs) const override {
     return !(*this == rhs);
+  }
+
+  hash_t Hash() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    for (auto &clause : clauses_) {
+      hash = HashUtil::CombineHashes(hash, clause.first->Hash());
+      hash = HashUtil::CombineHashes(hash, clause.second->Hash());
+    }
+    if (default_expr_ != nullptr)
+      hash = HashUtil::CombineHashes(hash, default_expr_->Hash());
+    return hash;
   }
 
   void ExtractParameters(std::vector<Parameter> &parameters,

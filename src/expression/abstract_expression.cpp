@@ -133,5 +133,26 @@ hash_t AbstractExpression::Hash() const {
   return hash;
 }
 
+bool AbstractExpression::ExactlyEquals(const AbstractExpression &other)
+    const{
+  if (exp_type_ != other.exp_type_ ||
+      children_.size() != other.children_.size())
+    return false;
+  for (unsigned i = 0; i < children_.size(); i++) {
+    if (!children_[i]->ExactlyEquals(*other.children_[i].get()))
+      return false;
+  }
+  return true;
+}
+
+hash_t AbstractExpression::HashForExactMatch() const {
+  hash_t hash = HashUtil::Hash(&exp_type_);
+  for (size_t i = 0; i < GetChildrenSize(); i++) {
+    auto child = GetChild(i);
+    hash = HashUtil::CombineHashes(hash, child->HashForExactMatch());
+  }
+  return hash;
+}
+
 }  // namespace expression
 }  // namespace peloton

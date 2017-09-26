@@ -15,6 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "executor/executor_context.h"
 #include "common/sql_node_visitor.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
@@ -44,7 +45,7 @@ class ParameterValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  bool operator==(const AbstractExpression &rhs) const override {
+  virtual bool operator==(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;
     auto &other = static_cast<const ParameterValueExpression &>(rhs);
@@ -53,8 +54,13 @@ class ParameterValueExpression : public AbstractExpression {
     return true;
   }
 
-  bool operator!=(const AbstractExpression &rhs) const override {
+  virtual bool operator!=(const AbstractExpression &rhs) const override {
     return !(*this == rhs);
+  }
+
+  virtual hash_t Hash() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, HashUtil::Hash(&value_idx_));
   }
 
   void ExtractParameters(std::vector<Parameter> &parameters,
