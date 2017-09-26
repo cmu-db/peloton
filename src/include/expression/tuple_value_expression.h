@@ -101,6 +101,14 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual bool operator==(const AbstractExpression &rhs) const override {
+    return ExactlyEquals(rhs);
+  }
+
+  virtual bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual bool ExactlyEquals(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;
 
@@ -117,11 +125,9 @@ class TupleValueExpression : public AbstractExpression {
     return are_equal;
   }
 
-  virtual bool operator!=(const AbstractExpression &rhs) const override {
-    return !(*this == rhs);
-  }
+  virtual hash_t Hash() const override { return HashForExactMatch(); }
 
-  virtual hash_t Hash() const override;
+  virtual hash_t HashForExactMatch() const override;
 
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 

@@ -44,6 +44,13 @@ class ConstantValueExpression : public AbstractExpression {
     expr_name_ = value_.ToString();
   }
   
+  virtual bool ExactlyEquals(const AbstractExpression &other) const override {
+    if (exp_type_ != other.GetExpressionType())
+      return false;
+    auto const_expr = static_cast<const ConstantValueExpression &>(other);
+    return value_.CompareEquals(const_expr.value_);
+  }
+
   virtual bool operator==(const AbstractExpression &rhs) const override {
     if (exp_type_ != rhs.GetExpressionType())
       return false;
@@ -72,6 +79,11 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  virtual hash_t HashForExactMatch() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, value_.Hash());
+  }
 
   virtual hash_t Hash() const override {
     // Do not hash value since we are going to parameterize and cache
