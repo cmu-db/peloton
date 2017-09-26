@@ -26,6 +26,9 @@
 #include "type/type_id.h"
 #include "parser/pg_trigger.h"
 
+#include "unistd.h"
+#include "common/logger.h"
+#include "common/macros.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -806,7 +809,8 @@ enum class ResultType {
   FAILURE = 2,
   ABORTED = 3,  // aborted
   NOOP = 4,     // no op
-  UNKNOWN = 5
+  UNKNOWN = 5,
+  QUEUING = 6
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);
@@ -1290,5 +1294,20 @@ typedef unsigned char uchar;
 
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
+
+//===--------------------------------------------------------------------===//
+// Packet Manager: ProcessResult
+//===--------------------------------------------------------------------===//
+enum class ProcessResult {
+  COMPLETE,
+  TERMINATE,
+  PROCESSING,
+  MORE_DATA_REQUIRED
+};
+
+enum class NetworkProtocolType {
+  POSTGRES_JDBC,
+  POSTGRES_PSQL,
+};
 
 }  // namespace peloton

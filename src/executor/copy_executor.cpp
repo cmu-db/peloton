@@ -18,7 +18,7 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
-#include "network/protocol_handler.h"
+#include "network/postgres_protocol_handler.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>
@@ -233,7 +233,8 @@ bool CopyExecutor::DExecute() {
 
           // Read param types
           types.resize(num_params);
-          network::ProtocolHandler::ReadParamType(&packet, num_params, types);
+          //TODO: Instead of passing packet to executor, some data structure more generic is need
+          network::PostgresProtocolHandler::ReadParamType(&packet, num_params, types);
 
           // Write all the types to output file
           for (int i = 0; i < num_params; i++) {
@@ -249,7 +250,8 @@ bool CopyExecutor::DExecute() {
 
           // Read param formats
           formats.resize(num_params);
-          network::ProtocolHandler::ReadParamFormat(&packet, num_params, formats);
+          //TODO: Instead of passing packet to executor, some data structure more generic is need
+          network::PostgresProtocolHandler::ReadParamFormat(&packet, num_params, formats);
 
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
@@ -259,7 +261,8 @@ bool CopyExecutor::DExecute() {
           network::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
           param_values.resize(num_params);
-          network::ProtocolHandler::ReadParamValue(&packet, num_params, types,
+          //TODO: Instead of passing packet to executor, some data structure more generic is need
+          network::PostgresProtocolHandler::ReadParamValue(&packet, num_params, types,
                                               bind_parameters, param_values,
                                               formats);
 

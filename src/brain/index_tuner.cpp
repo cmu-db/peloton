@@ -12,7 +12,6 @@
 #include "brain/index_tuner.h"
 
 #include <algorithm>
-#include <unordered_map>
 #include <include/brain/brain_util.h>
 
 #include "concurrency/transaction_manager_factory.h"
@@ -26,7 +25,6 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
-#include "network/protocol_handler.h"
 
 namespace peloton {
 namespace brain {
@@ -381,16 +379,6 @@ void IndexTuner::AddIndexes(
       if (index_is_visible == false) {
         LOG_INFO("Enabling index : %s", index_metadata->GetName().c_str());
         index_metadata->SetVisibility(true);
-
-        // BARON VON PAVLO'S HACK ATTACK!
-        // Tell all our PacketManagers back up in the front-end that they need
-        // to replan their PreparedStatements that reference this index's table!
-        // At some point the PreparedStatement handles should be moved out of
-        // the ProtocolHandler and into some more sane that doesn't require us
-        // to start up the network layer to test...
-        for (auto pm : network::ProtocolHandler::GetPacketManagers()) {
-          pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
-        }  // FOR
       }
     }
   }

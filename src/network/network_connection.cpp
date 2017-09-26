@@ -6,13 +6,18 @@
 //
 // Identification: src/network/network_connection.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
+#include <include/network/postgres_protocol_handler.h>
 #include "network/network_connection.h"
+#include "network/protocol_handler_factory.h"
 
+#define SSL_MESSAGE_VERNO 80877103
+#define PROTO_MAJOR_VERSION(x) x >> 16
+#define UNUSED(x) (void)(x)
 namespace peloton {
 namespace network {
 
@@ -21,6 +26,8 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   SetNonBlocking(sock_fd);
   SetTCPNoDelay(sock_fd);
 
+  protocol_handler_ = nullptr;
+
   this->event_flags = event_flags;
   this->thread = thread;
   this->state = init_state;
@@ -28,46 +35,71 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   this->thread_id = thread->GetThreadID();
 
   // clear out packet
-  rpkt.Reset();
-  if (event == nullptr) {
-    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+  if (network_event == nullptr) {
+    network_event = event_new(thread->GetEventBase(), sock_fd, event_flags,
                       CallbackUtil::EventHandler, this);
   } else {
     // Reuse the event object if already initialized
-    if (event_del(event) == -1) {
-      LOG_ERROR("Failed to delete event");
+    if (event_del(network_event) == -1) {
+      LOG_ERROR("Failed to delete network event");
       PL_ASSERT(false);
     }
 
-    auto result = event_assign(event, thread->GetEventBase(), sock_fd,
+    auto result = event_assign(network_event, thread->GetEventBase(), sock_fd,
                                event_flags,
                                CallbackUtil::EventHandler, this);
 
     if (result != 0) {
-      LOG_ERROR("Failed to update event");
+      LOG_ERROR("Failed to update network event");
       PL_ASSERT(false);
     }
   }
-  event_add(event, nullptr);
+
+  if (workpool_event == nullptr) {
+    workpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
+    CallbackUtil::EventHandler, this);
+  } else {
+    if (event_del(workpool_event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(workpool_event, thread->GetEventBase(), -1,
+                                EV_PERSIST, CallbackUtil::EventHandler, this);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
+  }
+
+  event_add(network_event, nullptr);
+  event_add(workpool_event, nullptr);
+
+  //TODO:: should put the initialization else where.. check correctness first.
+  traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
+}
+
+void NetworkConnection::TriggerStateMachine(void* arg) {
+  struct event* event = static_cast<struct event*>(arg);
+  event_active(event, EV_WRITE, 0);
 }
 
 void NetworkConnection::TransitState(ConnState next_state) {
-  #ifdef LOG_TRACE_ENABLED
-    if (next_state != state)
-      LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
-  #endif
+#ifdef LOG_TRACE_ENABLED
+  if (next_state != state)
+  LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
+#endif
   state = next_state;
 }
 
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
   auto base = thread->GetEventBase();
-  if (event_del(event) == -1) {
+  if (event_del(network_event) == -1) {
     LOG_ERROR("Failed to delete event");
     return false;
   }
   auto result =
-      event_assign(event, base, sock_fd, flags,
+      event_assign(network_event, base, sock_fd, flags,
                    CallbackUtil::EventHandler, (void *)this);
 
   if (result != 0) {
@@ -77,7 +109,7 @@ bool NetworkConnection::UpdateEvent(short flags) {
 
   event_flags = flags;
 
-  if (event_add(event, nullptr) == -1) {
+  if (event_add(network_event, nullptr) == -1) {
     LOG_ERROR("Failed to add event");
     return false;
   }
@@ -85,94 +117,6 @@ bool NetworkConnection::UpdateEvent(short flags) {
   return true;
 }
 
-void NetworkConnection::GetSizeFromPacketHeader(size_t start_index) {
-  rpkt.len = 0;
-  // directly converts from network byte order to little-endian
-  for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
-    rpkt.len = (rpkt.len << 8) | rbuf_.GetByte(i);
-  }
-  // packet size includes initial bytes read as well
-  rpkt.len = rpkt.len - sizeof(int32_t);
-}
-
-bool NetworkConnection::IsReadDataAvailable(size_t bytes) {
-  return ((rbuf_.buf_ptr - 1) + bytes < rbuf_.buf_size);
-}
-
-// The function tries to do a preliminary read to fetch the size value and
-// then reads the rest of the packet.
-// Assume: Packet length field is always 32-bit int
-bool NetworkConnection::ReadPacketHeader() {
-  size_t initial_read_size = sizeof(int32_t);
-  if (protocol_handler_.is_started == true) {
-    // All packets other than the startup packet have a 5B header
-    initial_read_size++;
-  }
-  // check if header bytes are available
-  if (IsReadDataAvailable(initial_read_size) == false) {
-    // nothing more to read
-    return false;
-  }
-
-  // get packet size from the header
-  if (protocol_handler_.is_started == true) {
-    // Header also contains msg type
-    rpkt.msg_type =
-        static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
-    // extract packet size
-    GetSizeFromPacketHeader(rbuf_.buf_ptr + 1);
-  } else {
-    GetSizeFromPacketHeader(rbuf_.buf_ptr);
-  }
-
-  // do we need to use the extended buffer for this packet?
-  rpkt.is_extended = (rpkt.len > rbuf_.GetMaxSize());
-
-  if (rpkt.is_extended) {
-    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
-    // reserve space for the extended buffer
-    rpkt.ReserveExtendedBuffer();
-  }
-
-  // we have processed the data, move buffer pointer
-  rbuf_.buf_ptr += initial_read_size;
-  rpkt.header_parsed = true;
-
-  return true;
-}
-
-// Tries to read the contents of a single packet, returns true on success, false
-// on failure.
-bool NetworkConnection::ReadPacket() {
-  if (rpkt.is_extended) {
-    // extended packet mode
-    auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
-    auto bytes_required = rpkt.ExtendedBytesRequired();
-    // read minimum of the two ranges
-    auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf_.Begin() + rbuf_.buf_ptr,
-                                rbuf_.Begin() + rbuf_.buf_ptr + read_size);
-    // data has been copied, move ptr
-    rbuf_.buf_ptr += read_size;
-    if (bytes_required > bytes_available) {
-      // more data needs to be read
-      return false;
-    }
-    // all the data has been read
-    rpkt.InitializePacket();
-    return true;
-  } else {
-    if (IsReadDataAvailable(rpkt.len) == false) {
-      // data not available yet, return
-      return false;
-    }
-    // Initialize the packet's "contents"
-    rpkt.InitializePacket(rbuf_.buf_ptr, rbuf_.Begin());
-    // We have processed the data, move buffer pointer
-    rbuf_.buf_ptr += rpkt.len;
-  }
-  return true;
-}
 
 /**
  * Public Functions
@@ -180,8 +124,8 @@ bool NetworkConnection::ReadPacket() {
 
 WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < protocol_handler_.responses.size(); next_response_++) {
-    auto pkt = protocol_handler_.responses[next_response_].get();
+  for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
+    auto pkt = protocol_handler_->responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
@@ -191,10 +135,10 @@ WriteState NetworkConnection::WritePackets() {
   }
 
   // Done writing all packets. clear packets
-  protocol_handler_.responses.clear();
+  protocol_handler_->responses.clear();
   next_response_ = 0;
 
-  if (protocol_handler_.force_flush == true) {
+  if (protocol_handler_->force_flush == true) {
     return FlushWriteBuffer();
   }
   return WriteState::WRITE_COMPLETE;
@@ -241,6 +185,7 @@ ReadState NetworkConnection::FillReadBuffer() {
       else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
                         rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
       }
 
       if (bytes_read > 0) {
@@ -367,10 +312,11 @@ WriteState NetworkConnection::FlushWriteBuffer() {
             return WriteState::WRITE_ERROR;
           }
           // We should go to CONN_WRITE state
+          LOG_DEBUG("WRITE NOT READY");
           return WriteState::WRITE_NOT_READY;
         } else {
           // fatal errors
-          LOG_ERROR("Fatal error during write");
+          LOG_ERROR("Fatal error during write, errno %d", errno);
           return WriteState::WRITE_ERROR;
         }
       }
@@ -391,7 +337,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   wbuf_.Reset();
 
   // we have flushed, disable force flush now
-  protocol_handler_.force_flush = false;
+  protocol_handler_->force_flush = false;
 
   // we are ok
   return WriteState::WRITE_COMPLETE;
@@ -407,6 +353,139 @@ std::string NetworkConnection::WriteBufferToString() {
   #endif
 
   return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
+}
+
+ProcessResult NetworkConnection::ProcessInitial() {
+  //TODO: this is a direct copy and we should get rid of it later;
+  InputPacket rpkt;
+
+  if (rpkt.header_parsed == false) {
+    // parse out the header first
+    if (ReadStartupPacketHeader(rbuf_, rpkt) == false) {
+      // need more data
+      return ProcessResult::MORE_DATA_REQUIRED;
+    }
+  }
+  PL_ASSERT(rpkt.header_parsed == true);
+
+  if (rpkt.is_initialized == false) {
+    // packet needs to be initialized with rest of the contents
+    //TODO: If other protocols are added, this need to be changed
+    if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
+      // need more data
+      return ProcessResult::MORE_DATA_REQUIRED;
+    }
+  }
+
+  // We need to handle startup packet first
+
+  if (!ProcessInitialPacket(&rpkt)) {
+    return ProcessResult::TERMINATE;
+  }
+  return ProcessResult::COMPLETE;
+}
+
+// TODO: This function is now dedicated for postgres packet
+bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt) {
+  size_t initial_read_size = sizeof(int32_t);
+
+  if (!rbuf.IsReadDataAvailable(initial_read_size)){
+    return false;
+  }
+
+  // extract packet contents size
+  //content lengths should exclude the length
+  rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
+
+  // do we need to use the extended buffer for this packet?
+  rpkt.is_extended = (rpkt.len > rbuf.GetMaxSize());
+
+  if (rpkt.is_extended) {
+    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
+    // reserve space for the extended buffer
+    rpkt.ReserveExtendedBuffer();
+  }
+
+  // we have processed the data, move buffer pointer
+  rbuf.buf_ptr += initial_read_size;
+  rpkt.header_parsed = true;
+  return true;
+}
+
+/*
+ * process_startup_packet - Processes the startup packet
+ *  (after the size field of the header).
+ */
+bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
+  std::string token, value;
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+
+  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
+  LOG_INFO("protocol version: %d", proto_version);
+
+  // TODO: consider more about return value
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    LOG_TRACE("process SSL MESSAGE");
+    return ProcessSSLRequestPacket(pkt);
+  }
+  else {
+    LOG_TRACE("process startup packet");
+    return ProcessStartupPacket(pkt, proto_version);
+  }
+}
+
+bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
+  UNUSED(pkt);
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  // TODO: consider more about a proper response
+  response->msg_type = NetworkMessageType::SSL_YES;
+  protocol_handler_->responses.push_back(std::move(response));
+  protocol_handler_->force_flush = true;
+  ssl_sent_ = true;
+  return true;
+}
+
+bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+  std::string token, value;
+
+
+  // Only protocol version 3 is supported
+  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
+    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO: check for more malformed cases
+  // iterate till the end
+  for (;;) {
+    // loop end case?
+    if (pkt->ptr >= pkt->len) break;
+    GetStringToken(pkt, token);
+    // if the option database was found
+    if (token.compare("database") == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client_.dbname);
+    } else if (token.compare(("user")) == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client_.user);
+    }
+    else {
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, value);
+      client_.cmdline_options[token] = value;
+    }
+
+  }
+
+  protocol_handler_ =
+      ProtocolHandlerFactory::CreateProtocolHandler(
+          ProtocolHandlerType::Postgres, &traffic_cop_);
+
+  protocol_handler_->SendInitialResponse();
+
+  return true;
 }
 
 // Writes a packet's header (type, size) into the write buffer.
@@ -508,9 +587,9 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
 void NetworkConnection::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd);
   // Remove listening event
-  event_del(event);
+  event_del(network_event);
+  event_del(workpool_event);
   // event_free(event);
-
   TransitState(ConnState::CONN_CLOSED);
   Reset();
   for (;;) {
@@ -528,19 +607,24 @@ void NetworkConnection::CloseSocket() {
 }
 
 void NetworkConnection::Reset() {
+  client_.Reset();
   rbuf_.Reset();
   wbuf_.Reset();
-  protocol_handler_.Reset();
+  // The listening connection do not have protocol handler
+  if (protocol_handler_ != nullptr) {
+    protocol_handler_->Reset();
+  }
   state = ConnState::CONN_INVALID;
-  rpkt.Reset();
+  traffic_cop_.Reset();
   next_response_ = 0;
+  ssl_sent_ = false;
 }
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_TRACE("current state: %d", conn->state);
+    LOG_TRACE("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -561,7 +645,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         switch (res) {
           case ReadState::READ_DATA_RECEIVED:
             // wait for some other event
-            conn->TransitState(ConnState::CONN_PROCESS);
+            if (conn->protocol_handler_ == nullptr) {
+              conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
+            }
+            else {
+              conn->TransitState(ConnState::CONN_PROCESS);
+            }
             break;
 
           case ReadState::READ_NO_DATA_RECEIVED:
@@ -589,72 +678,88 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         break;
       }
 
+      case ConnState::CONN_PROCESS_INITIAL: {
+        if (conn->ssl_sent_) {
+          // start SSL handshake
+          // TODO: consider free conn_SSL_context
+          conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+          if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
+            LOG_ERROR("Failed to set SSL fd");
+            PL_ASSERT(false);
+          }
+          int ssl_accept_ret;
+          if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
+            LOG_ERROR("Failed to accept (handshake) client SSL context.");
+            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
+            // TODO: consider more about proper action
+            PL_ASSERT(false);
+            conn->TransitState(ConnState::CONN_CLOSED);
+          }
+          LOG_ERROR("SSL handshake completed");
+          conn->ssl_sent_ = false;
+        }
+
+        switch (conn->ProcessInitial()) {
+          case ProcessResult::COMPLETE: {
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
+          }
+          case ProcessResult::MORE_DATA_REQUIRED: {
+            conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          }
+          case ProcessResult::TERMINATE: {
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          }
+          default: // PROCESSING is impossible to happens in initial packets
+            break;
+        }
+        break;
+      }
+
       case ConnState::CONN_PROCESS: {
-        bool status;
+        ProcessResult status;
 
-        if(conn->protocol_handler_.ssl_sent) {
-            // start SSL handshake
-            // TODO: consider free conn_SSL_context
-            conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
-            if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
-              LOG_ERROR("Failed to set SSL fd");
-              PL_ASSERT(false);
-            }
-            int ssl_accept_ret;
-            if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-              LOG_ERROR("Failed to accept (handshake) client SSL context.");
-              LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
-              // TODO: consider more about proper action
-              PL_ASSERT(false);
-              conn->TransitState(ConnState::CONN_CLOSED);
-            }
-            LOG_ERROR("SSL handshake completed");
-            conn->protocol_handler_.ssl_sent = false;
-        }
+        status = conn->protocol_handler_->Process(conn->rbuf_,
+                                                        (size_t) conn->thread_id);
 
-        if (conn->rpkt.header_parsed == false) {
-          // parse out the header first
-          if (conn->ReadPacketHeader() == false) {
-            // need more data
+        switch (status) {
+          case ProcessResult::MORE_DATA_REQUIRED:
             conn->TransitState(ConnState::CONN_WAIT);
+            break;
+          case ProcessResult::TERMINATE:
+            // packet processing can't proceed further
+            conn->TransitState(ConnState::CONN_CLOSING);
+            break;
+          case ProcessResult::COMPLETE:
+            // We should have responses ready to send
+            conn->TransitState(ConnState::CONN_WRITE);
+            break;
+          case ProcessResult::PROCESSING: {
+            if (event_del(conn->network_event) == -1) {
+              //TODO: There may be better way to handle this error
+              LOG_ERROR("Failed to delete event");
+              PL_ASSERT(false);
+            }
+            LOG_TRACE("ProcessResult: queueing");
+            conn->TransitState(ConnState::CONN_GET_RESULT);
+            done = true;
             break;
           }
         }
-        PL_ASSERT(conn->rpkt.header_parsed == true);
 
-        if (conn->rpkt.is_initialized == false) {
-          // packet needs to be initialized with rest of the contents
-          if (conn->ReadPacket() == false) {
-            // need more data
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-          }
-        }
-        PL_ASSERT(conn->rpkt.is_initialized == true);
+        break;
+      }
 
-        if (conn->protocol_handler_.is_started == false) {
-          // We need to handle startup packet first
-          int status_res = conn->protocol_handler_.ProcessInitialPacket(&conn->rpkt);
-          status = (status_res != 0);
-          if (status_res == 1) {
-            conn->protocol_handler_.is_started = true;
-          }
-          else if (status_res == -1){
-            conn->protocol_handler_.ssl_sent = true;
-          }
-        } else {
-          // Process all other packets
-          status = conn->protocol_handler_.ProcessPacket(&conn->rpkt,
-                                                   (size_t)conn->thread_id);
+      case ConnState::CONN_GET_RESULT: {
+        if (event_add(conn->network_event, nullptr) < 0) {
+          LOG_ERROR("Failed to add event");
+          PL_ASSERT(false);
         }
-
-        if (status == false) {
-          // packet processing can't proceed further
-          conn->TransitState(ConnState::CONN_CLOSING);
-        } else {
-          // We should have responses ready to send
-          conn->TransitState(ConnState::CONN_WRITE);
-        }
+        conn->protocol_handler_->GetResult();
+        conn->traffic_cop_.is_queuing_ = false;
+        conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
 
@@ -662,8 +767,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         // examine write packets result
         switch (conn->WritePackets()) {
           case WriteState::WRITE_COMPLETE: {
-            // Input Packet can now be reset, before we parse the next packet
-            conn->rpkt.Reset();
             if (!conn->UpdateEvent(EV_READ | EV_PERSIST)) {
               LOG_ERROR("Failed to update event, closing");
               conn->TransitState(ConnState::CONN_CLOSING);
@@ -706,6 +809,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
     }
   }
+  LOG_TRACE("END of while loop");
 }
 }  // namespace network
 }  // namespace peloton

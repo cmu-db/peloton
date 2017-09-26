@@ -6,7 +6,7 @@
 //
 // Identification: src/include/network/network_master_thread.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -98,8 +98,11 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
 
   // Free events and event base
   if (worker_thread->GetThreadSockFd() != -1) {
-    event_free(
-        NetworkManager::GetConnection(worker_thread->GetThreadSockFd())->event);
+    NetworkConnection *connection =
+        NetworkManager::GetConnection(worker_thread->GetThreadSockFd());
+
+    event_free(connection->network_event);
+    event_free(connection->workpool_event);
   }
   event_free(worker_thread->GetNewConnEvent());
   event_free(worker_thread->GetTimeoutEvent());

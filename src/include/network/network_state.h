@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// network_manager.h
+// network_state.h
 //
-// Identification: src/include/network/network_manager.h
+// Identification: src/include/network/network_state.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +24,8 @@ enum class ConnState {
   CONN_CLOSING,    // State for closing the client connection
   CONN_CLOSED,     // State for closed connection
   CONN_INVALID,    // Invalid STate
+  CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
+  CONN_PROCESS_INITIAL// State to process initial packets and detemine protocols
 };
 
 enum class ReadState {

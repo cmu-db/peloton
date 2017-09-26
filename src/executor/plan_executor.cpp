@@ -26,8 +26,8 @@ namespace peloton {
 namespace executor {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-    const planner::AbstractPlan *plan,
-    executor::ExecutorContext *executor_context);
+                                              const planner::AbstractPlan *plan,
+                                              executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -39,15 +39,15 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-ExecuteResult PlanExecutor::ExecutePlan(
+void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::Transaction *txn, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result,
-    const std::vector<int> &result_format) {
+    const std::vector<int> &result_format,
+    executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%lu)", txxn->GetTransactionId());
 
-  ExecuteResult p_status;
   result.clear();
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));
@@ -63,7 +63,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
       p_status.m_result = ResultType::FAILURE;
       p_status.m_result_slots = nullptr;
       CleanExecutorTree(executor_tree.get());
-      return p_status;
+      return;
     }
 
     // Execute the tree until we get result tiles from root node
@@ -84,7 +84,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
             PlanExecutor::copyFromTo(tuple[i], res.second);
             result.push_back(std::move(res));
             LOG_TRACE("column content: %s",
-                tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
+                      tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
           }
         }
       }
@@ -93,7 +93,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
     p_status.m_result = ResultType::SUCCESS;
     p_status.m_result_slots = nullptr;
     CleanExecutorTree(executor_tree.get());
-    return p_status;
+    return;
   }
 
   LOG_TRACE("Compiling and executing query ...");
@@ -127,7 +127,7 @@ ExecuteResult PlanExecutor::ExecutePlan(
   p_status.m_processed = executor_context->num_processed;
   p_status.m_result = ResultType::SUCCESS;
   p_status.m_result_slots = nullptr;
-  return p_status;
+  return;
 }
 
 // FIXME this function is here temporarily to support PelotonService
@@ -141,8 +141,8 @@ ExecuteResult PlanExecutor::ExecutePlan(
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-    const std::vector<type::Value> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
+                              const std::vector<type::Value> &params,
+                              std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   PL_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");
 
@@ -176,7 +176,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     logical_tile_list.push_back(std::move(logical_tile));
   }
 
-cleanup:
+  cleanup:
   LOG_TRACE("About to commit: init_failure: %d, status: %s", init_failure,
             ResultTypeToString(txn->GetResult()).c_str());
 
@@ -205,8 +205,8 @@ cleanup:
  * @return The updated executor tree.
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-    const planner::AbstractPlan *plan,
-    executor::ExecutorContext *executor_context) {
+                                              const planner::AbstractPlan *plan,
+                                              executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr) return root;
 

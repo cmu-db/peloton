@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// network_manager.h
+// network_callback_util.h
 //
-// Identification: src/include/network/network_manager.h
+// Identification: src/include/network/network_callback_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

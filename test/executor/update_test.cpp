@@ -13,6 +13,7 @@
 #include <cstdio>
 
 #include "executor/testing_executor_util.h"
+#include <sql/testing_sql_util.h>
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
@@ -43,7 +44,7 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -155,6 +156,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
@@ -215,9 +217,17 @@ TEST_F(UpdateTests, UpdatingOld) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   std::vector<int> result_format;
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
   executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree(), params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
@@ -245,9 +255,17 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                            result, result_format);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
+                                            params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -276,9 +294,17 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                            result, result_format);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
+                                            params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -301,9 +327,17 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                            result, result_format);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
+                                            params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
@@ -329,9 +363,17 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params,
-                                            result, result_format);
+  result_format =
+      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  TestingSQLUtil::counter_.store(1);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
+                                            params, result, result_format);
+  if (traffic_cop.is_queuing_) {
+    TestingSQLUtil::ContinueAfterComplete();
+    traffic_cop.ExecuteStatementPlanGetResult();
+    status = traffic_cop.p_status_;
+    traffic_cop.is_queuing_ = false;
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");

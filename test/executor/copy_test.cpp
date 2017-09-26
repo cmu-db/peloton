@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
+#include <sql/testing_sql_util.h>
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -22,7 +23,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
@@ -45,6 +46,7 @@ TEST_F(CopyTests, Copying) {
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);
@@ -84,8 +86,19 @@ TEST_F(CopyTests, Copying) {
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<StatementResult> result;
+
+    TestingSQLUtil::counter_.store(1);
+    LOG_DEBUG("-----here: %d", i);
     executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);
+
+    if (traffic_cop.is_queuing_) {
+      TestingSQLUtil::ContinueAfterComplete();
+      traffic_cop.ExecuteStatementPlanGetResult();
+      status = traffic_cop.p_status_;
+      traffic_cop.is_queuing_ = false;
+    }
+
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
     LOG_TRACE("Statement executed. Result: %s",
               ResultTypeToString(status.m_result).c_str());
@@ -129,11 +142,9 @@ TEST_F(CopyTests, Copying) {
   while (status == true) {
     status = root_executor->Execute();
   }
-
   // Check the number of bypes written
   EXPECT_EQ(copy_executor->GetTotalBytesWritten(), num_bytes_to_write);
   txn_manager.CommitTransaction(txn);
-
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog->DropDatabaseWithName("emp_db", txn);

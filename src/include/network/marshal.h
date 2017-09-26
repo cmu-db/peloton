@@ -6,7 +6,7 @@
 //
 // Identification: src/include/network/marshal.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -53,6 +53,15 @@ struct Buffer {
   inline ByteBuf::const_iterator End() { return std::end(buf); }
 
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
+
+  //Get the 4 bytes Big endian uint32 and convert it to little endian
+  size_t GetUInt32BigEndian();
+
+  // Is the requested amount of data available from the current position in
+  // the reader buffer?
+  inline bool IsReadDataAvailable(size_t bytes) {
+    return ((buf_ptr - 1) + bytes < buf_size);
+  }
 };
 
 class InputPacket {

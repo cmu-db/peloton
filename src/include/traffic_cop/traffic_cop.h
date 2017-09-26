@@ -6,7 +6,7 @@
 //
 // Identification: src/include/traffic_cop/traffic_cop.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,10 +27,12 @@
 #include "storage/data_table.h"
 #include "type/type.h"
 #include "type/types.h"
+#include "event.h"
 
 namespace peloton {
-
+//void ExecutePlanWrapper(void *arg_ptr);
 namespace tcop {
+
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
 //===--------------------------------------------------------------------===//
@@ -40,6 +42,8 @@ class TrafficCop {
 
  public:
   TrafficCop();
+  TrafficCop(void(* task_callback)(void *), void *task_callback_arg);
+
   ~TrafficCop();
 
   // static singleton method used by tests
@@ -49,11 +53,11 @@ class TrafficCop {
   void Reset();
 
   // PortalExec - Execute query string
-  ResultType ExecuteStatement(const std::string &query,
-                              std::vector<StatementResult> &result,
-                              std::vector<FieldInfo> &tuple_descriptor,
-                              int &rows_changed, std::string &error_message,
-                              const size_t thread_id = 0);
+//  ResultType ExecuteStatement(const std::string &query,
+//                              std::vector<StatementResult> &result,
+//                              std::vector<FieldInfo> &tuple_descriptor,
+//                              int &rows_changed, std::string &error_message,
+//                              const size_t thread_id = 0);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   ResultType ExecuteStatement(
@@ -94,12 +98,24 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  void SetPsqlFlag(bool is_psql) {
-    psql_ = is_psql;
-  }
-
   ResultType CommitQueryHelper();
 
+  void ExecuteStatementPlanGetResult();
+
+  ResultType ExecuteStatementGetResult(int &rows_changed);
+
+  static void ExecutePlanWrapper(void *arg_ptr);
+
+  void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
+    task_callback_ = task_callback;
+    task_callback_arg_ = task_callback_arg;
+  }
+
+  executor::ExecuteResult p_status_;
+
+  bool is_queuing_;
+
+//  struct event* event_;
  private:
 
   // The optimizer used for this connection
@@ -109,7 +125,12 @@ class TrafficCop {
   bool single_statement_txn_;
 
   // flag of psql protocol
-  bool psql_ = true;
+  // executePlan arguments
+
+  std::vector<StatementResult> result_;
+  void(* task_callback_)(void *);
+  void * task_callback_arg_;
+//  IOTrigger io_trigger_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
@@ -130,7 +151,45 @@ class TrafficCop {
   // still a HACK
   void GetDataTables(parser::TableRef *from_table,
                      std::vector<storage::DataTable *> &target_tables);
+
+//  const std::shared_ptr<Statement> statement_;
+//  const std::vector<type::Value> params_;
+//  UNUSED_ATTRIBUTE const bool unnamed;
+//  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
+//  const std::vector<int> &result_format, std::vector<StatementResult> result;
+//  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
+//  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
-}  // namespace traffic_cop
+//===--------------------------------------------------------------------===//
+// TrafficCop: Wrapper struct ExecutePlan argument
+//===--------------------------------------------------------------------===//
+struct ExecutePlanArg {
+  inline ExecutePlanArg(const std::shared_ptr<planner::AbstractPlan> plan,
+                        concurrency::Transaction *txn,
+                        const std::vector<type::Value> &params,
+                        std::vector<StatementResult> &result,
+                        const std::vector<int> &result_format,
+                        executor::ExecuteResult &p_status) :
+      plan_(plan),
+      txn_(txn),
+      params_(params),
+      result_(result),
+      result_format_(result_format),
+      p_status_(p_status) {}
+//      event_(event) {}
+//      io_trigger_(io_trigger) { }
+
+
+  std::shared_ptr<planner::AbstractPlan> plan_;
+  concurrency::Transaction *txn_;
+  const std::vector<type::Value> &params_;
+  std::vector<StatementResult> &result_;
+  const std::vector<int> &result_format_;
+  executor::ExecuteResult &p_status_;
+//  struct event* event_;
+//  IOTrigger *io_trigger_;
+};
+
+}  // namespace tcop
 }  // namespace peloton

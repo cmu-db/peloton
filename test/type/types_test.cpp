@@ -403,7 +403,8 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
 TEST_F(TypesTests, ResultTypeTest) {
   std::vector<ResultType> list = {ResultType::INVALID, ResultType::SUCCESS,
                                   ResultType::FAILURE, ResultType::ABORTED,
-                                  ResultType::NOOP,    ResultType::UNKNOWN};
+                                  ResultType::NOOP,    ResultType::UNKNOWN,
+                                  ResultType::QUEUING};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

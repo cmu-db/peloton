@@ -780,7 +780,17 @@ public class PelotonTest {
 	    } else {
         	CopyTest(args[1]);
         }
+      } else if (args[0].equals("simple")) {
+      	SingleTest();
       }
+  }
+
+  static public void SingleTest() throws Exception {
+    System.out.println("Basic Tests");
+    PelotonTest pt = new PelotonTest();
+    pt.Init();
+//    pt.ShowTable();
+    pt.Close(); 
   }
 
   static public void BasicTest() throws Exception {

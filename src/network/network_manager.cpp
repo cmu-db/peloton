@@ -6,11 +6,10 @@
 //
 // Identification: src/network/network_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
+#include "event2/thread.h"
 #include <fstream>
 
 #include "network/network_manager.h"
@@ -55,7 +54,9 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
 }
 
 NetworkManager::NetworkManager() {
+  evthread_use_pthreads();
   base_ = event_base_new();
+  evthread_make_base_notifiable(base_);
 
   // Create our event base
   if (!base_) {
@@ -163,10 +164,12 @@ void NetworkManager::StartServer() {
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     event_base_dispatch(base_);
+    LOG_INFO("Closing server");
     NetworkManager::GetConnection(listen_fd)->CloseSocket();
 
     // Free events and event base
-    event_free(NetworkManager::GetConnection(listen_fd)->event);
+    event_free(NetworkManager::GetConnection(listen_fd)->network_event);
+    event_free(NetworkManager::GetConnection(listen_fd)->workpool_event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);

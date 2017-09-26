@@ -6,7 +6,7 @@
 //
 // Identification: src/network/marshal.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,8 +23,17 @@ namespace network {
 // checks for parsing overflows
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
                           UNUSED_ATTRIBUTE size_t size) {
-  LOG_TRACE("rpkt->len: %lu", rpkt->len);
+  LOG_TRACE("request->len: %lu", rpkt->len);
   PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
+}
+
+size_t Buffer::GetUInt32BigEndian() {
+  size_t num = 0;
+  // directly converts from network byte order to little-endian
+  for (size_t i = buf_ptr; i < buf_ptr + sizeof(uint32_t); i++) {
+    num = (num << 8) | GetByte(i);
+  }
+  return num;
 }
 
 int PacketGetInt(InputPacket *rpkt, uchar base) {

@@ -19,7 +19,8 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "tcop/tcop.h"
+#include "include/traffic_cop/traffic_cop.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 
@@ -55,8 +56,32 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_INFO("Query: %s", query.c_str());
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_changed, error_message);
+  // prepareStatement
+  std::string unnamed_statement = "unnamed";
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 error_message);
+  if (statement.get() == nullptr) {
+    rows_changed = 0;
+    return ResultType::FAILURE;
+  }
+  // ExecuteStatment
+  std::vector<type::Value> param_values;
+  bool unnamed = false;
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result, rows_changed, error_message);
+  if (traffic_cop_.is_queuing_) {
+    ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
+    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    traffic_cop_.is_queuing_ = false;
+  }
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = statement->GetTupleDescriptor();
+  }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status).c_str());
   return status;
@@ -82,9 +107,16 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status =
-        traffic_cop_.ExecuteStatementPlan(plan, params, result, result_format);
-    traffic_cop_.CommitQueryHelper();
+    //SetTrafficCopCounter();
+    counter_.store(1);
+    auto status = traffic_cop_.ExecuteStatementPlan(plan, params, result,
+                                                    result_format);
+    if (traffic_cop_.is_queuing_) {
+      TestingSQLUtil::ContinueAfterComplete();
+      traffic_cop_.ExecuteStatementPlanGetResult();
+      status = traffic_cop_.p_status_;
+      traffic_cop_.is_queuing_ = false;
+    }
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
              ResultTypeToString(status.m_result).c_str());
@@ -113,10 +145,32 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::string error_message;
   int rows_changed;
 
-  // execute the query using traffic_cop
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_changed, error_message);
-
+  // prepareStatement
+  std::string unnamed_statement = "unnamed";
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 error_message);
+  if (statement.get() == nullptr) {
+    rows_changed = 0;
+    return ResultType::FAILURE;
+  }
+  // ExecuteStatment
+  std::vector<type::Value> param_values;
+  bool unnamed = false;
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result, rows_changed, error_message);
+  if (traffic_cop_.is_queuing_) {
+    ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
+    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    traffic_cop_.is_queuing_ = false;
+  }
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = statement->GetTupleDescriptor();
+  }
   return status;
 }
 
@@ -126,16 +180,49 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string error_message;
   int rows_changed;
 
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-
-  // execute the query using traffic_cop
-  auto status = traffic_cop.ExecuteStatement(query, result, tuple_descriptor,
-                                             rows_changed, error_message);
-
+  // execute the query using tcop
+  // prepareStatement
+  std::string unnamed_statement = "unnamed";
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 error_message);
+  if (statement.get() == nullptr) {
+    rows_changed = 0;
+    return ResultType::FAILURE;
+  }
+  // ExecuteStatment
+  std::vector<type::Value> param_values;
+  bool unnamed = false;
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  //SetTrafficCopCounter();
+  counter_.store(1);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result, rows_changed, error_message);
+  if (traffic_cop_.is_queuing_) {
+    ContinueAfterComplete();
+    traffic_cop_.ExecuteStatementPlanGetResult();
+    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    traffic_cop_.is_queuing_ = false;
+  }
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = statement->GetTupleDescriptor();
+  }
   return status;
 }
 
-tcop::TrafficCop TestingSQLUtil::traffic_cop_;
+void TestingSQLUtil::ContinueAfterComplete() {
+  while (TestingSQLUtil::counter_.load() == 1) {
+    usleep(10);
+  }
+}
+
+void TestingSQLUtil::UtilTestTaskCallback(void *arg) {
+  std::atomic_int *count = static_cast<std::atomic_int*>(arg);
+  count->store(0);
+}
+
+std::atomic_int TestingSQLUtil::counter_;
+tcop::TrafficCop TestingSQLUtil::traffic_cop_(UtilTestTaskCallback, &counter_);
 
 }  // namespace test
 }  // namespace peloton
