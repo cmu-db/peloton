@@ -23,7 +23,7 @@ private:
 
   LoadKeyFunction loadKey;
 
-  Epoche epoche{256};
+  Epoche epoche;
 
 public:
   enum class CheckPrefixResult : uint8_t {
@@ -64,7 +64,7 @@ public:
 
   Tree(const Tree &) = delete;
 
-  Tree(Tree &&t) : root(t.root), loadKey(t.loadKey) { }
+  Tree(Tree &&t) : root(t.root), loadKey(t.loadKey), epoche(256) { }
 
   ~Tree();
 

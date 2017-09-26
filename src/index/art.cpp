@@ -26,8 +26,9 @@ namespace peloton {
 namespace index {
 
 
-//Tree::Tree(LoadKeyFunction loadKey) : root(new N256( nullptr, 0)), loadKey(loadKey) {
-//}
+Tree::Tree(LoadKeyFunction loadKey) : root(new N256( nullptr, 0)), loadKey(loadKey), epoche(256) {
+
+}
 
 Tree::~Tree() {
   N::deleteChildren(root);
@@ -88,9 +89,9 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
           if (needRestart) goto restart;
 
           TID tid = N::getLeaf(node);
-          if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
-            return checkKey(tid, k);
-          }
+//          if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
+//            return checkKey(tid, k);
+//          }
           return tid;
         }
         level++;

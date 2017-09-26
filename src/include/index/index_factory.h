@@ -47,6 +47,12 @@ class IndexFactory {
   static Index *GetSkipListIntsKeyIndex(IndexMetadata *metadata);
 
   static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
+
+  //===--------------------------------------------------------------------===//
+  // PELOTON::ART
+  //===--------------------------------------------------------------------===//
+
+  static Index *GetARTIntsKeyIndex(IndexMetadata *metadata);
 };
 
 }  // namespace index

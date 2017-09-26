@@ -21,5 +21,9 @@ TEST_F(ARTIndexTests, BasicTest) {
 TestingIndexUtil::BasicTest(IndexType::ART);
 }
 
+//TEST_F(ARTIndexTests, UniqueKeyInsertTest) {
+//  TestingIndexUtil::UniqueKeyInsertTest(IndexType::ART);
+//}
+
 }
 }

@@ -4,26 +4,32 @@
 
 #pragma once
 
+#include "catalog/manager.h"
+#include "common/platform.h"
+#include "type/types.h"
+#include "index/index.h"
+
 #include "index/art.h"
 
 namespace peloton {
 namespace index {
 
-class ArtIndex : public index {
+class ArtIndex : public Index {
   friend class IndexFactory;
 
 public:
   ArtIndex();
+  ArtIndex(IndexMetadata *metadata);
   ~ArtIndex();
 
 
   // designed for secondary indexes.
   bool InsertEntry(const storage::Tuple *key,
-                           ItemPointer *location_ptr) = 0;
+                           ItemPointer *location_ptr);
 
   // delete the index entry linked to given tuple and location
   bool DeleteEntry(const storage::Tuple *key,
-                           ItemPointer *location_ptr) = 0;
+                           ItemPointer *location_ptr);
 
   // First retrieve all Key-Value pairs of the given key
   // Return false if any of those k-v pairs satisfy the predicate
@@ -59,6 +65,17 @@ public:
 
   void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result);
+
+  // TODO: Implement this
+  size_t GetMemoryFootprint() { return 0; }
+
+  // TODO: Implement this
+  bool NeedGC() { return false; }
+
+  // TODO: Implement this
+  void PerformGC() { return; }
+
+  std::string GetTypeName() const;
 
 
 protected:

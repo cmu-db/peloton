@@ -827,6 +827,9 @@ std::string IndexTypeToString(IndexType type) {
     case IndexType::SKIPLIST: {
       return "SKIPLIST";
     }
+    case IndexType::ART: {
+      return "ART";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for IndexType value '%d'",

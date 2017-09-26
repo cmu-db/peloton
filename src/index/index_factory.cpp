@@ -20,6 +20,7 @@
 #include "index/index_factory.h"
 #include "index/index_key.h"
 #include "index/skiplist_index.h"
+#include "index/art_index.h"
 
 namespace peloton {
 namespace index {
@@ -79,6 +80,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
     // ART
   } else if (index_type == IndexType::ART) {
     printf("creating a art index!");
+    index = IndexFactory::GetARTIntsKeyIndex(metadata);
 
   // -----------------------
   // ERROR
@@ -88,6 +90,31 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   }
   PL_ASSERT(index != nullptr);
 
+  return (index);
+}
+
+
+Index *IndexFactory::GetARTIntsKeyIndex(IndexMetadata *metadata) {
+  // Our new Index!
+  Index *index = nullptr;
+
+  // The size of the key in bytes
+  const auto key_size = metadata->key_schema->GetLength();
+  printf("[DEBUG] key_size = %d\n", key_size);
+
+  index = new ArtIndex(metadata);
+
+//  if (key_size <= sizeof(uint64_t)) {
+//    printf("in ART index factory, key size smaller than %lu\n", sizeof(uint64_t));
+//    index = new ArtIndex(metadata);
+//  } else {
+//    printf("in ART index factory, key size bigger than %lu\n", sizeof(uint64_t));
+//    throw IndexException("Unsupported IntsKey scheme");
+//  }
+
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
+#endif
   return (index);
 }
 
