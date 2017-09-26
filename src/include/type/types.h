@@ -679,7 +679,8 @@ enum class StatementType {
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
   COPY = 14,                  // copy type
-  ANALYZE = 15                // analyze type
+  ANALYZE = 15,                // analyze type
+  VARIABLE_SET = 16,           // variable set statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);

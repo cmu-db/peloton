@@ -32,7 +32,7 @@
 #include "parser/postgresparser.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-
+#include "parser/variable_set_statement.h"
 namespace peloton {
 namespace parser {
 
@@ -1147,6 +1147,11 @@ parser::AnalyzeStatement* PostgresParser::VacuumTransform(VacuumStmt* root) {
   return res;
 }
 
+parser::VariableSetStatement* PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
+  VariableSetStatement* res = new VariableSetStatement();
+  return res;
+}
+
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   if (root == nullptr) return nullptr;
 
@@ -1202,6 +1207,7 @@ PostgresParser::ParamListTransform(List* root) {
       new std::vector<expression::AbstractExpression*>();
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    // what to do with Expr???
     result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
   }
 
@@ -1365,6 +1371,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_VacuumStmt:
       result = VacuumTransform((VacuumStmt*)stmt);
       break;
+    case T_VariableSetStmt:
+      result = VariableSetTransform((VariableSetStmt*)stmt);
+      break;
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Statement of type %d not supported yet...\n", stmt->type));
@@ -1430,7 +1439,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto result = pg_query_parse(text);
   if (result.error) {
     // Parse Error
-    LOG_ERROR("%s at %d\n", result.error->message, result.error->cursorpos);
+    LOG_INFO("%s at %d\n", result.error->message, result.error->cursorpos);
     auto new_stmt = new parser::SQLStatementList();
     new_stmt->is_valid = false;
     pg_query_parse_finish(ctx);

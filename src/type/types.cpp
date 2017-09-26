@@ -420,6 +420,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::ANALYZE: {
       return "ANALYZE";
     }
+    case StatementType::VARIABLE_SET: {
+      return "SET";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",

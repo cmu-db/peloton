@@ -143,9 +143,9 @@ ResultType TrafficCop::ExecuteStatement(
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-  LOG_TRACE("Execute Statement of name: %s",
+  LOG_INFO("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement of query: %s",
+  LOG_INFO("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
   try {
     switch (statement->GetQueryType()) {

@@ -256,6 +256,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     sql_stmt_list = peloton_parser.BuildParseTree(query);
     // TODO: 1
     if (!sql_stmt_list->is_valid) {
+      LOG_INFO("22222");
       throw ParserException("Error Parsing SQL statement");
     }
   } // If the statement is invalid or not supported yet
@@ -263,8 +264,9 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     // TODO: 9
     traffic_cop_->AbortInvalidStmt();
     std::string error_message = e.what();
+    LOG_INFO("111111%s", error_message.c_str());
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return ProcessResult::COMPLETE;
   }
@@ -276,6 +278,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   // TODO: 3
   query_ = query;
   query_type_ = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
+  LOG_INFO("%s",QueryTypeToString(query_type_).c_str());
   protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
   switch (query_type_) {
     case QueryType::QUERY_PREPARE: {
@@ -290,7 +293,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       if (statement.get() == nullptr) {
         SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-        LOG_TRACE("ExecQuery Error");
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -319,7 +321,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         // Did not find statement with same name
       else {
         error_message_ = "The prepared statement does not exist";
-        LOG_ERROR("%s", error_message_.c_str());
         SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -330,7 +331,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       query_type_ = statement_->GetQueryType();
       std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
-      // TODO: 7!!!
+      // TODO: 7
+      // We assume it's only constant value expression
+      for (expression::AbstractExpression* param : *exec_stmt->parameters) {
+        param_values_.push_back(((expression::ConstantValueExpression*) param)->GetValue());
+      }
       if (param_values_.size() > 0) {
         statement_->GetPlanTree()->SetParameterValues(&param_values_);
       }
@@ -351,7 +356,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       if (statement_.get() == nullptr) {
         SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message_}});
-        LOG_TRACE("ExecQuery Error");
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -403,24 +407,23 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   skipped_stmt_ = false;
   std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
   parser::SQLStatement* sql_stmt;
-  QueryType query_type;
+  QueryType query_type = QueryType::QUERY_OTHER;
   try {
+    LOG_INFO("%s, %s", statement_name.c_str(), query.c_str());
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+    sql_stmt_list = peloton_parser.BuildParseTree(query);
     if (!sql_stmt_list->is_valid) {
-      // For invalid queries, call traffic_cop's function to abort
-      // transaction if exists
-      traffic_cop_->AbortInvalidStmt();
-      // Send error message back
-      std::string error_message = "Error parsing SQL statement";
-      SendErrorResponse(
-         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-      SendReadyForQuery(NetworkTransactionStateType::IDLE);
-      return;
+      LOG_INFO("Not valid");
+      throw ParserException("Error parsing SQL statement");
     }
   }
   catch (Exception &e) {
-    // TODO: Hack, if the statement is not supported yet
+    traffic_cop_->AbortInvalidStmt();
+    skipped_stmt_ = true;
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
+//    SendReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
   }
   bool skip = (sql_stmt_list->GetNumStatements() == 0);
   if (!skip) {
@@ -429,6 +432,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   }
   skip = skip || !HardcodedExecuteFilter(query_type);
   if (skip) {
+    LOG_INFO("skip");
     skipped_stmt_ = true;
     skipped_query_string_ = std::move(query);
     skipped_query_type_ = std::move(query_type);
@@ -440,14 +444,19 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
-  LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
-            query.c_str());
   statement = traffic_cop_->PrepareStatement(statement_name, query, sql_stmt,
                                              error_message);
   if (statement.get() == nullptr) {
+    traffic_cop_->AbortInvalidStmt();
+    skipped_stmt_ = true;
+    LOG_INFO("%s", error_message.c_str());
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+//    SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
-
+  LOG_INFO("PrepareStatement[%s] => %s", statement_name.c_str(),
+           query.c_str());
   // Read number of params
   int num_params = PacketGetInt(pkt, 2);
 
@@ -902,7 +911,6 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 }
 
 void PostgresProtocolHandler::GetResult() {
-  LOG_INFO("PostgresProtocolHandler, getResult");
   traffic_cop_->ExecuteStatementPlanGetResult();
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
   switch (protocol_type_) {

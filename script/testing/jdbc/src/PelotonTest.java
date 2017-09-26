@@ -713,6 +713,7 @@ public class PelotonTest {
       }
     }
     if (validQueryIndex != -1) {
+      System.out.println("validQueryIndex: " + validQueryIndex);
       throw new SQLException("This should be an invalid SQL: " + statements[validQueryIndex]);
     }
   }

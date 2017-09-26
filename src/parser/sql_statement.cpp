@@ -83,6 +83,7 @@ const std::string SQLStatementList::GetInfo() const {
 }
 
 QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement *sql_stmt) {
+  LOG_INFO("%s", StatementTypeToString(stmt_type).c_str());
   QueryType query_type = QueryType::QUERY_OTHER;
   std::map<StatementType, QueryType> type_map {
       {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
@@ -95,6 +96,7 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement
       {StatementType::ALTER, QueryType::QUERY_ALTER},
       {StatementType::DROP, QueryType::QUERY_DROP},
       {StatementType::SELECT, QueryType::QUERY_SELECT},
+      {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
   };
   std::map<StatementType, QueryType>::iterator it  = type_map.find(stmt_type);
   if (it != type_map.end()) {
@@ -126,6 +128,7 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement
             query_type = QueryType::QUERY_CREATE_TABLE;
             break;
         }
+        break;
       default:
         // TODO: When to get QUERY_SET, QUERY_SHOW????
         query_type = QueryType::QUERY_OTHER;
