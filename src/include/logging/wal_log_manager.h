@@ -110,8 +110,6 @@ private:
 private:
   std::string logger_dir_;
 
-  CopySerializeOutput output_buffer_;
-
   std::unique_ptr<WalLogger> logger_;
 
   bool is_running_;

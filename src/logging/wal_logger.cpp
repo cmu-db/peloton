@@ -203,6 +203,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
   //Store the pg_index tuples to defer index creation
   std::vector<std::unique_ptr<storage::Tuple>> indexes;
   while (true) {
+
     // Read the frame length
     if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *) &length_buf, 4) == false) {
       LOG_TRACE("Reach the end of the log file");
@@ -324,7 +325,8 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
               auto tuple_id = tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
               table->IncreaseTupleCount(1);
               if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
-                table->AddDefaultTileGroup();
+                if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                    table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
               }
           }
           break;
@@ -370,7 +372,8 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         auto tuple_id =  tg->DeleteTupleFromRecovery(current_cid, tg_offset);
         table->IncreaseTupleCount(1);
         if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
-          table->AddDefaultTileGroup();
+            if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
         }
     }
       case LogRecordType::TUPLE_UPDATE:{
@@ -413,7 +416,8 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         old_tg->UpdateTupleFromRecovery(current_cid, old_tg_offset, location);
         table->IncreaseTupleCount(1);
         if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
-          table->AddDefaultTileGroup();
+            if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
         }
         /*
         if(database_id == 16777216){ //catalog database oid
@@ -503,10 +507,10 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                 t->SetValue(col, tile_group->GetValue(offset, col));
             }
             ItemPointer p(tile_group->GetTileGroupId(), offset);
-           // auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
+            auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
             ItemPointer* i = new ItemPointer(tg, offset);
-            table->InsertInIndexes(t, p, nullptr, &i);
-           // concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+            table->InsertInIndexes(t, p, txn, &i);
+            concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
           }
 
       }
@@ -585,7 +589,7 @@ void WalLogger::RebuildSecIndexForTable(storage::DataTable *table) {
 }
 
 
-LogBuffer* WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
+void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     FileHandle *new_file_handle = new FileHandle();
     if(likely_branch(log_buffer != nullptr)){
     std::string filename = GetLogFileFullPath(0);
@@ -596,7 +600,7 @@ LogBuffer* WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     }
 
     fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, new_file_handle->file);
-    log_buffer->Reset();
+    delete log_buffer;
 
 //  Call fsync
     LoggingUtil::FFlushFsync(*new_file_handle);
@@ -608,7 +612,7 @@ LogBuffer* WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
     }
 }
     delete new_file_handle;
-return log_buffer;
+
 }
 
 void WalLogger::Run() {
@@ -618,22 +622,24 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
-          log_buffers_.push_back(log_buffer_);
-          log_buffer_ = new LogBuffer();
-        }
-            while(!log_buffers_.empty()){
-                auto buf = log_buffers_[0];
-                PersistLogBuffer(buf);
-                delete buf;
-                log_buffers_.erase(log_buffers_.begin());
-            }
 
-   }
+        CopySerializeOutput* a;
+        while(log_buffers_.Dequeue(a)){
+         if(!log_buffer_->WriteData(a->Data(), a->Size())){
+            PersistLogBuffer(log_buffer_);
+            log_buffer_ = new LogBuffer();
+            log_buffer_->WriteData(a->Data(), a->Size());
+        }
+         delete a;
+        }
+
+            PersistLogBuffer(log_buffer_);
+            log_buffer_ = new LogBuffer();
+
      std::this_thread::sleep_for(
-        std::chrono::microseconds(5000));
+        std::chrono::microseconds(500));
 
  }
 
 }
-}}
+}}}
