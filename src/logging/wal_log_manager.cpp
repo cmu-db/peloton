@@ -26,17 +26,17 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
   if(likely_branch(is_running_)){
 
   // Reset the output buffer
-  output_buffer_.Reset();
+  CopySerializeOutput* output_buffer = new CopySerializeOutput();
 
   // Reserve for the frame length
-  size_t start = output_buffer_.Position();
-  output_buffer_.WriteInt(0);
+  size_t start = output_buffer->Position();
+  output_buffer->WriteInt(0);
 
   LogRecordType type = record.GetType();
-  output_buffer_.WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
+  output_buffer->WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
 
-  output_buffer_.WriteLong(record.GetEpochId());
-  output_buffer_.WriteLong(record.GetCommitId());
+  output_buffer->WriteLong(record.GetEpochId());
+  output_buffer->WriteLong(record.GetCommitId());
 
   switch (type) {
     case LogRecordType::TUPLE_INSERT:
@@ -46,11 +46,11 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
       std::vector<catalog::Column> columns;
       // Write down the database id and the table id
-      output_buffer_.WriteLong(tg->GetDatabaseId());
-      output_buffer_.WriteLong(tg->GetTableId());
+      output_buffer->WriteLong(tg->GetDatabaseId());
+      output_buffer->WriteLong(tg->GetTableId());
 
-      output_buffer_.WriteLong(tuple_pos.block);
-      output_buffer_.WriteLong(tuple_pos.offset);
+      output_buffer->WriteLong(tuple_pos.block);
+      output_buffer->WriteLong(tuple_pos.offset);
 
       // Write the full tuple into the buffer
       for(auto schema : tg->GetTileSchemas()){
@@ -64,7 +64,7 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       );
       for(oid_t oid = 0; oid < columns.size(); oid++){
         auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(output_buffer_);
+        val.SerializeTo(*(output_buffer));
       }
 
       break;
@@ -76,11 +76,11 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
 
       // Write down the database id and the table id
-      output_buffer_.WriteLong(tg->GetDatabaseId());
-      output_buffer_.WriteLong(tg->GetTableId());
+      output_buffer->WriteLong(tg->GetDatabaseId());
+      output_buffer->WriteLong(tg->GetTableId());
 
-      output_buffer_.WriteLong(tuple_pos.block);
-      output_buffer_.WriteLong(tuple_pos.offset);
+      output_buffer->WriteLong(tuple_pos.block);
+      output_buffer->WriteLong(tuple_pos.offset);
 
 
       break;
@@ -94,14 +94,14 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       std::vector<catalog::Column> columns;
 
       // Write down the database id and the table id
-      output_buffer_.WriteLong(tg->GetDatabaseId());
-      output_buffer_.WriteLong(tg->GetTableId());
+      output_buffer->WriteLong(tg->GetDatabaseId());
+      output_buffer->WriteLong(tg->GetTableId());
 
-      output_buffer_.WriteLong(old_tuple_pos.block);
-      output_buffer_.WriteLong(old_tuple_pos.offset);
+      output_buffer->WriteLong(old_tuple_pos.block);
+      output_buffer->WriteLong(old_tuple_pos.offset);
 
-      output_buffer_.WriteLong(tuple_pos.block);
-      output_buffer_.WriteLong(tuple_pos.offset);
+      output_buffer->WriteLong(tuple_pos.block);
+      output_buffer->WriteLong(tuple_pos.offset);
       // Write the full tuple into the buffer
       for(auto schema : tg->GetTileSchemas()){
           for(auto column : schema.GetColumns()){
@@ -114,18 +114,18 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
       );
       for(oid_t oid = 0; oid < columns.size(); oid++){
         auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(output_buffer_);
+        val.SerializeTo(*(output_buffer));
       }
 
 
       break;
   }
     case LogRecordType::TRANSACTION_BEGIN: {
-      output_buffer_.WriteLong(record.GetCommitId());
+      output_buffer->WriteLong(record.GetCommitId());
       break;
   }
     case LogRecordType::TRANSACTION_COMMIT: {
-      output_buffer_.WriteLong(record.GetCommitId());
+      output_buffer->WriteLong(record.GetCommitId());
       break;
     }
     default: {
@@ -136,13 +136,10 @@ void WalLogManager::WriteRecordToBuffer(LogRecord &record) {
 
   // Add the frame length
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
-  int32_t length = output_buffer_.Position() - start - sizeof(int32_t);
-  output_buffer_.WriteIntAt(start, length);
-  if(!logger_->log_buffer_->WriteData(output_buffer_.Data(), output_buffer_.Size())){
-      logger_->PushBuffer(logger_->log_buffer_);
-      logger_->log_buffer_= new LogBuffer();
-      logger_->log_buffer_->WriteData(output_buffer_.Data(), output_buffer_.Size());
-  }
+  int32_t length = output_buffer->Position() - start - sizeof(int32_t);
+  output_buffer->WriteIntAt(start, length);
+  logger_->PushBuffer(output_buffer);
+
   }
 }
 

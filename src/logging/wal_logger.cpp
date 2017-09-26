@@ -73,6 +73,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tg->GetDatabaseId());
       output_buffer->WriteLong(tg->GetTableId());
 
+
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
 
@@ -117,7 +118,8 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
               //Simply insert the tuple in the tilegroup directly
               table->IncreaseTupleCount(1);
               if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
-                table->AddDefaultTileGroup();
+                if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                    table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
               }
         if(record_eid > current_eid){
           current_eid =  record_eid;
@@ -143,7 +145,8 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
         auto tuple_id =  tg->DeleteTupleFromRecovery(current_cid, tg_offset);
         table->IncreaseTupleCount(1);
       break;
-          table->AddDefaultTileGroup();
+            if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
         }
     }
     case LogRecordType::TUPLE_UPDATE: {
@@ -171,7 +174,8 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       for (auto schema : tg->GetTileSchemas()) {
         for (auto column : schema.GetColumns()) {
           columns.push_back(column);
-          table->AddDefaultTileGroup();
+            if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
+                table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
         }
         }
       }
@@ -233,10 +237,10 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
                 t->SetValue(col, tile_group->GetValue(offset, col));
             }
             ItemPointer p(tile_group->GetTileGroupId(), offset);
-           // auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
+            auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(IsolationLevelType::SERIALIZABLE);
             ItemPointer* i = new ItemPointer(tg, offset);
-            table->InsertInIndexes(t, p, nullptr, &i);
-           // concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+            table->InsertInIndexes(t, p, txn, &i);
+            concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
           }
 
       }
@@ -290,22 +294,24 @@ void WalLogger::Run() {
    while (true) {
      if (is_running_ == false) { break; }
      {
-        if(log_buffer_ != nullptr && !log_buffer_->Empty()){
-          log_buffers_.push_back(log_buffer_);
-          log_buffer_ = new LogBuffer();
-        }
-            while(!log_buffers_.empty()){
-                auto buf = log_buffers_[0];
-                PersistLogBuffer(buf);
-                delete buf;
-                log_buffers_.erase(log_buffers_.begin());
-            }
 
-   }
+        CopySerializeOutput* a;
+        while(log_buffers_.Dequeue(a)){
+         if(!log_buffer_->WriteData(a->Data(), a->Size())){
+            PersistLogBuffer(log_buffer_);
+            log_buffer_ = new LogBuffer();
+            log_buffer_->WriteData(a->Data(), a->Size());
+        }
+         delete a;
+        }
+
+            PersistLogBuffer(log_buffer_);
+            log_buffer_ = new LogBuffer();
+
      std::this_thread::sleep_for(
-        std::chrono::microseconds(5000));
+        std::chrono::microseconds(500));
 
  }
 
 }
-}}
+}}}
