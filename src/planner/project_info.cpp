@@ -241,14 +241,17 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   return true;
 }
 
-void ProjectInfo::ExtractParameters(std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
+void ProjectInfo::VisitParameters(
+    std::vector<expression::Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
   if (isNonTrivial()) {
-    for (const auto &target : GetTargetList()) {
+    for (auto &target : GetTargetList()) {
       const auto &derived_attribute = target.second;
       PL_ASSERT(derived_attribute.expr != nullptr);
-      derived_attribute.expr->ExtractParameters(parameters, index);
+      auto *expr =
+          const_cast<expression::AbstractExpression *>(derived_attribute.expr);
+      expr->VisitParameters(parameters, index, parameter_values);
     }
   }
 }

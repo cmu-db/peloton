@@ -59,15 +59,14 @@ bool HashPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void HashPlan::ExtractParameters(std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
-  AbstractPlan::ExtractParameters(parameters, index);
+void HashPlan::VisitParameters(std::vector<expression::Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
+  AbstractPlan::VisitParameters(parameters, index, parameter_values);
 
   for (auto &hash_key : hash_keys_) {
-    auto *key_expr =
-        const_cast<expression::AbstractExpression *>(hash_key.get());
-    key_expr->ExtractParameters(parameters, index);
+    auto *expr = const_cast<expression::AbstractExpression *>(hash_key.get());
+    expr->VisitParameters(parameters, index, parameter_values);
   }
 }
 

@@ -154,9 +154,8 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    const planner::AbstractPlan &plan,
-    codegen::QueryResultConsumer &consumer, char *consumer_state,
-    std::vector<type::Value> *params) {
+    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+    char *consumer_state, std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -185,7 +184,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
-    const std::shared_ptr<planner::AbstractPlan> &plan,
+    std::shared_ptr<planner::AbstractPlan> plan,
     codegen::QueryResultConsumer &consumer, char *consumer_state,
     std::vector<type::Value> *params, bool *cached) {
   // Start a transaction
@@ -215,8 +214,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
     if (cached != nullptr) *cached = false;
   } else {
-    query->Execute(*txn, executor_context.get(), parameters.get(),
-                   consumer_state);
+    query->Execute(*txn, executor_context.get(), parameters.get(), consumer_state);
     if (cached != nullptr) *cached = true;
   }
   txn_manager.CommitTransaction(txn);

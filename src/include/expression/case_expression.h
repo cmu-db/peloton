@@ -139,17 +139,17 @@ class CaseExpression : public AbstractExpression {
     return hash;
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index)
-      const override {
-    AbstractExpression::ExtractParameters(parameters, index);
+  virtual void VisitParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values)
+      override {
     for (const auto &clause : clauses_) {
-      clause.first->ExtractParameters(parameters, index);
-      clause.second->ExtractParameters(parameters, index);
+      clause.first->VisitParameters(parameters, index, parameter_values);
+      clause.second->VisitParameters(parameters, index, parameter_values);
     }
 
     if (GetDefault() != nullptr) {
-      default_expr_->ExtractParameters(parameters, index);
+      default_expr_->VisitParameters(parameters, index, parameter_values);
     }
   };
 

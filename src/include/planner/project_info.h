@@ -107,9 +107,9 @@ class ProjectInfo {
   bool operator==(const ProjectInfo &rhs) const;
   bool operator!=(const ProjectInfo &rhs) const { return !(*this == rhs); }
 
-  void ExtractParameters(std::vector<expression::Parameter> &parameters,
-      std::unordered_map<const expression::AbstractExpression *, size_t>
-          &index) const;
+  void VisitParameters(std::vector<expression::Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values);
 
  private:
   bool AreEqual(const planner::DerivedAttribute &A,

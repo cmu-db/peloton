@@ -316,13 +316,16 @@ bool SeqScanPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void SeqScanPlan::ExtractParameters(std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
-  AbstractPlan::ExtractParameters(parameters, index);
-  auto predicate = GetPredicate();
+
+void SeqScanPlan::VisitParameters(
+    std::vector<expression::Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
+  AbstractPlan::VisitParameters(parameters, index, parameter_values);
+
+  auto *predicate = const_cast<expression::AbstractExpression *>(GetPredicate());
   if (predicate != nullptr) {
-    predicate->ExtractParameters(parameters, index);
+    predicate->VisitParameters(parameters, index, parameter_values);
   }
 }
 

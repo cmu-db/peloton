@@ -49,6 +49,8 @@ class ParameterValueExpression : public AbstractExpression {
     auto type = rhs.GetExpressionType();
     if (type != ExpressionType::VALUE_CONSTANT && exp_type_ != type)
       return false;
+    if (return_value_type_ != rhs.GetValueType())
+      return false;
     return true;
   }
 
@@ -57,17 +59,18 @@ class ParameterValueExpression : public AbstractExpression {
   }
 
   virtual hash_t Hash() const override {
-    return HashUtil::Hash(&exp_type_);
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    return HashUtil::CombineHashes(hash, HashUtil::Hash(&return_value_type_));
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index) const
-      override {
-    AbstractExpression::ExtractParameters(parameters, index);
-
+  virtual void VisitParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values) override {
     // Add a new parameter object for a parameter
     parameters.push_back(Parameter::CreateParamParameter(GetValueIdx()));
     index[this] = parameters.size() - 1;
+
+    return_value_type_ = parameter_values[value_idx_].GetTypeId();
   };
 
  protected:

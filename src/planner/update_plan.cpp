@@ -105,14 +105,15 @@ bool UpdatePlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void UpdatePlan::ExtractParameters(std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
-  AbstractPlan::ExtractParameters(parameters, index);
+void UpdatePlan::VisitParameters(
+    std::vector<expression::Parameter> &parameters,
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
+  AbstractPlan::VisitParameters(parameters, index, parameter_values);
 
-  auto *proj_info = GetProjectInfo();
+  auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
   if (proj_info != nullptr) {
-    proj_info->ExtractParameters(parameters, index);
+    proj_info->VisitParameters(parameters, index, parameter_values);
   }
 }
 

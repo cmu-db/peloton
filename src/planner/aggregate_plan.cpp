@@ -218,27 +218,31 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   return (AbstractPlan::operator==(rhs));
 }
 
-void AggregatePlan::ExtractParameters(
+void AggregatePlan::VisitParameters(
     std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
-  AbstractPlan::ExtractParameters(parameters, index);
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
+  AbstractPlan::VisitParameters(parameters, index, parameter_values);
+
   for (const auto &agg_term : GetUniqueAggTerms()) {
     if (agg_term.expression != nullptr) {
-      agg_term.expression->ExtractParameters(parameters, index);
+      auto *expr =
+          const_cast<expression::AbstractExpression *>(agg_term.expression);
+      expr->VisitParameters(parameters, index, parameter_values);
     }
   }
 
   if (GetGroupbyColIds().size() > 0) {
     // HashGroupBy
-    auto predicate = GetPredicate();
+    auto *predicate =
+        const_cast<expression::AbstractExpression *>(GetPredicate());
     if (predicate != nullptr) {
-      predicate->ExtractParameters(parameters, index);
+      predicate->VisitParameters(parameters, index, parameter_values);
     }
 
-    auto projection = GetProjectInfo();
-    if (projection != nullptr) {
-      projection->ExtractParameters(parameters, index);
+    auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
+    if (proj_info != nullptr) {
+      proj_info->VisitParameters(parameters, index, parameter_values);
     }
   }
 }

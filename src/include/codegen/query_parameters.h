@@ -26,10 +26,10 @@ class Value;
 namespace codegen {
 class QueryParameters {
  public:
-  QueryParameters(const planner::AbstractPlan &plan,
+  QueryParameters(planner::AbstractPlan &plan,
                   const std::vector<peloton::type::Value> &parameter_values) {
-    // Extract Parameters information from the papers
-    plan.ExtractParameters(parameters_, parameters_index_);
+    // Extract Parameters information and set value type for all the PVE
+    plan.VisitParameters(parameters_, parameters_index_, parameter_values);
 
     // Set the values from the user's query parameters
     SetParameterExpressionValues(parameter_values);

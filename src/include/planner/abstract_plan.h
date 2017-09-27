@@ -131,11 +131,11 @@ class AbstractPlan : public Printable {
     return !(*this == rhs);
   }
 
-  virtual void ExtractParameters(std::vector<expression::Parameter> &parameters,
-      std::unordered_map<const expression::AbstractExpression *, size_t>
-          &index) const {
+  virtual void VisitParameters(std::vector<expression::Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values) {
     for (auto &child : GetChildren()) {
-      child->ExtractParameters(parameters, index);
+      child->VisitParameters(parameters, index, parameter_values);
     }
   }
 
