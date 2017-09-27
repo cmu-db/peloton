@@ -159,12 +159,18 @@ void ArtIndex::Scan(
     index_high_key.setKeyLen(high_key_p->GetLength());
 
     // TODO: how do I know the result length before scanning?
-//    std::size_t expected_result_length = -1;
-//    std::size_t actual_result_length = 0;
-//
-//    auto t = artTree.getThreadInfo();
-//    artTree.lookupRange(index_low_key, index_high_key, continue_key, result, expected_result_length,
-//      actual_result_length, t);
+    std::size_t range = 1000;
+    std::size_t actual_result_length = 0;
+    TID results[range];
+
+    auto t = artTree.getThreadInfo();
+    artTree.lookupRange(index_low_key, index_high_key, continue_key, results, range,
+      actual_result_length, t);
+
+    for (std::size_t i = 0; i < actual_result_length; i++) {
+      ItemPointer *value_pointer = (ItemPointer *) results[i];
+      result.push_back(value_pointer);
+    }
 
   }
   return;
