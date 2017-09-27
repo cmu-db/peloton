@@ -81,13 +81,14 @@ bool ProjectionPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void ProjectionPlan::ExtractParameters(
+void ProjectionPlan::VisitParameters(
     std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-    const {
-  AbstractPlan::ExtractParameters(parameters, index);
+    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+    const std::vector<peloton::type::Value> &parameter_values) {
+  AbstractPlan::VisitParameters(parameters, index, parameter_values);
 
-  GetProjectInfo()->ExtractParameters(parameters, index);
+  auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
+  proj_info->VisitParameters(parameters, index, parameter_values);
 }
 
 }  // namespace planner

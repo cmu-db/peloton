@@ -60,6 +60,8 @@ class ConstantValueExpression : public AbstractExpression {
     auto type = rhs.GetExpressionType();
     if (type != ExpressionType::VALUE_PARAMETER && exp_type_ != type)
       return false;
+    if (return_value_type_ != rhs.GetValueType())
+      return false;
     // Do not hash value since we are going to parameterize and cache
     return true;
   }
@@ -71,13 +73,14 @@ class ConstantValueExpression : public AbstractExpression {
   virtual hash_t Hash() const override {
     // Use VALUE_PARAMTER for parameterization with the compiled query cache
     auto val = ExpressionType::VALUE_PARAMETER;
-    // Do not hash value since we are going to parameterize and cache
-    return HashUtil::Hash(&val);
+    hash_t hash = HashUtil::Hash(&val);
+    return HashUtil::CombineHashes(hash, HashUtil::Hash(&return_value_type_));
   }
 
-  void ExtractParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index)
-      const override {
+  virtual void VisitParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index,
+      UNUSED_ATTRIBUTE const std::vector<peloton::type::Value>
+          &parameter_values) override {
     // Add a new parameter object for a constant
     parameters.push_back(Parameter::CreateConstParameter(GetValue().Copy()));
     index[this] = parameters.size() - 1;

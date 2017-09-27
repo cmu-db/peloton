@@ -104,9 +104,9 @@ class HashJoinPlan : public AbstractJoinPlan {
     return !(*this == rhs);
   }
 
-  void ExtractParameters(std::vector<expression::Parameter> &parameters,
-      std::unordered_map<const expression::AbstractExpression *, size_t> &index)
-      const override;
+  void VisitParameters(std::vector<expression::Parameter> &parameters,
+      std::unordered_map<const expression::AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values) override;
 
  private:
   std::vector<oid_t> outer_column_ids_;

@@ -141,10 +141,11 @@ class AbstractExpression : public Printable {
   virtual bool ExactlyEquals(const AbstractExpression &other) const;
   virtual hash_t HashForExactMatch() const;
 
-  virtual void ExtractParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index) const {
+  virtual void VisitParameters(std::vector<Parameter> &parameters,
+      std::unordered_map<const AbstractExpression *, size_t> &index,
+      const std::vector<peloton::type::Value> &parameter_values) {
     for (auto &child : children_) {
-      child->ExtractParameters(parameters, index);
+      child->VisitParameters(parameters, index, parameter_values);
     }
   };
 
