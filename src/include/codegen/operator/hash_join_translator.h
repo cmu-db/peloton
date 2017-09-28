@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "codegen/bloom_filter.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/oa_hash_table.h"
@@ -135,8 +136,14 @@ class HashJoinTranslator : public OperatorTranslator {
   // The ID of the hash-table in the runtime state
   RuntimeState::StateID hash_table_id_;
 
+  // The ID of the bloom filter in the runtime state
+  RuntimeState::StateID bloom_filter_id_;
+
   // The hash table we use to perform the join
   OAHashTable hash_table_;
+
+  // The Bloom Filter we use to pre-filter probing tuples
+  BloomFilter bloom_filter_;
 
   // The left and right hash key expressions
   std::vector<const expression::AbstractExpression *> left_key_exprs_;

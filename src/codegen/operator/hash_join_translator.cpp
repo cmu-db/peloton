@@ -12,9 +12,10 @@
 
 #include "codegen/operator/hash_join_translator.h"
 
-#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "codegen/lang/vectorized_loop.h"
+#include "codegen/proxy/bloom_filter_storage_proxy.h"
+#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
 
@@ -51,9 +52,11 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
         true);
   }
 
-  // Allocate state for our hash table
+  // Allocate state for our hash table and bloom filter
   hash_table_id_ =
       runtime_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
+  bloom_filter_id_ = runtime_state.RegisterState(
+      "bloomfilter", BloomFilterStorageProxy::GetType(codegen));
 
   // Prepare translators for the left and right input operators
   context.Prepare(*join_.GetChild(0), left_pipeline_);
@@ -128,13 +131,14 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Create the hash table
   hash_table_ =
       OAHashTable{codegen, left_key_type, left_value_storage_.MaxStorageSize()};
-
+  bloom_filter_ = BloomFilter{};
   LOG_DEBUG("Finished constructing HashJoinTranslator ...");
 }
 
 // Initialize the hash-table instance
 void HashJoinTranslator::InitializeState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_));
 }
 
 // Produce!
@@ -270,6 +274,9 @@ void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
   InsertLeft insert_left{left_value_storage_, vals};
   hash_table_.Insert(codegen, LoadStatePtr(hash_table_id_), hash, key,
                      insert_left);
+
+  // Insert tuples into the bloom filter
+  bloom_filter_.Add(codegen, LoadStatePtr(bloom_filter_id_), key);
 }
 
 // The given row is from the right child. Probe hash-table.
@@ -281,18 +288,27 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
 
   const auto &join_plan = GetJoinPlan();
 
-  // Check the join type
-  if (join_plan.GetJoinType() == JoinType::INNER) {
-    // For inner joins, find all join partners
-    ProbeRight probe_right{*this, context, row, key};
-    hash_table_.FindAll(GetCodeGen(), LoadStatePtr(hash_table_id_), key,
-                        probe_right);
+  // Prefilter the tuple using Bloom Filter
+  llvm::Value *contains =
+      bloom_filter_.Contains(GetCodeGen(), LoadStatePtr(bloom_filter_id_), key);
+  lang::If is_valid_row{GetCodeGen(), contains};
+  {
+    // For each tuple that passes the bloom filter, probe the hash table
+    // to eliminate the false positives.
+    if (join_plan.GetJoinType() == JoinType::INNER) {
+      // For inner joins, find all join partners
+      ProbeRight probe_right{*this, context, row, key};
+      hash_table_.FindAll(GetCodeGen(), LoadStatePtr(hash_table_id_), key,
+                          probe_right);
+    }
   }
+  is_valid_row.EndIf();
 }
 
 // Cleanup by destroying the hash-table instance
 void HashJoinTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  bloom_filter_.Destroy(GetCodeGen(), LoadStatePtr(bloom_filter_id_));
 }
 
 // Get the stringified name of this join
