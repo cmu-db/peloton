@@ -19,9 +19,7 @@ namespace codegen {
 // Static Members
 //===----------------------------------------------------------------------===//
 std::vector<Hash::HashMethod> BloomFilter::kHashFunctions = {
-  Hash::HashMethod::Murmur3,
-  Hash::HashMethod::Crc32
-};
+    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32};
 
 //===----------------------------------------------------------------------===//
 // Member Functions
@@ -36,7 +34,7 @@ void BloomFilter::Destroy(CodeGen &codegen, llvm::Value *bloom_filter) {
 }
 
 void BloomFilter::Add(CodeGen &codegen, llvm::Value *bloom_filter,
-                      std::vector<codegen::Value> &key) const {
+                      const std::vector<codegen::Value> &key) const {
   llvm::Value *num_hashes = codegen.Const32(kHashFunctions.size());
   llvm::Value *hashes = CalculateHashes(codegen, key);
   // Pass the hashes to the underlying bloom filter storage to mark the bits
@@ -44,8 +42,9 @@ void BloomFilter::Add(CodeGen &codegen, llvm::Value *bloom_filter,
                {bloom_filter, hashes, num_hashes});
 }
 
-llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
-                                   std::vector<codegen::Value> &key) const {
+llvm::Value *BloomFilter::Contains(
+    CodeGen &codegen, llvm::Value *bloom_filter,
+    const std::vector<codegen::Value> &key) const {
   llvm::Value *num_hashes = codegen.Const32(kHashFunctions.size());
   llvm::Value *hashes = CalculateHashes(codegen, key);
   // Pass the hashes to the underlying bloom filter storage to mark the bits
@@ -54,15 +53,16 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
 }
 
 llvm::Value *BloomFilter::CalculateHashes(
-    CodeGen &codegen, std::vector<codegen::Value> &key) const {
+    CodeGen &codegen, const std::vector<codegen::Value> &key) const {
   // Alloca space on stack to store the hashes
   llvm::Value *hashes = codegen->CreateAlloca(
       codegen.Int64Type(), codegen.Const32(kHashFunctions.size()));
   for (unsigned i = 0; i < kHashFunctions.size(); i++) {
     llvm::Value *hash = Hash::HashValues(codegen, key, kHashFunctions[i]);
     // hashes[i] = hash
-    codegen->CreateStore(codegen->CreateInBoundsGEP(codegen.Int64Type(), hashes,
-                                                    codegen.Const32(i)), hash);
+    codegen->CreateStore(hash,
+                         codegen->CreateInBoundsGEP(codegen.Int64Type(), hashes,
+                                                    codegen.Const32(i)));
   }
   return hashes;
 }

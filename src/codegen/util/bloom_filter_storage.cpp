@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "codegen/util/bloom_filter_storage.h"
+#include "common/logger.h"
 
 #include <string.h>
 
@@ -25,6 +26,7 @@ void BloomFilterStorage::Init() {
 }
 
 void BloomFilterStorage::Add(uint64_t* hashes, uint32_t size) {
+  LOG_INFO("BloomFilterStorage::Add(%lu, %d)", hashes[0], size);
   for (unsigned i = 0; i < size; i++) {
     uint32_t bit_offset = hashes[i] % kNumBits;
     uint32_t byte_offset = bit_offset / 8;
@@ -34,6 +36,7 @@ void BloomFilterStorage::Add(uint64_t* hashes, uint32_t size) {
 }
 
 bool BloomFilterStorage::Contains(uint64_t* hashes, uint32_t size) {
+  LOG_INFO("BloomFilterStorage::Contains(%lu, %d)", hashes[0], size);
   for (unsigned i = 0; i < size; i++) {
     uint32_t bit_offset = hashes[i] % kNumBits;
     uint32_t byte_offset = bit_offset / 8;

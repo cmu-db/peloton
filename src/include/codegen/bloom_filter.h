@@ -31,14 +31,14 @@ class BloomFilter {
   void Destroy(CodeGen &codegen, llvm::Value *bloom_filter);
 
   void Add(CodeGen &codegen, llvm::Value *bloom_filter,
-           std::vector<codegen::Value> &key) const;
+           const std::vector<codegen::Value> &key) const;
 
   llvm::Value *Contains(CodeGen &codegen, llvm::Value *bloom_filter,
-                        std::vector<codegen::Value> &key) const;
+                        const std::vector<codegen::Value> &key) const;
 
  private:
   llvm::Value *CalculateHashes(CodeGen &codegen,
-                               std::vector<codegen::Value> &key) const;
+                               const std::vector<codegen::Value> &key) const;
 };
 
 }  // namespace codegen
