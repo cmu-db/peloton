@@ -267,6 +267,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
           {
             table->AddTileGroupWithOidForRecovery(tg_block);
             tg = table->GetTileGroupById(tg_block);
+            catalog::Manager::GetInstance().GetNextTileGroupId();
           }
 
           std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema,true));
@@ -282,7 +283,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
                   case TABLE_CATALOG_OID: //pg_table
                       {
                       auto database = storage::StorageManager::GetInstance()->GetDatabaseWithOid(tuple->GetValue(2).GetAs<oid_t>()); //Getting database oid from pg_table
-                      database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),1000,true,false,false));
+                      database->AddTable(new storage::DataTable(new catalog::Schema(columns),tuple->GetValue(1).ToString(),database->GetOid(),tuple->GetValue(0).GetAs<oid_t>(),DEFAULT_TUPLES_PER_TILEGROUP,true,false,false));
                       LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
                       catalog::TableCatalog::GetInstance()->GetNextOid();
                       columns.clear();
@@ -327,6 +328,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
               if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
                 if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                     table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                    catalog::Manager::GetInstance().GetNextTileGroupId();
               }
           }
           break;
@@ -374,6 +376,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
             if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                 table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                catalog::Manager::GetInstance().GetNextTileGroupId();
         }
     }
       case LogRecordType::TUPLE_UPDATE:{
@@ -418,6 +421,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
         if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
             if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                 table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                catalog::Manager::GetInstance().GetNextTileGroupId();
         }
         /*
         if(database_id == 16777216){ //catalog database oid
@@ -629,13 +633,13 @@ void WalLogger::Run() {
             PersistLogBuffer(log_buffer_);
             log_buffer_ = new LogBuffer();
             log_buffer_->WriteData(a->Data(), a->Size());
-        }
+            }
          delete a;
         }
-
+        if(!log_buffer_->Empty()){
             PersistLogBuffer(log_buffer_);
             log_buffer_ = new LogBuffer();
-
+        }
      std::this_thread::sleep_for(
         std::chrono::microseconds(500));
 
