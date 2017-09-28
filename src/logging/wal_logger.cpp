@@ -92,6 +92,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       for (oid_t oid = 0; oid < columns.size(); oid++) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
+            catalog::Manager::GetInstance().GetNextTileGroupId();
       }
 
                //Catalog is already created, we must do this transactionally
@@ -120,6 +121,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
               if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
                 if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                     table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                    catalog::Manager::GetInstance().GetNextTileGroupId();
               }
         if(record_eid > current_eid){
           current_eid =  record_eid;
@@ -147,6 +149,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
       break;
             if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                 table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                catalog::Manager::GetInstance().GetNextTileGroupId();
         }
     }
     case LogRecordType::TUPLE_UPDATE: {
@@ -176,6 +179,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
           columns.push_back(column);
             if(table->GetTileGroupById(tg->GetTileGroupId()+1).get() == nullptr)
                 table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
+                catalog::Manager::GetInstance().GetNextTileGroupId();
         }
         }
       }
@@ -301,13 +305,13 @@ void WalLogger::Run() {
             PersistLogBuffer(log_buffer_);
             log_buffer_ = new LogBuffer();
             log_buffer_->WriteData(a->Data(), a->Size());
-        }
+            }
          delete a;
         }
-
+        if(!log_buffer_->Empty()){
             PersistLogBuffer(log_buffer_);
             log_buffer_ = new LogBuffer();
-
+        }
      std::this_thread::sleep_for(
         std::chrono::microseconds(500));
 
