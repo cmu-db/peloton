@@ -301,7 +301,10 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
       hash_table_.FindAll(GetCodeGen(), LoadStatePtr(hash_table_id_), key,
                           probe_right);
     }
+    GetCodeGen().CallPrintf("Row is not filterd\n", {});
   }
+  is_valid_row.ElseBlock();
+  { GetCodeGen().CallPrintf("Row is filtered\n", {}); }
   is_valid_row.EndIf();
 }
 
