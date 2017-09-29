@@ -23,6 +23,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "type/types.h"
+#include "logging/log_record.h"
 
 namespace peloton {
 
@@ -31,6 +32,9 @@ class TriggerSet;
 class TriggerData;
 }  // namespace trigger
 
+namespace logging{
+class LogRecord;
+}
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
@@ -181,6 +185,8 @@ class Transaction : public Printable {
 
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
+
+  std::vector<logging::LogRecord> log_records_;
 
   bool is_written_;
   size_t insert_count_;

@@ -21,7 +21,6 @@
 #include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "logging/wal_log_manager.h"
 #include "type/types.h"
 #include "type/serializer.h"
 #include "container/lock_free_queue.h"
@@ -37,40 +36,18 @@ class TileGroupHeader;
 
 namespace logging {
 
-class WalLogger {
+class WalRecovery {
 
 public:
-  WalLogger(const size_t &logger_id, const std::string &log_dir) :
+  WalRecovery(const size_t &logger_id, const std::string &log_dir) :
     logger_id_(logger_id),
     log_dir_(log_dir),
-    logger_thread_(nullptr),
-    is_running_(false)
     {}
 
-  ~WalLogger() {}
+  ~WalRecovery() {}
 
-  void StartLogging() {
-    is_running_ = true;
-   }
-
-  void StopLogging() {
-    is_running_ = false;
-   /*/ if(!log_buffer_->Empty()){
-        PersistLogBuffer(log_buffer_);
-    }
-    delete log_buffer_;
-    logger_thread_->join();*/
-  }
-
-  void PersistLogBuffer(LogBuffer* log_buffer);
-
-
-
-  /*void PushBuffer(CopySerializeOutput* buf){
-      log_buffers_.Enqueue(buf);
-  }*/
-
-void WriteTransaction(std::vector<LogRecord> log_records);
+  void StartRecovery();
+  void WaitForRecovery();
 
 private:
  // void Run();

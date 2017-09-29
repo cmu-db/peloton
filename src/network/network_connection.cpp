@@ -70,12 +70,29 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
   }
+  if (logpool_event == nullptr) {
+    logpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
+    CallbackUtil::EventHandler, this);
+  } else {
+    if (event_del(logpool_event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(logpool_event, thread->GetEventBase(), -1,
+                                EV_PERSIST, CallbackUtil::EventHandler, this);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
+  }
 
   event_add(network_event, nullptr);
   event_add(workpool_event, nullptr);
+  event_add(logpool_event, nullptr);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
+  log_manager_.SetTaskCallback(TriggerStateMachine, logpool_event);
 }
 
 void NetworkConnection::TriggerStateMachine(void* arg) {

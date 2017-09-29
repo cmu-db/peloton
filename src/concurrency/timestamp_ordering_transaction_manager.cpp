@@ -19,7 +19,6 @@
 #include "common/platform.h"
 #include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
-#include "logging/log_manager_factory.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
@@ -830,9 +829,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // add old version into gc set.
         // may need to delete versions from secondary indexes.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
-        //log_manager.StartPersistTxn(end_commit_id);
-        log_manager.LogUpdate(old_version, new_version,end_commit_id,epoch_id);
-        //log_manager.EndPersistTxn(end_commit_id);
+        LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, new_version, end_commit_id, epoch_id);
+        record.SetOldVersion(old_version);
+        current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -862,9 +861,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // recycle old version, delete from index
         // the gc should be responsible for recycling the newer empty version.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
-        //log_manager.StartPersistTxn(end_commit_id);
-        log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot),end_commit_id,epoch_id);
-        //log_manager.EndPersistTxn(end_commit_id);
+        LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_DELETE, ItemPointer(tile_group_id, tuple_slot),end_commit_id, epoch_id);
+        current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::INSERT) {
 
 
@@ -880,8 +878,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // nothing to be added to gc set.
-        log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot),end_commit_id,epoch_id);
-
+        LogRecord record = LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, ItemPointer(tile_group_id, tuple_slot),end_commit_id, epoch_id);
+        current_txn->log_records_.push_back(record);
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -904,20 +902,32 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       }
     }
   }
+  if(!current_txn->log_records_.empty()){
+      log_manager.LogTransaction(current_txn->log_records_);
+      EndTransaction(current_txn);
+      if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
+          STATS_TYPE_INVALID) {
+        stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+            database_oid);
+      }
 
-  ResultType result = current_txn->GetResult();
+      return ResultType::QUEUING;
+  }
+  else{
+      ResultType result = current_txn->GetResult();
+      EndTransaction(current_txn);
+      if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
+          STATS_TYPE_INVALID) {
+        stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+            database_oid);
+      }
 
-  EndTransaction(current_txn);
-
-  // Increment # txns committed metric
-  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-      STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-        database_id);
+    return result;
   }
 
-  return result;
+
 }
+
 
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     Transaction *const current_txn) {
