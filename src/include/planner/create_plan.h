@@ -50,7 +50,8 @@ struct ForeignKeyInfo {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-
+  
+  // This construnctor is for Create Database Test used only
   explicit CreatePlan(std::string database_name, CreateType c_type);
 
   explicit CreatePlan(std::string table_name, std::string database_name,

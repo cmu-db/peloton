@@ -44,7 +44,7 @@ TEST_F(CreateTests, CreatingDB) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
   
-    // Create plans
+    // Create plans with database name set.
     planner::CreatePlan node("PelotonDB", CreateType::DB);
 
     std::unique_ptr<executor::ExecutorContext> context(
