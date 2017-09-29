@@ -51,6 +51,8 @@ class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
 
+  explicit CreatePlan(std::string database_name, CreateType c_type);
+
   explicit CreatePlan(std::string table_name, std::string database_name,
                       std::unique_ptr<catalog::Schema> schema,
                       CreateType c_type);

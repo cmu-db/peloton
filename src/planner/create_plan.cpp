@@ -20,6 +20,10 @@
 namespace peloton {
 namespace planner {
 
+CreatePlan::CreatePlan(std::string database_name, CreateType c_type)
+    : database_name(database_name),
+      create_type(c_type) {}
+
 CreatePlan::CreatePlan(std::string table_name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
                        CreateType c_type)
