@@ -37,7 +37,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
   for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
     for (auto column : column_exprs_) {
-      if (*column.get() == *r_column.get()) {
+      if (column->ExactlyEquals(*r_column.get())) {
         has_column = true;
         break;
       }
@@ -106,7 +106,7 @@ bool PropertyDistinct::operator>=(const Property &r) const {
   for (auto r_column : r_columns.distinct_column_exprs_) {
     bool has_column = false;
     for (auto column : distinct_column_exprs_) {
-      if (*column.get() == *r_column.get()) {
+      if (column->ExactlyEquals(*r_column.get())) {
         has_column = true;
         break;
       }
@@ -193,7 +193,8 @@ bool PropertySort::operator>=(const Property &r) const {
   size_t num_sort_columns = r_sort.sort_columns_.size();
   PL_ASSERT(num_sort_columns == r_sort.sort_ascending_.size());
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    if (*sort_columns_[i].get() != *r_sort.sort_columns_[i].get()) return false;
+    if (!sort_columns_[i]->ExactlyEquals(*r_sort.sort_columns_[i].get()))
+      return false;
     if (sort_ascending_[i] != r_sort.sort_ascending_[i]) return false;
   }
   return true;
