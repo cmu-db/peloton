@@ -26,7 +26,7 @@
 #include "planner/create_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/plan_util.h"
-#include "tcop/tcop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -35,9 +35,10 @@ class UpdateTranslatorTest : public PelotonCodeGenTest {
  public:
   UpdateTranslatorTest() : PelotonCodeGenTest() {}
 
-  TableId TestTableId1() { return TableId::_1; }
-  TableId TestTableId2() { return TableId::_2; }
-  TableId TestTableId5() { return TableId::_5; }
+
+  oid_t TestTableId1() { return test_table_oids[0]; }
+  oid_t TestTableId2() { return test_table_oids[1]; }
+  oid_t TestTableId5() { return test_table_oids[4]; }
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
  private:
