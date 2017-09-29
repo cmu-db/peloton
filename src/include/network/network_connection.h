@@ -36,6 +36,7 @@
 #include "protocol_handler.h"
 #include "marshal.h"
 #include "network_state.h"
+#include "logging/wal_log_manager.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -53,6 +54,7 @@ class NetworkConnection {
   int sock_fd;                    // socket file descriptor
   struct event *network_event = nullptr;  // something to read from network
   struct event *workpool_event = nullptr; // worker thread done the job
+  struct event *logpool_event = nullptr; // logger thread done the job
   short event_flags;              // event flags mask
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
@@ -61,6 +63,7 @@ class NetworkConnection {
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   tcop::TrafficCop traffic_cop_;
+  logging::WalLogManager log_manager_;
  private:
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer

@@ -35,44 +35,22 @@
 #include "type/ephemeral_pool.h"
 #include "storage/storage_manager.h"
 
-#include "logging/wal_logger.h"
-#include "logging/wal_log_manager.h"
+#include "logging/wal_recovery.h"
 
 namespace peloton {
 namespace logging {
 
 
-void WalLogger::StartIndexRebulding() {
-  PL_ASSERT(recovery_threads_.size() != 0);
-  recovery_threads_[0].reset(new std::thread(&WalLogger::RunSecIndexRebuildThread, this));
-}
 
-void WalLogger::WaitForIndexRebuilding() {
-  recovery_threads_[0]->join();
-}
-
-void WalLogger::StartRecovery(){
+void WalRecovery::StartRecovery(){
 
   GetSortedLogFileIdList();
-  recovery_pools_.resize(1);
-  recovery_threads_.resize(1);
-
-  for (size_t i = 0; i < 1; ++i) {
-
-    recovery_pools_[i].reset(new type::EphemeralPool());
-
-    recovery_threads_[i].reset(new std::thread(&WalLogger::RunRecoveryThread, this));
-  }
-}
-
-void WalLogger::WaitForRecovery() {
-  for (auto &recovery_thread : recovery_threads_) {
-    recovery_thread->join();
-  }
+  RunRecovery();
 }
 
 
-void WalLogger::GetSortedLogFileIdList(){
+
+void WalRecovery::GetSortedLogFileIdList(){
   // Open the log dir
   struct dirent *file;
   DIR *dirp;
@@ -106,7 +84,7 @@ void WalLogger::GetSortedLogFileIdList(){
 
 }
 
-txn_id_t WalLogger::LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset) {
+txn_id_t WalRecovery::LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset) {
   txn_id_t txnid_logger = (this->logger_id_);
   while (true) {
     // We use the txn_id field as a lock. However this field also stored information about whether a tuple is deleted or not.
@@ -117,13 +95,13 @@ txn_id_t WalLogger::LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_o
   }
 }
 
-void WalLogger::UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id) {
+void WalRecovery::UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id) {
   PL_ASSERT(new_txn_id == INVALID_TXN_ID || new_txn_id == INITIAL_TXN_ID);
   tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t) (this->logger_id_), new_txn_id);
 
 }
 
-bool WalLogger::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location) {
+bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location) {
 
     oid_t tile_group_id = location.block;
     auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -190,7 +168,7 @@ bool WalLogger::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, st
       return true;
 }
 
-bool WalLogger::ReplayLogFile(FileHandle &file_handle){
+bool WalRecovery::ReplayLogFile(FileHandle &file_handle){
   PL_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
 
   // Status
@@ -525,15 +503,7 @@ bool WalLogger::ReplayLogFile(FileHandle &file_handle){
 
 
 
-void WalLogger::RunRecoveryThread(){
-
-    int replay_cap = max_replay_file_id_.load();
-  while (true) {
-
-    int replay_file_id = max_replay_file_id_.fetch_sub(1, std::memory_order_relaxed);
-    if (replay_file_id < 0) {
-      break;
-    }
+void WalRecovery::RunRecovery(){
 
     size_t file_eid = file_eids_.at(replay_cap - replay_file_id);
     // Replay a single file
@@ -555,210 +525,14 @@ void WalLogger::RunRecoveryThread(){
 
   }
 
-}
-
-void WalLogger::RunSecIndexRebuildThread() {
-  auto manager = storage::StorageManager::GetInstance();
-  auto db_count = manager->GetDatabaseCount();
-
-  // Loop all databases
-  for (oid_t db_idx = 0; db_idx < db_count; db_idx ++) {
-    auto database = manager->GetDatabaseWithOid(db_idx);
-    auto table_count = database->GetTableCount();
-
-    // Loop all tables
-    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
-      // Get the target table
-      storage::DataTable *table = database->GetTable(table_idx);
-      RebuildSecIndexForTable(table);
-    }
-  }
-}
-
-void WalLogger::RebuildSecIndexForTable(storage::DataTable *table) {
-  size_t tg_count = table->GetTileGroupCount();
-
-  // Loop all the tile groups, shared by thread id
-  for (size_t tg_idx = 0; tg_idx < tg_count; tg_idx ++) {
-    auto tg = table->GetTileGroup(tg_idx).get();
-    UNUSED_ATTRIBUTE auto tg_header = tg->GetHeader();
-    oid_t active_tuple_count = tg->GetNextTupleSlot();
-
-    // Loop all tuples headers in the tile group
-    for (oid_t tuple_offset = 0; tuple_offset < active_tuple_count; ++tuple_offset) {
-      // Check if the tuple is valid
-      PL_ASSERT(tg_header->GetTransactionId(tuple_offset) == INITIAL_TXN_ID);
-    }
-  }
-}
-
-void WriteTransactionWrapper(void *arg_ptr) {
-    LogTransactionArg* arg = (LogTransactionArg*) arg_ptr;
-    WriteTransaction(arg->log_records_);
-    delete (arg);
-}
-
-void WriteTransaction(std::vector<LogRecord> log_records, ResultType* status) {
-    LogBuffer* buf = new LogBuffer();
-    for(LogRecord record : log_records){
-        CopySerializeOutput* output = WriteRecordToBuffer(record);
-        if(!buf->WriteData(output->Data(),output->Size())){
-            PersistLogBuffer(buf);
-            buf = new LogBuffer();
-        }
-        delete output;
-    }
-    if(!buf->Empty()){
-        PersistLogBuffer(buf);
-    }
-    *status = ResultType::SUCCESS;
-}
-
-CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
-  if(likely_branch(is_running_)){
-
-  // Reset the output buffer
-  CopySerializeOutput* output_buffer = new CopySerializeOutput();
-
-  // Reserve for the frame length
-  size_t start = output_buffer->Position();
-  output_buffer->WriteInt(0);
-
-  LogRecordType type = record.GetType();
-  output_buffer->WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
-
-  output_buffer->WriteLong(record.GetEpochId());
-  output_buffer->WriteLong(record.GetCommitId());
-
-  switch (type) {
-    case LogRecordType::TUPLE_INSERT:
-     {
-      auto &manager = catalog::Manager::GetInstance();
-      auto tuple_pos = record.GetItemPointer();
-      auto tg = manager.GetTileGroup(tuple_pos.block).get();
-      std::vector<catalog::Column> columns;
-      // Write down the database id and the table id
-      output_buffer->WriteLong(tg->GetDatabaseId());
-      output_buffer->WriteLong(tg->GetTableId());
-
-      output_buffer->WriteLong(tuple_pos.block);
-      output_buffer->WriteLong(tuple_pos.offset);
-
-      // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
-      }
-
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
-        auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(*(output_buffer));
-      }
-
-      break;
-    }
-  case LogRecordType::TUPLE_DELETE:
-  {
-      auto &manager = catalog::Manager::GetInstance();
-      auto tuple_pos = record.GetItemPointer();
-      auto tg = manager.GetTileGroup(tuple_pos.block).get();
-
-      // Write down the database id and the table id
-      output_buffer->WriteLong(tg->GetDatabaseId());
-      output_buffer->WriteLong(tg->GetTableId());
-
-      output_buffer->WriteLong(tuple_pos.block);
-      output_buffer->WriteLong(tuple_pos.offset);
 
 
-      break;
-  }
-  case LogRecordType::TUPLE_UPDATE:
-  {
-      auto &manager = catalog::Manager::GetInstance();
-      auto tuple_pos = record.GetItemPointer();
-      auto old_tuple_pos = record.GetOldItemPointer();
-      auto tg = manager.GetTileGroup(tuple_pos.block).get();
-      std::vector<catalog::Column> columns;
-
-      // Write down the database id and the table id
-      output_buffer->WriteLong(tg->GetDatabaseId());
-      output_buffer->WriteLong(tg->GetTableId());
-
-      output_buffer->WriteLong(old_tuple_pos.block);
-      output_buffer->WriteLong(old_tuple_pos.offset);
-
-      output_buffer->WriteLong(tuple_pos.block);
-      output_buffer->WriteLong(tuple_pos.offset);
-      // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
-      }
-
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
-        auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(*(output_buffer));
-      }
-
-
-      break;
-  }
-    case LogRecordType::TRANSACTION_BEGIN: {
-      output_buffer->WriteLong(record.GetCommitId());
-      break;
-  }
-    case LogRecordType::TRANSACTION_COMMIT: {
-      output_buffer->WriteLong(record.GetCommitId());
-      break;
-    }
-    default: {
-      LOG_ERROR("Unsupported log record type");
-      PL_ASSERT(false);
-    }
-  }
-
-  // Add the frame length
-  // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
-  int32_t length = output_buffer->Position() - start - sizeof(int32_t);
-  output_buffer->WriteIntAt(start, length);
-  //logger_->PushBuffer(output_buffer);
-   return output_buffer;
-  }
-  return nullptr;
-}
-void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
-    FileHandle *new_file_handle = new FileHandle();
-    if(likely_branch(log_buffer != nullptr)){
-    std::string filename = GetLogFileFullPath(0);
-    // Create a new file
-    if (LoggingUtil::OpenFile(filename.c_str(), "ab", *new_file_handle) == false) {
-      LOG_ERROR("Unable to create log file %s\n", filename.c_str());
-      exit(EXIT_FAILURE);
-    }
-
-    fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, new_file_handle->file);
-    delete log_buffer;
-
-//  Call fsync
-    LoggingUtil::FFlushFsync(*new_file_handle);
-
-    bool res = LoggingUtil::CloseFile(*new_file_handle);
-    if (res == false) {
-      LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
-      exit(EXIT_FAILURE);
-    }
-}
-    delete new_file_handle;
+void WalRecovery::RunSecIndexRebuildThread() {
 
 }
 
-}}
+void WalRecovery::RebuildSecIndexForTable(storage::DataTable *table UNUSED_ATTRIBUTE) {
+
+}
+
+}

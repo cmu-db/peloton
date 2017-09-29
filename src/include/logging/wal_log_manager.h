@@ -20,7 +20,6 @@
 #include "concurrency/transaction.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "logging/log_manager.h"
 #include "logging/logging_util.h"
 #include "logging/wal_logger.h"
 #include "type/types.h"
@@ -50,71 +49,62 @@ namespace logging {
  *
  */
 
-class WalLogManager : public LogManager {
+class WalLogManager {
   WalLogManager(const WalLogManager &) = delete;
   WalLogManager &operator=(const WalLogManager &) = delete;
   WalLogManager(WalLogManager &&) = delete;
   WalLogManager &operator=(WalLogManager &&) = delete;
 
-protected:
 
-  WalLogManager()
-    :is_running_(false) {}
+
 
 public:
-  static WalLogManager &GetInstance() {
+  WalLogManager()
+    :is_running_(false) {}
+  WalLogManager(void(* task_callback)(void *), void *task_callback_arg):
+      task_callback_(task_callback), task_callback_arg_(task_callback_arg),is_running_(false) {
+  }
+  /*static WalLogManager &GetInstance() {
     static WalLogManager log_manager;
     return log_manager;
-  }
-  virtual ~WalLogManager() {}
+  }*/
+  ~WalLogManager() {}
 
-  virtual void SetDirectories(std::string logging_dir) override {
-    logger_dir_ = logging_dir;
-    // check the existence of logging directories.
-    // if not exists, then create the directory.
-      if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false) {
-        LOG_INFO("Logging directory %s is not accessible or does not exist", logging_dir.c_str());
-        bool res = LoggingUtil::CreateDirectory(logging_dir.c_str(), 0700);
-        if (res == false) {
-          LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
-        }
-      }
-
-    logger_count_ = 1;
-    for (size_t i = 0; i < logger_count_; ++i) {
-      logger_ = std::make_unique<WalLogger>(0, logging_dir);
-    }
-  }
-
-  virtual const std::string GetDirectories() override {
-    return logger_dir_;
-  }
+  static void SetDirectories(std::string logging_dir);
 
 
-  void LogInsert(const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid);
-  void LogUpdate(const ItemPointer &tuple_old_pos, const ItemPointer &tuple_pos, cid_t current_cid, eid_t current_eid);
-  void LogDelete(const ItemPointer &tuple_pos_deleted, cid_t current_cid, eid_t current_eid);
-
-  void StartPersistTxn(cid_t commit_id);
-  void EndPersistTxn(cid_t commit_id);
+  static void WriteTransactionWrapper(void* args);
 
 
   // Logger side logic
-  virtual void DoRecovery() override;
-  virtual void StartLoggers() override;
-  virtual void StopLoggers() override;
+  static void DoRecovery();
+
+  void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
+    task_callback_ = task_callback;
+    task_callback_arg_ = task_callback_arg;
+  }
+
 private:
-
-  void WriteRecordToBuffer(LogRecord &record);
-
-private:
-  std::string logger_dir_;
-
-  std::unique_ptr<WalLogger> logger_;
-
+  void(* task_callback_)(void *);
+  void * task_callback_arg_;
   bool is_running_;
 
 };
 
+
+struct LogTransactionArg {
+  inline LogTransactionArg(const std::vector<LogRecord> log_records,
+                        ResultType* p_status) :
+      log_records_(log_records),
+      p_status_(p_status) {}
+//      event_(event) {}
+//      io_trigger_(io_trigger) { }
+
+
+  std::vector<LogRecord> log_records_;
+  ResultType *p_status_;
+//  struct event* event_;
+//  IOTrigger *io_trigger_;
+};
 }
 }
