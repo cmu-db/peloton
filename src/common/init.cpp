@@ -23,7 +23,6 @@
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
 #include "logging/wal_log_manager.h"
-#include "logging/wal_log_manager.h"
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -48,6 +47,7 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
+  //logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 

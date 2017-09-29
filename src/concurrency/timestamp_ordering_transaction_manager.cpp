@@ -920,6 +920,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       }
     }
   }
+  if(!current_txn->log_records_.empty()){
+      log_manager.LogTransaction(current_txn->log_records_);
+      EndTransaction(current_txn);
+      if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
+          STATS_TYPE_INVALID) {
+        stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+            database_oid);
+      }
 
   // If there is a log manager and something to log, queue the task.
   if (log_manager != nullptr && !current_txn->log_records_.empty()) {
@@ -931,7 +939,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
           database_id);
     }
-
     return ResultType::LOGGING;
   }
   // If not, just return.
@@ -946,7 +953,11 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
     return result;
   }
+  }
+
+
 }
+
 
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn) {

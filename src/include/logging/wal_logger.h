@@ -21,7 +21,7 @@
 #include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "logging/log_manager.h"
+#include "logging/wal_log_manager.h"
 #include "type/types.h"
 #include "type/serializer.h"
 #include "container/lock_free_queue.h"
@@ -49,37 +49,31 @@ public:
 
   ~WalLogger() {}
 
-  void StartRecovery();
-  void StartIndexRebulding();
-
-  void WaitForRecovery();
-  void WaitForIndexRebuilding();
-
   void StartLogging() {
     is_running_ = true;
-    logger_thread_.reset(new std::thread(&WalLogger::Run, this));
    }
 
   void StopLogging() {
     is_running_ = false;
-    if(!log_buffer_->Empty()){
+   /*/ if(!log_buffer_->Empty()){
         PersistLogBuffer(log_buffer_);
     }
     delete log_buffer_;
-    logger_thread_->join();
+    logger_thread_->join();*/
   }
 
   void PersistLogBuffer(LogBuffer* log_buffer);
 
 
-  void PushBuffer(CopySerializeOutput* buf){
-      log_buffers_.Enqueue(buf);
-  }
 
-  LogBuffer* log_buffer_ = new LogBuffer();
+  /*void PushBuffer(CopySerializeOutput* buf){
+      log_buffers_.Enqueue(buf);
+  }*/
+
+void WriteTransaction(std::vector<LogRecord> log_records);
 
 private:
-  void Run();
+ // void Run();
 
   std::string GetLogFileFullPath(size_t epoch_id) {
     return log_dir_ + "/" + logging_filename_prefix_ + "_" + std::to_string(logger_id_) + "_" + std::to_string(epoch_id);
@@ -95,12 +89,16 @@ private:
 
   bool ReplayLogFile(FileHandle &file_handle);
 
+  CopySerializeOutput* WriteRecordToBuffer(LogRecord &record);
+
   bool InstallTupleRecord(LogRecordType type, storage::Tuple *tuple, storage::DataTable *table, cid_t cur_cid, ItemPointer location);
 
 
   // Return value is the swapped txn id, either INVALID_TXNID or INITIAL_TXNID
   txn_id_t LockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset);
   void UnlockTuple(storage::TileGroupHeader *tg_header, oid_t tuple_offset, txn_id_t new_txn_id);
+
+
 
 
 private:
@@ -125,15 +123,15 @@ private:
 //  CopySerializeOutput logger_output_buffer_;
 
   /* Log buffers */
-  LockFreeQueue<CopySerializeOutput*> log_buffers_{100000};
+//  LockFreeQueue<CopySerializeOutput*> log_buffers_{100000};
 
   size_t persist_epoch_id_;
 
   // The spin lock to protect the worker map. We only update this map when creating/terminating a new worker
-  Spinlock buffers_lock_;
+ // Spinlock buffers_lock_;
   // map from worker id to the worker's context.
   //std::unordered_map<oid_t, std::shared_ptr<WorkerContext>> worker_map_;
-
+  //LogBuffer* log_buffer_ = new LogBuffer();
 
   const std::string logging_filename_prefix_ = "log";
 
