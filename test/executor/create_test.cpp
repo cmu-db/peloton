@@ -54,17 +54,25 @@ TEST_F(CreateTests, CreatingDB) {
   
     executor.Init();
     executor.Execute();
-  
+    // Check if the database exists in the same txn
     EXPECT_EQ(0, catalog::Catalog::GetInstance()
-                     ->GetDatabaseObject("PelotonDB", txn)
-                     ->database_name
-                     .compare("PelotonDB"));
+    ->GetDatabaseObject("PelotonDB", txn)
+    ->database_name
+    .compare("PelotonDB"));
 
     txn_manager.CommitTransaction(txn);
   
-    // free the database just created
+    // start a new txn
     txn = txn_manager.BeginTransaction();
+    // Check if the database exists in a new txn
+    EXPECT_EQ(0, catalog::Catalog::GetInstance()
+    ->GetDatabaseObject("PelotonDB", txn)
+    ->database_name
+    .compare("PelotonDB"));
+  
+    // free the database just created  
     catalog::Catalog::GetInstance()->DropDatabaseWithName("PelotonDB", txn);
+
     txn_manager.CommitTransaction(txn);
   }
 
