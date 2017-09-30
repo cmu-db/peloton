@@ -1326,9 +1326,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_CreateStmt:
       result = CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
       break;
-      case T_CreatedbStmt:
-        result = CreateDbTransform(reinterpret_cast<CreatedbStmt*>(stmt));
-        break;
+    case T_CreatedbStmt:
+      result = CreateDbTransform(reinterpret_cast<CreatedbStmt*>(stmt));
+      break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
       break;
