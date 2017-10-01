@@ -651,5 +651,12 @@ TEST_F(OptimizerSQLTests, IndexTest) {
            false);
 }
 
+TEST_F(OptimizerSQLTests, NestedQueriesTest) {
+  TestUtil("select * from (select b from test where a = 1) as A", {"22"}, false);
+  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
+  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
+
+}
+
 }  // namespace test
 }  // namespace peloton
